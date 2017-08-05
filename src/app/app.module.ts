@@ -1,16 +1,30 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { RouterModule }   from '@angular/router';
 
 import { AppComponent } from './app.component';
+import { SignalKService } from './signalk.service';
+import { SettingsComponent } from './settings.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    SettingsComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    RouterModule.forRoot([
+      {
+        path: 'settings',
+        component: SettingsComponent
+      }
+    ])
   ],
-  providers: [],
+  providers: [ SignalKService ],
   bootstrap: [AppComponent]
 })
+
+
+
+
 export class AppModule { }

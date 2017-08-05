@@ -21,8 +21,10 @@
     "@angular/platform-browser": "^4.0.0",
     "@angular/platform-browser-dynamic": "^4.0.0",
     "@angular/router": "^4.0.0",
+    "angular2-logger": "^0.6.0",
     "core-js": "^2.4.1",
     "rxjs": "^5.4.1",
+    "signalk-client": "github:signalk/signalk-js-client",
     "zone.js": "^0.8.14"
   },
   "devDependencies": {
