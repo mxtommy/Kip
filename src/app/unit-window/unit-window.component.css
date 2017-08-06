@@ -1,0 +1,33 @@
+.flexContainer {
+
+    display: flex;
+    flex-direction: row;
+    /*flex-direction: column; */
+     align-items: stretch;
+
+    height: 100%;
+    border: 5px solid yellow;
+
+
+}
+
+
+.flexBox1 {
+    flex-grow: 8;
+
+    background-color: blue;
+}
+.flexBox2 {
+    flex-grow: 1;
+
+    background-color: green;
+}
+
+.settingsButton {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: block;
+    height: 40px;
+    width: 40px;
+}
