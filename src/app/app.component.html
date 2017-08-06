@@ -1,30 +1,41 @@
-<div class="mainWindow">
+<div class="mainContainer">
+    <div class="mainWindow">
 
 
-    <router-outlet></router-outlet>
-</div>
-<div class="menuBar">
-    <div class="btn-toolbar">
-        <div class="btn-group" role="group" aria-label="Menu">
-            <button type="button" class="btn btn-default btn-lg" routerLink="/">
-                <span class="glyphicon glyphicon-home"></span>
-            </button>
-        </div>
-        <div class="btn-group" role="group" aria-label="Menu">
+        <router-outlet></router-outlet>
+    </div>
+    <div class="menuBar">
+        <div class="menuBarContainer">
 
-            <button type="button" class="btn btn-default btn-lg">
-                <span class="glyphicon glyphicon-chevron-left"></span>
-            </button>
+            <div class="menuBarButtonGroup">
+                <div class="btn-group" role="group" aria-label="Menu">
 
-            <button type="button" class="btn btn-default btn-lg">
-                <span class="glyphicon glyphicon-chevron-right"></span>
-            </button>
-        </div>
-        <div class="btn-group" role="group" aria-label="Menu">
+                </div>
+            </div>
 
-            <button type="button" class="btn btn-default btn-lg"  routerLink="/settings">
-                <span class="glyphicon glyphicon-cog"></span>
-            </button>
+            <div class="menuBarButtonGroup">
+                <div class="btn-group" role="group" aria-label="Menu">
+                    <button type="button" class="btn btn-default btn-lg">
+                        <span class="glyphicon glyphicon-chevron-left"></span>
+                    </button>
+
+                    <button type="button" class="btn btn-default btn-lg" routerLink="/">
+                        <span class="glyphicon glyphicon-home"></span>
+                    </button>
+
+                    <button type="button" class="btn btn-default btn-lg">
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="menuBarButtonGroup">
+                <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
+                    <button type="button" class="btn btn-default btn-lg"  routerLink="/settings">
+                        <span class="glyphicon glyphicon-cog"></span>
+                    </button>
+                </div>
+            </div>
 
         </div>
     </div>
