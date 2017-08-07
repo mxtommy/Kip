@@ -1,8 +1,8 @@
 <div class="mainContainer">
     <div class="mainWindow">
 
+            <app-unit-window></app-unit-window>
 
-        <router-outlet></router-outlet>
     </div>
     <div class="menuBar">
         <div class="menuBarContainer">
@@ -31,6 +31,10 @@
 
             <div class="menuBarButtonGroup">
                 <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
+                    <button type="button" class="btn btn-default btn-lg" (click)="unlockPage()">
+                        <span [hidden]="unlockStatus" class="fa fa-unlock"></span>
+                        <span [hidden]="!unlockStatus" class="fa fa-lock"></span>
+                    </button>
                     <button type="button" class="btn btn-default btn-lg"  routerLink="/settings">
                         <span class="fa fa-cog"></span>
                     </button>

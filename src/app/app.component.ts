@@ -12,5 +12,19 @@ export class AppComponent {
 
   constructor(private signalKService: SignalKService) { }
 
-  speed = this.signalKService.connectSignalK('aaa');
+  unlockStatus: boolean = false; 
+
+  unlockPage() {
+    if (this.unlockStatus) {
+      console.log("Locking");
+      this.unlockStatus = false;
+    } else {
+      console.log("Unlocking");
+      this.unlockStatus = true;
+    }
+
+
+  }
+
+
 }

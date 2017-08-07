@@ -31,8 +31,8 @@
 .menuBarContainer {
     display: flex;
     flex-direction: row;
-
+    justify-content: space-between;
 }
 .menuBarButtonGroup {
-    flex: 1;
+    /*flex: 1;*/
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
 
@@ -8,10 +8,14 @@ import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
   styleUrls: ['./unit-window.component.css']
 })
 export class UnitWindowComponent implements OnInit {
+  @Input('master') masterName: string;
+
+
+  
+  constructor(private modalService: NgbModal) {}
 
   closeResult: string;
 
-  constructor(private modalService: NgbModal) {}
 
   open(content) {
     this.modalService.open(content).result.then((result) => {
