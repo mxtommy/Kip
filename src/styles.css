@@ -8,3 +8,9 @@ app-root {
 body {
 	margin: 0;
 }
+
+/*
+.modal-backdrop.show {
+	opacity: 0.9;
+}
+*/
