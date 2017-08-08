@@ -10,8 +10,8 @@ import { TreeManagerService } from '../tree-manager.service';
   styleUrls: ['./unit-window.component.css']
 })
 export class UnitWindowComponent implements OnInit {
-  @Input('master') masterName: string;
-
+  @Input('unlockStatus') unlockStatus: string;
+  @Input('nodeGUID') nodeGUID: string;
 
   constructor(private modalService: NgbModal, private treeManager: TreeManagerService) {}
 

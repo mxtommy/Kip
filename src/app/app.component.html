@@ -1,7 +1,10 @@
 <div class="mainContainer">
     <div class="mainWindow">
 
-            <app-unit-window></app-unit-window>
+            <app-unit-window 
+                [unlockStatus]="unlockStatus" 
+                [nodeGUID]="activePage.id"
+                ></app-unit-window>
 
     </div>
     <div class="menuBar">
@@ -33,13 +36,13 @@
                 <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
 
                     <button type="button" class="btn btn-default btn-lg" (click)="unlockPage()">
-                        <span [hidden]="unlockStatus" class="fa fa-unlock"></span>
-                        <span [hidden]="!unlockStatus" class="fa fa-lock"></span>
+                        <span [hidden]="!unlockStatus" class="fa fa-unlock"></span>
+                        <span [hidden]="unlockStatus" class="fa fa-lock"></span>
                     </button>
-                    <button [hidden]="unlockStatus" type="button" class="btn btn-default btn-lg"  (click)="newPage()">
+                    <button [hidden]="!unlockStatus" type="button" class="btn btn-default btn-lg"  (click)="newPage()">
                         <span class="fa fa-plus"></span>
                     </button>
-                    <button [hidden]="unlockStatus" type="button" class="btn btn-default btn-lg" (click)="deletePage()">
+                    <button [hidden]="!unlockStatus" type="button" class="btn btn-default btn-lg" (click)="deletePage()">
                         <span class="fa fa-trash"></span>
                     </button>                    
                     <button type="button" class="btn btn-default btn-lg"  routerLink="/settings">
