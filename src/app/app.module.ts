@@ -9,12 +9,18 @@ import { UnitWindowComponent } from './unit-window/unit-window.component';
 
 import { SignalKService } from './signalk.service';
 import { TreeManagerService } from './tree-manager.service';
+import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
+import { WidgetSplitComponent } from './widget-split/widget-split.component';
+import { DynamicWidgetDirective } from './dynamic-widget.directive';
 
 @NgModule({
   declarations: [
     AppComponent,
     SettingsComponent,
-    UnitWindowComponent
+    UnitWindowComponent,
+    WidgetBlankComponent,
+    WidgetSplitComponent,
+    DynamicWidgetDirective
   ],
   imports: [
     BrowserModule,
@@ -30,6 +36,7 @@ import { TreeManagerService } from './tree-manager.service';
       }
     ])
   ],
+  entryComponents: [ WidgetBlankComponent, WidgetSplitComponent ],
   providers: [ SignalKService, TreeManagerService ],
   bootstrap: [AppComponent]
 })

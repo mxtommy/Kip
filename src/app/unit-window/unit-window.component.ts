@@ -1,7 +1,11 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ComponentFactoryResolver, ViewChild } from '@angular/core';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
-import { TreeManagerService } from '../tree-manager.service';
+import { TreeNode, TreeManagerService } from '../tree-manager.service';
+import { DynamicWidgetDirective } from '../dynamic-widget.directive';
+
+import { WidgetBlankComponent } from '../widget-blank/widget-blank.component';
+import { WidgetSplitComponent } from '../widget-split/widget-split.component';
 
 
 @Component({
@@ -12,32 +16,27 @@ import { TreeManagerService } from '../tree-manager.service';
 export class UnitWindowComponent implements OnInit {
   @Input('unlockStatus') unlockStatus: string;
   @Input('nodeGUID') nodeGUID: string;
+  @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
 
-  constructor(private modalService: NgbModal, private treeManager: TreeManagerService) {}
+  activePage: TreeNode;
 
-  closeResult: string;
-
-
-  open(content) {
-    this.modalService.open(content).result.then((result) => {
-      this.closeResult = `Closed with: ${result}`;
-    }, (reason) => {
-      this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
-    });
-  }
-
-  private getDismissReason(reason: any): string {
-    if (reason === ModalDismissReasons.ESC) {
-      return 'by pressing ESC';
-    } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
-      return 'by clicking on a backdrop';
-    } else {
-      return  `with: ${reason}`;
-    }
-  }
+  constructor(
+      private componentFactoryResolver: ComponentFactoryResolver,
+      private treeManager: TreeManagerService) { }
 
   ngOnInit() {
+    this.activePage = this.treeManager.getNode(this.nodeGUID);
+
+    //dynamically load component.
+    let componentFactory = this.componentFactoryResolver.resolveComponentFactory(WidgetBlankComponent);
+    let viewContainerRef = this.dynamicWidget.viewContainerRef;
+    viewContainerRef.clear();
+    let componentRef = viewContainerRef.createComponent(componentFactory);
+
   }
 
+  ngOnChanges(changes: any) {
+    this.ngOnInit();
+  }
 
 }
