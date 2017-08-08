@@ -9,13 +9,13 @@
 
             <div class="menuBarButtonGroup">
                 <div class="btn-group" role="group" aria-label="Menu">
-
+{{ activePage.name }} {{ rootIndex }}
                 </div>
             </div>
 
             <div class="menuBarButtonGroup">
                 <div class="btn-group" role="group" aria-label="Menu">
-                    <button type="button" class="btn btn-default btn-lg">
+                    <button type="button" class="btn btn-default btn-lg"  (click)="pageDown()">
                         <span class="fa fa-chevron-down"></span>
                     </button>
 
@@ -23,7 +23,7 @@
                         <span class="fa fa-home"></span>
                     </button>
 
-                    <button type="button" class="btn btn-default btn-lg">
+                    <button type="button" class="btn btn-default btn-lg" (click)="pageUp()">
                         <span class="fa fa-chevron-up"></span>
                     </button>
                 </div>
@@ -36,10 +36,10 @@
                         <span [hidden]="unlockStatus" class="fa fa-unlock"></span>
                         <span [hidden]="!unlockStatus" class="fa fa-lock"></span>
                     </button>
-                    <button [hidden]="unlockStatus" type="button" class="btn btn-default btn-lg">
+                    <button [hidden]="unlockStatus" type="button" class="btn btn-default btn-lg"  (click)="newPage()">
                         <span class="fa fa-plus"></span>
                     </button>
-                    <button [hidden]="unlockStatus" type="button" class="btn btn-default btn-lg">
+                    <button [hidden]="unlockStatus" type="button" class="btn btn-default btn-lg" (click)="deletePage()">
                         <span class="fa fa-trash"></span>
                     </button>                    
                     <button type="button" class="btn btn-default btn-lg"  routerLink="/settings">

@@ -4,9 +4,11 @@ import { RouterModule }   from '@angular/router';
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import { AppComponent } from './app.component';
-import { SignalKService } from './signalk.service';
 import { SettingsComponent } from './settings.component';
 import { UnitWindowComponent } from './unit-window/unit-window.component';
+
+import { SignalKService } from './signalk.service';
+import { TreeManagerService } from './tree-manager.service';
 
 @NgModule({
   declarations: [
@@ -28,7 +30,7 @@ import { UnitWindowComponent } from './unit-window/unit-window.component';
       }
     ])
   ],
-  providers: [ SignalKService ],
+  providers: [ SignalKService, TreeManagerService ],
   bootstrap: [AppComponent]
 })
 

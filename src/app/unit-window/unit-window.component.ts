@@ -1,6 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
+import { TreeManagerService } from '../tree-manager.service';
+
 
 @Component({
   selector: 'app-unit-window',
@@ -11,8 +13,7 @@ export class UnitWindowComponent implements OnInit {
   @Input('master') masterName: string;
 
 
-  
-  constructor(private modalService: NgbModal) {}
+  constructor(private modalService: NgbModal, private treeManager: TreeManagerService) {}
 
   closeResult: string;
 
