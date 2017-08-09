@@ -1,0 +1,10 @@
+.settingsButton {
+    /*position: absolute; 
+    right: 0;
+    top: 0;
+    display: block; */
+    height: 27px;
+    width: 100%;
+    background-color: darkgray;
+    align-content: right;
+}

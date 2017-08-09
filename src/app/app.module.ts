@@ -1,7 +1,8 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule }   from '@angular/router';
-import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule} from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule }   from '@angular/forms';
 
 import { AppComponent } from './app.component';
 import { SettingsComponent } from './settings.component';
@@ -12,6 +13,7 @@ import { TreeManagerService } from './tree-manager.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetSplitComponent } from './widget-split/widget-split.component';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
+import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 
 @NgModule({
   declarations: [
@@ -20,10 +22,12 @@ import { DynamicWidgetDirective } from './dynamic-widget.directive';
     UnitWindowComponent,
     WidgetBlankComponent,
     WidgetSplitComponent,
-    DynamicWidgetDirective
+    DynamicWidgetDirective,
+    WidgetUnknownComponent
   ],
   imports: [
     BrowserModule,
+    FormsModule,
     NgbModule.forRoot(),
     RouterModule.forRoot([
       {
@@ -36,7 +40,7 @@ import { DynamicWidgetDirective } from './dynamic-widget.directive';
       }
     ])
   ],
-  entryComponents: [ WidgetBlankComponent, WidgetSplitComponent ],
+  entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent ],
   providers: [ SignalKService, TreeManagerService ],
   bootstrap: [AppComponent]
 })

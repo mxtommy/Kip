@@ -1,1 +1,26 @@
+<div class=settingsButton>
+    <button *ngIf="unlockStatus" type="button" class="btn btn-default btn-sm pull-right" (click)="openWidgetSelector(widgetSelector)">
+        <span class="fa fa-cog"></span>
+    </button>
+</div>
+
 <ng-template dynamic-widget></ng-template>
+
+<ng-template #widgetSelector let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title">Choose Widget:</h4>
+  </div>
+  <div class="modal-body">
+      {{newWidget}}
+    <div class="form-group">
+        <label for="widget">Widget</label>
+        <select class="form-control" id="widget" required>
+            <option *ngFor="let widget of widgetList" [value]="widget.name">{{widget.description}}</option>
+        </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
+    <button type="button" class="btn btn-secondary" (click)="changeWidget('aaa')">Confirm</button>
+  </div>
+</ng-template>

@@ -4,6 +4,7 @@ export class TreeNode {
   id: string;
   name: string;
   nodeType: string;
+  nodeData;
 }
 
 export class TreeLink {
@@ -33,7 +34,7 @@ export class TreeManagerService {
     // init if nothing.
     if (Object.keys(this.TreeNodes).length == 0) {
       let guid = this.newGuid();
-      this.TreeNodes = [ { id: guid, name: "Home Page", nodeType: "WidgetBlank" } ];
+      this.TreeNodes = [ { id: guid, name: "Home Page", nodeType: "WidgetBlank", nodeData: '' } ];
       this.TreeLinks = [ { parent: 'ROOT', child: guid }];
     }
 
@@ -52,7 +53,7 @@ export class TreeManagerService {
   
   newNode(parent: string) {
       let guid = this.newGuid();
-      this.TreeNodes.push({ id: guid, name: "New Page", nodeType: "WidgetBlank" });
+      this.TreeNodes.push({ id: guid, name: "New Page", nodeType: "WidgetBlank", nodeData: '' });
       this.TreeLinks.push({ parent: parent, child: guid });    
       return guid;
   }
