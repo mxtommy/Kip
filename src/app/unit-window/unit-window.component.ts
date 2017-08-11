@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, ComponentFactoryResolver, ViewChild } from '@angular/core';
+import { NgModel } from '@angular/forms';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
 import { TreeNode, TreeManagerService } from '../tree-manager.service';
@@ -77,9 +78,12 @@ export class UnitWindowComponent implements OnInit {
     });
   }
 
-  changeWidget(newWidget: string) {
+  changeWidget() {
     this.modalRef.close();
-    console.log(newWidget);
+    if (this.activePage.nodeType != this.newWidget) {
+      this.treeManager.updateNodeType(this.nodeGUID, this.newWidget);
+      this.ngOnInit();
+    }
   }
 
   private getComponentName(typeName: string) {

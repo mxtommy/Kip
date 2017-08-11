@@ -5,6 +5,7 @@ export class TreeNode {
   name: string;
   nodeType: string;
   nodeData;
+  nodeChildren: Array<string>;
 }
 
 export class TreeLink {
@@ -34,7 +35,7 @@ export class TreeManagerService {
     // init if nothing.
     if (Object.keys(this.TreeNodes).length == 0) {
       let guid = this.newGuid();
-      this.TreeNodes = [ { id: guid, name: "Home Page", nodeType: "WidgetBlank", nodeData: '' } ];
+      this.TreeNodes = [ { id: guid, name: "Home Page", nodeType: "WidgetBlank", nodeData: {}, nodeChildren: [] } ];
       this.TreeLinks = [ { parent: 'ROOT', child: guid }];
     }
 
@@ -53,8 +54,17 @@ export class TreeManagerService {
   
   newNode(parent: string) {
       let guid = this.newGuid();
-      this.TreeNodes.push({ id: guid, name: "New Page", nodeType: "WidgetBlank", nodeData: '' });
+      this.TreeNodes.push({ id: guid, name: "New Page", nodeType: "WidgetBlank", nodeData: {}, nodeChildren: [] });
       this.TreeLinks.push({ parent: parent, child: guid });    
       return guid;
   }
+
+  updateNodeType(guid: string, newNodeType: string) {
+    let nodeIndex = this.TreeNodes.findIndex(node => node.id == guid)
+    // TODO delete tree under this node...
+    this.TreeNodes[nodeIndex].nodeData = {};
+    this.TreeNodes[nodeIndex].nodeType = newNodeType;
+  }
+
+
 }

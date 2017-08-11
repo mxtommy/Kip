@@ -2,9 +2,35 @@
     /*position: absolute; 
     right: 0;
     top: 0;
-    display: block; */
+    display: block; 
     height: 27px;
     width: 100%;
     background-color: darkgray;
     align-content: right;
+    */
+}
+
+.unitContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 100%;
+}
+
+.unitWindow {
+    flex: 30;
+}
+
+.unitMenu {
+    flex: 1;
+    background-color: darkgray;
+    text-align: center;
+    border-style: outset;
+    border-color: darkred;
+}
+
+.verticalCenter {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
 }
