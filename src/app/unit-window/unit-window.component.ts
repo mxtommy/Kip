@@ -1,20 +1,11 @@
-import { Component, OnInit, Input, ComponentFactoryResolver, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ComponentFactoryResolver, ComponentRef, ViewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
 import { TreeNode, TreeManagerService } from '../tree-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 
-import { WidgetBlankComponent } from '../widget-blank/widget-blank.component';
-import { WidgetSplitComponent } from '../widget-split/widget-split.component';
-import { WidgetUnknownComponent } from '../widget-unknown/widget-unknown.component';
-
-export class widgetInfo {
-  name: string;
-  componentName;
-  description: string;
-}
-
+import { WidgetListService, widgetInfo } from '../widget-list.service';
 
 @Component({
   selector: 'app-unit-window',
@@ -24,45 +15,40 @@ export class widgetInfo {
 
 
 export class UnitWindowComponent implements OnInit {
-  @Input('unlockStatus') unlockStatus: string;
+  @Input('unlockStatus') unlockStatus: boolean;
   @Input('nodeGUID') nodeGUID: string;
   @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
 
 
-  widgetList: widgetInfo[] = 
-  [
-    {
-      name: 'WidgetBlank',
-      componentName: WidgetBlankComponent,
-      description: 'Blank'
-    },
-    {
-      name: 'WidgetSplit',
-      componentName: WidgetSplitComponent,
-      description: 'Split in two'
-    }
-  ];
+  widgetList: widgetInfo[];
 
   modalRef;
   activePage: TreeNode;
   newWidget: string; //Used in change modal form.
+  private componentRef: ComponentRef<{}>;
 
   constructor(
       private modalService: NgbModal,
       private componentFactoryResolver: ComponentFactoryResolver,
-      private treeManager: TreeManagerService) { }
+      private treeManager: TreeManagerService,
+      private widgetListService: WidgetListService) { }
 
   ngOnInit() {
+    this.widgetList = this.widgetListService.getList();
     this.activePage = this.treeManager.getNode(this.nodeGUID);
     this.newWidget  = this.activePage.nodeType;
-    let componentName = this.getComponentName(this.activePage.nodeType);
+    let componentName = this.widgetListService.getComponentName(this.activePage.nodeType);
 
     //dynamically load component.
     let componentFactory = this.componentFactoryResolver.resolveComponentFactory(componentName);
     let viewContainerRef = this.dynamicWidget.viewContainerRef;
     viewContainerRef.clear();
-    let componentRef = viewContainerRef.createComponent(componentFactory);
+    this.componentRef = viewContainerRef.createComponent(componentFactory);
 
+    // inject info into new component
+    let instance = <DynamicComponentData> this.componentRef.instance;
+    instance.nodeGUID = this.nodeGUID;
+    instance.unlockStatus = this.unlockStatus;
   }
 
   ngOnChanges(changes: any) {
@@ -72,9 +58,7 @@ export class UnitWindowComponent implements OnInit {
   openWidgetSelector(content) {
     this.modalRef = this.modalService.open(content);
     this.modalRef.result.then((result) => {
-      //this.closeResult = `Closed with: ${result}`;
     }, (reason) => {
-      //this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
     });
   }
 
@@ -86,10 +70,9 @@ export class UnitWindowComponent implements OnInit {
     }
   }
 
-  private getComponentName(typeName: string) {
-    let type = this.widgetList.find(c => c.name == typeName).componentName;
-    return type || WidgetUnknownComponent;
-  
-  }
+}
 
+export abstract class DynamicComponentData {
+    nodeGUID: string;
+    unlockStatus: boolean;
 }
