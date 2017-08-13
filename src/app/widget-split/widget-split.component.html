@@ -28,6 +28,9 @@
             <option value="column">Horizontal</option>            
         </select>
     </div>
+    <div class="form-group" *ngFor="let child of activePage.nodeData.children">
+        {{child.ratio}}
+    </div>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
