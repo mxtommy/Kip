@@ -1,37 +1,35 @@
-<div class=flexContainer>
-  <div class=settingsButton>
-    <button type="button" class="btn btn-default btn-sm" (click)="open(content)">
-      <span class="fa fa-cog"></span>
-    </button>
+<div class="flexContainer flexCol">
+  <div *ngIf="unlockStatus" class="unitMenu" (click)="openWidgetSettings(widgetSettings)">
+    <span class="verticalCenter fa fa-cog"></span>
   </div>
 
-  <div class=flexBox1>
-BOX1
-
- <pre>{{closeResult}}</pre>
-  </div>
-
-  <div class=flexBox2>
-BOX2
-{{unlockStatus}}
-
+  <div class="flexContainer">
+    <div class="flexBox" *ngFor="let child of activePage.nodeData.children" [ngStyle]="{ 'flex': child.ratio, 'order': child.order }">
+      <app-unit-window 
+                [unlockStatus]="unlockStatus" 
+                [nodeUUID]="child.uuid"
+                ></app-unit-window>
+    </div>
   </div>
   
 </div>
 
 
 
-<ng-template #content let-c="close" let-d="dismiss">
+<ng-template #widgetSettings let-c="close" let-d="dismiss">
   <div class="modal-header">
-    <h4 class="modal-title">Modal title</h4>
-    <button type="button" class="close" aria-label="Close" (click)="d('Cross click')">
-      <span aria-hidden="true">&times;</span>
-    </button>
+    <h4 class="modal-title">Split Settings:</h4>
   </div>
   <div class="modal-body">
-    <p>One fine body&hellip;</p>
+    <div class="form-group">
+        <label for="widget">Direction</label>
+        <select class="form-control" id="widget"  [(ngModel)]="newWidget" required>
+            <option *ngFor="let widget of widgetList" [value]="widget.name">{{widget.description}}</option>
+        </select>
+    </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="c('Close click')">Close</button>
+    <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
+    <button type="button" class="btn btn-secondary" (click)="changeWidget()">Confirm</button>
   </div>
 </ng-template>

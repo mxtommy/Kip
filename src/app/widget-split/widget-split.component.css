@@ -1,21 +1,8 @@
-.flexContainer {
-
-    display: flex;
-    flex-direction: row;
-    /*flex-direction: column; */
-     align-items: stretch;
-
-    height: 100%;
-    border: 5px solid yellow;
 
 
-}
-
-
-.flexBox1 {
-    flex-grow: 8;
-
-    background-color: blue;
+.flexBox {
+    border-style: outset;
+    border-color: darkred;
 }
 .flexBox2 {
     flex-grow: 1;

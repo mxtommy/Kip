@@ -9,8 +9,46 @@ body {
 	margin: 0;
 }
 
-/*
-.modal-backdrop.show {
-	opacity: 0.9;
+.unitContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 100%;
 }
-*/
+
+.unitWindow {
+    flex: 30;
+}
+
+.unitMenu {
+    flex: 1;
+    background-color: darkgray;
+    text-align: center;
+    border-style: outset;
+    border-color: darkred;
+}
+
+.verticalCenter {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.flexContainer {
+
+    display: flex;
+    /*flex-direction: column; */
+     align-items: stretch;
+
+    height: 100%;
+    border: 5px solid yellow;
+
+}
+
+.flowRow {
+    flex-direction: row;
+}
+
+.flexCol {
+    flex-direction: column;
+}

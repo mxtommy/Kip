@@ -16,7 +16,7 @@ import { WidgetListService, widgetInfo } from '../widget-list.service';
 
 export class UnitWindowComponent implements OnInit {
   @Input('unlockStatus') unlockStatus: boolean;
-  @Input('nodeGUID') nodeGUID: string;
+  @Input('nodeUUID') nodeUUID: string;
   @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
 
 
@@ -35,7 +35,7 @@ export class UnitWindowComponent implements OnInit {
 
   ngOnInit() {
     this.widgetList = this.widgetListService.getList();
-    this.activePage = this.treeManager.getNode(this.nodeGUID);
+    this.activePage = this.treeManager.getNode(this.nodeUUID);
     this.newWidget  = this.activePage.nodeType;
     let componentName = this.widgetListService.getComponentName(this.activePage.nodeType);
 
@@ -47,7 +47,7 @@ export class UnitWindowComponent implements OnInit {
 
     // inject info into new component
     let instance = <DynamicComponentData> this.componentRef.instance;
-    instance.nodeGUID = this.nodeGUID;
+    instance.nodeUUID = this.nodeUUID;
     instance.unlockStatus = this.unlockStatus;
   }
 
@@ -65,7 +65,7 @@ export class UnitWindowComponent implements OnInit {
   changeWidget() {
     this.modalRef.close();
     if (this.activePage.nodeType != this.newWidget) {
-      this.treeManager.updateNodeType(this.nodeGUID, this.newWidget);
+      this.treeManager.updateNodeType(this.nodeUUID, this.newWidget);
       this.ngOnInit();
     }
   }
@@ -73,6 +73,6 @@ export class UnitWindowComponent implements OnInit {
 }
 
 export abstract class DynamicComponentData {
-    nodeGUID: string;
+    nodeUUID: string;
     unlockStatus: boolean;
 }

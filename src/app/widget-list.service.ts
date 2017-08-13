@@ -11,6 +11,8 @@ export class widgetInfo {
 }
 
 
+
+
 @Injectable()
 export class WidgetListService {
 
@@ -22,12 +24,12 @@ export class WidgetListService {
     {
       name: 'WidgetBlank',
       componentName: WidgetBlankComponent,
-      description: 'Blank'
+      description: 'Blank',
     },
     {
       name: 'WidgetSplit',
       componentName: WidgetSplitComponent,
-      description: 'Split in two'
+      description: 'Split in two',
     }
   ];
 
@@ -35,6 +37,7 @@ export class WidgetListService {
     let type = this.widgetList.find(c => c.name == typeName).componentName;
     return type || WidgetUnknownComponent;
   }
+
 
   getList (){
     return this.widgetList;

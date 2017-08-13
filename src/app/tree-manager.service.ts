@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 
 export class TreeNode {
-  id: string;
+  uuid: string;
   name: string;
   nodeType: string;
   nodeData;
-  nodeChildren: Array<string>;
 }
 
 export class TreeLink {
@@ -21,7 +20,7 @@ export class TreeManagerService {
   
   constructor() { }
 
-  private newGuid() {
+  private newUuid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
             return v.toString(16);
@@ -34,9 +33,9 @@ export class TreeManagerService {
   getRootNodes() {
     // init if nothing.
     if (Object.keys(this.TreeNodes).length == 0) {
-      let guid = this.newGuid();
-      this.TreeNodes = [ { id: guid, name: "Home Page", nodeType: "WidgetBlank", nodeData: {}, nodeChildren: [] } ];
-      this.TreeLinks = [ { parent: 'ROOT', child: guid }];
+      let uuid = this.newUuid();
+      this.TreeNodes = [ { uuid: uuid, name: "Home Page", nodeType: "WidgetSplit", nodeData: null } ];
+      this.TreeLinks = [ { parent: 'ROOT', child: uuid }];
     }
 
     let rootNodes = [];
@@ -48,23 +47,27 @@ export class TreeManagerService {
     return rootNodes;
   }
 
-  getNode(guid: string) {
-      return this.TreeNodes.find(node => node.id == guid);
+  getNode(uuid: string) {
+      return this.TreeNodes.find(node => node.uuid == uuid);
   }
   
   newNode(parent: string) {
-      let guid = this.newGuid();
-      this.TreeNodes.push({ id: guid, name: "New Page", nodeType: "WidgetBlank", nodeData: {}, nodeChildren: [] });
-      this.TreeLinks.push({ parent: parent, child: guid });    
-      return guid;
+      let uuid = this.newUuid();
+      this.TreeNodes.push({ uuid: uuid, name: "New Page", nodeType: "WidgetBlank", nodeData: null });
+      this.TreeLinks.push({ parent: parent, child: uuid });    
+      return uuid;
   }
 
-  updateNodeType(guid: string, newNodeType: string) {
-    let nodeIndex = this.TreeNodes.findIndex(node => node.id == guid)
+  updateNodeType(uuid: string, newNodeType: string) {
+    let nodeIndex = this.TreeNodes.findIndex(node => node.uuid == uuid)
     // TODO delete tree under this node...
-    this.TreeNodes[nodeIndex].nodeData = {};
+    this.TreeNodes[nodeIndex].nodeData = null;
     this.TreeNodes[nodeIndex].nodeType = newNodeType;
   }
 
+  saveNodeData(uuid: string, newNodeData) {
+    let nodeIndex = this.TreeNodes.findIndex(node => node.uuid == uuid)
+    this.TreeNodes[nodeIndex].nodeData = newNodeData;
+  }
 
 }
