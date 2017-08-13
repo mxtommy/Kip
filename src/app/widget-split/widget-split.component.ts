@@ -4,7 +4,7 @@ import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 import { TreeNode, TreeManagerService } from '../tree-manager.service';
 
 export class WidgetSplitConfig {
-  orientation: boolean //true for row, false for col
+  orientation: string // row or col
   children: WidgetSplitChildren[]
 }
 
@@ -31,7 +31,9 @@ export class WidgetSplitComponent implements OnInit {
   //Variables
   activePage: TreeNode;
   modalRef;
-
+  settingsForm = {
+    newOrientation: 'row'
+  }
 
 
 
@@ -46,7 +48,7 @@ export class WidgetSplitComponent implements OnInit {
 
         //layout
         this.activePage.nodeData = <WidgetSplitConfig> {
-          orientation: true, // row
+          orientation: 'row',
           children: [
             {
               uuid: newNode1,
@@ -63,7 +65,7 @@ export class WidgetSplitComponent implements OnInit {
         this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
       } // end if null
 
-      
+      // set some defaults for the form.
 
   }
 
@@ -76,6 +78,13 @@ export class WidgetSplitComponent implements OnInit {
     });
   }
 
+  saveSettings() {
+    this.modalRef.close();
+    if (this.settingsForm.newOrientation != this.activePage.nodeData.orientation) {
+      this.activePage.nodeData.orientation = this.settingsForm.newOrientation;
+      this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
+    }
+  }
 
 
   

@@ -3,7 +3,7 @@
     <span class="verticalCenter fa fa-cog"></span>
   </div>
 
-  <div class="flexContainer">
+  <div class="flexContainer" [ngStyle]="{ 'flex-direction': activePage.nodeData.orientation }">
     <div class="flexBox" *ngFor="let child of activePage.nodeData.children" [ngStyle]="{ 'flex': child.ratio, 'order': child.order }">
       <app-unit-window 
                 [unlockStatus]="unlockStatus" 
@@ -23,13 +23,14 @@
   <div class="modal-body">
     <div class="form-group">
         <label for="widget">Direction</label>
-        <select class="form-control" id="widget"  [(ngModel)]="newWidget" required>
-            <option *ngFor="let widget of widgetList" [value]="widget.name">{{widget.description}}</option>
+        <select class="form-control" id="widget"  [(ngModel)]="settingsForm.newOrientation" required>
+            <option value="row">Vertical</option>
+            <option value="column">Horizontal</option>            
         </select>
     </div>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
-    <button type="button" class="btn btn-secondary" (click)="changeWidget()">Confirm</button>
+    <button type="button" class="btn btn-secondary" (click)="saveSettings()">Confirm</button>
   </div>
 </ng-template>
