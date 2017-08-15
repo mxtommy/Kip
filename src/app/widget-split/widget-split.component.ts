@@ -32,7 +32,8 @@ export class WidgetSplitComponent implements OnInit {
   activePage: TreeNode;
   modalRef;
   settingsForm = {
-    newOrientation: 'row'
+    newOrientation: 'row',
+    newChildren: null
   }
 
 
@@ -52,13 +53,13 @@ export class WidgetSplitComponent implements OnInit {
           children: [
             {
               uuid: newNode1,
-              order: 2,
+              order: 1,
               ratio: 1
             },
             {
               uuid: newNode2,
               order: 1,
-              ratio: 3
+              ratio: 1
             }            
           ]
         } // end layout
@@ -66,7 +67,7 @@ export class WidgetSplitComponent implements OnInit {
       } // end if null
 
       // set some defaults for the form.
-
+      this.settingsForm.newChildren = Object.assign([], this.activePage.nodeData.children);
   }
 
 
@@ -84,6 +85,13 @@ export class WidgetSplitComponent implements OnInit {
       this.activePage.nodeData.orientation = this.settingsForm.newOrientation;
       this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
     }
+  }
+
+  newChildNode() {
+    let newNode = this.treeManager.newNode(this.activePage.uuid);
+    this.activePage.nodeData.children.push(  { uuid: newNode, order: 1, ratio: 1 });
+    this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
+    this.ngOnInit();
   }
 
 

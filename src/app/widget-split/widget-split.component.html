@@ -28,8 +28,11 @@
             <option value="column">Horizontal</option>            
         </select>
     </div>
-    <div class="form-group" *ngFor="let child of activePage.nodeData.children">
-        {{child.ratio}}
+    <div class="form-group" *ngFor="let child of settingsForm.newChildren">
+      Order: <input type=number min=1 max=9 style="width: 3em"> WidthRatio: <input type=number [(ngModel)]="child.ratio" min=1 max=100 style="width: 3em">
+    </div>
+    <div class=form-group>
+      <span class="fa fa-plus" (click)="newChildNode()"></span>
     </div>
   </div>
   <div class="modal-footer">
