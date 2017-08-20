@@ -29,7 +29,7 @@
         </select>
     </div>
     <div class="form-group" *ngFor="let child of settingsForm.newChildren">
-      Order: <input type=number min=1 max=9 style="width: 3em"> WidthRatio: <input type=number [(ngModel)]="child.ratio" min=1 max=100 style="width: 3em">
+      Order: <input type=number [(ngModel)]="child.order" min=1 max=9 style="width: 3em"> WidthRatio: <input type=number [(ngModel)]="child.ratio" min=1 max=100 style="width: 3em">
     </div>
     <div class=form-group>
       <span class="fa fa-plus" (click)="newChildNode()"></span>

@@ -33,7 +33,7 @@ export class WidgetSplitComponent implements OnInit {
   modalRef;
   settingsForm = {
     newOrientation: 'row',
-    newChildren: null
+    newChildren: []
   }
 
 
@@ -66,8 +66,13 @@ export class WidgetSplitComponent implements OnInit {
         this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
       } // end if null
 
-      // set some defaults for the form.
-      this.settingsForm.newChildren = Object.assign([], this.activePage.nodeData.children);
+      // set some defaults for the form. Complicated as we need to deep copy array (or updating form updates page)
+      this.settingsForm.newChildren = [];
+      this.activePage.nodeData.children.map(item => {
+                                                return {
+                                                uuid:item.uuid,
+                                                order: item.order,
+                                                ratio: item.ratio }}).forEach(item => this.settingsForm.newChildren.push(item));
   }
 
 
@@ -81,10 +86,23 @@ export class WidgetSplitComponent implements OnInit {
 
   saveSettings() {
     this.modalRef.close();
+
+    // orientation
     if (this.settingsForm.newOrientation != this.activePage.nodeData.orientation) {
       this.activePage.nodeData.orientation = this.settingsForm.newOrientation;
-      this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
     }
+
+    // Children
+    //Complicated as we need to deep copy array (or updating form updates page)
+    this.activePage.nodeData.children = [];
+    this.settingsForm.newChildren.map(item => {
+                                                return {
+                                                uuid:item.uuid,
+                                                order: item.order,
+                                                ratio: item.ratio }}).forEach(item => this.activePage.nodeData.children.push(item));;  
+    // save
+    this.treeManager.saveNodeData(this.activePage.uuid, this.activePage.nodeData);
+
   }
 
   newChildNode() {

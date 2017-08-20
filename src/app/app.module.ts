@@ -15,6 +15,7 @@ import { WidgetSplitComponent } from './widget-split/widget-split.component';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetListService } from './widget-list.service';
+import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { WidgetListService } from './widget-list.service';
     WidgetBlankComponent,
     WidgetSplitComponent,
     DynamicWidgetDirective,
-    WidgetUnknownComponent
+    WidgetUnknownComponent,
+    WidgetTextGenericComponent
   ],
   imports: [
     BrowserModule,
@@ -41,7 +43,7 @@ import { WidgetListService } from './widget-list.service';
       }
     ])
   ],
-  entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent ],
+  entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent, WidgetTextGenericComponent ],
   providers: [ SignalKService, TreeManagerService, WidgetListService ],
   bootstrap: [AppComponent]
 })
