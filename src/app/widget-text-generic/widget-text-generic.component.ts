@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-widget-text-generic',
@@ -7,7 +7,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class WidgetTextGenericComponent implements OnInit {
 
-
+  @ViewChild('svgElement') svg; 
 
   constructor() {
   }
@@ -15,5 +15,12 @@ export class WidgetTextGenericComponent implements OnInit {
   ngOnInit() {
 
   }
+
+  ngAfterViewInit() {
+    console.log(this.svg.nativeElement.width);
+    let bbox = this.svg.nativeElement.getBBox();
+    console.log(bbox);
+  }
+
 
 }
