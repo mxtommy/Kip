@@ -4,9 +4,11 @@ import { RouterModule }   from '@angular/router';
 import { NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule }   from '@angular/forms';
 
+
 import { AppComponent } from './app.component';
 import { SettingsComponent } from './settings.component';
 import { UnitWindowComponent } from './unit-window/unit-window.component';
+
 
 import { SignalKService } from './signalk.service';
 import { TreeManagerService } from './tree-manager.service';
@@ -16,6 +18,7 @@ import { DynamicWidgetDirective } from './dynamic-widget.directive';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetListService } from './widget-list.service';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { FitTextDirective } from './fit-text.directive';
 
 @NgModule({
   declarations: [
@@ -26,7 +29,8 @@ import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-ge
     WidgetSplitComponent,
     DynamicWidgetDirective,
     WidgetUnknownComponent,
-    WidgetTextGenericComponent
+    WidgetTextGenericComponent,
+    FitTextDirective
   ],
   imports: [
     BrowserModule,

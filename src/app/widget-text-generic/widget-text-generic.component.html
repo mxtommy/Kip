@@ -1,21 +1,13 @@
-<div class="svgContainer" #svgContainer>
-  <svg #svgElement>
-
-         <text
-            x=0%
-            y=15%
-            font-size="10"
-            fill="gray"
-         >
+<div class="textGenericWrapper">
+  <div class="textGenericLabel">
          Speed
-         </text>
-         <text 
-            x="50%"
-            y="50%"
-            style="text-anchor: middle"
-            dy=".35em"
-            font-size="10lh">
-            5.12
-          </text>
-  </svg>
+  </div>
+  <div #resizeContainer class="textGenericValue">
+    <h1 [fit-text] [container]=resizeContainer>
+    5.12
+    </h1>
+  </div>
+  <div class="textGenericUnit">
+    Knots
+  </div>
 </div>
