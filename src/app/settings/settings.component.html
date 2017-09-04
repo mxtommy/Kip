@@ -7,7 +7,7 @@
 
           <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
             <div class="form-group">
-                <label class="" for="signalKURL">SignalK API Url <button type="submit" class="btn btn-sm btn-success" [disabled]="!signalKForm.form.valid">Update</button></label>
+                <label class="" for="signalKURL">SignalK API Url <button type="submit" class="btn btn-sm btn-success" [disabled]="!signalKForm.form.valid">Update/Reset</button></label>
                 <input type="url" class="form-control" id="signalKURL" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+" #signalKURL="ngModel">
             </div>
             <div [hidden]="signalKURL.valid || signalKURL.pristine"
@@ -16,7 +16,15 @@
             </div>
           </form>
           <hr>
+          <div>
+            <div>
+              API URL: 
+              <i class="fa fa-check" style="color:green;" aria-hidden="true" [hidden]="!endpointAPIStatus"></i>
+              <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointAPIStatus"></i>
+              {{ endpointAPIStatusMessage }}
+            </div>
 
+          </div>
         </ng-template>
       </ngb-tab>
       <ngb-tab title="Units">

@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
 import { NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule }   from '@angular/forms';
-
+import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 
@@ -46,6 +46,7 @@ const appRoutes: Routes = [
     BrowserModule,
     FormsModule,
     NgbModule.forRoot(),
+    HttpClientModule,
     RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } )
   ],
   entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent, WidgetTextGenericComponent ],

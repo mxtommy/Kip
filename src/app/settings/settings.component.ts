@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 
 import { AppSettingsService } from '../app-settings.service';
-
+import { SignalKService } from '../signalk.service';
 
 
 @Component({
@@ -16,14 +16,39 @@ export class SettingsComponent implements OnInit {
 
   formSignalKURL: string;
 
-  constructor(private AppSettingsService: AppSettingsService) { }
+  endpointAPIStatusSub: Subscription;
+  endpointAPIStatus: boolean;
+
+  endpointAPIStatusMessageSub: Subscription;
+  endpointAPIStatusMessage: string;
+
+  constructor(
+    private AppSettingsService: AppSettingsService, 
+    private SignalKService: SignalKService) { }
 
   ngOnInit() {
     // get SignalKurl Status
     this.formSignalKURL = this.AppSettingsService.getSignalKURL();
-    
+
+    // sub for signalk status stuff
+    this.endpointAPIStatusSub = this.SignalKService.getEndpointAPIStatus().subscribe(
+      status => {
+        this.endpointAPIStatus = status;
+      }
+    );
+    this.endpointAPIStatusMessageSub = this.SignalKService.getEndpointAPIStatusMessage().subscribe(
+      message => {
+        this.endpointAPIStatusMessage = message;
+      }
+    );
+
   }
 
+
+  ngOnDestroy() {
+    this.endpointAPIStatusSub.unsubscribe();
+    this.endpointAPIStatusMessageSub.unsubscribe();
+  }
 
   updateSignalKURL() {
     this.AppSettingsService.setSignalKURL(this.formSignalKURL);

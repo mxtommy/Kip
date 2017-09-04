@@ -5,16 +5,12 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 
 
-export class appSettings {
-  
-}
-
 
 @Injectable()
 export class AppSettingsService {
 
 
-  signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>('http://demo.signalk.com/signalk');
+  signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>('http://demo.signalk.org/signalk');
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   
   constructor() { }
