@@ -37,12 +37,15 @@ export class SignalKService {
 
     endpointHTTP: string;
     endpointWS: string;
+    
 
     // SigK Data
     dataFullTree
 
     // Websocket
-    private webSocket: WebSocket;
+    webSocket: WebSocket;
+    webSocketStatusOK:  BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //// constructor, mostly sub to stuff for changes.
@@ -69,6 +72,12 @@ export class SignalKService {
     resetSignalK() {
         // TODO close current connections/reset data, check api version... assuming v1
         console.log("Reseting SignalK URL: " + this.signalKURL);
+        this.signalKURLOK.next(false);
+        this.signalKURLMessage.next("Connecting...");
+        if (this.webSocket != null) {
+            this.webSocket.close();
+        }
+
         this.http.get<signalKEndpointResponse>(this.signalKURL, {observe: 'response'}).subscribe(
             // when we go ok, this runs
             response => {
@@ -78,7 +87,7 @@ export class SignalKService {
                 this.endpointHTTP = response.body.endpoints.v1["signalk-http"];
                 this.endpointWS = response.body.endpoints.v1["signalk-ws"];
                 this.updateEndpointHTTP();
-                this.updateEndpointWS();
+                this.connectEndpointWS();
                 
             },
             // When not ok, this runs...
@@ -97,20 +106,36 @@ export class SignalKService {
         );
     }
 
-    
     updateEndpointHTTP() {
         console.log(this.endpointHTTP);
     }
 
-    updateEndpointWS() {
-        if (this.webSocket != null) {
-            console.log("closing existing websocket");
-            this.webSocket.close();
-        }
+    connectEndpointWS() {
         this.webSocket = new WebSocket(this.endpointWS);
+        this.webSocket.onopen = function (event){
+            this.webSocketStatusOK.next(true);
+            this.webSocketStatusMessage.next("Connected");
+        }.bind(this);
+        //this.webSocket.onmessage
+        this.webSocket.onerror = function (event) {
+            this.webSocketStatusOK.next(false);
+            this.webSocketStatusMessage.next('Unspecified Error');
+        }.bind(this);
+        this.webSocket.onclose = function (event) {
+            this.webSocketStatusOK.next(false);
+            this.webSocketStatusMessage.next("Disconnected");
+        }.bind(this);
+        this.webSocket.onmessage = function(message) {
+            this.processWebsocketMessage(message.data);
+        }.bind(this);
+    }
 
+
+    processWebsocketMessage(message) {
         
     }
+
+
 
     //borring stuff, return observables etc
 
@@ -120,7 +145,12 @@ export class SignalKService {
     getEndpointAPIStatusMessage() {
         return this.signalKURLMessage.asObservable();
     }
-
+    getEndpointWSStatus() {
+        return this.webSocketStatusOK.asObservable();
+    }
+    getEndpointWSMessage() {
+        return this.webSocketStatusMessage.asObservable();
+    }
 
 
 }

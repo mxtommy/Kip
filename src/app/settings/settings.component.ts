@@ -16,11 +16,15 @@ export class SettingsComponent implements OnInit {
 
   formSignalKURL: string;
 
-  endpointAPIStatusSub: Subscription;
   endpointAPIStatus: boolean;
-
-  endpointAPIStatusMessageSub: Subscription;
   endpointAPIStatusMessage: string;
+  endpointWSStatus: boolean;
+  endpointWSMessage: string;
+
+  endpointAPIStatusSub: Subscription;
+  endpointAPIStatusMessageSub: Subscription;
+  endpointWSStatusSub: Subscription;
+  endpointWSMessageSub: Subscription;
 
   constructor(
     private AppSettingsService: AppSettingsService, 
@@ -41,7 +45,16 @@ export class SettingsComponent implements OnInit {
         this.endpointAPIStatusMessage = message;
       }
     );
-
+    this.endpointWSStatusSub = this.SignalKService.getEndpointWSStatus().subscribe(
+      status => {
+        this.endpointWSStatus = status;
+      }
+    );
+    this.endpointWSMessageSub = this.SignalKService.getEndpointWSMessage().subscribe(
+      message => {
+        this.endpointWSMessage = message;
+      }
+    );
   }
 
 

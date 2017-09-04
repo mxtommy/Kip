@@ -23,6 +23,12 @@
               <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointAPIStatus"></i>
               {{ endpointAPIStatusMessage }}
             </div>
+            <div>
+                Websocket Status: 
+                <i class="fa fa-check" style="color:green;" aria-hidden="true" [hidden]="!endpointWSStatus"></i>
+                <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointWSStatus"></i>
+                {{ endpointWSMessage }}
+            </div>
 
           </div>
         </ng-template>
