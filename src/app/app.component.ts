@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { TreeNode, TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKService } from './signalk.service';
+import { SignalKConnectionService } from './signalk-connection.service';
 
 @Component({
   selector: 'app-root',
@@ -24,7 +24,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private treeManager: TreeManagerService,
     private AppSettingsService: AppSettingsService,
     private route: ActivatedRoute,
-    private SignalKService: SignalKService,
+    private SignalKConnectionService: SignalKConnectionService,
     private router: Router) { }
 
 

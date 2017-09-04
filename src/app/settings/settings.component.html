@@ -29,7 +29,12 @@
                 <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointWSStatus"></i>
                 {{ endpointWSMessage }}
             </div>
-
+            <div>
+                HTTP REST Status: 
+                <i class="fa fa-check" style="color:green;" aria-hidden="true" [hidden]="!endpointRESTStatus"></i>
+                <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointRESTStatus"></i>
+                {{ endpointRESTMessage }}
+            </div>
           </div>
         </ng-template>
       </ngb-tab>

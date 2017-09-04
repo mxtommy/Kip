@@ -10,7 +10,9 @@ import { AppComponent } from './app.component';
 import { FitTextDirective } from './fit-text.directive';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
 
-import { SignalKService } from './signalk.service';
+import { SignalKConnectionService } from './signalk-connection.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { SignalKFullService } from './signalk-full.service';
 import { TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
 import { WidgetListService } from './widget-list.service';
@@ -21,7 +23,7 @@ import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.componen
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
-import { RootDisplayComponent } from './root-display/root-display.component';1
+import { RootDisplayComponent } from './root-display/root-display.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -50,7 +52,7 @@ const appRoutes: Routes = [
     RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } )
   ],
   entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent, WidgetTextGenericComponent ],
-  providers: [ SignalKService, TreeManagerService, WidgetListService, AppSettingsService ],
+  providers: [ SignalKConnectionService, SignalKDeltaService, SignalKFullService, TreeManagerService, WidgetListService, AppSettingsService ],
   bootstrap: [AppComponent]
 })
 

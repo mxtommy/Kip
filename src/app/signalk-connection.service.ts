@@ -6,6 +6,8 @@ import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { AppSettingsService } from './app-settings.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { SignalKFullService } from './signalk-full.service';
 
 
 
@@ -27,33 +29,34 @@ interface signalKEndpointResponse {
 
 
 @Injectable()
-export class SignalKService {
+export class SignalKConnectionService {
 
-    // URL Variables
+    // Main URL Variables
     signalKURL: string;
-
     signalKURLOK: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     signalKURLMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
-    endpointHTTP: string;
+    endpointREST: string;
     endpointWS: string;
-    
-
-    // SigK Data
-    dataFullTree
 
     // Websocket
     webSocket: WebSocket;
     webSocketStatusOK:  BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
+    // REST API
+    restStatusOk: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    restStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
+
+
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //// constructor, mostly sub to stuff for changes.
     constructor(
+        private SignalKDeltaService: SignalKDeltaService,
+        private SignalKFullService: SignalKFullService,
         private AppSettingsService: AppSettingsService, 
         private http: HttpClient) 
     {
-
         // when signalKUrl changes, do stuff
         this.AppSettingsService.getSignalKURLAsO().subscribe(
             newURL => {
@@ -61,10 +64,6 @@ export class SignalKService {
                 this.resetSignalK();
             }
         );
-
-        
-
-
     }
 
 
@@ -77,16 +76,15 @@ export class SignalKService {
         if (this.webSocket != null) {
             this.webSocket.close();
         }
-
         this.http.get<signalKEndpointResponse>(this.signalKURL, {observe: 'response'}).subscribe(
             // when we go ok, this runs
             response => {
                 this.signalKURLOK.next(true);
                 this.signalKURLMessage.next("HTTP " + response.status + ": " + response.statusText 
                     + ". Server: " + response.body.server.id + " Ver: " + response.body.server.version);
-                this.endpointHTTP = response.body.endpoints.v1["signalk-http"];
+                this.endpointREST = response.body.endpoints.v1["signalk-http"];
                 this.endpointWS = response.body.endpoints.v1["signalk-ws"];
-                this.updateEndpointHTTP();
+                this.callREST();
                 this.connectEndpointWS();
                 
             },
@@ -106,8 +104,29 @@ export class SignalKService {
         );
     }
 
-    updateEndpointHTTP() {
-        console.log(this.endpointHTTP);
+    callREST() {
+        this.http.get(this.endpointREST, {observe: 'response'}).subscribe(
+            // when we go ok, this runs
+            response => {
+                this.restStatusOk.next(true);
+                this.restStatusMessage.next("HTTP " + response.status + ": " + response.statusText );
+                this.SignalKFullService.processFullUpdate(response.body);   
+                
+            },
+            // When not ok, this runs...
+            (err: HttpErrorResponse) => {
+                if (err.error instanceof Error) {
+                    // A client-side or network error occurred. Handle it accordingly.
+                    console.log('An error occurred:', err.error.message);
+                  } else {
+                    // The backend returned an unsuccessful response code.
+                    // The response body may contain clues as to what went wrong,
+                    console.log(err);
+                  }
+                this.restStatusOk.next(false);
+                this.restStatusMessage.next('Unknown Error');
+            }
+        );    
     }
 
     connectEndpointWS() {
@@ -126,15 +145,9 @@ export class SignalKService {
             this.webSocketStatusMessage.next("Disconnected");
         }.bind(this);
         this.webSocket.onmessage = function(message) {
-            this.processWebsocketMessage(message.data);
+            this.SignalKDeltaService.processWebsocketMessage(message.data);
         }.bind(this);
     }
-
-
-    processWebsocketMessage(message) {
-        
-    }
-
 
 
     //borring stuff, return observables etc
@@ -151,6 +164,11 @@ export class SignalKService {
     getEndpointWSMessage() {
         return this.webSocketStatusMessage.asObservable();
     }
-
+    getEndpointRESTStatus() {
+        return this.restStatusOk.asObservable();
+    }
+    getEndpointRESTMessage() {
+        return this.restStatusMessage.asObservable();
+    }
 
 }
