@@ -6,8 +6,8 @@
   <div class="flexContainer" [ngStyle]="{ 'flex-direction': activePage.nodeData.orientation }">
     <div class="flexBox" *ngFor="let child of activePage.nodeData.children" [ngStyle]="{ 'flex': child.ratio, 'order': child.order }">
       <app-unit-window 
-                [unlockStatus]="unlockStatus" 
                 [nodeUUID]="child.uuid"
+                [unlockStatus]="unlockStatus"
                 ></app-unit-window>
     </div>
   </div>

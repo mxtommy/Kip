@@ -1,0 +1,29 @@
+<div class="settingsWindow">
+  <div class="settingsMain">
+    <ngb-tabset>
+      <ngb-tab title="SignalK">
+        <ng-template ngbTabContent>
+
+
+          <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
+            <div class="form-group">
+                <label class="" for="signalKURL">SignalK API Url <button type="submit" class="btn btn-sm btn-success" [disabled]="!signalKForm.form.valid">Update</button></label>
+                <input type="url" class="form-control" id="signalKURL" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+" #signalKURL="ngModel">
+            </div>
+            <div [hidden]="signalKURL.valid || signalKURL.pristine"
+                  class="alert alert-danger">
+                  Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com/signalk"
+            </div>
+          </form>
+          <hr>
+
+        </ng-template>
+      </ngb-tab>
+      <ngb-tab title="Units">
+        <ng-template ngbTabContent>
+          bbb
+        </ng-template>
+      </ngb-tab>  
+    </ngb-tabset>
+  </div>
+</div>

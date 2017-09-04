@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, ComponentFactoryResolver, ComponentRef, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
-import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
 import { TreeNode, TreeManagerService } from '../tree-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
@@ -15,10 +16,9 @@ import { WidgetListService, widgetInfo } from '../widget-list.service';
 
 
 export class UnitWindowComponent implements OnInit {
-  @Input('unlockStatus') unlockStatus: boolean;
   @Input('nodeUUID') nodeUUID: string;
+  @Input('unlockStatus') unlockStatus: boolean;
   @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
-
 
   widgetList: widgetInfo[];
 
