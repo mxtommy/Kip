@@ -10,6 +10,7 @@ import { AppComponent } from './app.component';
 import { FitTextDirective } from './fit-text.directive';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
 
+import { SignalKService } from './signalk.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
@@ -52,7 +53,15 @@ const appRoutes: Routes = [
     RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } )
   ],
   entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent, WidgetTextGenericComponent ],
-  providers: [ SignalKConnectionService, SignalKDeltaService, SignalKFullService, TreeManagerService, WidgetListService, AppSettingsService ],
+  providers: [ 
+    SignalKService,
+    SignalKConnectionService,
+    SignalKDeltaService,
+    SignalKFullService,
+    TreeManagerService,
+    WidgetListService,
+    AppSettingsService 
+  ],
   bootstrap: [AppComponent]
 })
 

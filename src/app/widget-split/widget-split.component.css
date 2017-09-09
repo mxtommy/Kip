@@ -1,13 +1,9 @@
 
 
 .flexBox {
-    border-style: outset;
-    border-color: darkred;
-}
-.flexBox2 {
-    flex-grow: 1;
-
-    background-color: green;
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
 }
 
 .settingsButton {

@@ -35,3 +35,14 @@
     justify-content: center;
 
 }
+
+.settingsButton {
+   position: absolute;
+   width: 5%;
+   height: 10%;
+   bottom: 5%;
+   right: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}

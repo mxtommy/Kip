@@ -6,6 +6,7 @@ import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { AppSettingsService } from './app-settings.service';
+import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 
@@ -27,31 +28,67 @@ interface signalKEndpointResponse {
     }
 }
 
+// TODO, use this instead of individual vars
+export interface signalKStatus {
+    endpoint: {
+        status: boolean;
+        message: string;
+    },
+    rest: {
+        status: boolean;
+        message: string;
+    },
+    websocket: {
+        status: boolean;
+        message: string;        
+    }
+
+}
+
 
 @Injectable()
 export class SignalKConnectionService {
 
     // Main URL Variables
     signalKURL: string;
-    signalKURLOK: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    signalKURLMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
-
     endpointREST: string;
     endpointWS: string;
 
     // Websocket
     webSocket: WebSocket;
+
+    // status
+    signalKStatus: BehaviorSubject<signalKStatus> = new BehaviorSubject<signalKStatus>({
+        endpoint: {
+            status: false,
+            message: 'Not yet connected'
+        },
+        rest: {
+            status: false,
+            message: 'Not yet connected'
+        },
+        websocket: {
+            status: false,
+            message: 'Not yet connected'
+        }
+    });
+
+    signalKURLOK: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    signalKURLMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
+
+
     webSocketStatusOK:  BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
+    webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('waiting for endpoint');
 
     // REST API
     restStatusOk: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    restStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
+    restStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('waiting for endpoint');
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //// constructor, mostly sub to stuff for changes.
     constructor(
+        private SignalKService: SignalKService,
         private SignalKDeltaService: SignalKDeltaService,
         private SignalKFullService: SignalKFullService,
         private AppSettingsService: AppSettingsService, 
@@ -70,12 +107,18 @@ export class SignalKConnectionService {
 
     resetSignalK() {
         // TODO close current connections/reset data, check api version... assuming v1
-        console.log("Reseting SignalK URL: " + this.signalKURL);
+        console.debug("Reseting SignalK URL: " + this.signalKURL);
+        
+        this.SignalKService.resetSignalKData();
         this.signalKURLOK.next(false);
         this.signalKURLMessage.next("Connecting...");
         if (this.webSocket != null) {
             this.webSocket.close();
         }
+        this.restStatusOk.next(false);
+        this.restStatusMessage.next('waiting for endpoint');
+
+        
         this.http.get<signalKEndpointResponse>(this.signalKURL, {observe: 'response'}).subscribe(
             // when we go ok, this runs
             response => {
@@ -130,7 +173,7 @@ export class SignalKConnectionService {
     }
 
     connectEndpointWS() {
-        this.webSocket = new WebSocket(this.endpointWS);
+        this.webSocket = new WebSocket(this.endpointWS+"?subscribe=all");
         this.webSocket.onopen = function (event){
             this.webSocketStatusOK.next(true);
             this.webSocketStatusMessage.next("Connected");
@@ -145,7 +188,7 @@ export class SignalKConnectionService {
             this.webSocketStatusMessage.next("Disconnected");
         }.bind(this);
         this.webSocket.onmessage = function(message) {
-            this.SignalKDeltaService.processWebsocketMessage(message.data);
+            this.SignalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
         }.bind(this);
     }
 
