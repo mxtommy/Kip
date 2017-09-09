@@ -7,7 +7,8 @@ export interface updateMessage {
     label: string;
     type: string;
     pgn?: string;
-    src: string;
+    src?: string;
+    talker?: string;
   };
   timestamp: string;
   values: {
@@ -44,7 +45,17 @@ export class SignalKDeltaService {
     }
     for (let update of message.updates) {
 
-      let source = update.source.label + '.' + update.source.src;
+      // get source identifyer. is 'src' on nmea2k and 'talker' on nmea0183
+      let si = '';
+      if (update.source.type == 'NMEA2000') {
+        si = update.source.src;
+      } else if (update.source.type == 'NMEA0183') {
+        si = update.source.talker;
+      } else {
+        // donno what it is...
+      }
+
+      let source = update.source.label + '.' + si;
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
 
       for (let value of update.values) {

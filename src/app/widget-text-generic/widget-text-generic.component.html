@@ -18,17 +18,27 @@
 </div>
 <ng-template #widgetSettings let-c="close" let-d="dismiss">
     <div class="modal-header">
-      <h4 class="modal-title">Text Settings:</h4>
+      <h4 class="modal-title">Settings:</h4>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-          <label for="widget">Value:</label>
-          <select class="form-control" id="widget"  [(ngModel)]="settingsForm.signalKPath" required>
-              <option value="row">Vertical</option>
-              <option value="column">Horizontal</option>            
-          </select>
-      </div>
-    
+
+      <ngb-tabset>
+        <ngb-tab title="Data Source">
+          <ng-template ngbTabContent>
+            
+          </ng-template>
+        </ngb-tab>
+        <ngb-tab title="Units">
+          <ng-template ngbTabContent>
+            bbb
+          </ng-template>
+        </ngb-tab>  
+      </ngb-tabset>            
+
+      
+
+
+
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>

@@ -19,6 +19,7 @@ export class AppComponent implements OnInit, OnDestroy {
   rootPageIndexSub: Subscription;
 
   unlockStatus: boolean = false; 
+  unlockStatusSub: Subscription;
 
   constructor(  
     private treeManager: TreeManagerService,
@@ -36,6 +37,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this.rootPage = this.treeManager.getNode(rootNodes[index]);
         this.pageName = this.rootPage.name;
       }
+    );
+
+    this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(
+      status => { this.unlockStatus = status; }
     );
 
   }

@@ -113,7 +113,7 @@ export class SignalKConnectionService {
         this.signalKURLOK.next(false);
         this.signalKURLMessage.next("Connecting...");
         if (this.webSocket != null) {
-            this.webSocket.close();
+            this.webSocket.close(); // TODO, new websocket gets created before this one closes sometimes. Need to make sure doesn't happen.
         }
         this.restStatusOk.next(false);
         this.restStatusMessage.next('waiting for endpoint');
