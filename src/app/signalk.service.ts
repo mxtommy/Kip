@@ -98,9 +98,7 @@ export class SignalKService {
         value: value
       };
 
-
-
-    } else {
+    } else { // doesn't exist. update...
       this.paths.push({
         path: pathSelf,
         defaultSource: source, // default source
@@ -128,6 +126,18 @@ export class SignalKService {
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     this.paths[pathIndex].defaultSource = source;
+  }
+
+
+  getPathsByType(type: string) {
+    let results: string[] = [];
+
+    for (let i = 0; i < this.paths.length; i++) {
+      if (this.paths[i].type == type) {
+        results.push(this.paths[i].path);
+      }
+    }
+    return results;
   }
 
 }

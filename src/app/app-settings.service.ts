@@ -39,9 +39,6 @@ export class AppSettingsService {
       this.treeLinks = defaultTreeLinks;
     } else {
       let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
-
-      console.log(this.signalKUrl.getValue());
-      console.log(storageObject);
       this.signalKUrl.next(storageObject['signalKUrl']);
       this.unlockStatus.next(storageObject['unlockStatus']);
       this.treeNodes = storageObject.treeNodes;
@@ -79,7 +76,6 @@ export class AppSettingsService {
     this.saveToLocalStorage();
   }
   loadTreeNodes() {
-    console.log(this.treeNodes);
     return this.treeNodes;
   }
   loadTreeLinks() {

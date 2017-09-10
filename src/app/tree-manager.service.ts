@@ -28,7 +28,6 @@ export class TreeManagerService {
   constructor( private AppSettingsService: AppSettingsService) { 
     this.TreeNodes = AppSettingsService.loadTreeNodes();
     this.TreeLinks = AppSettingsService.loadTreeLinks();
-    console.log(this.TreeNodes);
   }
 
   private newUuid() {

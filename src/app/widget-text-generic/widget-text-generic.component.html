@@ -25,7 +25,27 @@
       <ngb-tabset>
         <ngb-tab title="Data Source">
           <ng-template ngbTabContent>
-            
+              <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">
+
+                <div class="checkbox">
+                  <label class="" for="selfPaths">
+                    <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
+                  </label>
+                  
+                </div>
+
+
+                <div class="form-group">
+                  <label class="" for="path">SignalK Path:</label>
+                    <select class="form-control" id="power" required>
+                      <option *ngFor="let path of settingsForm.numberPaths" *ngIf="if (settingsForm.SelfPaths) { if (path.includes('self') {return true;} else { return false; } } else {return true; }" [value]="path">{{path}}</option>
+                    </select>                
+                  </div>
+
+
+              </form>
+                                {{settingsForm.selfPaths}}
+
           </ng-template>
         </ngb-tab>
         <ngb-tab title="Units">
