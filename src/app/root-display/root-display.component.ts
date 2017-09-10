@@ -17,7 +17,12 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   rootPageIndexSub: Subscription;
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
-  rootPage: TreeNode;
+  rootPage: TreeNode = { 
+    uuid: null,
+    name: null,
+    nodeType: null,
+    nodeData: null
+  };
 
   constructor(  private treeManager: TreeManagerService,
                 private AppSettingsService: AppSettingsService,

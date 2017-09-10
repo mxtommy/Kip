@@ -3,6 +3,8 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
+import { AppSettingsService } from './app-settings.service';
+
 export class TreeNode {
   uuid: string = '';
   name: string = '';
@@ -23,14 +25,10 @@ export class TreeManagerService {
   
   activeRootIndex: Subject<number> = new Subject<number>();
 
-  constructor() { 
-            // init if nothing.
-            if (Object.keys(this.TreeNodes).length == 0) {
-              let uuid = this.newUuid();
-              this.TreeNodes = [ { uuid: uuid, name: "Home Page", nodeType: "WidgetTextGeneric", nodeData: null } ];
-              this.TreeLinks = [ { parent: 'ROOT', child: uuid }];
-              //this.activeRootIndex.next(0);
-            }
+  constructor( private AppSettingsService: AppSettingsService) { 
+    this.TreeNodes = AppSettingsService.loadTreeNodes();
+    this.TreeLinks = AppSettingsService.loadTreeLinks();
+    console.log(this.TreeNodes);
   }
 
   private newUuid() {
@@ -45,7 +43,6 @@ export class TreeManagerService {
     if ( (index > (Object.keys(rootNodes).length -1)) || index < 0) {
       index = 0;
     }
-    console.log("Updated root index to: "+ index);
     this.activeRootIndex.next(index);
   }
 
@@ -70,7 +67,8 @@ export class TreeManagerService {
   newNode(parent: string) {
       let uuid = this.newUuid();
       this.TreeNodes.push({ uuid: uuid, name: "New Page", nodeType: "WidgetBlank", nodeData: null });
-      this.TreeLinks.push({ parent: parent, child: uuid });    
+      this.TreeLinks.push({ parent: parent, child: uuid });  
+      this.saveTree(); // save to localstorage  
       return uuid;
   }
 
@@ -79,11 +77,20 @@ export class TreeManagerService {
     // TODO delete tree under this node...
     this.TreeNodes[nodeIndex].nodeData = null;
     this.TreeNodes[nodeIndex].nodeType = newNodeType;
+    this.saveTree(); // save to localstorage  
+
   }
 
   saveNodeData(uuid: string, newNodeData) {
     let nodeIndex = this.TreeNodes.findIndex(node => node.uuid == uuid)
     this.TreeNodes[nodeIndex].nodeData = newNodeData;
+    this.saveTree(); // save to localstorage  
+
+  }
+
+
+  saveTree() {
+    this.AppSettingsService.saveTree(this.TreeNodes, this.TreeLinks);
   }
 
 }

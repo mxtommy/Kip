@@ -61,5 +61,9 @@ export class SettingsComponent implements OnInit {
     this.AppSettingsService.setSignalKURL(this.formSignalKURL);
   }
 
+  resetSettings() {
+    this.AppSettingsService.deleteSettings();
+  }
+
 
 }
