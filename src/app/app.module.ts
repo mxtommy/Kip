@@ -25,6 +25,7 @@ import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-ge
 import { UnitWindowComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
+import { FilterSelfPipe } from './filter-self.pipe';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -43,7 +44,8 @@ const appRoutes: Routes = [
     WidgetUnknownComponent,
     WidgetTextGenericComponent,
     FitTextDirective,
-    RootDisplayComponent
+    RootDisplayComponent,
+    FilterSelfPipe
   ],
   imports: [
     BrowserModule,

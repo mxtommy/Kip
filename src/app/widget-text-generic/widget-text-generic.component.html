@@ -37,14 +37,21 @@
 
                 <div class="form-group">
                   <label class="" for="path">SignalK Path:</label>
-                    <select class="form-control" id="power" required>
-                      <option *ngFor="let path of settingsForm.numberPaths" *ngIf="if (settingsForm.SelfPaths) { if (path.includes('self') {return true;} else { return false; } } else {return true; }" [value]="path">{{path}}</option>
-                    </select>                
-                  </div>
-
+                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.signalKPathObject">
+                    <option value=''></option>
+                    <option *ngFor="let pathObject of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="pathObject">{{pathObject.path}}</option>
+                  </select>                
+                </div>
+                <div class="form-group">
+                  <label class="" for="path">Source:</label>
+                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.signalKSource">
+                    <option value='default'>Default</option>
+                    <option *ngFor="let source of objectKeys(settingsForm.signalKPathObject.sources)" [value]="source">{{source}}</option>
+                  </select>                
+                </div>
 
               </form>
-                                {{settingsForm.selfPaths}}
+                                {{settingsForm.signalKPathObject}}
 
           </ng-template>
         </ngb-tab>

@@ -31,6 +31,10 @@ interface pathRegistration {
   observable: BehaviorSubject<pathObject>;
 }
 
+export interface pathInfo {
+  path: string;
+
+}
 
 @Injectable()
 export class SignalKService {
@@ -129,15 +133,8 @@ export class SignalKService {
   }
 
 
-  getPathsByType(type: string) {
-    let results: string[] = [];
-
-    for (let i = 0; i < this.paths.length; i++) {
-      if (this.paths[i].type == type) {
-        results.push(this.paths[i].path);
-      }
-    }
-    return results;
+  getAllPaths() {
+    return this.paths; // copy it....
   }
 
 }

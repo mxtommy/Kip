@@ -11,6 +11,12 @@ interface textWidgetConfig {
   signalKSource: string;
 }
 
+interface textWidgetSettingsForm {
+  availablePaths: pathObject[];
+  signalKPathObject: pathObject;
+  selfPaths: boolean;
+}
+
 @Component({
   selector: 'app-widget-text-generic',
   templateUrl: './widget-text-generic.component.html',
@@ -21,11 +27,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @Input('nodeUUID') nodeUUID: string;
 
   modalRef;
+  objectKeys = Object.keys; // used in template.
 
-  settingsForm = {
-    numberPaths: [],
-    stringPaths: [],
-    signalKPath: '',
+  settingsForm: textWidgetSettingsForm = {
+    availablePaths: [],
+    signalKPathObject: null,
     selfPaths: true //only show paths for own vessel
   }
 
@@ -96,9 +102,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       this.modalRef.result.then((result) => {
       }, (reason) => {
       });
-      this.settingsForm.numberPaths = this.SignalKService.getPathsByType('number');
-      this.settingsForm.stringPaths = this.SignalKService.getPathsByType('string');
-      console.log(this.settingsForm);
+      this.settingsForm.availablePaths = this.SignalKService.getAllPaths();
   }
   
   saveSettings() {
