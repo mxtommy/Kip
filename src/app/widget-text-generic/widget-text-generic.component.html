@@ -37,27 +37,25 @@
 
                 <div class="form-group">
                   <label class="" for="path">SignalK Path:</label>
-                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.signalKPathObject">
+                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()">
                     <option value=''></option>
-                    <option *ngFor="let pathObject of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="pathObject">{{pathObject.path}}</option>
+                    <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
                   </select>                
                 </div>
                 <div class="form-group">
                   <label class="" for="path">Source:</label>
-                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.signalKSource">
-                    <option value='default'>Default</option>
-                    <option *ngFor="let source of objectKeys(settingsForm.signalKPathObject.sources)" [value]="source">{{source}}</option>
+                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
+                    <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
                   </select>                
                 </div>
 
               </form>
-                                {{settingsForm.signalKPathObject}}
 
           </ng-template>
         </ngb-tab>
         <ngb-tab title="Units">
           <ng-template ngbTabContent>
-            bbb
+            {{ settingsForm.pathDataType }}
           </ng-template>
         </ngb-tab>  
       </ngb-tabset>            

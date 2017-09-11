@@ -12,9 +12,12 @@ interface textWidgetConfig {
 }
 
 interface textWidgetSettingsForm {
-  availablePaths: pathObject[];
-  signalKPathObject: pathObject;
+  availablePaths: string[];
+  selectedPath: string;
+  availableSources: string[];
+  selectedSource: string;
   selfPaths: boolean;
+  pathDataType: string;
 }
 
 @Component({
@@ -31,8 +34,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   settingsForm: textWidgetSettingsForm = {
     availablePaths: [],
-    signalKPathObject: null,
-    selfPaths: true //only show paths for own vessel
+    selectedPath: null,
+    availableSources: [],
+    selectedSource: null,
+    selfPaths: true, //only show paths for own vessel
+    pathDataType: null
   }
 
   activePage: TreeNode;
@@ -81,10 +87,14 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
         if (pathObject === null) {
           return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
         }
-
-        // TODO handle null...
-        this.dataValue = pathObject.sources[pathObject.defaultSource].value;
-        this.dataTimestamp = pathObject.sources[pathObject.defaultSource].timestamp;
+        let source: string;
+        if (this.nodeConfig.signalKSource == 'default') {
+          source = pathObject.defaultSource;
+        } else {
+          source = this.nodeConfig.signalKSource;
+        }
+        this.dataValue = pathObject.sources[source].value;
+        this.dataTimestamp = pathObject.sources[source].timestamp;
       }
     );
   }
@@ -97,17 +107,35 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   }
 
   openWidgetSettings(content) {
-      //this.availablePaths = this.SignalKService.getNumberPaths(true);
-      this.modalRef = this.modalService.open(content);
-      this.modalRef.result.then((result) => {
-      }, (reason) => {
-      });
-      this.settingsForm.availablePaths = this.SignalKService.getAllPaths();
+      
+    this.settingsForm.selectedPath = this.nodeConfig.signalKPath;
+    this.settingsForm.selectedSource = this.nodeConfig.signalKSource;
+    let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
+    if (pathObject !== null) { 
+      this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+     }
+    this.settingsForm.availablePaths = this.SignalKService.getAllPathsNormal();
+     
+    this.modalRef = this.modalService.open(content);
+    this.modalRef.result.then((result) => {
+    }, (reason) => {
+    });
+  }
+
+  settingsFormUpdatePath() {
+    let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
+    if (pathObject === null) { return; }
+    this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+    this.settingsForm.selectedSource = 'default';
+    this.settingsForm.pathDataType = pathObject.type;
   }
   
   saveSettings() {
       this.modalRef.close();
-  
+      this.nodeConfig.signalKPath = this.settingsForm.selectedPath;
+      this.nodeConfig.signalKSource = this.settingsForm.selectedSource;
+      this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
+      this.subscribePath();
   }
 
 }

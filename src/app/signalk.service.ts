@@ -21,6 +21,16 @@ export class pathObject {
       value: any;
     }
   }
+  meta?: {
+    label?: string;
+    units?: string;
+    zones?: {
+      state: string;
+      lower?: number;
+      upper?: number;
+      message?: string;
+    }[];
+  }
   type: string;
 }
 
@@ -129,12 +139,35 @@ export class SignalKService {
   setDefaultSource(path: string, source: string) {
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
-    this.paths[pathIndex].defaultSource = source;
+    if (pathIndex > 0) {
+      this.paths[pathIndex].defaultSource = source;
+    }
+  }
+
+  setMeta(path: string, meta) {
+    let pathSelf: string = path.replace(this.selfurn, 'self');
+    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
+    if (pathIndex > 0) {
+      this.paths[pathIndex].meta = meta;
+    }
   }
 
 
-  getAllPaths() {
-    return this.paths; // copy it....
+  getAllPathsNormal() {
+    let paths: string[] = [];
+    for (let i = 0; i < this.paths.length;  i++) {
+      if ((this.paths[i].type == 'string') || (this.paths[i].type == 'number')) {
+        paths.push(this.paths[i].path);
+      }
+    }
+    return paths; // copy it....
+  }
+
+  getPathObject(path): pathObject {
+    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    if (pathIndex < 0) { return null; }
+    return this.paths[pathIndex];
+
   }
 
 }
