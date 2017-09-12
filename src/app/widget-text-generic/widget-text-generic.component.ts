@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { TreeNode, TreeManagerService } from '../tree-manager.service';
+import { UnitConvertService } from '../unit-convert.service';
 
 
 interface textWidgetConfig {
@@ -66,13 +67,14 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   //subs
   valueSub: Subscription = null;
-
+  converter = this.UnitConvertService.getConverter();
 
   
   constructor(
     private modalService: NgbModal, 
     private SignalKService: SignalKService,
-    private treeManager: TreeManagerService) {
+    private treeManager: TreeManagerService,
+    private UnitConvertService: UnitConvertService) {
   }
 
   ngOnInit() {
@@ -131,6 +133,9 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.settingsForm.selectedSource = this.nodeConfig.signalKSource;
     this.settingsForm.label = this.nodeConfig.label;
     this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
+
+  
+    
     
     let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
     if (pathObject !== null) { 
