@@ -17,6 +17,7 @@ import { SignalKFullService } from './signalk-full.service';
 import { TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
 import { WidgetListService } from './widget-list.service';
+import { UnitConvertService } from './unit-convert.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetSplitComponent } from './widget-split/widget-split.component';
@@ -62,6 +63,7 @@ const appRoutes: Routes = [
     SignalKFullService,
     TreeManagerService,
     WidgetListService,
+    UnitConvertService,
     AppSettingsService 
   ],
   bootstrap: [AppComponent]
