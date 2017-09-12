@@ -23,6 +23,7 @@ export class pathObject {
   }
   meta?: {
     label?: string;
+    abbreviation?: string;
     units?: string;
     zones?: {
       state: string;

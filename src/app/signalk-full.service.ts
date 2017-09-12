@@ -70,7 +70,6 @@ export class SignalKFullService {
           keysValid.push(keys[i]);
         } 
         for (let i = 0; i < keysValid.length; i++) { //now we add them
-          console.log(keysValid[i]);
           this.SignalKService.updatePathData(path + '.' + keysValid[i], source, timestamp, data[keysValid[i]]);
           this.SignalKService.setDefaultSource(path + '.' + keysValid[i], source);      
           // try and get metadata.

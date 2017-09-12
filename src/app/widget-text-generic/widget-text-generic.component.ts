@@ -9,6 +9,9 @@ import { TreeNode, TreeManagerService } from '../tree-manager.service';
 interface textWidgetConfig {
   signalKPath: string;
   signalKSource: string;
+  label: string;
+  unit: string;
+  numDecimal: number; // number of decimal places if a number
 }
 
 interface textWidgetSettingsForm {
@@ -18,6 +21,10 @@ interface textWidgetSettingsForm {
   selectedSource: string;
   selfPaths: boolean;
   pathDataType: string;
+  label: string;
+  availableUnits: string[];
+  selectedUnit: string;
+  numDecimal: number;
 }
 
 @Component({
@@ -30,7 +37,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @Input('nodeUUID') nodeUUID: string;
 
   modalRef;
-  objectKeys = Object.keys; // used in template.
 
   settingsForm: textWidgetSettingsForm = {
     availablePaths: [],
@@ -38,7 +44,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     availableSources: [],
     selectedSource: null,
     selfPaths: true, //only show paths for own vessel
-    pathDataType: null
+    pathDataType: null,
+    label: null,
+    availableUnits: null,
+    selectedUnit: null,
+    numDecimal: 2,
   }
 
   activePage: TreeNode;
@@ -48,7 +58,10 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   nodeConfig: textWidgetConfig = {
     signalKPath: null,
-    signalKSource: 'default'
+    signalKSource: 'default',
+    label: null,
+    unit: null,
+    numDecimal: 2
   }
 
   //subs
@@ -93,7 +106,13 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
         } else {
           source = this.nodeConfig.signalKSource;
         }
-        this.dataValue = pathObject.sources[source].value;
+        if (pathObject.type == 'number') {
+          let value:number = pathObject.sources[source].value;
+          this.dataValue = value.toFixed(this.nodeConfig.numDecimal);
+        } else {
+          this.dataValue = pathObject.sources[source].value;
+        }
+        
         this.dataTimestamp = pathObject.sources[source].timestamp;
       }
     );
@@ -110,11 +129,17 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       
     this.settingsForm.selectedPath = this.nodeConfig.signalKPath;
     this.settingsForm.selectedSource = this.nodeConfig.signalKSource;
+    this.settingsForm.label = this.nodeConfig.label;
+    this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
+    
     let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
     if (pathObject !== null) { 
       this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+      this.settingsForm.pathDataType = pathObject.type;
+
+      
      }
-    this.settingsForm.availablePaths = this.SignalKService.getAllPathsNormal();
+    this.settingsForm.availablePaths = this.SignalKService.getAllPathsNormal().sort();
      
     this.modalRef = this.modalService.open(content);
     this.modalRef.result.then((result) => {
@@ -122,18 +147,33 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     });
   }
 
-  settingsFormUpdatePath() {
+  settingsFormUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
     let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
     if (pathObject === null) { return; }
     this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     this.settingsForm.selectedSource = 'default';
     this.settingsForm.pathDataType = pathObject.type;
+    this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
+    if (pathObject.meta) {
+      if (typeof(pathObject.meta.abbreviation) == 'string') {
+        this.settingsForm.label = pathObject.meta.abbreviation;
+      } else if (typeof(pathObject.meta.label) == 'string') {
+        this.settingsForm.label = pathObject.meta.label;
+      } else {
+        this.settingsForm.label = ''; // who knows?
+      }
+    } else {
+      this.settingsForm.label = '';
+    }
+
   }
   
   saveSettings() {
       this.modalRef.close();
       this.nodeConfig.signalKPath = this.settingsForm.selectedPath;
       this.nodeConfig.signalKSource = this.settingsForm.selectedSource;
+      this.nodeConfig.label = this.settingsForm.label;
+      this.nodeConfig.numDecimal = this.settingsForm.numDecimal;
       this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
       this.subscribePath();
   }

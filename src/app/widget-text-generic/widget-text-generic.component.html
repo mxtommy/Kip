@@ -1,6 +1,6 @@
 <div class="textGenericWrapper">
   <div class="textGenericLabel">
-         Speed
+         {{ nodeConfig.label }}
   </div>
   <div #resizeContainer class="textGenericValue">
     <h1 [fit-text] [container]="resizeContainer" [compression]="0.4" style="font-weight: bold;">
@@ -21,45 +21,56 @@
       <h4 class="modal-title">Settings:</h4>
     </div>
     <div class="modal-body">
+      <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">
+        <ngb-tabset>
+          <ngb-tab title="Source">
+            <ng-template ngbTabContent>
+              
 
-      <ngb-tabset>
-        <ngb-tab title="Data Source">
-          <ng-template ngbTabContent>
-              <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">
+              <div class="checkbox">
+                <label class="" for="selfPaths">
+                  <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
+                </label>
+                
+              </div>
 
-                <div class="checkbox">
-                  <label class="" for="selfPaths">
-                    <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
-                  </label>
-                  
+
+              <div class="form-group">
+                <label class="" for="path">SignalK Path:</label>
+                <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()">
+                  <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
+                </select>                
+              </div>
+
+              <div class="form-group">
+                <label class="" for="path">Source:</label>
+                <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
+                  <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
+                </select>                
+              </div>
+
+            </ng-template>
+          </ngb-tab>
+          <ngb-tab title="Display">
+            <ng-template ngbTabContent>
+              <div class="form-group">
+                <label class="" for="label">Label:</label>
+                <input class="form-control" type="text" id="label" name="label"  [(ngModel)]="settingsForm.label">                
+              </div>
+
+            </ng-template>
+          </ngb-tab>
+          <ngb-tab title="Units">
+            <ng-template ngbTabContent>
+                <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                    <label class="" for="decimals">Number of decimals:</label>
+                    <input class="form-control" type="number" min="0" max="5" id="decimals" name="decimals"  [(ngModel)]="settingsForm.numDecimal">                
                 </div>
-
-
-                <div class="form-group">
-                  <label class="" for="path">SignalK Path:</label>
-                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()">
-                    <option value=''></option>
-                    <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
-                  </select>                
-                </div>
-                <div class="form-group">
-                  <label class="" for="path">Source:</label>
-                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
-                    <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
-                  </select>                
-                </div>
-
-              </form>
-
-          </ng-template>
-        </ngb-tab>
-        <ngb-tab title="Units">
-          <ng-template ngbTabContent>
-            {{ settingsForm.pathDataType }}
-          </ng-template>
-        </ngb-tab>  
-      </ngb-tabset>            
-
+            </ng-template>
+          </ngb-tab>  
+        </ngb-tabset>            
+      </form>
+ 
       
 
 

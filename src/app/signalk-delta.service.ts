@@ -60,7 +60,17 @@ export class SignalKDeltaService {
 
       for (let value of update.values) {
         let fullPath = context + '.' + value.path;
-        this.SignalKService.updatePathData(fullPath, source, timestamp, value.value);
+        if ( (typeof(value.value) == 'object') && (value.value !== null)) {
+          // compound data
+          let keys = Object.keys(value.value);
+          for (let i = 0; i < keys.length; i++) {
+            this.SignalKService.updatePathData(fullPath + '.' + keys[i], source, timestamp, value.value[keys[i]]);
+          } 
+        } else {
+          // simple data
+          this.SignalKService.updatePathData(fullPath, source, timestamp, value.value);
+        }
+
       }
     }
   }
@@ -87,4 +97,62 @@ export class SignalKDeltaService {
     ],
     "context":"vessels.urn:mrn:signalk:uuid:c0d79334-4e25-4245-8892-54e8ccc8021d"
   }
-] */
+]
+
+{
+  "updates":
+  [
+    {
+      "source":
+        {
+          "label":"n2kFromFile",
+          "type":"NMEA2000",
+          "pgn":129029,
+          "src":"160"
+        },
+        "timestamp":"2014-08-15T19:05:48.955",
+        "values":
+        [
+          {
+            "path":"navigation.position",
+            "value": {
+              "longitude":24.730489,
+              "latitude":59.7147167
+            }
+          },
+          {
+            "path":"navigation.gnss.satellites",
+            "value":10
+          },
+          {
+            "path":"navigation.gnss.horizontalDilution",
+            "value":0.8
+          },
+          {
+            "path":"navigation.gnss.geoidalSeparation",
+            "value":-0.01
+          },
+          {
+            "path":"navigation.gnss.differentialReference",
+            "value":7
+          },
+          {
+            "path":"navigation.gnss.type",
+            "value":"GPS"
+          },
+          {
+            "path":"navigation.gnss.methodQuality",
+            "value":"GNSS Fix"
+          },
+          {
+            "path":"navigation.gnss.integrity",
+            "value":"no Integrity checking"
+          }
+        ]
+      }
+    ],
+    "context":"vessels.urn:mrn:signalk:uuid:c0d79334-4e25-4245-8892-54e8ccc8021d"
+  }
+}
+
+*/
