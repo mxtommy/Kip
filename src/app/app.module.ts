@@ -27,6 +27,7 @@ import { UnitWindowComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
+import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -46,7 +47,8 @@ const appRoutes: Routes = [
     WidgetTextGenericComponent,
     FitTextDirective,
     RootDisplayComponent,
-    FilterSelfPipe
+    FilterSelfPipe,
+    WidgetNumericComponent
   ],
   imports: [
     BrowserModule,
@@ -55,7 +57,12 @@ const appRoutes: Routes = [
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } )
   ],
-  entryComponents: [ WidgetUnknownComponent, WidgetBlankComponent, WidgetSplitComponent, WidgetTextGenericComponent ],
+  entryComponents: [ 
+    WidgetUnknownComponent, 
+    WidgetBlankComponent, 
+    WidgetSplitComponent, WidgetNumericComponent,
+    WidgetTextGenericComponent 
+  ],
   providers: [ 
     SignalKService,
     SignalKConnectionService,

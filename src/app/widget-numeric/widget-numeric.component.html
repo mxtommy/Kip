@@ -1,0 +1,92 @@
+<div class="textGenericWrapper">
+    <div class="textGenericLabel">
+           {{ nodeConfig.label }}
+    </div>
+    <div #resizeContainer class="textGenericValue">
+      <h1 [fit-text] [container]="resizeContainer" [compression]="0.4" style="font-weight: bold;">
+      {{ dataValue }}
+      </h1>
+    </div>
+    <div class="textGenericUnit">
+      {{ nodeConfig.unitName }}
+    </div>
+    <div class="settingsButton" [hidden]="!unlockStatus">
+      <button type="button" class="btn btn-default btn-lg" (click)="openWidgetSettings(widgetSettings)">
+          <span class="fa fa-cog"></span>
+      </button>
+    </div>
+  </div>
+  <ng-template #widgetSettings let-c="close" let-d="dismiss">
+      <div class="modal-body">
+        <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">
+          <ngb-tabset>
+            <ngb-tab title="Source">
+              <ng-template ngbTabContent>
+                
+                <div class="form-group">
+                  <label class="" for="path">SignalK Path:</label>
+                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()">
+                    <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
+                  </select>                
+                </div>
+  
+                <div class="checkbox">
+                    <label class="" for="selfPaths">
+                      <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
+                    </label>
+                  </div>              
+  
+                <div class="form-group">
+                  <label class="" for="path">Source:</label>
+                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
+                    <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
+                  </select>                
+                </div>
+  
+              </ng-template>
+            </ngb-tab>
+  
+            <ngb-tab title="Units" [hidden]="settingsForm.pathDataType != 'number'">
+              <ng-template ngbTabContent>
+                  <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                      <label class="" for="unitGroup">Unit Group:</label>
+                      <select class="form-control" id="unitGroup" name="unitGroup" [(ngModel)]="settingsForm.selectedUnitGroup" (ngModelChange)="settingsFormUpdateUnitType()">
+                          <option *ngFor="let group of settingsForm.availableUnitGroups" [value]="group">{{ group }}</option>
+                      </select>  
+                  </div>
+                  <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                      <label class="" for="unitName">Unit:</label>
+                      <select class="form-control" id="unitName" name="unitName" [(ngModel)]="settingsForm.selectedUnitName">
+                          <option *ngFor="let unitName of settingsForm.availableUnitNames" [value]="unitName">{{unitName}}</option>
+                      </select>  
+                  </div>
+              </ng-template>
+            </ngb-tab>  
+  
+            <ngb-tab title="Display">
+                <ng-template ngbTabContent>
+                  <div class="form-group">
+                    <label class="" for="label">Label:</label>
+                    <input class="form-control" type="text" id="label" name="label"  [(ngModel)]="settingsForm.label">                
+                  </div>
+                  <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                      <label class="" for="decimals">Number of decimals:</label>
+                      <input class="form-control" type="number" min="0" max="5" id="decimals" name="decimals"  [(ngModel)]="settingsForm.numDecimal">                
+                  </div>
+                </ng-template>
+              </ngb-tab>
+  
+  
+          </ngb-tabset>            
+        </form>
+   
+        
+  
+  
+  
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="saveSettings()">Confirm</button>
+      </div>
+    </ng-template>

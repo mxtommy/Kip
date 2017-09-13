@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetSplitComponent } from './widget-split/widget-split.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
+import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 
 export class widgetInfo {
@@ -30,12 +31,17 @@ export class WidgetListService {
     {
       name: 'WidgetSplit',
       componentName: WidgetSplitComponent,
-      description: 'Split in two',
+      description: 'Layout Splitter',
+    },
+    {
+      name: 'WidgetNumeric',
+      componentName: WidgetNumericComponent,
+      description: 'Numeric Value',
     },
     {
       name: 'WidgetTextGeneric',
       componentName: WidgetTextGenericComponent,
-      description: 'Text display',
+      description: 'Text Value',
     }
   ];
 
