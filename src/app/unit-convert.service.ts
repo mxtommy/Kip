@@ -38,6 +38,11 @@ export class UnitConvertService {
       "km": Qty.swiftConverter('m', 'km'),
       "nm": Qty.swiftConverter('m', 'nmi')
     },
+    'electrity': {
+      "volts": function(v) { return v; },
+      "amps": function(v) { return v; },
+
+    },    
     'pressure': {
       "pascal": Qty.swiftConverter('pascal', 'pascal'),
       "hPa": Qty.swiftConverter('pascal', 'hPa'),

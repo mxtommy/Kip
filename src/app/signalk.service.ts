@@ -154,10 +154,10 @@ export class SignalKService {
   }
 
 
-  getAllPathsNormal() {
+  getPathsByType(requestedType: string) {
     let paths: string[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
-      if ((this.paths[i].type == 'string') || (this.paths[i].type == 'number')) {
+       if (this.paths[i].type == requestedType) {
         paths.push(this.paths[i].path);
       }
     }

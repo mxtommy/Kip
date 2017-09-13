@@ -158,7 +158,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
       
      }
-    this.settingsForm.availablePaths = this.SignalKService.getAllPathsNormal().sort();
+    this.settingsForm.availablePaths = this.SignalKService.getPathsByType('string').sort();;
      
     this.modalRef = this.modalService.open(content);
     this.modalRef.result.then((result) => {
