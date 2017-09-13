@@ -11,6 +11,9 @@ export class UnitConvertService {
   constructor() {}
 
   conversions = {
+    'discreet': {
+      'no unit': function(v) { return v; }
+    },
     'speed': {
       'knots': Qty.swiftConverter("m/s", "kn"),
       'km/h': Qty.swiftConverter("m/s", "km/h"),
@@ -35,7 +38,7 @@ export class UnitConvertService {
       "km": Qty.swiftConverter('m', 'km'),
       "nm": Qty.swiftConverter('m', 'nmi')
     },
-    'presure': {
+    'pressure': {
       "pascal": Qty.swiftConverter('pascal', 'pascal'),
       "hPa": Qty.swiftConverter('pascal', 'hPa'),
       "bar": Qty.swiftConverter('pascal', 'bar'),
@@ -59,7 +62,7 @@ export class UnitConvertService {
       "deg": Qty.swiftConverter('rad', 'deg')
     }
 
-  };
+  }; 
 
   getConverter() {
     return this.conversions;

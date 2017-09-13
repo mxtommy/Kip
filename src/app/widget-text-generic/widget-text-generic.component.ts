@@ -11,7 +11,8 @@ interface textWidgetConfig {
   signalKPath: string;
   signalKSource: string;
   label: string;
-  unit: string;
+  unitGroup: string;
+  unitName: string;
   numDecimal: number; // number of decimal places if a number
 }
 
@@ -23,8 +24,10 @@ interface textWidgetSettingsForm {
   selfPaths: boolean;
   pathDataType: string;
   label: string;
-  availableUnits: string[];
-  selectedUnit: string;
+  availableUnitGroups: string[];
+  availableUnitNames: string[];
+  selectedUnitGroup: string;
+  selectedUnitName: string;
   numDecimal: number;
 }
 
@@ -38,7 +41,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @Input('nodeUUID') nodeUUID: string;
 
   modalRef;
-
+  converter = this.UnitConvertService.getConverter();
+  
   settingsForm: textWidgetSettingsForm = {
     availablePaths: [],
     selectedPath: null,
@@ -47,8 +51,10 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     selfPaths: true, //only show paths for own vessel
     pathDataType: null,
     label: null,
-    availableUnits: null,
-    selectedUnit: null,
+    availableUnitGroups: Object.keys(this.converter),
+    availableUnitNames: null,
+    selectedUnitGroup: null,
+    selectedUnitName: null,
     numDecimal: 2,
   }
 
@@ -61,13 +67,14 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     signalKPath: null,
     signalKSource: 'default',
     label: null,
-    unit: null,
+    unitGroup: 'discreet',
+    unitName: 'no unit',
     numDecimal: 2
+
   }
 
   //subs
   valueSub: Subscription = null;
-  converter = this.UnitConvertService.getConverter();
 
   
   constructor(
@@ -108,14 +115,21 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
         } else {
           source = this.nodeConfig.signalKSource;
         }
+
+        this.dataTimestamp = pathObject.sources[source].timestamp;
+
+        if (pathObject.sources[source].value === null) {
+          this.dataValue = 'N/A';
+        }
+
         if (pathObject.type == 'number') {
           let value:number = pathObject.sources[source].value;
-          this.dataValue = value.toFixed(this.nodeConfig.numDecimal);
+          let converted = this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](value);
+          this.dataValue = converted.toFixed(this.nodeConfig.numDecimal);
         } else {
           this.dataValue = pathObject.sources[source].value;
         }
         
-        this.dataTimestamp = pathObject.sources[source].timestamp;
       }
     );
   }
@@ -133,9 +147,9 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.settingsForm.selectedSource = this.nodeConfig.signalKSource;
     this.settingsForm.label = this.nodeConfig.label;
     this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
-
-  
-    
+    this.settingsForm.availableUnitNames = Object.keys(this.converter[this.nodeConfig.unitGroup]);
+    this.settingsForm.selectedUnitGroup = this.nodeConfig.unitGroup;
+    this.settingsForm.selectedUnitName = this.nodeConfig.unitName;
     
     let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
     if (pathObject !== null) { 
@@ -165,12 +179,17 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       } else if (typeof(pathObject.meta.label) == 'string') {
         this.settingsForm.label = pathObject.meta.label;
       } else {
-        this.settingsForm.label = ''; // who knows?
+        this.settingsForm.label = this.settingsForm.selectedPath; // who knows?
       }
     } else {
-      this.settingsForm.label = '';
+      this.settingsForm.label = this.settingsForm.selectedPath;// who knows?
     }
 
+  }
+
+  settingsFormUpdateUnitType() {
+    this.settingsForm.availableUnitNames = Object.keys(this.converter[this.settingsForm.selectedUnitGroup]);
+    this.settingsForm.selectedUnitName = this.settingsForm.availableUnitNames[0];
   }
   
   saveSettings() {
@@ -178,6 +197,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       this.nodeConfig.signalKPath = this.settingsForm.selectedPath;
       this.nodeConfig.signalKSource = this.settingsForm.selectedSource;
       this.nodeConfig.label = this.settingsForm.label;
+      this.nodeConfig.unitGroup = this.settingsForm.selectedUnitGroup;
+      this.nodeConfig.unitName = this.settingsForm.selectedUnitName;
       this.nodeConfig.numDecimal = this.settingsForm.numDecimal;
       this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
       this.subscribePath();
