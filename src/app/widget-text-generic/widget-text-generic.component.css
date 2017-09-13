@@ -6,13 +6,16 @@
 }
 .textGenericLabel {
     position: absolute;
+    /*
     width: 10%;
     height: 10%;
-    top: 5%;
-    left: 5%;
     display: flex;
     align-items: center;
     justify-content: center;
+    */
+    top: 5%;
+    left: 5%;
+
 }
 
 .textGenericValue {
@@ -22,17 +25,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 2vw;
 }
 
 .textGenericUnit {
     position: absolute;
+    /*
     width: 10%;
     height: 10%;
-    bottom: 5%;
-    right: 5%;
     display: flex;
     align-items: center;
     justify-content: center;
+    */
+    bottom: 5%;
+    right: 5%;
+
 
 }
 

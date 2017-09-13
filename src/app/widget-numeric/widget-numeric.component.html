@@ -7,7 +7,7 @@
       {{ dataValue }}
       </h1>
     </div>
-    <div class="textGenericUnit">
+    <div class="textGenericUnit" *ngIf="nodeConfig.unitName != 'no unit'">
       {{ nodeConfig.unitName }}
     </div>
     <div class="settingsButton" [hidden]="!unlockStatus">
