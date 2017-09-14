@@ -14,6 +14,7 @@ import { SignalKService } from './signalk.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
+import { DataSetService } from './data-set.service';
 import { TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
 import { WidgetListService } from './widget-list.service';
@@ -68,6 +69,7 @@ const appRoutes: Routes = [
     SignalKConnectionService,
     SignalKDeltaService,
     SignalKFullService,
+    DataSetService,
     TreeManagerService,
     WidgetListService,
     UnitConvertService,

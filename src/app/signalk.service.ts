@@ -62,7 +62,7 @@ export class SignalKService {
     this.selfurn = 'self';
   }
   
-
+  //TODO unsubscribePath....
   subscribePath(uuid, path) {
     //see if already subscribed, if yes return that...
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid = uuid));
