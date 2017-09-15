@@ -46,15 +46,15 @@
               </ng-template>
             </ngb-tab>
   
-            <ngb-tab title="Units" [hidden]="settingsForm.pathDataType != 'number'">
+            <ngb-tab title="Units">
               <ng-template ngbTabContent>
-                  <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                  <div class="form-group">
                       <label class="" for="unitGroup">Unit Group:</label>
                       <select class="form-control" id="unitGroup" name="unitGroup" [(ngModel)]="settingsForm.selectedUnitGroup" (ngModelChange)="settingsFormUpdateUnitType()">
                           <option *ngFor="let group of settingsForm.availableUnitGroups" [value]="group">{{ group }}</option>
                       </select>  
                   </div>
-                  <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                  <div class="form-group">
                       <label class="" for="unitName">Unit:</label>
                       <select class="form-control" id="unitName" name="unitName" [(ngModel)]="settingsForm.selectedUnitName">
                           <option *ngFor="let unitName of settingsForm.availableUnitNames" [value]="unitName">{{unitName}}</option>
@@ -69,7 +69,7 @@
                     <label class="" for="label">Label:</label>
                     <input class="form-control" type="text" id="label" name="label"  [(ngModel)]="settingsForm.label">                
                   </div>
-                  <div class="form-group" [hidden]="settingsForm.pathDataType != 'number'">
+                  <div class="form-group">
                       <label class="" for="decimals">Number of decimals:</label>
                       <input class="form-control" type="number" min="0" max="5" id="decimals" name="decimals"  [(ngModel)]="settingsForm.numDecimal">                
                   </div>

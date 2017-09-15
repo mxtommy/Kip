@@ -24,7 +24,7 @@ interface dataCache {
   maxValue: number;
 }
 
-interface dataSet {
+export interface DataSet {
   uuid: string;
   path: string;
   pathSub: Subscription;
@@ -49,7 +49,7 @@ interface registration {
 @Injectable()
 export class DataSetService {
 
-  dataSets: dataSet[] = [];
+  dataSets: DataSet[] = [];
   dataSetRegister: registration[] = [];
 
   constructor(
@@ -142,7 +142,7 @@ export class DataSetService {
   addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {
     let uuid = this.newUuid();
 
-    let newSub: dataSet = {
+    let newSub: DataSet = {
       uuid: uuid,
       path: path,
       pathSub: null,
@@ -226,4 +226,5 @@ export class DataSetService {
     }
   }
 
+  
 }

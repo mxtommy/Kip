@@ -7,6 +7,12 @@ import { AppSettingsService } from '../app-settings.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
 
 
+interface dataSets {
+  uuid: string;
+  name: string;
+}
+
+
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
@@ -29,6 +35,10 @@ export class SettingsComponent implements OnInit {
   endpointWSMessageSub: Subscription;
   endpointRESTStatusSub: Subscription;
   endpointRESTMessageSub: Subscription;
+
+
+  dataSets: dataSets[] = [];
+  selectedDataSet: string;
 
   constructor(
     private AppSettingsService: AppSettingsService, 
@@ -64,6 +74,9 @@ export class SettingsComponent implements OnInit {
   resetSettings() {
     this.AppSettingsService.deleteSettings();
   }
+
+
+
 
 
 }

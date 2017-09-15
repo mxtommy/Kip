@@ -3,6 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { TreeNode, TreeLink } from './tree-manager.service';
+import { DataSet } from './data-set.service';
 
 
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
@@ -17,6 +18,7 @@ interface appSettings {
   treeNodes: TreeNode[];
   treeLinks: TreeLink[];
   unlockStatus: boolean;
+  dataSets: DataSet[];
 }
 
 
@@ -69,7 +71,7 @@ export class AppSettingsService {
     this.saveToLocalStorage();
   }
 
-
+  // Trees
   saveTree(treeNodes: TreeNode[], treeLinks: TreeLink[]) {
     this.treeNodes = treeNodes; 
     this.treeLinks = treeLinks;
@@ -81,7 +83,9 @@ export class AppSettingsService {
   loadTreeLinks() {
     return this.treeLinks;
   }
-  // saveing. 
+
+
+  // saving. 
 
   saveToLocalStorage() {
 
@@ -89,7 +93,8 @@ export class AppSettingsService {
       signalKUrl: this.signalKUrl.getValue(),
       treeNodes: this.treeNodes,
       treeLinks: this.treeLinks,
-      unlockStatus: this.unlockStatus.getValue()
+      unlockStatus: this.unlockStatus.getValue(),
+      dataSets: null
     }
 
     localStorage.setItem('signalKData', JSON.stringify(storageObject));
