@@ -1,0 +1,24 @@
+<div class="form-group">
+    <label for="dataSet">Delete DataSet:</label> <button type="submit" class="btn btn-sm btn-danger" (click)='deleteDataSet()'>Delete</button>
+    <select class="form-control" id="dataSet"  [(ngModel)]="selectedDataSet" size=5>
+        <option *ngFor="let ds of dataSets" [value]="ds.uuid">{{ds.name}}</option>
+    </select>
+</div>
+<button type="submit" class="btn btn-sm btn-success" (click)='deleteDataSet()'>Add New</button>
+<ng-template #newDataSetModal let-c="close" let-d="dismiss">
+    <div class="modal-header">
+      <h4 class="modal-title">New Dataset:</h4>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+          <label for="widget">Widget</label>
+          <select class="form-control" id="widget"  [(ngModel)]="newWidget" required>
+              <option *ngFor="let widget of widgetList" [value]="widget.name">{{widget.description}}</option>
+          </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
+      <button type="button" class="btn btn-secondary" (click)="changeWidget()">Confirm</button>
+    </div>
+</ng-template>

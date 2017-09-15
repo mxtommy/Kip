@@ -29,6 +29,8 @@ import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
+import { SettingsDatasetsComponent } from './settings-datasets/settings-datasets.component';
+import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -49,7 +51,9 @@ const appRoutes: Routes = [
     FitTextDirective,
     RootDisplayComponent,
     FilterSelfPipe,
-    WidgetNumericComponent
+    WidgetNumericComponent,
+    SettingsDatasetsComponent,
+    SettingsSignalkComponent
   ],
   imports: [
     BrowserModule,
