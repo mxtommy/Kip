@@ -1,21 +1,21 @@
 <div class="textGenericWrapper">
-    <div class="textGenericLabel">
-           {{ nodeConfig.label }}
-    </div>
-    <div #resizeContainer class="textGenericValue">
-      <h1 [fit-text] [container]="resizeContainer" [compression]="0.4" style="font-weight: bold;">
-      {{ dataValue }}
-      </h1>
-    </div>
-    <div class="textGenericUnit" *ngIf="nodeConfig.unitName != 'no unit'">
-      {{ nodeConfig.unitName }}
-    </div>
-    <div class="settingsButton" [hidden]="!unlockStatus">
-      <button type="button" class="btn btn-default btn-lg" (click)="openWidgetSettings(widgetSettings)">
-          <span class="fa fa-cog"></span>
-      </button>
-    </div>
+  <div class="textGenericLabel">
+          {{ nodeConfig.label }}
   </div>
+  <div #resizeContainer class="textGenericValue">
+    <h1 [fit-text] [container]="resizeContainer" [compression]="0.4" style="font-weight: bold;">
+    {{ dataValue }}
+    </h1>
+  </div>
+  <div class="textGenericUnit" *ngIf="nodeConfig.unitName != 'no unit'">
+    {{ nodeConfig.unitName }}
+  </div>
+  <div class="settingsButton" [hidden]="!unlockStatus">
+    <button type="button" class="btn btn-default btn-lg" (click)="openWidgetSettings(widgetSettings)">
+        <span class="fa fa-cog"></span>
+    </button>
+  </div>
+</div>
   <ng-template #widgetSettings let-c="close" let-d="dismiss">
       <div class="modal-body">
         <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">

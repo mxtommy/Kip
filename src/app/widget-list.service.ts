@@ -5,6 +5,7 @@ import { WidgetSplitComponent } from './widget-split/widget-split.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 
 export class widgetInfo {
   name: string;
@@ -42,6 +43,11 @@ export class WidgetListService {
       name: 'WidgetTextGeneric',
       componentName: WidgetTextGenericComponent,
       description: 'Text Value',
+    },
+    {
+      name: 'WidgetHistorical',
+      componentName: WidgetHistoricalComponent,
+      description: 'Historical DataSet',
     }
   ];
 

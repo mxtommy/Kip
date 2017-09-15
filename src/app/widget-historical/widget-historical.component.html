@@ -1,0 +1,77 @@
+<div class="mainWrapper">
+    
+  <div class="chart-container">
+      <canvas id="chart"></canvas>
+  </div>
+
+
+
+
+
+
+
+
+
+  <div class="settingsButton" [hidden]="!unlockStatus">
+    <button type="button" class="btn btn-default btn-lg" (click)="openWidgetSettings(widgetSettings)">
+        <span class="fa fa-cog"></span>
+    </button>
+  </div>
+
+</div>
+<ng-template #widgetSettings let-c="close" let-d="dismiss">
+  <div class="modal-body">
+    <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">
+      <ngb-tabset>
+        <ngb-tab title="Source">
+          <ng-template ngbTabContent>
+            
+            <div class="form-group">
+              <label class="" for="path">DataSet:</label>
+              <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedDataSet">
+                <option *ngFor="let path of settingsForm.availableDataSets" [value]="path">{{path}}</option>
+              </select>                
+            </div>
+
+          </ng-template>
+        </ngb-tab>
+
+        <ngb-tab title="Units">
+          <ng-template ngbTabContent>
+              <div class="form-group">
+                  <label class="" for="unitGroup">Unit Group:</label>
+                  <select class="form-control" id="unitGroup" name="unitGroup" [(ngModel)]="settingsForm.selectedUnitGroup" (ngModelChange)="settingsFormUpdateUnitType()">
+                      <option *ngFor="let group of settingsForm.availableUnitGroups" [value]="group">{{ group }}</option>
+                  </select>  
+              </div>
+              <div class="form-group">
+                  <label class="" for="unitName">Unit:</label>
+                  <select class="form-control" id="unitName" name="unitName" [(ngModel)]="settingsForm.selectedUnitName">
+                      <option *ngFor="let unitName of settingsForm.availableUnitNames" [value]="unitName">{{unitName}}</option>
+                  </select>  
+              </div>
+          </ng-template>
+        </ngb-tab>  
+
+        <ngb-tab title="Display">
+            <ng-template ngbTabContent>
+              <div class="form-group">
+                <label class="" for="label">Label:</label>
+                <input class="form-control" type="text" id="label" name="label"  [(ngModel)]="settingsForm.label">                
+              </div>
+              <div class="form-group">
+                  <label class="" for="decimals">Number of decimals:</label>
+                  <input class="form-control" type="number" min="0" max="5" id="decimals" name="decimals"  [(ngModel)]="settingsForm.numDecimal">                
+              </div>
+            </ng-template>
+          </ngb-tab>
+
+
+      </ngb-tabset>            
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
+    <button type="button" class="btn btn-secondary" (click)="saveSettings()">Confirm</button>
+  </div>
+</ng-template>

@@ -31,6 +31,7 @@ import { FilterSelfPipe } from './filter-self.pipe';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
+import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -53,7 +54,8 @@ const appRoutes: Routes = [
     FilterSelfPipe,
     WidgetNumericComponent,
     SettingsDatasetsComponent,
-    SettingsSignalkComponent
+    SettingsSignalkComponent,
+    WidgetHistoricalComponent
   ],
   imports: [
     BrowserModule,
@@ -65,8 +67,10 @@ const appRoutes: Routes = [
   entryComponents: [ 
     WidgetUnknownComponent, 
     WidgetBlankComponent, 
-    WidgetSplitComponent, WidgetNumericComponent,
-    WidgetTextGenericComponent 
+    WidgetSplitComponent, 
+    WidgetNumericComponent,
+    WidgetTextGenericComponent,
+    WidgetHistoricalComponent
   ],
   providers: [ 
     SignalKService,
