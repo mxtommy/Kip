@@ -56,7 +56,7 @@ export class DataSetService {
     private AppSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
   ) { 
-    //this.loadSubs();
+    //this.loadSubs(); TODO
     
         // start existing subscriptions
         for (let i = 0; i < this.dataSets.length; i++) {
@@ -160,9 +160,10 @@ export class DataSetService {
     this.dataSets.push(newSub);
 
     this.startDataSet(uuid);
+    //this.AppSettingsService.saveDataSets() TODO
   }
 
-  deleteSubscription(uuid: string) {
+  deleteDataSet(uuid: string) {
     //get index
     let dataSetIndex = this.dataSets.findIndex(sub => sub.uuid == uuid);
     if (dataSetIndex < 0) { return; } // uuid doesn't exist...
@@ -176,6 +177,20 @@ export class DataSetService {
     // deleteSubscription
     this.dataSets.splice(dataSetIndex,1);
 
+  }
+
+  getDataSets() {
+    let result = [];
+    for (let i=0;i<this.dataSets.length; i++) {
+
+      let name = this.dataSets[i].path + ' - Interval:' + this.dataSets[i].updateTimer.toString() + ' - DataPoints:' + this.dataSets[i].dataPoints.toString()
+      result.push({
+        uuid: this.dataSets[i].uuid,
+        path: this.dataSets[i].path,
+        name: name
+      });
+    }
+    return result;
   }
 
   aggregateDataCache(uuid: string) {

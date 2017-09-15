@@ -4,21 +4,60 @@
         <option *ngFor="let ds of dataSets" [value]="ds.uuid">{{ds.name}}</option>
     </select>
 </div>
-<button type="submit" class="btn btn-sm btn-success" (click)='deleteDataSet()'>Add New</button>
+<button type="submit" class="btn btn-sm btn-success" (click)='openNewDataSetModal(newDataSetModal)'>Add New</button>
 <ng-template #newDataSetModal let-c="close" let-d="dismiss">
     <div class="modal-header">
       <h4 class="modal-title">New Dataset:</h4>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-          <label for="widget">Widget</label>
-          <select class="form-control" id="widget"  [(ngModel)]="newWidget" required>
-              <option *ngFor="let widget of widgetList" [value]="widget.name">{{widget.description}}</option>
-          </select>
-      </div>
+        <form name="newDataSetForm" (ngSubmit)="addNewDataSet()" #newDataSetForm="ngForm">
+            <ngb-tabset>
+                <ngb-tab title="Source">
+                <ng-template ngbTabContent>
+                    
+                    <div class="form-group">
+                    <label class="" for="path">SignalK Path:</label>
+                    <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()" required>
+                        <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
+                    </select>                
+                    </div>
+    
+                    <div class="checkbox">
+                        <label class="" for="selfPaths">
+                        <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
+                        </label>
+                    </div>              
+    
+                    <div class="form-group">
+                    <label class="" for="path">Source:</label>
+                    <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
+                        <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
+                    </select>                
+                    </div>
+    
+                </ng-template>
+                </ngb-tab>
+    
+                <ngb-tab title="Data Set">
+                <ng-template ngbTabContent>
+                    <div class="form-group">
+                        <label class="" for="interval">Interval(seconds):</label>
+                        <input class="form-control" type="number" id="interval" name="interval"  [(ngModel)]="settingsForm.interval">      
+                    </div>
+                    <div class="form-group">
+                        <label class="" for="dataPoints">Data Points:</label>
+                        <input class="form-control" type="number" id="dataPoints" name="dataPoints"  [(ngModel)]="settingsForm.dataPoints">      
+                    </div>
+                </ng-template>
+                </ngb-tab>  
+    
+    
+    
+            </ngb-tabset>            
+        </form>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
-      <button type="button" class="btn btn-secondary" (click)="changeWidget()">Confirm</button>
+      <button type="button" class="btn btn-secondary" (click)="addNewDataSet()" [disabled]="!newDataSetForm.form.valid">Confirm</button>
     </div>
 </ng-template>
