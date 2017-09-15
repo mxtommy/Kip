@@ -12,6 +12,7 @@ const defaultUnlockStatus = false;
 
 const defaultTreeNodes: TreeNode[] = [ { uuid: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', name: "Home Page", nodeType: "WidgetTextGeneric", nodeData: null } ];
 const defaultTreeLinks: TreeLink[] = [ { parent: 'ROOT', child: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx' }];
+const defaultDataSets: DataSet[] = [];
 
 interface appSettings {
   signalKUrl: string;
@@ -31,6 +32,7 @@ export class AppSettingsService {
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   treeNodes: TreeNode[] = [];
   treeLinks: TreeLink[] = [];
+  dataSets: DataSet[] = [];
 
   constructor() {
     if (localStorage.getItem('signalKData') == null) {
@@ -39,12 +41,14 @@ export class AppSettingsService {
       this.unlockStatus.next(defaultUnlockStatus);
       this.treeNodes = defaultTreeNodes;
       this.treeLinks = defaultTreeLinks;
+      this.dataSets = defaultDataSets;
     } else {
       let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
       this.signalKUrl.next(storageObject['signalKUrl']);
       this.unlockStatus.next(storageObject['unlockStatus']);
       this.treeNodes = storageObject.treeNodes;
       this.treeLinks = storageObject.treeLinks;
+      this.dataSets = storageObject.dataSets;
 
     }   
   }
@@ -84,6 +88,14 @@ export class AppSettingsService {
     return this.treeLinks;
   }
 
+  // DataSets
+  saveDataSets(dataSets) {
+    this.dataSets = dataSets;
+    this.saveToLocalStorage();
+  }
+  getDataSets() {
+    return this.dataSets;
+  }
 
   // saving. 
 
@@ -94,7 +106,7 @@ export class AppSettingsService {
       treeNodes: this.treeNodes,
       treeLinks: this.treeLinks,
       unlockStatus: this.unlockStatus.getValue(),
-      dataSets: null
+      dataSets: this.dataSets
     }
 
     localStorage.setItem('signalKData', JSON.stringify(storageObject));

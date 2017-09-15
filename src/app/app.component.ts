@@ -6,6 +6,8 @@ import { Subscription } from 'rxjs/Subscription';
 import { TreeNode, TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
+import { DataSetService } from './data-set.service';
+
 
 @Component({
   selector: 'app-root',
@@ -26,7 +28,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private AppSettingsService: AppSettingsService,
     private route: ActivatedRoute,
     private SignalKConnectionService: SignalKConnectionService,
-    private router: Router) { }
+    private router: Router,
+    private DataSetService: DataSetService) { }
 
 
   ngOnInit() {
@@ -43,6 +46,7 @@ export class AppComponent implements OnInit, OnDestroy {
       status => { this.unlockStatus = status; }
     );
 
+    this.DataSetService.startAllDataSets();
   }
 
   ngOnDestroy() {

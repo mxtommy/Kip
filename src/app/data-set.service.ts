@@ -27,17 +27,20 @@ interface dataCache {
 export interface DataSet {
   uuid: string;
   path: string;
-  pathSub: Subscription;
   signalKSource: string;
 
   updateTimer: number; //number of seconds between new dataPoints
-  updateTimerSub: Subscription;
    
   dataPoints: number // how many datapoints do we keep?
+  
+};
 
+interface DataSetSub {
+  uuid: string;
+  pathSub: Subscription;
+  updateTimerSub: Subscription;
   data: dataPoint[];
   dataCache: dataCache // running calculations
-   
 };
 
 interface registration {
@@ -50,18 +53,21 @@ interface registration {
 export class DataSetService {
 
   dataSets: DataSet[] = [];
+  dataSetSub: DataSetSub[] = [];
   dataSetRegister: registration[] = [];
 
   constructor(
     private AppSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
   ) { 
-    //this.loadSubs(); TODO
-    
-        // start existing subscriptions
-        for (let i = 0; i < this.dataSets.length; i++) {
-           this.startDataSet(this.dataSets[i].uuid);
-        }
+      this.dataSets = AppSettingsService.getDataSets();
+  }
+
+  startAllDataSets() {
+    console.log("Starting " + this.dataSets.length.toString() + " DataSets");
+    for (let i = 0; i < this.dataSets.length; i++) {
+      this.startDataSet(this.dataSets[i].uuid);
+    }
   }
 
   private newUuid() {
@@ -81,9 +87,9 @@ export class DataSetService {
 
     //find if we already have a value for this dataSet to return.
     let currentDataSet: dataPoint[];
-    let dataIndex = this.dataSets.findIndex(dataSet => dataSet.uuid == dataSetUuid);
+    let dataIndex = this.dataSetSub.findIndex(dataSet => dataSet.uuid == dataSetUuid);
     if (dataIndex >= 0) { // exists
-      currentDataSet = this.dataSets[dataIndex].data;
+      currentDataSet = this.dataSetSub[dataIndex].data;
     } else {
       currentDataSet = null;
     }
@@ -103,14 +109,30 @@ export class DataSetService {
     let dataIndex = this.dataSets.findIndex(dataSet => dataSet.uuid == uuid);
     if (dataIndex < 0) { return; }//not found...
 
+    //delete current DataSetSub if it exists...
+    let dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
+    if (dataSubIndex > 0) {
+      this.dataSetSub.slice(dataSubIndex,1);
+    }
+
+    this.dataSetSub.push({
+      uuid: uuid,
+      pathSub: null,
+      updateTimerSub: null,
+      data: null,
+      dataCache: null,
+    });
+    dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
+    
+
     // initialize data
-    this.dataSets[dataIndex].data = [];
+    this.dataSetSub[dataSubIndex].data = [];
     for (let i=0; i<this.dataSets[dataIndex].dataPoints; i++) {
-        this.dataSets[dataIndex].data.push(null);
+        this.dataSetSub[dataSubIndex].data.push(null);
     }
     
     // inistialize dataCache
-    this.dataSets[dataIndex].dataCache = {
+    this.dataSetSub[dataSubIndex].dataCache = {
         runningTotal: 0,
         numberOfPoints: 0,
         minValue: null,
@@ -118,7 +140,7 @@ export class DataSetService {
     }
     
     //Subscribe to path data
-    this.dataSets[dataIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path).subscribe(
+    this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path).subscribe(
       pathObject => {
         if (pathObject === null) {
           return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
@@ -133,8 +155,8 @@ export class DataSetService {
     });
     
     // start update timer
-    this.dataSets[dataIndex].updateTimerSub = Observable.interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
-        this.aggregateDataCache(this.dataSets[dataIndex].uuid);
+    this.dataSetSub[dataSubIndex].updateTimerSub = Observable.interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
+        this.aggregateDataCache(uuid);
     });
 
   }
@@ -145,33 +167,25 @@ export class DataSetService {
     let newSub: DataSet = {
       uuid: uuid,
       path: path,
-      pathSub: null,
-
       signalKSource: source,
-
       updateTimer: updateTimer,
-      updateTimerSub: null,
-      
-      dataPoints: dataPoints,
-
-      data: null,
-      dataCache: null   
+      dataPoints: dataPoints
     };
     this.dataSets.push(newSub);
 
     this.startDataSet(uuid);
-    //this.AppSettingsService.saveDataSets() TODO
+    this.AppSettingsService.saveDataSets(this.dataSets);
   }
 
   deleteDataSet(uuid: string) {
     //get index
-    let dataSetIndex = this.dataSets.findIndex(sub => sub.uuid == uuid);
+    let dataSetIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
     if (dataSetIndex < 0) { return; } // uuid doesn't exist...
 
     //stop timer
-    this.dataSets[dataSetIndex].updateTimerSub.unsubscribe();
+    this.dataSetSub[dataSetIndex].updateTimerSub.unsubscribe();
     //stop pathSub
-    this.dataSets[dataSetIndex].pathSub.unsubscribe();
+    this.dataSetSub[dataSetIndex].pathSub.unsubscribe();
 
 
     // deleteSubscription
@@ -197,27 +211,27 @@ export class DataSetService {
     let avg: number = null;
 
     //get index
-    let dsIndex = this.dataSets.findIndex(sub => sub.uuid == uuid);
+    let dsIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
 
     // update average
-    if (this.dataSets[dsIndex].dataCache.numberOfPoints > 0) { // if it's still 0, we had no update this timeperiod so leave it as null...
-      avg = this.dataSets[dsIndex].dataCache.runningTotal / this.dataSets[dsIndex].dataCache.numberOfPoints;
+    if (this.dataSetSub[dsIndex].dataCache.numberOfPoints > 0) { // if it's still 0, we had no update this timeperiod so leave it as null...
+      avg = this.dataSetSub[dsIndex].dataCache.runningTotal / this.dataSetSub[dsIndex].dataCache.numberOfPoints;
     }
 
     // remove first item
-    this.dataSets[dsIndex].data.shift();
+    this.dataSetSub[dsIndex].data.shift();
 
     // add our new dataPoint to end of dataset.
     let newDataPoint: dataPoint = {
       timestamp: Date.now(),
       average: avg,
-      minValue: this.dataSets[dsIndex].dataCache.minValue,
-      maxValue: this.dataSets[dsIndex].dataCache.maxValue
+      minValue: this.dataSetSub[dsIndex].dataCache.minValue,
+      maxValue: this.dataSetSub[dsIndex].dataCache.maxValue
     }
-    this.dataSets[dsIndex].data.push(newDataPoint);
+    this.dataSetSub[dsIndex].data.push(newDataPoint);
 
     // reset dataCache
-    this.dataSets[dsIndex].dataCache = {
+    this.dataSetSub[dsIndex].dataCache = {
           runningTotal: 0,
           numberOfPoints: 0,
           minValue: null,
@@ -228,16 +242,16 @@ export class DataSetService {
 
   updateDataCache(uuid: string, newValue: number) {
     //get index
-    let dsIndex = this.dataSets.findIndex(sub => sub.uuid == uuid);
+    let dsIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
 
-    this.dataSets[dsIndex].dataCache.runningTotal = this.dataSets[dsIndex].dataCache.runningTotal + newValue;
-    this.dataSets[dsIndex].dataCache.numberOfPoints = this.dataSets[dsIndex].dataCache.numberOfPoints + 1;
+    this.dataSetSub[dsIndex].dataCache.runningTotal = this.dataSetSub[dsIndex].dataCache.runningTotal + newValue;
+    this.dataSetSub[dsIndex].dataCache.numberOfPoints = this.dataSetSub[dsIndex].dataCache.numberOfPoints + 1;
 
-    if ((this.dataSets[dsIndex].dataCache.minValue === null) || (this.dataSets[dsIndex].dataCache.minValue > newValue)) {
-      this.dataSets[dsIndex].dataCache.minValue = newValue;
+    if ((this.dataSetSub[dsIndex].dataCache.minValue === null) || (this.dataSetSub[dsIndex].dataCache.minValue > newValue)) {
+      this.dataSetSub[dsIndex].dataCache.minValue = newValue;
     }
-    if ((this.dataSets[dsIndex].dataCache.maxValue === null) || (this.dataSets[dsIndex].dataCache.maxValue < newValue)) {
-      this.dataSets[dsIndex].dataCache.maxValue = newValue;
+    if ((this.dataSetSub[dsIndex].dataCache.maxValue === null) || (this.dataSetSub[dsIndex].dataCache.maxValue < newValue)) {
+      this.dataSetSub[dsIndex].dataCache.maxValue = newValue;
     }
   }
 
