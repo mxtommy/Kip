@@ -21,15 +21,15 @@
 </div>
 <ng-template #widgetSettings let-c="close" let-d="dismiss">
   <div class="modal-body">
-    <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #signalKForm="ngForm">
+    <form name="widgetSettingsForm" (ngSubmit)="saveSettings()" #widgetSettingsForm="ngForm">
       <ngb-tabset>
         <ngb-tab title="Source">
           <ng-template ngbTabContent>
             
             <div class="form-group">
               <label class="" for="path">DataSet:</label>
-              <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedDataSet">
-                <option *ngFor="let path of settingsForm.availableDataSets" [value]="path">{{path}}</option>
+              <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedDataSet" required>
+                <option *ngFor="let ds of settingsForm.availableDataSets" [value]="ds.uuid">{{ds.name}}</option>
               </select>                
             </div>
 
@@ -72,6 +72,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" (click)="c('Close click')">Cancel</button>
-    <button type="button" class="btn btn-secondary" (click)="saveSettings()">Confirm</button>
+    <button type="button" class="btn btn-secondary" (click)="saveSettings()" [disabled]="!widgetSettingsForm.form.valid">Confirm</button>
   </div>
 </ng-template>

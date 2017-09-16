@@ -10,7 +10,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 
 
-interface dataPoint {
+export interface dataPoint {
   timestamp: number;
   average: number;
   minValue: number;
@@ -127,9 +127,9 @@ export class DataSetService {
 
     // initialize data
     this.dataSetSub[dataSubIndex].data = [];
-    for (let i=0; i<this.dataSets[dataIndex].dataPoints; i++) {
-        this.dataSetSub[dataSubIndex].data.push(null);
-    }
+    //for (let i=0; i<this.dataSets[dataIndex].dataPoints; i++) {
+    //    this.dataSetSub[dataSubIndex].data.push(null);
+    //}
     
     // inistialize dataCache
     this.dataSetSub[dataSubIndex].dataCache = {
@@ -211,33 +211,42 @@ export class DataSetService {
     let avg: number = null;
 
     //get index
-    let dsIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
+    let dataSetIndex = this.dataSets.findIndex(sub => sub.uuid == uuid);
+    let dataSubIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
 
     // update average
-    if (this.dataSetSub[dsIndex].dataCache.numberOfPoints > 0) { // if it's still 0, we had no update this timeperiod so leave it as null...
-      avg = this.dataSetSub[dsIndex].dataCache.runningTotal / this.dataSetSub[dsIndex].dataCache.numberOfPoints;
+    if (this.dataSetSub[dataSubIndex].dataCache.numberOfPoints > 0) { // if it's still 0, we had no update this timeperiod so leave it as null...
+      avg = this.dataSetSub[dataSubIndex].dataCache.runningTotal / this.dataSetSub[dataSubIndex].dataCache.numberOfPoints;
     }
 
-    // remove first item
-    this.dataSetSub[dsIndex].data.shift();
+    // remove first item if we have dataPoints points.
+    if (this.dataSetSub[dataSubIndex].data.length >= this.dataSets[dataSetIndex].dataPoints) {
+      this.dataSetSub[dataSubIndex].data.shift();
+    }
 
     // add our new dataPoint to end of dataset.
     let newDataPoint: dataPoint = {
       timestamp: Date.now(),
       average: avg,
-      minValue: this.dataSetSub[dsIndex].dataCache.minValue,
-      maxValue: this.dataSetSub[dsIndex].dataCache.maxValue
+      minValue: this.dataSetSub[dataSubIndex].dataCache.minValue,
+      maxValue: this.dataSetSub[dataSubIndex].dataCache.maxValue
     }
-    this.dataSetSub[dsIndex].data.push(newDataPoint);
+    this.dataSetSub[dataSubIndex].data.push(newDataPoint);
 
     // reset dataCache
-    this.dataSetSub[dsIndex].dataCache = {
+    this.dataSetSub[dataSubIndex].dataCache = {
           runningTotal: 0,
           numberOfPoints: 0,
           minValue: null,
           maxValue: null           
       }       
     // ... push to registered graphs...
+
+    for (let i = 0; i < this.dataSetRegister.length;  i++) {
+      if (this.dataSetRegister[i].dataSetUuid == uuid) {
+        this.dataSetRegister[i].observable.next(this.dataSetSub[dataSubIndex].data);
+      }
+    }
   }
 
   updateDataCache(uuid: string, newValue: number) {
