@@ -204,26 +204,24 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                     //process datapoint and add it to our chart.
                     
                     if (dataSet[i].average === null) {
-                        this.chartDataMin.push({t: dataSet[i].timestamp, y: null });
-                        this.chartDataAvg.push({t: dataSet[i].timestamp, y: null });
-                        this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
-                        this.chart.update(0); 
-                        return;
+                      this.chartDataMin.push({t: dataSet[i].timestamp, y: null });
+                      this.chartDataAvg.push({t: dataSet[i].timestamp, y: null });
+                      this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
+                    } else {
+                      this.chartDataMin.push({
+                          t: dataSet[i].timestamp, 
+                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].minValue).toFixed(this.nodeConfig.numDecimal)*-1
+                      });
+                      this.chartDataAvg.push({
+                          t: dataSet[i].timestamp, 
+                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].average).toFixed(this.nodeConfig.numDecimal)*-1
+                      });
+                      this.chartDataMax.push({
+                          t: dataSet[i].timestamp, 
+                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].maxValue).toFixed(this.nodeConfig.numDecimal)*-1
+                      });
                     }
-
-                    this.chartDataMin.push({
-                        t: dataSet[i].timestamp, 
-                        y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].minValue).toFixed(this.nodeConfig.numDecimal)*-1
-                    });
-                    this.chartDataAvg.push({
-                        t: dataSet[i].timestamp, 
-                        y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].average).toFixed(this.nodeConfig.numDecimal)*-1
-                    });
-                    this.chartDataMax.push({
-                        t: dataSet[i].timestamp, 
-                        y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].maxValue).toFixed(this.nodeConfig.numDecimal)*-1
-                    });
-                    
+                   
                 }
 
                 this.chart.config.data.datasets[0].data = this.chartDataMin;

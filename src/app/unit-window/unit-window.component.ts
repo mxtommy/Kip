@@ -24,6 +24,7 @@ export class UnitWindowComponent implements OnInit {
 
   modalRef;
   activePage: TreeNode;
+  instance;
   newWidget: string; //Used in change modal form.
   private componentRef: ComponentRef<{}>;
 
@@ -46,13 +47,23 @@ export class UnitWindowComponent implements OnInit {
     this.componentRef = viewContainerRef.createComponent(componentFactory);
 
     // inject info into new component
-    let instance = <DynamicComponentData> this.componentRef.instance;
-    instance.nodeUUID = this.nodeUUID;
-    instance.unlockStatus = this.unlockStatus;
+    this.instance = <DynamicComponentData> this.componentRef.instance;
+    this.instance.nodeUUID = this.nodeUUID;
+    this.instance.unlockStatus = this.unlockStatus;
   }
 
   ngOnChanges(changes: any) {
-    this.ngOnInit();
+//    this.ngOnInit();
+
+    if ( ('nodeUUID' in changes ) && (changes.nodeUUID.firstChange === false)) {
+      this.ngOnInit();
+    }
+
+
+    if ( ('unlockStatus' in changes ) && (changes.unlockStatus.firstChange === false)) {
+      this.instance.unlockStatus = this.unlockStatus;
+    }
+
   }
 
   openWidgetSelector(content) {
