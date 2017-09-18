@@ -73,7 +73,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     numDecimal: 2,
     invertData: false,
     displayMinMax: false,
-    animateGraph: true,
+    animateGraph: false,
     suggestedMin: null,
     suggestedMax: null,
     includeZero: true
@@ -87,7 +87,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     numDecimal: 2,
     invertData: false,
     displayMinMax: false,
-    animateGraph: true,
+    animateGraph: false,
     suggestedMin: null,
     suggestedMax: null,
     includeZero: true
@@ -271,6 +271,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                       });
                     }
                   }
+                  console.log(this.chart.config.data);
                   this.chart.config.data.datasets[1].data = this.chartDataMin;
                   this.chart.config.data.datasets[2].data = this.chartDataMax;                   
                 }
