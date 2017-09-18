@@ -198,7 +198,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                     
                     ticks: {
     //                    minRotation: 15,
-                        callback: function(value) {
+                        callback: function(value) {  //TODO, left pad 0 for min/sec
                             let tickTime = Date.parse(value);
                             let nowTime = Date.now();
                             let timeDiff = Math.floor((nowTime - tickTime)/1000);
