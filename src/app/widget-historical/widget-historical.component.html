@@ -32,7 +32,16 @@
                 <option *ngFor="let ds of settingsForm.availableDataSets" [value]="ds.uuid">{{ds.name}}</option>
               </select>                
             </div>
-
+            <div class="form-group">
+                <label class="" for="invertData">
+                    <input type="checkbox" id="invertData" name="invertData" [(ngModel)]="settingsForm.invertData"> Invert Data (multiply by -1)
+                </label>       
+            </div>
+            <div class="form-group">
+                <label class="" for="minMax">
+                    <input type="checkbox" id="minMax" name="minMax" [(ngModel)]="settingsForm.displayMinMax"> Include Min/Max
+                </label>       
+            </div>            
           </ng-template>
         </ngb-tab>
 
@@ -63,9 +72,33 @@
                   <label class="" for="decimals">Number of decimals:</label>
                   <input class="form-control" type="number" min="0" max="5" id="decimals" name="decimals"  [(ngModel)]="settingsForm.numDecimal">                
               </div>
+              <div class="form-group">
+                  <label class="" for="animateGraph">
+                      <input type="checkbox" id="animateGraph" name="animateGraph" [(ngModel)]="settingsForm.animateGraph"> Animate Updates
+                  </label>       
+              </div> 
+
             </ng-template>
           </ngb-tab>
 
+          <ngb-tab title="Graph Options">
+            <ng-template ngbTabContent>
+              <div class="form-group">
+                <label class="" for="suggestedMin">Suggested Minimum:</label>
+                <input class="form-control" type="number" id="suggestedMin" name="suggestedMin"  [(ngModel)]="settingsForm.suggestedMin">                
+              </div>
+              <div class="form-group">
+                  <label class="" for="suggestedMax">Suggested Maximum:</label>
+                  <input class="form-control" type="number" id="suggestedMax" name="suggestedMax"  [(ngModel)]="settingsForm.suggestedMax">                
+              </div>
+              <div class="form-group">
+                  <label class="" for="includeZero">
+                      <input type="checkbox" id="includeZero" name="includeZero" [(ngModel)]="settingsForm.includeZero"> Include Origin (aka 0)
+                  </label>       
+              </div> 
+
+            </ng-template>
+          </ngb-tab>
 
       </ngb-tabset>            
     </form>

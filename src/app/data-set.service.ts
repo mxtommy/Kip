@@ -105,6 +105,8 @@ export class DataSetService {
     return this.dataSetRegister[registerIndex].observable.asObservable();
   }
 
+  //TODO unegister dataSet (on signalk service too...)
+
   startDataSet(uuid: string) {
     let dataIndex = this.dataSets.findIndex(dataSet => dataSet.uuid == uuid);
     if (dataIndex < 0) { return; }//not found...

@@ -17,6 +17,12 @@ interface widgetSettingsForm {
   selectedUnitGroup: string;
   selectedUnitName: string;
   numDecimal: number;
+  invertData: boolean;
+  displayMinMax: boolean;
+  animateGraph: boolean;
+  suggestedMin: number;
+  suggestedMax: number;
+  includeZero: boolean;
 }
 
 interface widgetConfig {
@@ -25,6 +31,12 @@ interface widgetConfig {
   unitGroup: string;
   unitName: string;
   numDecimal: number; // number of decimal places if a number
+  invertData: boolean;
+  displayMinMax: boolean;
+  animateGraph: boolean;
+  suggestedMin: number;
+  suggestedMax: number;  
+  includeZero: boolean;
 }
 
 
@@ -59,6 +71,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     selectedUnitGroup: null,
     selectedUnitName: null,
     numDecimal: 2,
+    invertData: false,
+    displayMinMax: false,
+    animateGraph: true,
+    suggestedMin: null,
+    suggestedMax: null,
+    includeZero: true
   }
 
   nodeConfig: widgetConfig = {
@@ -66,7 +84,13 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     label: '',
     unitGroup: 'discreet',
     unitName: 'no unit',
-    numDecimal: 2
+    numDecimal: 2,
+    invertData: false,
+    displayMinMax: false,
+    animateGraph: true,
+    suggestedMin: null,
+    suggestedMax: null,
+    includeZero: true
   }
 
   activePage: TreeNode;
@@ -97,7 +121,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         if (this.chart !== null) {
-            this.chart.destroy();
+            //this.chart.destroy(); // doesn't seem to be needed since chart is destoryed when destroying component. was giving errors. (maybe html was destroyed before this is called?)
         }
         this.unsubscribeDataSet();     
         console.log("stopped Sub");
@@ -107,33 +131,51 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
         if (this.chart !== null) {
             this.chart.destroy();
         }
+        // Setup DataSets
+        let ds = [
+          {
+            label: this.nodeConfig.label + '-Avg.',
+            data: this.chartDataAvg,
+            fill: 'false',
+            //borderWidth: 1
+            borderColor: 'rgba(0, 255, 0, 1)'
+          }
+        ];
+        if (this.nodeConfig.displayMinMax) {
+          ds.push(
+            {
+              label: this.nodeConfig.label + '-Min',
+              data: this.chartDataMin,
+              fill: '+1',
+              //borderWidth: 1
+              borderColor: 'rgba(255, 0, 0, 0.5)'
+  
+          },
+          {
+              label: this.nodeConfig.label + '-Max',
+              data: this.chartDataMax,
+              fill: '-1',
+              //borderWidth: 1
+              borderColor: 'rgba(0, 0, 255, 0.5)'
+          } 
+          );
+        }
+        //setup Options
+        let yAxisTickOptions = {};
+        if (this.nodeConfig.includeZero) {
+          yAxisTickOptions['beginAtZero'] = true;
+        }
+        if (this.nodeConfig.suggestedMin !== null) {
+          yAxisTickOptions['suggestedMin'] = this.nodeConfig.suggestedMin;
+        }
+        if (this.nodeConfig.suggestedMax !== null) {
+          yAxisTickOptions['suggestedMax'] = this.nodeConfig.suggestedMax;
+        }        
+
         this.chart = new Chart(this.chartCtx,{
             type: 'line',
             data: {
-                datasets: [
-                {
-                    label: this.nodeConfig.label + '-Min',
-                    data: this.chartDataMin,
-                    fill: '+1',
-                    //borderWidth: 1
-                    borderColor: 'rgba(255, 0, 0, 0.5)'
-        
-                },
-                {
-                    label: this.nodeConfig.label + '-Avg.',
-                    data: this.chartDataAvg,
-                    fill: 'false',
-                    //borderWidth: 1
-                    borderColor: 'rgba(0, 255, 0, 1)'
-                },
-                {
-                    label: this.nodeConfig.label + '-Max',
-                    data: this.chartDataMax,
-                    fill: '-1',
-                    //borderWidth: 1
-                    borderColor: 'rgba(0, 0, 255, 0.5)'
-                }       
-            ]
+                datasets: ds
         },
         options: {
             maintainAspectRatio: false,
@@ -144,10 +186,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                     },
                     
                     position: 'right',
-                    ticks: {
-                        beginAtZero:true,
-                        suggestedMin: -30
-                    }
+                    ticks: yAxisTickOptions
                 }],
                 xAxes: [{
                     type: 'time',
@@ -196,38 +235,52 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 if (dataSet === null) {
                 return; // we will get null back if we subscribe to a dataSet before the app has started it.when it learns about it we will get first value
                 }
-
-                this.chartDataMin = [];
+                let invert = 1;
+                if (this.nodeConfig.invertData) { invert = -1; }
+                //Avg
                 this.chartDataAvg = [];
-                this.chartDataMax = [];
                 for (let i=0;i<dataSet.length;i++){
+                  if (dataSet[i].average === null) {
+                    this.chartDataAvg.push({t: dataSet[i].timestamp, y: null });
+                    continue;
+                  }
+                  this.chartDataAvg.push({
+                    t: dataSet[i].timestamp, 
+                    y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].average).toFixed(this.nodeConfig.numDecimal)*invert
+                  });
+                }
+                this.chart.config.data.datasets[0].data = this.chartDataAvg;
+                
+                //min/max
+                if (this.nodeConfig.displayMinMax) {
+                  this.chartDataMin = [];
+                  this.chartDataMax = [];
+                  for (let i=0;i<dataSet.length;i++){
                     //process datapoint and add it to our chart.
-                    
                     if (dataSet[i].average === null) {
                       this.chartDataMin.push({t: dataSet[i].timestamp, y: null });
-                      this.chartDataAvg.push({t: dataSet[i].timestamp, y: null });
                       this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
                     } else {
                       this.chartDataMin.push({
                           t: dataSet[i].timestamp, 
-                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].minValue).toFixed(this.nodeConfig.numDecimal)*-1
-                      });
-                      this.chartDataAvg.push({
-                          t: dataSet[i].timestamp, 
-                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].average).toFixed(this.nodeConfig.numDecimal)*-1
+                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].minValue).toFixed(this.nodeConfig.numDecimal)*invert
                       });
                       this.chartDataMax.push({
                           t: dataSet[i].timestamp, 
-                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].maxValue).toFixed(this.nodeConfig.numDecimal)*-1
+                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].maxValue).toFixed(this.nodeConfig.numDecimal)*invert
                       });
                     }
-                   
+                  }
+                  this.chart.config.data.datasets[1].data = this.chartDataMin;
+                  this.chart.config.data.datasets[2].data = this.chartDataMax;                   
                 }
 
-                this.chart.config.data.datasets[0].data = this.chartDataMin;
-                this.chart.config.data.datasets[1].data = this.chartDataAvg;
-                this.chart.config.data.datasets[2].data = this.chartDataMax;
-                this.chart.update(0);
+
+                if (this.nodeConfig.animateGraph) {
+                  this.chart.update();
+                } else {
+                  this.chart.update(0);
+                }
             }
         );
     }
@@ -248,6 +301,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
         this.settingsForm.availableUnitNames = Object.keys(this.converter[this.nodeConfig.unitGroup]);
         this.settingsForm.selectedUnitGroup = this.nodeConfig.unitGroup;
         this.settingsForm.selectedUnitName = this.nodeConfig.unitName;
+        this.settingsForm.invertData = this.nodeConfig.invertData;
+        this.settingsForm.displayMinMax = this.nodeConfig.displayMinMax;
+        this.settingsForm.animateGraph = this.nodeConfig.animateGraph;
+        this.settingsForm.suggestedMin = this.nodeConfig.suggestedMin;
+        this.settingsForm.suggestedMax = this.nodeConfig.suggestedMax;
+        this.settingsForm.includeZero = this.nodeConfig.includeZero;
         
         this.settingsForm.availableDataSets = this.DataSetService.getDataSets().sort();
         
@@ -267,7 +326,26 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       this.nodeConfig.unitGroup = this.settingsForm.selectedUnitGroup;
       this.nodeConfig.unitName = this.settingsForm.selectedUnitName;
       this.nodeConfig.numDecimal = this.settingsForm.numDecimal;
+      this.nodeConfig.invertData = this.settingsForm.invertData;
+      this.nodeConfig.displayMinMax = this.settingsForm.displayMinMax;
+      this.nodeConfig.animateGraph = this.settingsForm.animateGraph;
+      this.nodeConfig.includeZero = this.settingsForm.includeZero;
+      
+
+      if (typeof(this.settingsForm.suggestedMin) == 'number') {
+        this.nodeConfig.suggestedMin = this.settingsForm.suggestedMin;
+      } else {
+        this.nodeConfig.suggestedMin = null;
+      }
+
+      if (typeof(this.settingsForm.suggestedMax) == 'number') {
+        this.nodeConfig.suggestedMax = this.settingsForm.suggestedMax;
+      } else {
+        this.nodeConfig.suggestedMax = null;
+      }
+
       this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
+      this.startChart(); //need to recreate chart to update options :P
       this.subscribeDataSet();
   }
 
