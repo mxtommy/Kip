@@ -62,11 +62,18 @@ export class SignalKService {
     this.selfurn = 'self';
   }
   
-  //TODO unsubscribePath....
+  unsubscribePath(uuid, path) {
+    let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
+    if (registerIndex >= 0) {
+      this.pathRegister.splice(registerIndex,1);
+    }
+  }
+
   subscribePath(uuid, path) {
     //see if already subscribed, if yes return that...
-    let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid = uuid));
+    let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
+      console.log (uuid + '---' + this.pathRegister[registerIndex].uuid);
       return this.pathRegister[registerIndex].observable.asObservable();
     }
     
@@ -86,7 +93,7 @@ export class SignalKService {
       observable: new BehaviorSubject<pathObject>(currentValue)
     });
     // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
-    pathIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid = uuid));
+    pathIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     return this.pathRegister[pathIndex].observable.asObservable();
   }
 

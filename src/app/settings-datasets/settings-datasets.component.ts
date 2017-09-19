@@ -22,6 +22,7 @@ interface settingsForm {
 export class SettingsDatasetsComponent implements OnInit {
 
   modalRef;
+  selectedDataSet: string;
   
   settingsForm: settingsForm = {
     selectedPath: null,
@@ -30,7 +31,7 @@ export class SettingsDatasetsComponent implements OnInit {
     availableSources: [],
     selfPaths: true,
     interval: 1,
-    dataPoints: 300
+    dataPoints: 30
   };
 
   dataSets;
@@ -75,7 +76,9 @@ export class SettingsDatasetsComponent implements OnInit {
     this.loadDataSets();
   }
 
-  deleteDataSet() { //TODO 
+  deleteDataSet() { 
+    this.DataSetService.deleteDataSet(this.selectedDataSet);
+    this.loadDataSets();
   
   }
 

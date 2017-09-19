@@ -1,9 +1,12 @@
-<div class="form-group">
-    <label for="dataSet">Delete DataSet:</label> <button type="submit" class="btn btn-sm btn-danger" (click)='deleteDataSet()'>Delete</button>
-    <select class="form-control" id="dataSet"  [(ngModel)]="selectedDataSet" size=5>
-        <option *ngFor="let ds of dataSets" [value]="ds.uuid">{{ds.name}}</option>
-    </select>
-</div>
+<form name="existingDataSet" (ngSubmit)="addNewDataSet()" #existingDataSet="ngForm">
+    <div class="form-group">
+        <label for="dataSet">Slect DataSet:</label> 
+        <select class="form-control" id="dataSet" name="dataSet" [(ngModel)]="selectedDataSet" size=5 required>
+            <option *ngFor="let ds of dataSets" [value]="ds.uuid">{{ds.name}}</option>
+        </select>
+    </div>
+</form>
+<button type="submit" class="btn btn-sm btn-danger" (click)='deleteDataSet()' [disabled]="!existingDataSet.form.valid">Delete</button>
 <button type="submit" class="btn btn-sm btn-success" (click)='openNewDataSetModal(newDataSetModal)'>Add New</button>
 <ng-template #newDataSetModal let-c="close" let-d="dismiss">
     <div class="modal-header">

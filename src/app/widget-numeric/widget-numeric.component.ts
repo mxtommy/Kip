@@ -137,6 +137,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
+      this.SignalKService.unsubscribePath(this.nodeUUID, this.nodeConfig.signalKPath)
     }
   }
 
@@ -193,6 +194,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
   
   saveSettings() {
       this.modalRef.close();
+      this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
       this.nodeConfig.signalKPath = this.settingsForm.selectedPath;
       this.nodeConfig.signalKSource = this.settingsForm.selectedSource;
       this.nodeConfig.label = this.settingsForm.label;

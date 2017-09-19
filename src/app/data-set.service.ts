@@ -79,7 +79,7 @@ export class DataSetService {
 
   subscribeDataSet(uuid, dataSetUuid) {
     //see if already subscribed, if yes return that...
-    let registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid = dataSetUuid));
+    let registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid == dataSetUuid));
     if (registerIndex >= 0) { // exists
       return this.dataSetRegister[registerIndex].observable.asObservable();
     }
@@ -101,11 +101,31 @@ export class DataSetService {
       observable: new BehaviorSubject<Array<dataPoint>>(currentDataSet)
     });
     // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
-    registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid = dataSetUuid));
+    registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid == dataSetUuid));
     return this.dataSetRegister[registerIndex].observable.asObservable();
   }
 
-  //TODO unegister dataSet (on signalk service too...)
+
+
+  stopDataSet(uuid: string) {
+    // stop any registrations to this dataset...
+    for (let i=this.dataSetRegister.length-1; i >= 0; i--) { //backwards because lengh will change...
+      if (this.dataSetRegister[i].uuid == uuid) {
+        this.dataSetRegister.splice(i,1);
+      }
+    }
+
+     //delete current DataSetSub if it exists...
+    let dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
+    if (dataSubIndex > 0) {
+      // stop pathSub
+      this.dataSetSub[dataSubIndex].pathSub.unsubscribe();
+      //stop TimerSub
+      this.dataSetSub[dataSubIndex].updateTimerSub.unsubscribe();
+      //delete DataSub
+      this.dataSetSub.slice(dataSubIndex,1);
+     }
+  }
 
   startDataSet(uuid: string) {
     let dataIndex = this.dataSets.findIndex(dataSet => dataSet.uuid == uuid);
@@ -184,14 +204,11 @@ export class DataSetService {
     let dataSetIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
     if (dataSetIndex < 0) { return; } // uuid doesn't exist...
 
-    //stop timer
-    this.dataSetSub[dataSetIndex].updateTimerSub.unsubscribe();
-    //stop pathSub
-    this.dataSetSub[dataSetIndex].pathSub.unsubscribe();
-
-
+    this.stopDataSet(uuid);
     // deleteSubscription
     this.dataSets.splice(dataSetIndex,1);
+
+    this.AppSettingsService.saveDataSets(this.dataSets);
 
   }
 
