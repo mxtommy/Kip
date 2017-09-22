@@ -4,6 +4,13 @@ import { RouterModule, Routes }   from '@angular/router';
 import { NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule }   from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {
+  MdMenuModule,
+  MdIconModule
+} from '@angular/material';
+
+
 import { AngularSplitModule } from 'angular-split';
 
 import { AppComponent } from './app.component';
@@ -67,7 +74,10 @@ const appRoutes: Routes = [
     NgbModule.forRoot(),
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } ),
-    AngularSplitModule
+    AngularSplitModule,
+    BrowserAnimationsModule,
+    MdMenuModule,
+    MdIconModule
   ],
   entryComponents: [ 
     WidgetUnknownComponent, 

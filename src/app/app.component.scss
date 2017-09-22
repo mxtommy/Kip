@@ -1,0 +1,15 @@
+@import '~@angular/material/theming';
+
+
+@mixin app-theme($theme) {
+
+    $primary: map-get($theme, primary);
+    $warn: map-get($theme, warn);
+    $background: map-get($theme, background);
+    $foreground: map-get($theme, foreground);
+
+    .theme-menu {
+        background-color: mat-color($primary, 900);
+    }
+}    
+

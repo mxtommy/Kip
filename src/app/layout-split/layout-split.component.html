@@ -10,9 +10,10 @@
               [unlockStatus]="unlockStatus"
           ></app-unit-window>
           <div class="splitMenu">
-              <button type="button" class="btn btn-default btn-lg" (click)="openWidgetSettings(widgetSettings)">
-                  <span class="fa fa-cog"></span>
-              </button>
+              <md-menu #splitMenu="mdMenu">
+                <button md-menu-item>Split</button>
+              </md-menu>
+              <button md-icon-button [mdMenuTriggerFor]="splitMenu"><md-icon>more_vert</md-icon></button>
           </div>
         </div>
         <layout-split *ngSwitchCase="'splitSet'"

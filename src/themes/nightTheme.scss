@@ -1,0 +1,44 @@
+@import '~@angular/material/theming';
+
+$mat-custom-night: (
+    50 : #ede1e1,
+    100 : #d1b3b3,
+    200 : #b28080,
+    300 : #934d4d,
+    400 : #7c2727,
+    500 : #650101,
+    600 : #5d0101,
+    700 : #530101,
+    800 : #490101,
+    900 : #370000,
+    A100 : #ff6e6e,
+    A200 : #ff3b3b,
+    A400 : #ff0808,
+    A700 : #ee0000,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #ffffff,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #ffffff,
+        A400 : #ffffff,
+        A700 : #ffffff,
+    )
+);
+
+
+$nightTheme-primary: mat-palette($mat-custom-night);
+$nightTheme-accent:  mat-palette($mat-pink, A200, A100, A400);
+
+// The warn palette is optional (defaults to red).
+$nightTheme-warn:    mat-palette($mat-red);
+
+$nightTheme-light: mat-light-theme($nightTheme-primary, $nightTheme-accent, $nightTheme-warn);
+$nightTheme-dark: mat-dark-theme($nightTheme-primary, $nightTheme-accent, $nightTheme-warn);

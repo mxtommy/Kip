@@ -1,6 +1,5 @@
 
 
-
 .mainContainer {
     display: flex;
     flex-direction: column;
@@ -23,8 +22,9 @@
      height: 60px; */
     flex: 1;
    /*   bottom: 0px;
-        position: absolute; */
+        position: absolute; 
     background-color:  rgb(100,100,100);;
+    */
 }
 
 .menuBarContainer {

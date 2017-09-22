@@ -1,0 +1,17 @@
+@import '~@angular/material/theming';
+@include mat-core();
+
+//Import Themes
+@import 'themes/defaultTheme.scss';
+@import 'themes/nightTheme.scss';
+
+// import Components
+@import 'app/app.component.scss';
+
+@mixin theme-components($theme) {
+    @include angular-material-theme($theme);
+    @include app-theme($theme);
+}
+
+@include theme-components($defaultTheme-dark);
+
