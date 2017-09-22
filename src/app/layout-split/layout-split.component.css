@@ -1,0 +1,11 @@
+.splitArea {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.splitMenu {
+    position: absolute;
+    left: 5%;
+    bottom: 5%;
+}

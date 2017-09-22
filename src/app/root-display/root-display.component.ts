@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 
-import { TreeNode, TreeManagerService } from '../tree-manager.service';
 import { AppSettingsService } from '../app-settings.service';
+import { LayoutSplitsService } from '../layout-splits.service';
 
 
 @Component({
@@ -13,34 +12,23 @@ import { AppSettingsService } from '../app-settings.service';
 })
 export class RootDisplayComponent implements OnInit, OnDestroy {
 
-  rootIndexSub: Subscription;
-  rootPageIndexSub: Subscription;
+  rootUUIDSub: Subscription;
+  currentRootUUID: string;
+
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
-  rootPage: TreeNode = { 
-    uuid: null,
-    name: null,
-    nodeType: null,
-    nodeData: null
-  };
 
-  constructor(  private treeManager: TreeManagerService,
-                private AppSettingsService: AppSettingsService,
-                private route: ActivatedRoute) { }
+  constructor(  private AppSettingsService: AppSettingsService,
+                private LayoutSplitsService: LayoutSplitsService,
+                ) { }
 
   ngOnInit() {
     // when root uuid changes, update page.
-    this.rootPageIndexSub = this.treeManager.getRootIndex().subscribe(
-      index => {
-        let rootNodes = this.treeManager.getRootNodes();
-        this.rootPage = this.treeManager.getNode(rootNodes[index]);
+    this.rootUUIDSub = this.LayoutSplitsService.getActiveRootSub().subscribe(
+      uuid => {
+        if (uuid === null) {return; }// no root UUID yet...
+          this.currentRootUUID = uuid;
         }
-    );
-    // push our ID to the treemanager
-    this.rootIndexSub = this.route.params.subscribe(
-      params => { 
-        this.treeManager.setRootIndex(parseInt(params['id']));
-      }
     );
 
     // get Unlock Status
@@ -53,7 +41,7 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.rootIndexSub.unsubscribe();
-    this.rootPageIndexSub.unsubscribe();
+    this.rootUUIDSub.unsubscribe();
+    this.unlockStatusSub.unsubscribe();
   }
 }

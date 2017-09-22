@@ -18,30 +18,14 @@ body {
     border-left: 5px solid #a94442; /* red */
   }
 
-.unitContainer {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    height: 100%;
-}
 
-.unitWindow {
-    flex: 30;
-}
-
-.unitMenu {
-    flex: 1;
-    background-color: darkgray;
-    text-align: center;
-    border-style: outset;
-    border-color: darkred;
-}
 
 .verticalCenter {
     position: relative;
     top: 50%;
     transform: translateY(-50%);
 }
+
 
 .flexContainer {
 

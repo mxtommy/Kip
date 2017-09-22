@@ -73,7 +73,6 @@ export class SignalKService {
     //see if already subscribed, if yes return that...
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
-      console.log (uuid + '---' + this.pathRegister[registerIndex].uuid);
       return this.pathRegister[registerIndex].observable.asObservable();
     }
     

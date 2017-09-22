@@ -4,6 +4,7 @@ import { RouterModule, Routes }   from '@angular/router';
 import { NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule }   from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { AngularSplitModule } from 'angular-split';
 
 import { AppComponent } from './app.component';
 
@@ -16,6 +17,7 @@ import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 import { DataSetService } from './data-set.service';
 import { TreeManagerService } from './tree-manager.service';
+import { LayoutSplitsService } from './layout-splits.service';
 import { AppSettingsService } from './app-settings.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
@@ -32,6 +34,7 @@ import { WidgetNumericComponent } from './widget-numeric/widget-numeric.componen
 import { SettingsDatasetsComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
+import { LayoutSplitComponent } from './layout-split/layout-split.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -55,14 +58,16 @@ const appRoutes: Routes = [
     WidgetNumericComponent,
     SettingsDatasetsComponent,
     SettingsSignalkComponent,
-    WidgetHistoricalComponent
+    WidgetHistoricalComponent,
+    LayoutSplitComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
     NgbModule.forRoot(),
     HttpClientModule,
-    RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } )
+    RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } ),
+    AngularSplitModule
   ],
   entryComponents: [ 
     WidgetUnknownComponent, 
@@ -79,6 +84,7 @@ const appRoutes: Routes = [
     SignalKFullService,
     DataSetService,
     TreeManagerService,
+    LayoutSplitsService,
     WidgetListService,
     UnitConvertService,
     AppSettingsService 
