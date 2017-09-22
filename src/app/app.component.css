@@ -1,4 +1,6 @@
-
+.fullheight {
+    height: 100%;
+}
 
 .mainContainer {
     display: flex;

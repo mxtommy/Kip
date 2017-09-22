@@ -13,5 +13,17 @@
     @include app-theme($theme);
 }
 
-@include theme-components($defaultTheme-dark);
+@include theme-components($defaultTheme-light);
+
+.default-dark {
+    @include theme-components($defaultTheme-dark);
+}
+.night-light {
+    @include theme-components($nightTheme-light);
+}
+.night-dark {
+    @include theme-components($nightTheme-dark);
+}
+
+
 

@@ -1,51 +1,61 @@
-<div class="mainContainer">
-    <div class="mainWindow">
-        <router-outlet></router-outlet>
-    </div>
-    <div class="menuBar">
-        <div class="menuBarContainer theme-menu">
+<div [class]="themeClass">
+    <div class="mainContainer" >
+        <div class="mainWindow">
+            <router-outlet></router-outlet>
+        </div>
+        <div class="menuBar">
+            <div class="menuBarContainer theme-menu">
 
-            <div class="menuBarButtonGroup">
-                <div class="btn-group" role="group" aria-label="Menu">
-{{ pageName }}
+                <div class="menuBarButtonGroup">
+                    <div class="btn-group" role="group" aria-label="Menu">
+                            <button md-raised-button [mdMenuTriggerFor]="themeMenu" >
+                                    <span class="fa fa-lg fa-paint-brush"></span>
+                            </button>
+                            <md-menu #themeMenu="mdMenu">
+                                <button md-menu-item (click)="setTheme('default-light')">Default Light</button>
+                                <button md-menu-item (click)="setTheme('default-dark')">Default Dark</button>
+                                <button md-menu-item (click)="setTheme('night-light')">Night Light</button>
+                                <button md-menu-item (click)="setTheme('night-dark')">Night Dark</button>
+                            </md-menu>
+                    </div>
                 </div>
-            </div>
 
-            <div class="menuBarButtonGroup">
-                <div class="btn-group" role="group" aria-label="Menu">
-                    <button type="button" class="btn btn-default btn-lg"  (click)="pageDown()">
-                        <span class="fa fa-chevron-down"></span>
-                    </button>
+                <div class="menuBarButtonGroup">
+                    <div class="btn-group" role="group" aria-label="Menu">
+                        <button md-raised-button (click)="pageDown()">
+                            <span class="fa fa-lg fa-chevron-down"></span>
+                        </button>
 
-                    <button type="button" class="btn btn-default btn-lg" routerLink="/page/0">
-                        <span class="fa fa-home"></span>
-                    </button>
+                        <button md-raised-button routerLink="/page/0">
+                            <span class="fa fa-lg fa-home"></span>
+                        </button>
 
-                    <button type="button" class="btn btn-default btn-lg" (click)="pageUp()">
-                        <span class="fa fa-chevron-up"></span>
-                    </button>
+                        <button md-raised-button (click)="pageUp()">
+                            <span class="fa fa-lg fa-chevron-up"></span>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="menuBarButtonGroup">
-                <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
+                <div class="menuBarButtonGroup">
+                    <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
 
-                    <button type="button" class="btn btn-default btn-lg" (click)="unlockPage()">
-                        <span [hidden]="!unlockStatus" class="fa fa-unlock"></span>
-                        <span [hidden]="unlockStatus" class="fa fa-lock"></span>
-                    </button>
-                    <button [hidden]="!unlockStatus" type="button" class="btn btn-default btn-lg"  (click)="newPage()">
-                        <span class="fa fa-plus"></span>
-                    </button>
-                    <button [hidden]="!unlockStatus" type="button" class="btn btn-default btn-lg" (click)="deletePage()">
-                        <span class="fa fa-trash"></span>
-                    </button>                    
-                    <button type="button" class="btn btn-default btn-lg"  routerLink="/settings">
-                        <span class="fa fa-cog"></span>
-                    </button>
+                        <button md-raised-button (click)="unlockPage()">
+                            <span [hidden]="!unlockStatus" class="fa fa-lg fa-unlock"></span>
+                            <span [hidden]="unlockStatus" class="fa fa-lg fa-lock"></span>
+                        </button>
+                        <button [hidden]="!unlockStatus" md-raised-button  (click)="newPage()">
+                            <span class="fa fa-lg fa-plus"></span>
+                        </button>
+                        <button [hidden]="!unlockStatus" md-raised-button (click)="deletePage()">
+                            <span class="fa fa-lg fa-trash"></span>
+                        </button>                    
+                        <button md-raised-button  routerLink="/settings">
+                            <span class="fa fa-lg fa-cog"></span>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     </div>
 </div>

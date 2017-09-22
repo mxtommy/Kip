@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-
+import { OverlayContainer } from '@angular/material';
 
 import { TreeNode, TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
@@ -23,13 +23,17 @@ export class AppComponent implements OnInit, OnDestroy {
   unlockStatus: boolean = false; 
   unlockStatusSub: Subscription;
 
+  themeClass: string = 'default-light fullheight';
+  
+
   constructor(  
     private treeManager: TreeManagerService,
     private AppSettingsService: AppSettingsService,
     private route: ActivatedRoute,
     private SignalKConnectionService: SignalKConnectionService,
     private router: Router,
-    private DataSetService: DataSetService) { }
+    private DataSetService: DataSetService,
+    private overlayContainer: OverlayContainer) { }
 
 
   ngOnInit() {
@@ -51,6 +55,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.rootPageIndexSub.unsubscribe();
+  }
+
+  setTheme(theme: string) {
+    this.themeClass = theme + ' fullheight';
   }
 
   unlockPage() {

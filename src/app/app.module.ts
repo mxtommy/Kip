@@ -7,7 +7,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
   MdMenuModule,
-  MdIconModule
+  MdButtonModule
 } from '@angular/material';
 
 
@@ -76,8 +76,9 @@ const appRoutes: Routes = [
     RouterModule.forRoot(appRoutes, { /*enableTracing: true */ } ),
     AngularSplitModule,
     BrowserAnimationsModule,
+
     MdMenuModule,
-    MdIconModule
+    MdButtonModule
   ],
   entryComponents: [ 
     WidgetUnknownComponent, 
