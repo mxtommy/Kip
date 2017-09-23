@@ -60,32 +60,15 @@ export class LayoutSplitComponent implements OnInit {
     // area. If we're splitting in other direction, we need a new splitSet...
     if (this.splitSet.direction == direction) {
      
-        // same direction, add new area after specified area
+      // same direction, add new area after specified area
                 
-        this.splitSet.splitAreas[areaIndex].size = area1Size;
-        this.splitSet.splitAreas.splice(areaIndex+1, 0, newArea);
+      this.splitSet.splitAreas[areaIndex].size = area1Size;
+      this.splitSet.splitAreas.splice(areaIndex+1, 0, newArea);
          
     } else {
-     /*
-        // new direction, convert current splitArea to a SplitSet with 2 areas,
-        // 1 containing existing area, 1 new one.
-        let newSplitSet = newUUID();
-        let newSplitSet: ISplitSet =  {
-            uuid: newUUID,
-            direction: direction,
-            splitAreas: [{
-                    uuid: splitAreaUUID,
-                    type: 'widget',
-                    size: area1Size
-                }]
-            }
-        newSplitSet.splitAreas.push(newArea);
-        this.splitSets.push(newSplitSet);
-         
-        // convert existing area to splitset.
-        this.splitSets[splitSetIndex].splitAreas[areaIndex].uuid = newUUID;
-        this.splitSets[splitSetIndex].splitAreas[areaIndex].type = 'splitSet'
-     */
+      let newSplitUUID = this.LayoutSplitsService.newSplit(direction, areaUUID, newWidgetUUID);
+      this.splitSet.splitAreas[areaIndex].uuid = newSplitUUID;
+      this.splitSet.splitAreas[areaIndex].type = 'splitSet';
     }
     this.saveSplit();
   }
