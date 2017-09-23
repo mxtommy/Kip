@@ -23,8 +23,9 @@ export class AppComponent implements OnInit, OnDestroy {
   unlockStatus: boolean = false; 
   unlockStatusSub: Subscription;
 
+
   themeClass: string = 'default-light fullheight';
-  
+  themeNameSub: Subscription;
 
   constructor(  
     private treeManager: TreeManagerService,
@@ -50,15 +51,23 @@ export class AppComponent implements OnInit, OnDestroy {
       status => { this.unlockStatus = status; }
     );
 
+    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+      newTheme => {
+        this.themeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
+      }
+    )
+
     this.DataSetService.startAllDataSets();
   }
 
   ngOnDestroy() {
     this.rootPageIndexSub.unsubscribe();
+    this.unlockStatusSub.unsubscribe();
+    this.themeNameSub.unsubscribe();
   }
 
   setTheme(theme: string) {
-    this.themeClass = theme + ' fullheight';
+    this.AppSettingsService.setThemName(theme);
   }
 
   unlockPage() {

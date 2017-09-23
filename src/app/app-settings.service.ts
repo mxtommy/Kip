@@ -8,6 +8,7 @@ import { ISplitSet } from './layout-splits.service';
 
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
+const defaultTheme = 'default-light';
 
 const defaultSplitSet: ISplitSet[] = [ { uuid: 'isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', direction: 'horizontal', splitAreas: [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: 'widget', size: 40 }, { uuid: 'widgetno-2xxx-4xxx-yxxx-xxxxxxxxxxxx', type: 'widget', size: 60 } ]} ];
 const defaultRootSplits: string[] = ['isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'];
@@ -17,6 +18,7 @@ const defaultDataSets: DataSet[] = [];
 
 interface appSettings {
   signalKUrl: string;
+  themeName: string;
   treeNodes: TreeNode[];
   treeLinks: TreeLink[];
   unlockStatus: boolean;
@@ -31,13 +33,13 @@ export class AppSettingsService {
 
 
 
-  signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>('http://demo.signalk.org/signalk'); // this should be overwritten right away when loading settings, but you need to give something...
+  signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   treeNodes: TreeNode[] = [];
   treeLinks: TreeLink[] = [];
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
-
+  themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   dataSets: DataSet[] = [];
   root
 
@@ -46,20 +48,24 @@ export class AppSettingsService {
 
       this.signalKUrl.next(defaultSignalKUrl);
       this.unlockStatus.next(defaultUnlockStatus);
+      this.themeName.next(defaultTheme);
       this.treeNodes = defaultTreeNodes;
       this.treeLinks = defaultTreeLinks;
       this.dataSets = defaultDataSets;
       this.splitSets = defaultSplitSet;
-      this.rootSplits = defaultRootSplits
+      this.rootSplits = defaultRootSplits;
+      this.themeName.next(defaultTheme);
     } else {
       let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
       this.signalKUrl.next(storageObject['signalKUrl']);
+      this.themeName.next(storageObject['themeName']);
       this.unlockStatus.next(storageObject['unlockStatus']);
       this.treeNodes = storageObject.treeNodes;
       this.treeLinks = storageObject.treeLinks;
       this.dataSets = storageObject.dataSets;
       this.splitSets = storageObject.splitSets;
       this.rootSplits = storageObject.rootSplits;
+      
     }   
   }
 
@@ -82,6 +88,15 @@ export class AppSettingsService {
   }
   setUnlockStatus(value) {
     this.unlockStatus.next(value);
+    this.saveToLocalStorage();
+  }
+
+  // Themes
+  getThemeNameAsO() {
+    return this.themeName.asObservable();
+  }
+  setThemName(newName: string) {
+    this.themeName.next(newName);
     this.saveToLocalStorage();
   }
 
@@ -125,6 +140,7 @@ export class AppSettingsService {
 
     let storageObject: appSettings = {
       signalKUrl: this.signalKUrl.getValue(),
+      themeName: this.themeName.getValue(),
       treeNodes: this.treeNodes,
       treeLinks: this.treeLinks,
       unlockStatus: this.unlockStatus.getValue(),
