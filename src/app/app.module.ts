@@ -31,7 +31,7 @@ import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
-import { WidgetSplitComponent } from './widget-split/widget-split.component';
+//import { WidgetSplitComponent } from './widget-split/widget-split.component'; //TODO cleanup files
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent } from './unit-window/unit-window.component';
@@ -56,7 +56,7 @@ const appRoutes: Routes = [
     SettingsComponent,
     UnitWindowComponent,
     WidgetBlankComponent,
-    WidgetSplitComponent,
+    //WidgetSplitComponent, TODO Del
     DynamicWidgetDirective,
     WidgetUnknownComponent,
     WidgetTextGenericComponent,
@@ -84,7 +84,7 @@ const appRoutes: Routes = [
   entryComponents: [ 
     WidgetUnknownComponent, 
     WidgetBlankComponent, 
-    WidgetSplitComponent, 
+   // WidgetSplitComponent, TODO Del 
     WidgetNumericComponent,
     WidgetTextGenericComponent,
     WidgetHistoricalComponent

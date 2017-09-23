@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
-import { TreeNode, TreeManagerService } from '../tree-manager.service';
+import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 
 import { WidgetListService, widgetInfo } from '../widget-list.service';
@@ -16,14 +16,14 @@ import { WidgetListService, widgetInfo } from '../widget-list.service';
 
 
 export class UnitWindowComponent implements OnInit {
-  @Input('nodeUUID') nodeUUID: string;
+  @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
   @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
 
   widgetList: widgetInfo[];
 
   modalRef;
-  activePage: TreeNode;
+  activePage: IWidget;
   instance;
   newWidget: string; //Used in change modal form.
   private componentRef: ComponentRef<{}>;
@@ -31,14 +31,14 @@ export class UnitWindowComponent implements OnInit {
   constructor(
       private modalService: NgbModal,
       private componentFactoryResolver: ComponentFactoryResolver,
-      private treeManager: TreeManagerService,
+      private WidgetManagerService: WidgetManagerService,
       private widgetListService: WidgetListService) { }
 
   ngOnInit() {
     this.widgetList = this.widgetListService.getList();
-    this.activePage = this.treeManager.getNode(this.nodeUUID);
-    this.newWidget  = this.activePage.nodeType;
-    let componentName = this.widgetListService.getComponentName(this.activePage.nodeType);
+    this.activePage = this.WidgetManagerService.getWidget(this.widgetUUID);
+    this.newWidget  = this.activePage.type; // init form value to current
+    let componentName = this.widgetListService.getComponentName(this.activePage.type);
 
     //dynamically load component.
     let componentFactory = this.componentFactoryResolver.resolveComponentFactory(componentName);
@@ -48,14 +48,14 @@ export class UnitWindowComponent implements OnInit {
 
     // inject info into new component
     this.instance = <DynamicComponentData> this.componentRef.instance;
-    this.instance.nodeUUID = this.nodeUUID;
+    this.instance.widgetUUID = this.widgetUUID;
     this.instance.unlockStatus = this.unlockStatus;
   }
 
   ngOnChanges(changes: any) {
 //    this.ngOnInit();
 
-    if ( ('nodeUUID' in changes ) && (changes.nodeUUID.firstChange === false)) {
+    if ( ('widgetUUID' in changes ) && (changes.widgetUUID.firstChange === false)) {
       this.ngOnInit();
     }
 
@@ -75,8 +75,8 @@ export class UnitWindowComponent implements OnInit {
 
   changeWidget() {
     this.modalRef.close();
-    if (this.activePage.nodeType != this.newWidget) {
-      this.treeManager.updateNodeType(this.nodeUUID, this.newWidget);
+    if (this.activePage.type != this.newWidget) {
+      this.WidgetManagerService.updateWidgetType(this.widgetUUID, this.newWidget);
       this.ngOnInit();
     }
   }
@@ -84,6 +84,6 @@ export class UnitWindowComponent implements OnInit {
 }
 
 export abstract class DynamicComponentData {
-    nodeUUID: string;
+    widgetUUID: string;
     unlockStatus: boolean;
 }

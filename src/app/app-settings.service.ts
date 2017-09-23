@@ -16,7 +16,7 @@ const defaultRootSplits: string[] = ['isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'];
 const defaultTreeNodes: TreeNode[] = [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', name: "Home Page", nodeType: "WidgetBlank", nodeData: null }, { uuid: 'widgetno-2xxx-4xxx-yxxx-xxxxxxxxxxxx', name: "Home Page2", nodeType: "WidgetBlank", nodeData: null } ];
 const defaultTreeLinks: TreeLink[] = [ { parent: 'ROOT', child: 'widgetno-xxxx-4xxx-yxxx-xxxxxxxxxxxx' }];
 const defaultDataSets: DataSet[] = [];
-const defaultWidgets: Array<IWidget> = [];
+const defaultWidgets: Array<IWidget> = [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: "WidgetBlank", config: null }, { uuid: 'widgetno-2xxx-4xxx-yxxx-xxxxxxxxxxxx', type: "WidgetBlank", config: null } ];;
 
 
 interface appSettings {

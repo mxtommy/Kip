@@ -5,10 +5,10 @@
   <ng-template ngFor let-area let-i="index" [ngForOf]="splitSet.splitAreas">
     <split-area [order]="i" [size]="area.size" [ngSwitch]="area.type"> 
         <div class="splitArea" *ngSwitchCase="'widget'">
-          <!--<app-unit-window 
-              [nodeUUID]="area.uuid"
+          <app-unit-window 
+              [widgetUUID]="area.uuid"
               [unlockStatus]="unlockStatus"
-          ></app-unit-window> --> {{ area.uuid }}===== {{ i }}
+          ></app-unit-window>
           <div *ngIf="unlockStatus" class="splitMenu">
               <md-menu #splitMenu="mdMenu">
                 <button md-menu-item (click)="splitArea(area.uuid, 'vertical')">Split Horz.</button>
