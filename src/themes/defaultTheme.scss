@@ -1,7 +1,7 @@
 @import '~@angular/material/theming';
 
 $defaultTheme-primary: mat-palette($mat-red);
-$defaultTheme-accent:  mat-palette($mat-pink, A200, A100, A400);
+$defaultTheme-accent:  mat-palette($mat-blue, A200, A100, A400);
 
 // The warn palette is optional (defaults to red).
 $defaultTheme-warn:    mat-palette($mat-red);

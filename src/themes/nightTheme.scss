@@ -35,7 +35,7 @@ $mat-custom-night: (
 
 
 $nightTheme-primary: mat-palette($mat-custom-night);
-$nightTheme-accent:  mat-palette($mat-pink, A200, A100, A400);
+$nightTheme-accent:  mat-palette($mat-green, A200, A100, A400);
 
 // The warn palette is optional (defaults to red).
 $nightTheme-warn:    mat-palette($mat-red);

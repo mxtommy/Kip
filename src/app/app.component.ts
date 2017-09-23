@@ -54,6 +54,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
       newTheme => {
         this.themeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
+        this.overlayContainer.getContainerElement().classList.add(newTheme);
       }
     )
 
