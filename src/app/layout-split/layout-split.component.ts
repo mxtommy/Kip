@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 
 import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
+import { WidgetManagerService } from '../widget-manager.service';
 
 @Component({
   selector: 'layout-split',
@@ -14,7 +15,9 @@ export class LayoutSplitComponent implements OnInit {
   
   splitSet: ISplitSet;
 
-  constructor(private LayoutSplitsService: LayoutSplitsService) { }
+  constructor(
+    private LayoutSplitsService: LayoutSplitsService,
+    private WidgetManagerService: WidgetManagerService) { }
 
   ngOnInit() {
     this.splitSet = this.LayoutSplitsService.getSplit(this.splitUUID);
@@ -46,8 +49,9 @@ export class LayoutSplitComponent implements OnInit {
     let area1Size = currentSize / 2;
     let area2Size = currentSize - area1Size;
     
+    let newWidgetUUID = this.WidgetManagerService.newWidget();
     let newArea = {
-        uuid: 'widgetno-1xxx-4xxx-yxa9-xxxxxxxxxxxx',
+        uuid: newWidgetUUID,
         type: 'widget',
         size: area2Size
         };

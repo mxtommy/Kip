@@ -26,6 +26,7 @@ import { DataSetService } from './data-set.service';
 import { TreeManagerService } from './tree-manager.service';
 import { LayoutSplitsService } from './layout-splits.service';
 import { AppSettingsService } from './app-settings.service';
+import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
 
@@ -97,6 +98,7 @@ const appRoutes: Routes = [
     TreeManagerService,
     LayoutSplitsService,
     WidgetListService,
+    WidgetManagerService,
     UnitConvertService,
     AppSettingsService 
   ],
