@@ -7,7 +7,11 @@ import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
   MdMenuModule,
-  MdButtonModule
+  MdButtonModule,
+  MdDialogModule,
+  MdSelectModule,
+  MdToolbarModule,
+  MdCheckboxModule
 } from '@angular/material';
 
 
@@ -34,11 +38,11 @@ import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 //import { WidgetSplitComponent } from './widget-split/widget-split.component'; //TODO cleanup files
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
-import { UnitWindowComponent } from './unit-window/unit-window.component';
+import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
-import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
+import { WidgetNumericComponent, WidgetNumericModalComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
@@ -55,6 +59,7 @@ const appRoutes: Routes = [
     AppComponent,
     SettingsComponent,
     UnitWindowComponent,
+    UnitWindowModalComponent,
     WidgetBlankComponent,
     //WidgetSplitComponent, TODO Del
     DynamicWidgetDirective,
@@ -64,6 +69,7 @@ const appRoutes: Routes = [
     RootDisplayComponent,
     FilterSelfPipe,
     WidgetNumericComponent,
+    WidgetNumericModalComponent,
     SettingsDatasetsComponent,
     SettingsSignalkComponent,
     WidgetHistoricalComponent,
@@ -79,7 +85,11 @@ const appRoutes: Routes = [
     BrowserAnimationsModule,
 
     MdMenuModule,
-    MdButtonModule
+    MdButtonModule,
+    MdDialogModule,
+    MdSelectModule,
+    MdToolbarModule,
+    MdCheckboxModule
   ],
   entryComponents: [ 
     WidgetUnknownComponent, 
@@ -87,7 +97,11 @@ const appRoutes: Routes = [
    // WidgetSplitComponent, TODO Del 
     WidgetNumericComponent,
     WidgetTextGenericComponent,
-    WidgetHistoricalComponent
+    WidgetHistoricalComponent,
+
+    //dialogs
+    UnitWindowModalComponent,
+    WidgetNumericModalComponent
   ],
   providers: [ 
     SignalKService,

@@ -8,6 +8,12 @@
     $background: map-get($theme, background);
     $foreground: map-get($theme, foreground);
 
+    .app-defaults {
+        background-color: mat-color($primary, 200); //mat-color($background, background);
+        color: mat-color($foreground, text);
+
+    }
+
     .theme-menu {
         background-color: mat-color($primary, 900);
     }

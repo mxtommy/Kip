@@ -1,0 +1,13 @@
+@import '~@angular/material/theming';
+
+
+@mixin widget-blank-theme($theme) {
+
+    $primary: map-get($theme, primary);
+    $warn: map-get($theme, warn);
+    $background: map-get($theme, background);
+    $foreground: map-get($theme, foreground);
+
+    .widget-theme {
+    }
+}    

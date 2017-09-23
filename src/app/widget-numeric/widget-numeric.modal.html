@@ -1,0 +1,93 @@
+<h1 md-dialog-title>Settings:</h1>
+<form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
+
+    <md-dialog-content>
+
+        <md-tab-group class="tab-group">
+            <md-tab label="Tab 1">
+                <div class="tab-content"> 
+                    <md-select placeholder="Widget Type" [(ngModel)]="newWidget" name="newWidget">
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name=selfPaths
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                </div>
+
+            </md-tab>
+
+<!--
+
+                  <label class="" for="path">SignalK Path:</label>
+                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()">
+                    <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
+                  </select>                
+                </div>
+  
+                <div class="checkbox">
+                    <label class="" for="selfPaths">
+                      <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
+                    </label>
+                  </div>              
+  
+                <div class="form-group">
+                  <label class="" for="path">Source:</label>
+                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
+                    <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
+                  </select>                
+                </div>
+            </ngb-tab>
+  
+            <ngb-tab title="Units">
+              <ng-template ngbTabContent>
+                  <div class="form-group">
+                      <label class="" for="unitGroup">Unit Group:</label>
+                      <select class="form-control" id="unitGroup" name="unitGroup" [(ngModel)]="settingsForm.selectedUnitGroup" (ngModelChange)="settingsFormUpdateUnitType()">
+                          <option *ngFor="let group of settingsForm.availableUnitGroups" [value]="group">{{ group }}</option>
+                      </select>  
+                  </div>
+                  <div class="form-group">
+                      <label class="" for="unitName">Unit:</label>
+                      <select class="form-control" id="unitName" name="unitName" [(ngModel)]="settingsForm.selectedUnitName">
+                          <option *ngFor="let unitName of settingsForm.availableUnitNames" [value]="unitName">{{unitName}}</option>
+                      </select>  
+                  </div>
+              </ng-template>
+            </ngb-tab>  
+  
+            <ngb-tab title="Display">
+                <ng-template ngbTabContent>
+                  <div class="form-group">
+                    <label class="" for="label">Label:</label>
+                    <input class="form-control" type="text" id="label" name="label"  [(ngModel)]="settingsForm.label">                
+                  </div>
+                  <div class="form-group">
+                      <label class="" for="decimals">Number of decimals:</label>
+                      <input class="form-control" type="number" min="0" max="5" id="decimals" name="decimals"  [(ngModel)]="settingsForm.numDecimal">                
+                  </div>
+                </ng-template>
+              </ngb-tab>
+  
+  
+          </ngb-tabset>            
+        </form>
+   
+        
+  
+  
+     </div>
+
+     -->
+        </md-tab-group>
+    </md-dialog-content>
+</form>
+<md-dialog-actions>
+    <button md-raised-button md-dialog-close>Cancel</button>
+    <button md-raised-button color="accent" type=submit>Confirm</button>
+</md-dialog-actions>

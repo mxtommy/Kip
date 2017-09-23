@@ -12,11 +12,11 @@
 }
 
 .unitMenu {
-    position: absolute;    
-    height: 90%;    
-    width: 20px;
-    right: 0%;
-    background-color: darkgray;
-    text-align: center;
-    border-style: outset;
+    position: absolute;
+    right: 5%;
+    bottom: 5%;
+}
+
+.mat-select-trigger { 
+    min-width: 30px !important; 
 }

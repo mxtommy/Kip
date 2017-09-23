@@ -1,7 +1,6 @@
-import { Component, OnInit, Input, ComponentFactoryResolver, ComponentRef, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild } from '@angular/core';
+import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
 import { NgModel } from '@angular/forms';
-import { NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
@@ -13,32 +12,25 @@ import { WidgetListService, widgetInfo } from '../widget-list.service';
   templateUrl: './unit-window.component.html',
   styleUrls: ['./unit-window.component.css']
 })
-
-
 export class UnitWindowComponent implements OnInit {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
   @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
 
-  widgetList: widgetInfo[];
 
-  modalRef;
-  activePage: IWidget;
+  activeWidget: IWidget;
   instance;
-  newWidget: string; //Used in change modal form.
   private componentRef: ComponentRef<{}>;
 
   constructor(
-      private modalService: NgbModal,
       private componentFactoryResolver: ComponentFactoryResolver,
+      public dialog: MdDialog,
       private WidgetManagerService: WidgetManagerService,
-      private widgetListService: WidgetListService) { }
+        private widgetListService: WidgetListService) { }
 
   ngOnInit() {
-    this.widgetList = this.widgetListService.getList();
-    this.activePage = this.WidgetManagerService.getWidget(this.widgetUUID);
-    this.newWidget  = this.activePage.type; // init form value to current
-    let componentName = this.widgetListService.getComponentName(this.activePage.type);
+    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
+    let componentName = this.widgetListService.getComponentName(this.activeWidget.type);
 
     //dynamically load component.
     let componentFactory = this.componentFactoryResolver.resolveComponentFactory(componentName);
@@ -66,19 +58,19 @@ export class UnitWindowComponent implements OnInit {
 
   }
 
-  openWidgetSelector(content) {
-    this.modalRef = this.modalService.open(content);
-    this.modalRef.result.then((result) => {
-    }, (reason) => {
+  selectWidget() {
+    let dialogRef = this.dialog.open(UnitWindowModalComponent, {
+      
+      data: { currentType: this.activeWidget.type }
     });
-  }
 
-  changeWidget() {
-    this.modalRef.close();
-    if (this.activePage.type != this.newWidget) {
-      this.WidgetManagerService.updateWidgetType(this.widgetUUID, this.newWidget);
-      this.ngOnInit();
-    }
+    dialogRef.afterClosed().subscribe(result => {
+      if (this.activeWidget.type != result) {
+        this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
+        this.ngOnInit();
+      }
+    });
+    
   }
 
 }
@@ -86,4 +78,37 @@ export class UnitWindowComponent implements OnInit {
 export abstract class DynamicComponentData {
     widgetUUID: string;
     unlockStatus: boolean;
+}
+
+
+@Component({
+  selector: 'app-unit-window-modal',
+  templateUrl: './unit-window.modal.html',
+  styleUrls: ['./unit-window.component.css']
+})
+export class UnitWindowModalComponent implements OnInit {
+
+  newWidget: string;
+  widgetList: widgetInfo[];
+  
+  
+  constructor(
+    private widgetListService: WidgetListService,
+    public dialogRef: MdDialogRef<UnitWindowModalComponent>,
+    @Inject(MD_DIALOG_DATA) public data: any) { }
+
+  onNoClick(): void {
+    this.dialogRef.close();
+  }
+
+
+  ngOnInit() {
+    this.widgetList = this.widgetListService.getList();
+    this.newWidget = this.data.currentType;
+  }
+
+  submitNewWidget() {
+      this.dialogRef.close(this.newWidget);
+  }
+  
 }

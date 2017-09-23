@@ -1,7 +1,8 @@
 <split
   [direction]="splitSet.direction"
   [disabled]="!unlockStatus"
-  (dragEnd)="onDragEnd($event)">
+  (dragEnd)="onDragEnd($event)"
+  [gutterSize]="6">
   <ng-template ngFor let-area let-i="index" [ngForOf]="splitSet.splitAreas">
     <split-area [order]="i" [size]="area.size" [ngSwitch]="area.type"> 
         <div class="splitArea" *ngSwitchCase="'widget'">
@@ -14,7 +15,7 @@
                 <button md-menu-item (click)="splitArea(area.uuid, 'vertical')">Split Horz.</button>
                 <button md-menu-item (click)="splitArea(area.uuid, 'horizontal')">Split Vert.</button>
               </md-menu>
-              <button color="primary" md-mini-fab [mdMenuTriggerFor]="splitMenu"><span class="fa fa-columns"></span></button>
+              <button color="accent" md-mini-fab [mdMenuTriggerFor]="splitMenu"><span class="fa fa-columns"></span></button>
           </div>
         </div>
         <layout-split *ngSwitchCase="'splitSet'"

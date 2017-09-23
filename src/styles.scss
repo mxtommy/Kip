@@ -7,10 +7,14 @@
 
 // import Components
 @import 'app/app.component.scss';
+@import 'app/layout-split/layout-split.component.scss';
+@import 'app/widget-blank/widget-blank.component.scss';
 
 @mixin theme-components($theme) {
     @include angular-material-theme($theme);
     @include app-theme($theme);
+    @include layout-split-theme($theme);
+    @include widget-blank-theme($theme);
 }
 
 @include theme-components($defaultTheme-light);

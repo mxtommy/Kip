@@ -1,5 +1,5 @@
 <div [class]="themeClass">
-    <div class="mainContainer" >
+    <div class="mainContainer app-defaults" >
         <div class="mainWindow">
             <router-outlet></router-outlet>
         </div>
@@ -40,13 +40,13 @@
                     <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
 
                         <button md-raised-button (click)="unlockPage()">
-                            <span [hidden]="!unlockStatus" class="fa fa-lg fa-unlock"></span>
-                            <span [hidden]="unlockStatus" class="fa fa-lg fa-lock"></span>
+                            <span *ngIf="unlockStatus" class="fa fa-lg fa-unlock"></span>
+                            <span *ngIf="!unlockStatus" class="fa fa-lg fa-lock"></span>
                         </button>
-                        <button [hidden]="!unlockStatus" md-raised-button  (click)="newPage()">
+                        <button *ngIf="unlockStatus" md-raised-button  (click)="newPage()">
                             <span class="fa fa-lg fa-plus"></span>
                         </button>
-                        <button [hidden]="!unlockStatus" md-raised-button (click)="deletePage()">
+                        <button *ngIf="unlockStatus" md-raised-button (click)="deletePage()">
                             <span class="fa fa-lg fa-trash"></span>
                         </button>                    
                         <button md-raised-button  routerLink="/settings">

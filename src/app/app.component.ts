@@ -23,7 +23,7 @@ export class AppComponent implements OnInit, OnDestroy {
   unlockStatus: boolean = false; 
   unlockStatusSub: Subscription;
 
-
+  themeName: string;
   themeClass: string = 'default-light fullheight';
   themeNameSub: Subscription;
 
@@ -54,7 +54,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
       newTheme => {
         this.themeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
+        if (this.themeName) {
+          this.overlayContainer.getContainerElement().classList.remove(this.themeName);
+        }
         this.overlayContainer.getContainerElement().classList.add(newTheme);
+        this.themeName = newTheme;
       }
     )
 

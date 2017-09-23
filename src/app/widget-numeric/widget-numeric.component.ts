@@ -1,9 +1,9 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
+import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
-import { TreeNode, TreeManagerService } from '../tree-manager.service';
+import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { UnitConvertService } from '../unit-convert.service';
 
 
@@ -17,15 +17,11 @@ interface widgetConfig {
 }
 
 interface widgetSettingsForm {
-  availablePaths: string[];
   selectedPath: string;
   availableSources: string[];
   selectedSource: string;
-  selfPaths: boolean;
   pathDataType: string;
   label: string;
-  availableUnitGroups: string[];
-  availableUnitNames: string[];
   selectedUnitGroup: string;
   selectedUnitName: string;
   numDecimal: number;
@@ -38,59 +34,53 @@ interface widgetSettingsForm {
 })
 export class WidgetNumericComponent implements OnInit, OnDestroy {
 
-  @Input('nodeUUID') nodeUUID: string;
+  @Input('widgetUUID') widgetUUID: string;
 
-  modalRef;
   converter = this.UnitConvertService.getConverter();
   
   settingsForm: widgetSettingsForm = {
-    availablePaths: [],
     selectedPath: null,
     availableSources: [],
     selectedSource: null,
-    selfPaths: true, //only show paths for own vessel
     pathDataType: null,
     label: null,
-    availableUnitGroups: Object.keys(this.converter),
-    availableUnitNames: null,
     selectedUnitGroup: null,
     selectedUnitName: null,
     numDecimal: 2,
   }
 
-  activePage: TreeNode;
+  activeWidget: IWidget;
 
-  dataValue: any = '---';
+  dataValue: any = null;
   dataTimestamp: number = Date.now();
 
-  nodeConfig: widgetConfig = {
+  widgetConfig: widgetConfig = {
     signalKPath: null,
     signalKSource: 'default',
     label: null,
     unitGroup: 'discreet',
     unitName: 'no unit',
     numDecimal: 2
-
   }
 
   //subs
   valueSub: Subscription = null;
   
   constructor(
-    private modalService: NgbModal, 
+    public dialog: MdDialog,
     private SignalKService: SignalKService,
-    private treeManager: TreeManagerService,
+    private WidgetManagerService: WidgetManagerService,
     private UnitConvertService: UnitConvertService) {
   }
 
   ngOnInit() {
-    this.activePage = this.treeManager.getNode(this.nodeUUID);
-    if (this.activePage.nodeData === null) {
+    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
+    if (this.activeWidget.config === null) {
         // no data, let's set some!
-      this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
     } else {
-      this.nodeConfig = this.activePage.nodeData; // load existing config.
-    }
+      this.widgetConfig = this.activeWidget.config; // load existing config.
+    }0
     this.subscribePath();
   }
 
@@ -101,33 +91,29 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.nodeConfig.signalKPath === null) { return } // nothing to sub to...
+    if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.nodeUUID, this.nodeConfig.signalKPath).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath).subscribe(
       pathObject => {
         if (pathObject === null) {
           return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
         }
         let source: string;
-        if (this.nodeConfig.signalKSource == 'default') {
+        if (this.widgetConfig.signalKSource == 'default') {
           source = pathObject.defaultSource;
         } else {
-          source = this.nodeConfig.signalKSource;
+          source = this.widgetConfig.signalKSource;
         }
 
         this.dataTimestamp = pathObject.sources[source].timestamp;
 
         if (pathObject.sources[source].value === null) {
-          this.dataValue = 'N/A';
+          this.dataValue = null;
         }
 
-        if (pathObject.type == 'number') {
-          let value:number = pathObject.sources[source].value;
-          let converted = this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](value);
-          this.dataValue = converted.toFixed(this.nodeConfig.numDecimal);
-        } else {
-          this.dataValue = pathObject.sources[source].value;
-        }
+        let value:number = pathObject.sources[source].value;
+        let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](value);
+        this.dataValue = converted.toFixed(this.widgetConfig.numDecimal);
         
       }
     );
@@ -137,10 +123,26 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.nodeUUID, this.nodeConfig.signalKPath)
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.signalKPath)
     }
   }
 
+  openWidgetSettings() {
+    let dialogRef = this.dialog.open(WidgetNumericModalComponent, {
+      
+      data: { currentType: this.activeWidget.type }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (this.activeWidget.type != result) {
+        this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
+        this.ngOnInit();
+      }
+    });
+
+
+  }
+/*
   openWidgetSettings(content) {
       
     this.settingsForm.selectedPath = this.nodeConfig.signalKPath;
@@ -158,7 +160,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
       
      }
-    this.settingsForm.availablePaths = this.SignalKService.getPathsByType('number').sort();
+    
      
     this.modalRef = this.modalService.open(content);
     this.modalRef.result.then((result) => {
@@ -204,5 +206,42 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
       this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
       this.subscribePath();
   }
+*/
+}
 
+
+
+@Component({
+  selector: 'numeriv-widget-modal',
+  templateUrl: './widget-numeric.modal.html',
+  styleUrls: ['./widget-numeric.component.css']
+})
+export class WidgetNumericModalComponent implements OnInit {
+
+  settingsData: widgetSettingsForm;
+  selfPaths: boolean = true;
+  availablePaths: Array<string> = [];
+  availableUnitGroups: string[];
+  availableUnitNames: string[];
+  
+  constructor(
+    private SignalKService: SignalKService,
+    public dialogRef: MdDialogRef<WidgetNumericModalComponent>,
+    @Inject(MD_DIALOG_DATA) public data: any) { }
+
+  onNoClick(): void {
+    this.dialogRef.close();
+  }
+
+
+  ngOnInit() {
+    this.availablePaths = this.SignalKService.getPathsByType('number').sort();
+
+   
+  }
+
+  submitConfig() {
+
+  }
+  
 }

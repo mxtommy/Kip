@@ -6,7 +6,7 @@ import { WidgetManagerService } from '../widget-manager.service';
 @Component({
   selector: 'layout-split',
   templateUrl: './layout-split.component.html',
-  styleUrls: ['./layout-split.component.css']
+  styleUrls: ['./layout-split.component.css', './layout-split.component.scss']
 })
 export class LayoutSplitComponent implements OnInit {
 
