@@ -215,7 +215,7 @@ export class WidgetNumericModalComponent implements OnInit {
   availableUnitGroups: string[];
   availableUnitNames: string[];
   
-  converter = this.UnitConvertService.getConverter();
+  converter: Object = this.UnitConvertService.getConverter();
 
  // availableUnitNames = Object.keys(this.converter[this.widgetConfig.unitGroup]);
 
@@ -232,9 +232,15 @@ export class WidgetNumericModalComponent implements OnInit {
 
   ngOnInit() {
     this.settingsData = this.data;
+
+    //populate available choices
     this.availablePaths = this.SignalKService.getPathsByType('number').sort();
     if (this.availablePaths.includes(this.settingsData.selectedPath)) {
       this.settingsDataUpdatePath();
+    }
+    this.availableUnitGroups = Object.keys(this.converter);
+    if (this.converter.hasOwnProperty(this.settingsData.selectedUnitGroup)) {
+            this.availableUnitNames = Object.keys(this.converter[this.settingsData.selectedUnitGroup]);
     }
   }
 
@@ -255,6 +261,14 @@ export class WidgetNumericModalComponent implements OnInit {
       }
     } else {
       this.settingsData.label = this.settingsData.selectedPath;// who knows?
+    }
+  }
+
+  updateUnitType() {
+    if (this.converter.hasOwnProperty(this.settingsData.selectedUnitGroup)) {
+      this.availableUnitNames = Object.keys(this.converter[this.settingsData.selectedUnitGroup]);
+      // select first name
+      this.settingsData.selectedUnitName = this.availableUnitNames[0];
     }
   }
 

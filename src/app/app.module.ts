@@ -12,7 +12,8 @@ import {
   MdSelectModule,
   MdToolbarModule,
   MdCheckboxModule,
-  MdTabsModule
+  MdTabsModule,
+  MdStepperModule
 } from '@angular/material';
 
 
@@ -91,7 +92,8 @@ const appRoutes: Routes = [
     MdSelectModule,
     MdToolbarModule,
     MdCheckboxModule,
-    MdTabsModule
+    MdTabsModule,
+    MdStepperModule
   ],
   entryComponents: [ 
     WidgetUnknownComponent, 

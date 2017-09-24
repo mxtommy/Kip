@@ -2,8 +2,8 @@
 
     <md-dialog-content>
 
-        <md-tab-group class="tab-group">
-            <md-tab label="Source">
+        <md-horizontal-stepper>
+            <md-step label="">
                 <div class="tab-content"> 
                     <md-select 
                         [style.width]="'100%'" 
@@ -33,8 +33,37 @@
                         </md-option>
                     </md-select>
                 </div>
-
-            </md-tab>
+                <button md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
+            </md-step>
+            <md-step label="Units">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Unit Category" 
+                        [(ngModel)]="settingsData.selectedUnitGroup" 
+                        name="unitGroup"
+                         (ngModelChange)="updateUnitType()"
+                        >
+                        <md-option *ngFor="let group of availableUnitGroups" [value]="group">
+                            {{group}}
+                        </md-option>
+                    </md-select>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Unit Category" 
+                        [(ngModel)]="settingsData.selectedUnitName" 
+                        name="unitName"
+                        >
+                        <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                            {{unitName}}
+                        </md-option>
+                    </md-select>
+                    <button md-raised-button mdStepperPrevious>Back</button>
+                    <button md-raised-button color="accent" mdStepperNext>Next</button>
+                </div>
+            </md-step>
+            <md-step label="Display">
+            </md-step>
 
 <!--
 
@@ -79,10 +108,6 @@
      </div>
 
      -->
-        </md-tab-group>
+        </md-horizontal-stepper>
     </md-dialog-content>
 </form>
-<md-dialog-actions>
-    <button md-raised-button md-dialog-close>Cancel</button>
-    <button md-raised-button color="accent" type=submit>Confirm</button>
-</md-dialog-actions>
