@@ -26,7 +26,7 @@ export class UnitWindowComponent implements OnInit {
       private componentFactoryResolver: ComponentFactoryResolver,
       public dialog: MdDialog,
       private WidgetManagerService: WidgetManagerService,
-        private widgetListService: WidgetListService) { }
+      private widgetListService: WidgetListService) { }
 
   ngOnInit() {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);

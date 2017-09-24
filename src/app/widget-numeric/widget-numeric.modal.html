@@ -1,12 +1,17 @@
-<h1 md-dialog-title>Settings:</h1>
 <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
 
     <md-dialog-content>
 
         <md-tab-group class="tab-group">
-            <md-tab label="Tab 1">
+            <md-tab label="Source">
                 <div class="tab-content"> 
-                    <md-select placeholder="Widget Type" [(ngModel)]="newWidget" name="newWidget">
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="SignalK Path" 
+                        [(ngModel)]="settingsData.selectedPath" 
+                        name="selectedPath"
+                         (ngModelChange)="settingsDataUpdatePath()"
+                        >
                         <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                             {{path}}
                         </md-option>
@@ -14,10 +19,19 @@
                     <md-checkbox
                         [(ngModel)]="selfPaths"
                         [align]="align"
-                        name=selfPaths
+                        name="selfPaths"
                         >
                         Restric to own vessel
                     </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.selectedSource" 
+                        name="selectedSource">
+                        <md-option *ngFor="let source of availableSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
                 </div>
 
             </md-tab>

@@ -16,11 +16,9 @@ interface widgetConfig {
   numDecimal: number; // number of decimal places if a number
 }
 
-interface widgetSettingsForm {
+interface IWidgetsettingsData {
   selectedPath: string;
-  availableSources: string[];
   selectedSource: string;
-  pathDataType: string;
   label: string;
   selectedUnitGroup: string;
   selectedUnitName: string;
@@ -38,17 +36,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
   converter = this.UnitConvertService.getConverter();
   
-  settingsForm: widgetSettingsForm = {
-    selectedPath: null,
-    availableSources: [],
-    selectedSource: null,
-    pathDataType: null,
-    label: null,
-    selectedUnitGroup: null,
-    selectedUnitName: null,
-    numDecimal: 2,
-  }
-
   activeWidget: IWidget;
 
   dataValue: any = null;
@@ -128,35 +115,38 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
   }
 
   openWidgetSettings() {
+
+    //prepare current data
+    let settingsData: IWidgetsettingsData = {
+      selectedPath: this.widgetConfig.signalKPath,
+      selectedSource: this.widgetConfig.signalKSource,
+      label: this.widgetConfig.label,
+      numDecimal: this.widgetConfig.numDecimal,
+      selectedUnitGroup: this.widgetConfig.unitGroup,
+      selectedUnitName: this.widgetConfig.unitName
+    }
+
+
     let dialogRef = this.dialog.open(WidgetNumericModalComponent, {
-      
-      data: { currentType: this.activeWidget.type }
+      width: '500px',
+      data: settingsData
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (this.activeWidget.type != result) {
-        this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
-        this.ngOnInit();
-      }
+     console.log(result);
     });
+
 
 
   }
 /*
-  openWidgetSettings(content) {
+
       
-    this.settingsForm.selectedPath = this.nodeConfig.signalKPath;
-    this.settingsForm.selectedSource = this.nodeConfig.signalKSource;
-    this.settingsForm.label = this.nodeConfig.label;
-    this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
-    this.settingsForm.availableUnitNames = Object.keys(this.converter[this.nodeConfig.unitGroup]);
-    this.settingsForm.selectedUnitGroup = this.nodeConfig.unitGroup;
-    this.settingsForm.selectedUnitName = this.nodeConfig.unitName;
     
-    let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
     if (pathObject !== null) { 
-      this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-      this.settingsForm.pathDataType = pathObject.type;
+      this.settingsData.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+      this.settingsData.pathDataType = pathObject.type;
 
       
      }
@@ -168,42 +158,42 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
     });
   }
 
-  settingsFormUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
+  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
     if (pathObject === null) { return; }
-    this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsForm.selectedSource = 'default';
-    this.settingsForm.pathDataType = pathObject.type;
-    this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
+    this.settingsData.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+    this.settingsData.selectedSource = 'default';
+    this.settingsData.pathDataType = pathObject.type;
+    this.settingsData.numDecimal = this.widgetConfig.numDecimal;
     if (pathObject.meta) {
       if (typeof(pathObject.meta.abbreviation) == 'string') {
-        this.settingsForm.label = pathObject.meta.abbreviation;
+        this.settingsData.label = pathObject.meta.abbreviation;
       } else if (typeof(pathObject.meta.label) == 'string') {
-        this.settingsForm.label = pathObject.meta.label;
+        this.settingsData.label = pathObject.meta.label;
       } else {
-        this.settingsForm.label = this.settingsForm.selectedPath; // who knows?
+        this.settingsData.label = this.settingsData.selectedPath; // who knows?
       }
     } else {
-      this.settingsForm.label = this.settingsForm.selectedPath;// who knows?
+      this.settingsData.label = this.settingsData.selectedPath;// who knows?
     }
 
   }
 
-  settingsFormUpdateUnitType() {
-    this.settingsForm.availableUnitNames = Object.keys(this.converter[this.settingsForm.selectedUnitGroup]);
-    this.settingsForm.selectedUnitName = this.settingsForm.availableUnitNames[0];
+  settingsDataUpdateUnitType() {
+    this.settingsData.availableUnitNames = Object.keys(this.converter[this.settingsData.selectedUnitGroup]);
+    this.settingsData.selectedUnitName = this.settingsData.availableUnitNames[0];
   }
   
   saveSettings() {
       this.modalRef.close();
       this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-      this.nodeConfig.signalKPath = this.settingsForm.selectedPath;
-      this.nodeConfig.signalKSource = this.settingsForm.selectedSource;
-      this.nodeConfig.label = this.settingsForm.label;
-      this.nodeConfig.unitGroup = this.settingsForm.selectedUnitGroup;
-      this.nodeConfig.unitName = this.settingsForm.selectedUnitName;
-      this.nodeConfig.numDecimal = this.settingsForm.numDecimal;
-      this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
+      this.widgetConfig.signalKPath = this.settingsData.selectedPath;
+      this.widgetConfig.signalKSource = this.settingsData.selectedSource;
+      this.widgetConfig.label = this.settingsData.label;
+      this.widgetConfig.unitGroup = this.settingsData.selectedUnitGroup;
+      this.widgetConfig.unitName = this.settingsData.selectedUnitName;
+      this.widgetConfig.numDecimal = this.settingsData.numDecimal;
+      this.treeManager.saveNodeData(this.nodeUUID, this.widgetConfig);
       this.subscribePath();
   }
 */
@@ -218,14 +208,20 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 })
 export class WidgetNumericModalComponent implements OnInit {
 
-  settingsData: widgetSettingsForm;
+  settingsData: IWidgetsettingsData;
   selfPaths: boolean = true;
   availablePaths: Array<string> = [];
+  availableSources: Array<string>;
   availableUnitGroups: string[];
   availableUnitNames: string[];
   
+  converter = this.UnitConvertService.getConverter();
+
+ // availableUnitNames = Object.keys(this.converter[this.widgetConfig.unitGroup]);
+
   constructor(
     private SignalKService: SignalKService,
+    private UnitConvertService: UnitConvertService,
     public dialogRef: MdDialogRef<WidgetNumericModalComponent>,
     @Inject(MD_DIALOG_DATA) public data: any) { }
 
@@ -235,10 +231,36 @@ export class WidgetNumericModalComponent implements OnInit {
 
 
   ngOnInit() {
+    this.settingsData = this.data;
     this.availablePaths = this.SignalKService.getPathsByType('number').sort();
-
-   
+    console.log(this.availablePaths);
+    if (this.availablePaths.includes(this.settingsData.selectedPath)) {
+      this.settingsDataUpdatePath();
+    }
   }
+
+
+  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
+    console.debug('New Path, reseting form!');
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
+    if (pathObject === null) { return; }
+    console.log(pathObject);
+    this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+    this.settingsData.selectedSource = 'default';
+    this.settingsData.numDecimal = this.data.numDecimal;
+    if (pathObject.meta) {
+      if (typeof(pathObject.meta.abbreviation) == 'string') {
+        this.settingsData.label = pathObject.meta.abbreviation;
+      } else if (typeof(pathObject.meta.label) == 'string') {
+        this.settingsData.label = pathObject.meta.label;
+      } else {
+        this.settingsData.label = this.settingsData.selectedPath; // who knows?
+      }
+    } else {
+      this.settingsData.label = this.settingsData.selectedPath;// who knows?
+    }
+  }
+
 
   submitConfig() {
 

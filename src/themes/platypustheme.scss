@@ -1,0 +1,13 @@
+@import '~@angular/material/theming';
+
+$platypusTheme-primary: mat-palette($mat-teal);
+$platypusTheme-accent:  mat-palette($mat-orange, A200, A100, A400);
+
+// The warn palette is optional (defaults to red).
+$platypusTheme-warn:    mat-palette($mat-red);
+
+// Create the theme object (a Sass map containing all of the palettes).
+$platypusTheme-light: mat-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
+$platypusTheme-dark: mat-dark-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
+
+

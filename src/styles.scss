@@ -4,6 +4,7 @@
 //Import Themes
 @import 'themes/defaultTheme.scss';
 @import 'themes/nightTheme.scss';
+@import 'themes/platypusTheme.scss';
 
 // import Components
 @import 'app/app.component.scss';
@@ -28,6 +29,8 @@
 .night-dark {
     @include theme-components($nightTheme-dark);
 }
-
+.platypus-light {
+    @include theme-components($platypusTheme-light);
+}
 
 
