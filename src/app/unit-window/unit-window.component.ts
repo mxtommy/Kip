@@ -65,9 +65,12 @@ export class UnitWindowComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (this.activeWidget.type != result) {
-        this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
-        this.ngOnInit();
+      console.log(this.widgetListService.getList());
+      if (this.widgetListService.getList().findIndex(w => w.name == result) >= 0 ) {
+        if (this.activeWidget.type != result) {
+          this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
+          this.ngOnInit();
+        }
       }
     });
     

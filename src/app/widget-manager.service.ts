@@ -54,7 +54,7 @@ export class WidgetManagerService {
     let wIndex = this.widgets.findIndex(w => w.uuid == uuid)
     if (wIndex < 0) { return; } // not found
     this.widgets[wIndex].config = newConfig;
-    this.saveWidgets;
+    this.saveWidgets();
   }
 
   saveWidgets() {

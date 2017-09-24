@@ -38,25 +38,6 @@
 
 <!--
 
-                  <label class="" for="path">SignalK Path:</label>
-                  <select class="form-control" id="path" name="path" [(ngModel)]="settingsForm.selectedPath" (ngModelChange)="settingsFormUpdatePath()">
-                    <option *ngFor="let path of (settingsForm.availablePaths | filterSelf: settingsForm.selfPaths)" [value]="path">{{path}}</option>
-                  </select>                
-                </div>
-  
-                <div class="checkbox">
-                    <label class="" for="selfPaths">
-                      <input type="checkbox" id="selfPaths" name="selfPaths" [(ngModel)]="settingsForm.selfPaths"> Restric to own vessel
-                    </label>
-                  </div>              
-  
-                <div class="form-group">
-                  <label class="" for="path">Source:</label>
-                  <select class="form-control" id="source" name="source" [(ngModel)]="settingsForm.selectedSource">
-                    <option *ngFor="let source of settingsForm.availableSources" [value]="source">{{source}}</option>
-                  </select>                
-                </div>
-            </ngb-tab>
   
             <ngb-tab title="Units">
               <ng-template ngbTabContent>

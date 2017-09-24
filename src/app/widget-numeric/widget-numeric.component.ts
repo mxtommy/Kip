@@ -233,7 +233,6 @@ export class WidgetNumericModalComponent implements OnInit {
   ngOnInit() {
     this.settingsData = this.data;
     this.availablePaths = this.SignalKService.getPathsByType('number').sort();
-    console.log(this.availablePaths);
     if (this.availablePaths.includes(this.settingsData.selectedPath)) {
       this.settingsDataUpdatePath();
     }
@@ -241,10 +240,8 @@ export class WidgetNumericModalComponent implements OnInit {
 
 
   settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    console.debug('New Path, reseting form!');
     let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
     if (pathObject === null) { return; }
-    console.log(pathObject);
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     this.settingsData.selectedSource = 'default';
     this.settingsData.numDecimal = this.data.numDecimal;
