@@ -10,6 +10,7 @@ import {
   MdButtonModule,
   MdDialogModule,
   MdSelectModule,
+  MdInputModule,
   MdToolbarModule,
   MdCheckboxModule,
   MdTabsModule,
@@ -93,7 +94,8 @@ const appRoutes: Routes = [
     MdToolbarModule,
     MdCheckboxModule,
     MdTabsModule,
-    MdStepperModule
+    MdStepperModule,
+    MdInputModule
   ],
   entryComponents: [ 
     WidgetUnknownComponent, 

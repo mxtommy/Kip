@@ -3,7 +3,7 @@
     <md-dialog-content>
 
         <md-horizontal-stepper>
-            <md-step label="">
+            <md-step label="Source">
                 <div class="tab-content"> 
                     <md-select 
                         [style.width]="'100%'" 
@@ -11,7 +11,7 @@
                         [(ngModel)]="settingsData.selectedPath" 
                         name="selectedPath"
                          (ngModelChange)="settingsDataUpdatePath()"
-                        >
+                        required>
                         <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                             {{path}}
                         </md-option>
@@ -33,7 +33,20 @@
                         </md-option>
                     </md-select>
                 </div>
-                <button md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
+                <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
+            </md-step>
+            <md-step label="Display">
+                <div class="tab-content"> 
+                    <md-form-field class="full-width">
+                        <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
+                    </md-form-field>
+                    <md-form-field class="full-width">
+                            <input type="number" min="0" max="5" mdInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
+                    </md-form-field>
+
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                </div>
             </md-step>
             <md-step label="Units">
                 <div class="tab-content"> 
@@ -58,33 +71,15 @@
                             {{unitName}}
                         </md-option>
                     </md-select>
-                    <button md-raised-button mdStepperPrevious>Back</button>
-                    <button md-raised-button color="accent" mdStepperNext>Next</button>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button md-raised-button color="accent" type="submit">Save</button>
                 </div>
             </md-step>
-            <md-step label="Display">
-            </md-step>
+
 
 <!--
 
-  
-            <ngb-tab title="Units">
-              <ng-template ngbTabContent>
-                  <div class="form-group">
-                      <label class="" for="unitGroup">Unit Group:</label>
-                      <select class="form-control" id="unitGroup" name="unitGroup" [(ngModel)]="settingsForm.selectedUnitGroup" (ngModelChange)="settingsFormUpdateUnitType()">
-                          <option *ngFor="let group of settingsForm.availableUnitGroups" [value]="group">{{ group }}</option>
-                      </select>  
-                  </div>
-                  <div class="form-group">
-                      <label class="" for="unitName">Unit:</label>
-                      <select class="form-control" id="unitName" name="unitName" [(ngModel)]="settingsForm.selectedUnitName">
-                          <option *ngFor="let unitName of settingsForm.availableUnitNames" [value]="unitName">{{unitName}}</option>
-                      </select>  
-                  </div>
-              </ng-template>
-            </ngb-tab>  
-  
+
             <ngb-tab title="Display">
                 <ng-template ngbTabContent>
                   <div class="form-group">

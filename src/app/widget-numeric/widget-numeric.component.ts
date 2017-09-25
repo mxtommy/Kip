@@ -133,7 +133,21 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-     console.log(result);
+      // save new settings
+      console.log(result);
+      if (result) {
+        console.debug("Updating widget config");
+        this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
+        this.widgetConfig.signalKPath = result.selectedPath;
+        this.widgetConfig.signalKSource = result.selectedSource;
+        this.widgetConfig.label = result.label;
+        this.widgetConfig.unitGroup = result.selectedUnitGroup;
+        this.widgetConfig.unitName = result.selectedUnitName;
+        this.widgetConfig.numDecimal = result.numDecimal;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+        this.subscribePath();
+      }
+
     });
 
 
@@ -141,48 +155,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
   }
 /*
 
-      
     
-    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
-    if (pathObject !== null) { 
-      this.settingsData.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-      this.settingsData.pathDataType = pathObject.type;
 
-      
-     }
-    
-     
-    this.modalRef = this.modalService.open(content);
-    this.modalRef.result.then((result) => {
-    }, (reason) => {
-    });
-  }
-
-  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
-    if (pathObject === null) { return; }
-    this.settingsData.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsData.selectedSource = 'default';
-    this.settingsData.pathDataType = pathObject.type;
-    this.settingsData.numDecimal = this.widgetConfig.numDecimal;
-    if (pathObject.meta) {
-      if (typeof(pathObject.meta.abbreviation) == 'string') {
-        this.settingsData.label = pathObject.meta.abbreviation;
-      } else if (typeof(pathObject.meta.label) == 'string') {
-        this.settingsData.label = pathObject.meta.label;
-      } else {
-        this.settingsData.label = this.settingsData.selectedPath; // who knows?
-      }
-    } else {
-      this.settingsData.label = this.settingsData.selectedPath;// who knows?
-    }
-
-  }
-
-  settingsDataUpdateUnitType() {
-    this.settingsData.availableUnitNames = Object.keys(this.converter[this.settingsData.selectedUnitGroup]);
-    this.settingsData.selectedUnitName = this.settingsData.availableUnitNames[0];
-  }
   
   saveSettings() {
       this.modalRef.close();
@@ -226,7 +200,8 @@ export class WidgetNumericModalComponent implements OnInit {
     @Inject(MD_DIALOG_DATA) public data: any) { }
 
   onNoClick(): void {
-    this.dialogRef.close();
+    console.log("Dialog dismissed");
+    //this.dialogRef.close(null);
   }
 
 
@@ -274,7 +249,7 @@ export class WidgetNumericModalComponent implements OnInit {
 
 
   submitConfig() {
-
+    this.dialogRef.close(this.settingsData);
   }
   
 }
