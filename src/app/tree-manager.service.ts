@@ -26,8 +26,8 @@ export class TreeManagerService {
   activeRootIndex: Subject<number> = new Subject<number>();
 
   constructor( private AppSettingsService: AppSettingsService) { 
-    this.TreeNodes = AppSettingsService.loadTreeNodes();
-    this.TreeLinks = AppSettingsService.loadTreeLinks();
+    //this.TreeNodes = AppSettingsService.loadTreeNodes();
+    //this.TreeLinks = AppSettingsService.loadTreeLinks();
   }
 
   private newUuid() {
@@ -89,7 +89,7 @@ export class TreeManagerService {
 
 
   saveTree() {
-    this.AppSettingsService.saveTree(this.TreeNodes, this.TreeLinks);
+    //this.AppSettingsService.saveTree(this.TreeNodes, this.TreeLinks);
   }
 
 }

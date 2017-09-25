@@ -1,18 +1,4 @@
 .settingsWindow {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    height: 100%;
     padding: 20px;
 }
-
-.settingsMain {
-    height: 100%;
-    width: 100%;
-    border: 1px solid black;
-    border-radius: 15px;
-    padding: 5px;    
-}
-
-
 

@@ -46,7 +46,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
 import { WidgetNumericComponent, WidgetNumericModalComponent } from './widget-numeric/widget-numeric.component';
-import { SettingsDatasetsComponent } from './settings-datasets/settings-datasets.component';
+import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
@@ -74,6 +74,7 @@ const appRoutes: Routes = [
     WidgetNumericComponent,
     WidgetNumericModalComponent,
     SettingsDatasetsComponent,
+    SettingsDatasetsModalComponent,
     SettingsSignalkComponent,
     WidgetHistoricalComponent,
     LayoutSplitComponent
@@ -107,7 +108,8 @@ const appRoutes: Routes = [
 
     //dialogs
     UnitWindowModalComponent,
-    WidgetNumericModalComponent
+    WidgetNumericModalComponent,
+    SettingsDatasetsModalComponent
   ],
   providers: [ 
     SignalKService,

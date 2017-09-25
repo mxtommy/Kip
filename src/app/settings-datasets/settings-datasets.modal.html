@@ -1,0 +1,52 @@
+<h2 md-dialog-title>New Dataset:</h2>
+<md-dialog-content>
+    <form name="newDataSetForm" (ngSubmit)="addNewDataSet()" #newDataSetForm="ngForm">
+        <md-horizontal-stepper>
+            <md-step label="Source">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="SignalK Path" 
+                        [(ngModel)]="settingsForm.selectedPath" 
+                        name="selectedPath"
+                        (ngModelChange)="settingsFormUpdatePath()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsForm.selectedSource" 
+                        name="selectedSource">
+                        <md-option *ngFor="let source of availableSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                </div>
+                <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsForm.selectedPath">Next</button>
+            </md-step>
+            <md-step label="Data Set">
+                <div class="tab-content"> 
+                    <md-form-field class="full-width">
+                        <input mdInput placeholder="Interval(seconds)" type=number name="interval" [(ngModel)]="settingsForm.interval">
+                    </md-form-field>
+                    <md-form-field class="full-width">
+                        <input mdInput placeholder="Data Points" type="number" name="decimals" [(ngModel)]="settingsForm.dataPoints">
+                    </md-form-field>
+                    <br>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button md-raised-button color="accent" type="submit">Save</button>
+                </div>
+            </md-step>
+        </md-horizontal-stepper>          
+    </form>
+</md-dialog-content>

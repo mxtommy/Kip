@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { TreeNode, TreeLink } from './tree-manager.service';
 import { DataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
@@ -11,20 +10,16 @@ const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
 const defaultTheme = 'default-light';
 
-const defaultSplitSet: ISplitSet[] = [ { uuid: 'isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', direction: 'horizontal', splitAreas: [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: 'widget', size: 40 }, { uuid: 'widgetno-2xxx-4xxx-yxxx-xxxxxxxxxxxx', type: 'widget', size: 60 } ]} ];
+const defaultSplitSet: ISplitSet[] = [ { uuid: 'isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', direction: 'horizontal', splitAreas: [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: 'widget', size: 100 } ]} ];
 const defaultRootSplits: string[] = ['isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'];
-const defaultTreeNodes: TreeNode[] = [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', name: "Home Page", nodeType: "WidgetBlank", nodeData: null }, { uuid: 'widgetno-2xxx-4xxx-yxxx-xxxxxxxxxxxx', name: "Home Page2", nodeType: "WidgetBlank", nodeData: null } ];
-const defaultTreeLinks: TreeLink[] = [ { parent: 'ROOT', child: 'widgetno-xxxx-4xxx-yxxx-xxxxxxxxxxxx' }];
 const defaultDataSets: DataSet[] = [];
-const defaultWidgets: Array<IWidget> = [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: "WidgetBlank", config: null }, { uuid: 'widgetno-2xxx-4xxx-yxxx-xxxxxxxxxxxx', type: "WidgetBlank", config: null } ];;
+const defaultWidgets: Array<IWidget> = [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: "WidgetBlank", config: null } ];;
 
 
 interface appSettings {
   signalKUrl: string;
   themeName: string;
   widgets: Array<IWidget>; 
-  treeNodes: TreeNode[];
-  treeLinks: TreeLink[];
   unlockStatus: boolean;
   dataSets: DataSet[];
   splitSets: ISplitSet[];
@@ -41,8 +36,7 @@ export class AppSettingsService {
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   widgets: Array<IWidget>;
-  treeNodes: TreeNode[] = [];
-  treeLinks: TreeLink[] = [];
+
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
   
@@ -57,8 +51,6 @@ export class AppSettingsService {
       this.unlockStatus.next(defaultUnlockStatus);
       this.themeName.next(defaultTheme);
       this.widgets = defaultWidgets;
-      this.treeNodes = defaultTreeNodes;
-      this.treeLinks = defaultTreeLinks;
       this.dataSets = defaultDataSets;
       this.splitSets = defaultSplitSet;
       this.rootSplits = defaultRootSplits;
@@ -69,8 +61,6 @@ export class AppSettingsService {
       this.themeName.next(storageObject['themeName']);
       this.widgets = storageObject.widgets;
       this.unlockStatus.next(storageObject['unlockStatus']);
-      this.treeNodes = storageObject.treeNodes;
-      this.treeLinks = storageObject.treeLinks;
       this.dataSets = storageObject.dataSets;
       this.splitSets = storageObject.splitSets;
       this.rootSplits = storageObject.rootSplits;
@@ -119,20 +109,7 @@ export class AppSettingsService {
   }
 
 
-  // Trees
-  saveTree(treeNodes: TreeNode[], treeLinks: TreeLink[]) {
-    this.treeNodes = treeNodes; 
-    this.treeLinks = treeLinks;
-    this.saveToLocalStorage();
-  }
-  loadTreeNodes() {
-    return this.treeNodes;
-  }
-  loadTreeLinks() {
-    return this.treeLinks;
-  }
-
-  // Layout SplitSets
+   // Layout SplitSets
   getSplitSets() {
     return this.splitSets;
   }
@@ -161,8 +138,6 @@ export class AppSettingsService {
       signalKUrl: this.signalKUrl.getValue(),
       themeName: this.themeName.getValue(),
       widgets: this.widgets,
-      treeNodes: this.treeNodes,
-      treeLinks: this.treeLinks,
       unlockStatus: this.unlockStatus.getValue(),
       dataSets: this.dataSets,
       splitSets: this.splitSets,

@@ -1,31 +1,43 @@
+<br>
 <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
-  <div class="form-group">
-      <label class="" for="signalKURL">SignalK API Url <button type="submit" class="btn btn-sm btn-success" [disabled]="!signalKForm.form.valid">Update/Reset</button></label>
-      <input type="url" class="form-control" id="signalKURL" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+" #signalKURL="ngModel">
-  </div>
-  <div [hidden]="signalKURL.valid || signalKURL.pristine"
-        class="alert alert-danger">
-        Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com/signalk"
-  </div>
+  <md-form-field class="almost-full-width">
+    <input type=url mdInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
+    <md-error>
+      Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com/signalk"
+    </md-error>
+  </md-form-field>
+  <button type="submit" md-raised-button [disabled]="!signalKForm.form.valid">Update/Reset</button>
 </form>
-<hr>
-<div>
-  <div>
-    API URL: 
-    <i class="fa fa-check" style="color:green;" aria-hidden="true" [hidden]="!endpointAPIStatus"></i>
-    <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointAPIStatus"></i>
-    {{ endpointAPIStatusMessage }}
-  </div>
-  <div>
-    Websocket Status: 
-    <i class="fa fa-check" style="color:green;" aria-hidden="true" [hidden]="!endpointWSStatus"></i>
-    <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointWSStatus"></i>
-    {{ endpointWSMessage }}
-  </div>
-  <div>
-    HTTP REST Status: 
-    <i class="fa fa-check" style="color:green;" aria-hidden="true" [hidden]="!endpointRESTStatus"></i>
-    <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" [hidden]="endpointRESTStatus"></i>
-    {{ endpointRESTMessage }}
-  </div>
-</div>
+<br>
+<table>
+  <tr>
+    <td>
+      API URL: 
+    </td>
+    <td>
+      <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointAPIStatus"></i>
+      <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointAPIStatus"></i>
+      {{ endpointAPIStatusMessage }}
+    </td>
+  </tr>
+  <tr>
+    <td>
+      Websocket Status:
+    </td>
+    <td>
+      <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointWSStatus"></i>
+      <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointWSStatus"></i>
+      {{ endpointWSMessage }}
+    </td>
+  </tr>
+  <tr>
+    <td>
+      HTTP REST Status: 
+    </td>
+    <td>
+      <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointRESTStatus"></i>
+      <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointRESTStatus"></i>
+      {{ endpointRESTMessage }}
+    </td>
+  </tr>
+</table>

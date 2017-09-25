@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, Inject } from '@angular/core';
+import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { DataSetService } from '../data-set.service';
@@ -7,9 +7,6 @@ import { DataSetService } from '../data-set.service';
 interface settingsForm {
   selectedPath: string;
   selectedSource: string;
-  availablePaths: string[];
-  availableSources: string[];
-  selfPaths: boolean;
   interval: number;
   dataPoints: number;
 };
@@ -21,23 +18,11 @@ interface settingsForm {
 })
 export class SettingsDatasetsComponent implements OnInit {
 
-  modalRef;
   selectedDataSet: string;
-  
-  settingsForm: settingsForm = {
-    selectedPath: null,
-    selectedSource: null,
-    availablePaths: [],
-    availableSources: [],
-    selfPaths: true,
-    interval: 1,
-    dataPoints: 30
-  };
-
   dataSets;
 
   constructor(
-    private modalService: NgbModal, 
+    public dialog: MdDialog,
     private SignalKService: SignalKService,
     private DataSetService: DataSetService
     ) { }
@@ -51,35 +36,64 @@ export class SettingsDatasetsComponent implements OnInit {
   }
 
   openNewDataSetModal(content) {
-    this.settingsForm.availablePaths = this.SignalKService.getPathsByType('number').sort();
-   
-    this.modalRef = this.modalService.open(content);
-    this.modalRef.result.then((result) => {
-    }, (reason) => {
+    let dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
+      width: '500px'
     });
+    dialogRef.afterClosed().subscribe(result => { this.loadDataSets });
+  }
+
+
+
+ 
+  deleteDataSet() { 
+    this.DataSetService.deleteDataSet(this.selectedDataSet); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
+    this.loadDataSets();
+  }
+
+}
+
+@Component({
+  selector: 'app-settings-datasets-modal',
+  templateUrl: './settings-datasets.modal.html',
+  styleUrls: ['./settings-datasets.component.css']
+})
+export class SettingsDatasetsModalComponent implements OnInit {
+
+  settingsForm: settingsForm = {
+    selectedPath: null,
+    selectedSource: null,
+    interval: 1,
+    dataPoints: 30
+  };
+
+  availablePaths: string[] = [];
+  availableSources: string[] = [];
+  selfPaths:boolean = true;
+
+  constructor(
+    private SignalKService: SignalKService,
+    private DataSetService: DataSetService,
+    public dialogRef: MdDialogRef<SettingsDatasetsModalComponent>,
+    @Inject(MD_DIALOG_DATA) public data: any
+    ) { }
+
+  ngOnInit() {
+    this.availablePaths = this.SignalKService.getPathsByType('number').sort();
   }
 
   settingsFormUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
     let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
     if (pathObject === null) { return; }
-    this.settingsForm.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+    this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     this.settingsForm.selectedSource = 'default';
   }
 
   addNewDataSet() {
-    this.modalRef.close();
     this.DataSetService.addDataSet(
-      this.settingsForm.selectedPath, 
-      this.settingsForm.selectedSource, 
-      this.settingsForm.interval, 
-      this.settingsForm.dataPoints);
-    this.loadDataSets();
+    this.settingsForm.selectedPath, 
+    this.settingsForm.selectedSource, 
+    this.settingsForm.interval, 
+    this.settingsForm.dataPoints);
+    this.dialogRef.close();
   }
-
-  deleteDataSet() { 
-    this.DataSetService.deleteDataSet(this.selectedDataSet);
-    this.loadDataSets();
-  
-  }
-
 }

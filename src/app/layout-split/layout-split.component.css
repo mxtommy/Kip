@@ -9,3 +9,7 @@
     left: 5%;
     bottom: 5%;
 }
+
+split-area {
+    overflow-y: hidden !important;
+}

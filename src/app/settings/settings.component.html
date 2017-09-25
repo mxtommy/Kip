@@ -1,21 +1,19 @@
 <div class="settingsWindow">
-  <div class="settingsMain">
-    <ngb-tabset>
-      <ngb-tab title="SignalK">
-        <ng-template ngbTabContent>
-          <app-settings-signalk></app-settings-signalk>
-        </ng-template>
-      </ngb-tab>
-      <ngb-tab title="Historical Data Sets">
-        <ng-template ngbTabContent>
-          <app-settings-datasets></app-settings-datasets>
-        </ng-template>
-      </ngb-tab>  
-      <ngb-tab title="Config">
-        <ng-template ngbTabContent>
-          <button type="submit" class="btn btn-sm btn-success" (click)='resetSettings()'>Reset</button>
-        </ng-template>
-      </ngb-tab>  
-    </ngb-tabset>
-  </div>
+  <md-tab-group class="">
+    <md-tab label="Signal K">
+      <div class="">
+        <app-settings-signalk></app-settings-signalk>
+      </div>
+    </md-tab>
+    <md-tab label="Historical Data">
+      <div class="">
+        <app-settings-datasets></app-settings-datasets>
+      </div>
+    </md-tab> 
+    <md-tab label="Config">
+      <div class="">
+        <button md-raised-button color="warn" type="submit" class="btn btn-sm btn-success" (click)='resetSettings()'>Reset</button>
+      </div>
+    </md-tab>  
+  </md-tab-group>
 </div>
