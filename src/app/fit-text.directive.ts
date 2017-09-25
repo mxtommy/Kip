@@ -37,7 +37,7 @@ export class FitTextDirective {
                                     width / (this.compression * 10), 
                                     this.maxFontSize), 
                                 this.minFontSize),
-                            height);
+                            height); //TODO, does not take text width into consideration :(
 
 
             return this.el.nativeElement.style.setProperty('font-size', (fontSize).toString() + 'px');

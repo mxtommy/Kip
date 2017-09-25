@@ -134,7 +134,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
-      console.log(result);
       if (result) {
         console.debug("Updating widget config");
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
@@ -153,30 +152,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
 
   }
-/*
 
-    
-
-  
-  saveSettings() {
-      this.modalRef.close();
-      this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-      this.widgetConfig.signalKPath = this.settingsData.selectedPath;
-      this.widgetConfig.signalKSource = this.settingsData.selectedSource;
-      this.widgetConfig.label = this.settingsData.label;
-      this.widgetConfig.unitGroup = this.settingsData.selectedUnitGroup;
-      this.widgetConfig.unitName = this.settingsData.selectedUnitName;
-      this.widgetConfig.numDecimal = this.settingsData.numDecimal;
-      this.treeManager.saveNodeData(this.nodeUUID, this.widgetConfig);
-      this.subscribePath();
-  }
-*/
 }
 
 
 
 @Component({
-  selector: 'numeriv-widget-modal',
+  selector: 'numeric-widget-modal',
   templateUrl: './widget-numeric.modal.html',
   styleUrls: ['./widget-numeric.component.css']
 })
@@ -191,19 +173,11 @@ export class WidgetNumericModalComponent implements OnInit {
   
   converter: Object = this.UnitConvertService.getConverter();
 
- // availableUnitNames = Object.keys(this.converter[this.widgetConfig.unitGroup]);
-
   constructor(
     private SignalKService: SignalKService,
     private UnitConvertService: UnitConvertService,
     public dialogRef: MdDialogRef<WidgetNumericModalComponent>,
     @Inject(MD_DIALOG_DATA) public data: any) { }
-
-  onNoClick(): void {
-    console.log("Dialog dismissed");
-    //this.dialogRef.close(null);
-  }
-
 
   ngOnInit() {
     this.settingsData = this.data;
@@ -211,7 +185,7 @@ export class WidgetNumericModalComponent implements OnInit {
     //populate available choices
     this.availablePaths = this.SignalKService.getPathsByType('number').sort();
     if (this.availablePaths.includes(this.settingsData.selectedPath)) {
-      this.settingsDataUpdatePath();
+      this.settingsDataUpdatePath(); //TODO: this wipes out existing config, not good when editing existing config...
     }
     this.availableUnitGroups = Object.keys(this.converter);
     if (this.converter.hasOwnProperty(this.settingsData.selectedUnitGroup)) {

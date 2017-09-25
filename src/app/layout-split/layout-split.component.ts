@@ -24,8 +24,6 @@ export class LayoutSplitComponent implements OnInit {
   }
 
   onDragEnd(sizesArray: Array<number>) {
-    console.log(sizesArray);
-    console.log(this.splitSet);
     for (let i=0; i < sizesArray.length; i++) {
       this.splitSet.splitAreas[i].size = sizesArray[i];
     }

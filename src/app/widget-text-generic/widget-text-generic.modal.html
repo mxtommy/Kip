@@ -1,5 +1,5 @@
 <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
-
+        
     <md-dialog-content>
 
         <md-horizontal-stepper>
@@ -10,7 +10,7 @@
                         placeholder="SignalK Path" 
                         [(ngModel)]="settingsData.selectedPath" 
                         name="selectedPath"
-                         (ngModelChange)="settingsDataUpdatePath()"
+                            (ngModelChange)="settingsDataUpdatePath()"
                         required>
                         <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                             {{path}}
@@ -40,37 +40,7 @@
                     <md-form-field class="full-width">
                         <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
                     </md-form-field>
-                    <md-form-field class="full-width">
-                            <input type="number" min="0" max="5" mdInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
-                    </md-form-field>
-
-                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                    <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
-                </div>
-            </md-step>
-            <md-step label="Units">
-                <div class="tab-content"> 
-                    <md-select 
-                        [style.width]="'100%'" 
-                        placeholder="Unit Category" 
-                        [(ngModel)]="settingsData.selectedUnitGroup" 
-                        name="unitGroup"
-                         (ngModelChange)="updateUnitType()"
-                        >
-                        <md-option *ngFor="let group of availableUnitGroups" [value]="group">
-                            {{group}}
-                        </md-option>
-                    </md-select>
-                    <md-select 
-                        [style.width]="'100%'" 
-                        placeholder="Unit Category" 
-                        [(ngModel)]="settingsData.selectedUnitName" 
-                        name="unitName"
-                        >
-                        <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
-                            {{unitName}}
-                        </md-option>
-                    </md-select>
+                    
                     <button type="button" md-raised-button mdStepperPrevious>Back</button>
                     <button md-raised-button color="accent" type="submit">Save</button>
                 </div>
@@ -78,4 +48,4 @@
 
         </md-horizontal-stepper>
     </md-dialog-content>
-</form>
+</form>                    

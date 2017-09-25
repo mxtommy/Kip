@@ -40,7 +40,7 @@ import { UnitConvertService } from './unit-convert.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 //import { WidgetSplitComponent } from './widget-split/widget-split.component'; //TODO cleanup files
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
-import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetTextGenericComponent, WidgetTextGenericModalComponent } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
@@ -68,6 +68,7 @@ const appRoutes: Routes = [
     DynamicWidgetDirective,
     WidgetUnknownComponent,
     WidgetTextGenericComponent,
+    WidgetTextGenericModalComponent,
     FitTextDirective,
     RootDisplayComponent,
     FilterSelfPipe,
@@ -104,6 +105,7 @@ const appRoutes: Routes = [
    // WidgetSplitComponent, TODO Del 
     WidgetNumericComponent,
     WidgetTextGenericComponent,
+    WidgetTextGenericModalComponent,
     WidgetHistoricalComponent,
 
     //dialogs
