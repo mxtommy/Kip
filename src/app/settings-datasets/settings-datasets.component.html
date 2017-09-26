@@ -1,17 +1,35 @@
 <br>
 <form name="existingDataSet" #existingDataSet="ngForm">
-    <md-select 
-        [style.width]="'90%'" 
-        placeholder="Data Sets" 
-        [(ngModel)]="selectedDataSet" 
-        name="selectedDataSet"
-        required
-        >
-        <md-option *ngFor="let ds of dataSets" [value]="ds.uuid">
-            {{ds.name}}
-        </md-option>
-    </md-select>
-    <button md-raised-button color=warn (click)='deleteDataSet()' [disabled]="!existingDataSet.form.valid">Delete</button>
+
+    <table>
+        <tr>
+            <th>
+                Path
+            </th>
+            <th>
+                Interval
+            </th>
+            <th>
+                DataPoints
+            </th>
+            <th></th>
+        </tr>
+        <tr *ngFor="let ds of dataSets">
+            <td>
+                {{ ds.path }}
+            </td>
+            <td>
+                {{ ds.updateTimer }}
+            </td>
+            <td>
+                {{ ds.dataPoints }}
+            </td>
+            <td>
+                <button md-raised-button color=warn (click)="deleteDataSet(ds.uuid)">Delete</button>
+            </td>
+        </tr>
+    </table>
+
     <button md-raised-button  (click)='openNewDataSetModal(newDataSetModal)'>Add New</button>     
 </form>
 

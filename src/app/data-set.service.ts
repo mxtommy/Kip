@@ -24,15 +24,13 @@ interface dataCache {
   maxValue: number;
 }
 
-export interface DataSet {
+export interface IDataSet {
   uuid: string;
   path: string;
   signalKSource: string;
-
   updateTimer: number; //number of seconds between new dataPoints
-   
-  dataPoints: number // how many datapoints do we keep?
-  
+  dataPoints: number; // how many datapoints do we keep?
+  name?:  string; // sometimes used for display purposes
 };
 
 interface DataSetSub {
@@ -52,7 +50,7 @@ interface registration {
 @Injectable()
 export class DataSetService {
 
-  dataSets: DataSet[] = [];
+  dataSets: IDataSet[] = [];
   dataSetSub: DataSetSub[] = [];
   dataSetRegister: registration[] = [];
 
@@ -186,7 +184,7 @@ export class DataSetService {
   addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {
     let uuid = this.newUuid();
 
-    let newSub: DataSet = {
+    let newSub: IDataSet = {
       uuid: uuid,
       path: path,
       signalKSource: source,
@@ -220,6 +218,8 @@ export class DataSetService {
       result.push({
         uuid: this.dataSets[i].uuid,
         path: this.dataSets[i].path,
+        updateTimer: this.dataSets[i].updateTimer,
+        dataPoints: this.dataSets[i].dataPoints,
         name: name
       });
     }

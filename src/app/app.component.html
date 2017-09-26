@@ -7,53 +7,44 @@
             <div class="menuBarContainer theme-menu">
 
                 <div class="menuBarButtonGroup">
-                    <div class="btn-group" role="group" aria-label="Menu">
-                            <button md-raised-button [mdMenuTriggerFor]="themeMenu" >
-                                    <span class="fa fa-lg fa-paint-brush"></span>
-                            </button>
-                            <md-menu #themeMenu="mdMenu">
-                                <button md-menu-item (click)="setTheme('default-light')">Default Light</button>
-                                <button md-menu-item (click)="setTheme('default-dark')">Default Dark</button>
-                                <button md-menu-item (click)="setTheme('night-light')">Night Light</button>
-                                <button md-menu-item (click)="setTheme('night-dark')">Night Dark</button>
-                                <button md-menu-item (click)="setTheme('platypus-light')">Platypus</button>
-                            </md-menu>
-                    </div>
+                    <button color="accent" md-raised-button [mdMenuTriggerFor]="themeMenu" >
+                            <span class="fa fa-lg fa-paint-brush"></span>
+                    </button>
+                    <md-menu #themeMenu="mdMenu">
+                        <button md-menu-item (click)="setTheme('default-light')">Default Light</button>
+                        <button md-menu-item (click)="setTheme('default-dark')">Default Dark</button>
+                        <button md-menu-item (click)="setTheme('night-light')">Night Light</button>
+                        <button md-menu-item (click)="setTheme('night-dark')">Night Dark</button>
+                        <button md-menu-item (click)="setTheme('platypus-light')">Platypus</button>
+                    </md-menu>
                 </div>
 
                 <div class="menuBarButtonGroup">
-                    <div class="btn-group" role="group" aria-label="Menu">
-                        <button md-raised-button (click)="pageDown()">
-                            <span class="fa fa-lg fa-chevron-down"></span>
-                        </button>
+                    <button color="accent" md-raised-button (click)="pageDown()">
+                        <span class="fa fa-lg fa-chevron-down"></span>
+                    </button>
 
-                        <button md-raised-button routerLink="/page/0">
-                            <span class="fa fa-lg fa-home"></span>
-                        </button>
+                    <button color="accent" md-raised-button routerLink="/page/0">
+                        <span class="fa fa-lg fa-home"></span>
+                    </button>
 
-                        <button md-raised-button (click)="pageUp()">
-                            <span class="fa fa-lg fa-chevron-up"></span>
-                        </button>
-                    </div>
+                    <button color="accent" md-raised-button (click)="pageUp()">
+                        <span class="fa fa-lg fa-chevron-up"></span>
+                    </button>
                 </div>
 
                 <div class="menuBarButtonGroup">
-                    <div class="btn-group menuBarButtonGroup" role="group" aria-label="Menu">
-
-                        <button md-raised-button (click)="unlockPage()">
-                            <span *ngIf="unlockStatus" class="fa fa-lg fa-unlock"></span>
-                            <span *ngIf="!unlockStatus" class="fa fa-lg fa-lock"></span>
-                        </button>
-                        <button *ngIf="unlockStatus" md-raised-button  (click)="newPage()">
-                            <span class="fa fa-lg fa-plus"></span>
-                        </button>
-                        <button *ngIf="unlockStatus" md-raised-button (click)="deletePage()">
-                            <span class="fa fa-lg fa-trash"></span>
-                        </button>                    
-                        <button md-raised-button  routerLink="/settings">
+                    <button color="accent" md-raised-button [mdMenuTriggerFor]="settingsMenu" >
                             <span class="fa fa-lg fa-cog"></span>
+                    </button>
+                    <md-menu #settingsMenu="mdMenu">
+                        <button md-menu-item (click)="unlockPage()">
+                            <span *ngIf="!unlockStatus" class="fa fa-lg fa-unlock">Unlock</span>
+                            <span *ngIf="unlockStatus" class="fa fa-lg fa-lock">Lock</span>
                         </button>
-                    </div>
+                        <button md-menu-item (click)="newPage()"><span class="fa fa-lg fa-plus">New Page</span></button>
+                        <button md-menu-item routerLink="/settings"><span class="fa fa-lg fa-cog">App Settings</span></button>
+                    </md-menu>
                 </div>
 
             </div>

@@ -2,7 +2,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
-import { DataSetService } from '../data-set.service';
+import { DataSetService, IDataSet } from '../data-set.service';
 
 interface settingsForm {
   selectedPath: string;
@@ -19,7 +19,7 @@ interface settingsForm {
 export class SettingsDatasetsComponent implements OnInit {
 
   selectedDataSet: string;
-  dataSets;
+  dataSets: IDataSet[];
 
   constructor(
     public dialog: MdDialog,
@@ -39,14 +39,12 @@ export class SettingsDatasetsComponent implements OnInit {
     let dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
       width: '500px'
     });
-    dialogRef.afterClosed().subscribe(result => { this.loadDataSets });
+    dialogRef.afterClosed().subscribe(result => { this.loadDataSets() });
   }
 
 
-
- 
-  deleteDataSet() { 
-    this.DataSetService.deleteDataSet(this.selectedDataSet); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
+  deleteDataSet(uuid:string) { 
+    this.DataSetService.deleteDataSet(uuid); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
     this.loadDataSets();
   }
 
@@ -90,10 +88,10 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   addNewDataSet() {
     this.DataSetService.addDataSet(
-    this.settingsForm.selectedPath, 
-    this.settingsForm.selectedSource, 
-    this.settingsForm.interval, 
-    this.settingsForm.dataPoints);
+      this.settingsForm.selectedPath, 
+      this.settingsForm.selectedSource, 
+      this.settingsForm.interval, 
+      this.settingsForm.dataPoints);
     this.dialogRef.close();
   }
 }

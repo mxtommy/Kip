@@ -128,7 +128,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
 
     let dialogRef = this.dialog.open(WidgetNumericModalComponent, {
-      width: '500px',
+      width: '650px',
       data: settingsData
     });
 
