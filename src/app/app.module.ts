@@ -48,7 +48,7 @@ import { FilterSelfPipe } from './filter-self.pipe';
 import { WidgetNumericComponent, WidgetNumericModalComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
-import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
+import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './widget-historical/widget-historical.component';
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
 
 const appRoutes: Routes = [
@@ -78,6 +78,7 @@ const appRoutes: Routes = [
     SettingsDatasetsModalComponent,
     SettingsSignalkComponent,
     WidgetHistoricalComponent,
+    WidgetHistoricalModalComponent,
     LayoutSplitComponent
   ],
   imports: [
@@ -107,10 +108,12 @@ const appRoutes: Routes = [
     WidgetTextGenericComponent,
     WidgetTextGenericModalComponent,
     WidgetHistoricalComponent,
+    
 
     //dialogs
     UnitWindowModalComponent,
     WidgetNumericModalComponent,
+    WidgetHistoricalModalComponent,
     SettingsDatasetsModalComponent
   ],
   providers: [ 

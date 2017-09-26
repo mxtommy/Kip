@@ -32,8 +32,8 @@
                             {{source}}
                         </md-option>
                     </md-select>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
                 </div>
-                <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
             </md-step>
             <md-step label="Display">
                 <div class="tab-content"> 
@@ -63,7 +63,7 @@
                     </md-select>
                     <md-select 
                         [style.width]="'100%'" 
-                        placeholder="Unit Category" 
+                        placeholder="Unit" 
                         [(ngModel)]="settingsData.selectedUnitName" 
                         name="unitName"
                         >

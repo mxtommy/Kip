@@ -1,19 +1,16 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input, Inject } from '@angular/core';
 import Chart from 'chart.js';
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 
 import { dataPoint, DataSetService } from '../data-set.service';
-import { TreeNode, TreeManagerService } from '../tree-manager.service';
+import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { UnitConvertService } from '../unit-convert.service';
 
 
-interface widgetSettingsForm {
-  availableDataSets: string[];
+interface IHistoricalWidgetSettings {
   selectedDataSet: string;
   label: string;
-  availableUnitGroups: string[];
-  availableUnitNames: string[];
   selectedUnitGroup: string;
   selectedUnitName: string;
   numDecimal: number;
@@ -39,6 +36,14 @@ interface widgetConfig {
   includeZero: boolean;
 }
 
+interface IDataSetOptions {
+    label: string;
+    data: any;
+    fill: string;
+    //borderWidth: 1
+    borderColor: any;
+    borderDash?: number[];
+}
 
 @Component({
   selector: 'app-widget-historical',
@@ -47,10 +52,12 @@ interface widgetConfig {
 })
 export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
-  @Input('nodeUUID') nodeUUID: string;
-
+  @Input('widgetUUID') widgetUUID: string;
+    
   @ViewChild('lineGraph') lineGraph: ElementRef;
 
+  activeWidget: IWidget;
+  
   chartCtx;
   chart = null;
 
@@ -58,28 +65,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
   chartDataAvg = [];
   chartDataMax = [];
 
-  modalRef;
+  textColor; // store the color of text for the graph...
+
   converter = this.UnitConvertService.getConverter();
   dataSetSub: Subscription = null;
 
-  settingsForm: widgetSettingsForm = {
-    availableDataSets: [],
-    selectedDataSet: null,
-    label: null,
-    availableUnitGroups: Object.keys(this.converter),
-    availableUnitNames: null,
-    selectedUnitGroup: null,
-    selectedUnitName: null,
-    numDecimal: 2,
-    invertData: false,
-    displayMinMax: false,
-    animateGraph: false,
-    suggestedMin: null,
-    suggestedMax: null,
-    includeZero: true
-  }
-
-  nodeConfig: widgetConfig = {
+  widgetConfig: widgetConfig = {
     dataSetUUID: null,
     label: '',
     unitGroup: 'discreet',
@@ -93,26 +84,28 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     includeZero: true
   }
 
-  activePage: TreeNode;
 
 
 
   constructor(
+    public dialog: MdDialog,
     private DataSetService: DataSetService,
-    private modalService: NgbModal, 
-    private treeManager: TreeManagerService,
+    private WidgetManagerService: WidgetManagerService,
     private UnitConvertService: UnitConvertService
   ) { }
 
     ngOnInit() {
-        this.activePage = this.treeManager.getNode(this.nodeUUID);
-        if (this.activePage.nodeData === null) {
+        this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
+        if (this.activeWidget.config === null) {
             // no data, let's set some!
-            this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
+            this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
         } else {
-            this.nodeConfig = this.activePage.nodeData; // load existing config.
+            this.widgetConfig = this.activeWidget.config; // load existing config.
         }
 
+        //TODO, this only works on chart init... need to find when theme changes...
+        this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
+        
         this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
         this.startChart();
         setTimeout(this.subscribeDataSet(),1000);//TODO, see why destroy called before we even get subbed (or just after...)
@@ -132,44 +125,45 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             this.chart.destroy();
         }
         // Setup DataSets
-        let ds = [
+        let ds: IDataSetOptions[] = [
           {
-            label: this.nodeConfig.label + '-Avg.',
+            label: this.widgetConfig.label + '-Avg.',
             data: this.chartDataAvg,
             fill: 'false',
             //borderWidth: 1
-            borderColor: 'rgba(0, 255, 0, 1)'
+            borderColor: this.textColor
           }
         ];
-        if (this.nodeConfig.displayMinMax) {
+        if (this.widgetConfig.displayMinMax) {
           ds.push(
             {
-              label: this.nodeConfig.label + '-Min',
+              label: this.widgetConfig.label + '-Min',
               data: this.chartDataMin,
               fill: '+1',
               //borderWidth: 1
-              borderColor: 'rgba(255, 0, 0, 0.5)'
-  
+              borderColor: this.textColor,
+              borderDash: [ 5, 5 ]
           },
           {
-              label: this.nodeConfig.label + '-Max',
+              label: this.widgetConfig.label + '-Max',
               data: this.chartDataMax,
               fill: '-1',
               //borderWidth: 1
-              borderColor: 'rgba(0, 0, 255, 0.5)'
+              borderColor: this.textColor,
+              borderDash: [ 5, 5 ]
           } 
           );
         }
         //setup Options
         let yAxisTickOptions = {};
-        if (this.nodeConfig.includeZero) {
+        if (this.widgetConfig.includeZero) {
           yAxisTickOptions['beginAtZero'] = true;
         }
-        if (this.nodeConfig.suggestedMin !== null) {
-          yAxisTickOptions['suggestedMin'] = this.nodeConfig.suggestedMin;
+        if (this.widgetConfig.suggestedMin !== null) {
+          yAxisTickOptions['suggestedMin'] = this.widgetConfig.suggestedMin;
         }
-        if (this.nodeConfig.suggestedMax !== null) {
-          yAxisTickOptions['suggestedMax'] = this.nodeConfig.suggestedMax;
+        if (this.widgetConfig.suggestedMax !== null) {
+          yAxisTickOptions['suggestedMax'] = this.widgetConfig.suggestedMax;
         }        
 
         this.chart = new Chart(this.chartCtx,{
@@ -227,16 +221,16 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
     subscribeDataSet() {
         //this.unsubscribeDataSet();
-        if (this.nodeConfig.dataSetUUID === null) { return } // nothing to sub to...
+        if (this.widgetConfig.dataSetUUID === null) { return } // nothing to sub to...
 
-        this.dataSetSub = this.DataSetService.subscribeDataSet(this.nodeUUID, this.nodeConfig.dataSetUUID).subscribe(
+        this.dataSetSub = this.DataSetService.subscribeDataSet(this.widgetUUID, this.widgetConfig.dataSetUUID).subscribe(
             dataSet => {
                 
                 if (dataSet === null) {
                 return; // we will get null back if we subscribe to a dataSet before the app has started it.when it learns about it we will get first value
                 }
                 let invert = 1;
-                if (this.nodeConfig.invertData) { invert = -1; }
+                if (this.widgetConfig.invertData) { invert = -1; }
                 //Avg
                 this.chartDataAvg = [];
                 for (let i=0;i<dataSet.length;i++){
@@ -246,13 +240,13 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                   }
                   this.chartDataAvg.push({
                     t: dataSet[i].timestamp, 
-                    y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].average).toFixed(this.nodeConfig.numDecimal)*invert
+                    y: this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](dataSet[i].average).toFixed(this.widgetConfig.numDecimal)*invert
                   });
                 }
                 this.chart.config.data.datasets[0].data = this.chartDataAvg;
                 
                 //min/max
-                if (this.nodeConfig.displayMinMax) {
+                if (this.widgetConfig.displayMinMax) {
                   this.chartDataMin = [];
                   this.chartDataMax = [];
                   for (let i=0;i<dataSet.length;i++){
@@ -263,11 +257,11 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                     } else {
                       this.chartDataMin.push({
                           t: dataSet[i].timestamp, 
-                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].minValue).toFixed(this.nodeConfig.numDecimal)*invert
+                          y: this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](dataSet[i].minValue).toFixed(this.widgetConfig.numDecimal)*invert
                       });
                       this.chartDataMax.push({
                           t: dataSet[i].timestamp, 
-                          y: this.converter[this.nodeConfig.unitGroup][this.nodeConfig.unitName](dataSet[i].maxValue).toFixed(this.nodeConfig.numDecimal)*invert
+                          y: this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](dataSet[i].maxValue).toFixed(this.widgetConfig.numDecimal)*invert
                       });
                     }
                   }
@@ -276,7 +270,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 }
 
 
-                if (this.nodeConfig.animateGraph) {
+                if (this.widgetConfig.animateGraph) {
                   this.chart.update();
                 } else {
                   this.chart.update(0);
@@ -294,62 +288,110 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
 
     openWidgetSettings(content) {
+
+        //prepare current data
+        let settingsData: IHistoricalWidgetSettings = {
+            selectedDataSet: this.widgetConfig.dataSetUUID,
+            label: this.widgetConfig.label,
+            numDecimal: this.widgetConfig.numDecimal,
+            selectedUnitGroup: this.widgetConfig.unitGroup,
+            selectedUnitName: this.widgetConfig.unitName,
+            invertData: this.widgetConfig.invertData,
+            displayMinMax: this.widgetConfig.displayMinMax,
+            animateGraph: this.widgetConfig.animateGraph,
+            suggestedMin: this.widgetConfig.suggestedMin,
+            suggestedMax: this.widgetConfig.suggestedMax,
+            includeZero: this.widgetConfig.includeZero
+        };
         
-        this.settingsForm.selectedDataSet = this.nodeConfig.dataSetUUID;
-        this.settingsForm.label = this.nodeConfig.label;
-        this.settingsForm.numDecimal = this.nodeConfig.numDecimal;
-        this.settingsForm.availableUnitNames = Object.keys(this.converter[this.nodeConfig.unitGroup]);
-        this.settingsForm.selectedUnitGroup = this.nodeConfig.unitGroup;
-        this.settingsForm.selectedUnitName = this.nodeConfig.unitName;
-        this.settingsForm.invertData = this.nodeConfig.invertData;
-        this.settingsForm.displayMinMax = this.nodeConfig.displayMinMax;
-        this.settingsForm.animateGraph = this.nodeConfig.animateGraph;
-        this.settingsForm.suggestedMin = this.nodeConfig.suggestedMin;
-        this.settingsForm.suggestedMax = this.nodeConfig.suggestedMax;
-        this.settingsForm.includeZero = this.nodeConfig.includeZero;
+        let dialogRef = this.dialog.open(WidgetHistoricalModalComponent, {
+            width: '650px',
+            data: settingsData
+          });
+      
+          dialogRef.afterClosed().subscribe(result => {
+            // save new settings
+            if (result) {
+                this.widgetConfig.dataSetUUID = result.selectedDataSet;
+                this.widgetConfig.label = result.label;
+                this.widgetConfig.unitGroup = result.selectedUnitGroup;
+                this.widgetConfig.unitName = result.selectedUnitName;
+                this.widgetConfig.numDecimal = result.numDecimal;
+                this.widgetConfig.invertData = result.invertData;
+                this.widgetConfig.displayMinMax = result.displayMinMax;
+                this.widgetConfig.animateGraph = result.animateGraph;
+                this.widgetConfig.includeZero = result.includeZero;
+                
         
-        this.settingsForm.availableDataSets = this.DataSetService.getDataSets().sort();
+                if (typeof(result.suggestedMin) == 'number') {
+                    this.widgetConfig.suggestedMin = result.suggestedMin;
+                } else {
+                    this.widgetConfig.suggestedMin = null;
+                }
         
-        this.modalRef = this.modalService.open(content);
-        this.modalRef.result.then((result) => {
-        }, (reason) => {
+                if (typeof(result.suggestedMax) == 'number') {
+                    this.widgetConfig.suggestedMax = result.suggestedMax;
+                } else {
+                    this.widgetConfig.suggestedMax = null;
+                }
+                this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);                
+                this.startChart(); //need to recreate chart to update options :P
+                this.subscribeDataSet();
+            }
+
         });
     }
-    settingsFormUpdateUnitType() {
-        this.settingsForm.availableUnitNames = Object.keys(this.converter[this.settingsForm.selectedUnitGroup]);
-        this.settingsForm.selectedUnitName = this.settingsForm.availableUnitNames[0];
+
+}
+
+
+
+
+
+
+
+
+@Component({
+selector: 'historical-widget-modal',
+templateUrl: './widget-historical.modal.html',
+styleUrls: ['./widget-historical.component.css']
+})
+export class WidgetHistoricalModalComponent implements OnInit {
+
+    settingsData: IHistoricalWidgetSettings;
+    availableDataSets: string[];
+    availableUnitGroups: string[];
+    availableUnitNames: string[];
+
+    converter: Object = this.UnitConvertService.getConverter();
+    
+    constructor(
+        private UnitConvertService: UnitConvertService,
+        private DataSetService: DataSetService,
+        public dialogRef: MdDialogRef<WidgetHistoricalModalComponent>,
+        @Inject(MD_DIALOG_DATA) public data: any) { }
+    
+
+    ngOnInit() {
+        this.settingsData = this.data;
+
+        this.availableUnitGroups = Object.keys(this.converter);
+        if (this.converter.hasOwnProperty(this.settingsData.selectedUnitGroup)) {
+                this.availableUnitNames = Object.keys(this.converter[this.settingsData.selectedUnitGroup]);
+        }
+        
+        this.availableDataSets = this.DataSetService.getDataSets().sort();
+
+
     }
- saveSettings() {
-      this.modalRef.close();
-      this.nodeConfig.dataSetUUID = this.settingsForm.selectedDataSet;
-      this.nodeConfig.label = this.settingsForm.label;
-      this.nodeConfig.unitGroup = this.settingsForm.selectedUnitGroup;
-      this.nodeConfig.unitName = this.settingsForm.selectedUnitName;
-      this.nodeConfig.numDecimal = this.settingsForm.numDecimal;
-      this.nodeConfig.invertData = this.settingsForm.invertData;
-      this.nodeConfig.displayMinMax = this.settingsForm.displayMinMax;
-      this.nodeConfig.animateGraph = this.settingsForm.animateGraph;
-      this.nodeConfig.includeZero = this.settingsForm.includeZero;
-      
 
-      if (typeof(this.settingsForm.suggestedMin) == 'number') {
-        this.nodeConfig.suggestedMin = this.settingsForm.suggestedMin;
-      } else {
-        this.nodeConfig.suggestedMin = null;
-      }
+    updateUnitType() {
+        this.availableUnitNames = Object.keys(this.converter[this.settingsData.selectedUnitGroup]);
+        this.settingsData.selectedUnitName = this.availableUnitNames[0];
+    }
 
-      if (typeof(this.settingsForm.suggestedMax) == 'number') {
-        this.nodeConfig.suggestedMax = this.settingsForm.suggestedMax;
-      } else {
-        this.nodeConfig.suggestedMax = null;
-      }
-
-      this.treeManager.saveNodeData(this.nodeUUID, this.nodeConfig);
-      this.startChart(); //need to recreate chart to update options :P
-      this.subscribeDataSet();
-  }
-
-
-
+    submitConfig() {
+        this.dialogRef.close(this.settingsData);
+    }
 
 }

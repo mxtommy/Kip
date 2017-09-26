@@ -1,0 +1,126 @@
+<form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
+    <md-dialog-content>
+            
+        <md-horizontal-stepper>
+            <md-step label="Source">
+                <div class="tab-content"> 
+                    <p>
+                        <md-select 
+                            [style.width]="'100%'" 
+                            placeholder="Data Set" 
+                            [(ngModel)]="settingsData.selectedDataSet" 
+                            name="selectedDataSet"
+                            required>
+                            <md-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
+                                {{ds.name}}
+                            </md-option>
+                        </md-select>
+                    </p>
+                    <p>
+                        <md-checkbox
+                            [(ngModel)]="settingsData.invertData"
+                            [align]="align"
+                            name="invertData"
+                            >
+                            Invert Data (multiply by -1)
+                        </md-checkbox>
+                    </p>
+                    <p>
+                        <md-checkbox
+                            [(ngModel)]="settingsData.displayMinMax"
+                            [align]="align"
+                            name="displayMinMax"
+                            >
+                            Include Min/Max
+                        </md-checkbox>
+                    </p>
+                    <p>
+                        <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedDataSet">Next</button>
+                    </p>
+                </div>
+            </md-step>
+            <md-step label="Display">
+                <div class="tab-content"> 
+                    <p>                    
+                        <md-form-field class="full-width">
+                            <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
+                        </md-form-field>
+                    </p>
+                    <p>
+                        <md-checkbox
+                            [(ngModel)]="settingsData.animateGraph"
+                            [align]="align"
+                            name="animateGraph"
+                            >
+                            Animate Updates
+                        </md-checkbox>                    
+                    </p>
+                    <p>
+                        <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                        <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                    </p>
+                </div>
+            </md-step>
+            <md-step label="Units">
+                <div class="tab-content"> 
+                    <p>                    
+                        <md-select 
+                            [style.width]="'100%'" 
+                            placeholder="Unit Category" 
+                            [(ngModel)]="settingsData.selectedUnitGroup" 
+                            name="unitGroup"
+                            (ngModelChange)="updateUnitType()"
+                            >
+                            <md-option *ngFor="let group of availableUnitGroups" [value]="group">
+                                {{group}}
+                            </md-option>
+                        </md-select>
+                    </p>
+                    <p>
+                        <md-select 
+                            [style.width]="'100%'" 
+                            placeholder="Unit" 
+                            [(ngModel)]="settingsData.selectedUnitName" 
+                            name="unitName"
+                            >
+                            <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                                {{unitName}}
+                            </md-option>
+                        </md-select>
+                    </p>
+                    <p>
+                        <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                        <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                    </p>
+                </div>
+            </md-step>
+            <md-step label="Graph">
+                    <div class="tab-content"> 
+                        <p>                    
+                            <md-form-field class="full-width">
+                                <input mdInput type="number" placeholder="Suggested Minimum (optional):" name="suggestedMin" [(ngModel)]="settingsData.suggestedMin">
+                            </md-form-field>
+                        </p>
+                        <p>
+                            <md-form-field class="full-width">
+                                <input mdInput type="number" placeholder="Suggested Maximum (optional)" name="suggestedMax" [(ngModel)]="settingsData.suggestedMax">
+                            </md-form-field>
+                        </p>
+                        <p>
+                            <md-checkbox
+                                [(ngModel)]="settingsData.includeZero"
+                                [align]="align"
+                                name="includeZero"
+                                >
+                                Include Origin (aka 0)
+                            </md-checkbox>                    
+                        </p>                        
+                        <p>
+                            <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                            <button md-raised-button color="accent" type="submit">Save</button>
+                        </p>
+                    </div>
+                </md-step>
+        </md-horizontal-stepper>
+    </md-dialog-content>
+</form>                    
