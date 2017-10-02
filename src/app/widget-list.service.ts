@@ -5,6 +5,7 @@ import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.componen
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
+import { WidgetWindComponent } from './widget-wind/widget-wind.component';
 
 export class widgetInfo {
   name: string;
@@ -42,6 +43,11 @@ export class WidgetListService {
       name: 'WidgetHistorical',
       componentName: WidgetHistoricalComponent,
       description: 'Historical DataSet',
+    },
+    {
+      name: 'WidgetWindComponent',
+      componentName: WidgetWindComponent,
+      description: 'Wind Gauge',
     }
   ];
 

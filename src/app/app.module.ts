@@ -50,6 +50,8 @@ import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './set
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './widget-historical/widget-historical.component';
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
+import { WidgetWindComponent, WidgetWindModalComponent } from './widget-wind/widget-wind.component';
+import { SvgWindComponent } from './svg-wind/svg-wind.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -79,7 +81,10 @@ const appRoutes: Routes = [
     SettingsSignalkComponent,
     WidgetHistoricalComponent,
     WidgetHistoricalModalComponent,
-    LayoutSplitComponent
+    LayoutSplitComponent,
+    WidgetWindComponent,
+    WidgetWindModalComponent,
+    SvgWindComponent
   ],
   imports: [
     BrowserModule,
@@ -108,12 +113,14 @@ const appRoutes: Routes = [
     WidgetTextGenericComponent,
     WidgetTextGenericModalComponent,
     WidgetHistoricalComponent,
-    
+    WidgetWindComponent,
 
     //dialogs
     UnitWindowModalComponent,
     WidgetNumericModalComponent,
     WidgetHistoricalModalComponent,
+    WidgetWindModalComponent,
+    
     SettingsDatasetsModalComponent
   ],
   providers: [ 

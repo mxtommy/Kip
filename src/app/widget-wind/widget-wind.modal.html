@@ -1,0 +1,193 @@
+<form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
+        
+    <md-dialog-content>
+
+        <md-horizontal-stepper>
+            <md-step label="Heading">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Heading Path" 
+                        [(ngModel)]="settingsData.headingPath" 
+                        name="settingsData.headingPath"
+                            (ngModelChange)="updateHeadingSources()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.headingSource" 
+                        name="settingsData.headingSource">
+                        <md-option *ngFor="let source of headingSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.headingPath">Next</button>
+                </div>
+            </md-step>
+            <md-step label="True Wind Angle">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="True wind Angle Path" 
+                        [(ngModel)]="settingsData.trueWindAnglePath" 
+                        name="settingsData.trueWindAnglePath"
+                            (ngModelChange)="updateTrueWindAngleSources()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.trueWindAngleSource" 
+                        name="settingsData.trueWindAngleSource">
+                        <md-option *ngFor="let source of trueWindAngleSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.trueWindAnglePath">Next</button>
+                </div>
+            </md-step>
+
+            <md-step label="True Wind Speed">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="True wind Speed Path" 
+                        [(ngModel)]="settingsData.trueWindSpeedPath" 
+                        name="settingsData.trueWindSpeedPath"
+                            (ngModelChange)="updateTrueWindSpeedSources()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.trueWindSpeedSource" 
+                        name="settingsData.trueWindSpeedSource">
+                        <md-option *ngFor="let source of trueWindSpeedSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.trueWindAnglePath">Next</button>
+                </div>
+            </md-step>
+
+            <md-step label="App Wind Angle">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="App wind Angle Path" 
+                        [(ngModel)]="settingsData.appWindAnglePath" 
+                        name="settingsData.appWindAnglePath"
+                            (ngModelChange)="updateAppWindAngleSources()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.appWindAngleSource" 
+                        name="settingsData.appWindAngleSource">
+                        <md-option *ngFor="let source of appWindAngleSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.appWindAnglePath">Next</button>
+                </div>
+            </md-step>
+
+            <md-step label="App Wind Speed">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="App. wind Speed Path" 
+                        [(ngModel)]="settingsData.appWindSpeedPath" 
+                        name="settingsData.appWindSpeedPath"
+                            (ngModelChange)="updateAppWindSpeedSources()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        [align]="align"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.appWindSpeedSource" 
+                        name="settingsData.appWindSpeedSource">
+                        <md-option *ngFor="let source of appWindSpeedSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.appWindAnglePath">Next</button>
+                </div>
+            </md-step>            
+            <md-step label="Units">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Unit" 
+                        [(ngModel)]="settingsData.unitName" 
+                        name="unitName"
+                        >
+                        <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                            {{unitName}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button md-raised-button color="accent" type="submit">Save</button>
+                </div>
+            </md-step>                    
+
+
+        </md-horizontal-stepper>
+    </md-dialog-content>
+</form>                        

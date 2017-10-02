@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { DataSet } from './data-set.service';
+import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 
@@ -12,7 +12,7 @@ const defaultTheme = 'default-light';
 
 const defaultSplitSet: ISplitSet[] = [ { uuid: 'isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', direction: 'horizontal', splitAreas: [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: 'widget', size: 100 } ]} ];
 const defaultRootSplits: string[] = ['isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'];
-const defaultDataSets: DataSet[] = [];
+const defaultDataSets: IDataSet[] = [];
 const defaultWidgets: Array<IWidget> = [ { uuid: 'widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx', type: "WidgetBlank", config: null } ];;
 
 
@@ -21,7 +21,7 @@ interface appSettings {
   themeName: string;
   widgets: Array<IWidget>; 
   unlockStatus: boolean;
-  dataSets: DataSet[];
+  dataSets: IDataSet[];
   splitSets: ISplitSet[];
   rootSplits: string[];
 }
@@ -41,7 +41,7 @@ export class AppSettingsService {
   rootSplits: string[] = [];
   
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
-  dataSets: DataSet[] = [];
+  dataSets: IDataSet[] = [];
   root
 
   constructor() {

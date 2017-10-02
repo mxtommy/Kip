@@ -67,7 +67,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
     } else {
       this.widgetConfig = this.activeWidget.config; // load existing config.
-    }0
+    }
     this.subscribePath();
   }
 
@@ -96,6 +96,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy {
 
         if (pathObject.sources[source].value === null) {
           this.dataValue = null;
+          return;
         }
 
         let value:number = pathObject.sources[source].value;

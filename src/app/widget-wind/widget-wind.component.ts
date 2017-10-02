@@ -1,0 +1,332 @@
+import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
+import { Subscription } from 'rxjs/Subscription';
+import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+
+import { SignalKService, pathObject } from '../signalk.service';
+import { WidgetManagerService, IWidget } from '../widget-manager.service';
+import { UnitConvertService } from '../unit-convert.service';
+
+
+interface IWidgetConfig {
+  headingPath: string;
+  headingSource: string;
+  trueWindAnglePath: string;
+  trueWindAngleSource: string;
+  trueWindSpeedPath: string;
+  trueWindSpeedSource: string;
+  appWindAnglePath: string;
+  appWindAngleSource: string;
+  appWindSpeedPath: string;
+  appWindSpeedSource: string;
+  unitName: string;
+}  
+
+@Component({
+  selector: 'app-widget-wind',
+  templateUrl: './widget-wind.component.html',
+  styleUrls: ['./widget-wind.component.css']
+})
+export class WidgetWindComponent implements OnInit, OnDestroy {
+
+  @Input('widgetUUID') widgetUUID: string;
+  @Input('unlockStatus') unlockStatus: boolean;
+  converter: Object = this.UnitConvertService.getConverter();
+  
+  activeWidget: IWidget;
+  
+  widgetConfig: IWidgetConfig = {
+    headingPath: 'vessels.self.navigation.headingTrue',
+    headingSource: 'default',
+    trueWindAnglePath: 'vessels.self.environment.wind.angleTrueWater',
+    trueWindAngleSource: 'default',
+    trueWindSpeedPath: 'vessels.self.environment.wind.speedTrue',
+    trueWindSpeedSource: 'default',
+    appWindAnglePath: 'vessels.self.environment.wind.angleApparent',
+    appWindAngleSource: 'default',
+    appWindSpeedPath: 'vessels.self.environment.wind.speedApparent',
+    appWindSpeedSource: 'default',
+    unitName: 'knots'
+  }    
+
+  currentHeading: number = 0;
+  headingSub: Subscription = null;
+
+  appWindAngle: number = null;
+  appWindAngleSub: Subscription = null;
+
+  appWindSpeed: number = null;
+  appWindSpeedSub: Subscription = null;
+
+  constructor(
+    public dialog: MdDialog,
+    private SignalKService: SignalKService,
+    private WidgetManagerService: WidgetManagerService,
+    private UnitConvertService: UnitConvertService) {
+  }
+
+
+  ngOnInit() {
+    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
+    if (this.activeWidget.config === null) {
+        // no data, let's set some!
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+    } else {
+      this.widgetConfig = this.activeWidget.config; // load existing config.
+    }
+
+    this.subscribeHeading();
+    this.subscribeAppWindAngle();
+    this.subscribeAppWindSpeed();
+
+  }
+
+  ngOnDestroy() {
+    this.unsubscribeHeading();
+    this.unsubscribeAppWindAngle();
+    this.unsubscribeAppWindSpeed();
+  }
+
+  subscribeHeading() {
+    this.unsubscribeHeading();
+    if (this.widgetConfig.headingPath === null) { return } // nothing to sub to...
+
+    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.headingPath).subscribe(
+      pathObject => {
+        if (pathObject === null) {
+          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
+        }
+        let source: string;
+        if (this.widgetConfig.headingSource == 'default') {
+          source = pathObject.defaultSource;
+        } else {
+          source = this.widgetConfig.headingSource;
+        }
+
+        if (pathObject.sources[source].value === null) {
+          this.currentHeading = 0;
+        }
+
+        let value:number = pathObject.sources[source].value;
+        let converted = this.converter['angle']['deg'](value);
+        this.currentHeading = converted;
+      }
+    );
+  }
+
+  subscribeAppWindAngle() {
+    this.unsubscribeAppWindAngle();
+    if (this.widgetConfig.appWindAnglePath === null) { return } // nothing to sub to...
+
+    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.appWindAnglePath).subscribe(
+      pathObject => {
+        if (pathObject === null) {
+          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
+        }
+        let source: string;
+        if (this.widgetConfig.appWindAngleSource == 'default') {
+          source = pathObject.defaultSource;
+        } else {
+          source = this.widgetConfig.appWindAngleSource;
+        }
+
+        if (pathObject.sources[source].value === null) {
+          this.appWindAngle = null;
+          return;
+        }
+
+        let value:number = pathObject.sources[source].value;
+        let converted = this.converter['angle']['deg'](value);
+        // 0-180+ for stb
+        // -0 to -180 for port
+        // need in 0-360
+        if (converted > 0) {// stb
+          this.appWindAngle= 360 - converted;
+        } else if (converted < 0) {
+          this.appWindAngle = (converted * -1);
+        }
+
+      }
+    );
+  }
+
+  subscribeAppWindSpeed() {
+    this.unsubscribeAppWindSpeed();
+    if (this.widgetConfig.appWindSpeedPath === null) { return } // nothing to sub to...
+
+    this.appWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.appWindSpeedPath).subscribe(
+      pathObject => {
+        if (pathObject === null) {
+          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
+        }
+        let source: string;
+        if (this.widgetConfig.appWindSpeedSource == 'default') {
+          source = pathObject.defaultSource;
+        } else {
+          source = this.widgetConfig.appWindSpeedSource;
+        }
+
+        if (pathObject.sources[source].value === null) {
+          this.appWindSpeed = null;
+          return;
+        }
+
+        let value:number = pathObject.sources[source].value;
+        this.appWindSpeed = this.converter['speed'][this.widgetConfig.unitName](value);
+      }
+    );
+  }
+
+  unsubscribeHeading() {
+    if (this.headingSub !== null) {
+      this.headingSub.unsubscribe();
+      this.headingSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.headingPath);
+    }
+  }
+
+  unsubscribeAppWindAngle() {
+    if (this.appWindAngleSub !== null) {
+      this.appWindAngleSub.unsubscribe();
+      this.appWindAngleSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.appWindAnglePath);
+    }
+  }
+
+  unsubscribeAppWindSpeed() {
+    if (this.appWindSpeedSub !== null) {
+      this.appWindSpeedSub.unsubscribe();
+      this.appWindSpeedSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.appWindSpeedPath);
+    }   
+  }
+
+
+
+  openWidgetSettings() {
+
+    //prepare current data
+    let settingsData: IWidgetConfig = {
+      headingPath: this.widgetConfig.headingPath,
+      headingSource: this.widgetConfig.headingSource,
+      trueWindAnglePath: this.widgetConfig.trueWindAnglePath,
+      trueWindAngleSource: this.widgetConfig.trueWindAngleSource,
+      trueWindSpeedPath: this.widgetConfig.trueWindSpeedPath,
+      trueWindSpeedSource: this.widgetConfig.trueWindSpeedSource,
+      appWindAnglePath: this.widgetConfig.appWindAnglePath,
+      appWindAngleSource: this.widgetConfig.appWindAngleSource,
+      appWindSpeedPath: this.widgetConfig.appWindSpeedPath,
+      appWindSpeedSource: this.widgetConfig.appWindSpeedSource,
+      unitName: this.widgetConfig.unitName
+    }
+
+
+    let dialogRef = this.dialog.open(WidgetWindModalComponent, {
+      width: '650px',
+      data: settingsData
+    });
+
+  }
+
+
+}
+
+/*************************************************************
+ * ***********************************************************
+ * ***********************************************************
+ *   Modal
+ * ***********************************************************
+ * ***********************************************************
+ */
+
+
+@Component({
+  selector: 'wind-widget-modal',
+  templateUrl: './widget-wind.modal.html',
+  styleUrls: ['./widget-wind.component.css']
+})
+export class WidgetWindModalComponent implements OnInit {
+
+  settingsData: IWidgetConfig;
+
+  availableUnitNames: string[];
+  
+  selfPaths: boolean = true;
+  availablePaths: Array<string> = [];
+
+  headingSources: Array<string>;
+  trueWindAngleSources: Array<string>;
+  trueWindSpeedSources: Array<string>;
+  appWindAngleSources: Array<string>;
+  appWindSpeedSources: Array<string>;
+
+  converter: Object = this.UnitConvertService.getConverter();
+  
+
+  constructor(
+    private SignalKService: SignalKService,
+    private UnitConvertService: UnitConvertService,
+    public dialogRef: MdDialogRef<WidgetWindModalComponent>,
+    @Inject(MD_DIALOG_DATA) public data: any) { }
+
+  ngOnInit() {
+    this.settingsData = this.data;
+    //populate available choices
+    this.availablePaths = this.SignalKService.getPathsByType('number').sort();
+
+    this.updateHeadingSources();
+    this.updateTrueWindAngleSources();
+    this.updateTrueWindSpeedSources();
+    this.updateAppWindAngleSources();
+    this.updateAppWindSpeedSources();
+
+    this.availableUnitNames = Object.keys(this.converter['speed']);
+    
+
+  }
+
+
+  updateHeadingSources() { 
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.headingPath);
+    if (pathObject === null) { return; }
+    this.headingSources = ['default'].concat(Object.keys(pathObject.sources));
+    if (!this.headingSources.includes(this.settingsData.headingSource))
+      { this.settingsData.headingSource = 'default'; }
+  }
+
+  updateTrueWindAngleSources() {
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.trueWindAnglePath);
+    if (pathObject === null) { return; }
+    this.trueWindAngleSources = ['default'].concat(Object.keys(pathObject.sources));
+    if (!this.trueWindAngleSources.includes(this.settingsData.trueWindAngleSource))
+      { this.settingsData.trueWindAngleSource = 'default'; }
+  }
+
+  updateTrueWindSpeedSources() {
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.trueWindSpeedPath);
+    if (pathObject === null) { return; }
+    this.trueWindSpeedSources = ['default'].concat(Object.keys(pathObject.sources));
+    if (!this.trueWindSpeedSources.includes(this.settingsData.trueWindSpeedSource))
+      { this.settingsData.trueWindSpeedSource = 'default'; }
+  }
+
+  updateAppWindAngleSources() {
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.appWindAnglePath);
+    if (pathObject === null) { return; }
+    this.appWindAngleSources = ['default'].concat(Object.keys(pathObject.sources));
+    if (!this.appWindAngleSources.includes(this.settingsData.appWindAngleSource))
+      { this.settingsData.appWindAngleSource = 'default'; }
+  }
+
+  updateAppWindSpeedSources() {
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.appWindSpeedPath);
+    if (pathObject === null) { return; }
+    this.appWindSpeedSources = ['default'].concat(Object.keys(pathObject.sources));
+    if (!this.appWindSpeedSources.includes(this.settingsData.appWindSpeedSource))
+    { this.settingsData.appWindSpeedSource = 'default'; }
+  }
+
+
+  submitConfig() {
+    this.dialogRef.close(this.settingsData);
+  }
+}
