@@ -2,9 +2,9 @@
   <gauge-steel
     [widgetUUID]="widgetUUID"
     [gaugeType]="widgetConfig.gaugeType"
-    barGauge=""
+    [barGauge]="widgetConfig.barGraph"
 
-    [radialSize]=""
+    [radialSize]="widgetConfig.radialSize"
   
     backgroundColor="carbon"
     frameColor="anthracite"
@@ -14,7 +14,7 @@
 
     [zones]=""
     [title]="widgetConfig.label"
-    [units]="widgetConfig.units"
+    [units]="widgetConfig.unitName"
     [value]="dataValue"
 
   ></gauge-steel>

@@ -14,6 +14,8 @@ interface IWidgetConfig {
   label: string;
   unitGroup: string;
   unitName: string;
+  barGraph: boolean;
+  radialSize: string;
   minValue: number;
   maxValue: number;
 }
@@ -46,6 +48,8 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
     label: null,
     unitGroup: 'discreet',
     unitName: 'no unit',
+    barGraph: false,
+    radialSize: 'full',
     minValue: 0,
     maxValue: 100
   }
@@ -121,6 +125,8 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
           label: this.widgetConfig.label,
           unitGroup: this.widgetConfig.unitGroup,
           unitName: this.widgetConfig.unitName,
+          barGraph: this.widgetConfig.barGraph,
+          radialSize: this.widgetConfig.radialSize,
           minValue: this.widgetConfig.minValue,
           maxValue: this.widgetConfig.maxValue
         }
@@ -142,6 +148,8 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
             this.widgetConfig.label = result.label;
             this.widgetConfig.unitGroup = result.unitGroup;
             this.widgetConfig.unitName = result.unitName;
+            this.widgetConfig.barGraph = result.barGraph;
+            this.widgetConfig.radialSize = result.radialSize;
             this.widgetConfig.minValue = result.minValue;
             this.widgetConfig.maxValue = result.maxValue;
             this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);

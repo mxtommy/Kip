@@ -275,7 +275,12 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
       }
     } 
 
-
+    if (changes.radialSize) {
+      if ( !changes.radialSize.firstChange) {
+        this.buildOptions();
+        this.startGauge();//reset
+      }
+    } 
 
 
 

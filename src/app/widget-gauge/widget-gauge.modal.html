@@ -40,12 +40,13 @@
                         <md-form-field class="full-width">
                             <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
                         </md-form-field>
+                    </p><p>                    
+                        <md-form-field class="full-width">
+                            <input mdInput type="number" placeholder="Minimum Value" name="minValue" [(ngModel)]="settingsData.minValue">
+                        </md-form-field>
                     </p><p>
-                        <md-form-field class="">
-                                <input type="number" min="0" max="5" mdInput placeholder="Number of Integer places" name="integers" [(ngModel)]="settingsData.numInt">
-                        </md-form-field>        
-                        <md-form-field class="">
-                                <input type="number" min="0" max="5" mdInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
+                        <md-form-field class="full-width">
+                            <input mdInput type="number" placeholder="Maximum Value" name="maxValue" [(ngModel)]="settingsData.maxValue">
                         </md-form-field>
                     </p><p>
                         <button type="button" md-raised-button mdStepperPrevious>Back</button>
@@ -83,21 +84,25 @@
             <md-step label="Gauge">
                 <div class="tab-content"> 
                     <p>                    
-                        <md-radio-group name="gaugeType" [(ngModel)]="settingsData.gaugeType">
+                        <md-radio-group name="settingsData.gaugeType" [(ngModel)]="settingsData.gaugeType">
                             <md-radio-button value="linear">Linear Gauge</md-radio-button>
                             <md-radio-button value="radial">Radial Gauge</md-radio-button>
                         </md-radio-group>
-                    </p>                    
-                    <p>                    
-                        <md-form-field class="full-width">
-                            <input mdInput type="number" placeholder="Minimum Value" name="minValue" [(ngModel)]="settingsData.minValue">
-                        </md-form-field>
+                    </p><p>  
+                        <md-checkbox
+                            [(ngModel)]="settingsData.barGraph"
+                            name="settingsData.barGraph"
+                            >
+                            Digital display
+                        </md-checkbox>
+                    </p><p *ngIf="settingsData.gaugeType == 'radial'" >
+                        <md-radio-group name="gaugeType" [(ngModel)]="settingsData.radialSize">
+                            <md-radio-button value="quarter">1/4</md-radio-button>
+                            <md-radio-button value="half">1/2</md-radio-button>
+                            <md-radio-button value="three-quarter">3/4</md-radio-button>
+                            <md-radio-button value="full">Full</md-radio-button>
+                        </md-radio-group>
                     </p>
-                    <p>
-                        <md-form-field class="full-width">
-                            <input mdInput type="number" placeholder="Maximum Value" name="maxValue" [(ngModel)]="settingsData.maxValue">
-                        </md-form-field>
-                    </p>                     
                     <p>
                         <button type="button" md-raised-button mdStepperPrevious>Back</button>
                         <button md-raised-button color="accent" type="submit">Save</button>
