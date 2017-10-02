@@ -13,6 +13,7 @@ import {
   MdInputModule,
   MdToolbarModule,
   MdCheckboxModule,
+  MdRadioModule,
   MdTabsModule,
   MdStepperModule
 } from '@angular/material';
@@ -52,6 +53,9 @@ import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './wid
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
 import { WidgetWindComponent, WidgetWindModalComponent } from './widget-wind/widget-wind.component';
 import { SvgWindComponent } from './svg-wind/svg-wind.component';
+import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
+import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component'
+
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -84,7 +88,10 @@ const appRoutes: Routes = [
     LayoutSplitComponent,
     WidgetWindComponent,
     WidgetWindModalComponent,
-    SvgWindComponent
+    SvgWindComponent,
+    WidgetGaugeComponent,
+    WidgetGaugeModalComponent,
+    GaugeSteelComponent
   ],
   imports: [
     BrowserModule,
@@ -101,6 +108,7 @@ const appRoutes: Routes = [
     MdSelectModule,
     MdToolbarModule,
     MdCheckboxModule,
+    MdRadioModule,
     MdTabsModule,
     MdStepperModule,
     MdInputModule
@@ -114,12 +122,14 @@ const appRoutes: Routes = [
     WidgetTextGenericModalComponent,
     WidgetHistoricalComponent,
     WidgetWindComponent,
-
+    WidgetGaugeComponent,
+    
     //dialogs
     UnitWindowModalComponent,
     WidgetNumericModalComponent,
     WidgetHistoricalModalComponent,
     WidgetWindModalComponent,
+    WidgetGaugeModalComponent,
     
     SettingsDatasetsModalComponent
   ],

@@ -1,0 +1,109 @@
+<form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
+
+    <md-dialog-content>
+
+        <md-horizontal-stepper>
+            <md-step label="Source">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="SignalK Path" 
+                        [(ngModel)]="settingsData.signalKPath" 
+                        name="signalKPath"
+                         (ngModelChange)="settingsDataUpdatePath()"
+                        required>
+                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                            {{path}}
+                        </md-option>
+                    </md-select>
+                    <md-checkbox
+                        [(ngModel)]="selfPaths"
+                        name="selfPaths"
+                        >
+                        Restric to own vessel
+                    </md-checkbox>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Source" 
+                        [(ngModel)]="settingsData.signalKSource" 
+                        name="signalKSource">
+                        <md-option *ngFor="let source of availableSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.signalKPath">Next</button>
+                </div>
+            </md-step>
+            <md-step label="Display">
+                <div class="tab-content"> 
+                    <p>
+                        <md-form-field class="full-width">
+                            <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
+                        </md-form-field>
+                    </p><p>
+                        <md-form-field class="">
+                                <input type="number" min="0" max="5" mdInput placeholder="Number of Integer places" name="integers" [(ngModel)]="settingsData.numInt">
+                        </md-form-field>        
+                        <md-form-field class="">
+                                <input type="number" min="0" max="5" mdInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
+                        </md-form-field>
+                    </p><p>
+                        <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                        <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                    </p>
+                </div>
+            </md-step>
+            <md-step label="Units">
+                <div class="tab-content"> 
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Unit Category" 
+                        [(ngModel)]="settingsData.unitGroup" 
+                        name="unitGroup"
+                         (ngModelChange)="updateUnitType()"
+                        >
+                        <md-option *ngFor="let group of availableUnitGroups" [value]="group">
+                            {{group}}
+                        </md-option>
+                    </md-select>
+                    <md-select 
+                        [style.width]="'100%'" 
+                        placeholder="Unit" 
+                        [(ngModel)]="settingsData.unitName" 
+                        name="unitName"
+                        >
+                        <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                            {{unitName}}
+                        </md-option>
+                    </md-select>
+                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                </div>
+            </md-step>
+            <md-step label="Gauge">
+                <div class="tab-content"> 
+                    <p>                    
+                        <md-radio-group name="gaugeType" [(ngModel)]="settingsData.gaugeType">
+                            <md-radio-button value="linear">Linear Gauge</md-radio-button>
+                            <md-radio-button value="radial">Radial Gauge</md-radio-button>
+                        </md-radio-group>
+                    </p>                    
+                    <p>                    
+                        <md-form-field class="full-width">
+                            <input mdInput type="number" placeholder="Minimum Value" name="minValue" [(ngModel)]="settingsData.minValue">
+                        </md-form-field>
+                    </p>
+                    <p>
+                        <md-form-field class="full-width">
+                            <input mdInput type="number" placeholder="Maximum Value" name="maxValue" [(ngModel)]="settingsData.maxValue">
+                        </md-form-field>
+                    </p>                     
+                    <p>
+                        <button type="button" md-raised-button mdStepperPrevious>Back</button>
+                        <button md-raised-button color="accent" type="submit">Save</button>
+                    </p>
+                </div>
+            </md-step>
+        </md-horizontal-stepper>
+    </md-dialog-content>
+</form>

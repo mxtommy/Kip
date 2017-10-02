@@ -6,6 +6,8 @@ import { WidgetNumericComponent } from './widget-numeric/widget-numeric.componen
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 import { WidgetWindComponent } from './widget-wind/widget-wind.component';
+import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
+
 
 export class widgetInfo {
   name: string;
@@ -38,6 +40,11 @@ export class WidgetListService {
       name: 'WidgetTextGeneric',
       componentName: WidgetTextGenericComponent,
       description: 'Text Value',
+    },
+    {
+      name: 'WidgetGaugeComponent',
+      componentName: WidgetGaugeComponent,
+      description: "Gauge (Radial/Linear)"
     },
     {
       name: 'WidgetHistorical',
