@@ -1,15 +1,5 @@
-<div class="textGenericWrapper">
-  <div class="textGenericLabel">
-          {{ widgetConfig.label }}
-  </div>
-  <div #resizeContainer class="textGenericValue">
-    <h1 [fit-text] [container]="resizeContainer" [compression]="0.4" style="font-weight: bold;">
-    {{ dataValue }}
-    </h1>
-  </div>
-  <div class="textGenericUnit" *ngIf="widgetConfig.unitName != 'no unit'">
-    {{ widgetConfig.unitName }}
-  </div>
+<div #wrapperDiv class="textGenericWrapper">
+  <canvas #canvasEl></canvas>
   <div class="settingsButton" *ngIf="unlockStatus">
     <button  color="accent" md-mini-fab class="selector-fab" (click)="openWidgetSettings()">
         <span class="fa fa-cog"></span>

@@ -8,8 +8,8 @@
                     <md-select 
                         [style.width]="'100%'" 
                         placeholder="SignalK Path" 
-                        [(ngModel)]="settingsData.selectedPath" 
-                        name="selectedPath"
+                        [(ngModel)]="settingsData.signalKPath" 
+                        name="signalKPath"
                          (ngModelChange)="settingsDataUpdatePath()"
                         required>
                         <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
@@ -26,13 +26,13 @@
                     <md-select 
                         [style.width]="'100%'" 
                         placeholder="Source" 
-                        [(ngModel)]="settingsData.selectedSource" 
-                        name="selectedSource">
+                        [(ngModel)]="settingsData.signalKSource" 
+                        name="signalKSource">
                         <md-option *ngFor="let source of availableSources" [value]="source">
                             {{source}}
                         </md-option>
                     </md-select>
-                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
+                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.signalKPath">Next</button>
                 </div>
             </md-step>
             <md-step label="Display">
@@ -43,7 +43,9 @@
                     <md-form-field class="full-width">
                             <input type="number" min="0" max="5" mdInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
                     </md-form-field>
-
+                    <md-form-field class="full-width">
+                            <input type="number" min="0" max="5" mdInput placeholder="Number of Integer Place" name="integers" [(ngModel)]="settingsData.numInt">
+                    </md-form-field>
                     <button type="button" md-raised-button mdStepperPrevious>Back</button>
                     <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
                 </div>
@@ -53,7 +55,7 @@
                     <md-select 
                         [style.width]="'100%'" 
                         placeholder="Unit Category" 
-                        [(ngModel)]="settingsData.selectedUnitGroup" 
+                        [(ngModel)]="settingsData.unitGroup" 
                         name="unitGroup"
                          (ngModelChange)="updateUnitType()"
                         >
@@ -64,7 +66,7 @@
                     <md-select 
                         [style.width]="'100%'" 
                         placeholder="Unit" 
-                        [(ngModel)]="settingsData.selectedUnitName" 
+                        [(ngModel)]="settingsData.unitName" 
                         name="unitName"
                         >
                         <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
