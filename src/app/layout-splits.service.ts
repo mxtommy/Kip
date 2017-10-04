@@ -73,6 +73,10 @@ export class LayoutSplitsService {
     return uuid;
   }
 
+  isRootSplit(uuid: string) {
+    return this.rootUUIDs.includes(uuid);
+  }
+
   saveSplit(uuid: string, areas: ISplitArea[])  {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == uuid);
     if (splitIndex < 0) { return null; }

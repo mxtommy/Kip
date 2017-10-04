@@ -181,10 +181,12 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 /* ******************************************************************************************* */
 
   updateCanvas() {
-    this.clearCanvas();
-    this.drawValue();
-    this.drawTitle();
-    this.drawUnit();
+    if (this.canvasCtx) {
+      this.clearCanvas();
+      this.drawValue();
+      this.drawTitle();
+      this.drawUnit();
+    }
   }
 
   clearCanvas() {

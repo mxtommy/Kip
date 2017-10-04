@@ -7,9 +7,6 @@
     {{ dataValue }}
     </h1>
   </div>
-  <div class="textGenericUnit" *ngIf="widgetConfig.unitName != 'no unit'">
-    {{ widgetConfig.unitName }}
-  </div>
   <div class="settingsButton" *ngIf="unlockStatus">
     <button  color="accent" md-mini-fab class="selector-fab" (click)="openWidgetSettings()">
         <span class="fa fa-cog"></span>

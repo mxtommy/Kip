@@ -28,7 +28,7 @@ interface IWidgetsettingsData {
 export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
-  
+  @Input('unlockStatus') unlockStatus: boolean;
 
     activeWidget: IWidget;
   
@@ -140,7 +140,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   styleUrls: ['./widget-text-generic.component.css']
 })
 export class WidgetTextGenericModalComponent implements OnInit {
-
 
   settingsData: IWidgetsettingsData;
   selfPaths: boolean = true;

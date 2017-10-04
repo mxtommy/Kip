@@ -10,6 +10,12 @@
     bottom: 5%;
 }
 
+.splitdelete {
+    position: absolute;
+    right: 5%;
+    top: 5%;
+}
+
 split-area {
     overflow-y: hidden !important;
 }

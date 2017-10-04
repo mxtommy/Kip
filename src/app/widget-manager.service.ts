@@ -42,6 +42,12 @@ export class WidgetManagerService {
     return uuid; 
   }
 
+  deleteWidget(uuid) {
+    let wIndex = this.widgets.findIndex(w => w.uuid == uuid)
+    if (wIndex < 0) { return; } // not found
+    this.widgets.splice(wIndex, 1);
+  }
+
   updateWidgetType(uuid: string, newNodeType: string) {
     let wIndex = this.widgets.findIndex(w => w.uuid == uuid)
     if (wIndex < 0) { return; } // not found

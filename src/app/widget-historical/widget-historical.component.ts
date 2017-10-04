@@ -53,7 +53,8 @@ interface IDataSetOptions {
 export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
-    
+  @Input('unlockStatus') unlockStatus: boolean;    
+
   @ViewChild('lineGraph') lineGraph: ElementRef;
 
   activeWidget: IWidget;
@@ -357,6 +358,8 @@ templateUrl: './widget-historical.modal.html',
 styleUrls: ['./widget-historical.component.css']
 })
 export class WidgetHistoricalModalComponent implements OnInit {
+
+
 
     settingsData: IHistoricalWidgetSettings;
     availableDataSets: string[];

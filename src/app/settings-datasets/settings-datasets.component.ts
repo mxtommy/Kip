@@ -35,7 +35,7 @@ export class SettingsDatasetsComponent implements OnInit {
     this.dataSets = this.DataSetService.getDataSets();
   }
 
-  openNewDataSetModal(content) {
+  openNewDataSetModal() {
     let dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
       width: '600px'
     });

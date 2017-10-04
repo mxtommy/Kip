@@ -76,7 +76,26 @@ export class LayoutSplitComponent implements OnInit {
  
     // if num of areas in split > 1, delete the area from the splitset.
         // delete widget too! :P
- 
+    if (this.splitSet.splitAreas.length > 1) {
+      // delete widget
+      this.WidgetManagerService.deleteWidget(areaUUID);
+      //delete Area
+      let areaIndex = this.splitSet.splitAreas.findIndex(w => w.uuid == areaUUID)
+      
+      if (areaIndex < 0) { return; } // not found
+      this.splitSet.splitAreas.splice(areaIndex,1);
+      
+    } else {
+      if (this.LayoutSplitsService.isRootSplit(this.splitSet.uuid)) {
+        console.log("isRoot");
+        //TODO reset widget
+        return;
+      }
+      //this.WidgetManagerService.deleteWidget(areaUUID);
+      //delete this splitset...
+
+    }
+    
     // if num of areas in split = 1,
         // test if is rootsplit. if it is, just reset widget. (delete old first)
         // find Splitset that contains an area with uuid of this splitset.
@@ -84,7 +103,8 @@ export class LayoutSplitComponent implements OnInit {
         // delete splitSet
         // delete area from parent splitset
          
-    
+    this.saveSplit();
+        
   }
 
 
