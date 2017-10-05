@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { OverlayContainer } from '@angular/material';
 import { LayoutSplitsService } from './layout-splits.service';
@@ -29,9 +28,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(  
     private AppSettingsService: AppSettingsService,
-    private route: ActivatedRoute,
     private SignalKConnectionService: SignalKConnectionService,
-    private router: Router,
     private DataSetService: DataSetService,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService) { }
@@ -52,7 +49,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.themeName = newTheme;
       }
     )
-
     this.DataSetService.startAllDataSets();
   }
 
@@ -87,6 +83,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   pageDown() {
+        this.LayoutSplitsService.previousRoot();
+    
     /*let rootNodes = this.treeManager.getRootNodes();
     let currentIndex = rootNodes.findIndex(uuid => uuid == this.rootPage.uuid);
     let rootNum = Object.keys(rootNodes).length;
@@ -100,6 +98,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   pageUp() {
+    this.LayoutSplitsService.nextRoot();
+    
     /*
     let rootNodes = this.treeManager.getRootNodes();
     let currentIndex = rootNodes.findIndex(uuid => uuid == this.rootPage.uuid);

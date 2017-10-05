@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-
+import { Router } from '@angular/router';
 
 import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
@@ -31,11 +31,11 @@ export class LayoutSplitsService {
   splitSetObs: Array<ISplitSetObs> = [];
   rootUUIDs: Array<string> = [];
   activeRoot: BehaviorSubject<string> = new BehaviorSubject<string>(null);
-  activeRootIndex: number;
   
   constructor(
     private AppSettingsService: AppSettingsService,
-    private WidgetManagerService: WidgetManagerService) {  
+    private WidgetManagerService: WidgetManagerService,
+    private router: Router) {  
     this.splitSets = this.AppSettingsService.getSplitSets(); 
     // prepare subs
     for (let i=0; i<this.splitSets.length; i++) {
@@ -43,7 +43,7 @@ export class LayoutSplitsService {
     }
 
     this.rootUUIDs = this.AppSettingsService.getRootSplits();
-    this.activeRoot.next(this.rootUUIDs[0]);
+    //this.activeRoot.next(this.rootUUIDs[0]);
   }
 
   private newUuid() {
@@ -57,8 +57,31 @@ export class LayoutSplitsService {
     return this.activeRoot.asObservable();
   }
   
-  
+  setActiveRootIndex(index: number) {
+    if (this.rootUUIDs[index]) {
+      this.activeRoot.next(this.rootUUIDs[index]);
+    } else {
+      this.activeRoot.next(this.rootUUIDs[0]);
+    }
+  }
 
+  nextRoot() {
+    let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
+    if (currentIndex >= this.rootUUIDs.length - 1) {
+      this.router.navigate(['/page', 0]);
+    } else {
+      this.router.navigate(['/page', currentIndex + 1]);
+    }
+  }
+
+  previousRoot() {
+    let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
+    if (currentIndex == 0) {
+      this.router.navigate(['/page', this.rootUUIDs.length - 1]); // going down from 0, go to max
+    } else {
+      this.router.navigate(['/page', currentIndex - 1]);
+    }
+  }
 
   getSplitObs(uuid:string) {
     let splitIndex = this.splitSetObs.findIndex(sSet => sSet.uuid == uuid);

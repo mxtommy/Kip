@@ -38,7 +38,7 @@
                             <span *ngIf="!unlockStatus" class="fa fa-lg fa-unlock">Unlock</span>
                             <span *ngIf="unlockStatus" class="fa fa-lg fa-lock">Lock</span>
                         </button>
-                        <button md-menu-item (click)="newPage()"><span class="fa fa-lg fa-plus">New Page</span></button>
+                        <button md-menu-item [disabled]="!unlockStatus" (click)="newPage()"><span class="fa fa-lg fa-plus">New Page</span></button>
                         <button md-menu-item routerLink="/settings"><span class="fa fa-lg fa-cog">App Settings</span></button>
                     </md-menu>
                 </div>
