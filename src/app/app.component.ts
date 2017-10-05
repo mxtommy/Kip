@@ -3,7 +3,6 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { OverlayContainer } from '@angular/material';
 
-import { TreeNode, TreeManagerService } from './tree-manager.service';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { DataSetService } from './data-set.service';
@@ -16,7 +15,6 @@ import { DataSetService } from './data-set.service';
 })
 export class AppComponent implements OnInit, OnDestroy {
 
-  rootPage: TreeNode;
   pageName: string = '';
   rootPageIndexSub: Subscription;
 
@@ -28,7 +26,6 @@ export class AppComponent implements OnInit, OnDestroy {
   themeNameSub: Subscription;
 
   constructor(  
-    private treeManager: TreeManagerService,
     private AppSettingsService: AppSettingsService,
     private route: ActivatedRoute,
     private SignalKConnectionService: SignalKConnectionService,
@@ -38,15 +35,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
   ngOnInit() {
-    // when root uuid changes, update page.
-    this.rootPageIndexSub = this.treeManager.getRootIndex().subscribe(
-      index => {
-        let rootNodes = this.treeManager.getRootNodes();
-        this.rootPage = this.treeManager.getNode(rootNodes[index]);
-        this.pageName = this.rootPage.name;
-      }
-    );
-
     this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }
     );
@@ -87,10 +75,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   newPage() {
-      let newuuid = this.treeManager.newNode('ROOT');
-      let rootNodes = this.treeManager.getRootNodes();
 
-      this.router.navigate(['/page', rootNodes.findIndex(uuid => uuid == newuuid)]);
+      //this.router.navigate(['/page', rootNodes.findIndex(uuid => uuid == newuuid)]);
   }
 
   deletePage() {
@@ -98,7 +84,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   pageDown() {
-    let rootNodes = this.treeManager.getRootNodes();
+    /*let rootNodes = this.treeManager.getRootNodes();
     let currentIndex = rootNodes.findIndex(uuid => uuid == this.rootPage.uuid);
     let rootNum = Object.keys(rootNodes).length;
 
@@ -107,10 +93,11 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/page', currentIndex - 1]);
     }
-    
+    */
   }
 
   pageUp() {
+    /*
     let rootNodes = this.treeManager.getRootNodes();
     let currentIndex = rootNodes.findIndex(uuid => uuid == this.rootPage.uuid);
     let rootNum = Object.keys(rootNodes).length;
@@ -120,6 +107,7 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/page', currentIndex + 1]);
     }
+    */
   }
 
 }
