@@ -31,10 +31,11 @@ export class LayoutSplitsService {
   splitSetObs: Array<ISplitSetObs> = [];
   rootUUIDs: Array<string> = [];
   activeRoot: BehaviorSubject<string> = new BehaviorSubject<string>(null);
+  activeRootIndex: number;
   
   constructor(
     private AppSettingsService: AppSettingsService,
-  private WidgetManagerService: WidgetManagerService) {  
+    private WidgetManagerService: WidgetManagerService) {  
     this.splitSets = this.AppSettingsService.getSplitSets(); 
     // prepare subs
     for (let i=0; i<this.splitSets.length; i++) {
@@ -56,6 +57,9 @@ export class LayoutSplitsService {
     return this.activeRoot.asObservable();
   }
   
+  
+
+
   getSplitObs(uuid:string) {
     let splitIndex = this.splitSetObs.findIndex(sSet => sSet.uuid == uuid);
     if (splitIndex < 0) { return null; }
@@ -94,6 +98,22 @@ export class LayoutSplitsService {
     return uuid;
   }
 
+  newRootSplit() {
+    //create new root split
+    let uuid = this.newUuid();
+    let newWidget = this.WidgetManagerService.newWidget();
+    let newRootSplit: ISplitSet = {
+      uuid: uuid,
+      direction: 'horizontal',
+      splitAreas: [ {uuid: newWidget, type: 'widget', size: 100}]
+    }
+    this.splitSets.push(newRootSplit);
+
+    this.splitSetObs.push({uuid: uuid, observable: new BehaviorSubject(newRootSplit)});
+
+    this.rootUUIDs.push(uuid);
+    this.activeRoot.next(uuid);
+  }
 
   splitArea(splitSetUUID: string, areaUUID: string, direction: string) {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);

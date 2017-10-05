@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
 
@@ -7,7 +7,7 @@ import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
   templateUrl: './layout-split.component.html',
   styleUrls: ['./layout-split.component.css', './layout-split.component.scss']
 })
-export class LayoutSplitComponent implements OnInit, OnDestroy {
+export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
 
   @Input('unlockStatus') unlockStatus: boolean;
   @Input('splitUUID') splitUUID: string;
@@ -31,11 +31,20 @@ export class LayoutSplitComponent implements OnInit, OnDestroy {
     this.splitSetSub.unsubscribe();
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    
+    if (changes.splitUUID) {
+      if (! changes.splitUUID.firstChange) {
+        this.ngOnDestroy();
+        this.ngOnInit();
+        
+      }
+    }
+  }
+
   onDragEnd(sizesArray: Array<number>) {
     this.LayoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray);
   }
-
-
 
   splitArea(areaUUID: string, direction: string) {
     this.LayoutSplitsService.splitArea(this.splitSet.uuid,areaUUID, direction);

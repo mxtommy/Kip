@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { OverlayContainer } from '@angular/material';
+import { LayoutSplitsService } from './layout-splits.service';
+
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
@@ -31,7 +33,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private SignalKConnectionService: SignalKConnectionService,
     private router: Router,
     private DataSetService: DataSetService,
-    private overlayContainer: OverlayContainer) { }
+    private overlayContainer: OverlayContainer,
+    private LayoutSplitsService: LayoutSplitsService) { }
 
 
   ngOnInit() {
@@ -75,7 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   newPage() {
-
+    this.LayoutSplitsService.newRootSplit();
       //this.router.navigate(['/page', rootNodes.findIndex(uuid => uuid == newuuid)]);
   }
 
