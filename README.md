@@ -1,28 +1,37 @@
 # Sailmonitor
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.2.7.
+This is an instrumentation package to display signalK data. Display can be split up in any arrangement to show all data available on the server.
 
-## Development server
+## Design Goal
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+The idea is to replicate the functionality of your average MFD such as the B&G Triton, Raymarine i70, or Garmin GMI20. Display should be fullscreen and not require any scrolling, and anything displayed should be as big as possible in the given space. Multiple pages
 
-## Code scaffolding
+## Developing
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+The app is an Angular-cli app. Install dependencies with `npm install`. Then run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files. Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
 
-## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+## Todo List
 
-## Running unit tests
+### V0.1
+* Derived Data
+* Finish sailgauge (True wind/Wind sectors/laylines)
+* Demo default config
+* Load/Save Config
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### V0.2
+* Tutorial Widget
+* Customization options for radial/linear Gauges
+* Customization options for Historical Charts
+* Pre-created widgets for commonly used displays
+* Redo conversion service
+  * Know at least which type of unit it should be. (either with meta or hard coded/derived from schema)
+  * Default unit for each unit type in config.
+* Show SignalK status/alert if disconnected
+* Radial/Linear Gauge Zones
 
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+### V0.3
+ * Sailing Polars with ChartJS Radar type chart?
+ * Alerts/Notifications
+ * iFrame Widget?
+ 
