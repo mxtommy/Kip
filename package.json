@@ -1,7 +1,19 @@
 {
   "name": "sailmonitor",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
+  "keywords": [
+    "signalk-webapp",
+    "signal k",
+    "signalk",
+    "instruments",
+    "dashboard",
+    "marine",
+    "nmea"
+  ],  
+  "homepage": "https://github.com/mxtommy/SailMonitor",
+  "bugs": "https://github.com/mxtommy/SailMonitor/issues",  
+  "author": "Thomas St.Pierre <thomas@samoht.ca>",  
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -10,7 +22,6 @@
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^4.4.3",
     "@angular/cdk": "^2.0.0-beta.11",
@@ -28,7 +39,6 @@
     "core-js": "^2.4.1",
     "js-quantities": "^1.7.0",
     "rxjs": "^5.4.1",
-    "signalk-client": "github:signalk/signalk-js-client",
     "zone.js": "^0.8.14"
   },
   "devDependencies": {
