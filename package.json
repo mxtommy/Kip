@@ -1,6 +1,6 @@
 {
-  "name": "sailmonitor",
-  "version": "0.0.1",
+  "name": "@mxtommy/kip",
+  "version": "0.0.1a",
   "license": "MIT",
   "keywords": [
     "signalk-webapp",
@@ -11,13 +11,14 @@
     "marine",
     "nmea"
   ],  
-  "homepage": "https://github.com/mxtommy/SailMonitor",
-  "bugs": "https://github.com/mxtommy/SailMonitor/issues",  
+  "homepage": "https://github.com/mxtommy/Kip",
+  "bugs": "https://github.com/mxtommy/Kip/issues",  
   "author": "Thomas St.Pierre <thomas@samoht.ca>",  
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build-npm": "ng build --prod --base-href=@mxtommy/kip/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

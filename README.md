@@ -1,4 +1,4 @@
-# Sailmonitor
+# Kip
 
 This is an instrumentation package to display signalK data. Display can be split up in any arrangement to show all data available on the server.
 
