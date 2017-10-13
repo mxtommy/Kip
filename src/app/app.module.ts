@@ -52,7 +52,8 @@ import { LayoutSplitComponent } from './layout-split/layout-split.component';
 import { WidgetWindComponent, WidgetWindModalComponent } from './widget-wind/widget-wind.component';
 import { SvgWindComponent } from './svg-wind/svg-wind.component';
 import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
-import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component'
+import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
+import { SettingsConfigComponent } from './settings-config/settings-config.component'
 
 
 const appRoutes: Routes = [
@@ -88,7 +89,8 @@ const appRoutes: Routes = [
     SvgWindComponent,
     WidgetGaugeComponent,
     WidgetGaugeModalComponent,
-    GaugeSteelComponent
+    GaugeSteelComponent,
+    SettingsConfigComponent
   ],
   imports: [
     BrowserModule,

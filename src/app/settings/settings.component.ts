@@ -1,10 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
 
-
-
-import { AppSettingsService } from '../app-settings.service';
-import { SignalKConnectionService } from '../signalk-connection.service';
 
 @Component({
   selector: 'app-settings',
@@ -13,17 +8,13 @@ import { SignalKConnectionService } from '../signalk-connection.service';
 })
 export class SettingsComponent implements OnInit {
 
-  constructor(
-    private AppSettingsService: AppSettingsService) { }
+  constructor() { }
 
 
   ngOnInit() {
   }
 
-  resetSettings() {
-    this.AppSettingsService.deleteSettings();
-  }
-
+ 
 
 
 
