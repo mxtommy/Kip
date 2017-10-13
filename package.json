@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "0.0.1a",
+  "version": "0.0.1b",
   "license": "MIT",
   "keywords": [
     "signalk-webapp",
@@ -18,7 +18,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build-npm": "ng build --prod --base-href=@mxtommy/kip/",
+    "build-npm": "ng build --prod --base-href=/@mxtommy/kip/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
