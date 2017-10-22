@@ -5,6 +5,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
+import { IDerivation } from './derived.service';
 
 import { BlankConfig } from './settings-config/blank-config.const';
 
@@ -20,6 +21,7 @@ interface appSettings {
   dataSets: IDataSet[];
   splitSets: ISplitSet[];
   rootSplits: string[];
+  derivations: IDerivation[];
 }
 
 
@@ -35,7 +37,8 @@ export class AppSettingsService {
 
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
-  
+  derivations: IDerivation[] = [];
+
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   dataSets: IDataSet[] = [];
   root
@@ -53,7 +56,7 @@ export class AppSettingsService {
     this.dataSets = storageObject.dataSets;
     this.splitSets = storageObject.splitSets;
     this.rootSplits = storageObject.rootSplits;
-      
+    this.derivations = storageObject.derivations;
       
   }
 
@@ -122,6 +125,15 @@ export class AppSettingsService {
     return this.dataSets;
   }
 
+  // derivations
+  getDerivations() {
+    return this.derivations;
+  }
+  saveDerivations(derivations: IDerivation[]) {
+    this.derivations = derivations;
+    this.saveToLocalStorage();
+  }
+
   // saving. 
 
 
@@ -133,7 +145,8 @@ export class AppSettingsService {
       unlockStatus: this.unlockStatus.getValue(),
       dataSets: this.dataSets,
       splitSets: this.splitSets,
-      rootSplits: this.rootSplits
+      rootSplits: this.rootSplits,
+      derivations: this.derivations
     }
     return storageObject;
   }

@@ -25,5 +25,8 @@ export const BlankConfig = {
     ],
     "rootSplits": [
       "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+    ],
+    "derivations": [
+
     ]
 }

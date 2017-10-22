@@ -1,0 +1,33 @@
+<h2 md-dialog-title>Activate {{ derivationName }}:</h2>
+<md-dialog-content>
+    <form name="derivationActivation" (ngSubmit)="activateDerivation()" #derivationActivation="ngForm">
+        <md-horizontal-stepper>
+            <md-step label="Source">
+                <div class="tab-content">
+                    <md-select *ngFor="let path of requiredPaths"
+                        [style.width]="'100%'" 
+                        [placeholder]="path.path" 
+                        [(ngModel)]="path.selectedSource" 
+                        [name]="path.path">
+                        <md-option *ngFor="let source of path.availableSources" [value]="source">
+                            {{source}}
+                        </md-option>
+                    </md-select>
+                </div>
+                <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>
+            </md-step>
+            <md-step label="Options">
+                <div class="tab-content"> 
+                    <md-checkbox
+                        [(ngModel)]="updateAny"
+                        name="updateInt"
+                        >
+                        Update on Any Value
+                    </md-checkbox>
+                </div>
+                <button type="button" md-raised-button color="accent" mdStepperPrevious>Back</button>
+                <button md-raised-button color="primary" type="submit">Save</button>                
+            </md-step>            
+        </md-horizontal-stepper>
+    </form>
+</md-dialog-content>

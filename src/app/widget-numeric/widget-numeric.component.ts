@@ -197,6 +197,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText = this.padValue(this.dataValue, this.widgetConfig.numInt, this.widgetConfig.numDecimal);
+    //TODO: at high res.large area, this can take way too long :( (500ms+)
     // set font small and make bigger until we hit a max.
     let fontSize = 1;
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)

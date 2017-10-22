@@ -1,0 +1,30 @@
+<br>
+<form name="existingDerived" #existingDerived="ngForm">
+
+    <table>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Active                
+            </th>
+
+            <th></th>
+        </tr>
+        <tr *ngFor="let derivation of possibleDerivations">
+            <td>
+                {{ derivation.name }}
+            </td>
+            <td>
+              <span *ngIf="derivation.active" style="color:green;" class="fa fa-lg fa-check"></span>
+              <span *ngIf="!derivation.active" style="color:red;" class="fa fa-lg fa-times-circle"></span>
+            </td>
+            <td>
+                <button md-raised-button *ngIf="!derivation.active" color="primary" (click)="activateDerivation(derivation.name)">Activate</button>
+                <button md-raised-button *ngIf="derivation.active" color="warn" (click)="deactivateDerivation(derivation.name)">Deactivate</button>
+            </td>
+        </tr>
+    </table>
+
+</form>

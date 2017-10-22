@@ -281,5 +281,29 @@ export const DemoConfig = {
     "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
     "640ad069-c300-4dee-8b10-61c7db465781",
     "7866142d-e3ab-4b9f-910c-188ca8bf9e6c"
-  ]
+  ],
+  "derivations": [
+    {
+      "name": "True Wind",
+      "updateAny": true,
+      "paths": [
+        {
+          "path": "vessels.self.navigation.headingTrue",
+          "source": "default"
+        },
+        {
+          "path": "vessels.self.navigation.speedThroughWater",
+          "source": "default"
+        },
+        {
+          "path": "vessels.self.environment.wind.speedApparent",
+          "source": "default"
+        },
+        {
+          "path": "vessels.self.environment.wind.angleApparent",
+          "source": "default"
+        }
+      ]
+    }
+  ] 
 }

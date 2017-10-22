@@ -17,8 +17,9 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 ### V0.1
 * Derived Data
 * Finish sailgauge (True wind/Wind sectors/laylines)
-* Demo default config
-* Load/Save Config
+* Demo default config - Done!
+* Load/Save Config - Done!
+* Get a few themes going
 
 ### V0.2
 * Tutorial Widget

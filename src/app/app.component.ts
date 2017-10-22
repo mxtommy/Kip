@@ -7,6 +7,7 @@ import { LayoutSplitsService } from './layout-splits.service';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { DataSetService } from './data-set.service';
+import { DerivedService } from './derived.service';
 
 
 @Component({
@@ -30,6 +31,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private AppSettingsService: AppSettingsService,
     private SignalKConnectionService: SignalKConnectionService,
     private DataSetService: DataSetService,
+    private DerivedService: DerivedService,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService) { }
 
@@ -50,6 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
     this.DataSetService.startAllDataSets();
+    this.DerivedService.startAllDerivations();
   }
 
   ngOnDestroy() {
