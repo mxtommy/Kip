@@ -9,7 +9,8 @@
     $foreground: map-get($theme, foreground);
 
     .app-defaults {
-        background-color: mat-color($primary, 200); //mat-color($background, background);
+        //background-color: mat-color($primary, 200); 
+        background-color: mat-color($background, background);
         color: mat-color($foreground, text);
 
     }

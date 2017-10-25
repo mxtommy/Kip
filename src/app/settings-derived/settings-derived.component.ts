@@ -33,8 +33,14 @@ export class SettingsDerivedComponent implements OnInit {
       data: derivationName
     });
     dialogRef.afterClosed().subscribe(result => { this.loadDerivations() });
+    this.ngOnInit();
   }
 
+  deactivateDerivation(derivationName: string) {
+    this.DerivedService.deleteDerivation(derivationName);
+    this.ngOnInit();
+    
+  }
 }
 
 
@@ -89,7 +95,7 @@ export class SettingsDerivedModalComponent implements OnInit {
   }
 
 
-
+  
 
 
 }

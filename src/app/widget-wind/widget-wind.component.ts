@@ -57,6 +57,12 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   appWindSpeed: number = null;
   appWindSpeedSub: Subscription = null;
 
+  trueWindAngle: number = null;
+  trueWindAngleSub: Subscription = null;
+
+  trueWindSpeed: number = null;
+  trueWindSpeedSub: Subscription = null;
+
   constructor(
     public dialog: MdDialog,
     private SignalKService: SignalKService,
@@ -77,13 +83,16 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.subscribeHeading();
     this.subscribeAppWindAngle();
     this.subscribeAppWindSpeed();
-
+    this.subscribeTrueWindAngle();
+    this.subscribeTrueWindSpeed();
   }
 
   ngOnDestroy() {
     this.unsubscribeHeading();
     this.unsubscribeAppWindAngle();
     this.unsubscribeAppWindSpeed();
+    this.unsubscribeTrueWindAngle();
+    this.unsubscribeTrueWindSpeed();    
   }
 
   subscribeHeading() {
@@ -176,6 +185,70 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     );
   }
 
+  subscribeTrueWindAngle() {
+    this.unsubscribeTrueWindAngle();
+    if (this.widgetConfig.trueWindAnglePath === null) { return } // nothing to sub to...
+
+    this.trueWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.trueWindAnglePath).subscribe(
+      pathObject => {
+        if (pathObject === null) {
+          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
+        }
+        let source: string;
+        if (this.widgetConfig.trueWindAngleSource == 'default') {
+          source = pathObject.defaultSource;
+        } else {
+          source = this.widgetConfig.trueWindAngleSource;
+        }
+
+        if (pathObject.sources[source].value === null) {
+          this.trueWindAngle = null;
+          return;
+        }
+
+        let value:number = pathObject.sources[source].value;
+        let converted = this.converter['angle']['deg'](value);
+        // 0-180+ for stb
+        // -0 to -180 for port
+        // need in 0-360
+        if (converted > 0) {// stb
+          this.trueWindAngle= 360 - converted;
+        } else if (converted < 0) {
+          this.trueWindAngle = (converted * -1);
+        }
+
+      }
+    );
+  }
+
+  subscribeTrueWindSpeed() {
+    this.unsubscribeTrueWindSpeed();
+    if (this.widgetConfig.trueWindSpeedPath === null) { return } // nothing to sub to...
+
+    this.trueWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.trueWindSpeedPath).subscribe(
+      pathObject => {
+        if (pathObject === null) {
+          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
+        }
+        let source: string;
+        if (this.widgetConfig.trueWindSpeedSource == 'default') {
+          source = pathObject.defaultSource;
+        } else {
+          source = this.widgetConfig.trueWindSpeedSource;
+        }
+
+        if (pathObject.sources[source].value === null) {
+          this.trueWindSpeed = null;
+          return;
+        }
+
+        let value:number = pathObject.sources[source].value;
+        this.trueWindSpeed = this.converter['speed'][this.widgetConfig.unitName](value);
+      }
+    );
+  }
+
+
   unsubscribeHeading() {
     if (this.headingSub !== null) {
       this.headingSub.unsubscribe();
@@ -200,7 +273,21 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     }   
   }
 
+  unsubscribeTrueWindAngle() {
+    if (this.trueWindAngleSub !== null) {
+      this.trueWindAngleSub.unsubscribe();
+      this.trueWindAngleSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.trueWindAnglePath);
+    }
+  }
 
+  unsubscribeTrueWindSpeed() {
+    if (this.trueWindSpeedSub !== null) {
+      this.trueWindSpeedSub.unsubscribe();
+      this.trueWindSpeedSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.trueWindSpeedPath);
+    }   
+  }
 
   openWidgetSettings() {
 

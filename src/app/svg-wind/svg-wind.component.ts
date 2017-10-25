@@ -9,6 +9,7 @@ export class SvgWindComponent implements OnInit {
 
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
   @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
+  @ViewChild('trueWindAnimate') trueWindAnimate: ElementRef;
   
 
   @Input('compassHeading') compassHeading: number;
@@ -35,6 +36,11 @@ export class SvgWindComponent implements OnInit {
   newAppWindAngle: string = "0";
   appWindSpeedDisplay: string = "";
 
+  //truewind
+  oldTrueWindAngle: string = "0";
+  newTrueWindAngle: string = "0";
+  trueWindSpeedDisplay: string = "";
+
   ngOnInit() {
 
 
@@ -58,7 +64,6 @@ export class SvgWindComponent implements OnInit {
       if (! changes.appWindAngle.firstChange) {
         this.oldAppWindAngle = this.newAppWindAngle;
         this.newAppWindAngle = changes.appWindAngle.currentValue; //.toString();
-        this.headingValue = this.newCompassRotate.toFixed(0);
         
         if (this.appWindAnimate) { // only update if on dom...
           this.appWindAnimate.nativeElement.beginElement();
@@ -69,6 +74,24 @@ export class SvgWindComponent implements OnInit {
     if (changes.appWindSpeed) {
       if (! changes.appWindSpeed.firstChange) {
         this.appWindSpeedDisplay = changes.appWindSpeed.currentValue.toFixed(1);
+      }
+    }
+
+    //trueWindAngle
+    if (changes.trueWindAngle) {
+      if (! changes.trueWindAngle.firstChange) {
+        this.oldTrueWindAngle = this.newTrueWindAngle;
+        this.newTrueWindAngle = changes.trueWindAngle.currentValue; //.toString();
+        
+        if (this.trueWindAnimate) { // only update if on dom...
+          this.trueWindAnimate.nativeElement.beginElement();
+        }
+      }
+    }
+    //trueWindSpeed
+    if (changes.trueWindSpeed) {
+      if (! changes.trueWindSpeed.firstChange) {
+        this.trueWindSpeedDisplay = changes.trueWindSpeed.currentValue.toFixed(1);
       }
     }
 

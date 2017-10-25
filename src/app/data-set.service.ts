@@ -121,7 +121,7 @@ export class DataSetService {
       //stop TimerSub
       this.dataSetSub[dataSubIndex].updateTimerSub.unsubscribe();
       //delete DataSub
-      this.dataSetSub.slice(dataSubIndex,1);
+      this.dataSetSub.splice(dataSubIndex,1);
      }
   }
 
@@ -132,7 +132,7 @@ export class DataSetService {
     //delete current DataSetSub if it exists...
     let dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
     if (dataSubIndex > 0) {
-      this.dataSetSub.slice(dataSubIndex,1);
+      this.dataSetSub.splice(dataSubIndex,1);
     }
 
     this.dataSetSub.push({

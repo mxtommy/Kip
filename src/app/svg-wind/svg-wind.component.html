@@ -847,45 +847,54 @@
 
   <!-- True Wind Indicator -->
   <g
-    *ngIf="trueWindAngle"
+    *ngIf="trueWindAngle != null"
     style="display:inline"
     id="layer4">
     <g
     id="g1187">
-   <g
-      transform="matrix(-5.1082345,0,0,-4.5354333,587.61946,139.05361)"
-      id="g7361"
-      style="display:inline;fill:#0d06fb;fill-opacity:1">
-     <path
-        d="M 62.243972,4.0584953 A 3.9408352,3.9073367 0 0 1 66.184807,0.15115881 3.9408352,3.9073367 0 0 1 70.125642,4.0584955"
-        id="path7357"
-        style="fill:#0d06fb;fill-opacity:1;stroke:#000000;stroke-width:0.30782673;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-     <path
-        id="path7359"
-        d="m 62.177083,3.96875 3.968749,6.614583 3.96875,-6.614583"
-        style="fill:#0d06fb;fill-opacity:1;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-   </g>
-   <text
-      transform="scale(-1.0096233,-0.99046843)"
-      id="text7365"
-      y="-117.71236"
-      x="-247.47594"
-      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.02742887"
-      xml:space="preserve"><tspan
-        id="tspan7417"
-        x="-247.47594"
-        y="-117.71236">XX</tspan></text>
-   <text
-      xml:space="preserve"
-      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.66666698px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-      x="-252.43172"
-      y="-103.49368"
-      id="text1173"
-      transform="scale(-1)"><tspan
-        id="tspan1171"
-        x="-252.43172"
-        y="-103.49368">T</tspan></text>
- </g>
+      <g
+          transform="matrix(-5.1082345,0,0,-4.5354333,587.61946,139.05361)"
+          id="g7361"
+          style="display:inline;fill:#068dfb;fill-opacity:1">
+        <path
+            d="M 62.243972,4.0584953 A 3.9408352,3.9073367 0 0 1 66.184807,0.15115881 3.9408352,3.9073367 0 0 1 70.125642,4.0584955"
+            id="path7357"
+            style="fill:#068dfb;fill-opacity:1;stroke:#000000;stroke-width:0.30782673;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+        <path
+            id="path7359"
+            d="m 62.177083,3.96875 3.968749,6.614583 3.96875,-6.614583"
+            style="fill:#068dfb;fill-opacity:1;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      </g>
+      <text
+          transform="scale(-1.0096233,-0.99046843)"
+          id="text7365"
+          y="-117.71236"
+          x="-247.47594"
+          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.02742887"
+          xml:space="preserve"><tspan
+            id="tspan7417"
+            x="-247.47594"
+            y="-117.71236">{{ trueWindSpeedDisplay }}</tspan></text>
+      <text
+          xml:space="preserve"
+          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.66666698px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+          x="-252.43172"
+          y="-103.49368"
+          id="text1173"
+          transform="scale(-1)"><tspan
+            id="tspan1171"
+            x="-252.43172"
+            y="-103.49368">T</tspan></text>
+    </g>
+    <animateTransform #trueWindAnimate attributeName="transform"
+      type="rotate"
+      [attr.from]="'-'+oldTrueWindAngle+' 250 250'"
+      [attr.to]="'-'+newTrueWindAngle+' 250 250'"
+      begin="indefinite"
+      dur="0.1s"
+      additive="replace"
+      fill="freeze"
+      />
   </g>
 
   <!-- App Wind Indicator -->

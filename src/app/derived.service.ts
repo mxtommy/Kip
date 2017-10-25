@@ -109,7 +109,9 @@ export class DerivedService {
     // return name/required paths;
     let result = [];
     for (let x=0; x < possibleDerivations.length; x++) {
-      result.push({name: possibleDerivations[x].name, requiredPaths: possibleDerivations[x].requiredPaths, active: false});
+      let isActive = false;
+      if (this.activeDerivations.findIndex(der => der.name == possibleDerivations[x].name) >= 0) { isActive = true; } 
+      result.push({name: possibleDerivations[x].name, requiredPaths: possibleDerivations[x].requiredPaths, active: isActive });
     }
     return result;
   }
@@ -127,11 +129,38 @@ export class DerivedService {
     this.saveDerivations();
   }
 
+  deleteDerivation(derivationName: string) {
+    let actIdx = this.activeDerivations.findIndex(der => der.name == derivationName);
+    if (actIdx < 0) { return; }// uhhh?
+    let derIdx = this.derivations.findIndex(der => der.name == derivationName);
+    if (derIdx < 0) { return; }//  uhhh>    
+    console.log(derivationName);
+    
+    for (let x=0; x<this.activeDerivations[actIdx].pathSubs.length; x++) {
+      if (this.activeDerivations[actIdx].pathSubs[x].sub !== null)  {
+        this.activeDerivations[actIdx].pathSubs[x].sub.unsubscribe();
+        this.SignalKService.unsubscribePath(this.activeDerivations[actIdx].pathSubs[x].subUUID, this.activeDerivations[actIdx].pathSubs[x].path);
+      }
+    }
+    if (this.activeDerivations[actIdx].timerSub !== null) {
+      this.activeDerivations[actIdx].timerSub.unsubscribe();
+    }
+    console.log(this.derivations);
+    
+    //delete them
+    this.activeDerivations.splice(actIdx, 1);
+    this.derivations.splice(derIdx, 1);
+
+    console.log(this.derivations);
+    
+    this.saveDerivations();    
+  }
+
   // TODO So many indexes.... :(
   activateDerivation(name: string)  {
     //check if already active. if yes unsub first
     if (this.activeDerivations.findIndex(der => der.name == name) >= 0) {
-      this.deactivateDerivation(name);
+      this.deleteDerivation(name);
     }
     let constIdx = possibleDerivations.findIndex(der => der.name == name)
     if (constIdx < 0) { return; }// uhhh?
@@ -173,17 +202,16 @@ export class DerivedService {
 
     } // end for each path
     // if not updateAny, we need to set a timer to update it.
-    this.activeDerivations[actIdx].timerSub = Observable.interval(1000).subscribe(
-      tick => {
-        this.calculateDerivation(name);
-      }
-    );
+    if (!this.derivations[derIdx].updateAny) {
+      this.activeDerivations[actIdx].timerSub = Observable.interval(1000).subscribe(
+        tick => {
+          this.calculateDerivation(name);
+        }
+      );
+    }
 
   }
 
-  deactivateDerivation(name: string) {
-
-  }
 
   calculateDerivation(name: string) {
     let constIdx = possibleDerivations.findIndex(der => der.name == name)
