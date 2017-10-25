@@ -200,6 +200,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     //TODO: at high res.large area, this can take way too long :( (500ms+)
     // set font small and make bigger until we hit a max.
     let fontSize = 1;
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
@@ -217,6 +218,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     // set font small and make bigger until we hit a max.
  
     var fontSize = 1;
+    // get color
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasCtx.measureText(this.widgetConfig.label).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
@@ -233,6 +237,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     // set font small and make bigger until we hit a max.
  
     var fontSize = 1;
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasCtx.measureText(this.widgetConfig.unitName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;

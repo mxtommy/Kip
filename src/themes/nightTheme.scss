@@ -80,8 +80,6 @@ $nightTheme-foreground: custom-theme-dark-foreground(#b81e1e);
 $nightTheme-temp-dark: mat-dark-theme($nightTheme-primary, $nightTheme-accent, $nightTheme-warn);
 
 //merge with custom foreground
-
-
 $nightTheme-dark: map-merge($nightTheme-temp-dark, (foreground: $nightTheme-foreground));
 
 
