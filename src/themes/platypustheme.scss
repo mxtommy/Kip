@@ -1,13 +1,50 @@
 @import '~@angular/material/theming';
 
+$mat-perry: (
+    50 : #e3f2f2,
+    100 : #badede,
+    200 : #8cc8c8,
+    300 : #5db1b1,
+    400 : #3ba1a1,
+    500 : #189090,
+    600 : #158888,
+    700 : #117d7d,
+    800 : #0e7373,
+    900 : #086161,
+    A100 : #93ffff,
+    A200 : #60ffff,
+    A400 : #2dffff,
+    A700 : #14ffff,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+
 $platypusTheme-primary: mat-palette($mat-teal);
 $platypusTheme-accent:  mat-palette($mat-orange, A200, A100, A400);
 
 // The warn palette is optional (defaults to red).
 $platypusTheme-warn:    mat-palette($mat-red);
 
+$platypusTheme-background: custom-theme-light-background($mat-perry, 500);
+
+
 // Create the theme object (a Sass map containing all of the palettes).
-$platypusTheme-light: mat-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
-$platypusTheme-dark: mat-dark-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
+$platypusTheme-temp-light: mat-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
 
-
+//merge with custom background
+$platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background));

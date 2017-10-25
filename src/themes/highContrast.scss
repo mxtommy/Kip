@@ -1,0 +1,15 @@
+@import '~@angular/material/theming';
+
+$highContrast-primary: mat-palette($mat-grey);
+$highContrast-accent:  mat-palette($mat-grey, A200, A100, A400);
+
+// The warn palette is optional (defaults to red).
+$highContrast-warn:    mat-palette($mat-red);
+
+
+
+// Create the theme object (a Sass map containing all of the palettes).
+$highContrast-light: mat-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
+
+
+

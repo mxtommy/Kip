@@ -6,8 +6,13 @@ $defaultTheme-accent:  mat-palette($mat-blue, A200, A100, A400);
 // The warn palette is optional (defaults to red).
 $defaultTheme-warn:    mat-palette($mat-red);
 
-// Create the theme object (a Sass map containing all of the palettes).
-$defaultTheme-light: mat-light-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
-$defaultTheme-dark: mat-dark-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
 
+// custom background
+$defaultTheme-background: custom-theme-light-background($mat-blue, 100);
+
+// Create the theme object (a Sass map containing all of the palettes).
+$defaultTheme-temp-light: mat-light-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
+
+
+$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background));
 

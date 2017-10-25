@@ -40,16 +40,16 @@
 };
 
 // Custom Background functions. takes full pallet
-@function custom-theme-light-background($pallet) {
+@function custom-theme-light-background($pallet, $bgcolor: 900) {
     @return (
         status-bar: map_get($pallet, 300),
         app-bar:    map_get($pallet, 100),
-        background: map_get($pallet, 50),
+        background: map_get($pallet, $bgcolor),
         hover:      rgba(black, 0.04), // TODO(kara): check style with Material Design UX
-        card:       white,
-        dialog:     white,
+        card:       map_get($pallet, 200),
+        dialog:     map_get($pallet, 200),
         disabled-button: $black-12-opacity,
-        raised-button: white,
+        raised-button: map_get($pallet, 200),
         focused-button: $black-6-opacity,
         selected-button: map_get($pallet, 300),
         selected-disabled-button: map_get($pallet, 400),
@@ -59,11 +59,11 @@
     );
 };
 
-@function custom-theme-dark-background($pallet) {
+@function custom-theme-dark-background($pallet, $bgcolor: 900) {
     @return (
         status-bar: black,
         app-bar:    map_get($pallet, 800),
-        background: map_get($pallet, 900),
+        background: map_get($pallet, $bgcolor),
         hover:      rgba(white, 0.04), // TODO(kara): check style with Material Design UX
         card:       map_get($pallet, 800),
         dialog:     map_get($pallet, 800),
@@ -82,6 +82,7 @@
 @import 'themes/defaultTheme.scss';
 @import 'themes/nightTheme.scss';
 @import 'themes/platypusTheme.scss';
+@import 'themes/highContrast.scss';
 
 // import Components
 @import 'app/app.component.scss';
@@ -97,9 +98,10 @@
 
 @include theme-components($defaultTheme-light);
 
-.default-dark {
-    @include theme-components($defaultTheme-dark);
+.high-contrast-light {
+    @include theme-components($highContrast-light);
 }
+
 .night-dark {
     @include theme-components($nightTheme-dark);
 }
