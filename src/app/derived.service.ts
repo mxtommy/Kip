@@ -10,7 +10,7 @@ interface calculatorData {
   [path: string]: number;
 }
 
-
+//TODO Need to test incoming data for null!
 const possibleDerivations = [
   {
     name: 'True Wind',

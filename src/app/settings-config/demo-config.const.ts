@@ -285,7 +285,7 @@ export const DemoConfig = {
   "derivations": [
     {
       "name": "True Wind",
-      "updateAny": true,
+      "updateAny": false,
       "paths": [
         {
           "path": "vessels.self.navigation.headingTrue",

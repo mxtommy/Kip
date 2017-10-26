@@ -19,9 +19,10 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 * Sailgauge (True wind) - Done!
 * Demo default config - Done!
 * Load/Save Config - Done!
-* Get a few themes going
+* Get a few themes going - Done!
 
 ### V0.2
+* Sailgauge Laylines and sectors
 * Tutorial Widget
 * Customization options for radial/linear Gauges
 * Customization options for Historical Charts

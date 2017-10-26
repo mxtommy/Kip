@@ -110,6 +110,8 @@ export class SignalKConnectionService {
         console.debug("Reseting SignalK URL: " + this.signalKURL);
         
         this.SignalKService.resetSignalKData();
+        this.endpointREST = null;
+        this.endpointWS = null;
         this.signalKURLOK.next(false);
         this.signalKURLMessage.next("Connecting...");
         if (this.webSocket != null) {
@@ -173,20 +175,30 @@ export class SignalKConnectionService {
     }
 
     connectEndpointWS() {
+        if (this.endpointWS === null) {
+            //no endpoint, try again later....
+            setTimeout(()=>{ this.connectEndpointWS();}, 3000);
+            return;
+        }
+        this.webSocketStatusMessage.next("Connecting...");
         this.webSocket = new WebSocket(this.endpointWS+"?subscribe=all");
         this.webSocket.onopen = function (event){
             this.webSocketStatusOK.next(true);
             this.webSocketStatusMessage.next("Connected");
         }.bind(this);
-        //this.webSocket.onmessage
+
         this.webSocket.onerror = function (event) {
             this.webSocketStatusOK.next(false);
             this.webSocketStatusMessage.next('Unspecified Error');
+            setTimeout(()=>{ this.connectEndpointWS();}, 3000);
         }.bind(this);
+
         this.webSocket.onclose = function (event) {
             this.webSocketStatusOK.next(false);
             this.webSocketStatusMessage.next("Disconnected");
+            setTimeout(()=>{ this.connectEndpointWS();}, 3000);
         }.bind(this);
+
         this.webSocket.onmessage = function(message) {
             this.SignalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
         }.bind(this);
