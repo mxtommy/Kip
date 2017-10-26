@@ -56,13 +56,16 @@ import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
-import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component'
+import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
+import { ResetConfigComponent } from './reset-config/reset-config.component'
 
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
-  { path: 'settings',  component: SettingsComponent}
+  { path: 'settings',  component: SettingsComponent },
+  { path: 'reset', component: ResetConfigComponent },
+  { path: 'demo', component: ResetConfigComponent }
 ];
 
 @NgModule({
@@ -96,7 +99,8 @@ const appRoutes: Routes = [
     SettingsConfigComponent,
     SettingsDerivedComponent,
     SettingsDerivedModalComponent,
-    WidgetTutorialComponent
+    WidgetTutorialComponent,
+    ResetConfigComponent
   ],
   imports: [
     BrowserModule,

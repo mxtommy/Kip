@@ -70,6 +70,6 @@ export class WidgetListService {
 
 
   getList (){
-    return this.widgetList;
+    return this.widgetList.filter(w => w.name != 'WidgetTutorial');
   }
 }

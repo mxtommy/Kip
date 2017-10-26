@@ -2,12 +2,16 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Router } from '@angular/router';
+
+
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 import { IDerivation } from './derived.service';
 
-import { BlankConfig } from './settings-config/blank-config.const';
+import { BlankConfig } from './blank-config.const';
+import { DemoConfig } from './demo-config.const';
 
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
@@ -43,7 +47,8 @@ export class AppSettingsService {
   dataSets: IDataSet[] = [];
   root
 
-  constructor() {
+  constructor(
+    private router: Router) {
     if (localStorage.getItem('signalKData') == null) {
       localStorage.setItem('signalKData', JSON.stringify(BlankConfig));
     }
@@ -157,6 +162,7 @@ export class AppSettingsService {
 
   replaceConfig(jsonConfig:string) {
     localStorage.setItem('signalKData', jsonConfig);
+    this.router.navigate(['/']);
     location.reload();
   }
 
@@ -164,8 +170,12 @@ export class AppSettingsService {
     localStorage.setItem('signalKData', JSON.stringify(this.buildStorageObject()));
   }
 
-  deleteSettings() {
-    localStorage.removeItem('signalKData');
-    location.reload();
+  resetSettings() {
+    this.replaceConfig(JSON.stringify(BlankConfig));
   }
+
+  loadDemoConfig() {
+    this.replaceConfig(JSON.stringify(DemoConfig));    
+  }
+
 }

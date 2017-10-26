@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import { AppSettingsService } from '../app-settings.service';
-import { DemoConfig } from './demo-config.const';
+import { DemoConfig } from '../demo-config.const';
 
 
 @Component({
@@ -22,7 +22,7 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   resetSettings() {
-    this.AppSettingsService.deleteSettings();
+    this.AppSettingsService.resetSettings();
   }
 
   submitConfig() {
@@ -30,7 +30,7 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   loadDemoConfig() {
-    this.AppSettingsService.replaceConfig(JSON.stringify(DemoConfig));
+    this.AppSettingsService.loadDemoConfig();
   }
 
 }
