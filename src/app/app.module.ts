@@ -55,7 +55,8 @@ import { SvgWindComponent } from './svg-wind/svg-wind.component';
 import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
-import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component'
+import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
+import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component'
 
 
 const appRoutes: Routes = [
@@ -94,7 +95,8 @@ const appRoutes: Routes = [
     GaugeSteelComponent,
     SettingsConfigComponent,
     SettingsDerivedComponent,
-    SettingsDerivedModalComponent
+    SettingsDerivedModalComponent,
+    WidgetTutorialComponent
   ],
   imports: [
     BrowserModule,
@@ -125,6 +127,7 @@ const appRoutes: Routes = [
     WidgetHistoricalComponent,
     WidgetWindComponent,
     WidgetGaugeComponent,
+    WidgetTutorialComponent,
     
     //dialogs
     UnitWindowModalComponent,

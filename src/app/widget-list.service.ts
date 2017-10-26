@@ -7,7 +7,7 @@ import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-ge
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 import { WidgetWindComponent } from './widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
-
+import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 
 export class widgetInfo {
   name: string;
@@ -55,6 +55,11 @@ export class WidgetListService {
       name: 'WidgetWindComponent',
       componentName: WidgetWindComponent,
       description: 'Wind Gauge',
+    },
+    {
+      name: 'WidgetTutorial',
+      componentName: WidgetTutorialComponent,
+      description: 'Tutorial'
     }
   ];
 
