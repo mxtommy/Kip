@@ -7,9 +7,21 @@ $highContrast-accent:  mat-palette($mat-grey, A200, A100, A400);
 $highContrast-warn:    mat-palette($mat-red);
 
 
+$mat-wind: (
+    boat-background: #c7c7c7,
+    heading-background: #c5c5c5,
+    true-wind-background: #068dfb,
+    app-wind-background: #06fb06,
+    compass-dark: #757575,
+    compass-light: #afafaf,
+    wind-rose-background: #8a8a8a,
+    port: #ff0000,
+    starboard: #1fce04,    
+);
+
 
 // Create the theme object (a Sass map containing all of the palettes).
-$highContrast-light: mat-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
+$highContrast-temp-light: mat-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
 
-
+$highContrast-light: map-merge($highContrast-temp-light, (wind: $mat-wind) );
 

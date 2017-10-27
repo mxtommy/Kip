@@ -12,18 +12,12 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 
 
-## Todo List
+## Roadmap
 
-### V0.1
-* Derived Data - Done
-* Sailgauge (True wind) - Done!
-* Demo default config - Done!
-* Load/Save Config - Done!
-* Get a few themes going - Done!
+
 
 ### V0.2
 * Sailgauge Laylines and sectors
-* Tutorial Widget
 * Customization options for radial/linear Gauges
 * Customization options for Historical Charts
 * Pre-created widgets for commonly used displays
@@ -35,6 +29,8 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 ### V0.3
  * Sailing Polars with ChartJS Radar type chart?
+ * Overview page to quickly scroll through known path info.
  * Alerts/Notifications
  * iFrame Widget?
+ * Delete Page.
  

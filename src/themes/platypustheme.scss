@@ -33,6 +33,18 @@ $mat-perry: (
     )
 );
 
+$mat-wind: (
+    boat-background: #c7c7c7,
+    heading-background: #c5c5c5,
+    true-wind-background: #068dfb,
+    app-wind-background: #06fb06,
+    compass-dark: #757575,
+    compass-light: #afafaf,
+    wind-rose-background: #8a8a8a,
+    port: #ff0000,
+    starboard: #1fce04,
+);
+
 
 $platypusTheme-primary: mat-palette($mat-teal);
 $platypusTheme-accent:  mat-palette($mat-orange, A200, A100, A400);
@@ -47,4 +59,4 @@ $platypusTheme-background: custom-theme-light-background($mat-perry, 500);
 $platypusTheme-temp-light: mat-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
 
 //merge with custom background
-$platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background));
+$platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background, wind: $mat-wind));

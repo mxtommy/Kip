@@ -120,6 +120,10 @@ export class AppSettingsService {
     this.splitSets = splitSets;
     this.saveToLocalStorage();
   }
+  saveRootUUIDs(rootUUIDs) {
+    this.rootSplits = rootUUIDs;
+    this.saveToLocalStorage();
+  }
 
   // DataSets
   saveDataSets(dataSets) {
@@ -143,6 +147,7 @@ export class AppSettingsService {
 
 
   buildStorageObject() {
+    console.log(this.rootSplits);
     let storageObject: appSettings = {
       signalKUrl: this.signalKUrl.getValue(),
       themeName: this.themeName.getValue(),

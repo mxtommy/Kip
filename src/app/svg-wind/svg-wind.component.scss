@@ -1,0 +1,49 @@
+@import '~@angular/material/theming';
+
+
+@mixin svg-wind-theme($theme) {
+
+    $primary: map-get($theme, primary);
+    $warn: map-get($theme, warn);
+    $background: map-get($theme, background);
+    $foreground: map-get($theme, foreground);
+    $wind: map-get($theme, wind);
+
+    .boatBackground {
+        fill: mat-color($wind, boat-background) !important; //400
+    }
+
+    .heading-background {
+        fill: mat-color($wind, heading-background)
+    }
+
+    .wind-text {
+        fill: mat-color($foreground, text);
+    }
+
+    .compass-outer-ring {
+        stroke: mat-color($wind, compass-dark);
+    }
+    .compass-inner-ring {
+        stroke: mat-color($wind, compass-light);
+    }
+
+    .wind-rose-background {
+        stroke: mat-color($wind, wind-rose-background);
+    }
+
+    .port {
+        stroke: mat-color($wind, port);
+    }
+    .starboard  {
+        stroke: mat-color($wind, starboard);
+    }
+
+    .true-wind {
+        fill: mat-color($wind, true-wind-background)
+    }
+
+    .app-wind {
+        fill: mat-color($wind, app-wind-background)        
+    }
+}    

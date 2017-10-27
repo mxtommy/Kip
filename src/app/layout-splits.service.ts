@@ -133,9 +133,12 @@ export class LayoutSplitsService {
     this.splitSets.push(newRootSplit);
 
     this.splitSetObs.push({uuid: uuid, observable: new BehaviorSubject(newRootSplit)});
-
+    
     this.rootUUIDs.push(uuid);
-    this.activeRoot.next(uuid);
+    this.saveRootUUIDs();
+
+    //get index of our new split
+    this.router.navigate(['/page', this.rootUUIDs.indexOf(uuid)]);
   }
 
   splitArea(splitSetUUID: string, areaUUID: string, direction: string) {
@@ -248,7 +251,9 @@ export class LayoutSplitsService {
     return this.rootUUIDs.includes(uuid);
   }
 
-
+  saveRootUUIDs() {
+    this.AppSettingsService.saveRootUUIDs(this.rootUUIDs);
+  }
 
   saveSplits() {
     this.AppSettingsService.saveSplitSets(this.splitSets);

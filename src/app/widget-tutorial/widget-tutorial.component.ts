@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-widget-tutorial',
@@ -6,6 +6,9 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./widget-tutorial.component.css']
 })
 export class WidgetTutorialComponent implements OnInit {
+
+  @Input('widgetUUID') widgetUUID: string;
+  @Input('unlockStatus') unlockStatus: boolean;
 
   constructor() { }
 

@@ -7,6 +7,19 @@ $defaultTheme-accent:  mat-palette($mat-blue, A200, A100, A400);
 $defaultTheme-warn:    mat-palette($mat-red);
 
 
+
+$mat-wind: (
+    boat-background: #c7c7c7,
+    heading-background: #c5c5c5,
+    true-wind-background: #068dfb,
+    app-wind-background: #06fb06,
+    compass-dark: #757575,
+    compass-light: #afafaf,
+    wind-rose-background: #8a8a8a,
+    port: #ff0000,
+    starboard: #1fce04,    
+);
+
 // custom background
 $defaultTheme-background: custom-theme-light-background($mat-blue, 100);
 
@@ -14,5 +27,5 @@ $defaultTheme-background: custom-theme-light-background($mat-blue, 100);
 $defaultTheme-temp-light: mat-light-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
 
 
-$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background));
+$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, wind: $mat-wind));
 
