@@ -147,7 +147,6 @@ export class AppSettingsService {
 
 
   buildStorageObject() {
-    console.log(this.rootSplits);
     let storageObject: appSettings = {
       signalKUrl: this.signalKUrl.getValue(),
       themeName: this.themeName.getValue(),

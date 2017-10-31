@@ -33,4 +33,5 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
  * Alerts/Notifications
  * iFrame Widget?
  * Delete Page.
+ * Support boolean values. 
  

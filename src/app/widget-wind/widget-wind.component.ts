@@ -79,7 +79,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     } else {
       this.widgetConfig = this.activeWidget.config; // load existing config.
     }
+    this.startAll();
+  }
 
+  ngOnDestroy() {
+    this.stopAll();
+  }
+
+  startAll() {
     this.subscribeHeading();
     this.subscribeAppWindAngle();
     this.subscribeAppWindSpeed();
@@ -87,7 +94,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.subscribeTrueWindSpeed();
   }
 
-  ngOnDestroy() {
+  stopAll() {
     this.unsubscribeHeading();
     this.unsubscribeAppWindAngle();
     this.unsubscribeAppWindSpeed();
@@ -310,6 +317,31 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     let dialogRef = this.dialog.open(WidgetWindModalComponent, {
       width: '650px',
       data: settingsData
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // save new settings
+      if (result) {
+        console.debug("Updating widget config");
+        this.stopAll();//unsub now as we will change variables so wont know what was subbed before...
+        this.widgetConfig.headingPath = result.headingPath;
+        this.widgetConfig.headingSource = result.headingSource;
+        this.widgetConfig.trueWindAnglePath = result.trueWindAnglePath;
+        this.widgetConfig.trueWindAngleSource = result.trueWindAngleSource;
+        this.widgetConfig.trueWindSpeedPath = result.trueWindSpeedPath;
+        this.widgetConfig.trueWindSpeedSource = result.trueWindSpeedSource;
+
+        this.widgetConfig.appWindAnglePath = result.appWindAnglePath;
+        this.widgetConfig.appWindAngleSource = result.appWindAngleSource;
+        this.widgetConfig.appWindSpeedPath = result.appWindSpeedPath;
+        this.widgetConfig.appWindSpeedSource = result.appWindSpeedSource;
+        this.widgetConfig.unitName = result.unitName;
+        
+
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+        this.startAll();
+      }
+
     });
 
   }

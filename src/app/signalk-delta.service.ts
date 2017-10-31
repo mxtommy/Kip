@@ -46,16 +46,22 @@ export class SignalKDeltaService {
     for (let update of message.updates) {
 
       // get source identifyer. is 'src' on nmea2k and 'talker' on nmea0183
-      let si = '';
-      if (update.source.type == 'NMEA2000') {
-        si = update.source.src;
-      } else if (update.source.type == 'NMEA0183') {
-        si = update.source.talker;
-      } else {
-        // donno what it is...
+      let source = '';
+      if ((update.source !== undefined) && (update.source.type !== undefined) && update.source.label !== undefined) {
+        if (update.source.type == 'NMEA2000') {
+          source = update.source.label + '.' + update.source.src;
+        } else if (update.source.type == 'NMEA0183') {
+          source = update.source.label + '.' + update.source.talker;
+        } else {
+          // donno what it is...
+          source = update.source.label;
+        }
+      } else if (update['$source'] !== undefined) {
+        source = update['$source'];
       }
+      
 
-      let source = update.source.label + '.' + si;
+      
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
 
       for (let value of update.values) {
