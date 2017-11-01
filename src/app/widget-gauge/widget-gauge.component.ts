@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -55,7 +55,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
   }
 
   constructor(
-    public dialog: MdDialog,
+    public dialog:MatDialog,
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
     private UnitConvertService: UnitConvertService) {
@@ -182,8 +182,8 @@ export class WidgetGaugeModalComponent implements OnInit {
   constructor(
     private SignalKService: SignalKService,
     private UnitConvertService: UnitConvertService,
-    public dialogRef: MdDialogRef<WidgetGaugeModalComponent>,
-    @Inject(MD_DIALOG_DATA) public data: any) { }
+    public dialogRef:MatDialogRef<WidgetGaugeModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any) { }
 
 
   ngOnInit() {

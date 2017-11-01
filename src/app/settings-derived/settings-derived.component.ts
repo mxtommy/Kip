@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 
 import { SignalKService, pathObject } from '../signalk.service';
@@ -15,7 +15,7 @@ export class SettingsDerivedComponent implements OnInit {
   possibleDerivations = [];
 
   constructor(
-    public dialog: MdDialog,
+    public dialog:MatDialog,
     private SignalKService: SignalKService,
     private DerivedService: DerivedService) { }
 
@@ -59,8 +59,8 @@ export class SettingsDerivedModalComponent implements OnInit {
   constructor(
     private SignalKService: SignalKService,
     private DerivedService: DerivedService,
-    public dialogRef: MdDialogRef<SettingsDerivedModalComponent>,
-    @Inject(MD_DIALOG_DATA) public data: any
+    public dialogRef:MatDialogRef<SettingsDerivedModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
     ) { }
 
   ngOnInit() {

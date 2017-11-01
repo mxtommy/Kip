@@ -1,50 +1,50 @@
 <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
         
-    <md-dialog-content>
+    <mat-dialog-content>
 
-        <md-horizontal-stepper>
-            <md-step label="Source">
+        <mat-horizontal-stepper>
+            <mat-step label="Source">
                 <div class="tab-content"> 
-                    <md-select 
+                    <mat-select 
                         [style.width]="'100%'" 
                         placeholder="SignalK Path" 
                         [(ngModel)]="settingsData.selectedPath" 
                         name="selectedPath"
                             (ngModelChange)="settingsDataUpdatePath()"
                         required>
-                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                        <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                             {{path}}
-                        </md-option>
-                    </md-select>
-                    <md-checkbox
+                        </mat-option>
+                    </mat-select>
+                    <mat-checkbox
                         [(ngModel)]="selfPaths"
                         name="selfPaths"
                         >
                         Restric to own vessel
-                    </md-checkbox>
-                    <md-select 
+                    </mat-checkbox>
+                    <mat-select 
                         [style.width]="'100%'" 
                         placeholder="Source" 
                         [(ngModel)]="settingsData.selectedSource" 
                         name="selectedSource">
-                        <md-option *ngFor="let source of availableSources" [value]="source">
+                        <mat-option *ngFor="let source of availableSources" [value]="source">
                             {{source}}
-                        </md-option>
-                    </md-select>
+                        </mat-option>
+                    </mat-select>
                 </div>
-                <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedPath">Next</button>
-            </md-step>
-            <md-step label="Display">
+                <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.selectedPath">Next</button>
+            </mat-step>
+            <mat-step label="Display">
                 <div class="tab-content"> 
-                    <md-form-field class="full-width">
-                        <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
-                    </md-form-field>
+                    <mat-form-field class="full-width">
+                        <input matInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
+                    </mat-form-field>
                     
-                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                    <button md-raised-button color="accent" type="submit">Save</button>
+                    <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="accent" type="submit">Save</button>
                 </div>
-            </md-step>
+            </mat-step>
 
-        </md-horizontal-stepper>
-    </md-dialog-content>
+        </mat-horizontal-stepper>
+    </mat-dialog-content>
 </form>                    

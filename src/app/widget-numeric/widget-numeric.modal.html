@@ -1,82 +1,82 @@
 <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
 
-    <md-dialog-content>
+    <mat-dialog-content>
 
-        <md-horizontal-stepper>
-            <md-step label="Source">
+        <mat-horizontal-stepper>
+            <mat-step label="Source">
                 <div class="tab-content"> 
-                    <md-select 
+                    <mat-select 
                         [style.width]="'100%'" 
                         placeholder="SignalK Path" 
                         [(ngModel)]="settingsData.signalKPath" 
                         name="signalKPath"
                          (ngModelChange)="settingsDataUpdatePath()"
                         required>
-                        <md-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                        <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                             {{path}}
-                        </md-option>
-                    </md-select>
-                    <md-checkbox
+                        </mat-option>
+                    </mat-select>
+                    <mat-checkbox
                         [(ngModel)]="selfPaths"
                         name="selfPaths"
                         >
                         Restric to own vessel
-                    </md-checkbox>
-                    <md-select 
+                    </mat-checkbox>
+                    <mat-select 
                         [style.width]="'100%'" 
                         placeholder="Source" 
                         [(ngModel)]="settingsData.signalKSource" 
                         name="signalKSource">
-                        <md-option *ngFor="let source of availableSources" [value]="source">
+                        <mat-option *ngFor="let source of availableSources" [value]="source">
                             {{source}}
-                        </md-option>
-                    </md-select>
-                    <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.signalKPath">Next</button>
+                        </mat-option>
+                    </mat-select>
+                    <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.signalKPath">Next</button>
                 </div>
-            </md-step>
-            <md-step label="Display">
+            </mat-step>
+            <mat-step label="Display">
                 <div class="tab-content"> 
-                    <md-form-field class="full-width">
-                        <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
-                    </md-form-field>
-                    <md-form-field class="full-width">
-                            <input type="number" min="0" max="5" mdInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
-                    </md-form-field>
-                    <md-form-field class="full-width">
-                            <input type="number" min="0" max="5" mdInput placeholder="Number of Integer Place" name="integers" [(ngModel)]="settingsData.numInt">
-                    </md-form-field>
-                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                    <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                    <mat-form-field class="full-width">
+                        <input matInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
+                    </mat-form-field>
+                    <mat-form-field class="full-width">
+                            <input type="number" min="0" max="5"matInput placeholder="Number of Decimals" name="decimals" [(ngModel)]="settingsData.numDecimal">
+                    </mat-form-field>
+                    <mat-form-field class="full-width">
+                            <input type="number" min="0" max="5"matInput placeholder="Number of Integer Place" name="integers" [(ngModel)]="settingsData.numInt">
+                    </mat-form-field>
+                    <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                    <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    
                 </div>
-            </md-step>
-            <md-step label="Units">
+            </mat-step>
+            <mat-step label="Units">
                 <div class="tab-content"> 
-                    <md-select 
+                    <mat-select 
                         [style.width]="'100%'" 
                         placeholder="Unit Category" 
                         [(ngModel)]="settingsData.unitGroup" 
                         name="unitGroup"
                          (ngModelChange)="updateUnitType()"
                         >
-                        <md-option *ngFor="let group of availableUnitGroups" [value]="group">
+                        <mat-option *ngFor="let group of availableUnitGroups" [value]="group">
                             {{group}}
-                        </md-option>
-                    </md-select>
-                    <md-select 
+                        </mat-option>
+                    </mat-select>
+                    <mat-select 
                         [style.width]="'100%'" 
                         placeholder="Unit" 
                         [(ngModel)]="settingsData.unitName" 
                         name="unitName"
                         >
-                        <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                        <mat-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
                             {{unitName}}
-                        </md-option>
-                    </md-select>
-                    <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                    <button md-raised-button color="accent" type="submit">Save</button>
+                        </mat-option>
+                    </mat-select>
+                    <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="accent" type="submit">Save</button>
                 </div>
-            </md-step>
+            </mat-step>
 
-        </md-horizontal-stepper>
-    </md-dialog-content>
+        </mat-horizontal-stepper>
+    </mat-dialog-content>
 </form>

@@ -21,8 +21,8 @@
               <span *ngIf="!derivation.active" style="color:red;" class="fa fa-lg fa-times-circle"></span>
             </td>
             <td>
-                <button md-raised-button *ngIf="!derivation.active" color="primary" (click)="activateDerivation(derivation.name)">Activate</button>
-                <button md-raised-button *ngIf="derivation.active" color="warn" (click)="deactivateDerivation(derivation.name)">Deactivate</button>
+                <button mat-raised-button *ngIf="!derivation.active" color="primary" (click)="activateDerivation(derivation.name)">Activate</button>
+                <button mat-raised-button *ngIf="derivation.active" color="warn" (click)="deactivateDerivation(derivation.name)">Deactivate</button>
             </td>
         </tr>
     </table>

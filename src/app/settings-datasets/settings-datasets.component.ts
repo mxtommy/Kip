@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { DataSetService, IDataSet } from '../data-set.service';
@@ -22,7 +22,7 @@ export class SettingsDatasetsComponent implements OnInit {
   dataSets: IDataSet[];
 
   constructor(
-    public dialog: MdDialog,
+    public dialog: MatDialog,
     private SignalKService: SignalKService,
     private DataSetService: DataSetService
     ) { }
@@ -71,8 +71,8 @@ export class SettingsDatasetsModalComponent implements OnInit {
   constructor(
     private SignalKService: SignalKService,
     private DataSetService: DataSetService,
-    public dialogRef: MdDialogRef<SettingsDatasetsModalComponent>,
-    @Inject(MD_DIALOG_DATA) public data: any
+    public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
     ) { }
 
   ngOnInit() {

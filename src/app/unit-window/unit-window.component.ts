@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild } from '@angular/core';
-import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 import { NgModel } from '@angular/forms';
 
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -24,7 +24,7 @@ export class UnitWindowComponent implements OnInit {
 
   constructor(
       private componentFactoryResolver: ComponentFactoryResolver,
-      public dialog: MdDialog,
+      public dialog:MatDialog,
       private WidgetManagerService: WidgetManagerService,
       private widgetListService: WidgetListService) { }
 
@@ -96,8 +96,8 @@ export class UnitWindowModalComponent implements OnInit {
   
   constructor(
     private widgetListService: WidgetListService,
-    public dialogRef: MdDialogRef<UnitWindowModalComponent>,
-    @Inject(MD_DIALOG_DATA) public data: any) { }
+    public dialogRef:MatDialogRef<UnitWindowModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   onNoClick(): void {
     this.dialogRef.close();

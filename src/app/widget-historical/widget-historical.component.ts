@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input, Inject } from '@angular/core';
 import Chart from 'chart.js';
-import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 
 import { dataPoint, DataSetService } from '../data-set.service';
@@ -89,7 +89,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
 
   constructor(
-    public dialog: MdDialog,
+    public dialog:MatDialog,
     private DataSetService: DataSetService,
     private WidgetManagerService: WidgetManagerService,
     private UnitConvertService: UnitConvertService
@@ -371,8 +371,8 @@ export class WidgetHistoricalModalComponent implements OnInit {
     constructor(
         private UnitConvertService: UnitConvertService,
         private DataSetService: DataSetService,
-        public dialogRef: MdDialogRef<WidgetHistoricalModalComponent>,
-        @Inject(MD_DIALOG_DATA) public data: any) { }
+        public dialogRef:MatDialogRef<WidgetHistoricalModalComponent>,
+        @Inject(MAT_DIALOG_DATA) public data: any) { }
     
 
     ngOnInit() {
