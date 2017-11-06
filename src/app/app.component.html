@@ -37,6 +37,10 @@
                             <span *ngIf="!unlockStatus" class="fa fa-lg fa-unlock">Unlock</span>
                             <span *ngIf="unlockStatus" class="fa fa-lg fa-lock">Lock</span>
                         </button>
+                        <button mat-menu-item (click)="toggleFullScreen()">
+                            <span *ngIf="!fullscreenStatus" class="fa fa-lg fa-window-maximize">Fullscreen</span>
+                            <span *ngIf="fullscreenStatus" class="fa fa-lg fa-window-restore">Exit Fullscreen</span>
+                        </button>
                         <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()"><span class="fa fa-lg fa-plus">New Page</span></button>
                         <button mat-menu-item routerLink="/settings"><span class="fa fa-lg fa-cog">App Settings</span></button>
                     </mat-menu>

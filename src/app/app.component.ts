@@ -3,12 +3,15 @@ import { Subscription } from 'rxjs/Subscription';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { LayoutSplitsService } from './layout-splits.service';
 
+import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { DataSetService } from './data-set.service';
 import { DerivedService } from './derived.service';
 
+
+declare var NoSleep: any; //3rd party
 
 @Component({
   selector: 'app-root',
@@ -17,11 +20,16 @@ import { DerivedService } from './derived.service';
 })
 export class AppComponent implements OnInit, OnDestroy {
 
+  noSleep = new NoSleep();
+  
   pageName: string = '';
   rootPageIndexSub: Subscription;
 
   unlockStatus: boolean = false; 
   unlockStatusSub: Subscription;
+
+  fullscreenStatus = false;
+  
 
   themeName: string;
   themeClass: string = 'default-light fullheight';
@@ -95,12 +103,18 @@ export class AppComponent implements OnInit, OnDestroy {
    
   }
 
-  fullScreenStart() {
+  toggleFullScreen() {
+    if (!this.fullscreenStatus) {
+      screenfull.request();
+      this.noSleep.enable();
+    } else {
+      if (screenfull.isFullscreen) {
+        screenfull.exit();
+      }
+      this.noSleep.disable();
+    }
 
-  }
-
-  stopFullScreen() {
-    
+    this.fullscreenStatus = !this.fullscreenStatus;
   }
 
 }
