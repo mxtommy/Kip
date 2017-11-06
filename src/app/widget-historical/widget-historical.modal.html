@@ -1,122 +1,122 @@
 <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
-    <md-dialog-content>
+    <mat-dialog-content>
             
-        <md-horizontal-stepper>
-            <md-step label="Source">
+        <mat-horizontal-stepper>
+            <mat-step label="Source">
                 <div class="tab-content"> 
                     <p>
-                        <md-select 
+                        <mat-select 
                             [style.width]="'100%'" 
                             placeholder="Data Set" 
                             [(ngModel)]="settingsData.selectedDataSet" 
                             name="selectedDataSet"
                             required>
-                            <md-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
+                            <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
                                 {{ds.name}}
-                            </md-option>
-                        </md-select>
+                            </mat-option>
+                        </mat-select>
                     </p>
                     <p>
-                        <md-checkbox
+                        <mat-checkbox
                             [(ngModel)]="settingsData.invertData"
                             name="invertData"
                             >
                             Invert Data (multiply by -1)
-                        </md-checkbox>
+                        </mat-checkbox>
                     </p>
                     <p>
-                        <md-checkbox
+                        <mat-checkbox
                             [(ngModel)]="settingsData.displayMinMax"
                             name="displayMinMax"
                             >
                             Include Min/Max
-                        </md-checkbox>
+                        </mat-checkbox>
                     </p>
                     <p>
-                        <button type="button" md-raised-button color="accent" mdStepperNext [disabled]="!settingsData.selectedDataSet">Next</button>
+                        <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.selectedDataSet">Next</button>
                     </p>
                 </div>
-            </md-step>
-            <md-step label="Display">
+            </mat-step>
+            <mat-step label="Display">
                 <div class="tab-content"> 
                     <p>                    
-                        <md-form-field class="full-width">
-                            <input mdInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
-                        </md-form-field>
+                        <mat-form-field class="full-width">
+                            <input matInput placeholder="Widget Label" name="label" [(ngModel)]="settingsData.label">
+                        </mat-form-field>
                     </p>
                     <p>
-                        <md-checkbox
+                        <mat-checkbox
                             [(ngModel)]="settingsData.animateGraph"
                             name="animateGraph"
                             >
                             Animate Updates
-                        </md-checkbox>                    
+                        </mat-checkbox>                    
                     </p>
                     <p>
-                        <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                        <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                        <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                        <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    
                     </p>
                 </div>
-            </md-step>
-            <md-step label="Units">
+            </mat-step>
+            <mat-step label="Units">
                 <div class="tab-content"> 
                     <p>                    
-                        <md-select 
+                        <mat-select 
                             [style.width]="'100%'" 
                             placeholder="Unit Category" 
                             [(ngModel)]="settingsData.selectedUnitGroup" 
                             name="unitGroup"
                             (ngModelChange)="updateUnitType()"
                             >
-                            <md-option *ngFor="let group of availableUnitGroups" [value]="group">
+                            <mat-option *ngFor="let group of availableUnitGroups" [value]="group">
                                 {{group}}
-                            </md-option>
-                        </md-select>
+                            </mat-option>
+                        </mat-select>
                     </p>
                     <p>
-                        <md-select 
+                        <mat-select 
                             [style.width]="'100%'" 
                             placeholder="Unit" 
                             [(ngModel)]="settingsData.selectedUnitName" 
                             name="unitName"
                             >
-                            <md-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                            <mat-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
                                 {{unitName}}
-                            </md-option>
-                        </md-select>
+                            </mat-option>
+                        </mat-select>
                     </p>
                     <p>
-                        <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                        <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>                    
+                        <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                        <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    
                     </p>
                 </div>
-            </md-step>
-            <md-step label="Graph">
+            </mat-step>
+            <mat-step label="Graph">
                     <div class="tab-content"> 
                         <p>                    
-                            <md-form-field class="full-width">
-                                <input mdInput type="number" placeholder="Suggested Minimum (optional):" name="suggestedMin" [(ngModel)]="settingsData.suggestedMin">
-                            </md-form-field>
+                            <mat-form-field class="full-width">
+                                <input matInput type="number" placeholder="Suggested Minimum (optional):" name="suggestedMin" [(ngModel)]="settingsData.suggestedMin">
+                            </mat-form-field>
                         </p>
                         <p>
-                            <md-form-field class="full-width">
-                                <input mdInput type="number" placeholder="Suggested Maximum (optional)" name="suggestedMax" [(ngModel)]="settingsData.suggestedMax">
-                            </md-form-field>
+                            <mat-form-field class="full-width">
+                                <input matInput type="number" placeholder="Suggested Maximum (optional)" name="suggestedMax" [(ngModel)]="settingsData.suggestedMax">
+                            </mat-form-field>
                         </p>
                         <p>
-                            <md-checkbox
+                            <mat-checkbox
                                 [(ngModel)]="settingsData.includeZero"
                                 name="includeZero"
                                 >
                                 Include Origin (aka 0)
-                            </md-checkbox>                    
+                            </mat-checkbox>                    
                         </p>                        
                         <p>
-                            <button type="button" md-raised-button mdStepperPrevious>Back</button>
-                            <button md-raised-button color="accent" type="submit">Save</button>
+                            <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                            <button mat-raised-button color="accent" type="submit">Save</button>
                         </p>
                     </div>
-                </md-step>
-        </md-horizontal-stepper>
-    </md-dialog-content>
+                </mat-step>
+        </mat-horizontal-stepper>
+    </mat-dialog-content>
 </form>                    

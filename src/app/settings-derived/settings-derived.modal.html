@@ -1,33 +1,33 @@
-<h2 md-dialog-title>Activate {{ derivationName }}:</h2>
-<md-dialog-content>
+<h2 mat-dialog-title>Activate {{ derivationName }}:</h2>
+<mat-dialog-content>
     <form name="derivationActivation" (ngSubmit)="activateDerivation()" #derivationActivation="ngForm">
-        <md-horizontal-stepper>
-            <md-step label="Source">
+        <mat-horizontal-stepper>
+            <mat-step label="Source">
                 <div class="tab-content">
-                    <md-select *ngFor="let path of requiredPaths"
+                    <mat-select *ngFor="let path of requiredPaths"
                         [style.width]="'100%'" 
                         [placeholder]="path.path" 
                         [(ngModel)]="path.selectedSource" 
                         [name]="path.path">
-                        <md-option *ngFor="let source of path.availableSources" [value]="source">
+                        <mat-option *ngFor="let source of path.availableSources" [value]="source">
                             {{source}}
-                        </md-option>
-                    </md-select>
+                        </mat-option>
+                    </mat-select>
                 </div>
-                <button type="button" md-raised-button color="accent" mdStepperNext>Next</button>
-            </md-step>
-            <md-step label="Options">
+                <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>
+            </mat-step>
+            <mat-step label="Options">
                 <div class="tab-content"> 
-                    <md-checkbox
+                    <mat-checkbox
                         [(ngModel)]="updateAny"
                         name="updateInt"
                         >
                         Update on Any Value
-                    </md-checkbox>
+                    </mat-checkbox>
                 </div>
-                <button type="button" md-raised-button color="accent" mdStepperPrevious>Back</button>
-                <button md-raised-button color="primary" type="submit">Save</button>                
-            </md-step>            
-        </md-horizontal-stepper>
+                <button type="button" mat-raised-button color="accent" matStepperPrevious>Back</button>
+                <button mat-raised-button color="primary" type="submit">Save</button>                
+            </mat-step>            
+        </mat-horizontal-stepper>
     </form>
-</md-dialog-content>
+</mat-dialog-content>

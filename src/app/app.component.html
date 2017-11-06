@@ -7,39 +7,39 @@
             <div class="menuBarContainer theme-menu">
 
                 <div class="menuBarButtonGroup">
-                    <button color="accent" md-raised-button [mdMenuTriggerFor]="themeMenu" >
+                    <button color="accent" mat-raised-button [matMenuTriggerFor]="themeMenu" >
                             <span class="fa fa-lg fa-paint-brush"></span>
                     </button>
-                    <md-menu #themeMenu="mdMenu">
-                        <button md-menu-item (click)="setTheme('default-light')">Default</button>
-                        <button md-menu-item (click)="setTheme('high-contrast-light')">High Contrast</button>
-                        <button md-menu-item (click)="setTheme('night-dark')">Night (red)</button>
-                        <button md-menu-item (click)="setTheme('platypus-light')">Platypus</button>
-                    </md-menu>
+                    <mat-menu #themeMenu="matMenu">
+                        <button mat-menu-item (click)="setTheme('default-light')">Default</button>
+                        <button mat-menu-item (click)="setTheme('high-contrast-light')">High Contrast</button>
+                        <button mat-menu-item (click)="setTheme('night-dark')">Night (red)</button>
+                        <button mat-menu-item (click)="setTheme('platypus-light')">Platypus</button>
+                    </mat-menu>
                 </div>
 
                 <div class="menuBarButtonGroup">
-                    <button color="accent" md-raised-button (click)="pageDown()">
+                    <button color="accent" mat-raised-button (click)="pageDown()">
                         <span class="fa fa-lg fa-chevron-left"></span>
                     </button>
 
-                    <button color="accent" md-raised-button (click)="pageUp()">
+                    <button color="accent" mat-raised-button (click)="pageUp()">
                         <span class="fa fa-lg fa-chevron-right"></span>
                     </button>
                 </div>
 
                 <div class="menuBarButtonGroup">
-                    <button color="accent" md-raised-button [mdMenuTriggerFor]="settingsMenu" >
+                    <button color="accent" mat-raised-button [matMenuTriggerFor]="settingsMenu" >
                             <span class="fa fa-lg fa-cog"></span>
                     </button>
-                    <md-menu #settingsMenu="mdMenu">
-                        <button md-menu-item (click)="unlockPage()">
+                    <mat-menu #settingsMenu="matMenu">
+                        <button mat-menu-item (click)="unlockPage()">
                             <span *ngIf="!unlockStatus" class="fa fa-lg fa-unlock">Unlock</span>
                             <span *ngIf="unlockStatus" class="fa fa-lg fa-lock">Lock</span>
                         </button>
-                        <button md-menu-item [disabled]="!unlockStatus" (click)="newPage()"><span class="fa fa-lg fa-plus">New Page</span></button>
-                        <button md-menu-item routerLink="/settings"><span class="fa fa-lg fa-cog">App Settings</span></button>
-                    </md-menu>
+                        <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()"><span class="fa fa-lg fa-plus">New Page</span></button>
+                        <button mat-menu-item routerLink="/settings"><span class="fa fa-lg fa-cog">App Settings</span></button>
+                    </mat-menu>
                 </div>
 
             </div>

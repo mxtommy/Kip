@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { MdDialog, MdDialogRef, MD_DIALOG_DATA } from '@angular/material';
+import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -54,7 +54,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
 
   constructor(
-    public dialog: MdDialog,
+    public dialog:MatDialog,
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
     private UnitConvertService: UnitConvertService) {
@@ -303,8 +303,8 @@ export class WidgetNumericModalComponent implements OnInit {
   constructor(
     private SignalKService: SignalKService,
     private UnitConvertService: UnitConvertService,
-    public dialogRef: MdDialogRef<WidgetNumericModalComponent>,
-    @Inject(MD_DIALOG_DATA) public data: any) { }
+    public dialogRef:MatDialogRef<WidgetNumericModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
     this.settingsData = this.data;

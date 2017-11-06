@@ -1,12 +1,12 @@
 <br>
 <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
-  <md-form-field class="almost-full-width">
-    <input type=url mdInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
-    <md-error>
+  <mat-form-field class="almost-full-width">
+    <input type=urlmatInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
+    <mat-error>
       Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com/signalk"
-    </md-error>
-  </md-form-field>
-  <button type="submit" md-raised-button [disabled]="!signalKForm.form.valid">Update/Reset</button>
+    </mat-error>
+  </mat-form-field>
+  <button type="submit" mat-raised-button [disabled]="!signalKForm.form.valid">Update/Reset</button>
 </form>
 <br>
 <table>
