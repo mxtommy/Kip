@@ -10,10 +10,10 @@
     "dashboard",
     "marine",
     "nmea"
-  ],  
+  ],
   "homepage": "https://github.com/mxtommy/Kip",
-  "bugs": "https://github.com/mxtommy/Kip/issues",  
-  "author": "Thomas St.Pierre <thomas@samoht.ca>",  
+  "bugs": "https://github.com/mxtommy/Kip/issues",
+  "author": "Thomas St.Pierre <thomas@samoht.ca>",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -39,6 +39,7 @@
     "chart.js": "^2.7.0",
     "core-js": "^2.4.1",
     "js-quantities": "^1.7.0",
+    "nosleep.js": "^0.7.0",
     "rxjs": "^5.4.1",
     "zone.js": "^0.8.14"
   },

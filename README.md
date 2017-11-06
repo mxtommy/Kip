@@ -34,4 +34,5 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
  * iFrame Widget?
  * Delete Page.
  * Support boolean values. 
+ * Numeric widget max/avg values.
  

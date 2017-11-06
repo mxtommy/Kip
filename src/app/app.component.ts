@@ -87,33 +87,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   pageDown() {
         this.LayoutSplitsService.previousRoot();
-    
-    /*let rootNodes = this.treeManager.getRootNodes();
-    let currentIndex = rootNodes.findIndex(uuid => uuid == this.rootPage.uuid);
-    let rootNum = Object.keys(rootNodes).length;
 
-    if (currentIndex == 0) {
-      this.router.navigate(['/page', rootNum -1]); // going down from 0, go to max
-    } else {
-      this.router.navigate(['/page', currentIndex - 1]);
-    }
-    */
   }
 
   pageUp() {
     this.LayoutSplitsService.nextRoot();
-    
-    /*
-    let rootNodes = this.treeManager.getRootNodes();
-    let currentIndex = rootNodes.findIndex(uuid => uuid == this.rootPage.uuid);
-    let rootNum = Object.keys(rootNodes).length;
+   
+  }
 
-    if (currentIndex >= (rootNum-1)) {
-      this.router.navigate(['/page', 0]); // going down from 0, go to max
-    } else {
-      this.router.navigate(['/page', currentIndex + 1]);
-    }
-    */
+  fullScreenStart() {
+
+  }
+
+  stopFullScreen() {
+    
   }
 
 }
