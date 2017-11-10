@@ -36,3 +36,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
  * Support boolean values. 
  * Numeric widget max/avg values.
  
+### V0.4
+ * Get historical from server.
+ 
