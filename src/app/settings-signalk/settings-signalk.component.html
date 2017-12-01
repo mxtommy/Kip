@@ -1,7 +1,7 @@
 <br>
 <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
   <mat-form-field class="almost-full-width">
-    <input type=urlmatInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
+    <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
     <mat-error>
       Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com/signalk"
     </mat-error>
