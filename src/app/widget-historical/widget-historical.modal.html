@@ -4,9 +4,8 @@
         <mat-horizontal-stepper>
             <mat-step label="Source">
                 <div class="tab-content"> 
-                    <p>
+                    <mat-form-field class="full-width">
                         <mat-select 
-                            [style.width]="'100%'" 
                             placeholder="Data Set" 
                             [(ngModel)]="settingsData.selectedDataSet" 
                             name="selectedDataSet"
@@ -15,7 +14,7 @@
                                 {{ds.name}}
                             </mat-option>
                         </mat-select>
-                    </p>
+                    </mat-form-field>
                     <p>
                         <mat-checkbox
                             [(ngModel)]="settingsData.invertData"
@@ -60,7 +59,7 @@
             </mat-step>
             <mat-step label="Units">
                 <div class="tab-content"> 
-                    <p>                    
+                    <mat-form-field class="full-width">                    
                         <mat-select 
                             [style.width]="'100%'" 
                             placeholder="Unit Category" 
@@ -72,8 +71,8 @@
                                 {{group}}
                             </mat-option>
                         </mat-select>
-                    </p>
-                    <p>
+                    </mat-form-field>
+                    <mat-form-field class="full-width">                    
                         <mat-select 
                             [style.width]="'100%'" 
                             placeholder="Unit" 
@@ -84,7 +83,7 @@
                                 {{unitName}}
                             </mat-option>
                         </mat-select>
-                    </p>
+                    </mat-form-field>
                     <p>
                         <button type="button" mat-raised-button matStepperPrevious>Back</button>
                         <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    

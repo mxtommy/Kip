@@ -4,15 +4,17 @@
         <mat-horizontal-stepper>
             <mat-step label="Source">
                 <div class="tab-content">
-                    <mat-select *ngFor="let path of requiredPaths"
-                        [style.width]="'100%'" 
-                        [placeholder]="path.path" 
-                        [(ngModel)]="path.selectedSource" 
-                        [name]="path.path">
-                        <mat-option *ngFor="let source of path.availableSources" [value]="source">
-                            {{source}}
-                        </mat-option>
-                    </mat-select>
+                    <mat-form-field *ngFor="let path of requiredPaths" class="full-width">
+                        <mat-select 
+                            [placeholder]="path.path" 
+                            [(ngModel)]="path.selectedSource" 
+                            [name]="path.path">
+                            <mat-option *ngFor="let source of path.availableSources" [value]="source">
+                                {{source}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
                 </div>
                 <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>
             </mat-step>

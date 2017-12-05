@@ -20,3 +20,7 @@
 .mat-select-trigger { 
     min-width: 30px !important; 
 }
+
+.full-width {
+    width: 100%;
+}

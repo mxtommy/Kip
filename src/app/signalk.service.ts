@@ -107,10 +107,8 @@ export class SignalKService {
   updatePathData(path: string, source: string, timestamp: number, value: any) {
     // convert the selfURN to "self"
     let pathSelf: string = path.replace(this.selfurn, 'self');
-
     // update existing if exists.
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
-
     if (pathIndex >= 0) { // exists
      
       // update data

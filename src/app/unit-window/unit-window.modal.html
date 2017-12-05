@@ -1,11 +1,14 @@
  <form name="widgetForm" (ngSubmit)="submitNewWidget()">
      <h1 mat-dialog-title>Choose Widget:</h1>
     <mat-dialog-content>
-        <mat-select [style.width]="'100%'" placeholder="Widget Type" [(ngModel)]="newWidget" name="newWidget">
-            <mat-option *ngFor="let widget of widgetList" [value]="widget.name">
-                {{widget.description}}
-            </mat-option>
-        </mat-select>
+        <mat-form-field>
+            <mat-select placeholder="Widget Type" [(ngModel)]="newWidget" name="newWidget">
+                <mat-option *ngFor="let widget of widgetList" [value]="widget.name">
+                    {{widget.description}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
     </mat-dialog-content>
     <mat-dialog-actions>
         <button mat-raised-button mat-dialog-close>Cancel</button>

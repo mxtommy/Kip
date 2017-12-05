@@ -58,12 +58,15 @@ export class SignalKDeltaService {
         }
       } else if (update['$source'] !== undefined) {
         source = update['$source'];
+      } else if ((update.source !== undefined) && (update.source.src !== undefined) && (update.source.label !== undefined)) {
+        source = update.source.label + '.' + update.source.src;
+      } else {
+        source = "unknown";
       }
       
 
       
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
-
       for (let value of update.values) {
         let fullPath = context + '.' + value.path;
         if ( (typeof(value.value) == 'object') && (value.value !== null)) {
