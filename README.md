@@ -26,6 +26,7 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
   * Default unit for each unit type in config.
 * Show SignalK status/alert if disconnected
 * Radial/Linear Gauge Zones
+* Hash based routing to be friendly to node server
 
 ### V0.3
  * Sailing Polars with ChartJS Radar type chart?

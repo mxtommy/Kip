@@ -56,7 +56,8 @@ import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
-import { ResetConfigComponent } from './reset-config/reset-config.component'
+import { ResetConfigComponent } from './reset-config/reset-config.component';
+import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component'
 
 
 const appRoutes: Routes = [
@@ -99,7 +100,9 @@ const appRoutes: Routes = [
     SettingsDerivedComponent,
     SettingsDerivedModalComponent,
     WidgetTutorialComponent,
-    ResetConfigComponent
+    ResetConfigComponent,
+    WidgetStateComponent,
+    WidgetStateModalComponent
   ],
   imports: [
     BrowserModule,
@@ -129,6 +132,7 @@ const appRoutes: Routes = [
     WidgetHistoricalComponent,
     WidgetWindComponent,
     WidgetGaugeComponent,
+    WidgetStateComponent,
     WidgetTutorialComponent,
     
     //dialogs
@@ -138,7 +142,8 @@ const appRoutes: Routes = [
     WidgetWindModalComponent,
     WidgetGaugeModalComponent,
     SettingsDerivedModalComponent,
-    SettingsDatasetsModalComponent
+    SettingsDatasetsModalComponent,
+    WidgetStateModalComponent
   ],
   providers: [ 
     SignalKService,

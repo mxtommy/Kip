@@ -4,7 +4,6 @@ import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
-import { UnitConvertService } from '../unit-convert.service';
 
 
 interface widgetConfig {
@@ -13,38 +12,28 @@ interface widgetConfig {
   label: string;
 }
 
-interface IWidgetsettingsData {
-  selectedPath: string;
-  selectedSource: string;
-  label: string;
-
-}
 
 @Component({
-  selector: 'app-widget-text-generic',
-  templateUrl: './widget-text-generic.component.html',
-  styleUrls: ['./widget-text-generic.component.css']
+  selector: 'app-widget-state',
+  templateUrl: './widget-state.component.html',
+  styleUrls: ['./widget-state.component.css']
 })
-export class WidgetTextGenericComponent implements OnInit, OnDestroy {
+export class WidgetStateComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-    activeWidget: IWidget;
+  valueSub: Subscription = null;
+  activeWidget: IWidget;
   
-  dataValue: any = null;
-  dataTimestamp: number = Date.now();
+  state: boolean = null;
 
   widgetConfig: widgetConfig = {
     signalKPath: null,
     signalKSource: 'default',
     label: null
   }
-
-  //subs
-  valueSub: Subscription = null;
-
-  
+    
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -66,7 +55,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.unsubscribePath();
   }
 
-
   subscribePath() {
     this.unsubscribePath();
     if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
@@ -83,17 +71,18 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
           source = this.widgetConfig.signalKSource;
         }
 
-        this.dataTimestamp = pathObject.sources[source].timestamp;
 
         if (pathObject.sources[source].value === null) {
-          this.dataValue = null;
+          this.state = null;
         }
 
-        this.dataValue = pathObject.sources[source].value;
+        this.state = pathObject.sources[source].value;
         
       }
     );
   }
+
+
 
   unsubscribePath() {
     if (this.valueSub !== null) {
@@ -106,12 +95,12 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   openWidgetSettings(content) {
       
     //prepare current data
-    let settingsData: IWidgetsettingsData = {
-      selectedPath: this.widgetConfig.signalKPath,
-      selectedSource: this.widgetConfig.signalKSource,
+    let settingsData: widgetConfig = {
+      signalKPath: this.widgetConfig.signalKPath,
+      signalKSource: this.widgetConfig.signalKSource,
       label: this.widgetConfig.label
     }
-    let dialogRef = this.dialog.open(WidgetTextGenericModalComponent, {
+    let dialogRef = this.dialog.open(WidgetStateModalComponent, {
       width: '500px',
       data: settingsData
     });
@@ -120,8 +109,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       if (result) {
         console.debug("Updating widget config");
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.widgetConfig.signalKPath = result.selectedPath;
-        this.widgetConfig.signalKSource = result.selectedSource;
+        this.widgetConfig.signalKPath = result.signalKPath;
+        this.widgetConfig.signalKSource = result.signalKSource;
         this.widgetConfig.label = result.label;
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
         this.subscribePath();
@@ -129,27 +118,26 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     });
   }
 
-  
+
 }
 
 
 
 @Component({
-  selector: 'text-widget-modal',
-  templateUrl: './widget-text-generic.modal.html',
-  styleUrls: ['./widget-text-generic.component.css']
+  selector: 'state-widget-modal',
+  templateUrl: './widget-state.modal.html',
+  styleUrls: ['./widget-state.component.css']
 })
-export class WidgetTextGenericModalComponent implements OnInit {
+export class WidgetStateModalComponent implements OnInit {
 
-  settingsData: IWidgetsettingsData;
+  settingsData: widgetConfig;
   selfPaths: boolean = true;
   availablePaths: Array<string> = [];
   availableSources: Array<string>;
 
   constructor(
     private SignalKService: SignalKService,
-    private UnitConvertService: UnitConvertService,
-    public dialogRef:MatDialogRef<WidgetTextGenericModalComponent>,
+    public dialogRef:MatDialogRef<WidgetStateModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any) { }
 
 
@@ -159,18 +147,18 @@ export class WidgetTextGenericModalComponent implements OnInit {
     this.settingsData = this.data;
 
     //populate available choices
-    this.availablePaths = this.SignalKService.getPathsByType('string').sort();
-    if (this.availablePaths.includes(this.settingsData.selectedPath)) {
+    this.availablePaths = this.SignalKService.getPathsByType('boolean').sort();
+    if (this.availablePaths.includes(this.settingsData.signalKPath)) {
       this.settingsDataUpdatePath(); //TODO: this wipes out existing config, not good when editing existing config...
     }
   }
 
 
   settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
+    let pathObject = this.SignalKService.getPathObject(this.settingsData.signalKPath);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsData.selectedSource = 'default';
+    this.settingsData.signalKSource = 'default';
 
     if (pathObject.meta) {
       if (typeof(pathObject.meta.abbreviation) == 'string') {
@@ -178,10 +166,10 @@ export class WidgetTextGenericModalComponent implements OnInit {
       } else if (typeof(pathObject.meta.label) == 'string') {
         this.settingsData.label = pathObject.meta.label;
       } else {
-        this.settingsData.label = this.settingsData.selectedPath; // who knows?
+        this.settingsData.label = this.settingsData.signalKPath; // who knows?
       }
     } else {
-      this.settingsData.label = this.settingsData.selectedPath;// who knows?
+      this.settingsData.label = this.settingsData.signalKPath;// who knows?
     }
   }
 
@@ -190,3 +178,7 @@ export class WidgetTextGenericModalComponent implements OnInit {
   }
   
 }
+
+
+
+

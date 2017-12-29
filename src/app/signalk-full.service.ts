@@ -23,9 +23,8 @@ export class SignalKFullService {
   findKeys(data, currentPath: string[] = []) {
     let path = currentPath.join('.');
 
-    if (typeof(data) == 'boolean') { return; } //wilhelmsk has some boolean stuff, not needed for now to support boolean...
     
-    if ( (typeof(data) == 'string') || (typeof(data) == 'number')) {  // is it a simple value?
+    if ( (typeof(data) == 'string') || (typeof(data) == 'number') || (typeof(data) == 'boolean')) {  // is it a simple value?
       let timestamp = Date.now();
       let source = 'noSource'
       this.SignalKService.updatePathData(path, source, timestamp, data);
