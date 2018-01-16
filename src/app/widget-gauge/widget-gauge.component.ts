@@ -18,6 +18,7 @@ interface IWidgetConfig {
   radialSize: string;
   minValue: number;
   maxValue: number;
+  rotateFace: boolean;
 }
 
 
@@ -48,10 +49,11 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
     label: null,
     unitGroup: 'discreet',
     unitName: 'no unit',
-    barGraph: false,
+    barGraph: false,    // if linear/radial, is it digital?
     radialSize: 'full',
     minValue: 0,
-    maxValue: 100
+    maxValue: 100,
+    rotateFace: false
   }
 
   constructor(
@@ -128,7 +130,8 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
           barGraph: this.widgetConfig.barGraph,
           radialSize: this.widgetConfig.radialSize,
           minValue: this.widgetConfig.minValue,
-          maxValue: this.widgetConfig.maxValue
+          maxValue: this.widgetConfig.maxValue,
+          rotateFace: this.widgetConfig.rotateFace
         }
     
     

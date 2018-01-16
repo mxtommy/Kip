@@ -3,6 +3,49 @@
     <mat-dialog-content>
 
         <mat-horizontal-stepper>
+            <mat-step label="Gauge Type">
+                <div class="tab-content"> 
+                    <mat-form-field class="full-width">
+                        <mat-select 
+                            placeholder="Gauge Type" 
+                            [(ngModel)]="settingsData.gaugeType" 
+                            name="gaugeType">
+                            <mat-option value="linear">Linear</mat-option>
+                            <mat-option value="radial">Radial</mat-option>
+                            <mat-option value="compass">Compass</mat-option>
+                            <mat-option value="compass">Horizon</mat-option>
+                        </mat-select>
+                    </mat-form-field>                        
+                    <p *ngIf="(settingsData.gaugeType == 'radial')||(settingsData.gaugeType == 'linear')">  
+                        <mat-checkbox
+                            [(ngModel)]="settingsData.barGraph"
+                            name="settingsData.barGraph"
+                            >
+                            Digital display
+                        </mat-checkbox>
+                    </p>
+                    <p *ngIf="settingsData.gaugeType == 'radial'" >
+                        <mat-radio-group name="gaugeType" [(ngModel)]="settingsData.radialSize">
+                            <mat-radio-button value="quarter">1/4</mat-radio-button>
+                            <mat-radio-button value="half">1/2</mat-radio-button>
+                            <mat-radio-button value="three-quarter">3/4</mat-radio-button>
+                            <mat-radio-button value="full">Full</mat-radio-button>
+                        </mat-radio-group>
+                    </p>
+                    <p *ngIf="(settingsData.gaugeType == 'radial')||(settingsData.gaugeType == 'linear')">  
+                        <mat-checkbox
+                            [(ngModel)]="settingsData.rotateFace"
+                            name="settingsData.rotateFace"
+                            >
+                            Rotate face of compass? (otherwise needle moves)
+                        </mat-checkbox>
+                    </p>
+                    <p>
+                        <button type="button" mat-raised-button matStepperPrevious>Back</button>
+                        <button mat-raised-button color="accent" type="submit">Save</button>
+                    </p>
+                </div>
+            </mat-step>            
             <mat-step label="Source">
                 <div class="tab-content"> 
                     <mat-form-field class="full-width">
@@ -89,34 +132,6 @@
                     </mat-form-field>
                     <button type="button" mat-raised-button matStepperPrevious>Back</button>
                     <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    
-                </div>
-            </mat-step>
-            <mat-step label="Gauge">
-                <div class="tab-content"> 
-                    <p>                    
-                        <mat-radio-group name="settingsData.gaugeType" [(ngModel)]="settingsData.gaugeType">
-                            <mat-radio-button value="linear">Linear Gauge</mat-radio-button>
-                            <mat-radio-button value="radial">Radial Gauge</mat-radio-button>
-                        </mat-radio-group>
-                    </p><p>  
-                        <mat-checkbox
-                            [(ngModel)]="settingsData.barGraph"
-                            name="settingsData.barGraph"
-                            >
-                            Digital display
-                        </mat-checkbox>
-                    </p><p *ngIf="settingsData.gaugeType == 'radial'" >
-                        <mat-radio-group name="gaugeType" [(ngModel)]="settingsData.radialSize">
-                            <mat-radio-button value="quarter">1/4</mat-radio-button>
-                            <mat-radio-button value="half">1/2</mat-radio-button>
-                            <mat-radio-button value="three-quarter">3/4</mat-radio-button>
-                            <mat-radio-button value="full">Full</mat-radio-button>
-                        </mat-radio-group>
-                    </p>
-                    <p>
-                        <button type="button" mat-raised-button matStepperPrevious>Back</button>
-                        <button mat-raised-button color="accent" type="submit">Save</button>
-                    </p>
                 </div>
             </mat-step>
         </mat-horizontal-stepper>
