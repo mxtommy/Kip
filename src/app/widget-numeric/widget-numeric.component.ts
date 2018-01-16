@@ -5,6 +5,7 @@ import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { UnitConvertService } from '../unit-convert.service';
+import { isNumeric } from 'rxjs/util/isNumeric';
 
 
 interface IWidgetConfig {
@@ -71,6 +72,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.subscribePath();
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
+    this.updateCanvas();
   }
 
   ngOnDestroy() {
@@ -90,6 +92,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.canvasEl.nativeElement.width = Math.floor(rect.width); 
       this.canvasEl.nativeElement.height = Math.floor(rect.height);
     }
+    this.updateCanvas();
   }
 
   subscribePath() {
@@ -196,14 +199,25 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
-    let valueText = this.padValue(this.dataValue, this.widgetConfig.numInt, this.widgetConfig.numDecimal);
-    //TODO: at high res.large area, this can take way too long :( (500ms+)
+    let valueText = "--";
+    
+    if (isNumeric(this.dataValue)) {
+      valueText = this.padValue(this.dataValue, this.widgetConfig.numInt, this.widgetConfig.numDecimal);
+    }
+    
+    //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
     // set font small and make bigger until we hit a max.
     let fontSize = 1;
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+    //first increase fontsize by 10, skips lots of loops.
     while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
+      fontSize = fontSize + 10;
+      this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
+    }    
+    // now decrease by 1 to find the right size
+    while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+        fontSize--;
         this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
     this.canvasCtx.textAlign = "center";
