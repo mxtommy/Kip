@@ -53,6 +53,12 @@ export class AppSettingsService {
       this.setDefaultConfig();
     }
 
+    this.loadSettings();
+      
+  }
+
+
+  loadSettings() {
     let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
     this.signalKUrl.next(storageObject['signalKUrl']);
     this.themeName.next(storageObject['themeName']);
@@ -62,10 +68,7 @@ export class AppSettingsService {
     this.splitSets = storageObject.splitSets;
     this.rootSplits = storageObject.rootSplits;
     this.derivations = storageObject.derivations;
-      
   }
-
-
 
 
 
@@ -186,7 +189,7 @@ export class AppSettingsService {
 
   reloadApp() {
     this.router.navigate(['/']);
-    location.reload();
+    setTimeout(()=>{ location.reload() }, 200);
   }
 
   setDefaultConfig() {
