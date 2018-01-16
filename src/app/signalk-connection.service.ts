@@ -121,7 +121,13 @@ export class SignalKConnectionService {
         this.restStatusMessage.next('waiting for endpoint');
 
         
-        this.http.get<signalKEndpointResponse>(this.signalKURL + "/signalk/", {observe: 'response'}).subscribe(
+        let fullURL = this.signalKURL;
+        let re = new RegExp("signalk/?$");
+        if (!re.test(fullURL)) {
+            fullURL = fullURL + "/signalk/";
+        }
+
+        this.http.get<signalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
             // when we go ok, this runs
             response => {
                 this.signalKURLOK.next(true);
