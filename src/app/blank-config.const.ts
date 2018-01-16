@@ -1,5 +1,5 @@
 export const BlankConfig = {
-    "signalKUrl": "http://demo.signalk.org/signalk",
+    "signalKUrl": "", // get's overwritten with host
     "themeName": "default-light",
     "widgets": [
       {

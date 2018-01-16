@@ -50,7 +50,7 @@ export class AppSettingsService {
   constructor(
     private router: Router) {
     if (localStorage.getItem('signalKData') == null) {
-      localStorage.setItem('signalKData', JSON.stringify(BlankConfig));
+      this.setDefaultConfig();
     }
 
     let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
@@ -164,22 +164,34 @@ export class AppSettingsService {
     return JSON.stringify(this.buildStorageObject(), null, 2);
   }
 
-  replaceConfig(jsonConfig:string) {
-    localStorage.setItem('signalKData', jsonConfig);
-    this.router.navigate(['/']);
-    location.reload();
-  }
 
   saveToLocalStorage() {
     localStorage.setItem('signalKData', JSON.stringify(this.buildStorageObject()));
   }
 
   resetSettings() {
-    this.replaceConfig(JSON.stringify(BlankConfig));
+    localStorage.removeItem("signalKData");
+    this.reloadApp();
+  }
+
+  replaceConfig(newConfig: string) {
+    localStorage.setItem('signalKData', newConfig);
+    this.reloadApp();
   }
 
   loadDemoConfig() {
-    this.replaceConfig(JSON.stringify(DemoConfig));    
+    this.replaceConfig(JSON.stringify(DemoConfig));
+
   }
 
+  reloadApp() {
+    this.router.navigate(['/']);
+    location.reload();
+  }
+
+  setDefaultConfig() {
+    let config = BlankConfig;
+    config.signalKUrl = window.location.origin;
+    localStorage.setItem('signalKData', JSON.stringify(config));
+  }
 }
