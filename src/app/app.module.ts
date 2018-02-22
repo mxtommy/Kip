@@ -57,7 +57,8 @@ import { SettingsConfigComponent } from './settings-config/settings-config.compo
 import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
-import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component'
+import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component';
+import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
 
 
 const appRoutes: Routes = [
@@ -102,7 +103,8 @@ const appRoutes: Routes = [
     WidgetTutorialComponent,
     ResetConfigComponent,
     WidgetStateComponent,
-    WidgetStateModalComponent
+    WidgetStateModalComponent,
+    WidgetSwitchComponent
   ],
   imports: [
     BrowserModule,
@@ -133,6 +135,7 @@ const appRoutes: Routes = [
     WidgetWindComponent,
     WidgetGaugeComponent,
     WidgetStateComponent,
+    WidgetSwitchComponent,
     WidgetTutorialComponent,
     
     //dialogs

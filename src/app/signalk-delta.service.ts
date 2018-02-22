@@ -26,7 +26,7 @@ export interface deltaMessage {
 @Injectable()
 export class SignalKDeltaService {
 
-  constructor(private SignalKService: SignalKService,) { }
+  constructor(private SignalKService: SignalKService) { }
   
 
   processWebsocketMessage(message: deltaMessage) {

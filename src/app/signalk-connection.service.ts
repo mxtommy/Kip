@@ -211,6 +211,21 @@ export class SignalKConnectionService {
     }
 
 
+    publishDelta(path: string, value: any) {
+        
+        let message = {
+          updates: [
+            {
+              values: [
+                { path: path, value: value }
+              ]
+            }
+          ]
+        };
+        this.webSocket.send(JSON.stringify(message));
+    
+      }
+
     //borring stuff, return observables etc
 
     getEndpointAPIStatus() {
