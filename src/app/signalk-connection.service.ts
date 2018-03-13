@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
@@ -212,18 +212,46 @@ export class SignalKConnectionService {
 
 
     publishDelta(path: string, value: any) {
-        
-        let message = {
-          updates: [
+        if (this.endpointREST === null) {
+            //no endpoint....
+            return;
+        }
+
+        const httpOptions = {
+            headers: new HttpHeaders({
+              'Content-Type':  'application/json',
+               responseType: 'text'
+            })
+          };
+/*
+        let message = { updates: [
             {
               values: [
                 { path: path, value: value }
               ]
             }
-          ]
-        };
+        ] };
         this.webSocket.send(JSON.stringify(message));
-    
+*/
+        let message2 = { value: value };
+        this.http.put(this.endpointREST + 'vessels/urn:mrn:signalk:uuid:2204ae24-c944-5ffe-8d1d-4d411c9cea2e/pushBool', JSON.stringify(message2), httpOptions).subscribe(
+            // when we go ok, this runs
+            response => {
+                console.log('Yay');
+            },
+            // When not ok, this runs...
+            (err: HttpErrorResponse) => {
+                if (err.error instanceof Error) {
+                    // A client-side or network error occurred. Handle it accordingly.
+                    console.log('An error occurred:', err.error.message);
+                  } else {
+                    // The backend returned an unsuccessful response code.
+                    // The response body may contain clues as to what went wrong,
+                    console.log(err);
+                  }
+            }
+        );    
+ 
       }
 
     //borring stuff, return observables etc
