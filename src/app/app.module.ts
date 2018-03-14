@@ -44,7 +44,7 @@ import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/uni
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
-import { WidgetNumericComponent, WidgetNumericModalComponent } from './widget-numeric/widget-numeric.component';
+import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './widget-historical/widget-historical.component';
@@ -57,7 +57,9 @@ import { SettingsConfigComponent } from './settings-config/settings-config.compo
 import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
-import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component'
+import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component';
+import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
+import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component'
 
 
 const appRoutes: Routes = [
@@ -83,7 +85,6 @@ const appRoutes: Routes = [
     RootDisplayComponent,
     FilterSelfPipe,
     WidgetNumericComponent,
-    WidgetNumericModalComponent,
     SettingsDatasetsComponent,
     SettingsDatasetsModalComponent,
     SettingsSignalkComponent,
@@ -102,7 +103,9 @@ const appRoutes: Routes = [
     WidgetTutorialComponent,
     ResetConfigComponent,
     WidgetStateComponent,
-    WidgetStateModalComponent
+    WidgetStateModalComponent,
+    ModalWidgetComponent,
+    ModalPathSelectorComponent
   ],
   imports: [
     BrowserModule,
@@ -136,8 +139,8 @@ const appRoutes: Routes = [
     WidgetTutorialComponent,
     
     //dialogs
+    ModalWidgetComponent,
     UnitWindowModalComponent,
-    WidgetNumericModalComponent,
     WidgetHistoricalModalComponent,
     WidgetWindModalComponent,
     WidgetGaugeModalComponent,

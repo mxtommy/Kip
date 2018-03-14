@@ -1,7 +1,8 @@
 import { Component, Input, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
+import { ModalWidgetComponent, IModalSettings } from '../modal-widget/modal-widget.component';
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { UnitConvertService } from '../unit-convert.service';
@@ -137,25 +138,32 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   openWidgetSettings() {
 
     //prepare current data
-    let settingsData: IWidgetConfig = {
-      signalKPath: this.widgetConfig.signalKPath,
-      signalKSource: this.widgetConfig.signalKSource,
-      label: this.widgetConfig.label,
+    let settingsData: IModalSettings = {
+      paths: [
+        {
+          description: "Numeric data path",
+          path: this.widgetConfig.signalKPath,
+          source: this.widgetConfig.signalKSource,
+          type: "number",
+          unitGroup: this.widgetConfig.unitGroup,
+          unitName: this.widgetConfig.unitName
+        }
+      ],
+      widgetLabel: this.widgetConfig.label,
       numDecimal: this.widgetConfig.numDecimal,
       numInt: this.widgetConfig.numInt,
-      unitGroup: this.widgetConfig.unitGroup,
-      unitName: this.widgetConfig.unitName
     }
 
+    
 
-    let dialogRef = this.dialog.open(WidgetNumericModalComponent, {
-      width: '650px',
+    let dialogRef = this.dialog.open(ModalWidgetComponent, {
+      width: '80%',
       data: settingsData
     });
 
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
-      if (result) {
+     /* if (result) {
         console.debug("Updating widget config");
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
         this.widgetConfig.signalKPath = result.signalKPath;
@@ -167,7 +175,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
         this.widgetConfig.numInt = result.numInt;
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
         this.subscribePath();
-      }
+      }*/
 
     });
 
@@ -297,7 +305,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 }
 
 
-
+/*
 @Component({
   selector: 'numeric-widget-modal',
   templateUrl: './widget-numeric.modal.html',
@@ -368,3 +376,4 @@ export class WidgetNumericModalComponent implements OnInit {
   }
   
 }
+*/
