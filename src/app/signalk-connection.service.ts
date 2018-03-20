@@ -234,7 +234,7 @@ export class SignalKConnectionService {
         this.webSocket.send(JSON.stringify(message));
 */
         let message2 = { value: value };
-        this.http.put(this.endpointREST + 'vessels/urn:mrn:signalk:uuid:2204ae24-c944-5ffe-8d1d-4d411c9cea2e/pushBool', JSON.stringify(message2), httpOptions).subscribe(
+        this.http.put(this.endpointREST + 'vessels/urn:mrn:signalk:uuid:2204ae24-c944-5ffe-8d1d-4d411c9cea2e/putPath/test1', JSON.stringify(message2), httpOptions).subscribe(
             // when we go ok, this runs
             response => {
                 console.log('Yay');

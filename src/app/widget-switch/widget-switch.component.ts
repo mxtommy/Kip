@@ -95,7 +95,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
 
   sendDelta(value: boolean) {
-    this.SignalKConnectionService.publishDelta("pushBool", value);
+    this.SignalKConnectionService.publishDelta("putPath.test1", value);
   }
 
 }
