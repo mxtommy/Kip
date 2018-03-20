@@ -1,10 +1,9 @@
-<div class="tab-content"> 
-    <!--<mat-form-field class="full-width">
+
+    <mat-form-field class="full-width" [formGroup]="form" >
         <mat-select 
-            placeholder="SignalK Path" 
-            [(ngModel)]="settingsData.signalKPath" 
-            name="signalKPath"
-             (ngModelChange)="settingsDataUpdatePath()"
+            [placeholder]="question.label" 
+            [id]="question.key"
+            [formControlName]="question.key"
             required>
             <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                 {{path}}
@@ -18,6 +17,10 @@
         >
         Restric to own vessel
     </mat-checkbox>
+    <!--
+
+                        (ngModelChange)="settingsDataUpdatePath()"
+
     <mat-form-field class="full-width">
         <mat-select 
             placeholder="Source" 
@@ -30,4 +33,3 @@
     </mat-form-field>
 
     <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.signalKPath">Next</button>-->
-</div>

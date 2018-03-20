@@ -1,10 +1,14 @@
-<mat-dialog-content>
+<form (ngSubmit)="onSubmit()" [formGroup]="form">
+  <mat-dialog-content>
 
-  <mat-horizontal-stepper>
-      <mat-step label="Paths">
-        <modal-path-selector *ngFor="let path of settingsData.paths"
-         [path]=path.path
-         [type]=path.type></modal-path-selector>
-      </mat-step>
-  </mat-horizontal-stepper>
-</mat-dialog-content>
+    <mat-horizontal-stepper>
+        <mat-step label="Paths">
+          <modal-path-selector class="full-width" *ngFor="let questionPath of questionPaths"
+          [question]="questionPath" [form]="form"
+          ></modal-path-selector>
+        </mat-step>
+        <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>-->
+    </mat-horizontal-stepper>
+  </mat-dialog-content>
+
+</form>

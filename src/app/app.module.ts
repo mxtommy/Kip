@@ -2,6 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
 import { FormsModule }   from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
@@ -36,6 +37,7 @@ import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
 import { DerivedService } from './derived.service';
+import { QuestionControlService } from './question-control.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
@@ -110,6 +112,7 @@ const appRoutes: Routes = [
   imports: [
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */ } ),
     AngularSplitModule,
@@ -159,7 +162,8 @@ const appRoutes: Routes = [
     WidgetManagerService,
     UnitConvertService,
     DerivedService,
-    AppSettingsService 
+    AppSettingsService,
+    QuestionControlService
   ],
   bootstrap: [AppComponent]
 })
