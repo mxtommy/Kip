@@ -1,9 +1,9 @@
 
-    <mat-form-field class="full-width" [formGroup]="form" >
+    <mat-form-field class="full-width" [formGroup]="question.formGroup" >
         <mat-select 
-            [placeholder]="question.label" 
-            [id]="question.key"
-            [formControlName]="question.key"
+            [placeholder]="question.description" 
+            [id]="question.key + 'Path'"
+            [formControlName]="question.key + 'Path'"
             required>
             <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                 {{path}}

@@ -12,7 +12,6 @@ import { SignalKPathQuestion } from '../question-path';
 export class ModalPathSelectorComponent implements OnInit {
 
   @Input() question: SignalKPathQuestion;
-  @Input() form: FormGroup;
 
 
   selfPaths: boolean = true;
@@ -27,9 +26,10 @@ export class ModalPathSelectorComponent implements OnInit {
     this.availablePaths = this.SignalKService.getPathsByType(this.question.pathType).sort();
     //if (this.availablePaths.includes(this.path)) {
       //this.settingsDataUpdatePath(); //TODO: this wipes out existing config, not good when editing existing config...
-    //}    
+    //}  
+    console.log(this.question.pathType);  
   }
 
-  get isValid() { return this.form.controls[this.question.key].valid; }
+  //get isValid() { return this.form.controls[this.question.key].valid; }
 
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { FormGroup }                 from '@angular/forms';
+import { FormGroup, FormControl, Validators }    from '@angular/forms';
 
 import { QuestionBase }              from '../question-base';
 import { QuestionControlService }    from '../question-control.service';
@@ -21,10 +21,10 @@ interface ISignalKPathInfo {
   description: string;
   path: string;       //can be null or set
   source: string;     //can be null or set
-  type: string;
+  pathType: string;
   unitGroup?: string;  
   unitName?: string;
-
+  formGroup?: FormGroup;
 }
 
 @Component({
@@ -35,7 +35,8 @@ interface ISignalKPathInfo {
 export class ModalWidgetComponent implements OnInit {
 
   questionPaths: QuestionBase<any>[] = [];
-  form: FormGroup;
+  formGroupPaths: FormGroup[] = [];
+  form: FormGroup = new FormGroup({});
 
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
@@ -43,16 +44,26 @@ export class ModalWidgetComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: IModalSettings) { }
 
   ngOnInit() {
-    this.generateQuestions();
-    console.log(this.questionPaths);
-    this.form = this.QuestionControlService.toFormGroup(this.questionPaths);
+    this.generateFormGroups();
+//    console.log(this.questionPaths);
+//    this.form = this.QuestionControlService.toFormGroup(this.questionPaths);
   }
 
 
-  generateQuestions() {
+  generateFormGroups() {
     
-    // Add Path Questions
+    // Generate formgroups for path selection
     this.data.paths.forEach(pathQuestion => {
+      let group: any = {};
+      group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
+      group[pathQuestion.key + 'Self'] = new FormControl(true);
+      group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);
+      pathQuestion.formGroup = new FormGroup(group);
+      this.form.addControl(pathQuestion.key, pathQuestion.formGroup);
+    });
+    //console.log(this.data.paths);
+    // Add Path Questions
+    /*this.data.paths.forEach(pathQuestion => {
       let newQuestion = {
         key: pathQuestion.key,
         label: pathQuestion.description,
@@ -66,8 +77,7 @@ export class ModalWidgetComponent implements OnInit {
       }
 
       this.questionPaths.push(new SignalKPathQuestion(newQuestion));
-    });
-
+    }); */
 
   }
 

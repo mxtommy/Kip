@@ -3,8 +3,8 @@
 
     <mat-horizontal-stepper>
         <mat-step label="Paths">
-          <modal-path-selector class="full-width" *ngFor="let questionPath of questionPaths"
-          [question]="questionPath" [form]="form"
+          <modal-path-selector class="full-width" *ngFor="let questionPath of data.paths"
+          [question]="questionPath"
           ></modal-path-selector>
         </mat-step>
         <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>-->
