@@ -213,17 +213,26 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
           return;
         }
 
-        let value:number = pathObject.sources[source].value;
-        let converted = this.converter['angle']['deg'](value);
-        // 0-180+ for stb
-        // -0 to -180 for port
-        // need in 0-360
-        if (converted > 0) {// stb
-          this.trueWindAngle= 360 - converted;
-        } else if (converted < 0) {
-          this.trueWindAngle = (converted * -1);
-        }
+        let value: number = pathObject.sources[source].value;
+        let converted = (this.converter['angle']['deg'](value));      
 
+        // TWD
+        //The angle is converted from radians to degrees above
+        //and results in a value that is inverted (359-0) from normal
+        //compass bearing (0-359) so this has to be handled.
+        //Also, hardcoded magneticVariation of -14.9 degrees as a placeholder
+        //until this widget ingests that path.
+        //So the TWD is very accurate for Boston MA USA area but not for other areas ATM (kludge!)
+        //TODO: prompt user for magneticVariation path in setup
+        if (((this.currentHeading - 14.9) - converted) < 0) {
+          //Stb angle
+          this.trueWindAngle = (360  - (((this.currentHeading - 14.9) - converted) * -1));
+        } else {
+          this.trueWindAngle = ((this.currentHeading - 14.9) - converted);
+        }
+        
+        
+        //console.log('TWD=', converted, "TWA=", this.trueWindAngle)
       }
     );
   }
