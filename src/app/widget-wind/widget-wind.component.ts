@@ -106,25 +106,16 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeHeading();
     if (this.widgetConfig.headingPath === null) { return } // nothing to sub to...
 
-    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.headingPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.headingSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.headingSource;
-        }
-
-        if (pathObject.sources[source].value === null) {
+    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.headingPath, this.widgetConfig.headingSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.currentHeading = 0;
+        } else {
+          let converted = this.converter['angle']['deg'](newValue);
+          this.currentHeading = converted;
         }
-
-        let value:number = pathObject.sources[source].value;
-        let converted = this.converter['angle']['deg'](value);
-        this.currentHeading = converted;
+        
+        
       }
     );
   }
