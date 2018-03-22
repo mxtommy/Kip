@@ -8,7 +8,6 @@ import { Router } from '@angular/router';
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
-import { IDerivation } from './derived.service';
 
 import { BlankConfig } from './blank-config.const';
 import { DemoConfig } from './demo-config.const';
@@ -25,7 +24,6 @@ interface appSettings {
   dataSets: IDataSet[];
   splitSets: ISplitSet[];
   rootSplits: string[];
-  derivations: IDerivation[];
 }
 
 
@@ -41,7 +39,6 @@ export class AppSettingsService {
 
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
-  derivations: IDerivation[] = [];
 
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   dataSets: IDataSet[] = [];
@@ -67,7 +64,6 @@ export class AppSettingsService {
     this.dataSets = storageObject.dataSets;
     this.splitSets = storageObject.splitSets;
     this.rootSplits = storageObject.rootSplits;
-    this.derivations = storageObject.derivations;
   }
 
 
@@ -137,14 +133,6 @@ export class AppSettingsService {
     return this.dataSets;
   }
 
-  // derivations
-  getDerivations() {
-    return this.derivations;
-  }
-  saveDerivations(derivations: IDerivation[]) {
-    this.derivations = derivations;
-    this.saveToLocalStorage();
-  }
 
   // saving. 
 
@@ -158,7 +146,6 @@ export class AppSettingsService {
       dataSets: this.dataSets,
       splitSets: this.splitSets,
       rootSplits: this.rootSplits,
-      derivations: this.derivations
     }
     return storageObject;
   }
