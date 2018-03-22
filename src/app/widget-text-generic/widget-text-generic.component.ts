@@ -73,8 +73,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath, this.widgetConfig.signalKSource).subscribe(
       newValue => {
-        console.log(newValue);
-        console.log('aaa');
         this.dataValue = newValue;
       }
     );
