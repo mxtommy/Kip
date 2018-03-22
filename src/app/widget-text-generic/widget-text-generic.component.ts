@@ -71,26 +71,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.unsubscribePath();
     if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.signalKSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.signalKSource;
-        }
-
-        this.dataTimestamp = pathObject.sources[source].timestamp;
-
-        if (pathObject.sources[source].value === null) {
-          this.dataValue = null;
-        }
-
-        this.dataValue = pathObject.sources[source].value;
-        
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath, this.widgetConfig.signalKSource).subscribe(
+      newValue => {
+        console.log(newValue);
+        console.log('aaa');
+        this.dataValue = newValue;
       }
     );
   }

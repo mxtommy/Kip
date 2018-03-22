@@ -83,10 +83,12 @@ export class SignalKService {
     if (pathIndex >= 0) { // exists
       if (source === null) {
         currentValue = this.paths[pathIndex]; //  return the entire pathObject
+      } else if (source == 'default') {
+        currentValue = this.paths[pathIndex].sources[this.paths[pathIndex].defaultSource].value;
       } else if (source in this.paths[pathIndex].sources) {
         currentValue = this.paths[pathIndex].sources[source].value;
       }
-      
+                  
     } 
 
     let newRegister = {
