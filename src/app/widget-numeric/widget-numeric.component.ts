@@ -214,7 +214,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   drawTitle() {
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
+    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.3));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
  
@@ -233,6 +233,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   drawUnit() {
+    if (this.widgetConfig.unitName == 'no unit') { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
