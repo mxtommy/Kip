@@ -65,6 +65,9 @@ export class UnitConvertService {
     'angle': {
       "rad": Qty.swiftConverter('rad', 'rad'),
       "deg": Qty.swiftConverter('rad', 'deg')
+    },
+    'ratio': {
+      '%': function(v) { return v * 100 },
     }
 
   }; 

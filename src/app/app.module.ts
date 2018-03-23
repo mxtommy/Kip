@@ -36,7 +36,6 @@ import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
-import { DerivedService } from './derived.service';
 import { QuestionControlService } from './question-control.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
@@ -56,7 +55,6 @@ import { SvgWindComponent } from './svg-wind/svg-wind.component';
 import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
-import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component';
@@ -100,8 +98,6 @@ const appRoutes: Routes = [
     WidgetGaugeModalComponent,
     GaugeSteelComponent,
     SettingsConfigComponent,
-    SettingsDerivedComponent,
-    SettingsDerivedModalComponent,
     WidgetTutorialComponent,
     ResetConfigComponent,
     WidgetStateComponent,
@@ -147,7 +143,6 @@ const appRoutes: Routes = [
     WidgetHistoricalModalComponent,
     WidgetWindModalComponent,
     WidgetGaugeModalComponent,
-    SettingsDerivedModalComponent,
     SettingsDatasetsModalComponent,
     WidgetStateModalComponent
   ],
@@ -161,7 +156,6 @@ const appRoutes: Routes = [
     WidgetListService,
     WidgetManagerService,
     UnitConvertService,
-    DerivedService,
     AppSettingsService,
     QuestionControlService
   ],
