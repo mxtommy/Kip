@@ -106,25 +106,15 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeHeading();
     if (this.widgetConfig.headingPath === null) { return } // nothing to sub to...
 
-    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.headingPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.headingSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.headingSource;
-        }
-
-        if (pathObject.sources[source].value === null) {
+    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.headingPath, this.widgetConfig.headingSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.currentHeading = 0;
+        } else {
+          let converted = this.converter['angle']['deg'](newValue);
+          this.currentHeading = converted;
         }
-
-        let value:number = pathObject.sources[source].value;
-        let converted = this.converter['angle']['deg'](value);
-        this.currentHeading = converted;
+        
       }
     );
   }
@@ -133,25 +123,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindAngle();
     if (this.widgetConfig.appWindAnglePath === null) { return } // nothing to sub to...
 
-    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.appWindAnglePath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.appWindAngleSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.appWindAngleSource;
-        }
-
-        if (pathObject.sources[source].value === null) {
+    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.appWindAnglePath, this.widgetConfig.appWindAngleSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.appWindAngle = null;
           return;
         }
 
-        let value:number = pathObject.sources[source].value;
-        let converted = this.converter['angle']['deg'](value);
+        let converted = this.converter['angle']['deg'](newValue);
         // 0-180+ for stb
         // -0 to -180 for port
         // need in 0-360
@@ -169,25 +148,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindSpeed();
     if (this.widgetConfig.appWindSpeedPath === null) { return } // nothing to sub to...
 
-    this.appWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.appWindSpeedPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.appWindSpeedSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.appWindSpeedSource;
-        }
-
-        if (pathObject.sources[source].value === null) {
+    this.appWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.appWindSpeedPath, this.widgetConfig.appWindSpeedSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.appWindSpeed = null;
           return;
         }
-
-        let value:number = pathObject.sources[source].value;
-        this.appWindSpeed = this.converter['speed'][this.widgetConfig.unitName](value);
+       
+        this.appWindSpeed = this.converter['speed'][this.widgetConfig.unitName](newValue);
       }
     );
   }
@@ -196,25 +164,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeTrueWindAngle();
     if (this.widgetConfig.trueWindAnglePath === null) { return } // nothing to sub to...
 
-    this.trueWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.trueWindAnglePath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.trueWindAngleSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.trueWindAngleSource;
-        }
-
-        if (pathObject.sources[source].value === null) {
+    this.trueWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.trueWindAnglePath, this.widgetConfig.trueWindAngleSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.trueWindAngle = null;
           return;
         }
-
-        let value:number = pathObject.sources[source].value;
-        let converted = this.converter['angle']['deg'](value);
+       
+        let converted = this.converter['angle']['deg'](newValue);
         // 0-180+ for stb
         // -0 to -180 for port
         // need in 0-360
@@ -232,25 +189,13 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeTrueWindSpeed();
     if (this.widgetConfig.trueWindSpeedPath === null) { return } // nothing to sub to...
 
-    this.trueWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.trueWindSpeedPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.trueWindSpeedSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.trueWindSpeedSource;
-        }
-
-        if (pathObject.sources[source].value === null) {
+    this.trueWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.trueWindSpeedPath, this.widgetConfig.trueWindSpeedSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.trueWindSpeed = null;
           return;
         }
-
-        let value:number = pathObject.sources[source].value;
-        this.trueWindSpeed = this.converter['speed'][this.widgetConfig.unitName](value);
+        this.trueWindSpeed = this.converter['speed'][this.widgetConfig.unitName](newValue);
       }
     );
   }
