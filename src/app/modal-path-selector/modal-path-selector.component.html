@@ -1,35 +1,26 @@
-
-    <mat-form-field class="full-width" [formGroup]="question.formGroup" >
+<div [formGroup]="question.formGroup">
+    <mat-form-field class="width-path"  >
         <mat-select 
             [placeholder]="question.description" 
             [id]="question.key + 'Path'"
             [formControlName]="question.key + 'Path'"
             required>
             <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
-                {{path}}
+                {{path}} 
             </mat-option>
         </mat-select> 
     </mat-form-field>
-
-    <mat-checkbox
-        [(ngModel)]="selfPaths"
-        name="selfPaths"
-        >
-        Restric to own vessel
-    </mat-checkbox>
-    <!--
-
-                        (ngModelChange)="settingsDataUpdatePath()"
-
-    <mat-form-field class="full-width">
+    <mat-form-field class="width-source">
         <mat-select 
             placeholder="Source" 
-            [(ngModel)]="settingsData.signalKSource" 
-            name="signalKSource">
+            [id]="question.key + 'Source'"
+            [formControlName]="question.key + 'Source'"
+            required>
             <mat-option *ngFor="let source of availableSources" [value]="source">
                 {{source}}
             </mat-option>
         </mat-select>
     </mat-form-field>
-
+</div>
+<!--
     <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.signalKPath">Next</button>-->

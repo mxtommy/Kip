@@ -4,10 +4,15 @@
     <mat-horizontal-stepper>
         <mat-step label="Paths">
           <modal-path-selector class="full-width" *ngFor="let questionPath of data.paths"
-          [question]="questionPath"
+          [question]="questionPath" [selfPaths]="form.value.selfPaths"
           ></modal-path-selector>
+
+          <mat-checkbox name="selfPaths" formControlName="selfPaths">
+          Restric to own vessel
+          </mat-checkbox> {{form.value.selfPaths | json}} as
+
         </mat-step>
-        <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>-->
+        <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>
     </mat-horizontal-stepper>
   </mat-dialog-content>
 

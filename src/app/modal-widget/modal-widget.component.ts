@@ -36,7 +36,11 @@ export class ModalWidgetComponent implements OnInit {
 
   questionPaths: QuestionBase<any>[] = [];
   formGroupPaths: FormGroup[] = [];
-  form: FormGroup = new FormGroup({});
+  form: FormGroup = new FormGroup({
+    'selfPaths': new FormControl(true);
+  });
+
+  selfPathboolean = true;
 
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
@@ -56,7 +60,6 @@ export class ModalWidgetComponent implements OnInit {
     this.data.paths.forEach(pathQuestion => {
       let group: any = {};
       group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
-      group[pathQuestion.key + 'Self'] = new FormControl(true);
       group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);
       pathQuestion.formGroup = new FormGroup(group);
       this.form.addControl(pathQuestion.key, pathQuestion.formGroup);
