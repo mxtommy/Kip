@@ -8,7 +8,7 @@ import * as screenfull from 'screenfull';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { DataSetService } from './data-set.service';
-import { DerivedService } from './derived.service';
+//import { DerivedService } from './derived.service';
 
 
 declare var NoSleep: any; //3rd party
@@ -39,7 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private AppSettingsService: AppSettingsService,
     private SignalKConnectionService: SignalKConnectionService,
     private DataSetService: DataSetService,
-    private DerivedService: DerivedService,
+    //private DerivedService: DerivedService,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService) { }
 
@@ -60,7 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
     this.DataSetService.startAllDataSets();
-    this.DerivedService.startAllDerivations();
+    //this.DerivedService.startAllDerivations();
   }
 
   ngOnDestroy() {

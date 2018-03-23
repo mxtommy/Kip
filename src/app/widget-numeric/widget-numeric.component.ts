@@ -99,27 +99,14 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.unsubscribePath();
     if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.signalKSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.signalKSource;
-        }
-
-        this.dataTimestamp = pathObject.sources[source].timestamp;
-
-        if (pathObject.sources[source].value === null) {
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath, this.widgetConfig.signalKSource).subscribe(
+      newValue => {
+        if (newValue === null) {
           this.dataValue = null;
           return;
         }
 
-        let value:number = pathObject.sources[source].value;
-        let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](value);
+        let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](newValue);
         this.dataValue = converted.toFixed(this.widgetConfig.numDecimal);
         this.updateCanvas();
       }
@@ -227,7 +214,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   drawTitle() {
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
+    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.3));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
  
@@ -246,6 +233,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   drawUnit() {
+    if (this.widgetConfig.unitName == 'no unit') { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.

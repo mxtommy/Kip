@@ -178,11 +178,11 @@ export class LayoutSplitsService {
     this.updateSplit(splitSetUUID);
   }
 
-  updateSplitSizes(splitSetUUID: string, sizesArray) {
+  updateSplitSizes(splitSetUUID: string, sizesArray: {gutterNum: number, sizes: Array<number>) {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }   
-    for (let i=0; i < sizesArray.length; i++) {
-      this.splitSets[splitIndex].splitAreas[i].size = sizesArray[i];
+    for (let i=0; i < sizesArray.sizes.length; i++) {
+      this.splitSets[splitIndex].splitAreas[i].size = sizesArray.sizes[i];
     }  
     this.updateSplit(splitSetUUID);
   }

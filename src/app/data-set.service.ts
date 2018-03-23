@@ -160,18 +160,9 @@ export class DataSetService {
     }
     
     //Subscribe to path data
-    this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.dataSets[dataIndex].signalKSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.dataSets[dataIndex].signalKSource;
-        }
-        this.updateDataCache(uuid, pathObject.sources[source].value);
+    this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path, this.dataSets[dataIndex].signalKSource).subscribe(
+      newValue => {
+        this.updateDataCache(uuid, newValue);
     });
     
     // start update timer
