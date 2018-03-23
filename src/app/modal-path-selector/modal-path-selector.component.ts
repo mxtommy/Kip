@@ -53,28 +53,5 @@ export class ModalPathSelectorComponent implements OnInit {
     });
   }
 
-  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathKey = this.question.key + 'Path';
-    let sourceKey = this.question.key + 'Source';
-
-    let pathObject = this.SignalKService.getPathObject(this.question.formGroup.controls[pathKey].value);
-    if (pathObject === null) { return; }
-    this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsData.signalKSource = 'default';
-    this.settingsData.numDecimal = this.data.numDecimal;
-    if (pathObject.meta) {
-      if (typeof(pathObject.meta.abbreviation) == 'string') {
-        this.settingsData.label = pathObject.meta.abbreviation;
-      } else if (typeof(pathObject.meta.label) == 'string') {
-        this.settingsData.label = pathObject.meta.label;
-      } else {
-        this.settingsData.label = this.settingsData.signalKPath; // who knows?
-      }
-    } else {
-      this.settingsData.label = this.settingsData.signalKPath;// who knows?
-    }
-  }
-
-  //get isValid() { return this.form.controls[this.question.key].valid; }
 
 }
