@@ -45,7 +45,7 @@ export class ModalWidgetComponent implements OnInit {
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
     private QuestionControlService: QuestionControlService,
-    @Inject(MAT_DIALOG_DATA) public data: IModalSettings) { }
+    @Inject(MAT_DIALOG_DATA) public questions: IModalSettings) { }
 
   ngOnInit() {
     this.generateFormGroups();
@@ -57,7 +57,7 @@ export class ModalWidgetComponent implements OnInit {
   generateFormGroups() {
     
     // Generate formgroups for path selection
-    this.data.paths.forEach(pathQuestion => {
+    this.questions.paths.forEach(pathQuestion => {
       let group: any = {};
       group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
       group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);

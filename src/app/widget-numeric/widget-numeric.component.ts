@@ -144,7 +144,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
           pathType: "number",
           unitGroup: this.widgetConfig.unitGroup,
           unitName: this.widgetConfig.unitName
-        }        
+        }         
       ],
       widgetLabel: this.widgetConfig.label,
       numDecimal: this.widgetConfig.numDecimal,

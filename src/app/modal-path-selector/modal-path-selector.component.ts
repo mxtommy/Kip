@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SignalKService, pathObject } from '../signalk.service';
 import { FormGroup } from '@angular/forms';
-import { SignalKPathQuestion } from '../question-path';
+import { SignalKPathQuestion } from '../question-signalk-path';
 
 
 @Component({
@@ -20,11 +20,8 @@ export class ModalPathSelectorComponent implements OnInit {
   constructor(private SignalKService: SignalKService) { }
 
   ngOnInit() {
-    console.log (this.question);
     //populate available choices
     this.availablePaths = this.SignalKService.getPathsByType(this.question.pathType).sort();
-
-
 
     //populate sources for this path (or just the current setting if we know nothing about the path)
     let pathKey = this.question.key + 'Path';
