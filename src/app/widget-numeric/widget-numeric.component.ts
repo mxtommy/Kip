@@ -133,22 +133,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
           path: this.widgetConfig.signalKPath,
           source: this.widgetConfig.signalKSource,
           pathType: "number",
-          unitGroup: this.widgetConfig.unitGroup,
-          unitName: this.widgetConfig.unitName
-        },
-        {
-          key: "numericPath2",
-          description: "Path of Numeric Data2",
-          path: this.widgetConfig.signalKPath,
-          source: this.widgetConfig.signalKSource,
-          pathType: "number",
-          unitGroup: this.widgetConfig.unitGroup,
-          unitName: this.widgetConfig.unitName
-        }         
+        }      
       ],
       widgetLabel: this.widgetConfig.label,
       numDecimal: this.widgetConfig.numDecimal,
       numInt: this.widgetConfig.numInt,
+      unitGroup: this.widgetConfig.unitGroup,
+      unitName: this.widgetConfig.unitName
     }
 
     

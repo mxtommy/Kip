@@ -2,18 +2,43 @@
   <mat-dialog-content>
 
     <mat-horizontal-stepper>
-        <mat-step label="Paths">
+        <mat-step label="Paths" [completed]="false">
           <modal-path-selector class="full-width" *ngFor="let questionPath of questions.paths"
-          [question]="questionPath" [selfPaths]="form.value.selfPaths"
+          [question]="questionPath" [formGroup]="formGroups[questionPath.key]" [selfPaths]="form.value.selfPaths"
           ></modal-path-selector>
 
           <mat-checkbox name="selfPaths" formControlName="selfPaths">
           Restric to own vessel
           </mat-checkbox>
+
+          <br>
+        
           <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>
 
         </mat-step>
+        <mat-step label="Display" [completed]="false">
+          <div class="tab-content"> 
+              <mat-form-field class="full-width" [formGroup]="formGroups['widgetLabel']">
+                  <input matInput placeholder="Widget Label" name="widgetLabel" [formControlName]="'widgetLabel'">
+              </mat-form-field>
+              <div class="full-width" *ngIf="(formGroups['numIntDec'] !== undefined)" [formGroup]="formGroups['numIntDec']">
+                <mat-form-field class="half-width">
+                        <input type="number" min="0" max="5" matInput placeholder="Number of Integer Place" name="numInt"  [formControlName]="'numInt'">
+                </mat-form-field>
+                <mat-form-field class="half-width">
+                  <input type="number" min="0" max="5" matInput placeholder="Number of Decimals" name="numDecimal"  [formControlName]="'numDecimal'">
+                </mat-form-field>
+              </div>
+
+              <button type="button" mat-raised-button matStepperPrevious>Back</button>
+              <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    
+          </div>
+        </mat-step>
+       
+
+
     </mat-horizontal-stepper>
+    {{form.value|json}}
   </mat-dialog-content>
 
 </form>

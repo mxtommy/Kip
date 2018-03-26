@@ -1,10 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
 
-import { QuestionBase }              from '../question-base';
-import { QuestionControlService }    from '../question-control.service';
-import { SignalKPathQuestion }       from '../question-path';
-
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 
@@ -14,6 +10,8 @@ export interface IModalSettings {
 
   numDecimal?: number; // number of decimal places if a number
   numInt?: number;
+  unitGroup?: string;  
+  unitName?: string;
 }
 
 interface ISignalKPathInfo {
@@ -22,9 +20,10 @@ interface ISignalKPathInfo {
   path: string;       //can be null or set
   source: string;     //can be null or set
   pathType: string;
-  unitGroup?: string;  
-  unitName?: string;
-  formGroup?: FormGroup;
+}
+
+interface IFormGroups {
+  [key: string]: FormGroup;
 }
 
 @Component({
@@ -34,17 +33,13 @@ interface ISignalKPathInfo {
 })
 export class ModalWidgetComponent implements OnInit {
 
-  questionPaths: QuestionBase<any>[] = [];
-  formGroupPaths: FormGroup[] = [];
+  formGroups: IFormGroups = {};
   form: FormGroup = new FormGroup({
-    'selfPaths': new FormControl(true);
+    'selfPaths': new FormControl(true)
   });
-
-  selfPathboolean = true;
 
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
-    private QuestionControlService: QuestionControlService,
     @Inject(MAT_DIALOG_DATA) public questions: IModalSettings) { }
 
   ngOnInit() {
@@ -61,26 +56,23 @@ export class ModalWidgetComponent implements OnInit {
       let group: any = {};
       group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
       group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);
-      pathQuestion.formGroup = new FormGroup(group);
-      this.form.addControl(pathQuestion.key, pathQuestion.formGroup);
+      this.formGroups[pathQuestion.key] = new FormGroup(group);
+      this.form.addControl(pathQuestion.key, this.formGroups[pathQuestion.key]);
     });
-    //console.log(this.data.paths);
-    // Add Path Questions
-    /*this.data.paths.forEach(pathQuestion => {
-      let newQuestion = {
-        key: pathQuestion.key,
-        label: pathQuestion.description,
-        pathType: pathQuestion.type,
-        path: pathQuestion.path,
-        source: pathQuestion.source,
-      };
-      if (pathQuestion.type == "number") {
-        newQuestion['unitGroup'] = pathQuestion.unitGroup;
-        newQuestion['unitName'] = pathQuestion.unitName;
-      }
 
-      this.questionPaths.push(new SignalKPathQuestion(newQuestion));
-    }); */
+    //label
+    this.formGroups['widgetLabel'] = new FormGroup({widgetLabel: new FormControl(this.questions.widgetLabel)});
+    this.form.addControl('widgetLabel', this.formGroups['widgetLabel']);
+
+    // Decimal positions if there...
+    if ('numInt' in this.questions) {
+      this.formGroups['numIntDec'] = new FormGroup({
+        numInt: new FormControl(this.questions.numInt, Validators.required),
+        numDecimal: new FormControl(this.questions.numDecimal, Validators.required)
+      });
+      this.form.addControl('numIntDec', this.formGroups['numIntDec']);
+
+    }
 
   }
 
