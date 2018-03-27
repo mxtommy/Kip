@@ -81,7 +81,7 @@ export class SvgWindComponent implements OnInit {
     if (changes.trueWindAngle) {
       if (! changes.trueWindAngle.firstChange) {
         this.oldTrueWindAngle = this.newTrueWindAngle;
-        this.newTrueWindAngle = changes.trueWindAngle.currentValue; //.toString();
+        this.newTrueWindAngle = changes.trueWindAngle.currentValue;
         
         if (this.trueWindAnimate) { // only update if on dom...
           this.trueWindAnimate.nativeElement.beginElement();

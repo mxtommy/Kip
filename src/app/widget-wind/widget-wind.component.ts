@@ -1,6 +1,8 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { Observable } from 'rxjs/Observable';
+
+import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -19,6 +21,8 @@ interface IWidgetConfig {
   appWindSpeedPath: string;
   appWindSpeedSource: string;
   unitName: string;
+  windSectorWindowSeconds: number;
+  laylineAngle: number;
 }  
 
 @Component({
@@ -35,17 +39,19 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   activeWidget: IWidget;
   
   widgetConfig: IWidgetConfig = {
-    headingPath: 'vessels.self.navigation.headingTrue',
+    headingPath: 'self.navigation.headingTrue',
     headingSource: 'default',
-    trueWindAnglePath: 'vessels.self.environment.wind.angleTrueWater',
+    trueWindAnglePath: 'self.environment.wind.angleTrueWater',
     trueWindAngleSource: 'default',
-    trueWindSpeedPath: 'vessels.self.environment.wind.speedTrue',
+    trueWindSpeedPath: 'self.environment.wind.speedTrue',
     trueWindSpeedSource: 'default',
-    appWindAnglePath: 'vessels.self.environment.wind.angleApparent',
+    appWindAnglePath: 'self.environment.wind.angleApparent',
     appWindAngleSource: 'default',
-    appWindSpeedPath: 'vessels.self.environment.wind.speedApparent',
+    appWindSpeedPath: 'self.environment.wind.speedApparent',
     appWindSpeedSource: 'default',
-    unitName: 'knots'
+    unitName: 'knots',
+    windSectorWindowSeconds: 30,
+    laylineAngle: 40
   }    
 
   currentHeading: number = 0;
@@ -63,6 +69,15 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   trueWindSpeed: number = null;
   trueWindSpeedSub: Subscription = null;
 
+
+  trueWindHistoric: {
+    timestamp: number;
+    direction: number;
+  }[] = [];
+    
+  windSectorObservableSub: Subscription;
+
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -79,6 +94,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     } else {
       this.widgetConfig = this.activeWidget.config; // load existing config.
     }
+    console.log(this.widgetConfig);
     this.startAll();
   }
 
@@ -92,6 +108,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.subscribeAppWindSpeed();
     this.subscribeTrueWindAngle();
     this.subscribeTrueWindSpeed();
+    this.startWindSectors();
   }
 
   stopAll() {
@@ -99,7 +116,8 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindAngle();
     this.unsubscribeAppWindSpeed();
     this.unsubscribeTrueWindAngle();
-    this.unsubscribeTrueWindSpeed();    
+    this.unsubscribeTrueWindSpeed();   
+    this.stopWindSectors(); 
   }
 
   subscribeHeading() {
@@ -134,10 +152,10 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         // 0-180+ for stb
         // -0 to -180 for port
         // need in 0-360
-        if (converted > 0) {// stb
-          this.appWindAngle= 360 - converted;
-        } else if (converted < 0) {
-          this.appWindAngle = (converted * -1);
+        if (converted < 0) {// stb
+          this.appWindAngle= 360 + converted; // adding a negative number subtracts it...
+        } else {
+          this.appWindAngle = converted;
         }
 
       }
@@ -172,15 +190,26 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         }
        
         let converted = this.converter['angle']['deg'](newValue);
-        // 0-180+ for stb
-        // -0 to -180 for port
-        // need in 0-360
-        if (converted > 0) {// stb
-          this.trueWindAngle= 360 - converted;
-        } else if (converted < 0) {
-          this.trueWindAngle = (converted * -1);
+
+        // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
+          // 0-180+ for stb
+          // -0 to -180 for port
+          // need in 0-360
+
+        if (this.widgetConfig.trueWindAnglePath.match('angleTrueWater')||
+            this.widgetConfig.trueWindAnglePath.match('angleTrueGround')
+            ) {//-180 to 180
+          if (converted < 0) {// stb
+            this.trueWindAngle= 360 + converted; // adding a negative number subtracts it...
+          } else {
+            this.trueWindAngle = converted;
+          }
+        } else if (this.widgetConfig.trueWindAnglePath.match('direction')) {
+
         }
 
+        //add to historical for wind sectors
+        this.addHistoricalTrue(this.trueWindAngle);
       }
     );
   }
@@ -200,6 +229,43 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     );
   }
 
+  startWindSectors() {
+
+    this.windSectorObservableSub = Observable.interval (500).subscribe(x => {
+      this.historicalCleanup();
+    });
+  }
+
+
+
+
+  addHistoricalTrue (windHeading) {
+    //windheading is in 0-360
+    this.trueWindHistoric.push({
+      timestamp: Date.now(),
+      direction: windHeading
+    });
+  }
+
+  historicalCleanup() {
+    let n = Date.now()-(this.widgetConfig.windSectorWindowSeconds*1000);
+    for (var i = this.trueWindHistoric.length - 1; i >= 0; --i) {
+      if (this.trueWindHistoric[i].timestamp < n) {
+        this.trueWindHistoric.splice(i,1);
+      }
+    }
+    console.log(this.trueWindHistoric);
+  }
+
+
+
+
+
+
+
+  stopWindSectors() {
+    this.windSectorObservableSub.unsubscribe();
+  }
 
   unsubscribeHeading() {
     if (this.headingSub !== null) {
@@ -244,7 +310,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   openWidgetSettings() {
 
     //prepare current data
-    let settingsData: IWidgetConfig = {
+    let settingsData = {
       headingPath: this.widgetConfig.headingPath,
       headingSource: this.widgetConfig.headingSource,
       trueWindAnglePath: this.widgetConfig.trueWindAnglePath,
