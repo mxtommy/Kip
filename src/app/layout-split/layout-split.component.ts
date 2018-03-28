@@ -43,7 +43,7 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onDragEnd(sizesArray: {gutterNum: number, sizes: Array<number>}) {
-    this.LayoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
+     this.LayoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
   }
 
   splitArea(areaUUID: string, direction: string) {
