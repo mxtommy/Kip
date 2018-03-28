@@ -86,14 +86,16 @@
   <g
      style="display:inline"
      id="layer8">
-    <path *ngIf="laylinePortAngle"
+    <path *ngIf="trueWindAngle != null"
        id="path177"
-       d="M 249.90451,250.75102 249.73104,91.05361"
+       [attr.d]="laylinePortPath"
        style="fill:none;stroke:#f50000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
-    <path *ngIf="laylineStbAngle"
+      
+    <path *ngIf="trueWindAngle != null"
        style="fill:none;stroke:#139800;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
-       d="M 249.90451,250.75102 249.73104,91.05361"
+       [attr.d]="laylineStbdPath"
        id="path984" />
+
   </g>
 
   <!-- Background -->
@@ -879,8 +881,8 @@
     </g>
     <animateTransform #trueWindAnimate attributeName="transform"
       type="rotate"
-      [attr.from]="oldTrueWindAngle+' 250 250'"
-      [attr.to]="newTrueWindAngle+' 250 250'"
+      [attr.from]="oldTrueWindRotateAngle+' 250 250'"
+      [attr.to]="newTrueWindRotateAngle+' 250 250'"
       begin="indefinite"
       dur="0.1s"
       additive="replace"

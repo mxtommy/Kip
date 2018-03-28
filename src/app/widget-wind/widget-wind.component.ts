@@ -69,7 +69,6 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   trueWindSpeed: number = null;
   trueWindSpeedSub: Subscription = null;
 
-
   trueWindHistoric: {
     timestamp: number;
     direction: number;
@@ -94,7 +93,6 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     } else {
       this.widgetConfig = this.activeWidget.config; // load existing config.
     }
-    console.log(this.widgetConfig);
     this.startAll();
   }
 
@@ -197,17 +195,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
           // need in 0-360
 
         if (this.widgetConfig.trueWindAnglePath.match('angleTrueWater')||
-            this.widgetConfig.trueWindAnglePath.match('angleTrueGround')
-            ) {//-180 to 180
-          if (converted < 0) {// stb
-            this.trueWindAngle= 360 + converted; // adding a negative number subtracts it...
-          } else {
-            this.trueWindAngle = converted;
-          }
+            this.widgetConfig.trueWindAnglePath.match('angleTrueGround')) {
+          //-180 to 180
+          this.trueWindAngle = this.addHeading(this.currentHeading, converted);
         } else if (this.widgetConfig.trueWindAnglePath.match('direction')) {
-
+          //0-360
+          this.trueWindAngle = converted;
         }
-
+        
         //add to historical for wind sectors
         this.addHistoricalTrue(this.trueWindAngle);
       }
@@ -240,7 +235,10 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
 
   addHistoricalTrue (windHeading) {
-    //windheading is in 0-360
+    //windheading is in 0-360 (referenced to current heading) Need it referenced to North.
+
+
+
     this.trueWindHistoric.push({
       timestamp: Date.now(),
       direction: windHeading
@@ -254,10 +252,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         this.trueWindHistoric.splice(i,1);
       }
     }
-    console.log(this.trueWindHistoric);
   }
-
-
 
 
 
@@ -306,6 +301,24 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.trueWindSpeedPath);
     }   
   }
+
+
+
+
+  addHeading(h1: number, h2: number) {
+    let h3 = h1 + h2;
+    while (h3 > 359) { h3 = h3 - 359; }
+    while (h3 < 0) { h3 = h3 + 359; }
+    return h3;
+  }
+
+
+
+
+
+
+
+
 
   openWidgetSettings() {
 
