@@ -71,8 +71,10 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
   trueWindHistoric: {
     timestamp: number;
-    direction: number;
+    heading: number;
   }[] = [];
+  trueWindMinHistoric: number;
+  trueWindMaxHistoric: number;
     
   windSectorObservableSub: Subscription;
 
@@ -225,24 +227,19 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   }
 
   startWindSectors() {
-
     this.windSectorObservableSub = Observable.interval (500).subscribe(x => {
       this.historicalCleanup();
     });
   }
 
-
-
-
   addHistoricalTrue (windHeading) {
-    //windheading is in 0-360 (referenced to current heading) Need it referenced to North.
-
-
-
     this.trueWindHistoric.push({
       timestamp: Date.now(),
-      direction: windHeading
+      heading: windHeading
     });
+    //console.log(this.trueWindHistoric.map(d => d.heading));
+    this.trueWindMinHistoric = Math.min(...this.trueWindHistoric.map(d => d.heading));
+    this.trueWindMaxHistoric = Math.max(...this.trueWindHistoric.map(d => d.heading));
   }
 
   historicalCleanup() {

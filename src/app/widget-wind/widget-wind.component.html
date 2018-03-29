@@ -6,10 +6,8 @@
             [appWindAngle]="appWindAngle"
             [appWindSpeed]="appWindSpeed"
             [laylineAngle]="widgetConfig.laylineAngle"
-            [windSectorPortStart]=""
-            [windSectorPortEnd]=""
-            [windSectorStbStart]=""
-            [windSectorStbEnd]=""
+            [trueWindMinHistoric]="trueWindMinHistoric"
+            [trueWindMaxHistoric]="trueWindMaxHistoric"
         ></app-svg-wind>
         <div class="settingsButton" *ngIf="unlockStatus">
             <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">

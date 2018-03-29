@@ -72,15 +72,16 @@
         <path *ngIf="windSectorStbStart"
        d="m 387.29427,171.18778 a 158.64403,159.12648 0 0 1 21.25427,79.56324 l -158.64403,0 z" />
 
-    -->
-      <path
        d="m 10.260483,250.75101 a 158.64403,159.12648 0 0 1 21.254267,-79.56322 l 137.38976,79.56323 z"
+    -->
+    <path *ngIf="portWindSectorPath != 'none'"
+       [attr.d]="portWindSectorPath"
        id="path7337"
        style="fill:#ff3b3b;fill-opacity:0.80952382;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668" />
-    <path
+    <path *ngIf="stbdWindSectorPath != 'none'"
+       [attr.d]="stbdWindSectorPath"
        style="fill:#3db72f;fill-opacity:0.79487179;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668"
-       id="path7339"
-       d="m 250,250 l 112,-112 a 158.64403,159.12648 0 0 0 -32.5,-25.69 z" />
+       id="path7339"/>
   </g>
   <!-- laylines -->
   <g

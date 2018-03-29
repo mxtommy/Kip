@@ -1,4 +1,6 @@
 import { Component, OnInit, Input, ViewChild, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
+import { isNumeric } from 'rxjs/util/isNumeric';
+import { isNumber } from 'util';
 
 @Component({
   selector: 'app-svg-wind',
@@ -20,10 +22,9 @@ export class SvgWindComponent implements OnInit {
   @Input('appWindAngle') appWindAngle: number;
   @Input('appWindSpeed') appWindSpeed: number;
   @Input('laylineAngle') laylineAngle : number;
-  @Input('windSectorPortStart') windSectorPortStart: number;
-  @Input('windSectorPortEnd') windSectorPortEnd: number;
-  @Input('windSectorStbStart') windSectorStbStart: number;
-  @Input('windSectorStbEnd') windSectorStbEnd: number;
+  @Input('trueWindMinHistoric') trueWindMinHistoric: number;
+  @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
+  
   
 
   constructor() { }
@@ -47,6 +48,9 @@ export class SvgWindComponent implements OnInit {
   laylinePortPath: string = "M 250,250 250,90";
   laylineStbdPath: string = "M 250,250 250,90";
 
+  //WindSectors
+  portWindSectorPath: string = "none";
+  stbdWindSectorPath: string = "none";
   ngOnInit() {
 
 
@@ -63,6 +67,7 @@ export class SvgWindComponent implements OnInit {
         this.headingValue = this.newCompassRotate.toFixed(0);
         this.compassAnimate.nativeElement.beginElement();
         this.updateTrueWind();// rotates with heading change
+        this.updateWindSectors();// they need to update to new heading too
       }
     }
 
@@ -98,13 +103,19 @@ export class SvgWindComponent implements OnInit {
       }
     }
 
+    //Min/Max
+    if (changes.trueWindMinHistoric || changes.trueWindMaxHistoric) {
+      if (isNumber(this.trueWindMinHistoric) && isNumber(this.trueWindMaxHistoric)) {
+        this.updateWindSectors();
+      } 
+    }
+
   }
 
   updateTrueWind(){
     this.oldTrueWindRotateAngle = this.newTrueWindRotateAngle;
-    this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0); //compass rotae is negative as we actually have to rotate counter clockwise
+    this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0); //compass rotate is negative as we actually have to rotate counter clockwise
 
-    //this.laylinePortRotate = this.addHeading(Number(this.newTrueWindRotateAngle), this.laylineAngle).toFixed(0);
     if (this.trueWindAnimate) { // only update if on dom...
       this.trueWindAnimate.nativeElement.beginElement();
     }
@@ -124,6 +135,33 @@ export class SvgWindComponent implements OnInit {
     this.laylineStbdPath = 'M 250,250 ' + stbdX +',' + stbdY;
 
   }
+
+
+  updateWindSectors() {
+    let portMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (this.newCompassRotate*-1)), (this.laylineAngle*-1));
+    let portMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric, (this.newCompassRotate*-1)), (this.laylineAngle*-1));
+
+    //console.log(this.trueWindMinHistoric.toFixed(0) + ' ' + this.trueWindMaxHistoric.toFixed(0) + ' ' + portMin.toFixed(0) + ' ' + portMax.toFixed(0));
+    let portMinX = 160 * Math.sin((portMin*Math.PI)/180) + 250; //250 is middle
+    let portMinY = (160 * Math.cos((portMin*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
+    let portMaxX = 160 * Math.sin((portMax*Math.PI)/180) + 250; //250 is middle
+    let portMaxY = (160 * Math.cos((portMax*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
+
+    this.portWindSectorPath = 'M 250,250 L ' + portMinX + ',' + portMinY + ' A 160,160 0 0 1 '+ portMaxX + ',' + portMaxY +' z';
+    //////////
+    let stbdMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (this.newCompassRotate*-1)), (this.laylineAngle));
+    let stbdMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric, (this.newCompassRotate*-1)), (this.laylineAngle));
+
+    let stbdMinX = 160 * Math.sin((stbdMin*Math.PI)/180) + 250; //250 is middle
+    let stbdMinY = (160 * Math.cos((stbdMin*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
+    let stbdMaxX = 160 * Math.sin((stbdMax*Math.PI)/180) + 250; //250 is middle
+    let stbdMaxY = (160 * Math.cos((stbdMax*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
+
+    this.stbdWindSectorPath = 'M 250,250 L ' + stbdMinX + ',' + stbdMinY + ' A 160,160 0 0 1 '+ stbdMaxX + ',' + stbdMaxY +' z';
+
+  }
+
+
 
 
   addHeading(h1: number, h2: number) {
