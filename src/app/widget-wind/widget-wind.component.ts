@@ -237,9 +237,24 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       timestamp: Date.now(),
       heading: windHeading
     });
-    //console.log(this.trueWindHistoric.map(d => d.heading));
-    this.trueWindMinHistoric = Math.min(...this.trueWindHistoric.map(d => d.heading));
-    this.trueWindMaxHistoric = Math.max(...this.trueWindHistoric.map(d => d.heading));
+    let arr = this.arcForAngles(this.trueWindHistoric.map(d => d.heading));
+    this.trueWindMinHistoric = arr[0];
+    this.trueWindMaxHistoric = arr[1];
+  }
+
+  arcForAngles (data) {
+    return data.slice(1).reduce((acc, theValue) => {
+      let value = theValue
+      while (value < acc[0] - 180) {
+        value += 360
+      }
+      while (value > acc[1] + 180) {
+        value -= 360
+      }
+      acc[0] = Math.min(acc[0], value)
+      acc[1] = Math.max(acc[1], value)
+      return acc
+    }, [data[0], data[0]])
   }
 
   historicalCleanup() {
@@ -250,10 +265,6 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       }
     }
   }
-
-
-
-
 
   stopWindSectors() {
     this.windSectorObservableSub.unsubscribe();
