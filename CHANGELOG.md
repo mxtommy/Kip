@@ -14,3 +14,17 @@
 
 ### V0.1.5
 * fix select dialogs (missing mat-form-field)
+
+### V0.1.6
+* Hash based routing
+* Start of Boolean state widget
+* default to /signalk in url
+* 
+
+### V0.1.7
+* Performance gain in Numeric widget in large fonts
+* Sailgauge updates (laylines, windsectors, general refactor)
+* Simplified source selection in the code
+* Removed Derived Data
+* Added Percentage unit, and stopped showing "no unit" on numeric
+* Updated Angular from v4 to v5 and all dependencies to latest version
