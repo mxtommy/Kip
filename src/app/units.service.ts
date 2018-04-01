@@ -32,7 +32,7 @@ export class UnitsService {
   defaultUnits: IUnitDefaults = {
     unitless: 'unitless',
     speed: 'knots',
-    flow: 'l/h',
+    flow: 'liter/minute',
     temp: 'C',
     length: 'nm',
     electrity: 'volts',
