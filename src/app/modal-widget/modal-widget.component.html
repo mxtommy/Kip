@@ -1,73 +1,65 @@
-<form (ngSubmit)="onSubmit()" [formGroup]="form">
+<form (ngSubmit)="onSubmit()" [formGroup]="formMaster">
   <mat-dialog-content>
-
-    <mat-horizontal-stepper>
-        <mat-step label="Paths" [completed]="false">
-          <modal-path-selector class="full-width" *ngFor="let questionPath of questions.paths"
-          [question]="questionPath" [formGroup]="formGroups[questionPath.key]" [selfPaths]="form.value.selfPaths"
+    <mat-tab-group class="">
+      <mat-tab label="Display">
+        <div class="tab-content"> 
+            <mat-form-field class="full-width">
+                <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
+            </mat-form-field>
+            <div class="full-width" *ngIf="true">
+              <mat-form-field class="half-width">
+                      <input type="number" min="0" max="5" matInput placeholder="Min Number of Integer Places" name="numInt"  formControlName="numInt">
+              </mat-form-field>
+              <mat-form-field class="half-width">
+                <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  formControlName="numDecimal">
+              </mat-form-field>
+            </div>          
+        </div>
+      </mat-tab>
+      <mat-tab label="Paths" [formGroup]="formPaths">
+        <ng-template mat-tab-label>
+          <span *ngIf="!formPaths.valid" class="warning fa fa-exclamation-circle"></span> Paths
+        </ng-template>
+        <modal-path-selector class="full-width" *ngFor="let questionPath of questions.paths"
+          [question]="questionPath" [formGroup]="formPaths.controls[questionPath.key]" [selfPaths]="formPaths.value.selfPaths"
           ></modal-path-selector>
 
-          <mat-checkbox name="selfPaths" formControlName="selfPaths">
-          Restric to own vessel
-          </mat-checkbox>
+        <mat-checkbox name="selfPaths" formControlName="selfPaths">
+        Restric to own vessel
+        </mat-checkbox>
+        {{formMaster.value|json}}
 
-          <br>
-        
-          <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>
+      </mat-tab>
 
-        </mat-step>
-        <mat-step label="Display" [completed]="false">
-          <div class="tab-content"> 
-              <mat-form-field class="full-width" [formGroup]="formGroups['widgetLabel']">
-                  <input matInput placeholder="Widget Label" name="widgetLabel" [formControlName]="'widgetLabel'">
-              </mat-form-field>
-              <div class="full-width" *ngIf="(formGroups['numIntDec'] !== undefined)" [formGroup]="formGroups['numIntDec']">
-                <mat-form-field class="half-width">
-                        <input type="number" min="0" max="5" matInput placeholder="Min Number of Integer Places" name="numInt"  [formControlName]="'numInt'">
-                </mat-form-field>
-                <mat-form-field class="half-width">
-                  <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  [formControlName]="'numDecimal'">
-                </mat-form-field>
-              </div>
-
-              <button type="button" mat-raised-button matStepperPrevious>Back</button>
-              <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>       
-              <button mat-raised-button color="accent" type="submit">Save</button>             
-          </div>
-        </mat-step>
-        <mat-step label="Units" *ngIf="(formGroups['units'] !== undefined)" [completed]="false">
-          <div class="tab-content"> 
-            <mat-form-field class="full-width">
-              <mat-select 
-                  placeholder="Unit Category" 
-                  [(ngModel)]="settingsData.unitGroup" 
-                  name="unitGroup"
-                  (ngModelChange)="updateUnitType()"
-                  >
-                  <mat-option *ngFor="let group of availableUnitGroups" [value]="group">
-                      {{group}}
-                  </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field class="full-width">
-              <mat-select 
-                  placeholder="Unit" 
-                  [(ngModel)]="settingsData.unitName" 
-                  name="unitName"
-                  >
-                  <mat-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
-                      {{unitName}}
-                  </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <button type="button" mat-raised-button matStepperPrevious>Back</button>
-            <button mat-raised-button color="accent" type="submit">Save</button>
-          </div>
-        </mat-step>       
-
-
-    </mat-horizontal-stepper>
-    {{form.value|json}}
+      <mat-tab label="Units" *ngIf="(formGroups['units'] !== undefined)">
+        <div class="tab-content"> <!--
+          <mat-form-field class="full-width">
+            <mat-select 
+                placeholder="Unit Category" 
+                
+                name="unitGroup"
+                >
+                <mat-option *ngFor="let group of availableUnitGroups" [value]="group">
+                </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="full-width">
+            <mat-select 
+                placeholder="Unit" 
+                [(ngModel)]="settingsData.unitName" 
+                name="unitName"
+                >
+                <mat-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                    {{unitName}}
+                </mat-option>
+            </mat-select>
+          </mat-form-field> -->
+        </div>
+      </mat-tab>  
+    </mat-tab-group>
   </mat-dialog-content>
-
+  <mat-dialog-actions>
+      <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
+      <button mat-raised-button color="accent" type="submit" [disabled]="!formMaster.valid" >Save</button>
+  </mat-dialog-actions>
 </form>

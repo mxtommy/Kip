@@ -139,7 +139,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       units: [ 
         {
           unitFor: "numericPath",
-          unitGroup: this.widgetConfig.unitGroup,
           unitName: this.widgetConfig.unitName
         }
       ],

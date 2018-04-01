@@ -25,7 +25,6 @@ interface ISignalKPathInfo {
 }
 interface IUnitInfo {
   unitFor: string;
-  unitGroup: string;
   unitName: string;
 }
 
@@ -41,19 +40,22 @@ interface IFormGroups {
 export class ModalWidgetComponent implements OnInit {
 
   formGroups: IFormGroups = {};
-  form: FormGroup = new FormGroup({
+  formMaster: FormGroup = new FormGroup({});
+  formPaths: FormGroup = new FormGroup({
     'selfPaths': new FormControl(true)
-  });
+  })
 
   constructor(
     private UnitsService: UnitsService,
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
     @Inject(MAT_DIALOG_DATA) public questions: IModalSettings) { }
 
+
+
   ngOnInit() {
+    this.formMaster.addControl('paths', this.formPaths);
     this.generateFormGroups();
-//    console.log(this.questionPaths);
-//    this.form = this.QuestionControlService.toFormGroup(this.questionPaths);
+    console.log(this.formPaths);
   }
 
 
@@ -63,22 +65,16 @@ export class ModalWidgetComponent implements OnInit {
       let group: any = {};
       group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
       group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);
-      this.formGroups[pathQuestion.key] = new FormGroup(group);
-      this.form.addControl(pathQuestion.key, this.formGroups[pathQuestion.key]);
+      this.formPaths.addControl(pathQuestion.key, new FormGroup(group));
     });
 
     //label
-    this.formGroups['widgetLabel'] = new FormGroup({widgetLabel: new FormControl(this.questions.widgetLabel)});
-    this.form.addControl('widgetLabel', this.formGroups['widgetLabel']);
+    this.formMaster.addControl('widgetLabel', new FormControl(this.questions.widgetLabel));
 
     // Decimal positions if there...
     if ('numInt' in this.questions) {
-      this.formGroups['numIntDec'] = new FormGroup({
-        numInt: new FormControl(this.questions.numInt, Validators.required),
-        numDecimal: new FormControl(this.questions.numDecimal, Validators.required)
-      });
-      this.form.addControl('numIntDec', this.formGroups['numIntDec']);
-
+      this.formMaster.addControl('numInt', new FormControl(this.questions.numInt, Validators.required));
+      this.formMaster.addControl('numDecimal', new FormControl(this.questions.numDecimal, Validators.required));
     }
 
   }
