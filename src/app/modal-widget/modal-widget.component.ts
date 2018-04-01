@@ -3,6 +3,8 @@ import { FormGroup, FormControl, Validators }    from '@angular/forms';
 
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
+import { UnitsService } from '../units.service';
+
 
 export interface IModalSettings {
   paths: ISignalKPathInfo[];
@@ -44,6 +46,7 @@ export class ModalWidgetComponent implements OnInit {
   });
 
   constructor(
+    private UnitsService: UnitsService,
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
     @Inject(MAT_DIALOG_DATA) public questions: IModalSettings) { }
 

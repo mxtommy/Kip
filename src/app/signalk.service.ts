@@ -203,4 +203,10 @@ export class SignalKService {
 
   }
 
+  getPathUnitType(path: string): string {
+    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    if (pathIndex < 0) { return null; }
+    if (this.paths[pathIndex].meta.units !== undefined) { return this.paths[pathIndex].meta.units; } else { return null; }
+  }
+
 }
