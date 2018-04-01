@@ -126,20 +126,25 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     //prepare current data
     let settingsData: IModalSettings = {
+      widgetLabel: this.widgetConfig.label,
       paths: [
         {
           key: "numericPath",
-          description: "Path of Numeric Data",
+          description: "Numeric Data",
           path: this.widgetConfig.signalKPath,
           source: this.widgetConfig.signalKSource,
           pathType: "number",
         }      
       ],
-      widgetLabel: this.widgetConfig.label,
+      units: [ 
+        {
+          unitFor: "numericPath",
+          unitGroup: this.widgetConfig.unitGroup,
+          unitName: this.widgetConfig.unitName
+        }
+      ],
       numDecimal: this.widgetConfig.numDecimal,
-      numInt: this.widgetConfig.numInt,
-      unitGroup: this.widgetConfig.unitGroup,
-      unitName: this.widgetConfig.unitName
+      numInt: this.widgetConfig.numInt
     }
 
     

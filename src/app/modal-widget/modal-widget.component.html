@@ -23,18 +23,47 @@
               </mat-form-field>
               <div class="full-width" *ngIf="(formGroups['numIntDec'] !== undefined)" [formGroup]="formGroups['numIntDec']">
                 <mat-form-field class="half-width">
-                        <input type="number" min="0" max="5" matInput placeholder="Number of Integer Place" name="numInt"  [formControlName]="'numInt'">
+                        <input type="number" min="0" max="5" matInput placeholder="Min Number of Integer Places" name="numInt"  [formControlName]="'numInt'">
                 </mat-form-field>
                 <mat-form-field class="half-width">
-                  <input type="number" min="0" max="5" matInput placeholder="Number of Decimals" name="numDecimal"  [formControlName]="'numDecimal'">
+                  <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  [formControlName]="'numDecimal'">
                 </mat-form-field>
               </div>
 
               <button type="button" mat-raised-button matStepperPrevious>Back</button>
-              <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>                    
+              <button type="button" mat-raised-button color="accent" matStepperNext>Next</button>       
+              <button mat-raised-button color="accent" type="submit">Save</button>             
           </div>
         </mat-step>
-       
+        <mat-step label="Units" *ngIf="(formGroups['units'] !== undefined)" [completed]="false">
+          <div class="tab-content"> 
+            <mat-form-field class="full-width">
+              <mat-select 
+                  placeholder="Unit Category" 
+                  [(ngModel)]="settingsData.unitGroup" 
+                  name="unitGroup"
+                  (ngModelChange)="updateUnitType()"
+                  >
+                  <mat-option *ngFor="let group of availableUnitGroups" [value]="group">
+                      {{group}}
+                  </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="full-width">
+              <mat-select 
+                  placeholder="Unit" 
+                  [(ngModel)]="settingsData.unitName" 
+                  name="unitName"
+                  >
+                  <mat-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
+                      {{unitName}}
+                  </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button type="button" mat-raised-button matStepperPrevious>Back</button>
+            <button mat-raised-button color="accent" type="submit">Save</button>
+          </div>
+        </mat-step>       
 
 
     </mat-horizontal-stepper>

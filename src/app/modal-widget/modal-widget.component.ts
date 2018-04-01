@@ -6,12 +6,12 @@ import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 export interface IModalSettings {
   paths: ISignalKPathInfo[];
+  units?: IUnitInfo[];
   widgetLabel: string;
 
   numDecimal?: number; // number of decimal places if a number
   numInt?: number;
-  unitGroup?: string;  
-  unitName?: string;
+
 }
 
 interface ISignalKPathInfo {
@@ -20,6 +20,11 @@ interface ISignalKPathInfo {
   path: string;       //can be null or set
   source: string;     //can be null or set
   pathType: string;
+}
+interface IUnitInfo {
+  unitFor: string;
+  unitGroup: string;
+  unitName: string;
 }
 
 interface IFormGroups {
@@ -50,7 +55,6 @@ export class ModalWidgetComponent implements OnInit {
 
 
   generateFormGroups() {
-    
     // Generate formgroups for path selection
     this.questions.paths.forEach(pathQuestion => {
       let group: any = {};
