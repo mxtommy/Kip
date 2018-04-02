@@ -176,7 +176,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         // -0 to -180 for port
         // need in 0-360
         if (converted > 0) {// stb
-          this.trueWindAngle= 360 - converted;
+          this.trueWindAngle= (360 - converted) + this.currentHeading;
         } else if (converted < 0) {
           this.trueWindAngle = (converted * -1);
         }

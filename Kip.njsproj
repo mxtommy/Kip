@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <SchemaVersion>2.0</SchemaVersion>
+        <ProjectGuid>{2e149ecd-b09d-4bbd-aece-b63364fd97a1}</ProjectGuid>
+        <ProjectHome />
+        <ProjectView>ShowAllFiles</ProjectView>
+        <StartupFile>karma.conf.js</StartupFile>
+        <WorkingDirectory>.</WorkingDirectory>
+        <OutputPath>.</OutputPath>
+        <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
+        <TypeScriptSourceMap>true</TypeScriptSourceMap>
+        <TypeScriptModuleKind>CommonJS</TypeScriptModuleKind>
+        <EnableTypeScript>true</EnableTypeScript>
+        <TypeScriptToolsVersion>2.3</TypeScriptToolsVersion>
+        <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">14.0</VisualStudioVersion>
+        <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+    <ItemGroup>
+        <Content Include=".angular-cli.json" />
+        <Content Include="package-lock.json" />
+        <Content Include="package.json" />
+        <Content Include="tsconfig.json" />
+        <Content Include="tslint.json" />
+        <Content Include="CHANGELOG.md" />
+        <Content Include="README.md" />
+        <Compile Include="karma.conf.js" />
+        <Compile Include="protractor.conf.js" />
+        <Content Include="e2e\tsconfig.e2e.json" />
+        <TypeScriptCompile Include="e2e\app.e2e-spec.ts" />
+        <TypeScriptCompile Include="e2e\app.po.ts" />
+        <Content Include="src\index.html" />
+        <Content Include="src\styles.css" />
+        <Content Include="src\favicon.ico" />
+        <Content Include="src\tsconfig.app.json" />
+        <Content Include="src\tsconfig.spec.json" />
+        <TypeScriptCompile Include="src\main.ts" />
+        <TypeScriptCompile Include="src\polyfills.ts" />
+        <TypeScriptCompile Include="src\test.ts" />
+        <TypeScriptCompile Include="src\typings.d.ts" />
+        <Content Include="src\app\app.component.html" />
+        <Content Include="src\app\app.component.css" />
+        <TypeScriptCompile Include="src\app\app-settings.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\app-settings.service.ts" />
+        <TypeScriptCompile Include="src\app\app.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\app.component.ts" />
+        <TypeScriptCompile Include="src\app\app.module.ts" />
+        <TypeScriptCompile Include="src\app\blank-config.const.ts" />
+        <TypeScriptCompile Include="src\app\data-set.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\data-set.service.ts" />
+        <TypeScriptCompile Include="src\app\demo-config.const.ts" />
+        <TypeScriptCompile Include="src\app\dynamic-widget.directive.spec.ts" />
+        <TypeScriptCompile Include="src\app\dynamic-widget.directive.ts" />
+        <TypeScriptCompile Include="src\app\filter-self.pipe.spec.ts" />
+        <TypeScriptCompile Include="src\app\filter-self.pipe.ts" />
+        <TypeScriptCompile Include="src\app\fit-text.directive.spec.ts" />
+        <TypeScriptCompile Include="src\app\fit-text.directive.ts" />
+        <TypeScriptCompile Include="src\app\layout-splits.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\layout-splits.service.ts" />
+        <TypeScriptCompile Include="src\app\signalk-connection.service.ts" />
+        <TypeScriptCompile Include="src\app\signalk-delta.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\signalk-delta.service.ts" />
+        <TypeScriptCompile Include="src\app\signalk-full.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\signalk-full.service.ts" />
+        <TypeScriptCompile Include="src\app\signalk.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\signalk.service.ts" />
+        <TypeScriptCompile Include="src\app\unit-convert.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\unit-convert.service.ts" />
+        <TypeScriptCompile Include="src\app\widget-list.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-list.service.ts" />
+        <TypeScriptCompile Include="src\app\widget-manager.service.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-manager.service.ts" />
+        <Content Include="src\assets\svg-wind-inkscape.svg" />
+        <Compile Include="src\assets\NoSleep.min.js" />
+        <Compile Include="src\assets\steelseries-min.js" />
+        <Compile Include="src\assets\steelseries.js" />
+        <Compile Include="src\assets\tween-min.js" />
+        <Compile Include="src\assets\tween.js" />
+        <TypeScriptCompile Include="src\environments\environment.prod.ts" />
+        <TypeScriptCompile Include="src\environments\environment.ts" />
+        <Content Include="src\app\gauge-steel\gauge-steel.component.html" />
+        <Content Include="src\app\gauge-steel\gauge-steel.component.css" />
+        <TypeScriptCompile Include="src\app\gauge-steel\gauge-steel.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\gauge-steel\gauge-steel.component.ts" />
+        <Content Include="src\app\layout-split\layout-split.component.html" />
+        <Content Include="src\app\layout-split\layout-split.component.css" />
+        <TypeScriptCompile Include="src\app\layout-split\layout-split.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\layout-split\layout-split.component.ts" />
+        <Content Include="src\app\reset-config\reset-config.component.html" />
+        <Content Include="src\app\reset-config\reset-config.component.css" />
+        <TypeScriptCompile Include="src\app\reset-config\reset-config.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\reset-config\reset-config.component.ts" />
+        <Content Include="src\app\root-display\root-display.component.html" />
+        <Content Include="src\app\root-display\root-display.component.css" />
+        <TypeScriptCompile Include="src\app\root-display\root-display.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\root-display\root-display.component.ts" />
+        <Content Include="src\app\settings\settings.component.html" />
+        <Content Include="src\app\settings\settings.component.css" />
+        <TypeScriptCompile Include="src\app\settings\settings.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\settings\settings.component.ts" />
+        <Content Include="src\app\settings-config\settings-config.component.html" />
+        <Content Include="src\app\settings-config\settings-config.component.css" />
+        <TypeScriptCompile Include="src\app\settings-config\settings-config.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\settings-config\settings-config.component.ts" />
+        <Content Include="src\app\settings-datasets\settings-datasets.component.html" />
+        <Content Include="src\app\settings-datasets\settings-datasets.modal.html" />
+        <Content Include="src\app\settings-datasets\settings-datasets.component.css" />
+        <TypeScriptCompile Include="src\app\settings-datasets\settings-datasets.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\settings-datasets\settings-datasets.component.ts" />
+        <Content Include="src\app\settings-signalk\settings-signalk.component.html" />
+        <Content Include="src\app\settings-signalk\settings-signalk.component.css" />
+        <TypeScriptCompile Include="src\app\settings-signalk\settings-signalk.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\settings-signalk\settings-signalk.component.ts" />
+        <Content Include="src\app\svg-wind\svg-wind.component.html" />
+        <Content Include="src\app\svg-wind\svg-wind.component.css" />
+        <TypeScriptCompile Include="src\app\svg-wind\svg-wind.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\svg-wind\svg-wind.component.ts" />
+        <Content Include="src\app\unit-window\unit-window.component.html" />
+        <Content Include="src\app\unit-window\unit-window.modal.html" />
+        <Content Include="src\app\unit-window\unit-window.component.css" />
+        <TypeScriptCompile Include="src\app\unit-window\unit-window.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\unit-window\unit-window.component.ts" />
+        <Content Include="src\app\widget-blank\widget-blank.component.html" />
+        <Content Include="src\app\widget-blank\widget-blank.component.css" />
+        <TypeScriptCompile Include="src\app\widget-blank\widget-blank.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-blank\widget-blank.component.ts" />
+        <Content Include="src\app\widget-gauge\widget-gauge.component.html" />
+        <Content Include="src\app\widget-gauge\widget-gauge.modal.html" />
+        <Content Include="src\app\widget-gauge\widget-gauge.component.css" />
+        <TypeScriptCompile Include="src\app\widget-gauge\widget-gauge.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-gauge\widget-gauge.component.ts" />
+        <Content Include="src\app\widget-historical\widget-historical.component.html" />
+        <Content Include="src\app\widget-historical\widget-historical.modal.html" />
+        <Content Include="src\app\widget-historical\widget-historical.component.css" />
+        <TypeScriptCompile Include="src\app\widget-historical\widget-historical.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-historical\widget-historical.component.ts" />
+        <Content Include="src\app\widget-numeric\widget-numeric.component.html" />
+        <Content Include="src\app\widget-numeric\widget-numeric.modal.html" />
+        <Content Include="src\app\widget-numeric\widget-numeric.component.css" />
+        <TypeScriptCompile Include="src\app\widget-numeric\widget-numeric.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-numeric\widget-numeric.component.ts" />
+        <Content Include="src\app\widget-state\widget-state.component.html" />
+        <Content Include="src\app\widget-state\widget-state.modal.html" />
+        <Content Include="src\app\widget-state\widget-state.component.css" />
+        <TypeScriptCompile Include="src\app\widget-state\widget-state.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-state\widget-state.component.ts" />
+        <Content Include="src\app\widget-text-generic\widget-text-generic.component.html" />
+        <Content Include="src\app\widget-text-generic\widget-text-generic.modal.html" />
+        <Content Include="src\app\widget-text-generic\widget-text-generic.component.css" />
+        <TypeScriptCompile Include="src\app\widget-text-generic\widget-text-generic.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-text-generic\widget-text-generic.component.ts" />
+        <Content Include="src\app\widget-tutorial\widget-tutorial.component.html" />
+        <Content Include="src\app\widget-tutorial\widget-tutorial.component.css" />
+        <TypeScriptCompile Include="src\app\widget-tutorial\widget-tutorial.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-tutorial\widget-tutorial.component.ts" />
+        <Content Include="src\app\widget-unknown\widget-unknown.component.html" />
+        <Content Include="src\app\widget-unknown\widget-unknown.component.css" />
+        <TypeScriptCompile Include="src\app\widget-unknown\widget-unknown.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-unknown\widget-unknown.component.ts" />
+        <Content Include="src\app\widget-wind\widget-wind.component.html" />
+        <Content Include="src\app\widget-wind\widget-wind.modal.html" />
+        <Content Include="src\app\widget-wind\widget-wind.component.css" />
+        <TypeScriptCompile Include="src\app\widget-wind\widget-wind.component.spec.ts" />
+        <TypeScriptCompile Include="src\app\widget-wind\widget-wind.component.ts" />
+        <Content Include="src\assets\font-awesome\HELP-US-OUT.txt" />
+        <Content Include="src\assets\font-awesome\css\font-awesome.css" />
+        <Content Include="src\assets\font-awesome\css\font-awesome.min.css" />
+        <Content Include="src\assets\font-awesome\fonts\fontawesome-webfont.svg" />
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="e2e" />
+        <Folder Include="Kip" />
+        <Folder Include="Kip\Kip" />
+        <Folder Include="src" />
+        <Folder Include="src\app" />
+        <Folder Include="src\app\gauge-steel" />
+        <Folder Include="src\app\layout-split" />
+        <Folder Include="src\app\reset-config" />
+        <Folder Include="src\app\root-display" />
+        <Folder Include="src\app\settings" />
+        <Folder Include="src\app\settings-config" />
+        <Folder Include="src\app\settings-datasets" />
+        <Folder Include="src\app\settings-signalk" />
+        <Folder Include="src\app\svg-wind" />
+        <Folder Include="src\app\unit-window" />
+        <Folder Include="src\app\widget-blank" />
+        <Folder Include="src\app\widget-gauge" />
+        <Folder Include="src\app\widget-historical" />
+        <Folder Include="src\app\widget-numeric" />
+        <Folder Include="src\app\widget-state" />
+        <Folder Include="src\app\widget-text-generic" />
+        <Folder Include="src\app\widget-tutorial" />
+        <Folder Include="src\app\widget-unknown" />
+        <Folder Include="src\app\widget-wind" />
+        <Folder Include="src\assets" />
+        <Folder Include="src\assets\font-awesome" />
+        <Folder Include="src\assets\font-awesome\css" />
+        <Folder Include="src\assets\font-awesome\fonts" />
+        <Folder Include="src\assets\font-awesome\less" />
+        <Folder Include="src\assets\font-awesome\scss" />
+        <Folder Include="src\environments" />
+        <Folder Include="src\themes" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->
+    <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />
+    <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsTools.targets" />
+    <ProjectExtensions>
+        <VisualStudio>
+          <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+            <WebProjectProperties>
+              <UseIIS>False</UseIIS>
+              <AutoAssignPort>True</AutoAssignPort>
+              <DevelopmentServerPort>0</DevelopmentServerPort>
+              <DevelopmentServerVPath>/</DevelopmentServerVPath>
+              <IISUrl>http://localhost:48022/</IISUrl>
+              <NTLMAuthentication>False</NTLMAuthentication>
+              <UseCustomServer>True</UseCustomServer>
+              <CustomServerUrl>http://localhost:1337</CustomServerUrl>
+              <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+            </WebProjectProperties>
+          </FlavorProperties>
+          <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+            <WebProjectProperties>
+              <StartPageUrl>
+              </StartPageUrl>
+              <StartAction>CurrentPage</StartAction>
+              <AspNetDebugging>True</AspNetDebugging>
+              <SilverlightDebugging>False</SilverlightDebugging>
+              <NativeDebugging>False</NativeDebugging>
+              <SQLDebugging>False</SQLDebugging>
+              <ExternalProgram>
+              </ExternalProgram>
+              <StartExternalURL>
+              </StartExternalURL>
+              <StartCmdLineArguments>
+              </StartCmdLineArguments>
+              <StartWorkingDirectory>
+              </StartWorkingDirectory>
+              <EnableENC>False</EnableENC>
+              <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+            </WebProjectProperties>
+          </FlavorProperties>
+        </VisualStudio>
+    </ProjectExtensions>
+</Project>
