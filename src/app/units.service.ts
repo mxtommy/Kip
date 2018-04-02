@@ -58,10 +58,11 @@ export class UnitsService {
   getConversionsForPath(path: string): { default: string, conversions: IUnitInfo[]} {
     let pathUnitType = this.SignalKService.getPathUnitType(path);
     if (pathUnitType === null) { return { default: 'unitless', conversions: this.conversionList }; } // if it's unknown units for this path let them choose from all 
-    let group = this.conversionList.find(el => el.units.includes(pathUnitType)).group;
-    let arr = this.conversionList.filter( el => el.group == group);
+    let group = this.conversionList.find(el => el.units.includes(pathUnitType));
+    if (group === undefined) { return { default: 'unitless', conversions: this.conversionList }; }
+    let arr = this.conversionList.filter( el => el.group == group.group);
     if (arr.length > 0) {
-      return { default: this.defaultUnits[group], conversions: arr};
+      return { default: this.defaultUnits[group.group], conversions: arr};
     } else {
       return { default: 'unitless', conversions: this.conversionList };
     }
