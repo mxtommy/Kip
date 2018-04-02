@@ -13,7 +13,6 @@ interface IWidgetConfig {
   signalKPath: string;
   signalKSource: string;
   label: string;
-  unitGroup: string;
   unitName: string;
   numDecimal: number; // number of decimal places if a number
   numInt: number;
@@ -43,8 +42,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     signalKPath: null,
     signalKSource: 'default',
     label: null,
-    unitGroup: 'discreet',
-    unitName: 'no unit',
+    unitName: 'unitless',
     numDecimal: 2,
     numInt: 2
   }
@@ -107,8 +105,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
           return;
         }
 
-        let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](newValue);
-        this.dataValue = converted.toFixed(this.widgetConfig.numDecimal);
+        //let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](newValue);
+        //this.dataValue = converted.toFixed(this.widgetConfig.numDecimal);
         this.updateCanvas();
       }
     );

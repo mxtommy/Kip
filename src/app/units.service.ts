@@ -3,9 +3,9 @@ import * as Qty from 'js-quantities';
 import { SignalKService } from './signalk.service';
 
 
-interface IUnitInfo {
+export interface IUnitInfo {
   group: string;
-  unit: string;
+  units: string[];
 }
 interface IUnitDefaults {
   [key: string]: string;
@@ -34,7 +34,7 @@ export class UnitsService {
     speed: 'knots',
     flow: 'liter/minute',
     temp: 'C',
-    length: 'nm',
+    length: 'm',
     electrity: 'volts',
     pressure: 'mmHg',
     angularVelocity: 'rpm',
@@ -43,46 +43,22 @@ export class UnitsService {
   }
 
   conversionList: IUnitInfo[] = [
-    { group: 'unitless', unit: 'unitless' },
-    { group: 'speed', unit: 'knots' },
-    { group: 'speed', unit: 'km/h' },
-    { group: 'speed', unit: 'm/s' },
-    { group: 'flow', unit: 'm^3/s' },
-    { group: 'flow', unit: 'liter/minute' },
-    { group: 'flow', unit: 'liter/hour' },
-    { group: 'flow', unit: 'gallon/minute' },
-    { group: 'flow', unit: 'gallon/hour' },
-    { group: 'temp', unit: 'K' },
-    { group: 'temp', unit: 'C' },
-    { group: 'temp', unit: 'F' },
-    { group: 'length', unit: 'meter' },
-    { group: 'length', unit: 'fathom' },
-    { group: 'length', unit: 'feet' },
-    { group: 'length', unit: 'km' },
-    { group: 'length', unit: 'nm' },
-    { group: 'length', unit: 'mile' },
-    { group: 'electrity', unit: 'amps' },
-    { group: 'electrity', unit: 'volts' },
-    { group: 'pressure', unit: 'pascal' },
-    { group: 'pressure', unit: 'hPa' },
-    { group: 'pressure', unit: 'bar' },
-    { group: 'pressure', unit: 'mbar' },
-    { group: 'pressure', unit: 'psi' },
-    { group: 'pressure', unit: 'mmHg' },
-    { group: 'angularVelocity', unit: 'rad/s' },
-    { group: 'angularVelocity', unit: 'deg/s' },
-    { group: 'angularVelocity', unit: 'deg/min' },
-    { group: 'angularVelocity', unit: 'rpm' },
-    { group: 'angle', unit: 'rad' },
-    { group: 'angle', unit: 'deg' },
-    { group: 'angle', unit: 'grad' },
-    { group: 'ratio', unit: 'percent' },
+    { group: 'unitless', units: [ 'unitless' ] },
+    { group: 'speed', units: [ 'knots','km/h', 'm/s' ] },
+    { group: 'flow', units: ['m^3/s', 'liter/minute', 'liter/hour', 'gallon/minute', 'gallon/hour' ] },
+    { group: 'temp', units: [ 'K', 'C', 'F' ] },
+    { group: 'length', units: [ 'm', 'fathom', 'feet', 'km', 'nm', 'mile' ] },
+    { group: 'electrity', units: [ 'amps', 'volts' ]},
+    { group: 'pressure', units: [ 'pascal', 'hPa', 'bar', 'mbar', 'psi', 'mmHg' ] },
+    { group: 'angularVelocity', units: [ 'rad/s', 'deg/s', 'deg/min', 'rpm' ] },
+    { group: 'angle', units: [ 'rad', 'deg', 'grad' ] },
+    { group: 'ratio', units: [ 'percent' ] },
   ];
 
   getConversionsForPath(path: string): { default: string, conversions: IUnitInfo[]} {
     let pathUnitType = this.SignalKService.getPathUnitType(path);
     if (pathUnitType === null) { return { default: 'unitless', conversions: this.conversionList }; } // if it's unknown units for this path let them choose from all 
-    let group = this.conversionList.find(el => el.unit == pathUnitType ).group;
+    let group = this.conversionList.find(el => el.units.includes(pathUnitType)).group;
     let arr = this.conversionList.filter( el => el.group == group);
     if (arr.length > 0) {
       return { default: this.defaultUnits[group], conversions: arr};

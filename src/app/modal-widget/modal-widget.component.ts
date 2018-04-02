@@ -1,9 +1,9 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
 
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
-import { UnitsService } from '../units.service';
+import { Subscription } from 'rxjs/Subscription';
 
 
 export interface IModalSettings {
@@ -37,16 +37,17 @@ interface IFormGroups {
   templateUrl: './modal-widget.component.html',
   styleUrls: ['./modal-widget.component.css']
 })
-export class ModalWidgetComponent implements OnInit {
+export class ModalWidgetComponent implements OnInit, OnDestroy {
 
   formGroups: IFormGroups = {};
   formMaster: FormGroup = new FormGroup({});
   formPaths: FormGroup = new FormGroup({
     'selfPaths': new FormControl(true)
   })
+  subs: Subscription[] = [];
+
 
   constructor(
-    private UnitsService: UnitsService,
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
     @Inject(MAT_DIALOG_DATA) public questions: IModalSettings) { }
 
@@ -55,9 +56,12 @@ export class ModalWidgetComponent implements OnInit {
   ngOnInit() {
     this.formMaster.addControl('paths', this.formPaths);
     this.generateFormGroups();
-    console.log(this.formPaths);
+    console.log(this.formMaster);
   }
 
+  ngOnDestroy() {
+    this.subs.forEach(sub => sub.unsubscribe());
+  }
 
   generateFormGroups() {
     // Generate formgroups for path selection
@@ -77,7 +81,17 @@ export class ModalWidgetComponent implements OnInit {
       this.formMaster.addControl('numDecimal', new FormControl(this.questions.numDecimal, Validators.required));
     }
 
+    //units
+    if ('units' in this.questions) {
+      let group = {};
+      this.questions.units.forEach(unitQ => {
+        group[unitQ.unitFor] = new FormControl(unitQ.unitName, Validators.required);
+      });
+      this.formMaster.addControl('units', new FormGroup(group));
+    }
+
   }
+
 
 
 }

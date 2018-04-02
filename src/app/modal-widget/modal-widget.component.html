@@ -6,7 +6,7 @@
             <mat-form-field class="full-width">
                 <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
             </mat-form-field>
-            <div class="full-width" *ngIf="true">
+            <div class="full-width" *ngIf="(formMaster.controls.numInt !== undefined)">
               <mat-form-field class="half-width">
                       <input type="number" min="0" max="5" matInput placeholder="Min Number of Integer Places" name="numInt"  formControlName="numInt">
               </mat-form-field>
@@ -31,8 +31,16 @@
 
       </mat-tab>
 
-      <mat-tab label="Units" *ngIf="(formGroups['units'] !== undefined)">
-        <div class="tab-content"> <!--
+      <mat-tab label="Units" *ngIf="(formMaster.controls.units !== undefined)">
+        <ng-template mat-tab-label>
+          <span *ngIf="!formMaster.controls.units.valid" class="warning fa fa-exclamation-circle"></span> Units
+        </ng-template>
+        <div class="tab-content"> 
+          <modal-unit-selector class="full-width" *ngFor="let questionUnit of questions.units"
+            [controlName]="questionUnit.unitFor"
+            [path]="formPaths.controls[questionUnit.unitFor].controls[questionUnit.unitFor + 'Path'].value"
+            [formGroup]="formMaster.controls.units" ></modal-unit-selector>
+          <!--
           <mat-form-field class="full-width">
             <mat-select 
                 placeholder="Unit Category" 
