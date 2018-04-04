@@ -23,7 +23,6 @@ export class ModalUnitSelectorComponent implements OnInit {
   pathSub: Subscription;
 
   ngOnInit() {
-    console.log(this.formGroup);
   }
 
   ngOnChanges(changes: SimpleChanges) {

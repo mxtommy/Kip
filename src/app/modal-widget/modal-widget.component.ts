@@ -64,7 +64,6 @@ export class ModalWidgetComponent implements OnInit {
       }
       this.formMaster.addControl('units', new FormGroup(unitsGroup));
     }
-    console.log(this.formMaster);
   }
 
 

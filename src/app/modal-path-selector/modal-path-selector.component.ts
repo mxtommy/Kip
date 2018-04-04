@@ -19,7 +19,6 @@ export class ModalPathSelectorComponent implements OnInit {
   constructor(private SignalKService: SignalKService) { }
 
   ngOnInit() {
-    console.log(this.formGroup);
     //populate available choices
     this.availablePaths = this.SignalKService.getPathsByType(this.formGroup.value.pathType).sort();
 

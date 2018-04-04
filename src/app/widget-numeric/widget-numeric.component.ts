@@ -5,7 +5,7 @@ import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
-import { UnitConvertService } from '../unit-convert.service';
+import { UnitsService } from '../units.service';
 import { isNumeric } from 'rxjs/util/isNumeric';
 
 
@@ -40,10 +40,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @Input('unlockStatus') unlockStatus: boolean;
   @ViewChild('canvasEl') canvasEl: ElementRef;
   @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
-  
-
-  converter = this.UnitConvertService.getConverter();
-  
+    
   activeWidget: IWidget;
 
   dataValue: any = null;
@@ -61,7 +58,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     public dialog:MatDialog,
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
-    private UnitConvertService: UnitConvertService) {
+    private UnitsService: UnitsService) {
   }
 
   ngOnInit() {
@@ -103,14 +100,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.activeWidget.config.paths['numericPath'].path, this.activeWidget.config.paths['numericPath'].source).subscribe(
       newValue => {
-        if (newValue === null) {
-          this.dataValue = null;
-          return;
-        }
-
-        //let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](newValue);
-        //this.dataValue = converted.toFixed(this.widgetConfig.numDecimal);
-        this.dataValue = newValue;
+        this.dataValue = this.UnitsService.convertUnit(this.activeWidget.config.units['numericPath'], newValue);
         this.updateCanvas();
       }
     );
@@ -126,7 +116,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   openWidgetSettings() {
 
-  
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
       data: this.activeWidget.config
@@ -173,10 +162,12 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
-    let valueText = "--";
+    let valueText;
     
     if (isNumeric(this.dataValue)) {
-      valueText = this.padValue(this.dataValue, this.activeWidget.config.numInt, this.activeWidget.config.numDecimal);
+      valueText = this.padValue(this.dataValue.toFixed(this.activeWidget.config.numDecimal), this.activeWidget.config.numInt, this.activeWidget.config.numDecimal);
+    } else {
+      valueText = "--";
     }
     
     //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
@@ -201,7 +192,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   drawTitle() {
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.3));
+    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
  
