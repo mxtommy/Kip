@@ -1,8 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SignalKService, pathObject } from '../signalk.service';
 import { FormGroup } from '@angular/forms';
-import { SignalKPathQuestion } from '../question-signalk-path';
-
 
 @Component({
   selector: 'modal-path-selector',

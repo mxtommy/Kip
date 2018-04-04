@@ -37,7 +37,6 @@ import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
 import { UnitsService } from './units.service';
-import { QuestionControlService } from './question-control.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
@@ -162,8 +161,7 @@ const appRoutes: Routes = [
     WidgetManagerService,
     UnitConvertService,
     UnitsService,
-    AppSettingsService,
-    QuestionControlService
+    AppSettingsService
   ],
   bootstrap: [AppComponent]
 })
