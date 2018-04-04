@@ -40,7 +40,7 @@ import { UnitsService } from './units.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
-import { WidgetTextGenericComponent, WidgetTextGenericModalComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
@@ -82,7 +82,6 @@ const appRoutes: Routes = [
     DynamicWidgetDirective,
     WidgetUnknownComponent,
     WidgetTextGenericComponent,
-    WidgetTextGenericModalComponent,
     FitTextDirective,
     RootDisplayComponent,
     FilterSelfPipe,
@@ -134,7 +133,6 @@ const appRoutes: Routes = [
     WidgetBlankComponent, 
     WidgetNumericComponent,
     WidgetTextGenericComponent,
-    WidgetTextGenericModalComponent,
     WidgetHistoricalComponent,
     WidgetWindComponent,
     WidgetGaugeComponent,
