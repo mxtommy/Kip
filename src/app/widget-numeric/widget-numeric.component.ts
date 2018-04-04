@@ -195,7 +195,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
- 
+    if (this.activeWidget.config.widgetLabel === null) { return; }
     var fontSize = 1;
     // get color
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
