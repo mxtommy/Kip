@@ -2,21 +2,32 @@ import { Component, Input, OnInit, OnDestroy, Inject, ViewChild, ElementRef, Aft
 import { Subscription } from 'rxjs/Subscription';
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
-import { ModalWidgetComponent, IModalSettings } from '../modal-widget/modal-widget.component';
+import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService, pathObject } from '../signalk.service';
-import { WidgetManagerService, IWidget } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitConvertService } from '../unit-convert.service';
 import { isNumeric } from 'rxjs/util/isNumeric';
 
 
-interface IWidgetConfig {
-  signalKPath: string;
-  signalKSource: string;
-  label: string;
-  unitName: string;
-  numDecimal: number; // number of decimal places if a number
-  numInt: number;
-}
+
+
+const defaultConfig: IWidgetConfig = {
+  widgetLabel: null,
+  paths: {
+    "numericPath": {
+      description: "Numeric Data",
+      path: null,
+      source: null,
+      pathType: "number",
+    }
+  },
+  units: {
+    "numericPath": "unitless"
+  },
+  selfPaths: true,
+  numDecimal: 1,
+  numInt: 1
+};
 
 @Component({
   selector: 'app-widget-numeric',
@@ -38,14 +49,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   dataValue: any = null;
   dataTimestamp: number = Date.now();
 
-  widgetConfig: IWidgetConfig = {
-    signalKPath: null,
-    signalKSource: 'default',
-    label: null,
-    unitName: 'unitless',
-    numDecimal: 2,
-    numInt: 2
-  }
+
 
   //subs
   valueSub: Subscription = null;
@@ -64,9 +68,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
-    } else {
-      this.widgetConfig = this.activeWidget.config; // load existing config.
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
+      this.activeWidget.config = defaultConfig; // load default config.
     }
     this.subscribePath();
 
@@ -96,9 +99,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
+    if (typeof(this.activeWidget.config.paths['numericPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath, this.widgetConfig.signalKSource).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.activeWidget.config.paths['numericPath'].path, this.activeWidget.config.paths['numericPath'].source).subscribe(
       newValue => {
         if (newValue === null) {
           this.dataValue = null;
@@ -107,6 +110,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
         //let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](newValue);
         //this.dataValue = converted.toFixed(this.widgetConfig.numDecimal);
+        this.dataValue = newValue;
         this.updateCanvas();
       }
     );
@@ -116,56 +120,28 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.signalKPath)
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.activeWidget.config.paths['numericPath'].path);
     }
   }
 
   openWidgetSettings() {
 
-    //prepare current data
-    let settingsData: IModalSettings = {
-      widgetLabel: this.widgetConfig.label,
-      paths: [
-        {
-          key: "numericPath",
-          description: "Numeric Data",
-          path: this.widgetConfig.signalKPath,
-          source: this.widgetConfig.signalKSource,
-          pathType: "number",
-        }      
-      ],
-      units: [ 
-        {
-          unitFor: "numericPath",
-          unitName: this.widgetConfig.unitName
-        }
-      ],
-      numDecimal: this.widgetConfig.numDecimal,
-      numInt: this.widgetConfig.numInt
-    }
-
-    
-
+  
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
-      data: settingsData
+      data: this.activeWidget.config
     });
 
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
-     /* if (result) {
-        console.debug("Updating widget config");
+      if (result) {
+        console.log(result);
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.widgetConfig.signalKPath = result.signalKPath;
-        this.widgetConfig.signalKSource = result.signalKSource;
-        this.widgetConfig.label = result.label;
-        this.widgetConfig.unitGroup = result.unitGroup;
-        this.widgetConfig.unitName = result.unitName;
-        this.widgetConfig.numDecimal = result.numDecimal;
-        this.widgetConfig.numInt = result.numInt;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+        this.activeWidget.config = result;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.activeWidget.config);
         this.subscribePath();
-      }*/
+        this.updateCanvas();
+      }
 
     });
 
@@ -200,7 +176,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let valueText = "--";
     
     if (isNumeric(this.dataValue)) {
-      valueText = this.padValue(this.dataValue, this.widgetConfig.numInt, this.widgetConfig.numDecimal);
+      valueText = this.padValue(this.dataValue, this.activeWidget.config.numInt, this.activeWidget.config.numDecimal);
     }
     
     //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
@@ -234,17 +210,17 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
 
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(this.widgetConfig.label).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasCtx.measureText(this.activeWidget.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
     this.canvasCtx.textAlign = "left";
     this.canvasCtx.textBaseline="top";
-    this.canvasCtx.fillText(this.widgetConfig.label,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasCtx.fillText(this.activeWidget.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
   drawUnit() {
-    if (this.widgetConfig.unitName == 'no unit') { return; }
+    if (this.activeWidget.config.units['numericPath'] == 'unitless') { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
@@ -252,13 +228,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     var fontSize = 1;
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(this.widgetConfig.unitName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasCtx.measureText(this.activeWidget.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
     this.canvasCtx.textAlign = "right";
     this.canvasCtx.textBaseline="bottom";
-    this.canvasCtx.fillText(this.widgetConfig.unitName,this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+    this.canvasCtx.fillText(this.activeWidget.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
 
@@ -294,77 +270,3 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
 
 }
-
-
-/*
-@Component({
-  selector: 'numeric-widget-modal',
-  templateUrl: './widget-numeric.modal.html',
-  styleUrls: ['./widget-numeric.component.css']
-})
-export class WidgetNumericModalComponent implements OnInit {
-
-  settingsData: IWidgetConfig;
-  selfPaths: boolean = true;
-  availablePaths: Array<string> = [];
-  availableSources: Array<string>;
-  availableUnitGroups: string[];
-  availableUnitNames: string[];
-  
-  converter: Object = this.UnitConvertService.getConverter();
-
-  constructor(
-    private SignalKService: SignalKService,
-    private UnitConvertService: UnitConvertService,
-    public dialogRef:MatDialogRef<WidgetNumericModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any) { }
-
-  ngOnInit() {
-    this.settingsData = this.data;
-
-    //populate available choices
-    this.availablePaths = this.SignalKService.getPathsByType('number').sort();
-    if (this.availablePaths.includes(this.settingsData.signalKPath)) {
-      this.settingsDataUpdatePath(); //TODO: this wipes out existing config, not good when editing existing config...
-    }
-    this.availableUnitGroups = Object.keys(this.converter);
-    if (this.converter.hasOwnProperty(this.settingsData.unitGroup)) {
-            this.availableUnitNames = Object.keys(this.converter[this.settingsData.unitGroup]);
-    }
-  }
-
-
-  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsData.signalKPath);
-    if (pathObject === null) { return; }
-    this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsData.signalKSource = 'default';
-    this.settingsData.numDecimal = this.data.numDecimal;
-    if (pathObject.meta) {
-      if (typeof(pathObject.meta.abbreviation) == 'string') {
-        this.settingsData.label = pathObject.meta.abbreviation;
-      } else if (typeof(pathObject.meta.label) == 'string') {
-        this.settingsData.label = pathObject.meta.label;
-      } else {
-        this.settingsData.label = this.settingsData.signalKPath; // who knows?
-      }
-    } else {
-      this.settingsData.label = this.settingsData.signalKPath;// who knows?
-    }
-  }
-
-  updateUnitType() {
-    if (this.converter.hasOwnProperty(this.settingsData.unitGroup)) {
-      this.availableUnitNames = Object.keys(this.converter[this.settingsData.unitGroup]);
-      // select first name
-      this.settingsData.unitName = this.availableUnitNames[0];
-    }
-  }
-
-
-  submitConfig() {
-    this.dialogRef.close(this.settingsData);
-  }
-  
-}
-*/

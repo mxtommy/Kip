@@ -1,95 +1,75 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import { Component, OnInit,  Inject } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
-
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
-import { Subscription } from 'rxjs/Subscription';
+import { IWidgetConfig } from '../widget-manager.service';
 
-
-export interface IModalSettings {
-  paths: ISignalKPathInfo[];
-  units?: IUnitInfo[];
-  widgetLabel: string;
-
-  numDecimal?: number; // number of decimal places if a number
-  numInt?: number;
-
-}
-
-interface ISignalKPathInfo {
-  key: string;
-  description: string;
-  path: string;       //can be null or set
-  source: string;     //can be null or set
-  pathType: string;
-}
-interface IUnitInfo {
-  unitFor: string;
-  unitName: string;
-}
-
-interface IFormGroups {
-  [key: string]: FormGroup;
-}
 
 @Component({
   selector: 'app-modal-widget',
   templateUrl: './modal-widget.component.html',
   styleUrls: ['./modal-widget.component.css']
 })
-export class ModalWidgetComponent implements OnInit, OnDestroy {
+export class ModalWidgetComponent implements OnInit {
 
-  formGroups: IFormGroups = {};
   formMaster: FormGroup = new FormGroup({});
-  formPaths: FormGroup = new FormGroup({
-    'selfPaths': new FormControl(true)
-  })
-  subs: Subscription[] = [];
+
 
 
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
-    @Inject(MAT_DIALOG_DATA) public questions: IModalSettings) { }
+    @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetConfig) { }
 
 
 
   ngOnInit() {
-    this.formMaster.addControl('paths', this.formPaths);
     this.generateFormGroups();
-    console.log(this.formMaster);
+    this.formMaster.updateValueAndValidity();
   }
 
-  ngOnDestroy() {
-    this.subs.forEach(sub => sub.unsubscribe());
-  }
 
   generateFormGroups() {
     // Generate formgroups for path selection
-    this.questions.paths.forEach(pathQuestion => {
+    /*this.widgetConfig.paths.forEach(pathQuestion => {
       let group: any = {};
       group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
       group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);
       this.formPaths.addControl(pathQuestion.key, new FormGroup(group));
-    });
+    });*/
+    let pathGroups = new FormGroup({});
+    for (var path in this.widgetConfig.paths) {
+      let pathGroup = new FormGroup({});
+      for (var pathInfo in this.widgetConfig.paths[path]) {
+        pathGroup.addControl(pathInfo, new FormControl(this.widgetConfig.paths[path][pathInfo]));
+      }
+      pathGroups.addControl(path, pathGroup);
+    }
+    this.formMaster.addControl('paths', pathGroups);
+    this.formMaster.addControl('selfPaths', new FormControl(this.widgetConfig.selfPaths));
 
     //label
-    this.formMaster.addControl('widgetLabel', new FormControl(this.questions.widgetLabel));
+    this.formMaster.addControl('widgetLabel', new FormControl(this.widgetConfig.widgetLabel));
 
     // Decimal positions if there...
-    if ('numInt' in this.questions) {
-      this.formMaster.addControl('numInt', new FormControl(this.questions.numInt, Validators.required));
-      this.formMaster.addControl('numDecimal', new FormControl(this.questions.numDecimal, Validators.required));
+    if ('numInt' in this.widgetConfig) {
+      this.formMaster.addControl('numInt', new FormControl(this.widgetConfig.numInt, Validators.required));
+      this.formMaster.addControl('numDecimal', new FormControl(this.widgetConfig.numDecimal, Validators.required));
     }
 
     //units
-    if ('units' in this.questions) {
-      let group = {};
-      this.questions.units.forEach(unitQ => {
-        group[unitQ.unitFor] = new FormControl(unitQ.unitName, Validators.required);
-      });
-      this.formMaster.addControl('units', new FormGroup(group));
+    if ('units' in this.widgetConfig) {
+      let unitsGroup = {};
+      for (var unit in this.widgetConfig.units) {
+        unitsGroup[unit] = new FormControl(this.widgetConfig.units[unit], Validators.required);
+      }
+      this.formMaster.addControl('units', new FormGroup(unitsGroup));
     }
+    console.log(this.formMaster);
+  }
 
+
+  submitConfig() {
+    this.dialogRef.close(this.formMaster.value);
   }
 
 

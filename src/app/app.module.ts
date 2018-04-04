@@ -61,7 +61,8 @@ import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component';
 import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
-import { ModalUnitSelectorComponent } from './modal-unit-selector/modal-unit-selector.component'
+import { ModalUnitSelectorComponent } from './modal-unit-selector/modal-unit-selector.component';
+import { ObjectKeysPipe } from './object-keys.pipe'
 
 
 const appRoutes: Routes = [
@@ -106,7 +107,8 @@ const appRoutes: Routes = [
     WidgetStateModalComponent,
     ModalWidgetComponent,
     ModalPathSelectorComponent,
-    ModalUnitSelectorComponent
+    ModalUnitSelectorComponent,
+    ObjectKeysPipe
   ],
   imports: [
     BrowserModule,

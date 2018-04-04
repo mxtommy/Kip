@@ -1,4 +1,4 @@
-<form (ngSubmit)="onSubmit()" [formGroup]="formMaster">
+<form (ngSubmit)="submitConfig()" [formGroup]="formMaster">
   <mat-dialog-content>
     <mat-tab-group class="">
       <mat-tab label="Display">
@@ -16,12 +16,12 @@
             </div>          
         </div>
       </mat-tab>
-      <mat-tab label="Paths" [formGroup]="formPaths">
+      <mat-tab label="Paths">
         <ng-template mat-tab-label>
-          <span *ngIf="!formPaths.valid" class="warning fa fa-exclamation-circle"></span> Paths
+          <span *ngIf="!formMaster.controls.paths.valid" class="warning fa fa-exclamation-circle"></span> Paths
         </ng-template>
-        <modal-path-selector class="full-width" *ngFor="let questionPath of questions.paths"
-          [question]="questionPath" [formGroup]="formPaths.controls[questionPath.key]" [selfPaths]="formPaths.value.selfPaths"
+        <modal-path-selector class="full-width" *ngFor="let pathForm of formMaster.controls.paths.controls | objectKeys"
+          [formGroup]="formMaster.controls.paths.controls[pathForm]" [selfPaths]="formMaster.value.selfPaths"
           ></modal-path-selector>
 
         <mat-checkbox name="selfPaths" formControlName="selfPaths">
@@ -36,32 +36,10 @@
           <span *ngIf="!formMaster.controls.units.valid" class="warning fa fa-exclamation-circle"></span> Units
         </ng-template>
         <div class="tab-content"> 
-          <modal-unit-selector class="full-width" *ngFor="let questionUnit of questions.units"
-            [controlName]="questionUnit.unitFor"
-            [path]="formPaths.controls[questionUnit.unitFor].controls[questionUnit.unitFor + 'Path'].value"
+          <modal-unit-selector class="full-width" *ngFor="let unitKey of formMaster.controls.units.controls  | objectKeys"
+            [controlName]="unitKey"
+            [path]="formMaster.controls.paths.controls[unitKey].value.path"
             [formGroup]="formMaster.controls.units" ></modal-unit-selector>
-          <!--
-          <mat-form-field class="full-width">
-            <mat-select 
-                placeholder="Unit Category" 
-                
-                name="unitGroup"
-                >
-                <mat-option *ngFor="let group of availableUnitGroups" [value]="group">
-                </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-select 
-                placeholder="Unit" 
-                [(ngModel)]="settingsData.unitName" 
-                name="unitName"
-                >
-                <mat-option *ngFor="let unitName of availableUnitNames" [value]="unitName">
-                    {{unitName}}
-                </mat-option>
-            </mat-select>
-          </mat-form-field> -->
         </div>
       </mat-tab>  
     </mat-tab-group>

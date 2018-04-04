@@ -7,8 +7,31 @@ export interface IWidget {
   uuid: string;
   name?: string;
   type: string;
-  config: any;
+  config: IWidgetConfig;
 }
+
+export interface IWidgetConfig {
+  paths: {
+    [key: string]: ISignalKPathInfo;
+  }
+  units?: {
+    [key: string]: string; // key should match key in paths, specifies unit for that path
+  }
+  widgetLabel: string;
+  selfPaths: boolean;
+
+  numDecimal?: number; // number of decimal places if a number
+  numInt?: number;
+
+}
+
+interface ISignalKPathInfo {
+  description: string;
+  path: string;       //can be null or set
+  source: string;     //can be null or set
+  pathType: string;
+}
+
 
 
 @Injectable()

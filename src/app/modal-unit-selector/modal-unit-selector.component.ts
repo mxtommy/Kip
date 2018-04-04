@@ -23,7 +23,7 @@ export class ModalUnitSelectorComponent implements OnInit {
   pathSub: Subscription;
 
   ngOnInit() {
-
+    console.log(this.formGroup);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -36,7 +36,6 @@ export class ModalUnitSelectorComponent implements OnInit {
 
   updateUnits() {
     let unitInfo = this.UnitsService.getConversionsForPath(this.path);
-    console.log(unitInfo);
     this.unitList = unitInfo.conversions;  // array of { "group": "angle", "unit": "deg" }
 
     //check if our current setting exists in unitList. If not, set default

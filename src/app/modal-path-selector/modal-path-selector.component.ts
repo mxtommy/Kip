@@ -11,7 +11,6 @@ import { SignalKPathQuestion } from '../question-signalk-path';
 })
 export class ModalPathSelectorComponent implements OnInit {
 
-  @Input() question: SignalKPathQuestion;
   @Input() formGroup: FormGroup;
 
   @Input() selfPaths: boolean;
@@ -22,15 +21,14 @@ export class ModalPathSelectorComponent implements OnInit {
   constructor(private SignalKService: SignalKService) { }
 
   ngOnInit() {
+    console.log(this.formGroup);
     //populate available choices
-    this.availablePaths = this.SignalKService.getPathsByType(this.question.pathType).sort();
+    this.availablePaths = this.SignalKService.getPathsByType(this.formGroup.value.pathType).sort();
 
     //populate sources for this path (or just the current setting if we know nothing about the path)
-    let pathKey = this.question.key + 'Path';
-    let sourceKey = this.question.key + 'Source';
-    let pathObject = this.SignalKService.getPathObject(this.formGroup.controls[pathKey].value);
+    let pathObject = this.SignalKService.getPathObject(this.formGroup.value.path);
     if (pathObject === null) { 
-      this.availableSources = [this.formGroup.controls[sourceKey].value]; 
+      this.availableSources = [this.formGroup.value.source]; 
     } else {
       this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     }
@@ -39,16 +37,14 @@ export class ModalPathSelectorComponent implements OnInit {
   }
 
   detectNewPath() {
-    let pathKey = this.question.key + 'Path';
-    let sourceKey = this.question.key + 'Source';
-    this.formGroup.controls[pathKey].valueChanges.subscribe(newValue => {
+    this.formGroup.controls.path.valueChanges.subscribe(newValue => {
       let pathObject = this.SignalKService.getPathObject(newValue);
       if (pathObject === null) { 
         this.availableSources = ['default']; 
       } else {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       }
-      this.formGroup.controls[sourceKey].setValue('default');
+      this.formGroup.controls.source.setValue('default');
     });
   }
 

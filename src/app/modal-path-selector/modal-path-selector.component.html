@@ -1,9 +1,8 @@
 <div [formGroup]="formGroup">
     <mat-form-field class="width-path"  >
         <mat-select 
-            [placeholder]="question.description" 
-            [id]="question.key + 'Path'"
-            [formControlName]="question.key + 'Path'"
+            [placeholder]="formGroup.value.description" 
+            formControlName="path"
             required>
             <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
                 {{path}} 
@@ -13,8 +12,7 @@
     <mat-form-field class="width-source">
         <mat-select 
             placeholder="Source" 
-            [id]="question.key + 'Source'"
-            [formControlName]="question.key + 'Source'"
+            formControlName="source"
             required>
             <mat-option *ngFor="let source of availableSources" [value]="source">
                 {{source}}
