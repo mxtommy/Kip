@@ -30,8 +30,10 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-    activeWidget: IWidget;
+  activeWidget: IWidget;
   
+  config: IWidgetConfig;
+
   dataValue: any = null;
 
 
@@ -51,8 +53,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     if (this.activeWidget.config === null) {
         // no data, let's set some!
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.activeWidget.config = defaultConfig; // load default config.
+      this.config = defaultConfig; // load default config.
+    } else {
+      this.config = this.activeWidget.config;
     }
+
 
     this.subscribePath();
   }
@@ -64,9 +69,9 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.activeWidget.config.paths['stringPath'].path === null) { return } // nothing to sub to...
+    if (this.config.paths['stringPath'].path === null) { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.activeWidget.config.paths['stringPath'].path, this.activeWidget.config.paths['stringPath'].source).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['stringPath'].path, this.config.paths['stringPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue;
       }
@@ -77,7 +82,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.activeWidget.config.paths['stringPath'].path)
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['stringPath'].path)
     }
   }
 
@@ -85,7 +90,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
-      data: this.activeWidget.config
+      data: this.config
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -93,8 +98,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       if (result) {
         console.log(result);
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.activeWidget.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.activeWidget.config);
+        this.config = result;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
       }
 

@@ -42,7 +42,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
     
   activeWidget: IWidget;
-
+  config: IWidgetConfig;
+  
   dataValue: any = null;
   dataTimestamp: number = Date.now();
 
@@ -66,7 +67,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.activeWidget.config === null) {
         // no data, let's set some!
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.activeWidget.config = defaultConfig; // load default config.
+      this.config = defaultConfig; // load default config.
+    } else {
+      this.config = this.activeWidget.config;
     }
     this.subscribePath();
 
@@ -96,11 +99,11 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   subscribePath() {
     this.unsubscribePath();
-    if (typeof(this.activeWidget.config.paths['numericPath'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(this.config.paths['numericPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.activeWidget.config.paths['numericPath'].path, this.activeWidget.config.paths['numericPath'].source).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.activeWidget.config.units['numericPath'], newValue);
+        this.dataValue = this.UnitsService.convertUnit(this.config.units['numericPath'], newValue);
         this.updateCanvas();
       }
     );
@@ -110,7 +113,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.activeWidget.config.paths['numericPath'].path);
+
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['numericPath'].path);
     }
   }
 
@@ -118,7 +122,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
-      data: this.activeWidget.config
+      data: this.config
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -126,8 +130,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       if (result) {
         console.log(result);
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.activeWidget.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.activeWidget.config);
+        this.config = result;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
         this.updateCanvas();
       }
@@ -165,7 +169,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let valueText;
     
     if (isNumeric(this.dataValue)) {
-      valueText = this.padValue(this.dataValue.toFixed(this.activeWidget.config.numDecimal), this.activeWidget.config.numInt, this.activeWidget.config.numDecimal);
+      valueText = this.padValue(this.dataValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
     } else {
       valueText = "--";
     }
@@ -195,23 +199,23 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
-    if (this.activeWidget.config.widgetLabel === null) { return; }
+    if (this.config.widgetLabel === null) { return; }
     var fontSize = 1;
     // get color
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
 
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(this.activeWidget.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasCtx.measureText(this.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
     this.canvasCtx.textAlign = "left";
     this.canvasCtx.textBaseline="top";
-    this.canvasCtx.fillText(this.activeWidget.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasCtx.fillText(this.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
   drawUnit() {
-    if (this.activeWidget.config.units['numericPath'] == 'unitless') { return; }
+    if (this.config.units['numericPath'] == 'unitless') { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
@@ -219,13 +223,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     var fontSize = 1;
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(this.activeWidget.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasCtx.measureText(this.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
     this.canvasCtx.textAlign = "right";
     this.canvasCtx.textBaseline="bottom";
-    this.canvasCtx.fillText(this.activeWidget.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+    this.canvasCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
 
