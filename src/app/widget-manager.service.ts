@@ -17,12 +17,18 @@ export interface IWidgetConfig {
   units?: {
     [key: string]: string; // key should match key in paths, specifies unit for that path
   }
-  widgetLabel: string;
+  widgetLabel?: string;
   selfPaths: boolean;
 
+  //numeric data
   numDecimal?: number; // number of decimal places if a number
   numInt?: number;
 
+  //Wind Gague data
+  windSectorEnable?: boolean;
+  windSectorWindowSeconds?: number;
+  laylineEnable?: boolean;
+  laylineAngle?: number;
 }
 
 interface ISignalKPathInfo {

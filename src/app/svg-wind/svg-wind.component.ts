@@ -22,6 +22,8 @@ export class SvgWindComponent implements OnInit {
   @Input('appWindAngle') appWindAngle: number;
   @Input('appWindSpeed') appWindSpeed: number;
   @Input('laylineAngle') laylineAngle : number;
+  @Input('laylineEnable') laylineEnable: boolean;
+  @Input('windSectorEnable') windSectorEnable: boolean;
   @Input('trueWindMinHistoric') trueWindMinHistoric: number;
   @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
   

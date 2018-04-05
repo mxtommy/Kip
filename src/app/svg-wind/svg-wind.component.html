@@ -66,7 +66,8 @@
   <!-- wind sectors -->
   <g
      style="display:inline"
-     id="layer7">
+     id="layer7"
+     *ngIf="windSectorEnable">
     <!--<path *ngIf="windSectorPortStart" 
        d="m 91.260483,250.75101 a 158.64403,159.12648 0 0 1 21.254267,-79.56322 l 137.38976,79.56323 z"
         <path *ngIf="windSectorStbStart"
@@ -86,7 +87,8 @@
   <!-- laylines -->
   <g
      style="display:inline"
-     id="layer8">
+     id="layer8"
+     *ngIf="laylineEnable">
     <path *ngIf="trueWindAngle != null"
        id="path177"
        [attr.d]="laylinePortPath"

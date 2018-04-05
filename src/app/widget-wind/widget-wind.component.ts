@@ -11,7 +11,6 @@ import { UnitsService } from '../units.service';
 
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: null,
   paths: {
     "headingPath": {
       description: "Heading",
@@ -49,7 +48,11 @@ const defaultConfig: IWidgetConfig = {
     "appWindSpeed": "knots"
   },
   selfPaths: true,
-
+  windSectorEnable: true,
+  windSectorWindowSeconds: 10,
+  laylineEnable: true,
+  laylineAngle: 35,
+  
 };
 
 
@@ -65,13 +68,6 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   
   activeWidget: IWidget;
   config: IWidgetConfig;
-
-  widgetConfig  = {
-
-    unitName: 'knots',
-    windSectorWindowSeconds: 30,
-    laylineAngle: 40
-  }    
 
   currentHeading: number = 0;
   headingSub: Subscription = null;
@@ -219,7 +215,9 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         }
         
         //add to historical for wind sectors
-        this.addHistoricalTrue(this.trueWindAngle);
+        if (this.config.windSectorEnable) {
+          this.addHistoricalTrue(this.trueWindAngle);
+        }
       }
     );
   }
@@ -267,7 +265,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   }
 
   historicalCleanup() {
-    let n = Date.now()-(this.widgetConfig.windSectorWindowSeconds*1000);
+    let n = Date.now()-(this.config.windSectorWindowSeconds*1000);
     for (var i = this.trueWindHistoric.length - 1; i >= 0; --i) {
       if (this.trueWindHistoric[i].timestamp < n) {
         this.trueWindHistoric.splice(i,1);

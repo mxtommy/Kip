@@ -3,7 +3,7 @@
     <mat-tab-group class="">
       <mat-tab label="Display">
         <div class="tab-content"> 
-            <mat-form-field class="full-width">
+            <mat-form-field class="full-width" *ngIf="(formMaster.controls.widgetLabel !== undefined)">
                 <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
             </mat-form-field>
             <div class="full-width" *ngIf="(formMaster.controls.numInt !== undefined)">
@@ -14,6 +14,24 @@
                 <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  formControlName="numDecimal">
               </mat-form-field>
             </div>          
+
+            <div class="full-width" *ngIf="(formMaster.controls.laylineEnable !== undefined)">
+              <mat-form-field class="half-width">
+                <input type="number" min="10" max="90" matInput placeholder="Layline Angle" name="laylineAngle"  formControlName="laylineAngle">
+              </mat-form-field>
+              <mat-checkbox name="laylineEnable" formControlName="laylineEnable">
+                Laylines
+              </mat-checkbox> 
+            </div>      
+            <div class="full-width" *ngIf="(formMaster.controls.windSectorEnable !== undefined)">
+              <mat-form-field class="half-width">
+                <input type="number" min="1" max="90" matInput placeholder="Windsector duration" name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
+              </mat-form-field>
+              <mat-checkbox name="windSectorEnable" formControlName="windSectorEnable">
+                Wind Sectors
+              </mat-checkbox> 
+            </div>                  
+
         </div>
       </mat-tab>
       <mat-tab label="Paths">

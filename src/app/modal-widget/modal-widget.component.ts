@@ -30,12 +30,6 @@ export class ModalWidgetComponent implements OnInit {
 
   generateFormGroups() {
     // Generate formgroups for path selection
-    /*this.widgetConfig.paths.forEach(pathQuestion => {
-      let group: any = {};
-      group[pathQuestion.key + 'Path'] = new FormControl(pathQuestion.path || '', Validators.required);
-      group[pathQuestion.key + 'Source'] = new FormControl(pathQuestion.source || '', Validators.required);
-      this.formPaths.addControl(pathQuestion.key, new FormGroup(group));
-    });*/
     let pathGroups = new FormGroup({});
     for (var path in this.widgetConfig.paths) {
       let pathGroup = new FormGroup({});
@@ -48,7 +42,9 @@ export class ModalWidgetComponent implements OnInit {
     this.formMaster.addControl('selfPaths', new FormControl(this.widgetConfig.selfPaths));
 
     //label
-    this.formMaster.addControl('widgetLabel', new FormControl(this.widgetConfig.widgetLabel));
+    if ('widgetLabel' in this.widgetConfig) {
+      this.formMaster.addControl('widgetLabel', new FormControl(this.widgetConfig.widgetLabel));
+    }
 
     // Decimal positions if there...
     if ('numInt' in this.widgetConfig) {
@@ -64,6 +60,16 @@ export class ModalWidgetComponent implements OnInit {
       }
       this.formMaster.addControl('units', new FormGroup(unitsGroup));
     }
+
+    //windgauge
+    if ('windSectorEnable' in this.widgetConfig) {
+      this.formMaster.addControl('windSectorEnable', new FormControl(this.widgetConfig.windSectorEnable, Validators.required));      
+      this.formMaster.addControl('laylineEnable', new FormControl(this.widgetConfig.laylineEnable, Validators.required));      
+      this.formMaster.addControl('windSectorWindowSeconds', new FormControl(this.widgetConfig.windSectorWindowSeconds, Validators.required));
+      this.formMaster.addControl('laylineAngle', new FormControl(this.widgetConfig.laylineAngle, Validators.required));      
+    }
+
+
   }
 
 
