@@ -63,7 +63,7 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.config.paths['boolPath'].path === null) { return } // nothing to sub to...
+    if (typeof(this.config.paths['boolPath'].path) != 'string') { return } // nothing to sub to...
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['boolPath'].path, this.config.paths['boolPath'].source).subscribe(
       newValue => {

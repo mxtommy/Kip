@@ -69,8 +69,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.config.paths['stringPath'].path === null) { return } // nothing to sub to...
-
+    if (typeof(this.config.paths['stringPath'].path) != 'string') { return } // nothing to sub to...
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['stringPath'].path, this.config.paths['stringPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue;

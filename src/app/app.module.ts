@@ -50,7 +50,7 @@ import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './set
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
 import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './widget-historical/widget-historical.component';
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
-import { WidgetWindComponent, WidgetWindModalComponent } from './widget-wind/widget-wind.component';
+import { WidgetWindComponent, } from './widget-wind/widget-wind.component';
 import { SvgWindComponent } from './svg-wind/svg-wind.component';
 import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
@@ -93,7 +93,6 @@ const appRoutes: Routes = [
     WidgetHistoricalModalComponent,
     LayoutSplitComponent,
     WidgetWindComponent,
-    WidgetWindModalComponent,
     SvgWindComponent,
     WidgetGaugeComponent,
     WidgetGaugeModalComponent,
@@ -142,7 +141,6 @@ const appRoutes: Routes = [
     ModalWidgetComponent,
     UnitWindowModalComponent,
     WidgetHistoricalModalComponent,
-    WidgetWindModalComponent,
     WidgetGaugeModalComponent,
     SettingsDatasetsModalComponent,
   ],
