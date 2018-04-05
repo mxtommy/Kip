@@ -12,7 +12,7 @@ import { IWidgetConfig } from '../widget-manager.service';
 })
 export class ModalWidgetComponent implements OnInit {
 
-  formMaster: FormGroup = new FormGroup({});
+  formMaster: FormGroup;
 
 
 
@@ -23,53 +23,22 @@ export class ModalWidgetComponent implements OnInit {
 
 
   ngOnInit() {
-    this.generateFormGroups();
+    this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.formMaster.updateValueAndValidity();
   }
 
 
-  generateFormGroups() {
-    // Generate formgroups for path selection
-    let pathGroups = new FormGroup({});
-    for (var path in this.widgetConfig.paths) {
-      let pathGroup = new FormGroup({});
-      for (var pathInfo in this.widgetConfig.paths[path]) {
-        pathGroup.addControl(pathInfo, new FormControl(this.widgetConfig.paths[path][pathInfo]));
+  generateFormGroups(formData: Object): FormGroup {
+    let groups = new FormGroup({});
+    Object.keys(formData).forEach (key => {
+      if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
+        groups.addControl(key, this.generateFormGroups(formData[key]));
+      } else {
+        groups.addControl(key, new FormControl(formData[key]));
       }
-      pathGroups.addControl(path, pathGroup);
-    }
-    this.formMaster.addControl('paths', pathGroups);
-    this.formMaster.addControl('selfPaths', new FormControl(this.widgetConfig.selfPaths));
-
-    //label
-    if ('widgetLabel' in this.widgetConfig) {
-      this.formMaster.addControl('widgetLabel', new FormControl(this.widgetConfig.widgetLabel));
-    }
-
-    // Decimal positions if there...
-    if ('numInt' in this.widgetConfig) {
-      this.formMaster.addControl('numInt', new FormControl(this.widgetConfig.numInt, Validators.required));
-      this.formMaster.addControl('numDecimal', new FormControl(this.widgetConfig.numDecimal, Validators.required));
-    }
-
-    //units
-    if ('units' in this.widgetConfig) {
-      let unitsGroup = {};
-      for (var unit in this.widgetConfig.units) {
-        unitsGroup[unit] = new FormControl(this.widgetConfig.units[unit], Validators.required);
-      }
-      this.formMaster.addControl('units', new FormGroup(unitsGroup));
-    }
-
-    //windgauge
-    if ('windSectorEnable' in this.widgetConfig) {
-      this.formMaster.addControl('windSectorEnable', new FormControl(this.widgetConfig.windSectorEnable, Validators.required));      
-      this.formMaster.addControl('laylineEnable', new FormControl(this.widgetConfig.laylineEnable, Validators.required));      
-      this.formMaster.addControl('windSectorWindowSeconds', new FormControl(this.widgetConfig.windSectorWindowSeconds, Validators.required));
-      this.formMaster.addControl('laylineAngle', new FormControl(this.widgetConfig.laylineAngle, Validators.required));      
-    }
-
-
+      
+    });
+    return groups;
   }
 
 
