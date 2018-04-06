@@ -246,7 +246,6 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       heading: windHeading
     });
     let arr = this.arcForAngles(this.trueWindHistoric.map(d => d.heading));
-    console.log(arr);
     this.trueWindMinHistoric = arr[0];
     this.trueWindMaxHistoric = arr[1];
     this.trueWindMidHistoric = arr[2];

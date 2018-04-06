@@ -17,12 +17,12 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 
 ### V0.2
-* Sailgauge Laylines and sectors Done!
-* Customization options for radial/linear Gauges
+* Sailgauge Laylines and sectors - Done!
+* Customization options for radial/linear Gauges - In Progress
 * Customization options for Historical Charts
 * Pre-created widgets for commonly used displays
-* Redo conversion service
-  * Know at least which type of unit it should be. (either with meta or hard coded/derived from schema)
+* Redo conversion service 
+  * Know at least which type of unit it should be. Done!
   * Default unit for each unit type in config.
 * Show SignalK status/alert if disconnected
 * Radial/Linear Gauge Zones
