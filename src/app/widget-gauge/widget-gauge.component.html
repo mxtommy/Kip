@@ -1,20 +1,20 @@
 <div class="wrapper" #wrapperDiv>
   <gauge-steel
     [widgetUUID]="widgetUUID"
-    [gaugeType]="widgetConfig.gaugeType"
-    [barGauge]="widgetConfig.barGraph"
+    [gaugeType]="config.gaugeType"
+    [barGauge]="config.barGraph"
 
-    [radialSize]="widgetConfig.radialSize"
+    [radialSize]="config.radialSize"
   
-    backgroundColor="carbon"
-    frameColor="anthracite"
+    [backgroundColor]="config.backgroundColor"
+    [frameColor]="config.frameColor"
 
-    [minValue]="widgetConfig.minValue"
-    [maxValue]="widgetConfig.maxValue"
+    [minValue]="config.minValue"
+    [maxValue]="config.maxValue"
 
     [zones]=""
-    [title]="widgetConfig.label"
-    [units]="widgetConfig.unitName"
+    [title]="config.widgetLabel"
+    [units]="config.unitName"
     [value]="dataValue"
 
   ></gauge-steel>

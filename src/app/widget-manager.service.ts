@@ -29,6 +29,16 @@ export interface IWidgetConfig {
   windSectorWindowSeconds?: number;
   laylineEnable?: boolean;
   laylineAngle?: number;
+
+  //gauge Data
+  gaugeType?: string;
+  barGraph?: boolean;
+  radialSize?: string;
+  minValue?: number;
+  maxValue?: number;
+  rotateFace?: boolean;
+  backgroundColor?: string;
+  frameColor?: string;
 }
 
 interface ISignalKPathInfo {

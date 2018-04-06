@@ -52,7 +52,7 @@ import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './wid
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
 import { WidgetWindComponent, } from './widget-wind/widget-wind.component';
 import { SvgWindComponent } from './svg-wind/svg-wind.component';
-import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
+import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
@@ -95,7 +95,6 @@ const appRoutes: Routes = [
     WidgetWindComponent,
     SvgWindComponent,
     WidgetGaugeComponent,
-    WidgetGaugeModalComponent,
     GaugeSteelComponent,
     SettingsConfigComponent,
     WidgetTutorialComponent,
@@ -141,7 +140,6 @@ const appRoutes: Routes = [
     ModalWidgetComponent,
     UnitWindowModalComponent,
     WidgetHistoricalModalComponent,
-    WidgetGaugeModalComponent,
     SettingsDatasetsModalComponent,
   ],
   providers: [ 

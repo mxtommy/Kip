@@ -71,7 +71,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
   converter = this.UnitConvertService.getConverter();
   dataSetSub: Subscription = null;
 
-  widgetConfig: widgetConfig = {
+  widgetConfig: any = {
     dataSetUUID: null,
     label: '',
     unitGroup: 'discreet',
