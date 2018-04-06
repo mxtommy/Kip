@@ -89,6 +89,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     heading: number;
   }[] = [];
   trueWindMinHistoric: number;
+  trueWindMidHistoric: number;
   trueWindMaxHistoric: number;
     
   windSectorObservableSub: Subscription;
@@ -245,8 +246,10 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       heading: windHeading
     });
     let arr = this.arcForAngles(this.trueWindHistoric.map(d => d.heading));
+    console.log(arr);
     this.trueWindMinHistoric = arr[0];
     this.trueWindMaxHistoric = arr[1];
+    this.trueWindMidHistoric = arr[2];
   }
 
   arcForAngles (data) {
@@ -260,6 +263,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       }
       acc[0] = Math.min(acc[0], value)
       acc[1] = Math.max(acc[1], value)
+      acc[2] = ((acc[1]-acc[0])/2)+acc[0];
       return acc
     }, [data[0], data[0]])
   }

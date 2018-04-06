@@ -68,13 +68,6 @@
      style="display:inline"
      id="layer7"
      *ngIf="windSectorEnable">
-    <!--<path *ngIf="windSectorPortStart" 
-       d="m 91.260483,250.75101 a 158.64403,159.12648 0 0 1 21.254267,-79.56322 l 137.38976,79.56323 z"
-        <path *ngIf="windSectorStbStart"
-       d="m 387.29427,171.18778 a 158.64403,159.12648 0 0 1 21.25427,79.56324 l -158.64403,0 z" />
-
-       d="m 10.260483,250.75101 a 158.64403,159.12648 0 0 1 21.254267,-79.56322 l 137.38976,79.56323 z"
-    -->
     <path *ngIf="portWindSectorPath != 'none'"
        [attr.d]="portWindSectorPath"
        id="path7337"
@@ -895,7 +888,7 @@
 
   <!-- App Wind Indicator -->
   <g
-    *ngIf="appWindAngle"
+    *ngIf="appWindAngle != null"
     style="display:inline"
     id="layer5">
     <g

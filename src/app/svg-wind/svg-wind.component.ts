@@ -2,6 +2,8 @@ import { Component, OnInit, Input, ViewChild, ElementRef, OnChanges, SimpleChang
 import { isNumeric } from 'rxjs/util/isNumeric';
 import { isNumber } from 'util';
 
+const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
+
 @Component({
   selector: 'app-svg-wind',
   templateUrl: './svg-wind.component.html',
@@ -25,6 +27,7 @@ export class SvgWindComponent implements OnInit {
   @Input('laylineEnable') laylineEnable: boolean;
   @Input('windSectorEnable') windSectorEnable: boolean;
   @Input('trueWindMinHistoric') trueWindMinHistoric: number;
+  @Input('trueWindMidHistoric') trueWindMidHistoric: number;
   @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
   
   
@@ -141,25 +144,39 @@ export class SvgWindComponent implements OnInit {
 
   updateWindSectors() {
     let portMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (this.newCompassRotate*-1)), (this.laylineAngle*-1));
+    let portMid = this.addHeading(this.addHeading(this.trueWindMidHistoric, (this.newCompassRotate*-1)), (this.laylineAngle*-1));
     let portMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric, (this.newCompassRotate*-1)), (this.laylineAngle*-1));
 
     //console.log(this.trueWindMinHistoric.toFixed(0) + ' ' + this.trueWindMaxHistoric.toFixed(0) + ' ' + portMin.toFixed(0) + ' ' + portMax.toFixed(0));
     let portMinX = 160 * Math.sin((portMin*Math.PI)/180) + 250; //250 is middle
     let portMinY = (160 * Math.cos((portMin*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
+    let portMidX = 160 * Math.sin((portMid*Math.PI)/180) + 250; //250 is middle
+    let portMidY = (160 * Math.cos((portMid*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
     let portMaxX = 160 * Math.sin((portMax*Math.PI)/180) + 250; //250 is middle
     let portMaxY = (160 * Math.cos((portMax*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
 
-    this.portWindSectorPath = 'M 250,250 L ' + portMinX + ',' + portMinY + ' A 160,160 0 0 1 '+ portMaxX + ',' + portMaxY +' z';
+    //calculate angles for arc options https://stackoverflow.com/questions/21816286/svg-arc-how-to-determine-sweep-and-larg-arc-flags-given-start-end-via-point
+    let portLgArcFl =   Math.abs(angle([portMinX,portMinY],[portMidX,portMidY],[portMaxX,portMaxY])) > Math.PI/2 ? 0 : 1;
+    let portSweepFl =           angle([portMaxX,portMaxY],[portMinX,portMinY],[portMidX,portMidY])  > 0    ? 0 : 1;
+
+
+    this.portWindSectorPath = 'M 250,250 L ' + portMinX + ',' + portMinY + ' A 160,160 0 ' + portLgArcFl + ' ' + portSweepFl + ' ' + portMaxX + ',' + portMaxY +' z';
     //////////
     let stbdMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (this.newCompassRotate*-1)), (this.laylineAngle));
+    let stbdMid = this.addHeading(this.addHeading(this.trueWindMidHistoric, (this.newCompassRotate*-1)), (this.laylineAngle));
     let stbdMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric, (this.newCompassRotate*-1)), (this.laylineAngle));
 
     let stbdMinX = 160 * Math.sin((stbdMin*Math.PI)/180) + 250; //250 is middle
     let stbdMinY = (160 * Math.cos((stbdMin*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
+    let stbdMidX = 160 * Math.sin((stbdMid*Math.PI)/180) + 250; //250 is middle
+    let stbdMidY = (160 * Math.cos((stbdMid*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top    
     let stbdMaxX = 160 * Math.sin((stbdMax*Math.PI)/180) + 250; //250 is middle
     let stbdMaxY = (160 * Math.cos((stbdMax*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
 
-    this.stbdWindSectorPath = 'M 250,250 L ' + stbdMinX + ',' + stbdMinY + ' A 160,160 0 0 1 '+ stbdMaxX + ',' + stbdMaxY +' z';
+    let stbdLgArcFl =   Math.abs(angle([stbdMinX,stbdMinY],[stbdMidX,stbdMidY],[stbdMaxX,stbdMaxY])) > Math.PI/2 ? 0 : 1;
+    let stbdSweepFl =           angle([stbdMaxX,stbdMaxY],[stbdMinX,stbdMinY],[stbdMidX,stbdMidY])  > 0    ? 0 : 1;
+
+    this.stbdWindSectorPath = 'M 250,250 L ' + stbdMinX + ',' + stbdMinY + ' A 160,160 0 ' + stbdLgArcFl + ' ' + stbdSweepFl + ' ' + stbdMaxX + ',' + stbdMaxY +' z';
 
   }
 
