@@ -81,6 +81,7 @@
 
 //Import Themes
 @import 'themes/defaultTheme.scss';
+@import 'themes/signalk.scss';
 @import 'themes/nightTheme.scss';
 @import 'themes/platypusTheme.scss';
 @import 'themes/highContrast.scss';
@@ -102,15 +103,19 @@
 
 @include theme-components($defaultTheme-light);
 
+.signalk {
+  @include theme-components($signalKTheme-light);
+}
+
 .high-contrast-light {
-    @include theme-components($highContrast-light);
+  @include theme-components($highContrast-light);
 }
 
 .night-dark {
-    @include theme-components($nightTheme-dark);
+  @include theme-components($nightTheme-dark);
 }
 .platypus-light {
-    @include theme-components($platypusTheme-light);
+  @include theme-components($platypusTheme-light);
 }
 
 
