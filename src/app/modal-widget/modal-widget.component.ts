@@ -2,6 +2,7 @@ import { Component, OnInit,  Inject } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
+import { DataSetService, IDataSet } from '../data-set.service';
 import { IWidgetConfig } from '../widget-manager.service';
 
 
@@ -13,16 +14,21 @@ import { IWidgetConfig } from '../widget-manager.service';
 export class ModalWidgetComponent implements OnInit {
 
   formMaster: FormGroup;
+  availableDataSets: IDataSet[];
 
 
 
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
+    private DataSetService: DataSetService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetConfig) { }
 
 
 
   ngOnInit() {
+    //load datasets
+    this.availableDataSets = this.DataSetService.getDataSets().sort();
+
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.formMaster.updateValueAndValidity();
   }

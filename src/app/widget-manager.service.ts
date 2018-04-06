@@ -11,14 +11,14 @@ export interface IWidget {
 }
 
 export interface IWidgetConfig {
-  paths: {
+  paths?: {
     [key: string]: ISignalKPathInfo;
   }
   units?: {
     [key: string]: string; // key should match key in paths, specifies unit for that path
   }
   widgetLabel?: string;
-  selfPaths: boolean;
+  selfPaths?: boolean;
 
   //numeric data
   numDecimal?: number; // number of decimal places if a number
@@ -39,7 +39,15 @@ export interface IWidgetConfig {
   rotateFace?: boolean;
   backgroundColor?: string;
   frameColor?: string;
+
+  //Historical
+  dataSetUUID?: string;
+  invertData?: boolean;
+  displayMinMax?: boolean;
+  animateGraph?: boolean;
+  includeZero?: boolean;
 }
+
 
 interface ISignalKPathInfo {
   description: string;

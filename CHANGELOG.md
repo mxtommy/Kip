@@ -28,3 +28,6 @@
 * Removed Derived Data
 * Added Percentage unit, and stopped showing "no unit" on numeric
 * Updated Angular from v4 to v5 and all dependencies to latest version
+* Complete re-write of widget settings modal for future ease of coding
+* Complete re-write of unit conversion service. Now if metadata specifies unit, it only offers you compatible units
+* Gauge Background and frame color options!

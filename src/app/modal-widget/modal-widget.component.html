@@ -135,16 +135,63 @@
       </mat-tab>
 <!-- end Gauge stuff-->
 
+<!-- Historical stuff -->
+      <mat-tab label="DataSet" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
+          <ng-template mat-tab-label>
+              <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> DataSet
+          </ng-template>        
+          <div class="tab-content"> 
+            <mat-form-field class="full-width">
+              <mat-select 
+                  placeholder="Data Set" 
+                  formControlName="dataSetUUID"
+                  name="dataSetUUID"
+                  required>
+                  <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
+                      {{ds.name}}
+                  </mat-option>
+                </mat-select>
+            </mat-form-field>            
+            <p>
+                <mat-checkbox
+                  formControlName="invertData"
+                  name="invertData">
+                    Invert Data (multiply by -1)
+                </mat-checkbox>
+            </p>
+            <p>
+                <mat-checkbox
+                  formControlName="displayMinMax"
+                  name="displayMinMax">
+                    Include Min/Max
+                </mat-checkbox>
+            </p>
+            <p>
+                <mat-checkbox
+                  formControlName="includeZero"
+                  name="includeZero">
+                    Include Origin (aka 0)
+                </mat-checkbox>                    
+            </p>                   
+          </div>
+      </mat-tab>
+<!-- end Historical -->
       <mat-tab label="Units" *ngIf="(widgetConfig.units !== undefined)">
         <ng-template mat-tab-label>
           <span *ngIf="!formMaster.controls.units.valid" class="warning fa fa-exclamation-circle"></span> Units
         </ng-template>
-        <div class="tab-content"> 
+        <div class="tab-content" *ngIf="(widgetConfig.paths !== undefined)"> 
           <modal-unit-selector class="full-width" *ngFor="let unitKey of formMaster.controls.units.controls  | objectKeys"
             [controlName]="unitKey"
             [path]="formMaster.controls.paths.controls[unitKey].value.path"
             [formGroup]="formMaster.controls.units" ></modal-unit-selector>
         </div>
+        <div class="tab-content" *ngIf="(widgetConfig.units.dataset !== undefined)"> 
+            <modal-unit-selector class="full-width"
+              controlName="dataset"
+              path="DataSet Unit"
+              [formGroup]="formMaster.controls.units" ></modal-unit-selector>
+          </div>
       </mat-tab>  
     </mat-tab-group>
   </mat-dialog-content>

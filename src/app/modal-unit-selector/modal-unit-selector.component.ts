@@ -36,7 +36,6 @@ export class ModalUnitSelectorComponent implements OnInit {
   updateUnits() {
     let unitInfo = this.UnitsService.getConversionsForPath(this.path);
     this.unitList = unitInfo.conversions;  // array of { "group": "angle", "unit": "deg" }
-
     //check if our current setting exists in unitList. If not, set default
     if (!this.unitList.some(group => group.units.includes(this.formGroup.controls[this.controlName].value))) {
       this.formGroup.controls[this.controlName].setValue(unitInfo.default);
