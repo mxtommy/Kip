@@ -1,24 +1,24 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
-import { SignalKService, pathObject } from '../signalk.service';
-import { WidgetManagerService, IWidget } from '../widget-manager.service';
-import { UnitConvertService } from '../unit-convert.service';
+import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
+import { SignalKService } from '../signalk.service';
+import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
-interface widgetConfig {
-  signalKPath: string;
-  signalKSource: string;
-  label: string;
-}
-
-interface IWidgetsettingsData {
-  selectedPath: string;
-  selectedSource: string;
-  label: string;
-
-}
+const defaultConfig: IWidgetConfig = {
+  widgetLabel: null,
+  paths: {
+    "stringPath": {
+      description: "String Data",
+      path: null,
+      source: null,
+      pathType: "string",
+    }
+  },
+  selfPaths: true
+};
 
 @Component({
   selector: 'app-widget-text-generic',
@@ -30,16 +30,13 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-    activeWidget: IWidget;
+  activeWidget: IWidget;
   
-  dataValue: any = null;
-  dataTimestamp: number = Date.now();
+  config: IWidgetConfig;
 
-  widgetConfig: widgetConfig = {
-    signalKPath: null,
-    signalKSource: 'default',
-    label: null
-  }
+  dataValue: any = null;
+
+
 
   //subs
   valueSub: Subscription = null;
@@ -55,10 +52,13 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
+      this.config = defaultConfig; // load default config.
     } else {
-      this.widgetConfig = this.activeWidget.config; // load existing config.
+      this.config = this.activeWidget.config;
     }
+
+
     this.subscribePath();
   }
 
@@ -69,9 +69,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
-
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath, this.widgetConfig.signalKSource).subscribe(
+    if (typeof(this.config.paths['stringPath'].path) != 'string') { return } // nothing to sub to...
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['stringPath'].path, this.config.paths['stringPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue;
       }
@@ -82,94 +81,28 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.signalKPath)
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['stringPath'].path)
     }
   }
 
   openWidgetSettings(content) {
       
-    //prepare current data
-    let settingsData: IWidgetsettingsData = {
-      selectedPath: this.widgetConfig.signalKPath,
-      selectedSource: this.widgetConfig.signalKSource,
-      label: this.widgetConfig.label
-    }
-    let dialogRef = this.dialog.open(WidgetTextGenericModalComponent, {
-      width: '500px',
-      data: settingsData
+    let dialogRef = this.dialog.open(ModalWidgetComponent, {
+      width: '80%',
+      data: this.config
     });
+
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
       if (result) {
-        console.debug("Updating widget config");
+        console.log(result);
         this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.widgetConfig.signalKPath = result.selectedPath;
-        this.widgetConfig.signalKSource = result.selectedSource;
-        this.widgetConfig.label = result.label;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+        this.config = result;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
       }
+
     });
   }
 
-  
-}
-
-
-
-@Component({
-  selector: 'text-widget-modal',
-  templateUrl: './widget-text-generic.modal.html',
-  styleUrls: ['./widget-text-generic.component.css']
-})
-export class WidgetTextGenericModalComponent implements OnInit {
-
-  settingsData: IWidgetsettingsData;
-  selfPaths: boolean = true;
-  availablePaths: Array<string> = [];
-  availableSources: Array<string>;
-
-  constructor(
-    private SignalKService: SignalKService,
-    private UnitConvertService: UnitConvertService,
-    public dialogRef:MatDialogRef<WidgetTextGenericModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any) { }
-
-
-
-
-  ngOnInit() {
-    this.settingsData = this.data;
-
-    //populate available choices
-    this.availablePaths = this.SignalKService.getPathsByType('string').sort();
-    if (this.availablePaths.includes(this.settingsData.selectedPath)) {
-      this.settingsDataUpdatePath(); //TODO: this wipes out existing config, not good when editing existing config...
-    }
-  }
-
-
-  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsData.selectedPath);
-    if (pathObject === null) { return; }
-    this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsData.selectedSource = 'default';
-
-    if (pathObject.meta) {
-      if (typeof(pathObject.meta.abbreviation) == 'string') {
-        this.settingsData.label = pathObject.meta.abbreviation;
-      } else if (typeof(pathObject.meta.label) == 'string') {
-        this.settingsData.label = pathObject.meta.label;
-      } else {
-        this.settingsData.label = this.settingsData.selectedPath; // who knows?
-      }
-    } else {
-      this.settingsData.label = this.settingsData.selectedPath;// who knows?
-    }
-  }
-
-   submitConfig() {
-    this.dialogRef.close(this.settingsData);
-  }
-  
 }

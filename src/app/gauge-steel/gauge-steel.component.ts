@@ -282,6 +282,19 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
       }
     } 
 
+    if (changes.backgroundColor) {
+      if ( !changes.backgroundColor.firstChange) {
+        this.buildOptions();
+        this.startGauge();//reset
+      }
+    } 
+
+    if (changes.frameColor) {
+      if ( !changes.frameColor.firstChange) {
+        this.buildOptions();
+        this.startGauge();//reset
+      }
+    }     
 
 
 

@@ -1,26 +1,38 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';
-import { WidgetManagerService, IWidget } from '../widget-manager.service';
-import { UnitConvertService } from '../unit-convert.service';
+import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
+import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { UnitsService } from '../units.service';
 
 
-interface IWidgetConfig {
-  gaugeType: string;
-  signalKPath: string;
-  signalKSource: string;
-  label: string;
-  unitGroup: string;
-  unitName: string;
-  barGraph: boolean;
-  radialSize: string;
-  minValue: number;
-  maxValue: number;
-  rotateFace: boolean;
-}
 
+const defaultConfig: IWidgetConfig = {
+  widgetLabel: null,
+  paths: {
+    "gaugePath": {
+      description: "Numeric Data",
+      path: null,
+      source: null,
+      pathType: "number",
+    }
+  },
+  units: {
+    "gaugePath": "unitless"
+  },
+  selfPaths: true,
+  
+  gaugeType: 'linear',
+  barGraph: false,    // if linear/radial, is it digital?
+  radialSize: 'full',
+  minValue: 0,
+  maxValue: 100,
+  rotateFace: false,
+  backgroundColor: 'carbon',
+  frameColor: 'anthracite'
+};
 
 
 @Component({
@@ -34,44 +46,29 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
   @Input('unlockStatus') unlockStatus: boolean;
   
 
-  converter = this.UnitConvertService.getConverter();
-
   activeWidget: IWidget;
-  
+  config: IWidgetConfig;
+
   dataValue: any = null;
 
   valueSub: Subscription = null;
   
-  widgetConfig: IWidgetConfig = {
-    gaugeType: 'linear',
-    signalKPath: null,
-    signalKSource: 'default',
-    label: null,
-    unitGroup: 'discreet',
-    unitName: 'no unit',
-    barGraph: false,    // if linear/radial, is it digital?
-    radialSize: 'full',
-    minValue: 0,
-    maxValue: 100,
-    rotateFace: false
-  }
-
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
-    private UnitConvertService: UnitConvertService) {
+    private UnitsService: UnitsService) {
   }
 
   ngOnInit() {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
+      this.config = defaultConfig; // load default config.
     } else {
-      this.widgetConfig = this.activeWidget.config; // load existing config.
+      this.config = this.activeWidget.config;
     }
-
     this.subscribePath();
    
   }
@@ -83,18 +80,11 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
+    if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath, this.widgetConfig.signalKSource).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
-              
-        if (newValue === null) {
-          this.dataValue = null;
-          return;
-        }
-
-        let converted = this.converter[this.widgetConfig.unitGroup][this.widgetConfig.unitName](newValue);
-        this.dataValue = converted;
+        this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
       }
     );
   }
@@ -103,125 +93,30 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.signalKPath)
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
     }
   }
 
   openWidgetSettings() {
-    
-        //prepare current data
-        let settingsData: IWidgetConfig = {
-          gaugeType: this.widgetConfig.gaugeType,
-          signalKPath: this.widgetConfig.signalKPath,
-          signalKSource: this.widgetConfig.signalKSource,
-          label: this.widgetConfig.label,
-          unitGroup: this.widgetConfig.unitGroup,
-          unitName: this.widgetConfig.unitName,
-          barGraph: this.widgetConfig.barGraph,
-          radialSize: this.widgetConfig.radialSize,
-          minValue: this.widgetConfig.minValue,
-          maxValue: this.widgetConfig.maxValue,
-          rotateFace: this.widgetConfig.rotateFace
-        }
-    
-    
-        let dialogRef = this.dialog.open(WidgetGaugeModalComponent, {
-          width: '650px',
-          data: settingsData
-        });
-    
-        dialogRef.afterClosed().subscribe(result => {
-          // save new settings
-          if (result) {
-            console.debug("Updating widget config");
-            this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-            this.widgetConfig.gaugeType = result.gaugeType;
-            this.widgetConfig.signalKPath = result.signalKPath;
-            this.widgetConfig.signalKSource = result.signalKSource;
-            this.widgetConfig.label = result.label;
-            this.widgetConfig.unitGroup = result.unitGroup;
-            this.widgetConfig.unitName = result.unitName;
-            this.widgetConfig.barGraph = result.barGraph;
-            this.widgetConfig.radialSize = result.radialSize;
-            this.widgetConfig.minValue = result.minValue;
-            this.widgetConfig.maxValue = result.maxValue;
-            this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
-            this.subscribePath();
-          }
-    
-        });
-    
+
+    let dialogRef = this.dialog.open(ModalWidgetComponent, {
+      width: '80%',
+      data: this.config
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // save new settings
+      if (result) {
+        console.log(result);
+        this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
+        this.config = result;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+        this.subscribePath();
       }
 
-}
+    });
 
-
-@Component({
-  selector: 'gauge-widget-modal',
-  templateUrl: './widget-gauge.modal.html',
-  styleUrls: ['./widget-gauge.component.css']
-})
-export class WidgetGaugeModalComponent implements OnInit {
-
-  settingsData: IWidgetConfig;
-  selfPaths: boolean = true;
-  availablePaths: Array<string> = [];
-  availableSources: Array<string>;
-  availableUnitGroups: string[];
-  availableUnitNames: string[];
+  }  
   
-  converter: Object = this.UnitConvertService.getConverter();
-
-  constructor(
-    private SignalKService: SignalKService,
-    private UnitConvertService: UnitConvertService,
-    public dialogRef:MatDialogRef<WidgetGaugeModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any) { }
-
-
-  ngOnInit() {
-    this.settingsData = this.data;
-
-    //populate available choices
-    this.availablePaths = this.SignalKService.getPathsByType('number').sort();
-    if (this.availablePaths.includes(this.settingsData.signalKPath)) {
-      this.settingsDataUpdatePath(); //TODO: this wipes out existing config, not good when editing existing config...
-    }
-    this.availableUnitGroups = Object.keys(this.converter);
-    if (this.converter.hasOwnProperty(this.settingsData.unitGroup)) {
-            this.availableUnitNames = Object.keys(this.converter[this.settingsData.unitGroup]);
-    }
-  }
-
-  settingsDataUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsData.signalKPath);
-    if (pathObject === null) { return; }
-    this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsData.signalKSource = 'default';
-    if (pathObject.meta) {
-      if (typeof(pathObject.meta.abbreviation) == 'string') {
-        this.settingsData.label = pathObject.meta.abbreviation;
-      } else if (typeof(pathObject.meta.label) == 'string') {
-        this.settingsData.label = pathObject.meta.label;
-      } else {
-        this.settingsData.label = this.settingsData.signalKPath; // who knows?
-      }
-    } else {
-      this.settingsData.label = this.settingsData.signalKPath;// who knows?
-    }
-  }
-
-  updateUnitType() {
-    if (this.converter.hasOwnProperty(this.settingsData.unitGroup)) {
-      this.availableUnitNames = Object.keys(this.converter[this.settingsData.unitGroup]);
-      // select first name
-      this.settingsData.unitName = this.availableUnitNames[0];
-    }
-  }
-
-
-  submitConfig() {
-    this.dialogRef.close(this.settingsData);
-  }
 
 }

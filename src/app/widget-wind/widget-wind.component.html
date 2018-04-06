@@ -5,8 +5,11 @@
             [trueWindSpeed]="trueWindSpeed"
             [appWindAngle]="appWindAngle"
             [appWindSpeed]="appWindSpeed"
-            [laylineAngle]="widgetConfig.laylineAngle"
+            [laylineAngle]="config.laylineAngle"
+            [laylineEnable]="config.laylineEnable"
+            [windSectorEnable]="config.windSectorEnable"
             [trueWindMinHistoric]="trueWindMinHistoric"
+            [trueWindMidHistoric]="trueWindMidHistoric"
             [trueWindMaxHistoric]="trueWindMaxHistoric"
         ></app-svg-wind>
         <div class="settingsButton" *ngIf="unlockStatus">

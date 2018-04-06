@@ -11,12 +11,16 @@ import { IWidget } from './widget-manager.service';
 
 import { BlankConfig } from './blank-config.const';
 import { DemoConfig } from './demo-config.const';
+import { isNumber } from 'util';
 
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
 const defaultTheme = 'default-light';
+const configVersion = 1; // used to invalidate old configs to avoir errors loading it.
+
 
 interface appSettings {
+  configVersion: number;
   signalKUrl: string;
   themeName: string;
   widgets: Array<IWidget>; 
@@ -46,17 +50,23 @@ export class AppSettingsService {
 
   constructor(
     private router: Router) {
+
+    let storageObject: appSettings
     if (localStorage.getItem('signalKData') == null) {
-      this.setDefaultConfig();
+      storageObject = this.getDefaultConfig();
+    } 
+    storageObject = JSON.parse(localStorage.getItem('signalKData'));
+    if (!isNumber(storageObject.configVersion) || (storageObject.configVersion != configVersion)) {
+      console.error("Invalid config version, loading default");
+      storageObject = this.getDefaultConfig();
     }
 
-    this.loadSettings();
+    this.loadSettings(storageObject);
       
   }
 
 
-  loadSettings() {
-    let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
+  loadSettings(storageObject: appSettings) {
     this.signalKUrl.next(storageObject['signalKUrl']);
     this.themeName.next(storageObject['themeName']);
     this.widgets = storageObject.widgets;
@@ -139,6 +149,7 @@ export class AppSettingsService {
 
   buildStorageObject() {
     let storageObject: appSettings = {
+      configVersion: configVersion,
       signalKUrl: this.signalKUrl.getValue(),
       themeName: this.themeName.getValue(),
       widgets: this.widgets,
@@ -179,9 +190,11 @@ export class AppSettingsService {
     setTimeout(()=>{ location.reload() }, 200);
   }
 
-  setDefaultConfig() {
+  getDefaultConfig(): appSettings {
     let config = BlankConfig;
     config.signalKUrl = window.location.origin;
+    config['configVersion'] = configVersion;
     localStorage.setItem('signalKData', JSON.stringify(config));
+    return config;
   }
 }

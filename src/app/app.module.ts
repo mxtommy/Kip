@@ -2,6 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
 import { FormsModule }   from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
@@ -35,29 +36,32 @@ import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
-//import { DerivedService } from './derived.service';
+import { UnitsService } from './units.service';
 
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
-import { WidgetTextGenericComponent, WidgetTextGenericModalComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
-import { WidgetNumericComponent, WidgetNumericModalComponent } from './widget-numeric/widget-numeric.component';
+import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
-import { WidgetHistoricalComponent, WidgetHistoricalModalComponent } from './widget-historical/widget-historical.component';
+import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
-import { WidgetWindComponent, WidgetWindModalComponent } from './widget-wind/widget-wind.component';
+import { WidgetWindComponent, } from './widget-wind/widget-wind.component';
 import { SvgWindComponent } from './svg-wind/svg-wind.component';
-import { WidgetGaugeComponent, WidgetGaugeModalComponent } from './widget-gauge/widget-gauge.component';
+import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
-//import { SettingsDerivedComponent, SettingsDerivedModalComponent } from './settings-derived/settings-derived.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
-import { WidgetStateComponent, WidgetStateModalComponent } from './widget-state/widget-state.component'
+import { WidgetStateComponent } from './widget-state/widget-state.component';
+import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
+import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
+import { ModalUnitSelectorComponent } from './modal-unit-selector/modal-unit-selector.component';
+import { ObjectKeysPipe } from './object-keys.pipe'
 
 
 const appRoutes: Routes = [
@@ -78,35 +82,32 @@ const appRoutes: Routes = [
     DynamicWidgetDirective,
     WidgetUnknownComponent,
     WidgetTextGenericComponent,
-    WidgetTextGenericModalComponent,
     FitTextDirective,
     RootDisplayComponent,
     FilterSelfPipe,
     WidgetNumericComponent,
-    WidgetNumericModalComponent,
     SettingsDatasetsComponent,
     SettingsDatasetsModalComponent,
     SettingsSignalkComponent,
     WidgetHistoricalComponent,
-    WidgetHistoricalModalComponent,
     LayoutSplitComponent,
     WidgetWindComponent,
-    WidgetWindModalComponent,
     SvgWindComponent,
     WidgetGaugeComponent,
-    WidgetGaugeModalComponent,
     GaugeSteelComponent,
     SettingsConfigComponent,
-    //SettingsDerivedComponent,
-    //SettingsDerivedModalComponent,
     WidgetTutorialComponent,
     ResetConfigComponent,
     WidgetStateComponent,
-    WidgetStateModalComponent
+    ModalWidgetComponent,
+    ModalPathSelectorComponent,
+    ModalUnitSelectorComponent,
+    ObjectKeysPipe
   ],
   imports: [
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */ } ),
     AngularSplitModule,
@@ -128,7 +129,6 @@ const appRoutes: Routes = [
     WidgetBlankComponent, 
     WidgetNumericComponent,
     WidgetTextGenericComponent,
-    WidgetTextGenericModalComponent,
     WidgetHistoricalComponent,
     WidgetWindComponent,
     WidgetGaugeComponent,
@@ -136,14 +136,9 @@ const appRoutes: Routes = [
     WidgetTutorialComponent,
     
     //dialogs
+    ModalWidgetComponent,
     UnitWindowModalComponent,
-    WidgetNumericModalComponent,
-    WidgetHistoricalModalComponent,
-    WidgetWindModalComponent,
-    WidgetGaugeModalComponent,
-    //SettingsDerivedModalComponent,
     SettingsDatasetsModalComponent,
-    WidgetStateModalComponent
   ],
   providers: [ 
     SignalKService,
@@ -155,8 +150,8 @@ const appRoutes: Routes = [
     WidgetListService,
     WidgetManagerService,
     UnitConvertService,
-    //DerivedService,
-    AppSettingsService 
+    UnitsService,
+    AppSettingsService
   ],
   bootstrap: [AppComponent]
 })

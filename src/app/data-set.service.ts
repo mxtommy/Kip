@@ -33,6 +33,7 @@ export interface IDataSet {
   name?:  string; // sometimes used for display purposes
 };
 
+
 interface DataSetSub {
   uuid: string;
   pathSub: Subscription;
@@ -201,7 +202,7 @@ export class DataSetService {
 
   }
 
-  getDataSets() {
+  getDataSets(): IDataSet[] {
     let result = [];
     for (let i=0;i<this.dataSets.length; i++) {
 

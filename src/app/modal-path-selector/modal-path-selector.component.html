@@ -1,0 +1,24 @@
+<div [formGroup]="formGroup">
+    <mat-form-field class="width-path"  >
+        <mat-select 
+            [placeholder]="formGroup.value.description" 
+            formControlName="path"
+            required>
+            <mat-option *ngFor="let path of (availablePaths | filterSelf: selfPaths)" [value]="path">
+                {{path}} 
+            </mat-option>
+        </mat-select> 
+    </mat-form-field>
+    <mat-form-field class="width-source">
+        <mat-select 
+            placeholder="Source" 
+            formControlName="source"
+            required>
+            <mat-option *ngFor="let source of availableSources" [value]="source">
+                {{source}}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+</div>
+<!--
+    <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.signalKPath">Next</button>-->
