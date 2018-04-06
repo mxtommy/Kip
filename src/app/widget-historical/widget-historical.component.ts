@@ -80,6 +80,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
     this.startChart();
+    this.subscribeDataSet();
     //setTimeout(this.subscribeDataSet(),1000);//TODO, see why destroy called before we even get subbed (or just after...)
 
   }
