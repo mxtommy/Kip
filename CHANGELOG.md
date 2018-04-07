@@ -34,3 +34,5 @@ Note, Any configs stored in browser will be lost as config format has changed.
 * Gauge Background and frame color options!
 * new Signal K Theme
 
+### V0.1.8
+* Fix bug related to source parsing in deltas
