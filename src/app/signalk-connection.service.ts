@@ -77,8 +77,8 @@ export class SignalKConnectionService {
     signalKURLMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
 
-    webSocketStatusOK:  BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('waiting for endpoint');
+    webSocketStatusOK:  BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true); // defaults to true so we don't say not connected right away
+    webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('waiting to connect');
 
     // REST API
     restStatusOk: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -150,7 +150,8 @@ export class SignalKConnectionService {
                     console.log(err);
                   }
                 this.signalKURLOK.next(false);
-                this.signalKURLMessage.next('Unknown Error');
+                this.signalKURLMessage.next(err.message);
+                this.webSocketStatusOK.next(false);
             }
         );
     }
@@ -175,7 +176,7 @@ export class SignalKConnectionService {
                     console.log(err);
                   }
                 this.restStatusOk.next(false);
-                this.restStatusMessage.next('Unknown Error');
+                this.restStatusMessage.next(err.message);
             }
         );    
     }
