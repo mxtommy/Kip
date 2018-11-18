@@ -6,7 +6,6 @@ import { LayoutSplitsService } from './layout-splits.service';
 import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
-import { SignalKConnectionService } from './signalk-connection.service';
 import { DataSetService } from './data-set.service';
 //import { DerivedService } from './derived.service';
 
@@ -37,7 +36,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(  
     private AppSettingsService: AppSettingsService,
-    private SignalKConnectionService: SignalKConnectionService,
     private DataSetService: DataSetService,
     //private DerivedService: DerivedService,
     private overlayContainer: OverlayContainer,

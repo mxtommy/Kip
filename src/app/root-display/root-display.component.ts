@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+import { SignalKConnectionService } from '../signalk-connection.service';
 
 import { AppSettingsService } from '../app-settings.service';
 import { LayoutSplitsService } from '../layout-splits.service';
@@ -22,7 +23,11 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
 
+  connectionOverlayDisplay = "none";
+  connectionStatusSub: Subscription;
+
   constructor(  private AppSettingsService: AppSettingsService,
+                private SignalKConnectionService: SignalKConnectionService,
                 private LayoutSplitsService: LayoutSplitsService,
                 private route: ActivatedRoute
                 ) { }
@@ -46,6 +51,16 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
     this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(
       unlockStatus => {
         this.unlockStatus = unlockStatus;
+      }
+    );
+
+    this.connectionStatusSub = this.SignalKConnectionService.getEndpointWSStatus().subscribe(
+      status => { 
+        if (status) {
+          this.connectionOverlayDisplay = "none";
+        } else {
+          this.connectionOverlayDisplay = "block";
+        }
       }
     );
 
