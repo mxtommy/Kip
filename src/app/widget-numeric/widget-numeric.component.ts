@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
@@ -44,7 +44,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   activeWidget: IWidget;
   config: IWidgetConfig;
   
-  dataValue: any = null;
+  dataValue: number = null;
   dataTimestamp: number = Date.now();
 
 

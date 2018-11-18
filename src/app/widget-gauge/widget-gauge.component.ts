@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
 
 import { SignalKService, pathObject } from '../signalk.service';

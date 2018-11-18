@@ -1,6 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
-import { Observable } from 'rxjs/Observable';
+import { Subscription ,  Observable, interval } from 'rxjs';
 
 import { MatDialog } from '@angular/material';
 
@@ -235,7 +234,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   }
 
   startWindSectors() {
-    this.windSectorObservableSub = Observable.interval (500).subscribe(x => {
+    this.windSectorObservableSub = interval (500).subscribe(x => {
       this.historicalCleanup();
     });
   }

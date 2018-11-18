@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 
-import { Subscription } from 'rxjs/Subscription';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/interval';
+import { Subscription ,  Observable ,  BehaviorSubject, interval } from 'rxjs';
+
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 
 
@@ -167,7 +165,7 @@ export class DataSetService {
     });
     
     // start update timer
-    this.dataSetSub[dataSubIndex].updateTimerSub = Observable.interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
+    this.dataSetSub[dataSubIndex].updateTimerSub = interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
         this.aggregateDataCache(uuid);
     });
 
