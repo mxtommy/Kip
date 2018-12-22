@@ -65,8 +65,10 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
   @Input('units') units: string;
 
   @Input('value') value: number;
-  gaugeWidth: number = 100;
-  gaugeHeight: number = 100;
+  gaugeWidth: number = 0;
+  gaugeHeight: number = 0;
+  isInResizeWindow: boolean = false;
+  gaugeStarted: boolean = false;
 
   constructor() { }
 
@@ -84,15 +86,7 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
   }
 
   ngAfterViewInit() {
-    
-
     if (!this.gaugeType) { this.gaugeType = 'radial'; }
-
-
-    this.buildOptions();
-           
-    this.startGauge();
-
   }
 
   ngAfterViewChecked() {
@@ -194,7 +188,9 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
 
 
   startGauge() {
-    // Initialzing gauges
+    this.gaugeStarted = true;
+    this.buildOptions();
+        // Initialzing gauges
     if (this.gaugeType == 'radial') {
       if (this.barGauge) {
         this.gauge = new steelseries.RadialBargraph(this.widgetUUID, this.gaugeOptions);
@@ -217,17 +213,25 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
     if (rect.height < 50) { return; }
     if (rect.width < 50) { return; }
     if ((this.gaugeWidth != rect.width) || (this.gaugeHeight != rect.height)) { 
-      this.gaugeWidth = rect.width; 
-      this.gaugeHeight = rect.height;
-      this.buildOptions();
-      this.startGauge();
+      if (!this.isInResizeWindow) {
+        this.isInResizeWindow = true;
+
+        setTimeout(() => { 
+          let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
+          this.gaugeWidth = rect.width; 
+          this.gaugeHeight = rect.height;
+          this.isInResizeWindow = false;
+          this.startGauge();
+           }, 1000);
+      }
+      
     }
   }
 
 
 
   ngOnChanges(changes: SimpleChanges) {
-
+    if (!this.gaugeStarted) { return; }
 
     if (changes.value) {
       if (! changes.value.firstChange) {
@@ -237,61 +241,52 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
 
     if (changes.gaugeType) {
       if ( !changes.gaugeType.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     }
     
     if (changes.barGauge) {
       if ( !changes.barGauge.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     }
 
     if (changes.title) {
       if ( !changes.title.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     }
 
     if (changes.units) {
       if ( !changes.units.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     } 
     if (changes.minValue) {
       if ( !changes.minValue.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     } 
     if (changes.maxValue) {
       if ( !changes.maxValue.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     } 
 
     if (changes.radialSize) {
       if ( !changes.radialSize.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     } 
 
     if (changes.backgroundColor) {
       if ( !changes.backgroundColor.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     } 
 
     if (changes.frameColor) {
       if ( !changes.frameColor.firstChange) {
-        this.buildOptions();
         this.startGauge();//reset
       }
     }     
