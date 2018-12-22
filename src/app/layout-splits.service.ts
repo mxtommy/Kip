@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { AppSettingsService } from './app-settings.service';
@@ -178,7 +178,7 @@ export class LayoutSplitsService {
     this.updateSplit(splitSetUUID);
   }
 
-  updateSplitSizes(splitSetUUID: string, sizesArray) {
+  updateSplitSizes(splitSetUUID: string, sizesArray: Array<number>) {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }   
     for (let i=0; i < sizesArray.length; i++) {

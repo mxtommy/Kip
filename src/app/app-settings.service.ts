@@ -1,23 +1,24 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 
 
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
-import { IDerivation } from './derived.service';
 
 import { BlankConfig } from './blank-config.const';
 import { DemoConfig } from './demo-config.const';
+import { isNumber } from 'util';
 
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
 const defaultTheme = 'default-light';
+const configVersion = 1; // used to invalidate old configs to avoir errors loading it.
+
 
 interface appSettings {
+  configVersion: number;
   signalKUrl: string;
   themeName: string;
   widgets: Array<IWidget>; 
@@ -25,7 +26,6 @@ interface appSettings {
   dataSets: IDataSet[];
   splitSets: ISplitSet[];
   rootSplits: string[];
-  derivations: IDerivation[];
 }
 
 
@@ -41,7 +41,6 @@ export class AppSettingsService {
 
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
-  derivations: IDerivation[] = [];
 
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   dataSets: IDataSet[] = [];
@@ -49,17 +48,23 @@ export class AppSettingsService {
 
   constructor(
     private router: Router) {
+
+    let storageObject: appSettings
     if (localStorage.getItem('signalKData') == null) {
-      this.setDefaultConfig();
+      storageObject = this.getDefaultConfig();
+    } 
+    storageObject = JSON.parse(localStorage.getItem('signalKData'));
+    if (!isNumber(storageObject.configVersion) || (storageObject.configVersion != configVersion)) {
+      console.error("Invalid config version, loading default");
+      storageObject = this.getDefaultConfig();
     }
 
-    this.loadSettings();
+    this.loadSettings(storageObject);
       
   }
 
 
-  loadSettings() {
-    let storageObject: appSettings = JSON.parse(localStorage.getItem('signalKData'));
+  loadSettings(storageObject: appSettings) {
     this.signalKUrl.next(storageObject['signalKUrl']);
     this.themeName.next(storageObject['themeName']);
     this.widgets = storageObject.widgets;
@@ -67,7 +72,6 @@ export class AppSettingsService {
     this.dataSets = storageObject.dataSets;
     this.splitSets = storageObject.splitSets;
     this.rootSplits = storageObject.rootSplits;
-    this.derivations = storageObject.derivations;
   }
 
 
@@ -137,20 +141,13 @@ export class AppSettingsService {
     return this.dataSets;
   }
 
-  // derivations
-  getDerivations() {
-    return this.derivations;
-  }
-  saveDerivations(derivations: IDerivation[]) {
-    this.derivations = derivations;
-    this.saveToLocalStorage();
-  }
 
   // saving. 
 
 
   buildStorageObject() {
     let storageObject: appSettings = {
+      configVersion: configVersion,
       signalKUrl: this.signalKUrl.getValue(),
       themeName: this.themeName.getValue(),
       widgets: this.widgets,
@@ -158,7 +155,6 @@ export class AppSettingsService {
       dataSets: this.dataSets,
       splitSets: this.splitSets,
       rootSplits: this.rootSplits,
-      derivations: this.derivations
     }
     return storageObject;
   }
@@ -192,9 +188,11 @@ export class AppSettingsService {
     setTimeout(()=>{ location.reload() }, 200);
   }
 
-  setDefaultConfig() {
+  getDefaultConfig(): appSettings {
     let config = BlankConfig;
     config.signalKUrl = window.location.origin;
+    config['configVersion'] = configVersion;
     localStorage.setItem('signalKData', JSON.stringify(config));
+    return config;
   }
 }

@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
 
 
 export enum SIUnits {
@@ -39,7 +37,8 @@ export class pathObject {
 interface pathRegistration {
   uuid: string;
   path: string;
-  observable: BehaviorSubject<pathObject>;
+  source?: string; // if this is set, updates to observable are the direct value of this source...
+  observable: BehaviorSubject<any>;
 }
 
 export interface pathInfo {
@@ -69,7 +68,7 @@ export class SignalKService {
     }
   }
 
-  subscribePath(uuid, path) {
+  subscribePath(uuid: string, path: string, source: string = null) {
     //see if already subscribed, if yes return that...
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
@@ -77,20 +76,29 @@ export class SignalKService {
     }
     
     //find if we already have a value for this path to return.
-    let currentValue: pathObject;
+    let currentValue = null;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex >= 0) { // exists
-      currentValue = this.paths[pathIndex];
-    } else {
-      currentValue = null;
-    }
+      if (source === null) {
+        currentValue = this.paths[pathIndex]; //  return the entire pathObject
+      } else if (source == 'default') {
+        currentValue = this.paths[pathIndex].sources[this.paths[pathIndex].defaultSource].value;
+      } else if (source in this.paths[pathIndex].sources) {
+        currentValue = this.paths[pathIndex].sources[source].value;
+      }
+                  
+    } 
 
-    //register
-    this.pathRegister.push({
+    let newRegister = {
       uuid: uuid,
       path: path,
-      observable: new BehaviorSubject<pathObject>(currentValue)
-    });
+      observable: new BehaviorSubject<any>(currentValue)
+    };
+    if (source !== null) {
+      newRegister['source'] = source;
+    }
+    //register
+    this.pathRegister.push(newRegister);
     // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
     pathIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     return this.pathRegister[pathIndex].observable.asObservable();
@@ -134,11 +142,29 @@ export class SignalKService {
 
     
     // push it to any subscriptions of that data
-    for (let i = 0; i < this.pathRegister.length;  i++) {
-      if (this.pathRegister[i].path == pathSelf) {
-        this.pathRegister[i].observable.next(this.paths[pathIndex]);
+    this.pathRegister.filter(pathRegister => pathRegister.path == pathSelf).forEach(
+      pathRegister => {
+        // new type sub that just wants the value
+        if ("source" in pathRegister) {
+          let source: string = null;
+          if (pathRegister.source == 'default') {
+            source = this.paths[pathIndex].defaultSource;
+          } else if (pathRegister.source in this.paths[pathIndex].sources) {
+            source = pathRegister.source;
+          } else {
+            //we're looking for a source we don't know of... do nothing I guess?
+          }
+          if (source !== null) {
+            pathRegister.observable.next(this.paths[pathIndex].sources[source].value);
+          }
+
+        } else {
+          //old type sub that wants whole pathObject...
+          pathRegister.observable.next(this.paths[pathIndex]);
+        }
       }
-    }
+    );
+
   }
 
   setDefaultSource(path: string, source: string) {
@@ -173,6 +199,12 @@ export class SignalKService {
     if (pathIndex < 0) { return null; }
     return this.paths[pathIndex];
 
+  }
+
+  getPathUnitType(path: string): string {
+    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    if (pathIndex < 0) { return null; }
+    if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) { return this.paths[pathIndex].meta.units; } else { return null; }
   }
 
 }

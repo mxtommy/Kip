@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 
-import { Subscription } from 'rxjs/Subscription';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/interval';
+import { Subscription ,  Observable ,  BehaviorSubject, interval } from 'rxjs';
+
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 
 
@@ -32,6 +30,7 @@ export interface IDataSet {
   dataPoints: number; // how many datapoints do we keep?
   name?:  string; // sometimes used for display purposes
 };
+
 
 interface DataSetSub {
   uuid: string;
@@ -160,22 +159,13 @@ export class DataSetService {
     }
     
     //Subscribe to path data
-    this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.dataSets[dataIndex].signalKSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.dataSets[dataIndex].signalKSource;
-        }
-        this.updateDataCache(uuid, pathObject.sources[source].value);
+    this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path, this.dataSets[dataIndex].signalKSource).subscribe(
+      newValue => {
+        this.updateDataCache(uuid, newValue);
     });
     
     // start update timer
-    this.dataSetSub[dataSubIndex].updateTimerSub = Observable.interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
+    this.dataSetSub[dataSubIndex].updateTimerSub = interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
         this.aggregateDataCache(uuid);
     });
 
@@ -210,7 +200,7 @@ export class DataSetService {
 
   }
 
-  getDataSets() {
+  getDataSets(): IDataSet[] {
     let result = [];
     for (let i=0;i<this.dataSets.length; i++) {
 

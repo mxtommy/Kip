@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SettingsDerivedComponent } from './settings-derived.component';
+import { ModalPathSelectorComponent } from './modal-path-selector.component';
 
-describe('SettingsDerivedComponent', () => {
-  let component: SettingsDerivedComponent;
-  let fixture: ComponentFixture<SettingsDerivedComponent>;
+describe('ModalPathSelectorComponent', () => {
+  let component: ModalPathSelectorComponent;
+  let fixture: ComponentFixture<ModalPathSelectorComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SettingsDerivedComponent ]
+      declarations: [ ModalPathSelectorComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(SettingsDerivedComponent);
+    fixture = TestBed.createComponent(ModalPathSelectorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -60,6 +60,8 @@ export class SignalKDeltaService {
         source = update['$source'];
       } else if ((update.source !== undefined) && (update.source.src !== undefined) && (update.source.label !== undefined)) {
         source = update.source.label + '.' + update.source.src;
+      } else if (update.source.label !== undefined) {
+        source = update.source.label;
       } else {
         source = "unknown";
       }

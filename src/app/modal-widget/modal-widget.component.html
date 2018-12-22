@@ -1,0 +1,202 @@
+<form (ngSubmit)="submitConfig()" [formGroup]="formMaster">
+  <mat-dialog-content>
+    <mat-tab-group class="">
+      <mat-tab label="Display">
+        <div class="tab-content"> 
+            <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetLabel !== undefined)">
+                <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
+            </mat-form-field>
+            <div class="full-width" *ngIf="(widgetConfig.numInt !== undefined)">
+              <mat-form-field class="half-width">
+                      <input type="number" min="0" max="5" matInput placeholder="Min Number of Integer Places" name="numInt"  formControlName="numInt">
+              </mat-form-field>
+              <mat-form-field class="half-width">
+                <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  formControlName="numDecimal">
+              </mat-form-field>
+            </div>          
+<!-- sailgauge stuff -->
+            <div class="full-width" *ngIf="(widgetConfig.laylineEnable !== undefined)">
+              <mat-form-field class="half-width">
+                <input type="number" min="10" max="90" matInput placeholder="Layline Angle" name="laylineAngle"  formControlName="laylineAngle">
+              </mat-form-field>
+              <mat-checkbox name="laylineEnable" formControlName="laylineEnable">
+                Laylines
+              </mat-checkbox> 
+            </div>      
+            <div class="full-width" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
+              <mat-form-field class="half-width">
+                <input type="number" min="1" max="90" matInput placeholder="Windsector duration" name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
+              </mat-form-field>
+              <mat-checkbox name="windSectorEnable" formControlName="windSectorEnable">
+                Wind Sectors
+              </mat-checkbox> 
+            </div>                  
+<!-- end sailgague -->
+
+            <div class="full-width" *ngIf="(widgetConfig.minValue !== undefined)">
+                <mat-form-field class="half-width">
+                  <input matInput type="number" placeholder="Minimum Value" name="minValue" formControlName="minValue">
+                </mat-form-field>
+                <mat-form-field class="half-width">
+                  <input matInput type="number" placeholder="Maximum Value" name="maxValue" formControlName="maxValue">
+                </mat-form-field>
+            </div>
+<!-- Gauge stuff -->
+            <div class="full-width" *ngIf="(widgetConfig.backgroundColor !== undefined)">
+              <mat-form-field class="full-width">
+                <mat-select 
+                placeholder="Background Style" 
+                formControlName="backgroundColor" 
+                name="backgroundColor">
+                  <mat-option value='darkGray'>Dark Gray</mat-option>
+                  <mat-option value='satinGray'>Satin Gray</mat-option>
+                  <mat-option value='lightGray'>Light Gray</mat-option>
+                  <mat-option value='white'>White</mat-option>
+                  <mat-option value='black'>Black</mat-option>
+                  <mat-option value='beige'>Beige</mat-option>
+                  <mat-option value='brown'>Brown</mat-option>
+                  <mat-option value='red'>Red</mat-option>
+                  <mat-option value='green'>Green</mat-option>
+                  <mat-option value='blue'>Blue</mat-option>
+                  <mat-option value='anthracite'>Anthracite</mat-option>
+                  <mat-option value='mud'>Mud</mat-option>
+                  <mat-option value='punchedSheet'>Punched Sheet</mat-option>
+                  <mat-option value='carbon'>Carbon</mat-option>
+                  <mat-option value='stainless'>Stainless</mat-option>
+                  <mat-option value='brushedMetal'>Brushed Metal</mat-option>
+                  <mat-option value='brushedStainless'>Brushed Stainless</mat-option>
+                  <mat-option value='turned'>Turned</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="full-width">
+                  <mat-select 
+                  placeholder="Frame Style" 
+                  formControlName="frameColor" 
+                  name="frameColor">
+                    <mat-option value='blackMetal'>Black Metal</mat-option>
+                    <mat-option value='metal'>Metal</mat-option>
+                    <mat-option value='shinyMetal'>Shiny Metal</mat-option>
+                    <mat-option value='brass'>Brass</mat-option>
+                    <mat-option value='steel'>Steel</mat-option>
+                    <mat-option value='chrome'>Chrome</mat-option>
+                    <mat-option value='gold'>Gold</mat-option>
+                    <mat-option value='anthracite'>Anthracite</mat-option>
+                    <mat-option value='tiltedGray'>Tilted Gray</mat-option>
+                    <mat-option value='tiltedBlack'>Tilted Black</mat-option>
+                    <mat-option value='glossyMetal'>Glossy Metal</mat-option>
+                  </mat-select>
+                </mat-form-field>
+            </div>
+<!-- end Gauge stuff-->
+        </div>
+      </mat-tab>
+      <mat-tab label="Paths" *ngIf="(widgetConfig.paths !== undefined)">
+        <ng-template mat-tab-label>
+          <span *ngIf="!formMaster.controls.paths.valid" class="warning fa fa-exclamation-circle"></span> Paths
+        </ng-template>
+        <modal-path-selector class="full-width" *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
+          [formGroup]="formMaster.controls.paths.controls[pathForm]" [selfPaths]="formMaster.value.selfPaths"
+          ></modal-path-selector>
+
+        <mat-checkbox name="selfPaths" formControlName="selfPaths">
+        Restric to own vessel
+        </mat-checkbox>
+      </mat-tab>
+<!-- Gauge stuff -->
+      <mat-tab label="Gauge" *ngIf="(widgetConfig.gaugeType !== undefined)">
+        <div class="tab-content"> 
+          <mat-form-field class="full-width">
+              <mat-select 
+                  placeholder="Gauge Type" 
+                  formControlName="gaugeType" 
+                  name="gaugeType">
+                  <mat-option value="linear">Linear</mat-option>
+                  <mat-option value="radial">Radial</mat-option>
+                  <!-- <mat-option value="compass">Compass</mat-option> -->
+              </mat-select>
+          </mat-form-field> 
+          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial')||(formMaster.controls.gaugeType.value == 'linear')">  
+              <mat-checkbox
+              formControlName="barGraph" 
+                  name="barGraph"
+                  >
+                  Digital display
+              </mat-checkbox>
+          </p>
+          <p *ngIf="formMaster.controls.gaugeType.value == 'radial'" >
+              <mat-radio-group name="radialSize" formControlName="radialSize">
+                  <mat-radio-button value="quarter">1/4</mat-radio-button>
+                  <mat-radio-button value="half">1/2</mat-radio-button>
+                  <mat-radio-button value="three-quarter">3/4</mat-radio-button>
+                  <mat-radio-button value="full">Full</mat-radio-button>
+              </mat-radio-group>
+          </p>
+        </div>
+      </mat-tab>
+<!-- end Gauge stuff-->
+
+<!-- Historical stuff -->
+      <mat-tab label="DataSet" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
+          <ng-template mat-tab-label>
+              <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> DataSet
+          </ng-template>        
+          <div class="tab-content"> 
+            <mat-form-field class="full-width">
+              <mat-select 
+                  placeholder="Data Set" 
+                  formControlName="dataSetUUID"
+                  name="dataSetUUID"
+                  required>
+                  <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
+                      {{ds.name}}
+                  </mat-option>
+                </mat-select>
+            </mat-form-field>            
+            <p>
+                <mat-checkbox
+                  formControlName="invertData"
+                  name="invertData">
+                    Invert Data (multiply by -1)
+                </mat-checkbox>
+            </p>
+            <p>
+                <mat-checkbox
+                  formControlName="displayMinMax"
+                  name="displayMinMax">
+                    Include Min/Max
+                </mat-checkbox>
+            </p>
+            <p>
+                <mat-checkbox
+                  formControlName="includeZero"
+                  name="includeZero">
+                    Include Origin (aka 0)
+                </mat-checkbox>                    
+            </p>                   
+          </div>
+      </mat-tab>
+<!-- end Historical -->
+      <mat-tab label="Units" *ngIf="(widgetConfig.units !== undefined)">
+        <ng-template mat-tab-label>
+          <span *ngIf="!formMaster.controls.units.valid" class="warning fa fa-exclamation-circle"></span> Units
+        </ng-template>
+        <div class="tab-content" *ngIf="(widgetConfig.paths !== undefined)"> 
+          <modal-unit-selector class="full-width" *ngFor="let unitKey of formMaster.controls.units.controls  | objectKeys"
+            [controlName]="unitKey"
+            [path]="formMaster.controls.paths.controls[unitKey].value.path"
+            [formGroup]="formMaster.controls.units" ></modal-unit-selector>
+        </div>
+        <div class="tab-content" *ngIf="(widgetConfig.units.dataset !== undefined)"> 
+            <modal-unit-selector class="full-width"
+              controlName="dataset"
+              path="DataSet Unit"
+              [formGroup]="formMaster.controls.units" ></modal-unit-selector>
+          </div>
+      </mat-tab>  
+    </mat-tab-group>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+      <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
+      <button mat-raised-button color="accent" type="submit" [disabled]="!formMaster.valid" >Save</button>
+  </mat-dialog-actions>
+</form>

@@ -1,10 +1,10 @@
-<split
+<as-split
   [direction]="splitSet.direction"
   [disabled]="!unlockStatus"
   (dragEnd)="onDragEnd($event)"
-  [gutterSize]="6">
+  gutterSize="6">
   <ng-template ngFor let-area let-i="index" [ngForOf]="splitSet.splitAreas">
-    <split-area [order]="i" [size]="area.size" [ngSwitch]="area.type"> 
+    <as-split-area [order]="i" [size]="area.size" [ngSwitch]="area.type"> 
         <div class="splitArea" *ngSwitchCase="'widget'">
           <app-unit-window 
               [widgetUUID]="area.uuid"
@@ -26,6 +26,6 @@
           [splitUUID]="area.uuid"
         ></layout-split>
 
-      </split-area> 
+      </as-split-area> 
   </ng-template>
-</split>
+</as-split>

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
 
 @Component({
@@ -42,8 +42,8 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  onDragEnd(sizesArray: Array<number>) {
-    this.LayoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray);
+  onDragEnd(sizesArray: {gutterNum: number, sizes: Array<number>}) {
+     this.LayoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
   }
 
   splitArea(areaUUID: string, direction: string) {

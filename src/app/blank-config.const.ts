@@ -1,4 +1,5 @@
 export const BlankConfig = {
+    "configVersion": 0,
     "signalKUrl": "", // get's overwritten with host
     "themeName": "default-light",
     "widgets": [

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
 
@@ -7,8 +7,55 @@ export interface IWidget {
   uuid: string;
   name?: string;
   type: string;
-  config: any;
+  config: IWidgetConfig;
 }
+
+export interface IWidgetConfig {
+  paths?: {
+    [key: string]: ISignalKPathInfo;
+  }
+  units?: {
+    [key: string]: string; // key should match key in paths, specifies unit for that path
+  }
+  widgetLabel?: string;
+  selfPaths?: boolean;
+
+  //numeric data
+  numDecimal?: number; // number of decimal places if a number
+  numInt?: number;
+
+  //Wind Gague data
+  windSectorEnable?: boolean;
+  windSectorWindowSeconds?: number;
+  laylineEnable?: boolean;
+  laylineAngle?: number;
+
+  //gauge Data
+  gaugeType?: string;
+  barGraph?: boolean;
+  radialSize?: string;
+  minValue?: number;
+  maxValue?: number;
+  rotateFace?: boolean;
+  backgroundColor?: string;
+  frameColor?: string;
+
+  //Historical
+  dataSetUUID?: string;
+  invertData?: boolean;
+  displayMinMax?: boolean;
+  animateGraph?: boolean;
+  includeZero?: boolean;
+}
+
+
+interface ISignalKPathInfo {
+  description: string;
+  path: string;       //can be null or set
+  source: string;     //can be null or set
+  pathType: string;
+}
+
 
 
 @Injectable()

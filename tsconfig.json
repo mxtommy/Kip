@@ -12,8 +12,13 @@
       "node_modules/@types"
     ],
     "lib": [
-      "es2016",
+      "es2017",
       "dom"
-    ]
+    ],
+    "module": "es2015",
+    "baseUrl": "./"
+  },
+  "angularCompilerOptions": {
+    "preserveWhitespaces": false
   }
 }

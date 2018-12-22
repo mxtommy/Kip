@@ -17,28 +17,25 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 
 ### V0.2
-* Sailgauge Laylines and sectors
-* Customization options for radial/linear Gauges
 * Customization options for Historical Charts
-* Pre-created widgets for commonly used displays
-* Redo conversion service
-  * Know at least which type of unit it should be. (either with meta or hard coded/derived from schema)
-  * Default unit for each unit type in config.
+* Select default unit for each unit type in config.
 * Show SignalK status/alert if disconnected
-* Radial/Linear Gauge Zones
-* Hash based routing to be friendly to node server *Done!
-* Boolean state widget
-* Attitude Indicator
+* Boolean state widget * In progress
+* Attitude Indicator * In progress
 
 ### V0.3
  * Sailing Polars with ChartJS Radar type chart?
+ * More Customization options for radial/linear Gauges
+    * Gauge Zones
+ 
  * Overview page to quickly scroll through known path info.
  * Alerts/Notifications
  * iFrame Widget?
  * Delete Page.
- * Support boolean values. 
  * Numeric widget max/avg values.
  
-### V0.4
+### Feature Ideas
  * Get historical from server.
+ * Pre-created widgets for commonly used displays
+
  

@@ -66,28 +66,32 @@
   <!-- wind sectors -->
   <g
      style="display:inline"
-     id="layer7">
-    <path *ngIf="windSectorPortStart"
-       d="m 91.260483,250.75101 a 158.64403,159.12648 0 0 1 21.254267,-79.56322 l 137.38976,79.56323 z"
+     id="layer7"
+     *ngIf="windSectorEnable">
+    <path *ngIf="portWindSectorPath != 'none'"
+       [attr.d]="portWindSectorPath"
        id="path7337"
        style="fill:#ff3b3b;fill-opacity:0.80952382;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668" />
-    <path *ngIf="windSectorStbStart"
+    <path *ngIf="stbdWindSectorPath != 'none'"
+       [attr.d]="stbdWindSectorPath"
        style="fill:#3db72f;fill-opacity:0.79487179;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668"
-       id="path7339"
-       d="m 387.29427,171.18778 a 158.64403,159.12648 0 0 1 21.25427,79.56324 l -158.64403,0 z" />
+       id="path7339"/>
   </g>
   <!-- laylines -->
   <g
      style="display:inline"
-     id="layer8">
-    <path *ngIf="laylinePortAngle"
+     id="layer8"
+     *ngIf="laylineEnable">
+    <path *ngIf="trueWindAngle != null"
        id="path177"
-       d="M 249.90451,250.75102 249.73104,91.05361"
+       [attr.d]="laylinePortPath"
        style="fill:none;stroke:#f50000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
-    <path *ngIf="laylineStbAngle"
+      
+    <path *ngIf="trueWindAngle != null"
        style="fill:none;stroke:#139800;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
-       d="M 249.90451,250.75102 249.73104,91.05361"
+       [attr.d]="laylineStbdPath"
        id="path984" />
+
   </g>
 
   <!-- Background -->
@@ -819,36 +823,13 @@
       [attr.from]="'-'+oldCompassRotate+' 250 250'"
       [attr.to]="'-'+newCompassRotate+' 250 250'"
       begin="indefinite"
-      dur="0.5s"
+      dur="0.1s"
       additive="replace"
       fill="freeze"
       />
   </g>
 
-  <!-- Heading -->
-  <g
-     style="display:inline"
-     id="layer3">
-    <rect class="heading-background"
-       ry="7.4823418"
-       rx="6.9066305"
-       y="64.10257"
-       x="203.85365"
-       height="28.058783"
-       width="90.649544"
-       id="rect7151"
-       style="fill-opacity:1;stroke:#040404;stroke-width:2.69577217;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <text class="wind-text"
-       transform="scale(1.0008524,0.99914832)"
-       id="text7163"
-       y="86.644958"
-       x="247.44287"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:22.38400078px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill-opacity:1;stroke:none;stroke-width:0.93268102"
-       xml:space="preserve"><tspan
-         y="86.644958"
-         x="247.44287"
-         id="tspan7406">{{ headingValue }}</tspan></text>
-  </g>
+
 
   <!-- True Wind Indicator -->
   <g
@@ -856,45 +837,48 @@
     style="display:inline"
     id="layer4">
     <g
-    id="g1187">
+      transform="rotate(179.60924,249.75622,83.659984)"
+      id="g1187">
       <g class="true-wind"
-          transform="matrix(-5.1082345,0,0,-4.5354333,587.61946,139.05361)"
-          id="g7361"
-          style="display:inline;fill-opacity:1">
+        transform="matrix(-5.1082345,0,0,-4.5354333,587.61946,139.05361)"
+        id="g7361"
+        style="display:inline;fill-opacity:1">
         <path class="true-wind"
-            d="M 62.243972,4.0584953 A 3.9408352,3.9073367 0 0 1 66.184807,0.15115881 3.9408352,3.9073367 0 0 1 70.125642,4.0584955"
-            id="path7357"
-            style="fill-opacity:1;stroke:#000000;stroke-width:0.30782673;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+          d="M 62.243972,4.0584953 A 3.9408352,3.9073367 0 0 1 66.184807,0.15115881 3.9408352,3.9073367 0 0 1 70.125642,4.0584955"
+          id="path7357"
+          style="fill-opacity:1;stroke:#000000;stroke-width:0.30782673;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
         <path class="true-wind"
-            id="path7359"
-            d="m 62.177083,3.96875 3.968749,6.614583 3.96875,-6.614583"
-            style="fill-opacity:1;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+          id="path7359"
+          d="m 62.177083,3.96875 3.968749,6.614583 3.96875,-6.614583"
+          style="fill-opacity:1;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       </g>
       <text class="wind-text"
-          transform="scale(-1.0096233,-0.99046843)"
-          id="text7365"
-          y="-117.71236"
+        transform="scale(-1.0096233,-0.99046843)"
+        id="text7365"
+        y="-117.71236"
+        x="-247.47594"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.02742887"
+        xml:space="preserve"><tspan
+          id="tspan7417"
           x="-247.47594"
-          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.66666603px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill-opacity:1;stroke:none;stroke-width:1.02742887"
-          xml:space="preserve"><tspan
-            id="tspan7417"
-            x="-247.47594"
-            y="-117.71236">{{ trueWindSpeedDisplay }}</tspan></text>
+          y="-117.71236">{{ trueWindSpeedDisplay }}</tspan></text>
       <text class="wind-text"
-          xml:space="preserve"
-          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.66666698px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill-opacity:1;stroke:none"
+        xml:space="preserve"
+        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.66666698px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+        x="-252.43172"
+        y="-103.49368"
+        id="text1173"
+        transform="scale(-1)">
+        <tspan
+          id="tspan1171"
           x="-252.43172"
-          y="-103.49368"
-          id="text1173"
-          transform="scale(-1)"><tspan
-            id="tspan1171"
-            x="-252.43172"
-            y="-103.49368">T</tspan></text>
+          y="-103.49368">T</tspan>
+      </text>
     </g>
     <animateTransform #trueWindAnimate attributeName="transform"
       type="rotate"
-      [attr.from]="'-'+oldTrueWindAngle+' 250 250'"
-      [attr.to]="'-'+newTrueWindAngle+' 250 250'"
+      [attr.from]="oldTrueWindRotateAngle+' 250 250'"
+      [attr.to]="newTrueWindRotateAngle+' 250 250'"
       begin="indefinite"
       dur="0.1s"
       additive="replace"
@@ -904,7 +888,7 @@
 
   <!-- App Wind Indicator -->
   <g
-    *ngIf="appWindAngle"
+    *ngIf="appWindAngle != null"
     style="display:inline"
     id="layer5">
     <g
@@ -945,12 +929,37 @@
     </g>
     <animateTransform #appWindAnimate attributeName="transform"
       type="rotate"
-      [attr.from]="'-'+oldAppWindAngle+' 250 250'"
-      [attr.to]="'-'+newAppWindAngle+' 250 250'"
+      [attr.from]="oldAppWindAngle+' 250 250'"
+      [attr.to]="newAppWindAngle+' 250 250'"
       begin="indefinite"
       dur="0.1s"
       additive="replace"
       fill="freeze"
       />
   </g>
+
+  <!-- Heading -->
+  <g
+    style="display:inline"
+    id="layer3">
+   <rect class="heading-background"
+      ry="7.4823418"
+      rx="6.9066305"
+      y="64.10257"
+      x="203.85365"
+      height="28.058783"
+      width="90.649544"
+      id="rect7151"
+      style="fill-opacity:1;stroke:#040404;stroke-width:2.69577217;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+   <text class="wind-text"
+      transform="scale(1.0008524,0.99914832)"
+      id="text7163"
+      y="86.644958"
+      x="247.44287"
+      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:22.38400078px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill-opacity:1;stroke:none;stroke-width:0.93268102"
+      xml:space="preserve"><tspan
+        y="86.644958"
+        x="247.44287"
+        id="tspan7406">{{ headingValue }}</tspan></text>
+ </g>
 </svg>
