@@ -1,17 +1,25 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
+import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService, pathObject } from '../signalk.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
-import { WidgetManagerService, IWidget } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
-interface widgetConfig {
-  signalKPath: string;
-  signalKSource: string;
-  label: string;
-}
+const defaultConfig: IWidgetConfig = {
+  widgetLabel: null,
+  paths: {
+    "statePath": {
+      description: "State Data",
+      path: null,
+      source: null,
+      pathType: "boolean",
+    }
+  },
+  selfPaths: true,
+};
 
 
 
@@ -25,16 +33,14 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  valueSub: Subscription = null;
   activeWidget: IWidget;
+  config: IWidgetConfig;
   
-  state: boolean = null;
+  dataValue: number = null;
+  dataTimestamp: number = Date.now();
+  valueSub: Subscription = null;
 
-  widgetConfig: widgetConfig = {
-    signalKPath: null,
-    signalKSource: 'default',
-    label: null
-  }
+  state: boolean = null;
 
   constructor(
     public dialog:MatDialog,
@@ -45,11 +51,13 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
+    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.widgetConfig);
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
+      this.config = defaultConfig; // load default config.
     } else {
-      this.widgetConfig = this.activeWidget.config; // load existing config.
+      this.config = this.activeWidget.config;
     }
     this.subscribePath();
   }
@@ -60,27 +68,11 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (this.widgetConfig.signalKPath === null) { return } // nothing to sub to...
+    if (typeof(this.config.paths['statePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.widgetConfig.signalKPath).subscribe(
-      pathObject => {
-        if (pathObject === null) {
-          return; // we will get null back if we subscribe to a path before the app knows about it. when it learns about it we will get first value
-        }
-        let source: string;
-        if (this.widgetConfig.signalKSource == 'default') {
-          source = pathObject.defaultSource;
-        } else {
-          source = this.widgetConfig.signalKSource;
-        }
-
-
-        if (pathObject.sources[source].value === null) {
-          this.state = null;
-        }
-
-        this.state = pathObject.sources[source].value;
-        
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
+      newValue => {
+        this.state = newValue;
       }
     );
   }
@@ -89,7 +81,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.widgetConfig.signalKPath)
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['statePath'].path);
     }
   }
 
@@ -97,5 +89,35 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
   sendDelta(value: boolean) {
     this.SignalKConnectionService.publishDelta("putPath.test1", value);
   }
+
+
+
+  openWidgetSettings() {
+
+    let dialogRef = this.dialog.open(ModalWidgetComponent, {
+      width: '80%',
+      data: this.config
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // save new settings
+      if (result) {
+        console.log(result);
+        this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
+        this.config = result;
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+        this.subscribePath();
+      }
+
+    });
+
+  }
+
+
+
+
+
+
+
 
 }
