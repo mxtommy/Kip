@@ -4,7 +4,7 @@ import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService, pathObject } from '../signalk.service';
-import { SignalKConnectionService } from '../signalk-connection.service';
+import { SignalkRequestsService } from '../signalk-requests.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
@@ -45,7 +45,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
-    private SignalKConnectionService: SignalKConnectionService,
+    private SignalkRequestsService: SignalkRequestsService,
     private WidgetManagerService: WidgetManagerService) {
   }
 
@@ -87,7 +87,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
 
   sendDelta(value: boolean) {
-    this.SignalKConnectionService.publishDelta("putPath.test1", value);
+    this.SignalkRequestsService.putRequest("putPath.test1", value);
   }
 
 

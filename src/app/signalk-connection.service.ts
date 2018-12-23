@@ -209,48 +209,14 @@ export class SignalKConnectionService {
     }
 
 
-    publishDelta(path: string, value: any) {
-        if (this.endpointREST === null) {
-            //no endpoint....
-            return;
-        }
+    publishDelta(message: string) {
 
-        const httpOptions = {
-            headers: new HttpHeaders({
-              'Content-Type':  'application/json',
-               responseType: 'text'
-            })
-          };
-/*
-        let message = { updates: [
-            {
-              values: [
-                { path: path, value: value }
-              ]
-            }
-        ] };
-        this.webSocket.send(JSON.stringify(message));
-*/
-        let message2 = { value: value };
-        this.http.put(this.endpointREST + 'vessels/urn:mrn:signalk:uuid:2204ae24-c944-5ffe-8d1d-4d411c9cea2e/putPath/test1', JSON.stringify(message2), httpOptions).subscribe(
-            // when we go ok, this runs
-            response => {
-                console.log('Yay');
-            },
-            // When not ok, this runs...
-            (err: HttpErrorResponse) => {
-                if (err.error instanceof Error) {
-                    // A client-side or network error occurred. Handle it accordingly.
-                    console.log('An error occurred:', err.error.message);
-                  } else {
-                    // The backend returned an unsuccessful response code.
-                    // The response body may contain clues as to what went wrong,
-                    console.log(err);
-                  }
-            }
-        );    
- 
+      if (!this.webSocketStatusOK.value) {
+        console.log("Tried to publish delta while not connected to Websocket");
+        return;
       }
+      this.webSocket.send(message);
+    }
 
     //borring stuff, return observables etc
 
@@ -272,5 +238,6 @@ export class SignalKConnectionService {
     getEndpointRESTMessage() {
         return this.restStatusMessage.asObservable();
     }
+
 
 }
