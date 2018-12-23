@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subscription ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
@@ -209,6 +209,15 @@ export class SignalKConnectionService {
     }
 
 
+    publishDelta(message: string) {
+
+      if (!this.webSocketStatusOK.value) {
+        console.log("Tried to publish delta while not connected to Websocket");
+        return;
+      }
+      this.webSocket.send(message);
+    }
+
     //borring stuff, return observables etc
 
     getEndpointAPIStatus() {
@@ -229,5 +238,6 @@ export class SignalKConnectionService {
     getEndpointRESTMessage() {
         return this.restStatusMessage.asObservable();
     }
+
 
 }
