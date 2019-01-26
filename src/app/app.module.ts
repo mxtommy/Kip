@@ -19,6 +19,8 @@ import {
 } from '@angular/material';
 
 
+import {MatTooltipModule} from '@angular/material/tooltip'; 
+
 import { AngularSplitModule } from 'angular-split';
 
 import { AppComponent } from './app.component';
@@ -117,6 +119,7 @@ const appRoutes: Routes = [
 
     MatMenuModule,
     MatButtonModule,
+    MatTooltipModule,
     MatDialogModule,
     MatSelectModule,
     MatToolbarModule,

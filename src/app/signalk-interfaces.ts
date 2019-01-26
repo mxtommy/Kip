@@ -21,4 +21,8 @@ export interface deltaMessage {
   statusCode?: number;
   context: string;
   self?: string;
+  accessRequest?: {
+    permission?: string;
+    token?: string
+  }
 }

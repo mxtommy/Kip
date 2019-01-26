@@ -46,13 +46,15 @@ export interface signalKStatus {
 @Injectable()
 export class SignalKConnectionService {
 
+
     // Main URL Variables
     signalKURL: string;
+    signalKToken: string;
     endpointREST: string;
     endpointWS: string;
 
     // Websocket
-    webSocket: WebSocket;
+    webSocket: WebSocket = null;
 
     // status
     signalKStatus: BehaviorSubject<signalKStatus> = new BehaviorSubject<signalKStatus>({
@@ -93,10 +95,22 @@ export class SignalKConnectionService {
     {
         // when signalKUrl changes, do stuff
         this.AppSettingsService.getSignalKURLAsO().subscribe(
-            newURL => {
-                this.signalKURL = newURL;
-                this.resetSignalK();
+          newURL => {
+            this.signalKURL = newURL;
+            if (this.webSocket !== null) {
+              
             }
+            this.resetSignalK();
+          }
+        );
+        // when token changes, do stuff
+        this.AppSettingsService.getSignalKTokenAsO().subscribe(
+          newToken => {
+            this.signalKToken = newToken;
+            if (this.webSocket !== null) {
+              this.webSocket.close();
+            }
+          }
         );
     }
 
@@ -184,8 +198,13 @@ export class SignalKConnectionService {
             setTimeout(()=>{ this.connectEndpointWS();}, 3000);
             return;
         }
+
+        let endpointArgs = "?subscribe=all";
+        if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+          endpointArgs += "&token="+this.signalKToken;
+        }
         this.webSocketStatusMessage.next("Connecting...");
-        this.webSocket = new WebSocket(this.endpointWS+"?subscribe=all");
+        this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
         this.webSocket.onopen = function (event){
             this.webSocketStatusOK.next(true);
             this.webSocketStatusMessage.next("Connected");

@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 
 import { AppSettingsService } from '../app-settings.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
+import { SignalkRequestsService } from '../signalk-requests.service';
 
 
 @Component({
@@ -13,6 +14,7 @@ import { SignalKConnectionService } from '../signalk-connection.service';
 export class SettingsSignalkComponent implements OnInit {
 
   formSignalKURL: string;
+  authToken: string;
   
   endpointAPIStatus: boolean;
   endpointAPIStatusMessage: string;
@@ -21,6 +23,7 @@ export class SettingsSignalkComponent implements OnInit {
   endpointRESTStatus: boolean;
   endpointRESTMessage: string;
 
+  authTokenSub: Subscription;
   endpointAPIStatusSub: Subscription;
   endpointAPIStatusMessageSub: Subscription;
   endpointWSStatusSub: Subscription;
@@ -30,11 +33,14 @@ export class SettingsSignalkComponent implements OnInit {
   
   constructor(
     private AppSettingsService: AppSettingsService, 
-    private SignalKConnectionService: SignalKConnectionService) { }
+    private SignalKConnectionService: SignalKConnectionService,
+    private SignalkRequestsService: SignalkRequestsService) { }
 
   ngOnInit() {
     // get SignalKurl Status
     this.formSignalKURL = this.AppSettingsService.getSignalKURL();
+    
+    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => { this.authToken = token; });
 
     // sub for signalk status stuff
     this.endpointAPIStatusSub = this.SignalKConnectionService.getEndpointAPIStatus().subscribe(status => { this.endpointAPIStatus = status; });
@@ -57,6 +63,10 @@ export class SettingsSignalkComponent implements OnInit {
 
   updateSignalKURL() {
     this.AppSettingsService.setSignalKURL(this.formSignalKURL);
+  }
+
+  requestAuth() {
+    this.SignalkRequestsService.requestAuth();
   }
  
 }
