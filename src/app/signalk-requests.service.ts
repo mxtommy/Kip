@@ -49,13 +49,13 @@ export class SignalkRequestsService {
     this.requests.push(request);  
   }
 
-  public putRequest(path: string, value: any)  {
+  public putRequest(path: string, source: string, value: any)  {
     let requestId = this.newUuid();
-
+    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
     let message = {
       "requestId": requestId,
       "put": {
-        "path": path,
+        "path": noSelfPath,
         "value": value
       }
     }      

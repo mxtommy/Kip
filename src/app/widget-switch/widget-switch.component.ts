@@ -51,7 +51,6 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
@@ -70,7 +69,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
     this.unsubscribePath();
     if (typeof(this.config.paths['statePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['statePath'].path, this.config.paths['statePath'].source).subscribe(
       newValue => {
         this.state = newValue;
       }
@@ -87,7 +86,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
 
   sendDelta(value: boolean) {
-    this.SignalkRequestsService.putRequest("putPath.test1", value);
+   this.SignalkRequestsService.putRequest(this.config.paths['statePath'].path, this.config.paths['statePath'].source, value);
   }
 
 
