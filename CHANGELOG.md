@@ -4,6 +4,8 @@
 * Updated NPM dependencies
 * Show connection lost overlay on closed websocket connection
 * Only resize Steelseries Gauges max 1 a second (helps in resizing)
+* Add Frequency Units
+* Put Support! (Switches + states)
 
 ### V0.1.8
 * Fix bug related to source parsing in deltas

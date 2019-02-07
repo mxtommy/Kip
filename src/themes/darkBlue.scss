@@ -1,0 +1,99 @@
+@import '~@angular/material/theming';
+
+$mat-darkBlue-primary: (
+    50 : #e0e2ec,
+    100 : #b3b7cf,
+    200 : #8087b0,
+    300 : #4d5690,
+    400 : #263278,
+    500 : #000e60,
+    600 : #000c58,
+    700 : #000a4e,
+    800 : #000844,
+    900 : #000433,
+    A100 : #6b6bff,
+    A200 : #3838ff,
+    A400 : #0505ff,
+    A700 : #0000eb,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #ffffff,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #ffffff,
+        A200 : #ffffff,
+        A400 : #ffffff,
+        A700 : #ffffff,
+    )
+);
+
+$mat-darkBlue-accent: (
+  50 : #e3e8f1,
+  100 : #bac5dc,
+  200 : #8c9fc4,
+  300 : #5d78ac,
+  400 : #3b5b9b,
+  500 : #183e89,
+  600 : #153881,
+  700 : #113076,
+  800 : #0e286c,
+  900 : #081b59,
+  A100 : #8ca1ff,
+  A200 : #5978ff,
+  A400 : #264eff,
+  A700 : #0d39ff,
+  contrast: (
+      50 : #000000,
+      100 : #000000,
+      200 : #000000,
+      300 : #ffffff,
+      400 : #ffffff,
+      500 : #ffffff,
+      600 : #ffffff,
+      700 : #ffffff,
+      800 : #ffffff,
+      900 : #ffffff,
+      A100 : #000000,
+      A200 : #ffffff,
+      A400 : #ffffff,
+      A700 : #ffffff,
+  )
+);
+
+$mat-wind: (
+  boat-background: #c7c7c7,
+  heading-background: #c5c5c5,
+  true-wind-background: #068dfb,
+  app-wind-background: #06fb06,
+  compass-dark: #757575,
+  compass-light: #afafaf,
+  wind-rose-background: #8a8a8a,
+  port: #ff0000,
+  starboard: #1fce04,  
+);
+
+
+$darkBlueTheme-primary: mat-palette($mat-darkBlue-primary);
+$darkBlueTheme-accent:  mat-palette($mat-darkBlue-accent);
+
+// The warn palette is optional (defaults to red).
+$darkBlueTheme-warn:    mat-palette($mat-red);
+
+//get our custom foreground/background
+$darkBlueTheme-foreground: custom-theme-dark-foreground(#a5e1fd);
+$darkBlueTheme-background: custom-theme-light-background($mat-darkBlue-primary, 500);
+
+//Generate theme
+$darkBlueTheme-temp-dark: mat-dark-theme($darkBlueTheme-primary, $darkBlueTheme-accent, $darkBlueTheme-warn);
+
+//merge with custom foreground
+$darkBlueTheme-dark: map-merge($darkBlueTheme-temp-dark, (background: $darkBlueTheme-background, foreground: $darkBlueTheme-foreground, wind: $mat-wind));
+
+
+

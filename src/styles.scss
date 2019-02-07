@@ -85,6 +85,7 @@
 @import 'themes/nightTheme.scss';
 @import 'themes/platypusTheme.scss';
 @import 'themes/highContrast.scss';
+@import 'themes/darkBlue.scss';
 
 // import Components
 @import 'app/app.component.scss';
@@ -118,4 +119,6 @@
   @include theme-components($platypusTheme-light);
 }
 
-
+.darkBlue {
+  @include theme-components($darkBlueTheme-dark);
+}
