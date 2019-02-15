@@ -43,16 +43,16 @@ export class WidgetListService {
       componentName: WidgetTextGenericComponent,
       description: 'Text Value',
     },
-//    {
-//      name: 'WidgetStateComponent',
-//      componentName: WidgetStateComponent,
-//      description: 'State (boolean) Value',
-//    },
+    {
+      name: 'WidgetStateComponent',
+      componentName: WidgetStateComponent,
+      description: 'State (boolean) Value',
+    },/*
     {
       name: 'WidgetSwitchComponent',
       componentName: WidgetSwitchComponent,
       description: 'Switch Input',
-    },    
+    },  */  
     {
       name: 'WidgetGaugeComponent',
       componentName: WidgetGaugeComponent,

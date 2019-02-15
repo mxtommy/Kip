@@ -46,6 +46,11 @@ export interface IWidgetConfig {
   displayMinMax?: boolean;
   animateGraph?: boolean;
   includeZero?: boolean;
+
+  //Puts
+  putEnable?: boolean;
+  putMomentary?: boolean;
+  putMomentaryValue?: boolean;
 }
 
 
