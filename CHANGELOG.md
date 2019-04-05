@@ -5,7 +5,7 @@
 * Show connection lost overlay on closed websocket connection
 * Only resize Steelseries Gauges max 1 a second (helps in resizing)
 * Add Frequency Units
-* Put Support! On/Off and Momentary
+* Put Support! On/Off and Momentary support on boolean state
 
 ### V0.1.8
 * Fix bug related to source parsing in deltas

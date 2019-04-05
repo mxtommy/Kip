@@ -4,56 +4,18 @@
     aaa
   </div> -->
 
-  
-  <div class="textValue stateOn" *ngIf="state" (mousedown)="handleClickDown();" (mouseup)="handleClickUp();" (mouseout)="handleClickUp();" >
-      {{ config.widgetLabel }}
-  </div>
-  <div class="textValue stateOff" *ngIf="!state" (mousedown)="handleClickDown()" (mouseup)="handleClickUp();" (mouseout)="handleClickUp();">
-      {{ config.widgetLabel }}
-  </div>
-  
-  <!--
-  <div class="stateIcon">
-    <span style="font-size: 800%;" class="fa fa-square"></span>
-  </div>
--->
-  <!--<div class="textValue">
-    {{ state }}
-  </div>-->
-<!--
-    <svg
-  xmlns:dc="http://purl.org/dc/elements/1.1/"
-  xmlns:cc="http://creativecommons.org/ns#"
-  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-  xmlns:svg="http://www.w3.org/2000/svg"
-  xmlns="http://www.w3.org/2000/svg"
-  id="svg8"
-  version="1.1"
-  viewBox="0 0 500 500"
-  height="100%"
-  width="100%">
- <defs
-    id="defs2" />
- <g
-    transform="translate(0,203)"
-    id="layer1">
-   <circle *ngIf="!state"
-      r="249.84225"
-      cy="47.913685"
-      cx="250.59822"
-      id="path4506"
-      style="stroke:#139800;stroke-width:0.79374999;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill:#ff0000" />
-    <circle *ngIf="state"
-      r="249.84225"
-      cy="47.913685"
-      cx="250.59822"
-      id="path4506"
-      style="stroke:#139800;stroke-width:0.79374999;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill:#139800" />
- 
-    </g>
-</svg>
--->
+  <div class="indicatorBorder stateOn"  *ngIf="state" (mousedown)="handleClickDown();" (mouseup)="handleClickUp();" (mouseout)="handleClickUp();">
+        <div class="textValue "  >
+            {{ config.widgetLabel }}
+        </div>
 
+  </div>
+
+<div class="indicatorBorder stateOff" *ngIf="!state" (mousedown)="handleClickDown()" (mouseup)="handleClickUp();" (mouseout)="handleClickUp();">
+  <div class="textValue " >
+      {{ config.widgetLabel }}
+  </div>
+</div>
 
 
 
