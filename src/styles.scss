@@ -85,12 +85,14 @@
 @import 'themes/nightTheme.scss';
 @import 'themes/platypusTheme.scss';
 @import 'themes/highContrast.scss';
+@import 'themes/darkBlue.scss';
 
 // import Components
 @import 'app/app.component.scss';
 @import 'app/layout-split/layout-split.component.scss';
 @import 'app/widget-blank/widget-blank.component.scss';
 @import 'app/svg-wind/svg-wind.component.scss';
+@import 'app/widget-state/widget-state.component.scss';
 
 
 @mixin theme-components($theme) {
@@ -98,7 +100,8 @@
     @include app-theme($theme);
     @include layout-split-theme($theme);
     @include widget-blank-theme($theme);
-    @include svg-wind-theme($theme)
+    @include svg-wind-theme($theme);
+    @include widget-state-theme($theme);
 }
 
 @include theme-components($defaultTheme-light);
@@ -118,4 +121,6 @@
   @include theme-components($platypusTheme-light);
 }
 
-
+.darkBlue {
+  @include theme-components($darkBlueTheme-dark);
+}

@@ -1,0 +1,22 @@
+@import '~@angular/material/theming';
+
+
+@mixin widget-state-theme($theme) {
+
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+
+  .stateOn {
+    background-color: mat-color($accent, 'A700');
+    color: mat-color($accent, 'A700-contrast');
+  }
+  .stateOff {
+    background-color: mat-color($accent, 100);
+    color: mat-color($accent, '100-contrast');
+  }
+
+}

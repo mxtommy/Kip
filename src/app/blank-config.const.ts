@@ -1,6 +1,7 @@
 export const BlankConfig = {
     "configVersion": 0,
     "signalKUrl": "", // get's overwritten with host
+    "signalKToken": null,
     "themeName": "default-light",
     "widgets": [
       {

@@ -19,8 +19,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 ### V0.2
 * Customization options for Historical Charts
 * Select default unit for each unit type in config.
-* Show SignalK status/alert if disconnected
-* Boolean state widget * In progress
 * Attitude Indicator * In progress
 
 ### V0.3

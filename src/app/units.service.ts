@@ -45,13 +45,14 @@ export class UnitsService {
   conversionList: IUnitInfo[] = [
     { group: 'unitless', units: [ 'unitless' ] },
     { group: 'speed', units: [ 'knots','kph', 'mph', 'm/s' ] },
-    { group: 'flow', units: ['m^3/s', 'liter/minute', 'liter/hour', 'gallon/minute', 'gallon/hour' ] },
+    { group: 'flow', units: ['m3/s', 'l/min', 'l/h', 'g/min', 'g/h' ] },
     { group: 'temp', units: [ 'K', 'C', 'F' ] },
     { group: 'length', units: [ 'm', 'fathom', 'feet', 'km', 'nm', 'mi' ] },
     { group: 'electrity', units: [ 'amps', 'volts' ]},
     { group: 'pressure', units: [ 'pascal', 'hPa', 'bar', 'mbar', 'psi', 'mmHg', 'inHg' ] },
-    { group: 'angularVelocity', units: [ 'rad/s', 'deg/s', 'deg/min', 'rpm' ] },
+    { group: 'angularVelocity', units: [ 'rad/s', 'deg/s', 'deg/min',  ] },
     { group: 'angle', units: [ 'rad', 'deg', 'grad' ] },
+    { group: 'frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
     { group: 'ratio', units: [ 'percent' ] },
   ];
 
@@ -94,6 +95,12 @@ export class UnitsService {
     "rad/s": Qty.swiftConverter('rad/s', 'rad/s'),
     "deg/s": Qty.swiftConverter('rad/s', 'deg/s'),
     "deg/min": Qty.swiftConverter('rad/s', 'deg/min'),
+//  frequency
+    "rpm": function(v) { return v*60; },
+    "Hz": function(v) { return v; },
+    "KHz": function(v) { return v/1000; },
+    "MHz": function(v) { return v/1000000; },
+    "GHz": function(v) { return v/1000000000; }, 
 //  angle
     "rad": Qty.swiftConverter('rad', 'rad'),
     "deg": Qty.swiftConverter('rad', 'deg'),

@@ -40,4 +40,23 @@
       {{ endpointRESTMessage }}
     </td>
   </tr>
+  <tr>
+    <td>
+      SignalK R/W Token: 
+    </td>
+    <td>
+      <div *ngIf="authToken"><i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>{{ authToken | slice : 0 : 15}}...</div>
+      <div *ngIf="!authToken">
+        <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
+        <button mat-button 
+          matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed"
+          (click)="requestAuth()"
+          >
+            Request
+        </button>
+      </div>
+      
+    </td>
+  </tr>
 </table>
+<br>

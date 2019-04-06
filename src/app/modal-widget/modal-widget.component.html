@@ -135,6 +135,38 @@
       </mat-tab>
 <!-- end Gauge stuff-->
 
+<!-- PUT Requests -->
+      <mat-tab label="Put Request" *ngIf="(widgetConfig.putEnable !== undefined)">
+          <div class="tab-content">
+            <p>
+              <mat-checkbox
+                formControlName="putEnable" 
+                  name="putEnable"
+                  >
+                  Enable Put Requests
+              </mat-checkbox>
+            </p>
+            <p>
+              <mat-checkbox
+              formControlName="putMomentary" 
+                name="putMomentary"
+                >
+                Momentary mode (instead of switching between on/off)
+            </mat-checkbox>
+            </p>
+            <p *ngIf="formMaster.controls.putMomentary.value">
+                <mat-checkbox
+                formControlName="putMomentaryValue" 
+                  name="putMomentaryValue"
+                  >
+                  Value to send on button push (checked = on, unchecked = off)
+              </mat-checkbox>
+              </p>
+
+          </div>
+      </mat-tab>
+<!-- End PUT Requests-->
+
 <!-- Historical stuff -->
       <mat-tab label="DataSet" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
           <ng-template mat-tab-label>

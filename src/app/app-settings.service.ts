@@ -14,12 +14,13 @@ import { isNumber } from 'util';
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
 const defaultTheme = 'default-light';
-const configVersion = 1; // used to invalidate old configs to avoir errors loading it.
+const configVersion = 2; // used to invalidate old configs to avoir errors loading it.
 
 
 interface appSettings {
   configVersion: number;
   signalKUrl: string;
+  signalKToken: string;
   themeName: string;
   widgets: Array<IWidget>; 
   unlockStatus: boolean;
@@ -35,6 +36,7 @@ export class AppSettingsService {
 
 
   signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
+  signalKToken: BehaviorSubject<string> = new BehaviorSubject<string>(null);
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   widgets: Array<IWidget>;
@@ -66,6 +68,7 @@ export class AppSettingsService {
 
   loadSettings(storageObject: appSettings) {
     this.signalKUrl.next(storageObject['signalKUrl']);
+    this.signalKToken.next(storageObject['signalKToken'])
     this.themeName.next(storageObject['themeName']);
     this.widgets = storageObject.widgets;
     this.unlockStatus.next(storageObject['unlockStatus']);
@@ -83,10 +86,22 @@ export class AppSettingsService {
   getSignalKURL() {
     return this.signalKUrl.getValue();
   }
-  setSignalKURL(value) {
+  setSignalKURL(value: string) {
     this.signalKUrl.next(value);
     this.saveToLocalStorage();
   }
+
+    // SignalKToken
+    getSignalKTokenAsO() {
+      return this.signalKToken.asObservable();
+    }
+    getSignalKToken() {
+      return this.signalKToken.getValue();
+    }
+    setSignalKToken(value: string) {
+      this.signalKToken.next(value);
+      this.saveToLocalStorage();
+    }
 
   // UnlockStatus
   getUnlockStatusAsO() {
@@ -149,6 +164,7 @@ export class AppSettingsService {
     let storageObject: appSettings = {
       configVersion: configVersion,
       signalKUrl: this.signalKUrl.getValue(),
+      signalKToken: this.signalKToken.getValue(),
       themeName: this.themeName.getValue(),
       widgets: this.widgets,
       unlockStatus: this.unlockStatus.getValue(),
