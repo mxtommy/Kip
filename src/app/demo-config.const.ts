@@ -1,8 +1,9 @@
 
 
 export const DemoConfig = {
-  "configVersion": 1,
+  "configVersion": 2,
   "signalKUrl": "http://demo.signalk.org",
+  "signalKToken": null,
   "themeName": "default-light",
   "widgets": [
     {
