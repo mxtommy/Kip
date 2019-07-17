@@ -7,6 +7,7 @@ import { SignalKService, pathObject } from '../signalk.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { isNumeric } from 'rxjs/util/isNumeric';
+import { isNull } from '@angular/compiler/src/output/output_ast';
 
 
 
@@ -25,6 +26,8 @@ const defaultConfig: IWidgetConfig = {
     "numericPath": "unitless"
   },
   selfPaths: true,
+  showMax: false,
+  showMin: false,
   numDecimal: 1,
   numInt: 1
 };
@@ -45,6 +48,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   config: IWidgetConfig;
   
   dataValue: number = null;
+  maxValue: number = null;
+  minValue: number = null;
   dataTimestamp: number = Date.now();
 
 
@@ -104,6 +109,11 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
         this.dataValue = this.UnitsService.convertUnit(this.config.units['numericPath'], newValue);
+        // init min/max 
+        if (this.minValue === null) { this.minValue = this.dataValue; }
+        if (this.maxValue === null) { this.maxValue = this.dataValue; }
+        if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
+        if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
         this.updateCanvas();
       }
     );
@@ -156,6 +166,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.drawValue();
       this.drawTitle();
       this.drawUnit();
+      if (this.config.showMax || this.config.showMin) {
+        this.drawMinMax();
+      }
     }
   }
 
@@ -232,8 +245,39 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.canvasCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
-
-
+  drawMinMax() {
+    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.6));
+    var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.85));
+    // set font small and make bigger until we hit a max.
+ 
+    let valueText: string = '';
+    
+    if (this.config.showMin) {
+      if (isNumeric(this.minValue)) {
+        valueText = valueText + " Min: " + this.padValue(this.minValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+      } else {
+        valueText = valueText + " Min: --";
+      }
+    }
+    if (this.config.showMax) {
+      if (isNumeric(this.maxValue)) {
+        valueText = valueText + " Max: " + this.padValue(this.maxValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+      } else {
+        valueText = valueText + " Max: --";
+      }
+    }
+    valueText = valueText.trim();
+    var fontSize = 1;
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+    while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+        fontSize++;
+        this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
+    }
+    this.canvasCtx.textAlign = "left";
+    this.canvasCtx.textBaseline="bottom";
+    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+  }
 
   padValue(val, int, dec) {
     let i = 0;

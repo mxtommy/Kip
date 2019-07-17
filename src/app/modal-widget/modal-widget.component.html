@@ -13,7 +13,17 @@
               <mat-form-field class="half-width">
                 <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  formControlName="numDecimal">
               </mat-form-field>
-            </div>          
+            </div>         
+            <div class="full-width"  *ngIf="(widgetConfig.showMax !== undefined)">
+              <mat-checkbox name="showMax" formControlName="showMax">
+                Show Max recorded value
+              </mat-checkbox>
+            </div>
+            <div class="full-width"  *ngIf="(widgetConfig.showMin !== undefined)">
+              <mat-checkbox name="showMin" formControlName="showMin">
+                Show Min recorded value
+              </mat-checkbox>            
+            </div>
 <!-- sailgauge stuff -->
             <div class="full-width" *ngIf="(widgetConfig.laylineEnable !== undefined)">
               <mat-form-field class="half-width">
