@@ -14,7 +14,7 @@ import { isNumber } from 'util';
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
 const defaultUnlockStatus = false;
 const defaultTheme = 'default-light';
-const configVersion = 2; // used to invalidate old configs to avoir errors loading it.
+const configVersion = 3; // used to invalidate old configs to avoir errors loading it.
 
 
 interface appSettings {

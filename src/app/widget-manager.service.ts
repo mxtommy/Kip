@@ -23,6 +23,8 @@ export interface IWidgetConfig {
   //numeric data
   numDecimal?: number; // number of decimal places if a number
   numInt?: number;
+  showMin?: boolean;
+  showMax?: boolean;
 
   //Wind Gague data
   windSectorEnable?: boolean;

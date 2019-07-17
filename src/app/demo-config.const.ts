@@ -1,8 +1,9 @@
 
 
 export const DemoConfig = {
-  "configVersion": 1,
+  "configVersion": 3,
   "signalKUrl": "http://demo.signalk.org",
+  "signalKToken": null,
   "themeName": "default-light",
   "widgets": [
     {
@@ -22,6 +23,8 @@ export const DemoConfig = {
           "numericPath": "feet"
         },
         "selfPaths": true,
+        "showMin": true,
+        "showMax": false,
         "numDecimal": 1,
         "numInt": 1
       }
@@ -144,6 +147,8 @@ export const DemoConfig = {
           "numericPath": "knots"
         },
         "selfPaths": true,
+        "showMin": false,
+        "showMax": true,
         "numDecimal": 1,
         "numInt": 1
       }
@@ -165,6 +170,8 @@ export const DemoConfig = {
           "numericPath": "knots"
         },
         "selfPaths": true,
+        "showMin": false,
+        "showMax": false,        
         "numDecimal": 1,
         "numInt": 1
       }
