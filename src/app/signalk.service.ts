@@ -57,7 +57,7 @@ export class SignalKService {
 
   resetSignalKData() {
     this.paths = [];
-    this.pathRegister = [];
+    //this.pathRegister = []; //why empty path register? That's what our widgets want...
     this.selfurn = 'self';
   }
   

@@ -193,12 +193,11 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
 
   subscribeDataSet() {
-      //this.unsubscribeDataSet();
+      this.unsubscribeDataSet();
       if (this.config.dataSetUUID === null) { return } // nothing to sub to...
 
       this.dataSetSub = this.DataSetService.subscribeDataSet(this.widgetUUID, this.config.dataSetUUID).subscribe(
           dataSet => {
-              
               if (dataSet === null) {
                 return; // we will get null back if we subscribe to a dataSet before the app has started it.when it learns about it we will get first value
               }
