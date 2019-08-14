@@ -42,6 +42,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
   @ViewChild('canvasEl') canvasEl: ElementRef;
+  @ViewChild('canvasBG') canvasBG: ElementRef;
   @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
     
   activeWidget: IWidget;
@@ -51,14 +52,17 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   maxValue: number = null;
   minValue: number = null;
   dataTimestamp: number = Date.now();
-
+  currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  currentMinMaxLength: number = 0;
+  valueFontSize: number = 1;
+  minMaxFontSize: number = 1;
 
 
   //subs
   valueSub: Subscription = null;
   
   canvasCtx;
-
+  canvasBGCtx;
 
   constructor(
     public dialog:MatDialog,
@@ -79,7 +83,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.subscribePath();
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.updateCanvas();
+    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.resizeWidget();  
   }
 
   ngOnDestroy() {
@@ -98,8 +103,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) { 
       this.canvasEl.nativeElement.width = Math.floor(rect.width); 
       this.canvasEl.nativeElement.height = Math.floor(rect.height);
+      this.canvasBG.nativeElement.width = Math.floor(rect.width); 
+      this.canvasBG.nativeElement.height = Math.floor(rect.height);
+      this.currentValueLength = 0; //will force resetting the font size
+      this.updateCanvas();
+      this.updateCanvasBG();
     }
-    this.updateCanvas();
+
   }
 
   subscribePath() {
@@ -144,6 +154,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
         this.updateCanvas();
+        this.updateCanvasBG();
+
       }
 
     });
@@ -162,50 +174,63 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   updateCanvas() {
     if (this.canvasCtx) {
-      this.clearCanvas();
+      this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
       this.drawValue();
-      this.drawTitle();
-      this.drawUnit();
       if (this.config.showMax || this.config.showMin) {
         this.drawMinMax();
       }
     }
   }
 
-  clearCanvas() {
-    this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+  updateCanvasBG() {
+    if (this.canvasBGCtx) {
+      this.canvasBGCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.drawTitle();
+      this.drawUnit();
+    }
   }
+
+
 
   drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
-    let valueText;
-    
+    let valueText : string;
+  
+
     if (isNumeric(this.dataValue)) {
       valueText = this.padValue(this.dataValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
     } else {
       valueText = "--";
     }
+
+    //check if length of string has changed since laste time.
+    if (this.currentValueLength != valueText.length) {
+      //we need to set font size...
+      this.currentValueLength = valueText.length;
     
-    //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
-    // set font small and make bigger until we hit a max.
-    let fontSize = 1;
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    //first increase fontsize by 10, skips lots of loops.
-    while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-      fontSize = fontSize + 10;
-      this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
-    }    
-    // now decrease by 1 to find the right size
-    while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize--;
-        this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
+      //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
+      // set font small and make bigger until we hit a max.
+      this.valueFontSize = 1;
+      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+      //first increase fontsize by 10, skips lots of loops.
+      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
+        this.valueFontSize = this.valueFontSize + 10;
+        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      }    
+      // now decrease by 1 to find the right size
+      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
+        this.valueFontSize--;
+        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      }
     }
+    
+    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
-    
-    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(fontSize/15), maxTextWidth);
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+
+    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
   drawTitle() {
@@ -215,16 +240,16 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.config.widgetLabel === null) { return; }
     var fontSize = 1;
     // get color
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
 
-    this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(this.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+    while ( (this.canvasBGCtx.measureText(this.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
-        this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
+        this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
-    this.canvasCtx.textAlign = "left";
-    this.canvasCtx.textBaseline="top";
-    this.canvasCtx.fillText(this.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasBGCtx.textAlign = "left";
+    this.canvasBGCtx.textBaseline="top";
+    this.canvasBGCtx.fillText(this.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
   drawUnit() {
@@ -234,21 +259,22 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     // set font small and make bigger until we hit a max.
  
     var fontSize = 1;
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(this.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+    while ( (this.canvasBGCtx.measureText(this.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
-        this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
+        this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
-    this.canvasCtx.textAlign = "right";
-    this.canvasCtx.textBaseline="bottom";
-    this.canvasCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+    this.canvasBGCtx.textAlign = "right";
+    this.canvasBGCtx.textBaseline="bottom";
+    this.canvasBGCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
   drawMinMax() {
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.6));
-    var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.85));
-    // set font small and make bigger until we hit a max.
+
+    if (!this.config.showMin && !this.config.showMax) { return; } //no need to do anything if we're not showing min/max
+
+
  
     let valueText: string = '';
     
@@ -267,31 +293,41 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       }
     }
     valueText = valueText.trim();
-    var fontSize = 1;
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
-        this.canvasCtx.font = "bold " + fontSize.toString() + "px Arial";
+
+    if (this.currentMinMaxLength != valueText.length) {
+      this.currentMinMaxLength = valueText.length;
+      var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.6));
+      var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.85));
+      // set font small and make bigger until we hit a max.
+      this.minMaxFontSize = 1;
+      this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.minMaxFontSize < maxTextHeight)) {
+        this.minMaxFontSize++;
+        this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+      }
     }
+
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "left";
     this.canvasCtx.textBaseline="bottom";
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
-  padValue(val, int, dec) {
+  padValue(val, int, dec): string {
     let i = 0;
-    let s, strVal, n;
+    let s, n, foo;
+    let strVal: string
     val = parseFloat(val);
     n = (val < 0);
     val = Math.abs(val);
     if (dec > 0) {
-        strVal = val.toFixed(dec).toString().split('.');
-        s = int - strVal[0].length;
+        foo = val.toFixed(dec).toString().split('.');
+        s = int - foo[0].length;
         for (; i < s; ++i) {
-            strVal[0] = '0' + strVal[0];
+            foo[0] = '0' + foo[0];
         }
-        strVal = (n ? '-' : '') + strVal[0] + '.' + strVal[1];
+        strVal = (n ? '-' : '') + foo[0] + '.' + foo[1];
     }
     else {
         strVal = Math.round(val).toString();
