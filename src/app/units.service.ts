@@ -7,7 +7,7 @@ export interface IUnitInfo {
   group: string;
   units: string[];
 }
-interface IUnitDefaults {
+export interface IUnitDefaults {
   [key: string]: string;
 }
 
@@ -31,15 +31,16 @@ export class UnitsService {
 
   defaultUnits: IUnitDefaults = {
     unitless: 'unitless',
-    speed: 'knots',
-    flow: 'liter/minute',
+    speed: 'kph',
+    flow: 'l/h',
     temp: 'C',
     length: 'm',
     electrity: 'volts',
     pressure: 'mmHg',
-    angularVelocity: 'rpm',
+    angularVelocity: 'deg/min',
+    frequency: 'Hz',
     angle: 'deg',
-    ratio: '%'
+    ratio: 'percent'
   }
 
   conversionList: IUnitInfo[] = [
@@ -105,7 +106,7 @@ export class UnitsService {
     "rad": Qty.swiftConverter('rad', 'rad'),
     "deg": Qty.swiftConverter('rad', 'deg'),
 //   ratio
-    '%': function(v) { return v * 100 },
+    'percent': function(v) { return v * 100 },
   }
 
 
@@ -127,6 +128,13 @@ export class UnitsService {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
     return this.unitConversionFunctions[unit](value);
+  }
+
+  getDefaults(): IUnitDefaults {
+    return this.defaultUnits;
+  }
+  getConversions(): IUnitInfo[] { 
+    return this.conversionList;
   }
 
 }
