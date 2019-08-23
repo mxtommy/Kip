@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
-
+import { AppSettingsService } from '../app-settings.service';
 
 import { IUnitInfo, IUnitDefaults, UnitsService } from '../units.service';
 
@@ -19,11 +19,11 @@ export class SettingsUnitsComponent implements OnInit {
   
 
   
-  constructor(private UnitsService: UnitsService) { }
+  constructor(private UnitsService: UnitsService, private AppSettingsService: AppSettingsService) { }
 
   ngOnInit() {
     
-    this.defaultUnits = this.UnitsService.getDefaults();
+    this.defaultUnits = this.AppSettingsService.getDefaultUnits();
 
     //format data a bit better for consumption in template
     let unitGroupsRaw = this.UnitsService.getConversions();
@@ -39,9 +39,11 @@ export class SettingsUnitsComponent implements OnInit {
 
     this.formUnitMaster = groups;
     this.formUnitMaster.updateValueAndValidity();
-    console.log(this.formUnitMaster);
+    //console.log(this.formUnitMaster);
   }
 
-
+  submitConfig() {
+    this.AppSettingsService.setDefaultUnits(this.formUnitMaster.value);
+  }
 
 }

@@ -11,6 +11,19 @@ export const BlankConfig = {
       }
     ],
     "unlockStatus": false,
+    "unitDefaults": {
+      "unitless": 'unitless',
+      "speed": 'kph',
+      "flow": 'l/h',
+      "temp": 'C',
+      "length": 'm',
+      "electrity": 'volts',
+      "pressure": 'mmHg',
+      "angularVelocity": 'deg/min',
+      "frequency": 'Hz',
+      "angle": 'deg',
+      "ratio": 'percent'
+    },    
     "dataSets": [],
     "splitSets": [
       {

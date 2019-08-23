@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import * as Qty from 'js-quantities';
-import { SignalKService } from './signalk.service';
 
+import { AppSettingsService } from './app-settings.service';
+import { SignalKService } from './signalk.service';
+import { Subscription } from 'rxjs';
 
 export interface IUnitInfo {
   group: string;
@@ -11,37 +13,14 @@ export interface IUnitDefaults {
   [key: string]: string;
 }
 
-
 @Injectable()
 
 export class UnitsService {
 
-  constructor(private SignalKService: SignalKService) {
-//    console.log(Qty.getKinds());
-//    console.log(Qty.getUnits());
-//    console.log(Qty.getAliases('naut-mile'));
-    //build list for others. 
-   /* Object.keys(this.conversions).forEach(group => {
-      this.conversionList[group] = [];
-      Object.keys(this.conversions[group]).forEach(unit => {
-        this.conversionList[group].push(unit);
-      });
-    }); */
-  }
 
-  defaultUnits: IUnitDefaults = {
-    unitless: 'unitless',
-    speed: 'kph',
-    flow: 'l/h',
-    temp: 'C',
-    length: 'm',
-    electrity: 'volts',
-    pressure: 'mmHg',
-    angularVelocity: 'deg/min',
-    frequency: 'Hz',
-    angle: 'deg',
-    ratio: 'percent'
-  }
+
+  defaultUnits: IUnitDefaults;
+  defaultUnitsSub: Subscription;
 
   conversionList: IUnitInfo[] = [
     { group: 'unitless', units: [ 'unitless' ] },
@@ -56,6 +35,28 @@ export class UnitsService {
     { group: 'frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
     { group: 'ratio', units: [ 'percent' ] },
   ];
+
+
+  constructor(  private AppSettingsService: AppSettingsService,
+    private SignalKService: SignalKService) {
+      this.defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
+        newDefaults => {
+          this.defaultUnits = newDefaults;
+          console.log(this.defaultUnits);
+        }
+      );
+//    console.log(Qty.getKinds());
+//    console.log(Qty.getUnits());
+//    console.log(Qty.getAliases('naut-mile'));
+//build list for others. 
+/* Object.keys(this.conversions).forEach(group => {
+this.conversionList[group] = [];
+Object.keys(this.conversions[group]).forEach(unit => {
+this.conversionList[group].push(unit);
+});
+}); */
+  }
+
 
   unitConversionFunctions = {
     'unitless': function(v) { return v; },

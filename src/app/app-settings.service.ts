@@ -6,13 +6,14 @@ import { Router } from '@angular/router';
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
+import { IUnitDefaults } from './units.service';
 
 import { BlankConfig } from './blank-config.const';
 import { DemoConfig } from './demo-config.const';
+import { initialDefaultUnits } from './defaultUnits.const'
 import { isNumber } from 'util';
 
 const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
-const defaultUnlockStatus = false;
 const defaultTheme = 'default-light';
 const configVersion = 3; // used to invalidate old configs to avoir errors loading it.
 
@@ -27,6 +28,7 @@ interface appSettings {
   dataSets: IDataSet[];
   splitSets: ISplitSet[];
   rootSplits: string[];
+  unitDefaults: IUnitDefaults;
 }
 
 
@@ -38,6 +40,8 @@ export class AppSettingsService {
   signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
   signalKToken: BehaviorSubject<string> = new BehaviorSubject<string>(null);
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
+
 
   widgets: Array<IWidget>;
 
@@ -75,9 +79,24 @@ export class AppSettingsService {
     this.dataSets = storageObject.dataSets;
     this.splitSets = storageObject.splitSets;
     this.rootSplits = storageObject.rootSplits;
+    if ('unitDefaults' in storageObject) {
+      this.unitDefaults.next(storageObject.unitDefaults);
+    } else {
+      this.unitDefaults.next(initialDefaultUnits);
+    }
   }
 
-
+  //UnitDefaults
+  getDefaultUnitsAsO() {
+    return this.unitDefaults.asObservable();
+  }
+  getDefaultUnits() {
+    return this.unitDefaults.getValue();
+  }
+  setDefaultUnits(newDefaults: IUnitDefaults) {
+    this.unitDefaults.next(newDefaults);
+    this.saveToLocalStorage();
+  }
 
   // SignalKURL
   getSignalKURLAsO() {
@@ -171,6 +190,7 @@ export class AppSettingsService {
       dataSets: this.dataSets,
       splitSets: this.splitSets,
       rootSplits: this.rootSplits,
+      unitDefaults: this.unitDefaults.getValue(),
     }
     return storageObject;
   }
@@ -181,6 +201,7 @@ export class AppSettingsService {
 
 
   saveToLocalStorage() {
+    console.log("Saving Config to LocalStorage");
     localStorage.setItem('signalKData', JSON.stringify(this.buildStorageObject()));
   }
 
