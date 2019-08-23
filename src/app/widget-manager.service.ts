@@ -53,6 +53,9 @@ export interface IWidgetConfig {
   putEnable?: boolean;
   putMomentary?: boolean;
   putMomentaryValue?: boolean;
+
+  //iFrame
+  widgetUrl?: string;
 }
 
 

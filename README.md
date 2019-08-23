@@ -18,7 +18,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 ### V0.2
 * Customization options for Historical Charts
-* Select default unit for each unit type in config.
 * Attitude Indicator * In progress
 
 ### V0.3
@@ -28,7 +27,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
  
  * Overview page to quickly scroll through known path info.
  * Alerts/Notifications
- * iFrame Widget?
  * Delete Page.
  * Numeric widget max/avg values.
  

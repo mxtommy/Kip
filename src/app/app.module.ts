@@ -47,6 +47,7 @@ import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/uni
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { FilterSelfPipe } from './filter-self.pipe';
+import { SafePipe } from './safe.pipe';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
@@ -65,7 +66,8 @@ import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
 import { ModalUnitSelectorComponent } from './modal-unit-selector/modal-unit-selector.component';
 import { ObjectKeysPipe } from './object-keys.pipe';
-import { SettingsUnitsComponent } from './settings-units/settings-units.component'
+import { SettingsUnitsComponent } from './settings-units/settings-units.component';
+import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component'
 
 
 const appRoutes: Routes = [
@@ -89,6 +91,7 @@ const appRoutes: Routes = [
     FitTextDirective,
     RootDisplayComponent,
     FilterSelfPipe,
+    SafePipe,
     WidgetNumericComponent,
     SettingsDatasetsComponent,
     SettingsDatasetsModalComponent,
@@ -108,7 +111,8 @@ const appRoutes: Routes = [
     ModalPathSelectorComponent,
     ModalUnitSelectorComponent,
     ObjectKeysPipe,
-    SettingsUnitsComponent
+    SettingsUnitsComponent,
+    WidgetIframeComponent
   ],
   imports: [
     BrowserModule,
@@ -141,6 +145,7 @@ const appRoutes: Routes = [
     WidgetGaugeComponent,
     WidgetStateComponent,
     WidgetSwitchComponent,
+    WidgetIframeComponent,
     WidgetTutorialComponent,
     
     //dialogs

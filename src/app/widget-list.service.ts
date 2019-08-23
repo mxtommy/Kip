@@ -9,6 +9,7 @@ import { WidgetWindComponent } from './widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
 import { WidgetStateComponent } from './widget-state/widget-state.component';
 import { WidgetSwitchComponent } from './widget-switch/widget-switch.component';
+import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 
 export class widgetInfo {
@@ -68,6 +69,11 @@ export class WidgetListService {
       componentName: WidgetWindComponent,
       description: 'Wind Gauge',
     },
+    {
+      name: 'WidgetIframeComponent',
+      componentName: WidgetIframeComponent,
+      description: 'Embed Webpage',
+    },    
     {
       name: 'WidgetTutorial',
       componentName: WidgetTutorialComponent,

@@ -3,8 +3,11 @@
     <mat-tab-group class="">
       <mat-tab label="Display">
         <div class="tab-content"> 
+            <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetUrl !== undefined)">
+                <input type="url" matInput placeholder="URL" name="widgetUrl" formControlName="widgetUrl">
+            </mat-form-field>
             <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetLabel !== undefined)">
-                <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
+              <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
             </mat-form-field>
             <div class="full-width" *ngIf="(widgetConfig.numInt !== undefined)">
               <mat-form-field class="half-width">
