@@ -106,6 +106,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.canvasBG.nativeElement.width = Math.floor(rect.width); 
       this.canvasBG.nativeElement.height = Math.floor(rect.height);
       this.currentValueLength = 0; //will force resetting the font size
+      this.currentMinMaxLength = 0;
       this.updateCanvas();
       this.updateCanvasBG();
     }
