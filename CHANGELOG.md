@@ -1,3 +1,18 @@
+### V0.1.13
+* Latitude/Longitude formats
+
+### V0.1.12
+* iFrame to embed something in kip
+* Unit defaults!
+
+### V0.1.11
+* Performance fixes for large numeric widgets
+* Bugfixes
+
+### V0.1.10
+* Numeric Min/Max
+
+
 ### V0.1.9
 * Updated NPM dependencies
 * Show connection lost overlay on closed websocket connection

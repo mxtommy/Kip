@@ -34,6 +34,7 @@ export class UnitsService {
     { group: 'angle', units: [ 'rad', 'deg', 'grad' ] },
     { group: 'frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
     { group: 'ratio', units: [ 'percent' ] },
+    { group: 'position', units: [ 'latitudeMin', 'latitudeSec', 'longitudeMin', 'longitudeSec' ] },
   ];
 
 
@@ -108,6 +109,41 @@ this.conversionList[group].push(unit);
     "deg": Qty.swiftConverter('rad', 'deg'),
 //   ratio
     'percent': function(v) { return v * 100 },
+// lat/lon
+    'latitudeMin': function(v) {
+        let degree = Math.trunc(v);
+        let s = 'N';
+        if (v < 0) { s = 'S'; degree = degree * -1 }
+        let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+        return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s; 
+      },
+    'latitudeSec': function(v) {
+      let degree = Math.trunc(v);
+      let s = 'N';
+      if (v < 0) { s = 'S'; degree = degree * -1 }
+      let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+      let minutes = Math.trunc(r);
+      let seconds = (r % 1) * 60;
+
+      return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s; 
+    },    
+    'longitudeMin': function(v) {
+      let degree = Math.trunc(v);
+      let s = 'E';
+      if (v < 0) { s = 'W'; degree = degree * -1 }
+      let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+      return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s; 
+    },
+    'longitudeSec': function(v) {
+      let degree = Math.trunc(v);
+      let s = 'E';
+      if (v < 0) { s = 'W'; degree = degree * -1 }
+      let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+      let minutes = Math.trunc(r);
+      let seconds = (r % 1) * 60;
+
+      return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s; 
+    },          
   }
 
 

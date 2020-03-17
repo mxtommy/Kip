@@ -119,7 +119,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.config.units['numericPath'], newValue);
+        this.dataValue = newValue;
         // init min/max 
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }
@@ -198,13 +198,17 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText : string;
   
-
     if (isNumeric(this.dataValue)) {
-      valueText = this.padValue(this.dataValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+      let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
+      if (isNumeric(converted)) { // retest as convert stuff might have returned a text string 
+        valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+      } else {
+        valueText = converted;
+      }
+      
     } else {
       valueText = "--";
     }
-
     //check if length of string has changed since laste time.
     if (this.currentValueLength != valueText.length) {
       //we need to set font size...
@@ -255,6 +259,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   drawUnit() {
     if (this.config.units['numericPath'] == 'unitless') { return; }
+    if (this.config.units['numericPath'].startsWith('lat')) { return; }
+    if (this.config.units['numericPath'].startsWith('lon')) { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
@@ -281,14 +287,25 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     
     if (this.config.showMin) {
       if (isNumeric(this.minValue)) {
-        valueText = valueText + " Min: " + this.padValue(this.minValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+        let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
+        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string 
+          valueText = valueText + " Min: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+        } else {
+          valueText = valueText + " Min: " + converted;
+        }        
+        
       } else {
         valueText = valueText + " Min: --";
       }
     }
     if (this.config.showMax) {
       if (isNumeric(this.maxValue)) {
-        valueText = valueText + " Max: " + this.padValue(this.maxValue.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+        let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.maxValue);
+        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string 
+          valueText = valueText + " Max: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+        } else {
+          valueText = valueText + " Max: " + converted;
+        }
       } else {
         valueText = valueText + " Max: --";
       }
