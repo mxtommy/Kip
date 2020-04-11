@@ -58,4 +58,3 @@ $platypusTheme-temp-light: mat-light-theme($platypusTheme-primary, $platypusThem
 
 //merge with custom background
 $platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background, wind: $mat-wind));
-

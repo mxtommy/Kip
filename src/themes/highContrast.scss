@@ -22,4 +22,3 @@ $mat-wind: (
 $highContrast-temp-light: mat-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
 
 $highContrast-light: map-merge($highContrast-temp-light, (wind: $mat-wind) );
-@include angular-material-theme($highContrast-light);

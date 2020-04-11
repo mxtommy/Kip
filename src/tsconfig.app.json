@@ -5,7 +5,6 @@
     "baseUrl": "./",
     "module": "es2015",
     "types": [],
-    "experimentalDecorators": true,
   },
   "exclude": [
     "test.ts",
