@@ -1,0 +1,61 @@
+@import '~@angular/material/theming';
+
+@mixin widget-ngGauge-radial-theme($theme) {
+
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  app-widget-gauge-ng-radial {
+      .primary {
+        color: mat-color($primary, 300);
+      }
+      .accent {
+        color: mat-color($accent, 300);
+      }
+      .warn {
+        color: mat-color($warn, 300);
+      }
+      .background {
+        color: mat-color($foreground, divider);
+      }
+  }
+}
+
+radial-gauge {
+  position: relative;
+  width: 94% !important;
+  height: auto !important;
+  top: 6%;
+
+}
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+ }
+
+
+.settingsButton {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+
+.tab-group {
+  border: 1px solid #e8e8e8;
+}
+
+.tab-content {
+  padding: 16px;
+}
+
+.full-width {
+  width: 100%;
+}

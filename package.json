@@ -44,6 +44,8 @@
     "chart.js": "^2.7.3",
     "core-js": "^2.5.3",
     "js-quantities": "^1.7.2",
+    "ng-canvas-gauges": "^6.0.4",
+    "node-sass": "^4.13.1",
     "rxjs": "^6.3.3",
     "rxjs-compat": "^6.3.3",
     "screenfull": "^3.3.3",

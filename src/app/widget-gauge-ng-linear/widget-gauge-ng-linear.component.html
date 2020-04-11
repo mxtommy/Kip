@@ -1,0 +1,117 @@
+<div style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
+  <div [className]="isGaugeVertical ? 'verticalLinearWrapper' : 'horizontalLinearWrapper'" #linearWrapperDiv>
+    <svg *ngIf="!isGaugeVertical" class="valueBox" viewport="0 0 100 100" preserveAspectRatio="none">
+      <text x="550" y="50" text-anchor="end">
+        <tspan class="valueText">{{dataValueTrimmed}}</tspan>
+        <tspan class="valueUnit" dx="2" dy="-5">{{config.units['gaugePath']}}</tspan>
+      </text>
+    </svg>
+    <linear-gauge class="linearGauge" id="{{widgetUUID}}" #linearGauge
+      [attr.width]="gaugeOptions.width"
+      [attr.height]="gaugeOptions.height"
+
+      [attr.title]="config.widgetLabel"
+      font-title="arial"
+      [attr.font-title-size]="gaugeOptions.fontTitleSize"
+      font-title-weight="bold"
+      [attr.color-title]="gaugeOptions.colorTitle"
+
+      [attr.units]="config.units['gaugePath']"
+      [value]="dataValue"
+
+      [attr.min-value]="config.minValue"
+      [attr.max-value]="config.maxValue"
+      font-Units="arial"
+      [attr.font-Units-size]="gaugeOptions.fontUnitsSize"
+      font-Units-weight=""
+      [attr.color-units]="gaugeOptions.colorUnits"
+
+      borders="false"
+      border-outer-width="0"
+      color-border-outer="red"
+      color-border-outer-end="red"
+      border-middle-width="0"
+      color-border-middle="#63afdf"
+      color-border-middle-end="#63afdf"
+      border-inner-width="0"
+      color-border-inner="red"
+      color-border-inner-end="#121212"
+      border-shadow-width="0"
+
+      [attr.color-plate]="gaugeColorPlate"
+      [attr.color-plate-end]="gaugeColorPlate"
+      border-radius="0"
+
+      bar-progress="true"
+      [attr.bar-width]="gaugeOptions.barWidth"
+      [attr.bar-length]="gaugeOptions.barLength"
+      bar-begin-circle="false"
+      bar-stroke-width="0"
+      bar-shadow=""
+      [attr.color-bar]="gaugeBarBackgroundColor"
+      color-bar-end=""
+      [attr.color-bar-progress]="gaugeBarColor"
+      [attr.color-bar-progress-end]="gaugeBarColor"
+      color-bar-stroke="0"
+
+      value-box="true"
+      value-box-stroke="0"
+      color-value-box-rect=""
+      color-value-box-rect-end=""
+      value-box-width="50"
+      value-box-border-radius="5"
+      [attr.color-value-box-background]="gaugeBarBackgroundColor"
+      value-text=""
+      [attr.value-int]="gaugeOptions.valueInt"
+      [attr.value-dec]="gaugeOptions.valueDec"
+      font-value="arial"
+      font-value-size="50"
+      font-value-weight="bold"
+      [attr.color-value-text]="gaugeOptions.colorValueText"
+      value-text-shadow="false"
+      color-value-box-shadow=""
+
+      exact-ticks="false"
+      stroke-ticks="false"
+      color-stroke-ticks="#121212"
+      tick-side="right"
+      [attr.ticks-padding]="gaugeOptions.ticksPadding"
+      [attr.major-ticks]="gaugeOptions.majorTicks"
+      [attr.major-ticks-int]="gaugeOptions.majorTicksInt"
+      major-ticks-dec="0"
+      [attr.color-major-ticks]="gaugeOptions.colorMajorTicks"
+      ticks-width="0"
+      [attr.minor-ticks]="gaugeOptions.minorTicks"
+      [attr.color-minor-ticks]="gaugeOptions.colorMinorTicks"
+      number-side="right"
+      [attr.numbers-margin]="gaugeOptions.numbersMargin"
+      font-numbers="arial"
+      [attr.font-numbers-size]="gaugeOptions.fontNumbersSize"
+      font-numbers-weight="bold"
+      [attr.color-numbers]="gaugeOptions.colorNumbers"
+      [attr.ticks-width-minor]="gaugeOptions.ticksWidthMinor"
+      highlights=""
+      highlights-width="0"
+      needle-side="both"
+
+      animation="true"
+      animation-duration="500"
+      animation-rule="linear"
+      animated-value="false"
+      animate-on-init="false"
+
+      needle="false"
+    ></linear-gauge>
+  </div>
+
+  <div #primary class='primary' style="display: none;"></div>
+  <div #accent class='accent' style="display: none;"></div>
+  <div #warn class='warn' style="display: none;"></div>
+  <div #background class='background' style="display: none;"></div>
+
+  <div class="settingsButton" *ngIf="unlockStatus">
+    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
+        <span class="fa fa-cog"></span>
+    </button>
+  </div>
+</div>

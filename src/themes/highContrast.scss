@@ -1,5 +1,3 @@
-@import '~@angular/material/theming';
-
 $highContrast-primary: mat-palette($mat-grey);
 $highContrast-accent:  mat-palette($mat-grey, A200, A100, A400);
 
@@ -16,7 +14,7 @@ $mat-wind: (
     compass-light: #afafaf,
     wind-rose-background: #8a8a8a,
     port: #ff0000,
-    starboard: #1fce04,    
+    starboard: #1fce04,
 );
 
 
@@ -24,4 +22,4 @@ $mat-wind: (
 $highContrast-temp-light: mat-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
 
 $highContrast-light: map-merge($highContrast-temp-light, (wind: $mat-wind) );
-
+@include angular-material-theme($highContrast-light);

@@ -42,6 +42,10 @@ export interface IWidgetConfig {
   backgroundColor?: string;
   frameColor?: string;
 
+  //NG Gauge Data
+  barColor?: string;
+  gaugeTicks?: boolean;
+
   //Historical
   dataSetUUID?: string;
   invertData?: boolean;
@@ -96,7 +100,7 @@ export class WidgetManagerService {
     let uuid = this.newUuid();
     this.widgets.push({ uuid: uuid, type: "WidgetBlank", config: null });
     this.saveWidgets();
-    return uuid; 
+    return uuid;
   }
 
   deleteWidget(uuid) {
@@ -110,7 +114,7 @@ export class WidgetManagerService {
     if (wIndex < 0) { return; } // not found
     this.widgets[wIndex].config = null;
     this.widgets[wIndex].type = newNodeType;
-    this.saveWidgets();  
+    this.saveWidgets();
   }
 
   updateWidgetConfig(uuid: string, newConfig) {

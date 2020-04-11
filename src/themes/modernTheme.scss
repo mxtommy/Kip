@@ -1,0 +1,160 @@
+$md-primary: (
+    50 : #ecf5fb,
+    100 : #d0e7f5,
+    200 : #b1d7ef,
+    300 : #92c7e9,
+    400 : #7abbe4,
+    500 : #63afdf,
+    600 : #5ba8db,
+    700 : #519fd7,
+    800 : #4796d2,
+    900 : #1E1E1E, // original #3586ca
+    A100 : #ffffff,
+    A200 : #e0f0ff,
+    A400 : #add8ff,
+    A700 : #93cbff,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #000000,
+        600 : #000000,
+        700 : #000000,
+        800 : #000000,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+$md-accent: (
+    50 : #fdf9e6,
+    100 : #fbefc1,
+    200 : #f8e598,
+    300 : #f5da6f,
+    400 : #f2d250,
+    500 : #f0ca31,
+    600 : #eec52c,
+    700 : #ecbd25,
+    800 : #e9b71f,
+    900 : #e5ab13,
+    A100 : #ffffff,
+    A200 : #1E1E1E, // original value #fff6e0
+    A400 : #ffe6ad,
+    A700 : #ffdf94,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #000000,
+        600 : #000000,
+        700 : #000000,
+        800 : #000000,
+        900 : #000000,
+        A100 : #000000,
+        A200 : #ffffff,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+$md-warm: (
+    50 : #fae5e5,
+    100 : #f2bebe,
+    200 : #ea9393,
+    300 : #e26767,
+    400 : #db4747,
+    500 : #d52626,
+    600 : #d02222,
+    700 : #ca1c1c,
+    800 : #c41717,
+    900 : #ba0d0d,
+    A100 : #ffe7e7,
+    A200 : #ffb4b4,
+    A400 : #ff8181,
+    A700 : #ff6868,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+// Generate theme palettes
+// The warn palette is optional (defaults to red).
+$modern-theme-primary: mat-palette($md-primary);
+$modern-theme-accent:  mat-palette($md-accent, A200, A100, A400);
+$modern-theme-warm:  mat-palette($md-warm);
+
+// Make temp theme with palettes - we need to merge custom values later
+$modernTheme-dark-temp: mat-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warm);
+
+$md-special: (
+    50 : #fae5e5,
+    100 : #f2bebe,
+    200 : #ea9393,
+    300 : #e26767,
+    400 : #389c19,
+    500 : #d02222,
+    600 : #3f3f3f,
+    700 : #1E1E1E,
+    800 : #121212,
+    900 : #000000,
+    A100 : #ffe7e7,
+    A200 : #ffb4b4,
+    A400 : #ff8181,
+    A700 : #ff6868,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+$modern-theme-special:  mat-palette($md-special);
+
+// Styles for widget-wind - wind instrument
+$mat-wind: (
+    boat-background: #ffffff,
+    heading-background: mat-color($modern-theme-special, 700),
+    true-wind-background: mat-color($modern-theme-accent, 500),
+    app-wind-background: mat-color($modern-theme-primary, 500),
+    compass-dark: mat-color($modern-theme-special, 600),
+    compass-light: #ffffff,
+    wind-rose-background: #ffffff,
+    port: mat-color($modern-theme-warm, 500),
+    starboard: mat-color($modern-theme-special, 400),
+);
+
+// Merge custom theme values for Light/Dark - Foreground/Background and Wind instrument style
+$modernTheme-dark-background: custom-theme-dark-background($modern-theme-special, 900);
+$modernTheme-dark-foreground: custom-theme-dark-foreground(white);
+$modernTheme-dark: map-merge($modernTheme-dark-temp, (background: $modernTheme-dark-background, foreground: $modernTheme-dark-foreground, wind: $mat-wind) );
