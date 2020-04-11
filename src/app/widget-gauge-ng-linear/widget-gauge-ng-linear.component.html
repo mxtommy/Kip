@@ -1,11 +1,5 @@
 <div style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
   <div [className]="isGaugeVertical ? 'verticalLinearWrapper' : 'horizontalLinearWrapper'" #linearWrapperDiv>
-    <svg *ngIf="!isGaugeVertical" class="valueBox" viewport="0 0 100 100" preserveAspectRatio="none">
-      <text x="550" y="50" text-anchor="end">
-        <tspan class="valueText">{{dataValueTrimmed}}</tspan>
-        <tspan class="valueUnit" dx="2" dy="-5">{{config.units['gaugePath']}}</tspan>
-      </text>
-    </svg>
     <linear-gauge class="linearGauge" id="{{widgetUUID}}" #linearGauge
       [attr.width]="gaugeOptions.width"
       [attr.height]="gaugeOptions.height"

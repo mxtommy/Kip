@@ -61,47 +61,7 @@
     bottom: 0;
     left: 0;
   }
-
-  > svg.valueBox {
-    position: absolute;
-    top:0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
-    height: 100%;
-    width: 100%;
-
-    font-family: Arial, Helvetica, sans-serif;
-    // font-size: 150%;
-    font-weight: bold;
-
-    fill: transparent;
-    border: 3px solid blue;
-  }
-
-  > svg.valueBox text {
-    fill: green;
-    border: 3px solid red;
-  }
-
-  > svg.valueBox tspan.valueText {
-    font-size: 10em;
-    fill: white;
-    text-anchor: end;
-  }
-
-  > svg.valueBox tspan.valueUnit {
-    font-size: 50%;
-    fill: white;
-    text-anchor: end;
-  }
-
 }
-
-
-
-
 
 .settingsButton {
   position: absolute;
