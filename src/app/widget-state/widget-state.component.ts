@@ -29,7 +29,7 @@ const defaultConfig: IWidgetConfig = {
 @Component({
   selector: 'app-widget-state',
   templateUrl: './widget-state.component.html',
-  styleUrls: ['./widget-state.component.css']
+  styleUrls: ['./widget-state.component.scss']
 })
 export class WidgetStateComponent implements OnInit, OnDestroy {
 

@@ -5,7 +5,7 @@ import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
 @Component({
   selector: 'layout-split',
   templateUrl: './layout-split.component.html',
-  styleUrls: ['./layout-split.component.css']
+  styleUrls: ['./layout-split.component.scss']
 })
 export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
 

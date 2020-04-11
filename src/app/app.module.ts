@@ -102,12 +102,10 @@ const appRoutes: Routes = [
     LayoutSplitComponent,
     WidgetWindComponent,
     SvgWindComponent,
-
     WidgetGaugeComponent,
     GaugeSteelComponent,
     WidgetGaugeNgLinearComponent,
     WidgetGaugeNgRadialComponent,
-
     SettingsConfigComponent,
     WidgetTutorialComponent,
     ResetConfigComponent,
@@ -140,7 +138,6 @@ const appRoutes: Routes = [
     MatTabsModule,
     MatStepperModule,
     MatInputModule,
-
     GaugesModule,
   ],
   entryComponents: [
