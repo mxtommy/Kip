@@ -9,9 +9,6 @@ import { UnitsService } from '../units.service';
 import { isNumeric } from 'rxjs/util/isNumeric';
 import { isNull } from '@angular/compiler/src/output/output_ast';
 
-
-
-
 const defaultConfig: IWidgetConfig = {
   widgetLabel: null,
   paths: {
@@ -35,7 +32,7 @@ const defaultConfig: IWidgetConfig = {
 @Component({
   selector: 'app-widget-numeric',
   templateUrl: './widget-numeric.component.html',
-  styleUrls: ['./widget-numeric.component.css']
+  styleUrls: ['./widget-numeric.component.scss']
 })
 export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewChecked {
 
@@ -186,7 +183,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   updateCanvasBG() {
     if (this.canvasBGCtx) {
       this.canvasBGCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-      this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
       this.drawTitle();
       this.drawUnit();
     }
@@ -235,8 +231,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-
-
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
@@ -246,16 +240,16 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     // set font small and make bigger until we hit a max.
     if (this.config.widgetLabel === null) { return; }
     var fontSize = 1;
-    // get color
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
 
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasBGCtx.measureText(this.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
+
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
+    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasBGCtx.fillText(this.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
@@ -268,7 +262,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     // set font small and make bigger until we hit a max.
 
     var fontSize = 1;
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasBGCtx.measureText(this.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
@@ -276,14 +270,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     }
     this.canvasBGCtx.textAlign = "right";
     this.canvasBGCtx.textBaseline="bottom";
+    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasBGCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
   drawMinMax() {
 
     if (!this.config.showMin && !this.config.showMax) { return; } //no need to do anything if we're not showing min/max
-
-
 
     let valueText: string = '';
 
@@ -327,10 +320,10 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       }
     }
 
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "left";
     this.canvasCtx.textBaseline="bottom";
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 

@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Component, OnInit, AfterContentChecked, AfterViewInit, AfterViewChecked, Input, OnDestroy, AfterContentInit } from '@angular/core';
+import { ViewChild, ElementRef, Component, OnInit, AfterViewInit, AfterViewChecked, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
 
@@ -6,9 +6,7 @@ import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-import { isNumeric } from 'rxjs/util/isNumeric';
 import { LinearGauge, LinearGaugeOptions } from 'ng-canvas-gauges';
-
 
 
 const defaultConfig: IWidgetConfig = {
@@ -39,7 +37,7 @@ const defaultConfig: IWidgetConfig = {
   styleUrls: ['./widget-gauge-ng-linear.component.scss']
 })
 
-export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked, AfterContentInit, AfterContentChecked {
+export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked {
   @ViewChild('linearWrapperDiv') wrapper: ElementRef;
   @ViewChild('linearGauge') public linearGauge: LinearGauge;
 
@@ -65,13 +63,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterVie
   themeBackgroundColor: string;
 
   public gaugeOptions = {} as LinearGaugeOptions;
-
-  gaugeColorTexts: string = "";
-  gaugeColorPlate: string = "";
-  gaugeBarColor: string = "";
-  gaugeBarBackgroundColor: string = "";
-  gaugeHeight: number = 300;
-  gaugeWidth: number = 100;
 
   isGaugeVertical: Boolean = true;
   isInResizeWindow: boolean = false;
@@ -113,14 +104,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterVie
   ngAfterViewChecked() {
     this.resizeWidget();
   }
-
-  ngAfterContentInit() {
-
-   }
-
-  ngAfterContentChecked() {
-
-   }
 
   subscribePath() {
     this.unsubscribePath();
@@ -178,8 +161,8 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterVie
     this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = window.getComputedStyle(this.wrapper.nativeElement).color;
 
     // Faceplate and gauge bar background - match selected theme
-    this.gaugeColorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeBarBackgroundColor = this.themeBackgroundColor;
+    this.gaugeOptions.colorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
+    this.gaugeOptions.colorBar = this.themeBackgroundColor;
 
     this.gaugeOptions.valueInt = 1;
     this.gaugeOptions.valueDec = 1;
@@ -240,19 +223,19 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterVie
 
     switch (this.config.barColor) {
       case "primary":
-        this.gaugeBarColor = this.themePrimaryColor;
+        this.gaugeOptions.colorBarProgress = this.themePrimaryColor;
         break;
 
       case "accent":
-        this.gaugeBarColor = this.themeAccentColor;
+        this.gaugeOptions.colorBarProgress = this.themeAccentColor;
         break;
 
       case "warn":
-        this.gaugeBarColor = this.themeWarnColor;
+        this.gaugeOptions.colorBarProgress = this.themeWarnColor;
         break;
 
       case "special":
-        this.gaugeBarColor = "red";
+        this.gaugeOptions.colorBarProgress = "red";
         break;
 
       default:

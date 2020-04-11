@@ -21,6 +21,9 @@
       .background {
         color: mat-color($foreground, divider);
       }
+      .text {
+        color: mat-color($foreground, text);
+      }
   }
 }
 

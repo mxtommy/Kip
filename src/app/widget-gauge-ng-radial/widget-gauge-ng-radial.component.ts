@@ -47,6 +47,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
   @ViewChild('accent') accentElement: ElementRef;
   @ViewChild('warn') warnElement: ElementRef;
   @ViewChild('background') backgroundElement: ElementRef;
+  @ViewChild('text') textElement: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
@@ -58,15 +59,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
   themeAccentColor: string;
   themeWarnColor: string;
   themeBackgroundColor: string;
+  themeTextColor: string;
 
   public gaugeOptions = {} as RadialGaugeOptions;
-
-  gaugeColorTexts: string = "";
-  gaugeColorPlate: string = "";
-  gaugeBarColor: string = "";
-  gaugeBarBackgroundColor: string = "";
-  gaugeHeight: number = 300;
-  gaugeWidth: number = 100;
 
   constructor(
     public dialog:MatDialog,
@@ -150,13 +145,14 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
     this.themeAccentColor = getComputedStyle(this.accentElement.nativeElement).color;
     this.themeWarnColor = getComputedStyle(this.warnElement.nativeElement).color;
     this.themeBackgroundColor = getComputedStyle(this.backgroundElement.nativeElement).color;
+    this.themeTextColor = getComputedStyle(this.textElement.nativeElement).color;
 
-    // Labels - match selected theme
-    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = window.getComputedStyle(this.wrapper.nativeElement).color;
+    // Labels to match selected theme
+    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = this.themeTextColor;
 
-    // Faceplate and gauge bar background - match selected theme
-    this.gaugeColorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeBarBackgroundColor = this.themeBackgroundColor;
+    // Face plate and gauge bar background - match selected theme
+    this.gaugeOptions.colorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
+    this.gaugeOptions.colorBar = this.themeBackgroundColor;
 
     ///////////////////////////////////////
     //Set layout selection specific values
@@ -189,19 +185,19 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
 
     switch (this.config.barColor) {
       case "primary":
-        this.gaugeBarColor = this.themePrimaryColor;
+        this.gaugeOptions.colorBarProgress = this.themePrimaryColor;
         break;
 
       case "accent":
-        this.gaugeBarColor = this.themeAccentColor;
+        this.gaugeOptions.colorBarProgress = this.themeAccentColor;
         break;
 
       case "warn":
-        this.gaugeBarColor = this.themeWarnColor;
+        this.gaugeOptions.colorBarProgress = this.themeWarnColor;
         break;
 
       case "special":
-        this.gaugeBarColor = "red";
+        this.gaugeOptions.colorBarProgress = "red";
         break;
 
       default:

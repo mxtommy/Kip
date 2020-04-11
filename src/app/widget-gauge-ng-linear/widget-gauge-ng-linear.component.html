@@ -32,8 +32,8 @@
       color-border-inner-end="#121212"
       border-shadow-width="0"
 
-      [attr.color-plate]="gaugeColorPlate"
-      [attr.color-plate-end]="gaugeColorPlate"
+      [attr.color-plate]="gaugeOptions.colorPlate"
+      [attr.color-plate-end]="gaugeOptions.colorPlate"
       border-radius="0"
 
       bar-progress="true"
@@ -42,10 +42,10 @@
       bar-begin-circle="false"
       bar-stroke-width="0"
       bar-shadow=""
-      [attr.color-bar]="gaugeBarBackgroundColor"
+      [attr.color-bar]="gaugeOptions.colorBar"
       color-bar-end=""
-      [attr.color-bar-progress]="gaugeBarColor"
-      [attr.color-bar-progress-end]="gaugeBarColor"
+      [attr.color-bar-progress]="gaugeOptions.colorBarProgress"
+      [attr.color-bar-progress-end]="gaugeOptions.colorBarProgress"
       color-bar-stroke="0"
 
       value-box="true"
@@ -54,7 +54,7 @@
       color-value-box-rect-end=""
       value-box-width="50"
       value-box-border-radius="5"
-      [attr.color-value-box-background]="gaugeBarBackgroundColor"
+      [attr.color-value-box-background]="gaugeOptions.colorBar"
       value-text=""
       [attr.value-int]="gaugeOptions.valueInt"
       [attr.value-dec]="gaugeOptions.valueDec"
@@ -102,6 +102,7 @@
   <div #accent class='accent' style="display: none;"></div>
   <div #warn class='warn' style="display: none;"></div>
   <div #background class='background' style="display: none;"></div>
+  <div #text class='text' style="display: none;"></div>
 
   <div class="settingsButton" *ngIf="unlockStatus">
     <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
