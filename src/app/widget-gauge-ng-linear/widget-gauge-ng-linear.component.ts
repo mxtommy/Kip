@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Component, OnInit, AfterViewInit, AfterViewChecked, Input, OnDestroy } from '@angular/core';
+import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, AfterContentChecked, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
 
@@ -37,7 +37,7 @@ const defaultConfig: IWidgetConfig = {
   styleUrls: ['./widget-gauge-ng-linear.component.scss']
 })
 
-export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked {
+export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
   @ViewChild('linearWrapperDiv') wrapper: ElementRef;
   @ViewChild('linearGauge') public linearGauge: LinearGauge;
 
@@ -97,11 +97,11 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterVie
     this.unsubscribePath();
   }
 
-  ngAfterViewInit() {
+  ngAfterContentInit(){
     this.updateGaugeConfig();
   }
 
-  ngAfterViewChecked() {
+  ngAfterContentChecked() {
     this.resizeWidget();
   }
 

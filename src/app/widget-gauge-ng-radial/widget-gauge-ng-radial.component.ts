@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Component, OnInit, AfterContentChecked, AfterViewInit, Input, OnDestroy, AfterContentInit } from '@angular/core';
+import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, AfterContentInit, AfterContentChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
 
@@ -6,6 +6,7 @@ import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+import { AppSettingsService } from '../app-settings.service';
 import { RadialGauge, RadialGaugeOptions } from 'ng-canvas-gauges';
 
 const defaultConfig: IWidgetConfig = {
@@ -27,7 +28,7 @@ const defaultConfig: IWidgetConfig = {
   gaugeTicks: false,
   minValue: 0,
   maxValue: 100,
-  barColor: 'accent',
+  barColor: 'accent',     // theme palette to select
 };
 
 @Component({
@@ -35,7 +36,7 @@ const defaultConfig: IWidgetConfig = {
   templateUrl: './widget-gauge-ng-radial.component.html',
   styleUrls: ['./widget-gauge-ng-radial.component.scss']
 })
-export class WidgetGaugeNgRadialComponent implements OnInit {
+export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
 
   @ViewChild('wrapperDiv') wrapper: ElementRef;
   @ViewChild('radialGauge') public radialGauge: RadialGauge;
@@ -43,6 +44,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
+  // hack to access material-theme palette colors
   @ViewChild('primary') primaryElement: ElementRef;
   @ViewChild('accent') accentElement: ElementRef;
   @ViewChild('warn') warnElement: ElementRef;
@@ -54,6 +56,11 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
 
   public dataValue = 0;
   valueSub: Subscription = null;
+
+  // dynamics theme support
+  // themeName: BehaviorSubject<string> = new BehaviorSubject<string>("");
+  themeNameSub: Subscription;
+
 
   themePrimaryColor: string;
   themeAccentColor: string;
@@ -68,6 +75,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
+    private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) { }
 
   ngOnInit() {
@@ -80,23 +88,20 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
+    // this.subscribeTheme();
   }
 
   ngOnDestroy() {
+    // this.unsubscribeTheme();
     this.unsubscribePath();
   }
 
-  ngAfterViewInit() {
+  ngAfterContentInit() {
     this.updateGaugeConfig();
   }
 
-  ngAfterContentInit(){
-
-   }
-
   ngAfterContentChecked() {
     this.resizeWidget();
-
    }
 
   subscribePath() {
@@ -108,6 +113,27 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
         this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
       }
     );
+  }
+
+  // This does not work yet.
+  subscribeTheme() {
+    // this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    //   themeChange => {
+
+    //   console.log(this.AppSettingsService.themeName);
+
+    //   console.log("color title BEFORE: " + this.gaugeOptions.colorTitle);
+    //   this.updateGaugeConfig();
+
+    //   console.log("color title AFTER: " + this.gaugeOptions.colorTitle);
+    // })
+  }
+
+  unsubscribeTheme(){
+    // if (this.themeNameSub !== null) {
+    //   this.themeNameSub.unsubscribe();
+    //   this.themeNameSub = null;
+    // }
   }
 
   unsubscribePath() {
@@ -132,7 +158,6 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
         this.config = result;
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
-
         this.updateGaugeConfig();
       }
     });
@@ -140,7 +165,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
 
   updateGaugeConfig(){
     ////  Colors
-    // Hack to get Theme colors using hidden minxin, DIV and @ViewChild
+    // Hack to get mixin theme colors using hidden DIV and @ViewChild - Don't know of a better way to access material theme in TS
     this.themePrimaryColor = getComputedStyle(this.primaryElement.nativeElement).color;
     this.themeAccentColor = getComputedStyle(this.accentElement.nativeElement).color;
     this.themeWarnColor = getComputedStyle(this.warnElement.nativeElement).color;
@@ -155,13 +180,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
     this.gaugeOptions.colorBar = this.themeBackgroundColor;
 
     ///////////////////////////////////////
-    //Set layout selection specific values
-
-    // this.gaugeOptions.fontUnitsSize = 50;
-    // this.gaugeOptions.fontTitleSize = 35;
+    //Set gauge layout selection specific values
 
     if (this.config.gaugeTicks == true) {
-      // this.gaugeOptions.barWidth = 50;
       this.gaugeOptions.majorTicks = [0,100];
       this.gaugeOptions.majorTicksInt = 1;
       this.gaugeOptions.colorMajorTicks = "red";
@@ -172,8 +193,6 @@ export class WidgetGaugeNgRadialComponent implements OnInit {
       this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
     }
     else {
-      // this.gaugeOptions.barWidth = 95;
-
       this.gaugeOptions.majorTicks = [];
       this.gaugeOptions.majorTicksInt = 0;
       this.gaugeOptions.colorMajorTicks = "";
