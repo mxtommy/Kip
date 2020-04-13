@@ -58,8 +58,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   valueSub: Subscription = null;
 
   // dynamics theme support
-  // themeName: BehaviorSubject<string> = new BehaviorSubject<string>("");
-  themeNameSub: Subscription;
+  themeNameSub: Subscription = null;
 
 
   themePrimaryColor: string;
@@ -88,11 +87,11 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
-    // this.subscribeTheme();
+    this.subscribeTheme();
   }
 
   ngOnDestroy() {
-    // this.unsubscribeTheme();
+    this.unsubscribeTheme();
     this.unsubscribePath();
   }
 
@@ -115,32 +114,28 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     );
   }
 
-  // This does not work yet.
-  subscribeTheme() {
-    // this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-    //   themeChange => {
-
-    //   console.log(this.AppSettingsService.themeName);
-
-    //   console.log("color title BEFORE: " + this.gaugeOptions.colorTitle);
-    //   this.updateGaugeConfig();
-
-    //   console.log("color title AFTER: " + this.gaugeOptions.colorTitle);
-    // })
-  }
-
-  unsubscribeTheme(){
-    // if (this.themeNameSub !== null) {
-    //   this.themeNameSub.unsubscribe();
-    //   this.themeNameSub = null;
-    // }
-  }
-
   unsubscribePath() {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
+    }
+  }
+
+   // Subscribe to theme event
+   subscribeTheme() {
+    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+      themeChange => {
+       setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+        this.updateGaugeConfig();
+       }, 50);
+    })
+  }
+
+  unsubscribeTheme(){
+    if (this.themeNameSub !== null) {
+      this.themeNameSub.unsubscribe();
+      this.themeNameSub = null;
     }
   }
 

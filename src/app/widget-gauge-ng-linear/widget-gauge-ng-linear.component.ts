@@ -6,6 +6,7 @@ import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+import { AppSettingsService } from '../app-settings.service';
 import { LinearGauge, LinearGaugeOptions } from 'ng-canvas-gauges';
 
 
@@ -57,6 +58,9 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   valueSub: Subscription = null;
 
+  // dynamics theme support
+  themeNameSub: Subscription = null;
+
   themePrimaryColor: string;
   themeAccentColor: string;
   themeWarnColor: string;
@@ -72,6 +76,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
+    private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) { }
 
   ngOnInit() {
@@ -84,6 +89,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
+    this.subscribeTheme();
 
     if (this.config.gaugeType == "ngLinearVertical") {
       this.isGaugeVertical = true;
@@ -95,6 +101,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   ngOnDestroy() {
     this.unsubscribePath();
+    this.unsubscribeTheme();
   }
 
   ngAfterContentInit(){
@@ -126,6 +133,23 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       this.valueSub.unsubscribe();
       this.valueSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
+    }
+  }
+
+   // Subscribe to theme event
+   subscribeTheme() {
+    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+      themeChange => {
+       setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+        this.updateGaugeConfig();
+       }, 50);
+    })
+  }
+
+  unsubscribeTheme(){
+    if (this.themeNameSub !== null) {
+      this.themeNameSub.unsubscribe();
+      this.themeNameSub = null;
     }
   }
 
