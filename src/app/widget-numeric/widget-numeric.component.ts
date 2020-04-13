@@ -6,6 +6,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+import { AppSettingsService } from '../app-settings.service';
 import { isNumeric } from 'rxjs/util/isNumeric';
 
 const defaultConfig: IWidgetConfig = {
@@ -56,6 +57,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   //subs
   valueSub: Subscription = null;
 
+  // dynamics theme support
+  themeNameSub: Subscription = null;
+
   canvasCtx;
   canvasBGCtx;
 
@@ -63,7 +67,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     public dialog:MatDialog,
     private SignalKService: SignalKService,
     private WidgetManagerService: WidgetManagerService,
-    private UnitsService: UnitsService) {
+    private UnitsService: UnitsService,
+    private AppSettingsService: AppSettingsService, // need for theme change subscription
+    ) {
   }
 
   ngOnInit() {
@@ -76,6 +82,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
+    this.subscribeTheme();
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
@@ -84,6 +91,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   ngOnDestroy() {
     this.unsubscribePath();
+    this.unsubscribeTheme();
   }
 
   ngAfterViewChecked() {
@@ -133,6 +141,24 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['numericPath'].path);
     }
   }
+
+// Subscribe to theme event
+subscribeTheme() {
+  this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    themeChange => {
+     setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+      this.drawTitle();
+      this.drawUnit();
+     }, 100);
+  })
+}
+
+unsubscribeTheme(){
+  if (this.themeNameSub !== null) {
+    this.themeNameSub.unsubscribe();
+    this.themeNameSub = null;
+  }
+}
 
   openWidgetSettings() {
 
