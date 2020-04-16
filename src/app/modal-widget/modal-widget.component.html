@@ -158,7 +158,7 @@
                   <mat-radio-button value="full">Full</mat-radio-button>
               </mat-radio-group>
           </p>
-          <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical'" >
+          <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical' || formMaster.controls.gaugeType.value == 'ngLinearHorizontal'" >
             <mat-checkbox
               formControlName="gaugeTicks"
                 name="gaugeTicks"

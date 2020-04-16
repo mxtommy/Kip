@@ -29,6 +29,8 @@ const defaultConfig: IWidgetConfig = {
   gaugeTicks: false,
   minValue: 0,
   maxValue: 100,
+  numInt: 1,
+  numDecimal: 0,
   barColor: 'accent',
 };
 
@@ -188,35 +190,58 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.colorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
     this.gaugeOptions.colorBar = this.themeBackgroundColor;
 
-    this.gaugeOptions.valueInt = 1;
-    this.gaugeOptions.valueDec = 1;
+    // Integer and decimal display
+    this.gaugeOptions.valueInt = this.config.numInt;
+    this.gaugeOptions.valueDec = this.config.numDecimal;
+    this.gaugeOptions.majorTicksInt = this.config.numInt;
+    this.gaugeOptions.majorTicksDec = this.config.numDecimal;
 
-    // Set layout selection specific values
+    this.gaugeOptions.minValue = this.config.minValue;
+    this.gaugeOptions.maxValue = this.config.maxValue;
+
+    // Vertical
     if (this.config.gaugeType == 'ngLinearVertical'){
       this.isGaugeVertical = true;   // Changes div wrapper class to respect aspect ratio
       this.gaugeOptions.barLength = 75;
       this.gaugeOptions.fontUnitsSize = 40;
       this.gaugeOptions.fontTitleSize = 40;
 
+      // With ticks
       if (this.config.gaugeTicks == true) {
-        this.gaugeOptions.barWidth = 60;
-        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
-        this.gaugeOptions.majorTicksInt = 0;
-        this.gaugeOptions.colorMajorTicks = "red";
-        this.gaugeOptions.ticksPadding = 2;
-        this.gaugeOptions.minorTicks = 10;
-        this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
-        this.gaugeOptions.ticksWidthMinor = 6;
-        this.gaugeOptions.numbersMargin = 10;
+        this.gaugeOptions.minValue = 11.9;
+        this.gaugeOptions.maxValue = 15;
+
+        this.gaugeOptions.exactTicks = false;
+        this.gaugeOptions.barWidth = 30;
+        this.gaugeOptions.tickSide = "right";
+        this.gaugeOptions.ticksWidth = 10;
+        this.gaugeOptions.ticksPadding = 5;
+
+        this.gaugeOptions.strokeTicks = false;
+        this.gaugeOptions.majorTicks = [11.9, 12, 13, 14, 15];
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorTitle;
+
+        this.gaugeOptions.numberSide = "right";
+        this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 25;
         this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
+
+        this.gaugeOptions.minorTicks = 4;
+        this.gaugeOptions.ticksWidthMinor = 5;
+        this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
+
+        this.gaugeOptions.highlights = [
+          { "from": 11.9, "to": 12.2, "color": "yellow" },
+          { "from": 12.2, "to": 12.8, "color": "green" }
+        ];
+        this.gaugeOptions.highlightsWidth = 5;
       }
       else {
+        // No ticks
         this.isGaugeVertical = true;
         this.gaugeOptions.barWidth = 100;
 
         this.gaugeOptions.majorTicks = [];
-        this.gaugeOptions.majorTicksInt = 0;
         this.gaugeOptions.colorMajorTicks = "";
         this.gaugeOptions.ticksPadding = 0;
         this.gaugeOptions.minorTicks = 0;
@@ -227,42 +252,60 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       }
     }
     else {
+      // horizontal
       this.isGaugeVertical = false;  // Changes div wrapper class to respect aspect ratio
-      this.gaugeOptions.barWidth = 35;
       this.gaugeOptions.barLength = 80;
-      this.gaugeOptions.fontUnitsSize = 50;
-      this.gaugeOptions.fontTitleSize = 45;
+      this.gaugeOptions.fontTitleSize = 50;
+      this.gaugeOptions.fontUnitsSize = 40;
 
-      // No ticks in horizontal
-      this.gaugeOptions.majorTicks = [];
-      this.gaugeOptions.majorTicksInt = 0;
-      this.gaugeOptions.colorMajorTicks = "";
-      this.gaugeOptions.ticksPadding = 0;
-      this.gaugeOptions.minorTicks = 0;
-      this.gaugeOptions.colorMinorTicks = "";
-      this.gaugeOptions.ticksWidthMinor = 0;
-      this.gaugeOptions.numbersMargin = 0;
-      this.gaugeOptions.fontNumbersSize = 0;
+
+      // With ticks
+      this.gaugeOptions.barWidth = 40;
+        if (this.config.gaugeTicks == true) {
+
+        this.gaugeOptions.tickSide = "right";
+        this.gaugeOptions.ticksWidth = 1;
+        this.gaugeOptions.ticksPadding = 5;
+
+        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
+        this.gaugeOptions.colorMajorTicks = "red";
+
+        this.gaugeOptions.numberSide = "right";
+        this.gaugeOptions.numbersMargin = 5;
+        this.gaugeOptions.fontNumbersSize = 30;
+        this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
+
+        this.gaugeOptions.minorTicks = 10;
+        this.gaugeOptions.ticksWidthMinor = 8;
+        this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
+
+
+      }
+      else {
+        // No ticks
+        this.gaugeOptions.barWidth = 60;
+        this.gaugeOptions.majorTicks = [];
+        this.gaugeOptions.colorMajorTicks = "";
+        this.gaugeOptions.ticksPadding = 0;
+        this.gaugeOptions.minorTicks = 0;
+        this.gaugeOptions.colorMinorTicks = "";
+        this.gaugeOptions.ticksWidthMinor = 0;
+        this.gaugeOptions.numbersMargin = 0;
+        this.gaugeOptions.fontNumbersSize = 0;
+      }
     }
 
     switch (this.config.barColor) {
-      case "primary":
-        this.gaugeOptions.colorBarProgress = this.themePrimaryColor;
+      case "primary": this.gaugeOptions.colorBarProgress = this.themePrimaryColor;
         break;
 
-      case "accent":
-        this.gaugeOptions.colorBarProgress = this.themeAccentColor;
+      case "accent": this.gaugeOptions.colorBarProgress = this.themeAccentColor;
         break;
 
-      case "warn":
-        this.gaugeOptions.colorBarProgress = this.themeWarnColor;
+      case "warn": this.gaugeOptions.colorBarProgress = this.themeWarnColor;
         break;
 
-      case "special":
-        this.gaugeOptions.colorBarProgress = "red";
-        break;
-
-      default:
+      default: this.gaugeOptions.colorBarProgress = "white"
         break;
     }
   }
