@@ -8,6 +8,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { dataPoint, DataSetService } from '../data-set.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+import { AppSettingsService } from '../app-settings.service';
 
 const defaultConfig: IWidgetConfig = {
   widgetLabel: null,
@@ -57,12 +58,15 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   dataSetSub: Subscription = null;
 
+  // dynamics theme support
+  themeNameSub: Subscription = null;
 
   constructor(
     public dialog:MatDialog,
     private DataSetService: DataSetService,
     private WidgetManagerService: WidgetManagerService,
-    private UnitsService: UnitsService
+    private UnitsService: UnitsService,
+    private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) { }
 
   ngOnInit() {
@@ -82,6 +86,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     this.startChart();
     this.subscribeDataSet();
     //setTimeout(this.subscribeDataSet(),1000);//TODO, see why destroy called before we even get subbed (or just after...)
+    this.subscribeTheme();
 
   }
 
@@ -91,6 +96,8 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       }
       this.unsubscribeDataSet();
       console.log("stopped Sub");
+      this.unsubscribeTheme();
+
   }
 
   startChart() {
@@ -257,6 +264,25 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
           this.dataSetSub = null;
       }
   }
+
+
+// Subscribe to theme event
+subscribeTheme() {
+  this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    themeChange => {
+     setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+      this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
+      this.startChart()
+     }, 100);
+  })
+}
+
+unsubscribeTheme(){
+  if (this.themeNameSub !== null) {
+    this.themeNameSub.unsubscribe();
+    this.themeNameSub = null;
+  }
+}
 
   openWidgetSettings() {
 
