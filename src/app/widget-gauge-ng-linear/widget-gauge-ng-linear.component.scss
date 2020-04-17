@@ -18,6 +18,15 @@
       .warn {
         color: mat-color($warn, 300);
       }
+      .primaryDark {
+        color: mat-color($primary, 900);
+      }
+      .accentDark {
+        color: mat-color($accent, 900);
+      }
+      .warnDark {
+        color: mat-color($warn, 900);
+      }
       .background {
         color: mat-color($foreground, divider);
       }

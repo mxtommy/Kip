@@ -41,16 +41,19 @@ const defaultConfig: IWidgetConfig = {
 })
 
 export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
-  @ViewChild('linearWrapperDiv') wrapper: ElementRef;
+  @ViewChild('linearWrapperDiv') private wrapper: ElementRef;
   @ViewChild('linearGauge') public linearGauge: LinearGauge;
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  @ViewChild('primary') primaryElement: ElementRef;
-  @ViewChild('accent') accentElement: ElementRef;
-  @ViewChild('warn') warnElement: ElementRef;
-  @ViewChild('background') backgroundElement: ElementRef;
+  @ViewChild('primary') private primaryElement: ElementRef;
+  @ViewChild('accent') private accentElement: ElementRef;
+  @ViewChild('warn') private warnElement: ElementRef;
+  @ViewChild('primaryDark') private primaryDarkElement: ElementRef;
+  @ViewChild('accentDark') private accentDarkElement: ElementRef;
+  @ViewChild('warnDark') private warnDarkElement: ElementRef;
+  @ViewChild('background') private backgroundElement: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
@@ -63,15 +66,10 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   // dynamics theme support
   themeNameSub: Subscription = null;
 
-  themePrimaryColor: string;
-  themeAccentColor: string;
-  themeWarnColor: string;
-  themeBackgroundColor: string;
-
   public gaugeOptions = {} as LinearGaugeOptions;
 
-  isGaugeVertical: Boolean = true;
-  isInResizeWindow: boolean = false;
+  public isGaugeVertical: Boolean = true;
+  private isInResizeWindow: boolean = false;
 
   constructor(
     public dialog:MatDialog,
@@ -122,6 +120,14 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       newValue => {
         this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
 
+        // Limit gauge progressbar overflow
+        if (this.dataValue >= this.config.maxValue) {
+          this.dataValue = this.config.maxValue;
+        };
+        if (this.dataValue <= this.config.minValue) {
+          this.dataValue = this.config.minValue;
+        };
+
         // for custom SVG text element
         if (!isNaN(Number(this.dataValue))){
           this.dataValueTrimmed = Number(this.padValue(this.dataValue, this.gaugeOptions.valueInt, this.gaugeOptions.valueDec));
@@ -142,7 +148,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
    subscribeTheme() {
     this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
       themeChange => {
-       setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+       setTimeout(() => {   // delay so browser getComputedStyles has time to complet theme style change.
         this.updateGaugeConfig();
        }, 50);
     })
@@ -176,28 +182,58 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   }
 
   updateGaugeConfig(){
-    ////  Colors
-    // Hack to get Theme colors using hidden minxin, DIV and @ViewChild
-    this.themePrimaryColor = getComputedStyle(this.primaryElement.nativeElement).color;
-    this.themeAccentColor = getComputedStyle(this.accentElement.nativeElement).color;
-    this.themeWarnColor = getComputedStyle(this.warnElement.nativeElement).color;
-    this.themeBackgroundColor = getComputedStyle(this.backgroundElement.nativeElement).color;
+    //// Hack to get Theme colors using hidden minxin, DIV and @ViewChild
+    let themePaletteColor = "";
+    let themePaletteDarkColor = "";
 
-    // Labels - match selected theme
     this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = window.getComputedStyle(this.wrapper.nativeElement).color;
 
-    // Faceplate and gauge bar background - match selected theme
     this.gaugeOptions.colorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeOptions.colorBar = this.themeBackgroundColor;
+    this.gaugeOptions.colorBar = getComputedStyle(this.backgroundElement.nativeElement).color;
 
-    // Integer and decimal display
+    this.gaugeOptions.colorNeedleEnd = "";
+    this.gaugeOptions.colorNeedleShadowUp = "";
+    this.gaugeOptions.colorNeedleShadowDown = "black";
+
+    switch (this.config.barColor) {
+      case "primary":
+          themePaletteColor = getComputedStyle(this.primaryElement.nativeElement).color;
+          themePaletteDarkColor = getComputedStyle(this.primaryDarkElement.nativeElement).color;
+          this.gaugeOptions.colorBarProgress = themePaletteColor;
+          this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+        break;
+
+        case "accent":
+          themePaletteColor = getComputedStyle(this.accentElement.nativeElement).color;
+          themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
+          this.gaugeOptions.colorBarProgress = themePaletteColor;
+          this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+        break;
+
+        case "warn":
+          themePaletteColor = getComputedStyle(this.warnElement.nativeElement).color;
+          themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
+          this.gaugeOptions.colorBarProgress = themePaletteColor;
+          this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+        break;
+
+        default:
+        break;
+    }
+
+    // Config storage values
+    this.gaugeOptions.minValue = this.config.minValue;
+    this.gaugeOptions.maxValue = this.config.maxValue;
     this.gaugeOptions.valueInt = this.config.numInt;
     this.gaugeOptions.valueDec = this.config.numDecimal;
     this.gaugeOptions.majorTicksInt = this.config.numInt;
     this.gaugeOptions.majorTicksDec = this.config.numDecimal;
 
-    this.gaugeOptions.minValue = this.config.minValue;
-    this.gaugeOptions.maxValue = this.config.maxValue;
+    this.gaugeOptions.needle = true;
+    this.gaugeOptions.needleType = "line";
+    this.gaugeOptions.needleWidth = 3;
+    this.gaugeOptions.needleShadow = true;
+    this.gaugeOptions.needleSide = "both";
 
     // Vertical
     if (this.config.gaugeType == 'ngLinearVertical'){
@@ -206,19 +242,20 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       this.gaugeOptions.fontUnitsSize = 40;
       this.gaugeOptions.fontTitleSize = 40;
 
-      // With ticks
+      // Vertical With ticks
       if (this.config.gaugeTicks == true) {
-        this.gaugeOptions.minValue = 11.9;
-        this.gaugeOptions.maxValue = 15;
-
         this.gaugeOptions.exactTicks = false;
         this.gaugeOptions.barWidth = 30;
+
+        this.gaugeOptions.needleStart = -45;
+        this.gaugeOptions.needleEnd = 55;
+
         this.gaugeOptions.tickSide = "right";
-        this.gaugeOptions.ticksWidth = 10;
-        this.gaugeOptions.ticksPadding = 5;
+        this.gaugeOptions.ticksWidth = 8;
+        this.gaugeOptions.ticksPadding = 4;
 
         this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = [11.9, 12, 13, 14, 15];
+        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorTitle;
 
         this.gaugeOptions.numberSide = "right";
@@ -226,23 +263,26 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.fontNumbersSize = 25;
         this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
 
-        this.gaugeOptions.minorTicks = 4;
-        this.gaugeOptions.ticksWidthMinor = 5;
+        this.gaugeOptions.minorTicks = 10;
+        this.gaugeOptions.ticksWidthMinor = 4;
         this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
 
-        this.gaugeOptions.highlights = [
-          { "from": 11.9, "to": 12.2, "color": "yellow" },
-          { "from": 12.2, "to": 12.8, "color": "green" }
-        ];
-        this.gaugeOptions.highlightsWidth = 5;
+        this.gaugeOptions.highlights = [];
+        this.gaugeOptions.highlightsWidth = 3;
       }
       else {
-        // No ticks
+        // Vertical No ticks
         this.isGaugeVertical = true;
         this.gaugeOptions.barWidth = 100;
 
+        this.gaugeOptions.needleStart = 0;
+        this.gaugeOptions.needleEnd = 100;
+
+        this.gaugeOptions.ticksWidth = 0;
+        this.gaugeOptions.strokeTicks = false;
         this.gaugeOptions.majorTicks = [];
         this.gaugeOptions.colorMajorTicks = "";
+
         this.gaugeOptions.ticksPadding = 0;
         this.gaugeOptions.minorTicks = 0;
         this.gaugeOptions.colorMinorTicks = "";
@@ -255,37 +295,52 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       // horizontal
       this.isGaugeVertical = false;  // Changes div wrapper class to respect aspect ratio
       this.gaugeOptions.barLength = 80;
-      this.gaugeOptions.fontTitleSize = 50;
-      this.gaugeOptions.fontUnitsSize = 40;
+      this.gaugeOptions.fontTitleSize = 45;
+      this.gaugeOptions.fontUnitsSize = 35;
 
 
-      // With ticks
+      // horizontal With ticks
       this.gaugeOptions.barWidth = 40;
         if (this.config.gaugeTicks == true) {
 
-        this.gaugeOptions.tickSide = "right";
-        this.gaugeOptions.ticksWidth = 1;
-        this.gaugeOptions.ticksPadding = 5;
+          this.gaugeOptions.exactTicks = false;
+          this.gaugeOptions.barWidth = 30;
 
-        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
-        this.gaugeOptions.colorMajorTicks = "red";
+          this.gaugeOptions.needleStart = -45;
+          this.gaugeOptions.needleEnd = 56;
 
-        this.gaugeOptions.numberSide = "right";
-        this.gaugeOptions.numbersMargin = 5;
-        this.gaugeOptions.fontNumbersSize = 30;
-        this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
+          this.gaugeOptions.tickSide = "right";
+          this.gaugeOptions.ticksWidth = 8;
+          this.gaugeOptions.ticksPadding = 5;
 
-        this.gaugeOptions.minorTicks = 10;
-        this.gaugeOptions.ticksWidthMinor = 8;
-        this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
+          this.gaugeOptions.strokeTicks = false;
+          this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
+          this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorTitle;
 
+          this.gaugeOptions.numberSide = "right";
+          this.gaugeOptions.numbersMargin = -5;
+          this.gaugeOptions.fontNumbersSize = 25;
+          this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
 
+          this.gaugeOptions.minorTicks = 10;
+          this.gaugeOptions.ticksWidthMinor = 5;
+          this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
+
+          this.gaugeOptions.highlights = [];
+          this.gaugeOptions.highlightsWidth = 3;
       }
       else {
-        // No ticks
+        // horizontal No ticks
         this.gaugeOptions.barWidth = 60;
+
+        this.gaugeOptions.needleStart = 0;
+        this.gaugeOptions.needleEnd = 100;
+
+        this.gaugeOptions.ticksWidth = 0;
+        this.gaugeOptions.strokeTicks = false;
         this.gaugeOptions.majorTicks = [];
         this.gaugeOptions.colorMajorTicks = "";
+
         this.gaugeOptions.ticksPadding = 0;
         this.gaugeOptions.minorTicks = 0;
         this.gaugeOptions.colorMinorTicks = "";
@@ -293,20 +348,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 0;
       }
-    }
-
-    switch (this.config.barColor) {
-      case "primary": this.gaugeOptions.colorBarProgress = this.themePrimaryColor;
-        break;
-
-      case "accent": this.gaugeOptions.colorBarProgress = this.themeAccentColor;
-        break;
-
-      case "warn": this.gaugeOptions.colorBarProgress = this.themeWarnColor;
-        break;
-
-      default: this.gaugeOptions.colorBarProgress = "white"
-        break;
     }
   }
 

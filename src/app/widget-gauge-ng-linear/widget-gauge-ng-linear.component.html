@@ -81,7 +81,7 @@
       [attr.numbers-margin]="gaugeOptions.numbersMargin"
       font-numbers="arial"
       [attr.font-numbers-size]="gaugeOptions.fontNumbersSize"
-      font-numbers-weight="bold"
+      font-numbers-weight=""
       [attr.color-numbers]="gaugeOptions.colorNumbers"
       [attr.ticks-width-minor]="gaugeOptions.ticksWidthMinor"
       [attr.highlights]="gaugeOptions.highlights"
@@ -94,13 +94,26 @@
       animated-value="false"
       animate-on-init="false"
 
-      needle="false"
+      [attr.needle]="gaugeOptions.needle"
+      [attr.needle-end]="gaugeOptions.needleEnd"
+      [attr.needle-start]="gaugeOptions.needleStart"
+      [attr.needle-shadow]="gaugeOptions.needleShadow"
+      [attr.needle-side]="gaugeOptions.needleSide"
+      [attr.needle-width]="gaugeOptions.needleWidth"
+      [attr.needle-type]="gaugeOptions.needleType"
+      [attr.color-needle]="gaugeOptions.colorNeedle"
+      [attr.color-needle-end]="gaugeOptions.colorNeedleEnd"
+      [attr.color-needle-shadow-up]="gaugeOptions.colorNeedleShadowUp"
+      [attr.color-needle-shadow-down]="gaugeOptions.colorNeedleShadowDown"
     ></linear-gauge>
   </div>
 
   <div #primary class='primary' style="display: none;"></div>
   <div #accent class='accent' style="display: none;"></div>
   <div #warn class='warn' style="display: none;"></div>
+  <div #primaryDark class='primaryDark' style="display: none;"></div>
+  <div #accentDark class='accentDark' style="display: none;"></div>
+  <div #warnDark class='warnDark' style="display: none;"></div>
   <div #background class='background' style="display: none;"></div>
   <div #text class='text' style="display: none;"></div>
 

@@ -28,6 +28,8 @@ const defaultConfig: IWidgetConfig = {
   gaugeTicks: false,
   minValue: 0,
   maxValue: 100,
+  numInt: 1,
+  numDecimal: 0,
   barColor: 'accent',     // theme palette to select
 };
 
@@ -110,6 +112,14 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
         this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
+
+        // Limit gauge progressbar overflow
+        if (this.dataValue >= this.config.maxValue) {
+          this.dataValue = this.config.maxValue;
+        };
+        if (this.dataValue <= this.config.minValue) {
+          this.dataValue = this.config.minValue;
+        };
       }
     );
   }
@@ -176,6 +186,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
     ///////////////////////////////////////
     //Set gauge layout selection specific values
+
+    this.gaugeOptions.valueInt = this.config.numInt;
+    this.gaugeOptions.valueDec = this.config.numDecimal;
 
     if (this.config.gaugeTicks == true) {
       this.gaugeOptions.majorTicks = [0,100];
