@@ -39,7 +39,7 @@ interface IDataSetOptions {
 export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;    
+  @Input('unlockStatus') unlockStatus: boolean;
 
   @ViewChild('lineGraph') lineGraph: ElementRef;
 
@@ -77,7 +77,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
     //TODO, this only works on chart init... need to find when theme changes...
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-    
+
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
     this.startChart();
     this.subscribeDataSet();
@@ -89,7 +89,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       if (this.chart !== null) {
           //this.chart.destroy(); // doesn't seem to be needed since chart is destoryed when destroying component. was giving errors. (maybe html was destroyed before this is called?)
       }
-      this.unsubscribeDataSet();     
+      this.unsubscribeDataSet();
       console.log("stopped Sub");
   }
 
@@ -124,7 +124,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             //borderWidth: 1
             borderColor: this.textColor,
             borderDash: [ 5, 5 ]
-        } 
+        }
         );
       }
       //setup Options
@@ -137,7 +137,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       }
       if (this.config.maxValue !== null) {
         yAxisTickOptions['suggestedMax'] = this.config.maxValue;
-      }        
+      }
 
       this.chart = new Chart(this.chartCtx,{
           type: 'line',
@@ -149,9 +149,9 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
           scales: {
               yAxes: [{
                   scaleLabel: {
-                      labelString: 'feet',   
+                      labelString: 'feet',
                   },
-                  
+
                   position: 'right',
                   ticks: yAxisTickOptions
               }],
@@ -162,7 +162,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                       round: 'second',
                       displayFormats: 'YY', //no mater what it seems to default to full time...
                   },
-                  
+
                   ticks: {
   //                    minRotation: 15,
                       callback: function(value) {  //TODO, left pad 0 for min/sec
@@ -211,12 +211,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                   continue;
                 }
                 this.chartDataAvg.push({
-                  t: dataSet[i].timestamp, 
+                  t: dataSet[i].timestamp,
                   y: (this.UnitsService.convertUnit(this.config.units['dataset'], dataSet[i].average) * invert).toFixed(2)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
-              
+
               //min/max
               if (this.config.displayMinMax) {
                 this.chartDataMin = [];
@@ -228,17 +228,17 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                     this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
                   } else {
                     this.chartDataMin.push({
-                        t: dataSet[i].timestamp, 
+                        t: dataSet[i].timestamp,
                         y: (this.UnitsService.convertUnit(this.config.units['dataset'], dataSet[i].minValue) * invert).toFixed(2)
                     });
                     this.chartDataMax.push({
-                        t: dataSet[i].timestamp, 
+                        t: dataSet[i].timestamp,
                         y: (this.UnitsService.convertUnit(this.config.units['dataset'], dataSet[i].maxValue) * invert).toFixed(2)
                     });
                   }
                 }
                 this.chart.config.data.datasets[1].data = this.chartDataMin;
-                this.chart.config.data.datasets[2].data = this.chartDataMax;                   
+                this.chart.config.data.datasets[2].data = this.chartDataMax;
               }
 
 
@@ -276,7 +276,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       }
 
     });
-      
+
     }
 
 }

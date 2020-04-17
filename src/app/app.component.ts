@@ -15,26 +15,26 @@ declare var NoSleep: any; //3rd party
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css', './app.component.scss']
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, OnDestroy {
 
   noSleep = new NoSleep();
-  
+
   pageName: string = '';
   rootPageIndexSub: Subscription;
 
-  unlockStatus: boolean = false; 
+  unlockStatus: boolean = false;
   unlockStatusSub: Subscription;
 
   fullscreenStatus = false;
-  
+
 
   themeName: string;
   themeClass: string = 'default-light fullheight';
   themeNameSub: Subscription;
 
-  constructor(  
+  constructor(
     private AppSettingsService: AppSettingsService,
     private DataSetService: DataSetService,
     //private DerivedService: DerivedService,
@@ -88,7 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   deletePage() {
-    
+
   }
 
   pageDown() {
@@ -98,7 +98,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   pageUp() {
     this.LayoutSplitsService.nextRoot();
-   
+
   }
 
   toggleFullScreen() {

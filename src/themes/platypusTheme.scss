@@ -1,5 +1,3 @@
-@import '~@angular/material/theming';
-
 $mat-perry: (
     50 : #e3f2f2,
     100 : #badede,
@@ -47,7 +45,7 @@ $mat-wind: (
 
 
 $platypusTheme-primary: mat-palette($mat-teal);
-$platypusTheme-accent:  mat-palette($mat-orange, A200, A100, A400);
+$platypusTheme-accent: mat-palette($mat-orange, A200, A100, A400);
 
 // The warn palette is optional (defaults to red).
 $platypusTheme-warn:    mat-palette($mat-red);

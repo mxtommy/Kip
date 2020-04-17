@@ -9,14 +9,16 @@
     $foreground: map-get($theme, foreground);
 
     .app-defaults {
-        //background-color: mat-color($primary, 200); 
-        background-color: mat-color($background, background);
-        color: mat-color($foreground, text);
-
+      background-color: mat-color($background, background);
+      color: mat-color($foreground, text);
     }
 
     .theme-menu {
-        background-color: mat-color($primary, 900);
+      background-color: mat-color($primary, 900);
     }
-}    
+
+    .menuBarButtonGroup {
+      background-color: mat-color($foreground, divider);
+    }
+}
 

@@ -5,13 +5,13 @@ import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
 @Component({
   selector: 'layout-split',
   templateUrl: './layout-split.component.html',
-  styleUrls: ['./layout-split.component.css', './layout-split.component.scss']
+  styleUrls: ['./layout-split.component.scss']
 })
 export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
 
   @Input('unlockStatus') unlockStatus: boolean;
   @Input('splitUUID') splitUUID: string;
-  
+
   splitSet: ISplitSet;
   splitSetSub: Subscription;
 
@@ -24,7 +24,7 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
         this.splitSet = splitSet;
        }
     );
-   
+
   }
 
   ngOnDestroy() {
@@ -32,12 +32,12 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    
+
     if (changes.splitUUID) {
       if (! changes.splitUUID.firstChange) {
         this.ngOnDestroy();
         this.ngOnInit();
-        
+
       }
     }
   }
@@ -49,8 +49,8 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   splitArea(areaUUID: string, direction: string) {
     this.LayoutSplitsService.splitArea(this.splitSet.uuid,areaUUID, direction);
   }
- 
- 
+
+
   deleteArea(areaUUID) {
     this.LayoutSplitsService.deleteArea(this.splitSet.uuid, areaUUID);
   }
