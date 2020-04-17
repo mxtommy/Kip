@@ -11,6 +11,8 @@ import { WidgetStateComponent } from './widget-state/widget-state.component';
 import { WidgetSwitchComponent } from './widget-switch/widget-switch.component';
 import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
+import { WidgetGaugeNgLinearComponent} from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
+import { WidgetGaugeNgRadialComponent} from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 
 export class widgetInfo {
   name: string;
@@ -27,7 +29,7 @@ export class WidgetListService {
   constructor() { }
 
 
-  widgetList: widgetInfo[] = 
+  widgetList: widgetInfo[] =
   [
     {
       name: 'WidgetBlank',
@@ -53,11 +55,21 @@ export class WidgetListService {
       name: 'WidgetSwitchComponent',
       componentName: WidgetSwitchComponent,
       description: 'Switch Input',
-    },  */  
+    },  */
+    {
+      name: 'WidgetGaugeNgLinearComponent',
+      componentName: WidgetGaugeNgLinearComponent,
+      description: "Linear Gauge"
+    },
+    {
+      name: 'WidgetGaugeNgRadialComponent',
+      componentName: WidgetGaugeNgRadialComponent,
+      description: "Radial Gauge"
+    },
     {
       name: 'WidgetGaugeComponent',
       componentName: WidgetGaugeComponent,
-      description: "Gauge (Radial/Linear)"
+      description: "Steel Gauge (Radial/Linear)"
     },
     {
       name: 'WidgetHistorical',
@@ -73,7 +85,7 @@ export class WidgetListService {
       name: 'WidgetIframeComponent',
       componentName: WidgetIframeComponent,
       description: 'Embed Webpage',
-    },    
+    },
     {
       name: 'WidgetTutorial',
       componentName: WidgetTutorialComponent,

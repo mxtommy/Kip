@@ -1,6 +1,6 @@
 import { Component, OnInit,  Inject } from '@angular/core';
-import { FormGroup, FormControl, Validators }    from '@angular/forms';
-import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { FormGroup, FormControl }    from '@angular/forms';
+import { MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
 
 import { DataSetService, IDataSet } from '../data-set.service';
 import { IWidgetConfig } from '../widget-manager.service';
@@ -42,7 +42,7 @@ export class ModalWidgetComponent implements OnInit {
       } else {
         groups.addControl(key, new FormControl(formData[key]));
       }
-      
+
     });
     return groups;
   }

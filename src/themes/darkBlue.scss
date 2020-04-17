@@ -1,5 +1,3 @@
-@import '~@angular/material/theming';
-
 $mat-darkBlue-primary: (
     50 : #e0e2ec,
     100 : #b3b7cf,
@@ -75,7 +73,7 @@ $mat-wind: (
   compass-light: #afafaf,
   wind-rose-background: #8a8a8a,
   port: #ff0000,
-  starboard: #1fce04,  
+  starboard: #1fce04,
 );
 
 
@@ -94,6 +92,4 @@ $darkBlueTheme-temp-dark: mat-dark-theme($darkBlueTheme-primary, $darkBlueTheme-
 
 //merge with custom foreground
 $darkBlueTheme-dark: map-merge($darkBlueTheme-temp-dark, (background: $darkBlueTheme-background, foreground: $darkBlueTheme-foreground, wind: $mat-wind));
-
-
 

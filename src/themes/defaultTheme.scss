@@ -1,5 +1,3 @@
-@import '~@angular/material/theming';
-
 $defaultTheme-primary: mat-palette($mat-cyan);
 $defaultTheme-accent:  mat-palette($mat-blue, A200, A100, A400);
 
@@ -17,7 +15,7 @@ $mat-wind: (
     compass-light: #afafaf,
     wind-rose-background: #8a8a8a,
     port: #ff0000,
-    starboard: #1fce04,    
+    starboard: #1fce04,
 );
 
 // custom background
@@ -28,4 +26,3 @@ $defaultTheme-temp-light: mat-light-theme($defaultTheme-primary, $defaultTheme-a
 
 
 $defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, wind: $mat-wind));
-

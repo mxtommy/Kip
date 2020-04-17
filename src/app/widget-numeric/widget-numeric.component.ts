@@ -9,9 +9,6 @@ import { UnitsService } from '../units.service';
 import { isNumeric } from 'rxjs/util/isNumeric';
 import { isNull } from '@angular/compiler/src/output/output_ast';
 
-
-
-
 const defaultConfig: IWidgetConfig = {
   widgetLabel: null,
   paths: {
@@ -35,7 +32,7 @@ const defaultConfig: IWidgetConfig = {
 @Component({
   selector: 'app-widget-numeric',
   templateUrl: './widget-numeric.component.html',
-  styleUrls: ['./widget-numeric.component.css']
+  styleUrls: ['./widget-numeric.component.scss']
 })
 export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewChecked {
 
@@ -44,10 +41,10 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @ViewChild('canvasEl') canvasEl: ElementRef;
   @ViewChild('canvasBG') canvasBG: ElementRef;
   @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
-    
+
   activeWidget: IWidget;
   config: IWidgetConfig;
-  
+
   dataValue: number = null;
   maxValue: number = null;
   minValue: number = null;
@@ -60,7 +57,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   //subs
   valueSub: Subscription = null;
-  
+
   canvasCtx;
   canvasBGCtx;
 
@@ -84,7 +81,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-    this.resizeWidget();  
+    this.resizeWidget();
   }
 
   ngOnDestroy() {
@@ -97,13 +94,13 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   resizeWidget() {
     let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
-    
+
     if (rect.height < 50) { return; }
     if (rect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) { 
-      this.canvasEl.nativeElement.width = Math.floor(rect.width); 
+    if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) {
+      this.canvasEl.nativeElement.width = Math.floor(rect.width);
       this.canvasEl.nativeElement.height = Math.floor(rect.height);
-      this.canvasBG.nativeElement.width = Math.floor(rect.width); 
+      this.canvasBG.nativeElement.width = Math.floor(rect.width);
       this.canvasBG.nativeElement.height = Math.floor(rect.height);
       this.currentValueLength = 0; //will force resetting the font size
       this.currentMinMaxLength = 0;
@@ -120,7 +117,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue;
-        // init min/max 
+        // init min/max
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }
         if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
@@ -197,15 +194,15 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText : string;
-  
+
     if (isNumeric(this.dataValue)) {
       let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
-      if (isNumeric(converted)) { // retest as convert stuff might have returned a text string 
+      if (isNumeric(converted)) { // retest as convert stuff might have returned a text string
         valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
       } else {
         valueText = converted;
       }
-      
+
     } else {
       valueText = "--";
     }
@@ -213,7 +210,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.currentValueLength != valueText.length) {
       //we need to set font size...
       this.currentValueLength = valueText.length;
-    
+
       //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
       // set font small and make bigger until we hit a max.
       this.valueFontSize = 1;
@@ -222,19 +219,18 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
         this.valueFontSize = this.valueFontSize + 10;
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
-      }    
+      }
       // now decrease by 1 to find the right size
       while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
         this.valueFontSize--;
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
     }
-    
+
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
     this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
@@ -244,16 +240,16 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     // set font small and make bigger until we hit a max.
     if (this.config.widgetLabel === null) { return; }
     var fontSize = 1;
-    // get color
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
 
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasBGCtx.measureText(this.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
+
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
+    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasBGCtx.fillText(this.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
@@ -264,9 +260,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
- 
+
     var fontSize = 1;
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasBGCtx.measureText(this.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
@@ -274,6 +270,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     }
     this.canvasBGCtx.textAlign = "right";
     this.canvasBGCtx.textBaseline="bottom";
+    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasBGCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
@@ -281,19 +278,17 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     if (!this.config.showMin && !this.config.showMax) { return; } //no need to do anything if we're not showing min/max
 
-
- 
     let valueText: string = '';
-    
+
     if (this.config.showMin) {
       if (isNumeric(this.minValue)) {
         let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
-        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string 
+        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Min: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
           valueText = valueText + " Min: " + converted;
-        }        
-        
+        }
+
       } else {
         valueText = valueText + " Min: --";
       }
@@ -301,7 +296,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.config.showMax) {
       if (isNumeric(this.maxValue)) {
         let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.maxValue);
-        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string 
+        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Max: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
           valueText = valueText + " Max: " + converted;
@@ -325,10 +320,10 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       }
     }
 
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "left";
     this.canvasCtx.textBaseline="bottom";
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
