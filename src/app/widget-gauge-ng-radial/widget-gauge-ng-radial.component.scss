@@ -9,21 +9,30 @@
   $foreground: map-get($theme, foreground);
 
   app-widget-gauge-ng-radial {
-      .primary {
-        color: mat-color($primary, 300);
-      }
-      .accent {
-        color: mat-color($accent, 300);
-      }
-      .warn {
-        color: mat-color($warn, 300);
-      }
-      .background {
-        color: mat-color($foreground, divider);
-      }
-      .text {
-        color: mat-color($foreground, text);
-      }
+    .primary {
+      color: mat-color($primary, 300);
+    }
+    .accent {
+      color: mat-color($accent, 300);
+    }
+    .warn {
+      color: mat-color($warn, 300);
+    }
+    .primaryDark {
+      color: mat-color($primary, 900);
+    }
+    .accentDark {
+      color: mat-color($accent, 900);
+    }
+    .warnDark {
+      color: mat-color($warn, 900);
+    }
+    .background {
+      color: mat-color($foreground, divider);
+    }
+    .text {
+      color: mat-color($foreground, text);
+    }
   }
 }
 

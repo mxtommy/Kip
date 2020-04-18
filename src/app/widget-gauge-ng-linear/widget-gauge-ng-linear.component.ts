@@ -77,7 +77,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
     private AppSettingsService: AppSettingsService, // need for theme change subscription
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
@@ -90,13 +90,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     }
     this.subscribePath();
     this.subscribeTheme();
-
-    if (this.config.gaugeType == "ngLinearVertical") {
-      this.isGaugeVertical = true;
-    }
-    else {
-      this.isGaugeVertical = false;
-    }
   }
 
   ngOnDestroy() {
@@ -170,7 +163,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.config = result;
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
-
         this.updateGaugeConfig();
       }
     });
@@ -237,13 +229,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     }
 
     this.gaugeOptions.valueBox = true;
-    this.gaugeOptions.valueBoxWidth = 50;
-    this.gaugeOptions.valueBoxBorderRadius = 5;
+    this.gaugeOptions.valueBoxWidth = 100;
+    this.gaugeOptions.valueBoxBorderRadius = 0;
 
     this.gaugeOptions.needle = true;
     this.gaugeOptions.needleType = "line";
-    this.gaugeOptions.needleWidth = 4;
-    this.gaugeOptions.needleShadow = true;
+    this.gaugeOptions.needleWidth = 5;
+    this.gaugeOptions.needleShadow = false;
     this.gaugeOptions.needleSide = "both";
 
     // Vertical
@@ -379,31 +371,5 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       }
 
     }
-  }
-
-  padValue(val, int, dec): string {
-    let i = 0;
-    let s, n, foo;
-    let strVal: string
-    val = parseFloat(val);
-    n = (val < 0);
-    val = Math.abs(val);
-    if (dec > 0) {
-        foo = val.toFixed(dec).toString().split('.');
-        s = int - foo[0].length;
-        for (; i < s; ++i) {
-            foo[0] = '0' + foo[0];
-        }
-        strVal = (n ? '-' : '') + foo[0] + '.' + foo[1];
-    }
-    else {
-        strVal = Math.round(val).toString();
-        s = int - strVal.length;
-        for (; i < s; ++i) {
-            strVal = '0' + strVal;
-        }
-        strVal = (n ? '-' : '') + strVal;
-    }
-    return strVal;
   }
 }

@@ -26,6 +26,7 @@ const defaultConfig: IWidgetConfig = {
 
   gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
   gaugeTicks: false,
+  radialSize: 'measuring',
   minValue: 0,
   maxValue: 100,
   numInt: 1,
@@ -40,18 +41,21 @@ const defaultConfig: IWidgetConfig = {
 })
 export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
 
-  @ViewChild('wrapperDiv') wrapper: ElementRef;
+  @ViewChild('wrapperDiv') private wrapper: ElementRef;
   @ViewChild('radialGauge') public radialGauge: RadialGauge;
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
   // hack to access material-theme palette colors
-  @ViewChild('primary') primaryElement: ElementRef;
-  @ViewChild('accent') accentElement: ElementRef;
-  @ViewChild('warn') warnElement: ElementRef;
-  @ViewChild('background') backgroundElement: ElementRef;
-  @ViewChild('text') textElement: ElementRef;
+  @ViewChild('primary') private primaryElement: ElementRef;
+  @ViewChild('accent') private accentElement: ElementRef;
+  @ViewChild('warn') private warnElement: ElementRef;
+  @ViewChild('primaryDark') private primaryDarkElement: ElementRef;
+  @ViewChild('accentDark') private accentDarkElement: ElementRef;
+  @ViewChild('warnDark') private warnDarkElement: ElementRef;
+  @ViewChild('background') private backgroundElement: ElementRef;
+  @ViewChild('text') private textElement: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
@@ -61,13 +65,6 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
   // dynamics theme support
   themeNameSub: Subscription = null;
-
-
-  themePrimaryColor: string;
-  themeAccentColor: string;
-  themeWarnColor: string;
-  themeBackgroundColor: string;
-  themeTextColor: string;
 
   public gaugeOptions = {} as RadialGaugeOptions;
 
@@ -93,8 +90,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   ngOnDestroy() {
-    this.unsubscribeTheme();
     this.unsubscribePath();
+    this.unsubscribeTheme();
   }
 
   ngAfterContentInit() {
@@ -103,7 +100,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
   ngAfterContentChecked() {
     this.resizeWidget();
-   }
+  }
 
   subscribePath() {
     this.unsubscribePath();
@@ -169,62 +166,172 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   updateGaugeConfig(){
-    ////  Colors
-    // Hack to get mixin theme colors using hidden DIV and @ViewChild - Don't know of a better way to access material theme in TS
-    this.themePrimaryColor = getComputedStyle(this.primaryElement.nativeElement).color;
-    this.themeAccentColor = getComputedStyle(this.accentElement.nativeElement).color;
-    this.themeWarnColor = getComputedStyle(this.warnElement.nativeElement).color;
-    this.themeBackgroundColor = getComputedStyle(this.backgroundElement.nativeElement).color;
-    this.themeTextColor = getComputedStyle(this.textElement.nativeElement).color;
+    //// Hack to get Theme colors using hidden minxin, DIV and @ViewChild
+    let themePaletteColor = "";
+    let themePaletteDarkColor = "";
 
-    // Labels to match selected theme
-    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = this.themeTextColor;
+    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = getComputedStyle(this.textElement.nativeElement).color;
 
-    // Face plate and gauge bar background - match selected theme
-    this.gaugeOptions.colorPlate = window.getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeOptions.colorBar = this.themeBackgroundColor;
+    this.gaugeOptions.colorPlate = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
+    this.gaugeOptions.colorBar = getComputedStyle(this.backgroundElement.nativeElement).color;
+    this.gaugeOptions.colorNeedleShadowUp = "";
+    this.gaugeOptions.colorNeedleShadowDown = "black";
+    this.gaugeOptions.colorNeedleCircleInner = "";
+    this.gaugeOptions.colorNeedleCircleInnerEnd = "";
+    this.gaugeOptions.colorNeedleCircleOuter = "";
+    this.gaugeOptions.colorNeedleCircleOuterEnd = "";
 
-    ///////////////////////////////////////
-    //Set gauge layout selection specific values
-
-    this.gaugeOptions.valueInt = this.config.numInt;
-    this.gaugeOptions.valueDec = this.config.numDecimal;
-
-    if (this.config.gaugeTicks == true) {
-      this.gaugeOptions.majorTicks = [0,100];
-      this.gaugeOptions.majorTicksInt = 1;
-      this.gaugeOptions.colorMajorTicks = "red";
-      this.gaugeOptions.minorTicks = 10;
-      this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
-      this.gaugeOptions.numbersMargin = -20;
-      this.gaugeOptions.fontNumbersSize = 25;
-      this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
-    }
-    else {
-      this.gaugeOptions.majorTicks = [];
-      this.gaugeOptions.majorTicksInt = 0;
-      this.gaugeOptions.colorMajorTicks = "";
-      this.gaugeOptions.minorTicks = 0;
-      this.gaugeOptions.colorMinorTicks = "";
-      this.gaugeOptions.numbersMargin = 0;
-      this.gaugeOptions.fontNumbersSize = 0;
-    }
-
+    // Theme colors
     switch (this.config.barColor) {
       case "primary":
-        this.gaugeOptions.colorBarProgress = this.themePrimaryColor;
+        themePaletteColor = getComputedStyle(this.primaryElement.nativeElement).color;
+        themePaletteDarkColor = getComputedStyle(this.primaryDarkElement.nativeElement).color;
+        this.gaugeOptions.colorBarProgress = themePaletteColor;
+        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       case "accent":
-        this.gaugeOptions.colorBarProgress = this.themeAccentColor;
+        themePaletteColor = getComputedStyle(this.accentElement.nativeElement).color;
+        themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
+        this.gaugeOptions.colorBarProgress = themePaletteColor;
+        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor
         break;
 
       case "warn":
-        this.gaugeOptions.colorBarProgress = this.themeWarnColor;
+        themePaletteColor = getComputedStyle(this.warnElement.nativeElement).color;
+        themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
+        this.gaugeOptions.colorBarProgress = themePaletteColor;
+        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor
         break;
 
-      case "special":
-        this.gaugeOptions.colorBarProgress = "red";
+      default:
+        break;
+    }
+
+    // Config storage values
+    this.gaugeOptions.valueInt = this.config.numInt;
+    this.gaugeOptions.valueDec = this.config.numDecimal;
+
+    this.gaugeOptions.majorTicksInt = this.config.numInt;
+    this.gaugeOptions.majorTicksDec = this.config.numDecimal;
+
+    // Radial gauge type
+    switch(this.config.radialSize) {
+      case "capacity":
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
+        this.gaugeOptions.fontTitleSize = 60;
+        this.gaugeOptions.minValue = this.config.minValue;
+        this.gaugeOptions.maxValue = this.config.maxValue;
+        this.gaugeOptions.barProgress = true;
+        this.gaugeOptions.barWidth = 15;
+
+        this.gaugeOptions.valueBox = true;
+        this.gaugeOptions.fontValueSize = 110;
+        this.gaugeOptions.valueBoxWidth = 100;
+        this.gaugeOptions.valueBoxBorderRadius = 0;
+        this.gaugeOptions.valueBoxStroke = 0;
+        this.gaugeOptions.colorValueBoxBackground = "";
+
+        this.gaugeOptions.ticksAngle = 360;
+        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.exactTicks = false;
+        this.gaugeOptions.strokeTicks = false;
+        this.gaugeOptions.majorTicks = [];
+        this.gaugeOptions.minorTicks = 0;
+        this.gaugeOptions.numbersMargin = 0;
+        this.gaugeOptions.fontNumbersSize = 0;
+        this.gaugeOptions.highlights = [];
+        this.gaugeOptions.highlightsWidth = 0;
+
+        this.gaugeOptions.needle = true;
+        this.gaugeOptions.needleType = "line";
+        this.gaugeOptions.needleWidth = 2;
+        this.gaugeOptions.needleShadow = false;
+        this.gaugeOptions.needleStart = 80;
+        this.gaugeOptions.needleEnd = 95;
+        this.gaugeOptions.needleCircleSize = 1;
+        this.gaugeOptions.needleCircleInner = false;
+        this.gaugeOptions.needleCircleOuter = false;
+
+        this.gaugeOptions.animationTarget = "needle";
+        this.gaugeOptions.useMinPath = false;
+        break;
+
+      case "measuring":
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
+        this.gaugeOptions.fontTitleSize = 60;
+        this.gaugeOptions.minValue = this.config.minValue;
+        this.gaugeOptions.maxValue = this.config.maxValue;
+        this.gaugeOptions.barProgress = true;
+        this.gaugeOptions.barWidth = 15;
+
+        this.gaugeOptions.valueBox = true;
+        this.gaugeOptions.fontValueSize = 70;
+        this.gaugeOptions.valueBoxWidth = 100;
+        this.gaugeOptions.valueBoxBorderRadius = 0;
+        this.gaugeOptions.valueBoxStroke = 0;
+        this.gaugeOptions.colorValueBoxBackground = "";
+
+        this.gaugeOptions.ticksAngle = 360;
+        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
+
+        this.gaugeOptions.ticksAngle = 360;
+        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.exactTicks = false;
+        this.gaugeOptions.strokeTicks = false;
+        this.gaugeOptions.majorTicks = [];
+        this.gaugeOptions.minorTicks = 0;
+        this.gaugeOptions.numbersMargin = 0;
+        this.gaugeOptions.fontNumbersSize = 0;
+        this.gaugeOptions.highlights = [];
+        this.gaugeOptions.highlightsWidth = 0;
+
+        this.gaugeOptions.animationTarget = "needle";
+        this.gaugeOptions.useMinPath = false;
+        break;
+
+      case "compass":
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
+        this.gaugeOptions.fontTitleSize = 60;
+        this.gaugeOptions.minValue = 0;
+        this.gaugeOptions.maxValue = 360;
+        this.gaugeOptions.barProgress = false;
+        this.gaugeOptions.barWidth = 0;
+
+        this.gaugeOptions.valueBox = true
+        this.gaugeOptions.fontValueSize = 50;
+        this.gaugeOptions.valueBoxWidth = 0;
+        this.gaugeOptions.valueBoxBorderRadius = 5;
+        this.gaugeOptions.valueBoxStroke = 0;
+        this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
+
+        this.gaugeOptions.ticksAngle = 360;
+        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.exactTicks = false;
+        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.strokeTicks = false;
+        this.gaugeOptions.numbersMargin = 0;
+        this.gaugeOptions.fontNumbersSize = 15;
+        this.gaugeOptions.minorTicks = 22;
+        this.gaugeOptions.highlights = [];
+        this.gaugeOptions.highlightsWidth = 0;
+
+        this.gaugeOptions.needle = true;
+        this.gaugeOptions.needleType = "line";
+        this.gaugeOptions.needleWidth = 3;
+        this.gaugeOptions.needleShadow = false;
+        this.gaugeOptions.needleStart = 75;
+        this.gaugeOptions.needleEnd = 99;
+        this.gaugeOptions.needleCircleSize = 2;
+        this.gaugeOptions.needleCircleInner = false;
+        this.gaugeOptions.needleCircleOuter = false;
+
+        this.gaugeOptions.animationTarget = "plate";
+        this.gaugeOptions.useMinPath = true;
         break;
 
       default:
