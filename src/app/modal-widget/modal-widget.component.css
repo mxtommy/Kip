@@ -8,3 +8,6 @@
 .half-width {
     width: 49%;
 }
+.mat-radio-button ~ .mat-radio-button {
+  margin-left: 16px;
+}

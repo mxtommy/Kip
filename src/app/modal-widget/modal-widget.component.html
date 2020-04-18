@@ -128,9 +128,9 @@
         </mat-checkbox>
       </mat-tab>
 <!-- Gauge stuff -->
-      <mat-tab label="Gauge" *ngIf="(widgetConfig.gaugeType !== undefined) && (widgetConfig.gaugeType !== 'ngRadial')">
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType !== undefined">
         <div class="tab-content">
-          <mat-form-field class="full-width">
+          <mat-form-field class="full-width" *ngIf="widgetConfig.gaugeType !== 'ngRadial'">
               <mat-select
                   placeholder="Gauge Type"
                   formControlName="gaugeType"
@@ -142,7 +142,7 @@
                   <!-- <mat-option value="compass">Compass</mat-option> -->
               </mat-select>
           </mat-form-field>
-          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial')||(formMaster.controls.gaugeType.value == 'linear')">
+          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial') || (formMaster.controls.gaugeType.value == 'linear')">
               <mat-checkbox
               formControlName="barGraph"
                   name="barGraph"
@@ -150,15 +150,20 @@
                   Digital display
               </mat-checkbox>
           </p>
-          <p *ngIf="formMaster.controls.gaugeType.value == 'radial'" >
-              <mat-radio-group name="radialSize" formControlName="radialSize">
-                  <mat-radio-button value="quarter">1/4</mat-radio-button>
-                  <mat-radio-button value="half">1/2</mat-radio-button>
-                  <mat-radio-button value="three-quarter">3/4</mat-radio-button>
-                  <mat-radio-button value="full">Full</mat-radio-button>
+          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial') || (formMaster.controls.gaugeType.value == 'ngRadial')" >
+              <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'radial'" name="radialSize" formControlName="radialSize">
+                <mat-radio-button value="quarter">1/4</mat-radio-button>
+                <mat-radio-button value="half">1/2</mat-radio-button>
+                <mat-radio-button value="three-quarter">3/4</mat-radio-button>
+                <mat-radio-button value="full">Full</mat-radio-button>
+              </mat-radio-group>
+              <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'ngRadial'" name="radialSize" formControlName="radialSize">
+                <mat-radio-button value="capacity">Capacity</mat-radio-button>
+                <mat-radio-button value="measuring">Measuring</mat-radio-button>
+                <mat-radio-button value="compass">Compass</mat-radio-button>
               </mat-radio-group>
           </p>
-          <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical'" >
+          <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical' || formMaster.controls.gaugeType.value == 'ngLinearHorizontal'" >
             <mat-checkbox
               formControlName="gaugeTicks"
                 name="gaugeTicks"

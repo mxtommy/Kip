@@ -13,8 +13,8 @@
       [attr.units]="config.units['gaugePath']"
       [value]="dataValue"
 
-      [attr.min-value]="config.minValue"
-      [attr.max-value]="config.maxValue"
+      [attr.min-value]="gaugeOptions.minValue"
+      [attr.max-value]="gaugeOptions.maxValue"
       font-Units="arial"
       [attr.font-Units-size]="gaugeOptions.fontUnitsSize"
       font-Units-weight=""
@@ -41,19 +41,20 @@
       [attr.bar-length]="gaugeOptions.barLength"
       bar-begin-circle="false"
       bar-stroke-width="0"
-      bar-shadow=""
+      bar-shadow="0"
+
       [attr.color-bar]="gaugeOptions.colorBar"
       color-bar-end=""
       [attr.color-bar-progress]="gaugeOptions.colorBarProgress"
-      [attr.color-bar-progress-end]="gaugeOptions.colorBarProgress"
+      [attr.color-bar-progress-end]="gaugeOptions.colorBarProgressEnd"
       color-bar-stroke="0"
 
-      value-box="true"
+      [attr.value-box]="gaugeOptions.valueBox"
       value-box-stroke="0"
       color-value-box-rect=""
       color-value-box-rect-end=""
-      value-box-width="50"
-      value-box-border-radius="5"
+      [attr.value-box-width]="gaugeOptions.valueBoxWidth"
+      [attr.value-box-border-radius]="gaugeOptions.valueBoxBorderRadius"
       [attr.color-value-box-background]="gaugeOptions.colorBar"
       value-text=""
       [attr.value-int]="gaugeOptions.valueInt"
@@ -65,28 +66,28 @@
       value-text-shadow="false"
       color-value-box-shadow=""
 
-      exact-ticks="false"
-      stroke-ticks="false"
-      color-stroke-ticks="#121212"
-      tick-side="right"
+      [attr.exact-ticks]="gaugeOptions.exactTicks"
+      [attr.stroke-ticks]="gaugeOptions.strokeTicks"
+      color-stroke-ticks=""
+      [attr.tick-side]="gaugeOptions.tickSide"
       [attr.ticks-padding]="gaugeOptions.ticksPadding"
       [attr.major-ticks]="gaugeOptions.majorTicks"
       [attr.major-ticks-int]="gaugeOptions.majorTicksInt"
-      major-ticks-dec="0"
+      [attr.major-ticks-dec]="gaugeOptions.majorTicksDec"
       [attr.color-major-ticks]="gaugeOptions.colorMajorTicks"
-      ticks-width="0"
+      [attr.ticks-width]="gaugeOptions.ticksWidth"
       [attr.minor-ticks]="gaugeOptions.minorTicks"
       [attr.color-minor-ticks]="gaugeOptions.colorMinorTicks"
-      number-side="right"
+      [attr.number-side]="gaugeOptions.numberSide"
       [attr.numbers-margin]="gaugeOptions.numbersMargin"
       font-numbers="arial"
       [attr.font-numbers-size]="gaugeOptions.fontNumbersSize"
-      font-numbers-weight="bold"
+      font-numbers-weight=""
       [attr.color-numbers]="gaugeOptions.colorNumbers"
       [attr.ticks-width-minor]="gaugeOptions.ticksWidthMinor"
-      highlights=""
-      highlights-width="0"
-      needle-side="both"
+      [attr.highlights]="gaugeOptions.highlights"
+      [attr.highlights-width]="gaugeOptions.highlightsWidth"
+      [attr.needle-side]="gaugeOptions.needleSide"
 
       animation="true"
       animation-duration="500"
@@ -94,13 +95,26 @@
       animated-value="false"
       animate-on-init="false"
 
-      needle="false"
+      [attr.needle]="gaugeOptions.needle"
+      [attr.needle-end]="gaugeOptions.needleEnd"
+      [attr.needle-start]="gaugeOptions.needleStart"
+      [attr.needle-shadow]="gaugeOptions.needleShadow"
+      [attr.needle-side]="gaugeOptions.needleSide"
+      [attr.needle-width]="gaugeOptions.needleWidth"
+      [attr.needle-type]="gaugeOptions.needleType"
+      [attr.color-needle]="gaugeOptions.colorNeedle"
+      [attr.color-needle-end]="gaugeOptions.colorNeedleEnd"
+      [attr.color-needle-shadow-up]="gaugeOptions.colorNeedleShadowUp"
+      [attr.color-needle-shadow-down]="gaugeOptions.colorNeedleShadowDown"
     ></linear-gauge>
   </div>
 
   <div #primary class='primary' style="display: none;"></div>
   <div #accent class='accent' style="display: none;"></div>
   <div #warn class='warn' style="display: none;"></div>
+  <div #primaryDark class='primaryDark' style="display: none;"></div>
+  <div #accentDark class='accentDark' style="display: none;"></div>
+  <div #warnDark class='warnDark' style="display: none;"></div>
   <div #background class='background' style="display: none;"></div>
   <div #text class='text' style="display: none;"></div>
 
