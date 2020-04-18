@@ -1,10 +1,12 @@
 ### V0.1.13
 * add ngcanvasgauges and new modern theme (thanks godind!)
 * new Theme change event allowing widgets to subscribe to theme changes (thanks godind!)
-* Fix Historical Graph color change on theme update
+* Historical Graph color change on theme update
 * Update WidgetString to use canvas like numeric widget for dynamic font size
 * Latitude/Longitude Unit format
 * Load / Save config from server!
+* Notifications service
+* Deleting the last widget in a page deletes the page!
 
 ### V0.1.12
 * iFrame to embed something in kip
