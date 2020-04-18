@@ -17,9 +17,11 @@ export class SignalKDeltaService {
     //handle Hello
     if (typeof(message.self) != 'undefined') {
       this.SignalKService.setSelf(message.self);
+      this.SignalKService.setServerVersion(message.version);
       return;
     }
 
+    
     if (typeof(message.updates) != 'undefined') {
       this.processUpdateDelta(message);
     }

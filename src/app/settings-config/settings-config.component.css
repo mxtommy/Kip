@@ -3,5 +3,23 @@
   }
 
 .textheight {
-    height: 150px;
+    height: 120px;
+}
+
+.almost-full-width {
+  width: 90%;
+}
+.server-form {
+  min-width: 150px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.warningText{
+  padding-left: 15px;
+}
+
+.mat-radio-button ~ .mat-radio-button {
+  margin-right: 16px;
+  margin-left: 16px;
 }

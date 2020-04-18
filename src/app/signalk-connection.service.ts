@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Subscription ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { of ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
-import { AppSettingsService } from './app-settings.service';
+import { AppSettingsService, appSettings } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
@@ -235,6 +236,96 @@ export class SignalKConnectionService {
         return;
       }
       this.webSocket.send(message);
+    }
+
+    postApplicationData(scope: string, configName: string, data: Object) {
+        
+
+      let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
+      url += "applicationData/" + scope +"/kip/1.0/"+ configName;
+
+      let options = {};
+
+      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      }
+      this.http.post<any>(url, data, options).subscribe(
+        // when we go ok, this runs
+        response => {
+          console.log(response);
+          
+        },        
+        // When not ok, this runs...
+        (err: HttpErrorResponse) => {
+          if (err.error instanceof Error) {
+              // A client-side or network error occurred. Handle it accordingly.
+              console.log('An error occurred:', err.error.message);
+            } else {
+              // The backend returned an unsuccessful response code.
+              // The response body may contain clues as to what went wrong,
+              console.log(err);
+            }
+        }
+      )
+    }
+
+
+    
+
+    getApplicationDataKeys(scope: string): Observable<string[]> {
+      let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
+      url += "applicationData/" + scope +"/kip/1.0/?keys=true";
+
+      let options = {};
+
+      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      }
+
+      return this.http.get<string[]>(url, options).pipe(
+        tap(_ => {
+          console.log("Server Stored Configs for "+ scope +": "); console.log(_) 
+        }),
+        catchError(this.handleError<string[]>('getApplicationDataKeys', []))
+      );
+
+    }
+
+    getApplicationData(scope: string, configName: string): Observable<appSettings>{
+      let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
+      url += "applicationData/" + scope +"/kip/1.0/" + configName;
+      let options = {};
+
+      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      }
+      return this.http.get<appSettings>(url, options).pipe(
+        tap(_ => {
+          console.log("Fetched Stored Configs for "+ scope +" / "+ configName); 
+        }),
+        catchError(this.handleError<appSettings>('getApplicationData'))
+      );
+    }
+
+
+    /**
+     * Handle Http operation that failed.
+     * Let the app continue.
+     * @param operation - name of the operation that failed
+     * @param result - optional value to return as the observable result
+     */
+    private handleError<T>(operation = 'operation', result?: T) {
+      return (error: any): Observable<T> => {
+
+        // TODO: send the error to remote logging infrastructure
+        console.error(error); // log to console instead
+
+        // TODO: better job of transforming error for user consumption
+        console.log(`${operation} failed: ${error.message}`);
+
+        // Let the app keep running by returning an empty result.
+        return of(result as T);
+      };
     }
 
     //borring stuff, return observables etc

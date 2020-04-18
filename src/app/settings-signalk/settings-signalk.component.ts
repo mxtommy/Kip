@@ -59,6 +59,7 @@ export class SettingsSignalkComponent implements OnInit {
     this.endpointWSMessageSub.unsubscribe();
     this.endpointRESTStatusSub.unsubscribe();
     this.endpointRESTMessageSub.unsubscribe();
+    this.authTokenSub.unsubscribe();
   }
 
   updateSignalKURL() {
@@ -69,4 +70,9 @@ export class SettingsSignalkComponent implements OnInit {
     this.SignalkRequestsService.requestAuth();
   }
  
+  clearAuth() {
+    this.AppSettingsService.setSignalKToken(null);
+  }
+  
+
 }

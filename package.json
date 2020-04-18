@@ -42,6 +42,7 @@
     "@angular/router": "7.0.4",
     "angular-split": "^1.0.0-rc.3",
     "chart.js": "^2.7.3",
+    "compare-versions": "^3.6.0",
     "core-js": "^2.5.3",
     "js-quantities": "^1.7.2",
     "ng-canvas-gauges": "^6.0.4",

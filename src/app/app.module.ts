@@ -15,7 +15,9 @@ import {
   MatCheckboxModule,
   MatRadioModule,
   MatTabsModule,
-  MatStepperModule
+  MatStepperModule,
+  MatCardModule,
+  MatExpansionModule,
 } from '@angular/material';
 
 
@@ -136,8 +138,10 @@ const appRoutes: Routes = [
     MatCheckboxModule,
     MatRadioModule,
     MatTabsModule,
+    MatCardModule,
     MatStepperModule,
     MatInputModule,
+    MatExpansionModule,
     GaugesModule,
   ],
   entryComponents: [

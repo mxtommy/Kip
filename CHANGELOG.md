@@ -1,5 +1,10 @@
 ### V0.1.13
-* Latitude/Longitude formats
+* add ngcanvasgauges and new modern theme (thanks godind!)
+* new Theme change event allowing widgets to subscribe to theme changes (thanks godind!)
+* Fix Historical Graph color change on theme update
+* Update WidgetString to use canvas like numeric widget for dynamic font size
+* Latitude/Longitude Unit format
+* Load / Save config from server!
 
 ### V0.1.12
 * iFrame to embed something in kip

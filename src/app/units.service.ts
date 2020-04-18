@@ -43,7 +43,6 @@ export class UnitsService {
       this.defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
         newDefaults => {
           this.defaultUnits = newDefaults;
-          console.log(this.defaultUnits);
         }
       );
 //    console.log(Qty.getKinds());
