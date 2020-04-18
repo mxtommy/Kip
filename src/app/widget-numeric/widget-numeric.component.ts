@@ -148,8 +148,8 @@ subscribeTheme() {
   this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
     themeChange => {
      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-      this.drawTitle();
-      this.drawUnit();
+      this.updateCanvas();
+      this.updateCanvasBG();
      }, 100);
   })
 }

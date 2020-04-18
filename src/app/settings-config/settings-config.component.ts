@@ -4,7 +4,8 @@ import { FormControl, Validators }    from '@angular/forms';
 
 import { AppSettingsService } from '../app-settings.service';
 import { SignalKService } from '../signalk.service';
-import { SignalKConnectionService } from '../signalk-connection.service'
+import { SignalKConnectionService } from '../signalk-connection.service';
+import { NotificationsService } from '../notifications.service';
 
 interface possibleConfig {
   name: string
@@ -38,6 +39,7 @@ export class SettingsConfigComponent implements OnInit {
     private AppSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
     private SignalKConnectionService: SignalKConnectionService,
+    private NotificationsService: NotificationsService,
   ) { }
 
 
@@ -79,7 +81,9 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   saveServerSettings() {
-    this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, this.applicationConfig);
+    this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, this.applicationConfig).subscribe(result => {
+      this.NotificationsService.newNotification("Configration Saved!", 3000);
+    });
   }
 
   loadServerSettings() {

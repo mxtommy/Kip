@@ -18,6 +18,7 @@ import {
   MatStepperModule,
   MatCardModule,
   MatExpansionModule,
+  MatSnackBarModule,
 } from '@angular/material';
 
 
@@ -41,6 +42,7 @@ import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
 import { UnitsService } from './units.service';
+import { NotificationsService } from './notifications.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
@@ -139,6 +141,7 @@ const appRoutes: Routes = [
     MatRadioModule,
     MatTabsModule,
     MatCardModule,
+    MatSnackBarModule,
     MatStepperModule,
     MatInputModule,
     MatExpansionModule,
@@ -175,7 +178,8 @@ const appRoutes: Routes = [
     WidgetManagerService,
     UnitConvertService,
     UnitsService,
-    AppSettingsService
+    AppSettingsService,
+    NotificationsService
   ],
   bootstrap: [AppComponent]
 })

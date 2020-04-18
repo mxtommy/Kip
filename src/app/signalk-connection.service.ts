@@ -7,7 +7,7 @@ import { AppSettingsService, appSettings } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
-
+import { NotificationsService } from './notifications.service';
 
 
 
@@ -92,6 +92,7 @@ export class SignalKConnectionService {
         private SignalKDeltaService: SignalKDeltaService,
         private SignalKFullService: SignalKFullService,
         private AppSettingsService: AppSettingsService, 
+        private NotificationsService: NotificationsService,
         private http: HttpClient) 
     {
         // when signalKUrl changes, do stuff
@@ -120,7 +121,6 @@ export class SignalKConnectionService {
     resetSignalK() {
         // TODO close current connections/reset data, check api version... assuming v1
         console.debug("Reseting SignalK URL: " + this.signalKURL);
-        
         this.SignalKService.resetSignalKData();
         this.endpointREST = null;
         this.endpointWS = null;
@@ -209,6 +209,7 @@ export class SignalKConnectionService {
         this.webSocket.onopen = function (event){
             this.webSocketStatusOK.next(true);
             this.webSocketStatusMessage.next("Connected");
+            this.NotificationsService.newNotification("Connected to server", 1000);
         }.bind(this);
 
         this.webSocket.onerror = function (event) {
@@ -238,7 +239,7 @@ export class SignalKConnectionService {
       this.webSocket.send(message);
     }
 
-    postApplicationData(scope: string, configName: string, data: Object) {
+    postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
         
 
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
@@ -249,25 +250,13 @@ export class SignalKConnectionService {
       if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
         options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
       }
-      this.http.post<any>(url, data, options).subscribe(
-        // when we go ok, this runs
-        response => {
-          console.log(response);
-          
-        },        
-        // When not ok, this runs...
-        (err: HttpErrorResponse) => {
-          if (err.error instanceof Error) {
-              // A client-side or network error occurred. Handle it accordingly.
-              console.log('An error occurred:', err.error.message);
-            } else {
-              // The backend returned an unsuccessful response code.
-              // The response body may contain clues as to what went wrong,
-              console.log(err);
-            }
-        }
-      )
+      return this.http.post<any>(url, data, options).pipe(
+        catchError(this.handleError<string[]>('postApplicationData', []))
+      );
+
     }
+
+
 
 
     
