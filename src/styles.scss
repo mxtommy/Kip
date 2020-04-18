@@ -1,4 +1,10 @@
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
 @import '~@angular/material/theming';
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// **Be sure that you only ever include this mixin once!**
 @include mat-core();
 
 // custom foreground/background functions // takes rgba color
@@ -42,66 +48,71 @@
 // Custom Background functions. takes full pallet
 @function custom-theme-light-background($pallet, $bgcolor: 900) {
     @return (
-        status-bar: map_get($pallet, 300),
-        app-bar:    map_get($pallet, 100),
-        background: map_get($pallet, $bgcolor),
-        hover:      rgba(black, 0.04), // TODO(kara): check style with Material Design UX
-        card:       map_get($pallet, 200),
-        dialog:     map_get($pallet, 200),
-        disabled-button: $black-12-opacity,
-        raised-button: map_get($pallet, 200),
-        focused-button: $black-6-opacity,
-        selected-button: map_get($pallet, 300),
-        selected-disabled-button: map_get($pallet, 400),
-        disabled-button-toggle: map_get($pallet, 200),
-        unselected-chip: map_get($pallet, 300),
-        disabled-list-option: map_get($pallet, 200),
+      status-bar: map_get($pallet, 300),
+      app-bar:    map_get($pallet, 100),
+      background: map_get($pallet, $bgcolor),
+      hover:      rgba(black, 0.04), // TODO(kara): check style with Material Design UX
+      card:       map_get($pallet, 200),
+      dialog:     map_get($pallet, 200),
+      disabled-button: $black-12-opacity,
+      raised-button: map_get($pallet, 200),
+      focused-button: $black-6-opacity,
+      selected-button: map_get($pallet, 300),
+      selected-disabled-button: map_get($pallet, 400),
+      disabled-button-toggle: map_get($pallet, 200),
+      unselected-chip: map_get($pallet, 300),
+      disabled-list-option: map_get($pallet, 200),
     );
 };
 
 @function custom-theme-dark-background($pallet, $bgcolor: 900) {
     @return (
-        status-bar: black,
-        app-bar:    map_get($pallet, 800),
-        background: map_get($pallet, $bgcolor),
-        hover:      rgba(white, 0.04), // TODO(kara): check style with Material Design UX
-        card:       map_get($pallet, 800),
-        dialog:     map_get($pallet, 800),
-        disabled-button: $white-12-opacity,
-        raised-button: map-get($pallet, 800),
-        focused-button: $white-6-opacity,
-        selected-button: map_get($pallet, 900),
-        selected-disabled-button: map_get($pallet, 800),
-        disabled-button-toggle: black,
-        unselected-chip: map_get($pallet, 700),
-        disabled-list-option: black,
+      status-bar: black,
+      app-bar:    map_get($pallet, 800),
+      background: map_get($pallet, $bgcolor),
+      hover:      rgba(white, 0.04), // TODO(kara): check style with Material Design UX
+      card:       map_get($pallet, 800),
+      dialog:     map_get($pallet, 800),
+      disabled-button: $white-12-opacity,
+      raised-button: map-get($pallet, 800),
+      focused-button: $white-6-opacity,
+      selected-button: map_get($pallet, 900),
+      selected-disabled-button: map_get($pallet, 800),
+      disabled-button-toggle: black,
+      unselected-chip: map_get($pallet, 700),
+      disabled-list-option: black,
     );
 };
 
 
-//Import Themes
+//Import themes
 @import 'themes/defaultTheme.scss';
 @import 'themes/signalk.scss';
 @import 'themes/nightTheme.scss';
 @import 'themes/platypusTheme.scss';
 @import 'themes/highContrast.scss';
 @import 'themes/darkBlue.scss';
+@import 'themes/modernTheme.scss';
 
-// import Components
+// import Components themes
 @import 'app/app.component.scss';
 @import 'app/layout-split/layout-split.component.scss';
 @import 'app/widget-blank/widget-blank.component.scss';
 @import 'app/svg-wind/svg-wind.component.scss';
 @import 'app/widget-state/widget-state.component.scss';
+@import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
+@import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
 
 
 @mixin theme-components($theme) {
-    @include angular-material-theme($theme);
-    @include app-theme($theme);
-    @include layout-split-theme($theme);
-    @include widget-blank-theme($theme);
-    @include svg-wind-theme($theme);
-    @include widget-state-theme($theme);
+  @include angular-material-theme($theme);
+  @include app-theme($theme);
+  @include layout-split-theme($theme);
+  @include widget-blank-theme($theme);
+  @include svg-wind-theme($theme);
+  @include widget-state-theme($theme);
+  @include widget-ngGauge-linear-theme($theme);
+  @include widget-ngGauge-radial-theme($theme);
 }
 
 @include theme-components($defaultTheme-light);
@@ -123,4 +134,8 @@
 
 .darkBlue {
   @include theme-components($darkBlueTheme-dark);
+}
+
+.modern-dark {
+  @include theme-components($modernTheme-dark);
 }

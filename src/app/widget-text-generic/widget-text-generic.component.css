@@ -1,3 +1,10 @@
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+
 .textGenericWrapper {
     position: relative;
     width: 100%;

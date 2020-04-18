@@ -60,7 +60,7 @@ export class UnitWindowComponent implements OnInit {
 
   selectWidget() {
     let dialogRef = this.dialog.open(UnitWindowModalComponent, {
-      
+
       data: { currentType: this.activeWidget.type }
     });
 
@@ -72,7 +72,7 @@ export class UnitWindowComponent implements OnInit {
         }
       }
     });
-    
+
   }
 
 }
@@ -92,8 +92,8 @@ export class UnitWindowModalComponent implements OnInit {
 
   newWidget: string;
   widgetList: widgetInfo[];
-  
-  
+
+
   constructor(
     private widgetListService: WidgetListService,
     public dialogRef:MatDialogRef<UnitWindowModalComponent>,
@@ -112,5 +112,5 @@ export class UnitWindowModalComponent implements OnInit {
   submitNewWidget() {
       this.dialogRef.close(this.newWidget);
   }
-  
+
 }

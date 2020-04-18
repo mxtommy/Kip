@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
 import { AppSettingsService } from '../app-settings.service';
+import { NotificationsService } from '../notifications.service';
 
 import { IUnitInfo, IUnitDefaults, UnitsService } from '../units.service';
 
@@ -19,7 +20,11 @@ export class SettingsUnitsComponent implements OnInit {
   
 
   
-  constructor(private UnitsService: UnitsService, private AppSettingsService: AppSettingsService) { }
+  constructor( 
+    private UnitsService: UnitsService, 
+    private AppSettingsService: AppSettingsService,
+    private NotificationsService: NotificationsService,
+    ) { }
 
   ngOnInit() {
     
@@ -44,6 +49,7 @@ export class SettingsUnitsComponent implements OnInit {
 
   submitConfig() {
     this.AppSettingsService.setDefaultUnits(this.formUnitMaster.value);
+    this.NotificationsService.newNotification("Saved Default Units", 5000);
   }
 
 }

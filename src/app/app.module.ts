@@ -15,11 +15,14 @@ import {
   MatCheckboxModule,
   MatRadioModule,
   MatTabsModule,
-  MatStepperModule
+  MatStepperModule,
+  MatCardModule,
+  MatExpansionModule,
+  MatSnackBarModule,
 } from '@angular/material';
 
 
-import {MatTooltipModule} from '@angular/material/tooltip'; 
+import {MatTooltipModule} from '@angular/material/tooltip';
 
 import { AngularSplitModule } from 'angular-split';
 
@@ -39,7 +42,7 @@ import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitConvertService } from './unit-convert.service';
 import { UnitsService } from './units.service';
-
+import { NotificationsService } from './notifications.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
@@ -57,7 +60,6 @@ import { WidgetWindComponent, } from './widget-wind/widget-wind.component';
 import { SvgWindComponent } from './svg-wind/svg-wind.component';
 import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
-import { SettingsConfigComponent } from './settings-config/settings-config.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetStateComponent } from './widget-state/widget-state.component';
@@ -67,8 +69,12 @@ import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-sel
 import { ModalUnitSelectorComponent } from './modal-unit-selector/modal-unit-selector.component';
 import { ObjectKeysPipe } from './object-keys.pipe';
 import { SettingsUnitsComponent } from './settings-units/settings-units.component';
-import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component'
+import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
+import { SettingsConfigComponent } from './settings-config/settings-config.component';
 
+import { GaugesModule } from 'ng-canvas-gauges';
+import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
+import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -102,6 +108,8 @@ const appRoutes: Routes = [
     SvgWindComponent,
     WidgetGaugeComponent,
     GaugeSteelComponent,
+    WidgetGaugeNgLinearComponent,
+    WidgetGaugeNgRadialComponent,
     SettingsConfigComponent,
     WidgetTutorialComponent,
     ResetConfigComponent,
@@ -112,7 +120,7 @@ const appRoutes: Routes = [
     ModalUnitSelectorComponent,
     ObjectKeysPipe,
     SettingsUnitsComponent,
-    WidgetIframeComponent
+    WidgetIframeComponent,
   ],
   imports: [
     BrowserModule,
@@ -132,28 +140,34 @@ const appRoutes: Routes = [
     MatCheckboxModule,
     MatRadioModule,
     MatTabsModule,
+    MatCardModule,
+    MatSnackBarModule,
     MatStepperModule,
-    MatInputModule
+    MatInputModule,
+    MatExpansionModule,
+    GaugesModule,
   ],
-  entryComponents: [ 
-    WidgetUnknownComponent, 
-    WidgetBlankComponent, 
+  entryComponents: [
+    WidgetUnknownComponent,
+    WidgetBlankComponent,
     WidgetNumericComponent,
     WidgetTextGenericComponent,
     WidgetHistoricalComponent,
     WidgetWindComponent,
     WidgetGaugeComponent,
+    WidgetGaugeNgLinearComponent,
+    WidgetGaugeNgRadialComponent,
     WidgetStateComponent,
     WidgetSwitchComponent,
     WidgetIframeComponent,
     WidgetTutorialComponent,
-    
+
     //dialogs
     ModalWidgetComponent,
     UnitWindowModalComponent,
     SettingsDatasetsModalComponent,
   ],
-  providers: [ 
+  providers: [
     SignalKService,
     SignalKConnectionService,
     SignalKDeltaService,
@@ -164,7 +178,8 @@ const appRoutes: Routes = [
     WidgetManagerService,
     UnitConvertService,
     UnitsService,
-    AppSettingsService
+    AppSettingsService,
+    NotificationsService
   ],
   bootstrap: [AppComponent]
 })

@@ -1,0 +1,121 @@
+<div class="wrapper" #wrapperDiv>
+  <radial-gauge class="radialGauge" id="{{widgetUUID}}" #radialGauge
+    [attr.width]="gaugeOptions.width"
+    [attr.height]="gaugeOptions.height"
+
+    [attr.title]="config.widgetLabel"
+    font-title="arial"
+    [attr.font-title-size]="gaugeOptions.fontTitleSize"
+    font-title-weight="bold"
+    [attr.color-title]="gaugeOptions.colorTitle"
+
+    [attr.units]="config.units['gaugePath']"
+    [value]="dataValue"
+    [attr.min-value]="config.minValue"
+    [attr.max-value]="config.maxValue"
+    font-Units="arial"
+    font-Units-size="25"
+    font-Units-weight=""
+    [attr.color-units]="gaugeOptions.colorUnits"
+
+    borders="true"
+    border-outer-width="0"
+    color-border-outer=""
+    color-border-outer-end=""
+    border-middle-width="2"
+    [attr.color-border-middle]="gaugeOptions.colorBarProgress"
+    [attr.color-border-middle-end]="gaugeOptions.colorBarProgress"
+    border-inner-width="2"
+    [attr.color-border-inner]="gaugeOptions.colorPlate"
+    [attr.color-border-inner-end]="gaugeOptions.colorPlate"
+    border-shadow-width="0"
+
+    [attr.color-plate]="gaugeOptions.colorPlate"
+    [attr.color-plate-end]="gaugeOptions.colorPlate"
+
+    [attr.bar-progress]="gaugeOptions.barProgress"
+    [attr.bar-width]="gaugeOptions.barWidth"
+    bar-stroke-width="0"
+    bar-shadow="0"
+    [attr.color-bar]="gaugeOptions.colorBar"
+    [attr.color-bar-progress]="gaugeOptions.colorBarProgress"
+    color-bar-stroke=""
+
+    [attr.value-box]="gaugeOptions.valueBox"
+    [attr.value-box-stroke]="gaugeOptions.valueBoxStroke"
+    [attr.color-value-box-rect]="gaugeOptions.colorValueBoxRect"
+    [attr.color-value-box-rect-end]="gaugeOptions.colorValueBoxRectEnd"
+    [attr.value-box-width]="gaugeOptions.valueBoxWidth"
+    [attr.value-box-border-radius]="gaugeOptions.valueBoxBorderRadius"
+    [attr.color-value-box-background]="gaugeOptions.colorValueBoxBackground"
+    value-text=""
+    [attr.value-int]="gaugeOptions.valueInt"
+    [attr.value-dec]="gaugeOptions.valueDec"
+    font-value="arial"
+    [attr.font-value-size]="gaugeOptions.fontValueSize"
+    font-value-weight="bold"
+    [attr.color-value-text]="gaugeOptions.colorValueText"
+    value-text-shadow="false"
+    color-value-box-shadow=""
+
+    [attr.ticks-angle]="gaugeOptions.ticksAngle"
+    [attr.start-angle]="gaugeOptions.startAngle"
+    exact-ticks="false"
+    stroke-ticks="false"
+    [attr.color-stroke-ticks]="gaugeOptions.colorPlate"
+    [attr.major-ticks]="gaugeOptions.majorTicks"
+    [attr.major-ticks-int]="gaugeOptions.majorTicksInt"
+    [attr.major-ticks-dec]="gaugeOptions.majorTicksDec"
+    [attr.color-major-ticks]="gaugeOptions.colorMajorTicks"
+    [attr.minor-ticks]="gaugeOptions.minorTicks"
+    [attr.color-minor-ticks]="gaugeOptions.colorMinorTicks"
+    [attr.numbers-margin]="gaugeOptions.numbersMargin"
+    font-numbers="arial"
+    [attr.font-numbers-size]="gaugeOptions.fontNumbersSize"
+    font-numbers-weight="bold"
+    [attr.color-numbers]="gaugeOptions.colorNumbers"
+    [attr.highlights]="gaugeOptions.highlights"
+    [attr.highlights-width]="gaugeOptions.highlightsWidth"
+
+    animation="true"
+    animation-duration="500"
+    animation-rule="linear"
+    animated-value="false"
+    animate-on-init="false"
+    [attr.animation-target]="gaugeOptions.animationTarget"
+    [attr.use-min-path]="gaugeOptions.useMinPath"
+
+    [attr.needle]="gaugeOptions.needle"
+    [attr.needle-end]="gaugeOptions.needleEnd"
+    [attr.needle-start]="gaugeOptions.needleStart"
+    [attr.needle-shadow]="gaugeOptions.needleShadow"
+    [attr.needle-width]="gaugeOptions.needleWidth"
+    [attr.needle-type]="gaugeOptions.needleType"
+    [attr.needle-circle-size]="gaugeOptions.needleCircleSize"
+    [attr.needle-circle-inner]="gaugeOptions.needleCircleInner"
+    [attr.needle-circle-outer]="gaugeOptions.needleCircleOuter"
+    [attr.color-needle]="gaugeOptions.colorNeedle"
+    [attr.color-needle-end]="gaugeOptions.colorNeedleEnd"
+    [attr.color-needle-shadow-up]="gaugeOptions.colorNeedleShadowUp"
+    [attr.color-needle-shadow-down]="gaugeOptions.colorNeedleShadowDown"
+    [attr.color-needle-circle-inner]="gaugeOptions.colorNeedleCircleInner"
+    [attr.color-needle-circle-inner-end]="gaugeOptions.colorNeedleCircleInnerEnd"
+    [attr.color-needle-circle-outer]="gaugeOptions.colorNeedleCircleOuter"
+    [attr.color-needle-circle-outer-end]="gaugeOptions.colorNeedleCircleOuterEnd"
+  ></radial-gauge>
+
+  <div #primary class='primary' style="display: none;"></div>
+  <div #accent class='accent' style="display: none;"></div>
+  <div #warn class='warn' style="display: none;"></div>
+  <div #primaryDark class='primaryDark' style="display: none;"></div>
+  <div #accentDark class='accentDark' style="display: none;"></div>
+  <div #warnDark class='warnDark' style="display: none;"></div>
+  <div #background class='background' style="display: none;"></div>
+  <div #text class='text' style="display: none;"></div>
+
+  <div class="settingsButton" *ngIf="unlockStatus">
+    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
+        <span class="fa fa-cog"></span>
+    </button>
+  </div>
+</div>

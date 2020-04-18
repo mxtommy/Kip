@@ -1,5 +1,3 @@
-@import '~@angular/material/theming';
-
 $mat-night-primary: (
     50 : #ede1e1,
     100 : #d1b3b3,
@@ -75,7 +73,7 @@ $mat-wind: (
     compass-light: #611111,
     wind-rose-background: #4e1010,
     port: #af0000,
-    starboard: #0d5500,    
+    starboard: #0d5500,
 );
 
 
@@ -93,6 +91,5 @@ $nightTheme-temp-dark: mat-dark-theme($nightTheme-primary, $nightTheme-accent, $
 
 //merge with custom foreground
 $nightTheme-dark: map-merge($nightTheme-temp-dark, (foreground: $nightTheme-foreground, wind: $mat-wind));
-
 
 

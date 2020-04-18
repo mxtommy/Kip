@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import * as compareVersions from 'compare-versions';
 
 
 export enum SIUnits {
@@ -49,6 +50,8 @@ export interface pathInfo {
 @Injectable()
 export class SignalKService {
 
+  serverSupportApplicationData: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
+  serverVersion: BehaviorSubject<string> = new BehaviorSubject<string>(null) // version of the signalk server
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
   paths: pathObject[] = [];
   pathRegister: pathRegistration[] = [];
@@ -110,7 +113,23 @@ export class SignalKService {
     this.selfurn = value;
   }
  
+  setServerVersion(version: string) {
+    console.log("Server version:" + version);
+    if (version) {
+      this.serverSupportApplicationData.next(compareVersions.compare(version, '1.27.0', ">="));
+    } else {
+      this.serverSupportApplicationData.next(false);
+    }
+    this.serverVersion.next(version);
+  }
 
+  getServerVersionAsO() {
+    return this.serverVersion.asObservable();
+  }
+
+  getServerSupportApplicationDataAsO() {
+    return this.serverSupportApplicationData.asObservable();
+  }
 
   updatePathData(path: string, source: string, timestamp: number, value: any) {
     // convert the selfURN to "self"
@@ -206,5 +225,7 @@ export class SignalKService {
     if (pathIndex < 0) { return null; }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) { return this.paths[pathIndex].meta.units; } else { return null; }
   }
+
+
 
 }

@@ -1,12 +1,6 @@
-<div class="textGenericWrapper">
-  <div class="textGenericLabel">
-          {{ config.widgetLabel }}
-  </div>
-  <div #resizeContainer class="textGenericValue">
-    <h1 [fit-text] [container]="resizeContainer" [compression]="0.4" style="font-weight: bold;">
-    {{ dataValue }}
-    </h1>
-  </div>
+<div #wrapperDiv class="textGenericWrapper">
+  <canvas id="canvasValue" #canvasEl></canvas>
+  <canvas id="cancasBG" #canvasBG></canvas>
   <div class="settingsButton" *ngIf="unlockStatus">
     <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
         <span class="fa fa-cog"></span>

@@ -5,6 +5,8 @@ import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { deltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
+import { NotificationsService } from './notifications.service';
+
 
 interface signalKRequest {
   requestId: string;
@@ -22,7 +24,9 @@ export class SignalkRequestsService {
 
   constructor(private SignalKConnectionService: SignalKConnectionService,
     private SignalKDeltaService: SignalKDeltaService,
-    private AppSettingsService: AppSettingsService) { 
+    private AppSettingsService: AppSettingsService,
+    private NotificationsService: NotificationsService,
+    ) { 
       this.requestsSub = this.SignalKDeltaService.subcribeRequest().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
       );
@@ -78,7 +82,8 @@ export class SignalkRequestsService {
       this.requests[rIndex].statusCode = delta.statusCode;
     }
     if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-      console.log("got new token!")
+      console.log("got new token!");
+      this.NotificationsService.newNotification("Got Token for server!");
       this.AppSettingsService.setSignalKToken(delta.accessRequest.token);
     }
     console.log("Put Result: " + delta.statusCode);  

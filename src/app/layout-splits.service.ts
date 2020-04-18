@@ -206,30 +206,44 @@ export class LayoutSplitsService {
       this.updateSplit(splitSetUUID);
       
     } else {
-      if (this.isRootSplit(splitSetUUID)) {
-        console.log('Tried deleting last widget in root');
-         //delete Area
-        let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(w => w.uuid == areaUUID);
-        if (areaIndex < 0) { return null; } // not found?
-        this.splitSets[splitIndex].splitAreas.splice(areaIndex,1);
-        // add a new Blank widget
-        let newUUID = this.WidgetManagerService.newWidget();
-        this.splitSets[splitIndex].splitAreas.push({uuid: newUUID, type: 'widget', size:100});
-
-        this.updateSplit(splitSetUUID);
-        return;
-      }
+      // We're the last area in the splitset, so delete the whole splitset
       this.WidgetManagerService.deleteWidget(areaUUID);
 
-      // find parent split :|
-      let parentIndex = this.splitSets.findIndex( sSet => sSet.uuid == this.splitSets[splitIndex].parentUUID);
-      let parentUUID = this.splitSets[parentIndex].uuid;
-      
-      //delete this splitset...
-      this.splitSets.splice(splitIndex, 1);
-      // we don't delete the sub, otherwise might get areas
-      
-      this.deleteArea(parentUUID, splitSetUUID);
+      if (this.isRootSplit(splitSetUUID)) {
+        // We're the rootsplit, bye bye page
+        console.log('Deleting last split in root');
+
+        //delete this splitset...
+        this.splitSets.splice(splitIndex, 1);
+
+        //remove from rootUUIDs
+        let rootIndex = this.rootUUIDs.findIndex( uuid => uuid == splitSetUUID);
+        this.rootUUIDs.splice(rootIndex,1);
+        this.saveRootUUIDs();
+
+        if (this.rootUUIDs.length <= 0) {
+          // no more roots, we need at least one
+          console.log("deleted last page");
+          this.newRootSplit();
+          this.setActiveRootIndex(0);
+        }
+       
+        this.nextRoot();
+      } else {
+        // we're not the root, so find parent split and clear there.
+
+        // find parent split,
+        let parentIndex = this.splitSets.findIndex( sSet => sSet.uuid == this.splitSets[splitIndex].parentUUID);
+        let parentUUID = this.splitSets[parentIndex].uuid;
+        
+        //delete this splitset...
+        this.splitSets.splice(splitIndex, 1);
+        // we don't delete the sub, otherwise might get areas
+        
+        this.deleteArea(parentUUID, splitSetUUID);
+        }
+
+
     }
     
 

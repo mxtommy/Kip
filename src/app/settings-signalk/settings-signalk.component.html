@@ -1,62 +1,75 @@
 <br>
-<form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
-  <mat-form-field class="almost-full-width">
-    <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
-    <mat-error>
-      Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com"
-    </mat-error>
-  </mat-form-field>
-  <button type="submit" mat-raised-button [disabled]="!signalKForm.form.valid">Update/Reset</button>
-</form>
-<br>
-<table>
-  <tr>
-    <td>
-      API URL: 
-    </td>
-    <td>
-      <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointAPIStatus"></i>
-      <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointAPIStatus"></i>
-      {{ endpointAPIStatusMessage }}
-    </td>
-  </tr>
-  <tr>
-    <td>
-      Websocket Status:
-    </td>
-    <td>
-      <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointWSStatus"></i>
-      <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointWSStatus"></i>
-      {{ endpointWSMessage }}
-    </td>
-  </tr>
-  <tr>
-    <td>
-      HTTP REST Status: 
-    </td>
-    <td>
-      <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointRESTStatus"></i>
-      <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointRESTStatus"></i>
-      {{ endpointRESTMessage }}
-    </td>
-  </tr>
-  <tr>
-    <td>
-      SignalK R/W Token: 
-    </td>
-    <td>
-      <div *ngIf="authToken"><i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>{{ authToken | slice : 0 : 15}}...</div>
-      <div *ngIf="!authToken">
-        <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
-        <button mat-button 
-          matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed"
-          (click)="requestAuth()"
-          >
-            Request
-        </button>
-      </div>
-      
-    </td>
-  </tr>
-</table>
-<br>
+<mat-card>
+
+
+  <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
+    <mat-form-field class="almost-full-width">
+      <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
+      <mat-error>
+        Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com"
+      </mat-error>
+    </mat-form-field>
+    <button type="submit" mat-raised-button color="accent" [disabled]="!signalKForm.form.valid">Update/Reset</button>
+  </form>
+  <br>
+  <table>
+    <tr>
+      <td>
+        API URL: 
+      </td>
+      <td>
+        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointAPIStatus"></i>
+        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointAPIStatus"></i>
+        {{ endpointAPIStatusMessage }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Websocket Status:
+      </td>
+      <td>
+        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointWSStatus"></i>
+        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointWSStatus"></i>
+        {{ endpointWSMessage }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        HTTP REST Status: 
+      </td>
+      <td>
+        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointRESTStatus"></i>
+        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointRESTStatus"></i>
+        {{ endpointRESTMessage }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        SignalK R/W Token: 
+      </td>
+      <td>
+        <div *ngIf="authToken">
+          <i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>
+          {{ authToken | slice : 0 : 15}}...
+          <button mat-button 
+            matTooltip="Delete Token"
+            (click)="clearAuth()"
+            >
+              Clear
+          </button>
+        </div>
+        
+        <div *ngIf="!authToken">
+          <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
+          <button mat-raised-button color="accent"
+            matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed"
+            (click)="requestAuth()"
+            >
+              Request
+          </button>
+        </div>
+        
+      </td>
+    </tr>
+  </table>
+</mat-card>

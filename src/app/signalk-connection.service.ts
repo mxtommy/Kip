@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Subscription ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { of ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
-import { AppSettingsService } from './app-settings.service';
+import { AppSettingsService, appSettings } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
-
+import { NotificationsService } from './notifications.service';
 
 
 
@@ -91,6 +92,7 @@ export class SignalKConnectionService {
         private SignalKDeltaService: SignalKDeltaService,
         private SignalKFullService: SignalKFullService,
         private AppSettingsService: AppSettingsService, 
+        private NotificationsService: NotificationsService,
         private http: HttpClient) 
     {
         // when signalKUrl changes, do stuff
@@ -119,7 +121,6 @@ export class SignalKConnectionService {
     resetSignalK() {
         // TODO close current connections/reset data, check api version... assuming v1
         console.debug("Reseting SignalK URL: " + this.signalKURL);
-        
         this.SignalKService.resetSignalKData();
         this.endpointREST = null;
         this.endpointWS = null;
@@ -208,6 +209,7 @@ export class SignalKConnectionService {
         this.webSocket.onopen = function (event){
             this.webSocketStatusOK.next(true);
             this.webSocketStatusMessage.next("Connected");
+            this.NotificationsService.newNotification("Connected to server", 1000);
         }.bind(this);
 
         this.webSocket.onerror = function (event) {
@@ -235,6 +237,84 @@ export class SignalKConnectionService {
         return;
       }
       this.webSocket.send(message);
+    }
+
+    postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
+        
+
+      let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
+      url += "applicationData/" + scope +"/kip/1.0/"+ configName;
+
+      let options = {};
+
+      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      }
+      return this.http.post<any>(url, data, options).pipe(
+        catchError(this.handleError<string[]>('postApplicationData', []))
+      );
+
+    }
+
+
+
+
+    
+
+    getApplicationDataKeys(scope: string): Observable<string[]> {
+      let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
+      url += "applicationData/" + scope +"/kip/1.0/?keys=true";
+
+      let options = {};
+
+      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      }
+
+      return this.http.get<string[]>(url, options).pipe(
+        tap(_ => {
+          console.log("Server Stored Configs for "+ scope +": "); console.log(_) 
+        }),
+        catchError(this.handleError<string[]>('getApplicationDataKeys', []))
+      );
+
+    }
+
+    getApplicationData(scope: string, configName: string): Observable<appSettings>{
+      let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
+      url += "applicationData/" + scope +"/kip/1.0/" + configName;
+      let options = {};
+
+      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      }
+      return this.http.get<appSettings>(url, options).pipe(
+        tap(_ => {
+          console.log("Fetched Stored Configs for "+ scope +" / "+ configName); 
+        }),
+        catchError(this.handleError<appSettings>('getApplicationData'))
+      );
+    }
+
+
+    /**
+     * Handle Http operation that failed.
+     * Let the app continue.
+     * @param operation - name of the operation that failed
+     * @param result - optional value to return as the observable result
+     */
+    private handleError<T>(operation = 'operation', result?: T) {
+      return (error: any): Observable<T> => {
+
+        // TODO: send the error to remote logging infrastructure
+        console.error(error); // log to console instead
+
+        // TODO: better job of transforming error for user consumption
+        console.log(`${operation} failed: ${error.message}`);
+
+        // Let the app keep running by returning an empty result.
+        return of(result as T);
+      };
     }
 
     //borring stuff, return observables etc

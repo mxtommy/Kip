@@ -1,13 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 import { LayoutSplitsService } from './layout-splits.service';
 
 import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
-//import { DerivedService } from './derived.service';
+import { NotificationsService } from './notifications.service';
 
 
 declare var NoSleep: any; //3rd party
@@ -15,29 +17,31 @@ declare var NoSleep: any; //3rd party
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css', './app.component.scss']
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, OnDestroy {
 
   noSleep = new NoSleep();
-  
+
   pageName: string = '';
   rootPageIndexSub: Subscription;
 
-  unlockStatus: boolean = false; 
+  unlockStatus: boolean = false;
   unlockStatusSub: Subscription;
 
   fullscreenStatus = false;
-  
+
 
   themeName: string;
   themeClass: string = 'default-light fullheight';
   themeNameSub: Subscription;
+  notificationSub: Subscription;
 
-  constructor(  
+  constructor(
     private AppSettingsService: AppSettingsService,
     private DataSetService: DataSetService,
-    //private DerivedService: DerivedService,
+    private NotificationsService: NotificationsService,
+    private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService) { }
 
@@ -58,13 +62,24 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
     this.DataSetService.startAllDataSets();
-    //this.DerivedService.startAllDerivations();
+    
+    this.notificationSub = this.NotificationsService.getObservable().subscribe(
+      appNotififaction => {
+        this._snackBar.open(appNotififaction.message, 'dismiss', {
+          duration: appNotififaction.duration,
+          verticalPosition: 'top'
+        });
+      }
+    )
+
   }
 
   ngOnDestroy() {
     this.rootPageIndexSub.unsubscribe();
     this.unlockStatusSub.unsubscribe();
     this.themeNameSub.unsubscribe();
+    this.notificationSub.unsubscribe();
+
   }
 
   setTheme(theme: string) {
@@ -88,7 +103,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   deletePage() {
-    
+
   }
 
   pageDown() {
@@ -98,7 +113,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   pageUp() {
     this.LayoutSplitsService.nextRoot();
-   
+
   }
 
   toggleFullScreen() {

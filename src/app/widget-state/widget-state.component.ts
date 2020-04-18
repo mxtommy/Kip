@@ -22,14 +22,14 @@ const defaultConfig: IWidgetConfig = {
   putEnable: false,
   putMomentary: false,
   putMomentaryValue: true
-  
+
 };
 
 
 @Component({
   selector: 'app-widget-state',
   templateUrl: './widget-state.component.html',
-  styleUrls: ['./widget-state.component.css', './widget-state.component.scss']
+  styleUrls: ['./widget-state.component.scss']
 })
 export class WidgetStateComponent implements OnInit, OnDestroy {
 
@@ -88,7 +88,7 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
   }
 
   openWidgetSettings() {
-      
+
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
       data: this.config
@@ -112,11 +112,11 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
   handleClickDown() {
     if (!this.config.putEnable) { return; }
 
-    if (!this.config.putMomentary) { 
+    if (!this.config.putMomentary) {
       //on/off mode. Send whatever we're not :)
       this.SignalkRequestsService.putRequest(
-        this.config.paths['boolPath'].path, 
-        this.config.paths['boolPath'].source, 
+        this.config.paths['boolPath'].path,
+        this.config.paths['boolPath'].source,
         !this.state);
         return;
     } else {
@@ -125,37 +125,37 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
 
       // send it once to start
       this.SignalkRequestsService.putRequest(
-        this.config.paths['boolPath'].path, 
-        this.config.paths['boolPath'].source, 
+        this.config.paths['boolPath'].path,
+        this.config.paths['boolPath'].source,
         this.config.putMomentaryValue);
       //send it again every 20ms
       this.timeoutHandler = setInterval(() => {
         this.SignalkRequestsService.putRequest(
-          this.config.paths['boolPath'].path, 
-          this.config.paths['boolPath'].source, 
+          this.config.paths['boolPath'].path,
+          this.config.paths['boolPath'].source,
           this.config.putMomentaryValue);
         }, 100);
 
       return;
     }
-    
+
   }
 
 
   handleClickUp() {
     if (!this.config.putEnable || !this.pressed) { return; }
 
-    if (this.config.putMomentary) { 
+    if (this.config.putMomentary) {
       this.pressed = false;
       clearInterval(this.timeoutHandler);
       // momentary mode
       this.SignalkRequestsService.putRequest(
-        this.config.paths['boolPath'].path, 
-        this.config.paths['boolPath'].source, 
+        this.config.paths['boolPath'].path,
+        this.config.paths['boolPath'].source,
         !this.config.putMomentaryValue);
         return;
     }
-    
+
   }
 
 

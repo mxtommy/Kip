@@ -18,7 +18,7 @@ const defaultTheme = 'default-light';
 const configVersion = 3; // used to invalidate old configs to avoir errors loading it.
 
 
-interface appSettings {
+export interface appSettings {
   configVersion: number;
   signalKUrl: string;
   signalKToken: string;
@@ -195,8 +195,8 @@ export class AppSettingsService {
     return storageObject;
   }
 
-  getConfigJson() {
-    return JSON.stringify(this.buildStorageObject(), null, 2);
+  getAppConfig() {
+    return this.buildStorageObject(); 
   }
 
 

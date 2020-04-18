@@ -2,7 +2,7 @@
   <mat-dialog-content>
     <mat-tab-group class="">
       <mat-tab label="Display">
-        <div class="tab-content"> 
+        <div class="tab-content">
             <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetUrl !== undefined)">
                 <input type="url" matInput placeholder="URL" name="widgetUrl" formControlName="widgetUrl">
             </mat-form-field>
@@ -16,7 +16,7 @@
               <mat-form-field class="half-width">
                 <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  formControlName="numDecimal">
               </mat-form-field>
-            </div>         
+            </div>
             <div class="full-width"  *ngIf="(widgetConfig.showMax !== undefined)">
               <mat-checkbox name="showMax" formControlName="showMax">
                 Show Max recorded value
@@ -25,7 +25,7 @@
             <div class="full-width"  *ngIf="(widgetConfig.showMin !== undefined)">
               <mat-checkbox name="showMin" formControlName="showMin">
                 Show Min recorded value
-              </mat-checkbox>            
+              </mat-checkbox>
             </div>
 <!-- sailgauge stuff -->
             <div class="full-width" *ngIf="(widgetConfig.laylineEnable !== undefined)">
@@ -34,16 +34,16 @@
               </mat-form-field>
               <mat-checkbox name="laylineEnable" formControlName="laylineEnable">
                 Laylines
-              </mat-checkbox> 
-            </div>      
+              </mat-checkbox>
+            </div>
             <div class="full-width" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
               <mat-form-field class="half-width">
                 <input type="number" min="1" max="90" matInput placeholder="Windsector duration" name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
               </mat-form-field>
               <mat-checkbox name="windSectorEnable" formControlName="windSectorEnable">
                 Wind Sectors
-              </mat-checkbox> 
-            </div>                  
+              </mat-checkbox>
+            </div>
 <!-- end sailgague -->
 
             <div class="full-width" *ngIf="(widgetConfig.minValue !== undefined)">
@@ -55,11 +55,11 @@
                 </mat-form-field>
             </div>
 <!-- Gauge stuff -->
-            <div class="full-width" *ngIf="(widgetConfig.backgroundColor !== undefined)">
+            <div class="full-width" *ngIf="(widgetConfig.backgroundColor !== undefined) && (widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial')">
               <mat-form-field class="full-width">
-                <mat-select 
-                placeholder="Background Style" 
-                formControlName="backgroundColor" 
+                <mat-select
+                placeholder="Background Style"
+                formControlName="backgroundColor"
                 name="backgroundColor">
                   <mat-option value='darkGray'>Dark Gray</mat-option>
                   <mat-option value='satinGray'>Satin Gray</mat-option>
@@ -82,9 +82,9 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field class="full-width">
-                  <mat-select 
-                  placeholder="Frame Style" 
-                  formControlName="frameColor" 
+                  <mat-select
+                  placeholder="Frame Style"
+                  formControlName="frameColor"
                   name="frameColor">
                     <mat-option value='blackMetal'>Black Metal</mat-option>
                     <mat-option value='metal'>Metal</mat-option>
@@ -99,6 +99,18 @@
                     <mat-option value='glossyMetal'>Glossy Metal</mat-option>
                   </mat-select>
                 </mat-form-field>
+            </div>
+            <div class="full-width" *ngIf="(widgetConfig.barColor !== undefined) && (widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngRadial')">
+              <mat-form-field class="full-width">
+                <mat-select
+                placeholder="Gauge Bar Color"
+                formControlName="barColor"
+                name="barColor">
+                  <mat-option value='primary'>Primary Color</mat-option>
+                  <mat-option value='accent'>Accent Color</mat-option>
+                  <mat-option value='warn'>Warn Color</mat-option>
+                </mat-select>
+              </mat-form-field>
             </div>
 <!-- end Gauge stuff-->
         </div>
@@ -116,33 +128,48 @@
         </mat-checkbox>
       </mat-tab>
 <!-- Gauge stuff -->
-      <mat-tab label="Gauge" *ngIf="(widgetConfig.gaugeType !== undefined)">
-        <div class="tab-content"> 
-          <mat-form-field class="full-width">
-              <mat-select 
-                  placeholder="Gauge Type" 
-                  formControlName="gaugeType" 
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType !== undefined">
+        <div class="tab-content">
+          <mat-form-field class="full-width" *ngIf="widgetConfig.gaugeType !== 'ngRadial'">
+              <mat-select
+                  placeholder="Gauge Type"
+                  formControlName="gaugeType"
                   name="gaugeType">
-                  <mat-option value="linear">Linear</mat-option>
-                  <mat-option value="radial">Radial</mat-option>
+                  <mat-option *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'" value="linear">Linear</mat-option>
+                  <mat-option *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'" value="radial">Radial</mat-option>
+                  <mat-option *ngIf="widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical'" value="ngLinearVertical">Vertical layout</mat-option>
+                  <mat-option *ngIf="widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical'" value="ngLinearHorizontal">Horizontal layout</mat-option>
                   <!-- <mat-option value="compass">Compass</mat-option> -->
               </mat-select>
-          </mat-form-field> 
-          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial')||(formMaster.controls.gaugeType.value == 'linear')">  
+          </mat-form-field>
+          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial') || (formMaster.controls.gaugeType.value == 'linear')">
               <mat-checkbox
-              formControlName="barGraph" 
+              formControlName="barGraph"
                   name="barGraph"
                   >
                   Digital display
               </mat-checkbox>
           </p>
-          <p *ngIf="formMaster.controls.gaugeType.value == 'radial'" >
-              <mat-radio-group name="radialSize" formControlName="radialSize">
-                  <mat-radio-button value="quarter">1/4</mat-radio-button>
-                  <mat-radio-button value="half">1/2</mat-radio-button>
-                  <mat-radio-button value="three-quarter">3/4</mat-radio-button>
-                  <mat-radio-button value="full">Full</mat-radio-button>
+          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial') || (formMaster.controls.gaugeType.value == 'ngRadial')" >
+              <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'radial'" name="radialSize" formControlName="radialSize">
+                <mat-radio-button value="quarter">1/4</mat-radio-button>
+                <mat-radio-button value="half">1/2</mat-radio-button>
+                <mat-radio-button value="three-quarter">3/4</mat-radio-button>
+                <mat-radio-button value="full">Full</mat-radio-button>
               </mat-radio-group>
+              <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'ngRadial'" name="radialSize" formControlName="radialSize">
+                <mat-radio-button value="capacity">Capacity</mat-radio-button>
+                <mat-radio-button value="measuring">Measuring</mat-radio-button>
+                <mat-radio-button value="compass">Compass</mat-radio-button>
+              </mat-radio-group>
+          </p>
+          <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical' || formMaster.controls.gaugeType.value == 'ngLinearHorizontal'" >
+            <mat-checkbox
+              formControlName="gaugeTicks"
+                name="gaugeTicks"
+                >
+                Display Gauge Thicks
+              </mat-checkbox>
           </p>
         </div>
       </mat-tab>
@@ -153,7 +180,7 @@
           <div class="tab-content">
             <p>
               <mat-checkbox
-                formControlName="putEnable" 
+                formControlName="putEnable"
                   name="putEnable"
                   >
                   Enable Put Requests
@@ -161,7 +188,7 @@
             </p>
             <p>
               <mat-checkbox
-              formControlName="putMomentary" 
+              formControlName="putMomentary"
                 name="putMomentary"
                 >
                 Momentary mode (instead of switching between on/off)
@@ -169,7 +196,7 @@
             </p>
             <p *ngIf="formMaster.controls.putMomentary.value">
                 <mat-checkbox
-                formControlName="putMomentaryValue" 
+                formControlName="putMomentaryValue"
                   name="putMomentaryValue"
                   >
                   Value to send on button push (checked = on, unchecked = off)
@@ -184,11 +211,11 @@
       <mat-tab label="DataSet" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
           <ng-template mat-tab-label>
               <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> DataSet
-          </ng-template>        
-          <div class="tab-content"> 
+          </ng-template>
+          <div class="tab-content">
             <mat-form-field class="full-width">
-              <mat-select 
-                  placeholder="Data Set" 
+              <mat-select
+                  placeholder="Data Set"
                   formControlName="dataSetUUID"
                   name="dataSetUUID"
                   required>
@@ -196,7 +223,7 @@
                       {{ds.name}}
                   </mat-option>
                 </mat-select>
-            </mat-form-field>            
+            </mat-form-field>
             <p>
                 <mat-checkbox
                   formControlName="invertData"
@@ -216,8 +243,8 @@
                   formControlName="includeZero"
                   name="includeZero">
                     Include Origin (aka 0)
-                </mat-checkbox>                    
-            </p>                   
+                </mat-checkbox>
+            </p>
           </div>
       </mat-tab>
 <!-- end Historical -->
@@ -225,19 +252,19 @@
         <ng-template mat-tab-label>
           <span *ngIf="!formMaster.controls.units.valid" class="warning fa fa-exclamation-circle"></span> Units
         </ng-template>
-        <div class="tab-content" *ngIf="(widgetConfig.paths !== undefined)"> 
+        <div class="tab-content" *ngIf="(widgetConfig.paths !== undefined)">
           <modal-unit-selector class="full-width" *ngFor="let unitKey of formMaster.controls.units.controls  | objectKeys"
             [controlName]="unitKey"
             [path]="formMaster.controls.paths.controls[unitKey].value.path"
             [formGroup]="formMaster.controls.units" ></modal-unit-selector>
         </div>
-        <div class="tab-content" *ngIf="(widgetConfig.units.dataset !== undefined)"> 
+        <div class="tab-content" *ngIf="(widgetConfig.units.dataset !== undefined)">
             <modal-unit-selector class="full-width"
               controlName="dataset"
               path="DataSet Unit"
               [formGroup]="formMaster.controls.units" ></modal-unit-selector>
           </div>
-      </mat-tab>  
+      </mat-tab>
     </mat-tab-group>
   </mat-dialog-content>
   <mat-dialog-actions>

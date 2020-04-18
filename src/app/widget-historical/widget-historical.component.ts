@@ -8,6 +8,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { dataPoint, DataSetService } from '../data-set.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+import { AppSettingsService } from '../app-settings.service';
 
 const defaultConfig: IWidgetConfig = {
   widgetLabel: null,
@@ -39,7 +40,7 @@ interface IDataSetOptions {
 export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;    
+  @Input('unlockStatus') unlockStatus: boolean;
 
   @ViewChild('lineGraph') lineGraph: ElementRef;
 
@@ -57,12 +58,15 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   dataSetSub: Subscription = null;
 
+  // dynamics theme support
+  themeNameSub: Subscription = null;
 
   constructor(
     public dialog:MatDialog,
     private DataSetService: DataSetService,
     private WidgetManagerService: WidgetManagerService,
-    private UnitsService: UnitsService
+    private UnitsService: UnitsService,
+    private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) { }
 
   ngOnInit() {
@@ -77,11 +81,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
     //TODO, this only works on chart init... need to find when theme changes...
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-    
+
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
     this.startChart();
     this.subscribeDataSet();
     //setTimeout(this.subscribeDataSet(),1000);//TODO, see why destroy called before we even get subbed (or just after...)
+    this.subscribeTheme();
 
   }
 
@@ -89,8 +94,10 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       if (this.chart !== null) {
           //this.chart.destroy(); // doesn't seem to be needed since chart is destoryed when destroying component. was giving errors. (maybe html was destroyed before this is called?)
       }
-      this.unsubscribeDataSet();     
+      this.unsubscribeDataSet();
       console.log("stopped Sub");
+      this.unsubscribeTheme();
+
   }
 
   startChart() {
@@ -124,7 +131,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             //borderWidth: 1
             borderColor: this.textColor,
             borderDash: [ 5, 5 ]
-        } 
+        }
         );
       }
       //setup Options
@@ -137,7 +144,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       }
       if (this.config.maxValue !== null) {
         yAxisTickOptions['suggestedMax'] = this.config.maxValue;
-      }        
+      }
 
       this.chart = new Chart(this.chartCtx,{
           type: 'line',
@@ -149,9 +156,9 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
           scales: {
               yAxes: [{
                   scaleLabel: {
-                      labelString: 'feet',   
+                      labelString: 'feet',
                   },
-                  
+
                   position: 'right',
                   ticks: yAxisTickOptions
               }],
@@ -162,7 +169,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                       round: 'second',
                       displayFormats: 'YY', //no mater what it seems to default to full time...
                   },
-                  
+
                   ticks: {
   //                    minRotation: 15,
                       callback: function(value) {  //TODO, left pad 0 for min/sec
@@ -211,12 +218,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                   continue;
                 }
                 this.chartDataAvg.push({
-                  t: dataSet[i].timestamp, 
+                  t: dataSet[i].timestamp,
                   y: (this.UnitsService.convertUnit(this.config.units['dataset'], dataSet[i].average) * invert).toFixed(2)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
-              
+
               //min/max
               if (this.config.displayMinMax) {
                 this.chartDataMin = [];
@@ -228,17 +235,17 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                     this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
                   } else {
                     this.chartDataMin.push({
-                        t: dataSet[i].timestamp, 
+                        t: dataSet[i].timestamp,
                         y: (this.UnitsService.convertUnit(this.config.units['dataset'], dataSet[i].minValue) * invert).toFixed(2)
                     });
                     this.chartDataMax.push({
-                        t: dataSet[i].timestamp, 
+                        t: dataSet[i].timestamp,
                         y: (this.UnitsService.convertUnit(this.config.units['dataset'], dataSet[i].maxValue) * invert).toFixed(2)
                     });
                   }
                 }
                 this.chart.config.data.datasets[1].data = this.chartDataMin;
-                this.chart.config.data.datasets[2].data = this.chartDataMax;                   
+                this.chart.config.data.datasets[2].data = this.chartDataMax;
               }
 
 
@@ -258,6 +265,25 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       }
   }
 
+
+// Subscribe to theme event
+subscribeTheme() {
+  this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    themeChange => {
+     setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+      this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
+      this.startChart()
+     }, 100);
+  })
+}
+
+unsubscribeTheme(){
+  if (this.themeNameSub !== null) {
+    this.themeNameSub.unsubscribe();
+    this.themeNameSub = null;
+  }
+}
+
   openWidgetSettings() {
 
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
@@ -276,7 +302,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       }
 
     });
-      
+
     }
 
 }
