@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NotificationsService, activeAlarms } from '../notifications.service';
 import { Subscription } from 'rxjs';
-
+import { Howl, Howler} from 'howler';
 
 
 @Component({
@@ -19,11 +19,23 @@ export class AlarmMenuComponent implements OnInit {
   blinkWarn: boolean = false;
   blinkCrit: boolean = false;
 
+  warningSound;
+  critSound;
+
   constructor(
     private NotificationsService: NotificationsService,
   ) { }
 
   ngOnInit() {
+
+    this.warningSound = new Howl({
+      src: ['assets/alarm-warn.mp3'],
+      loop: true,
+    });
+    this.critSound = new Howl({
+      src: ['assets/alarm-crit.mp3'],
+      loop: true,
+    });
     // Alarm code
 
     this.alarmSub = this.NotificationsService.getAlarmObservable().subscribe(
@@ -65,20 +77,28 @@ export class AlarmMenuComponent implements OnInit {
         case 0:
           this.blinkWarn = false;
           this.blinkCrit = false;
+          this.warningSound.stop();
+          this.critSound.stop();
           break;
         case 1:
           this.blinkWarn = true;
           this.blinkCrit = false;
+          this.warningSound.play();
+          this.critSound.stop();
           break;
         case 2:
           this.blinkCrit = true;
           this.blinkWarn = false;
+          this.warningSound.stop();
+          this.critSound.play();
 
       }
     } else {
       // no Alarms
       this.blinkWarn = false;
       this.blinkCrit = false;
+      this.warningSound.stop();
+      this.critSound.stop();
     }
   }
 
