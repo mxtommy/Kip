@@ -19,6 +19,7 @@ import {
   MatCardModule,
   MatExpansionModule,
   MatSnackBarModule,
+  MatBadgeModule,
 } from '@angular/material';
 
 
@@ -145,6 +146,7 @@ const appRoutes: Routes = [
     MatStepperModule,
     MatInputModule,
     MatExpansionModule,
+    MatBadgeModule,
     GaugesModule,
   ],
   entryComponents: [

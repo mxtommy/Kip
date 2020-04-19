@@ -20,5 +20,35 @@
     .menuBarButtonGroup {
       background-color: mat-color($foreground, divider);
     }
-}
+    // Alarm button when warning
+    .alarmWarning {
+      animation:blinkingAlarmWarning 1.5s infinite;
+      background-color: #FFA500 !important
+    }
+    @keyframes blinkingAlarmWarning{
+      0%{		color: rgb(179, 0, 0);	}
+      50%{	color: transparent;	}
+      100%{	color: rgb(179, 0, 0);	}
+    }
+    // Alarm button when crit
+    .alarmCrit {
+      animation:blinkingAlarmCrit 0.25s infinite;
+
+    }
+    @keyframes blinkingAlarmCrit{
+      0%{		
+        color: rgb(255, 232, 232);
+        background-color: rgb(179, 0, 0);
+      }
+      50%{	
+        color: rgb(179, 0, 0);
+        background-color: rgb(255, 232, 232);
+      }
+      100%{
+        color: rgb(255, 232, 232);
+        background-color: rgb(179, 0, 0);
+      }
+    }
+ }
+
 

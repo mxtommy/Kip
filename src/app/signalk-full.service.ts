@@ -23,6 +23,9 @@ export class SignalKFullService {
   findKeys(data, currentPath: string[] = []) {
     let path = currentPath.join('.');
 
+    if (data === null) { //notifications don't have timestamp... hmmm TODO get notif into tree...
+      return;
+    }
     
     if ( (typeof(data) == 'string') || (typeof(data) == 'number') || (typeof(data) == 'boolean')) {  // is it a simple value?
       let timestamp = Date.now();

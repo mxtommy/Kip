@@ -5,8 +5,9 @@
 * Update WidgetString to use canvas like numeric widget for dynamic font size
 * Latitude/Longitude Unit format
 * Load / Save config from server!
-* Notifications service
+* Notifications service for application status (snackbar)
 * Deleting the last widget in a page deletes the page!
+* Signalk Notifications in menubar!
 
 ### V0.1.12
 * iFrame to embed something in kip

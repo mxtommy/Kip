@@ -2,13 +2,18 @@ import { Injectable } from '@angular/core';
 import { Subscription ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
 import { SignalKService } from './signalk.service';
 import { deltaMessage } from './signalk-interfaces';
+import { NotificationsService } from './notifications.service';
+
 
 @Injectable()
 export class SignalKDeltaService {
 
   signalKRequests = new Subject<deltaMessage>(); // requests service subs to this (avoids circular dependency in services)
 
-  constructor(private SignalKService: SignalKService) { }
+  constructor(
+    private SignalKService: SignalKService,
+    private NotificationsService: NotificationsService,
+    ) { }
   
 
   processWebsocketMessage(message: deltaMessage) {
@@ -67,18 +72,23 @@ export class SignalKDeltaService {
       
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
       for (let value of update.values) {
-        let fullPath = context + '.' + value.path;
-        if ( (typeof(value.value) == 'object') && (value.value !== null)) {
-          // compound data
-          let keys = Object.keys(value.value);
-          for (let i = 0; i < keys.length; i++) {
-            this.SignalKService.updatePathData(fullPath + '.' + keys[i], source, timestamp, value.value[keys[i]]);
-          } 
+        if (/^notifications./.test(value.path)) {
+          // it's a notification 
+          this.NotificationsService.processNotificationDelta(value.path, value.value);
         } else {
-          // simple data
-          this.SignalKService.updatePathData(fullPath, source, timestamp, value.value);
+        
+          let fullPath = context + '.' + value.path;
+          if ( (typeof(value.value) == 'object') && (value.value !== null)) {
+            // compound data
+            let keys = Object.keys(value.value);
+            for (let i = 0; i < keys.length; i++) {
+              this.SignalKService.updatePathData(fullPath + '.' + keys[i], source, timestamp, value.value[keys[i]]);
+            } 
+          } else {
+            // simple data
+            this.SignalKService.updatePathData(fullPath, source, timestamp, value.value);
+          }
         }
-
       }
     }
   }
