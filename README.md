@@ -1,10 +1,19 @@
 # Kip
 
-This is an instrumentation package to display signalK data. Display can be split up in any arrangement to show all data available on the server.
+This is a marine instrumentation package to display signalK data. Display can be split up in any arrangement to show any kind data available on the server. 
 
 ## Design Goal
 
-The idea is to replicate the functionality of your average MFD such as the B&G Triton, Raymarine i70, or Garmin GMI20. Display should be fullscreen and not require any scrolling, and anything displayed should be as big as possible in the given space. Multiple pages
+The idea is to replicate the functionality of your average MFD such as the B&G Triton, Raymarine i70, or Garmin GMI20.
+- Display should be fullscreen and not require any scrolling
+- Anything displayed should be as big as possible in the given space
+- Touchscreen user experience should be excellent
+- Layout and configuration should be both easy to operate and flexible
+- Compatibility with Chromium browser and other device form factor improtant (**HELP WANTED)  
+
+## Sample Layouts
+
+<p align="center"><img src="./GaugeSample0.png"><img src="./GaugeSample1.png"><img src="./GaugeSample2.png"></p>
 
 ## Developing
 
