@@ -27,7 +27,7 @@ export class SettingsConfigComponent implements OnInit {
   supportApplicationData: boolean = false;
   possibleConfigs: possibleConfig[] = [];
 
-  configName = new FormControl("default", Validators.required);
+  configName = new FormControl("default", [ Validators.required, Validators.pattern("^[a-zA-Z0-9\-_]+$") ]);
   configScope = new FormControl("global", Validators.required);
   configLoad = new FormControl(Validators.required);
 

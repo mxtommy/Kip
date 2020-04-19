@@ -27,7 +27,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
  
  * Overview page to quickly scroll through known path info.
  * Alerts/Notifications
- * Delete Page.
  
 ### Feature Ideas
  * Get historical from server.
