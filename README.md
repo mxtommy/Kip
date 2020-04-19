@@ -12,23 +12,16 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 
 
-## Roadmap
+## Feature Ideas
 
 
-
-### V0.2
-* Customization options for Historical Charts
-* Attitude Indicator * In progress
-
-### V0.3
+ * More Customization options for Historical Charts
+ * Attitude Indicator
  * Sailing Polars with ChartJS Radar type chart?
  * More Customization options for radial/linear Gauges
     * Gauge Zones
- 
  * Overview page to quickly scroll through known path info.
- 
-### Feature Ideas
- * Get historical from server.
- * Pre-created widgets for commonly used displays
+ * Show alarms on numeric displays based on zones
+  * Pre-created widgets for commonly used displays
 
  

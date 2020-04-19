@@ -1,4 +1,4 @@
-### V0.1.13
+### V1.0.0
 * add ngcanvasgauges and new modern theme (thanks godind!)
 * new Theme change event allowing widgets to subscribe to theme changes (thanks godind!)
 * Historical Graph color change on theme update
