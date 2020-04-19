@@ -19,6 +19,8 @@ export class AlarmMenuComponent implements OnInit {
   blinkWarn: boolean = false;
   blinkCrit: boolean = false;
 
+  ignoredPaths: string[] = [];
+
   warningSound;
   critSound;
 
@@ -50,6 +52,10 @@ export class AlarmMenuComponent implements OnInit {
   updateAlarms() {
     this.alarmCount = Object.keys(this.alarms).length;
     this.unAckAlarms = 0;
+    this.blinkWarn = false;
+    this.blinkCrit = false;
+    this.warningSound.stop();
+    this.critSound.stop();
 
     if (this.alarmCount > 0) {
       // find worse alarm state
@@ -58,6 +64,8 @@ export class AlarmMenuComponent implements OnInit {
       for (const [path, alarm] of Object.entries(this.alarms))
       {
         if (alarm.ack) { continue; }
+        if (this.ignoredPaths.includes(path)) { continue; }
+
         let aSev = 0;
         switch (alarm.state) {
           case 'alert':
@@ -93,13 +101,7 @@ export class AlarmMenuComponent implements OnInit {
           this.critSound.play();
 
       }
-    } else {
-      // no Alarms
-      this.blinkWarn = false;
-      this.blinkCrit = false;
-      this.warningSound.stop();
-      this.critSound.stop();
-    }
+    } 
   }
 
   ackAlarm(path: string, timeout: number = 0) {
@@ -116,6 +118,28 @@ export class AlarmMenuComponent implements OnInit {
       }, timeout);
     }
     this.updateAlarms();
+  }
+
+  ignoreAlarm(path: string, timeout: number = 0) {
+    this.ignoredPaths.push(path);
+    this.updateAlarms();
+    if (timeout > 0) {
+      setTimeout(()=>{
+        console.log("unIgnore: "+ path);
+        if (this.ignoredPaths.includes(path)) {
+          let index = this.ignoredPaths.findIndex(p => (p == path));
+          if (index >= 0) {
+            this.ignoredPaths.splice(index,1);
+          }
+        }
+        this.updateAlarms();
+      }, timeout);
+    }
+
+  }
+
+  pathIgnored(path: string) {
+    return this.ignoredPaths.includes(path);
   }
 
 }
