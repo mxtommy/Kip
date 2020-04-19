@@ -59,48 +59,61 @@ export class AlarmMenuComponent implements OnInit {
 
     if (this.alarmCount > 0) {
       // find worse alarm state
-      let sev = 0;
+      let audioSev = 0;
+      let visualSev = 0;
 
       for (const [path, alarm] of Object.entries(this.alarms))
       {
         if (alarm.ack) { continue; }
         if (this.ignoredPaths.includes(path)) { continue; }
-
+        this.unAckAlarms++;
         let aSev = 0;
+        let vSev = 0;
         switch (alarm.state) {
           case 'alert':
           case 'warn':
-            aSev = 1;
-            this.unAckAlarms++;
+            if (alarm.method.includes('sound')) { aSev = 1; }
+            if (alarm.method.includes('visual')) { vSev = 1; }
             break;
           case 'alarm':
           case 'emergency':
-            aSev = 2;
-            this.unAckAlarms++;
+            if (alarm.method.includes('sound')) { aSev = 2; }
+            if (alarm.method.includes('visual')) { vSev = 2; }
+            
         }
-        if (aSev > sev) { sev = aSev; }
+        audioSev = Math.max(audioSev, aSev);
+        visualSev = Math.max(visualSev, vSev)
       }
 
-      switch(sev) {
+      switch(audioSev) {
         case 0:
-          this.blinkWarn = false;
-          this.blinkCrit = false;
           this.warningSound.stop();
           this.critSound.stop();
           break;
         case 1:
-          this.blinkWarn = true;
-          this.blinkCrit = false;
           this.warningSound.play();
           this.critSound.stop();
           break;
         case 2:
-          this.blinkCrit = true;
-          this.blinkWarn = false;
           this.warningSound.stop();
           this.critSound.play();
 
       }
+      switch(visualSev) {
+        case 0:
+          this.blinkWarn = false;
+          this.blinkCrit = false;
+          break;
+        case 1:
+          this.blinkWarn = true;
+          this.blinkCrit = false;
+          break;
+        case 2:
+          this.blinkCrit = true;
+          this.blinkWarn = false;
+     
+      }
+
     } 
   }
 
