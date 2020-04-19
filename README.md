@@ -35,7 +35,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
     * Gauge Zones
  
  * Overview page to quickly scroll through known path info.
- * Alerts/Notifications
  
 ### Feature Ideas
  * Get historical from server.

@@ -26,31 +26,7 @@
                         <span class="fa fa-lg fa-chevron-left"></span>
                     </button>
                     
-                    <button [class.alarmCrit]="blinkCrit"
-                            [class.alarmWarning]="blinkWarn"
-                            mat-raised-button 
-                            [matMenuTriggerFor]="alarmMenu"
-                            [disabled]="alarmCount == 0"
-                            [matBadgeHidden]="alarmCount == 0"
-                            [matBadge]="unAckAlarms"
-                            matBadgePosition="before"
-                            matBadgeColor="warn">
-                      <span class="fa fa-lg fa-bell"></span>
-                    </button>
-                    <mat-menu #alarmMenu="matMenu">
-                      <div *ngFor="let alarm of alarms | keyvalue">
-                        <button mat-menu-item [matMenuTriggerFor]="actions">
-                          <span *ngIf="alarm.value.ack" class="fa fa-lg fa-check"></span>
-                          <span *ngIf="!alarm.value.ack" class="fa fa-lg fa-exclamation"></span>
-                          {{ alarm.value.message }}
-                        </button>
-                        <mat-menu #actions="matMenu">
-                          <button mat-menu-item (click)="ackAlarm(alarm.key)" >Acknowledge</button>
-                          <button mat-menu-item (click)="ackAlarm(alarm.key, 300000)" >Snooze (5min)</button>
-                        </mat-menu>
-
-                      </div>
-                    </mat-menu>
+                    <app-alarm-menu></app-alarm-menu>
 
                     <button color="accent" mat-raised-button (click)="pageUp()">
                         <span class="fa fa-lg fa-chevron-right"></span>
