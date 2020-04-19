@@ -9,7 +9,7 @@ import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
-import { NotificationsService, activeAlarms } from './notifications.service';
+import { NotificationsService } from './notifications.service';
 
 
 declare var NoSleep: any; //3rd party
@@ -36,13 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
   themeNameSub: Subscription;
 
   notificationSub: Subscription;
-  alarmSub: Subscription;
 
-  alarms: activeAlarms = {};
-  alarmCount: number = 0;
-  unAckAlarms: number = 0;
-  blinkWarn: boolean = false;
-  blinkCrit: boolean = false;
 
   constructor(
     private AppSettingsService: AppSettingsService,
@@ -79,14 +73,7 @@ export class AppComponent implements OnInit, OnDestroy {
         });
       }
     )
-    // Alarm code
 
-    this.alarmSub = this.NotificationsService.getAlarmObservable().subscribe(
-      alarms  => {
-        this.alarms = alarms;
-        this.updateAlarms();
-       }
-    )
 
   }
 
@@ -113,68 +100,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.AppSettingsService.setUnlockStatus(this.unlockStatus);
   }
 
-  updateAlarms() {
-    this.alarmCount = Object.keys(this.alarms).length;
-    this.unAckAlarms = 0;
-
-    if (this.alarmCount > 0) {
-      // find worse alarm state
-      let sev = 0;
-
-      for (const [path, alarm] of Object.entries(this.alarms))
-      {
-        if (alarm.ack) { continue; }
-        let aSev = 0;
-        switch (alarm.state) {
-          case 'alert':
-          case 'warn':
-            aSev = 1;
-            this.unAckAlarms++;
-            break;
-          case 'alarm':
-          case 'emergency':
-            aSev = 2;
-            this.unAckAlarms++;
-        }
-        if (aSev > sev) { sev = aSev; }
-      }
-
-      switch(sev) {
-        case 0:
-          this.blinkWarn = false;
-          this.blinkCrit = false;
-          break;
-        case 1:
-          this.blinkWarn = true;
-          this.blinkCrit = false;
-          break;
-        case 2:
-          this.blinkCrit = true;
-          this.blinkWarn = false;
-
-      }
-    } else {
-      // no Alarms
-      this.blinkWarn = false;
-      this.blinkCrit = false;
-    }
-  }
-
-  ackAlarm(path: string, timeout: number = 0) {
-    if (path in this.alarms) {
-      this.alarms[path].ack = true;
-    }
-    if (timeout > 0) {
-      setTimeout(()=>{
-        console.log(path);
-        if (path in this.alarms) {
-          this.alarms[path].ack = false;
-        }
-        this.updateAlarms();
-      }, timeout);
-    }
-    this.updateAlarms();
-  }
 
   newPage() {
     this.LayoutSplitsService.newRootSplit();

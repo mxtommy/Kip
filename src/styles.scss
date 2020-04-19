@@ -102,6 +102,7 @@
 @import 'app/widget-state/widget-state.component.scss';
 @import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
 @import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
+@import 'app/alarm-menu/alarm-menu.component.scss';
 
 
 @mixin theme-components($theme) {
@@ -113,6 +114,7 @@
   @include widget-state-theme($theme);
   @include widget-ngGauge-linear-theme($theme);
   @include widget-ngGauge-radial-theme($theme);
+  @include alarm-menu-theme($theme);
 }
 
 @include theme-components($defaultTheme-light);
