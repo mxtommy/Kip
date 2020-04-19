@@ -12,6 +12,7 @@ import {
   MatSelectModule,
   MatInputModule,
   MatToolbarModule,
+  MatTooltipModule,
   MatCheckboxModule,
   MatRadioModule,
   MatTabsModule,
@@ -22,8 +23,6 @@ import {
   MatBadgeModule,
 } from '@angular/material';
 
-
-import {MatTooltipModule} from '@angular/material/tooltip';
 
 import { AngularSplitModule } from 'angular-split';
 
