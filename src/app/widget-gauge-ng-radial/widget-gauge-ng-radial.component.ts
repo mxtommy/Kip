@@ -223,7 +223,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     // Radial gauge type
     switch(this.config.radialSize) {
       case "capacity":
-        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks drawing firs tick always and using color="" does not work
+        this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = this.config.minValue;
         this.gaugeOptions.maxValue = this.config.maxValue;
@@ -317,7 +318,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.useMinPath = false;
         break;
 
-      case "compass":
+      case "marineCompass":
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = 0;
@@ -361,6 +362,52 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
         this.gaugeOptions.animationTarget = "plate";
         this.gaugeOptions.useMinPath = true;
+        break;
+
+      case "baseplateCompass":
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
+        this.gaugeOptions.fontTitleSize = 60;
+        this.gaugeOptions.minValue = 0;
+        this.gaugeOptions.maxValue = 360;
+        this.gaugeOptions.barProgress = false;
+        this.gaugeOptions.barWidth = 0;
+
+        this.gaugeOptions.valueBox = true
+        this.gaugeOptions.fontValueSize = 50;
+        this.gaugeOptions.valueBoxWidth = 0;
+        this.gaugeOptions.valueBoxBorderRadius = 5;
+        this.gaugeOptions.valueBoxStroke = 0;
+        this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
+
+        this.gaugeOptions.ticksAngle = 360;
+        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.exactTicks = false;
+        this.gaugeOptions.strokeTicks = false;
+        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.numbersMargin = 3;
+        this.gaugeOptions.fontNumbersSize = 15;
+        this.gaugeOptions.minorTicks = 22;
+        this.gaugeOptions.highlights = [];
+        this.gaugeOptions.highlightsWidth = 0;
+
+        this.gaugeOptions.needle = true;
+        this.gaugeOptions.needleType = "line";
+        this.gaugeOptions.needleWidth = 3;
+        this.gaugeOptions.needleShadow = false;
+        this.gaugeOptions.needleStart = 75;
+        this.gaugeOptions.needleEnd = 99;
+        this.gaugeOptions.needleCircleSize = 2;
+        this.gaugeOptions.needleCircleInner = false;
+        this.gaugeOptions.needleCircleOuter = false;
+
+        this.gaugeOptions.borders = true;
+        this.gaugeOptions.borderOuterWidth = 0;
+        this.gaugeOptions.borderMiddleWidth = 2;
+        this.gaugeOptions.borderInnerWidth = 2;
+        this.gaugeOptions.borderShadowWidth = 0;
+
+        this.gaugeOptions.animationTarget = "needle";
+        this.gaugeOptions.useMinPath = false;
         break;
 
       default:

@@ -160,7 +160,8 @@
               <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'ngRadial'" name="radialSize" formControlName="radialSize">
                 <mat-radio-button value="capacity">Capacity</mat-radio-button>
                 <mat-radio-button value="measuring">Measuring</mat-radio-button>
-                <mat-radio-button value="compass">Compass</mat-radio-button>
+                <mat-radio-button value="marineCompass">Marine Compass</mat-radio-button>
+                <mat-radio-button value="baseplateCompass">Baseplate Compass</mat-radio-button>
               </mat-radio-group>
           </p>
           <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical' || formMaster.controls.gaugeType.value == 'ngLinearHorizontal'" >
