@@ -63,14 +63,9 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
     this.DataSetService.startAllDataSets();
-<<<<<<< HEAD
-    
     // Snackbar Notification Code
     this.notificationSub = this.NotificationsService.getNotificationObservable().subscribe(
-=======
 
-    this.notificationSub = this.NotificationsService.getObservable().subscribe(
->>>>>>> update-ng-canvas-gauges
       appNotififaction => {
         this._snackBar.open(appNotififaction.message, 'dismiss', {
           duration: appNotififaction.duration,
