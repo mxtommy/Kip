@@ -17,7 +17,7 @@ declare var NoSleep: any; //3rd party
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
 
@@ -62,7 +62,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
     this.DataSetService.startAllDataSets();
-    
+
     this.notificationSub = this.NotificationsService.getObservable().subscribe(
       appNotififaction => {
         this._snackBar.open(appNotififaction.message, 'dismiss', {
