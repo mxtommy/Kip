@@ -4,8 +4,18 @@ $defaultTheme-accent:  mat-palette($mat-blue, A200, A100, A400);
 // The warn palette is optional (defaults to red).
 $defaultTheme-warn:    mat-palette($mat-red);
 
+// Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
+// Pull from mat-palettes or use custom color ie. #e3ff43
+$mat-ngGauge: (
+    primary-gaugeFaceLight: mat-color($defaultTheme-primary, 300),
+    primary-gaugeFaceDark: mat-color($defaultTheme-primary, 900),
+    accent-gaugeFaceLight: mat-color($defaultTheme-accent, 300),
+    accent-gaugeFaceDark: mat-color($defaultTheme-accent, 900),
+    warn-gaugeFaceLight: mat-color($defaultTheme-warn, 300),
+    warn-gaugeFaceDark: mat-color($defaultTheme-warn, 900),
+);
 
-
+// Palette for widget-wind - wind instrument
 $mat-wind: (
     boat-background: #c7c7c7,
     heading-background: #c5c5c5,
@@ -21,8 +31,8 @@ $mat-wind: (
 // custom background
 $defaultTheme-background: custom-theme-light-background($mat-blue, 100);
 
-// Create the theme object (a Sass map containing all of the palettes).
+// Create the mat-theme object (a Sass map containing all of the palettes). Note mat only supports 3 palettes by default - see next line
 $defaultTheme-temp-light: mat-light-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
 
-
-$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, wind: $mat-wind));
+// Merge additional palettes in mat-theme object (add to Sass map containing all of the palettes).
+$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));
