@@ -168,7 +168,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   updateGaugeConfig(){
-    //// Hack to get Theme colors using hidden minxin, DIV and @ViewChild
+    //// Hack to get Theme colors using hidden mixin, DIV and @ViewChild
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
@@ -198,7 +198,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       case "warn":
@@ -206,7 +206,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       default:
