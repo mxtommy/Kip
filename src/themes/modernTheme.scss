@@ -64,7 +64,7 @@ $md-accent: (
     )
 );
 
-$md-warm: (
+$md-warn: (
     50 : #fae5e5,
     100 : #f2bebe,
     200 : #ea9393,
@@ -101,10 +101,10 @@ $md-warm: (
 // The warn palette is optional (defaults to red).
 $modern-theme-primary: mat-palette($md-primary);
 $modern-theme-accent:  mat-palette($md-accent, A200, A100, A400);
-$modern-theme-warm:  mat-palette($md-warm);
+$modern-theme-warn:  mat-palette($md-warn);
 
 // Make temp theme with palettes - we need to merge custom values later
-$modernTheme-dark-temp: mat-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warm);
+$modernTheme-dark-temp: mat-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
 
 $md-special: (
     50 : #fae5e5,
@@ -141,7 +141,18 @@ $md-special: (
 
 $modern-theme-special:  mat-palette($md-special);
 
-// Styles for widget-wind - wind instrument
+// Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
+// Pull from mat-palettes or use custom color ie. #e3ff43
+$mat-ngGauge: (
+    primary-gaugeFaceLight: mat-color($modern-theme-primary, 300),
+    primary-gaugeFaceDark: mat-color($modern-theme-primary, 900),
+    accent-gaugeFaceLight: mat-color($modern-theme-accent, 300),
+    accent-gaugeFaceDark: mat-color($modern-theme-accent, 900),
+    warn-gaugeFaceLight: mat-color($modern-theme-warn, 300),
+    warn-gaugeFaceDark: mat-color($modern-theme-warn, 900),
+);
+
+// Palette for widget-wind - wind instrument
 $mat-wind: (
     boat-background: #ffffff,
     heading-background: mat-color($modern-theme-special, 700),
@@ -150,11 +161,11 @@ $mat-wind: (
     compass-dark: mat-color($modern-theme-special, 600),
     compass-light: #888888,
     wind-rose-background: #ffffff,
-    port: mat-color($modern-theme-warm, 500),
+    port: mat-color($modern-theme-warn, 500),
     starboard: mat-color($modern-theme-special, 400),
 );
 
 // Merge custom theme values for Light/Dark - Foreground/Background and Wind instrument style
 $modernTheme-dark-background: custom-theme-dark-background($modern-theme-special, 900);
 $modernTheme-dark-foreground: custom-theme-dark-foreground(white);
-$modernTheme-dark: map-merge($modernTheme-dark-temp, (background: $modernTheme-dark-background, foreground: $modernTheme-dark-foreground, wind: $mat-wind) );
+$modernTheme-dark: map-merge($modernTheme-dark-temp, (background: $modernTheme-dark-background, foreground: $modernTheme-dark-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));

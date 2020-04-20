@@ -67,6 +67,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   themeNameSub: Subscription = null;
 
   public gaugeOptions = {} as RadialGaugeOptions;
+  // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
+  public colorStrokeTicks: string = "";
 
   constructor(
     public dialog:MatDialog,
@@ -166,7 +168,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   updateGaugeConfig(){
-    //// Hack to get Theme colors using hidden minxin, DIV and @ViewChild
+    //// Hack to get Theme colors using hidden mixin, DIV and @ViewChild
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
@@ -196,7 +198,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       case "warn":
@@ -204,7 +206,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor
+        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       default:
@@ -221,7 +223,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     // Radial gauge type
     switch(this.config.radialSize) {
       case "capacity":
-        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks drawing firs tick always and using color="" does not work
+        this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = this.config.minValue;
         this.gaugeOptions.maxValue = this.config.maxValue;
@@ -256,45 +259,66 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.needleCircleInner = false;
         this.gaugeOptions.needleCircleOuter = false;
 
+        this.gaugeOptions.borders = true;
+        this.gaugeOptions.borderOuterWidth = 0;
+        this.gaugeOptions.borderMiddleWidth = 2;
+        this.gaugeOptions.borderInnerWidth = 2;
+        this.gaugeOptions.borderShadowWidth = 0;
+
         this.gaugeOptions.animationTarget = "needle";
         this.gaugeOptions.useMinPath = false;
         break;
 
       case "measuring":
-        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
-        this.gaugeOptions.fontTitleSize = 60;
+        let calculatedMajorTicks = this.calculateMajorTicks(this.config.minValue, this.config.maxValue);
+
+        this.gaugeOptions.colorTitle = this.colorStrokeTicks = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
+
+        this.gaugeOptions.fontTitleSize = 20;
         this.gaugeOptions.minValue = this.config.minValue;
         this.gaugeOptions.maxValue = this.config.maxValue;
         this.gaugeOptions.barProgress = true;
         this.gaugeOptions.barWidth = 15;
 
         this.gaugeOptions.valueBox = true;
-        this.gaugeOptions.fontValueSize = 70;
+        this.gaugeOptions.fontValueSize = 60;
         this.gaugeOptions.valueBoxWidth = 100;
         this.gaugeOptions.valueBoxBorderRadius = 0;
         this.gaugeOptions.valueBoxStroke = 0;
         this.gaugeOptions.colorValueBoxBackground = "";
 
-        this.gaugeOptions.ticksAngle = 360;
-        this.gaugeOptions.startAngle = 180;
-        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
-
-        this.gaugeOptions.ticksAngle = 360;
-        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.ticksAngle = 270;
+        this.gaugeOptions.startAngle = 45;
         this.gaugeOptions.exactTicks = false;
-        this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = [];
-        this.gaugeOptions.minorTicks = 0;
-        this.gaugeOptions.numbersMargin = 0;
-        this.gaugeOptions.fontNumbersSize = 0;
+        this.gaugeOptions.strokeTicks = true;
+        this.gaugeOptions.majorTicks = [calculatedMajorTicks.toString()];
+        this.gaugeOptions.minorTicks = 2;
+        this.gaugeOptions.numbersMargin = 3;
+        this.gaugeOptions.fontNumbersSize = 15;
         this.gaugeOptions.highlights = [];
         this.gaugeOptions.highlightsWidth = 0;
+
+        this.gaugeOptions.needle = true;
+        this.gaugeOptions.needleType = "line";
+        this.gaugeOptions.needleWidth = 2;
+        this.gaugeOptions.needleShadow = false;
+        this.gaugeOptions.needleStart = 0;
+        this.gaugeOptions.needleEnd = 95;
+        this.gaugeOptions.needleCircleSize = 10;
+        this.gaugeOptions.needleCircleInner = false;
+        this.gaugeOptions.needleCircleOuter = false;
+
+        this.gaugeOptions.borders = false;
+        this.gaugeOptions.borderOuterWidth = 0;
+        this.gaugeOptions.borderMiddleWidth = 0;
+        this.gaugeOptions.borderInnerWidth = 0;
+        this.gaugeOptions.borderShadowWidth = 0;
 
         this.gaugeOptions.animationTarget = "needle";
         this.gaugeOptions.useMinPath = false;
         break;
 
-      case "compass":
+      case "marineCompass":
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = 0;
@@ -312,9 +336,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.ticksAngle = 360;
         this.gaugeOptions.startAngle = 180;
         this.gaugeOptions.exactTicks = false;
-        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
         this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.numbersMargin = 0;
+        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;
         this.gaugeOptions.minorTicks = 22;
         this.gaugeOptions.highlights = [];
@@ -330,8 +354,60 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.needleCircleInner = false;
         this.gaugeOptions.needleCircleOuter = false;
 
+        this.gaugeOptions.borders = true;
+        this.gaugeOptions.borderOuterWidth = 0;
+        this.gaugeOptions.borderMiddleWidth = 2;
+        this.gaugeOptions.borderInnerWidth = 2;
+        this.gaugeOptions.borderShadowWidth = 0;
+
         this.gaugeOptions.animationTarget = "plate";
         this.gaugeOptions.useMinPath = true;
+        break;
+
+      case "baseplateCompass":
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
+        this.gaugeOptions.fontTitleSize = 60;
+        this.gaugeOptions.minValue = 0;
+        this.gaugeOptions.maxValue = 360;
+        this.gaugeOptions.barProgress = false;
+        this.gaugeOptions.barWidth = 0;
+
+        this.gaugeOptions.valueBox = true
+        this.gaugeOptions.fontValueSize = 50;
+        this.gaugeOptions.valueBoxWidth = 0;
+        this.gaugeOptions.valueBoxBorderRadius = 5;
+        this.gaugeOptions.valueBoxStroke = 0;
+        this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
+
+        this.gaugeOptions.ticksAngle = 360;
+        this.gaugeOptions.startAngle = 180;
+        this.gaugeOptions.exactTicks = false;
+        this.gaugeOptions.strokeTicks = false;
+        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.numbersMargin = 3;
+        this.gaugeOptions.fontNumbersSize = 15;
+        this.gaugeOptions.minorTicks = 22;
+        this.gaugeOptions.highlights = [];
+        this.gaugeOptions.highlightsWidth = 0;
+
+        this.gaugeOptions.needle = true;
+        this.gaugeOptions.needleType = "line";
+        this.gaugeOptions.needleWidth = 3;
+        this.gaugeOptions.needleShadow = false;
+        this.gaugeOptions.needleStart = 75;
+        this.gaugeOptions.needleEnd = 99;
+        this.gaugeOptions.needleCircleSize = 2;
+        this.gaugeOptions.needleCircleInner = false;
+        this.gaugeOptions.needleCircleOuter = false;
+
+        this.gaugeOptions.borders = true;
+        this.gaugeOptions.borderOuterWidth = 0;
+        this.gaugeOptions.borderMiddleWidth = 2;
+        this.gaugeOptions.borderInnerWidth = 2;
+        this.gaugeOptions.borderShadowWidth = 0;
+
+        this.gaugeOptions.animationTarget = "needle";
+        this.gaugeOptions.useMinPath = false;
         break;
 
       default:
@@ -344,5 +420,58 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
     this.gaugeOptions.height = Math.floor(rect.height * 0.88);
     this.gaugeOptions.width = Math.floor(rect.width * 0.88);
+  }
+
+  // Method to calculate nice values for min, max and range for the gaugeOptions.majorTicks
+  calculateMajorTicks(minValue: number, maxValue: number): string[]|number[] {
+    let niceMinValue = minValue;
+    let niceMaxValue = maxValue;
+    let niceRange = maxValue - minValue;
+    let majorTickSpacing = 0;
+    let maxNoOfMajorTicks = 10;
+    let tickArray = [] as Array<number>;
+
+    niceRange = this.calcNiceNumber(maxValue - minValue, false);
+    majorTickSpacing = this.calcNiceNumber(niceRange / (maxNoOfMajorTicks - 1), true);
+    niceMinValue = Math.floor(minValue / majorTickSpacing) * majorTickSpacing;
+    niceMaxValue = Math.ceil(maxValue / majorTickSpacing) * majorTickSpacing;
+
+    tickArray.push(niceMinValue);
+
+    for (let index = 0; index < (niceRange / majorTickSpacing); index++) {
+      if (tickArray[index] < niceMaxValue) {
+        tickArray.push(tickArray[index] + majorTickSpacing);
+      }
+    }
+    return tickArray;
+  }
+
+  calcNiceNumber(range: number, round: boolean): number {
+    let exponent = Math.floor(Math.log10(range)),   // exponent of range
+        fraction = range / Math.pow(10, exponent),  // fractional part of range
+        niceFraction: number;                               // nice, rounded fraction
+
+    if (round) {
+        if (1.5 > fraction) {
+            niceFraction = 1;
+        } else if (3 > fraction) {
+            niceFraction = 2;
+        } else if (7 > fraction) {
+            niceFraction = 5;
+        } else {
+            niceFraction = 10;
+        }
+    } else {
+        if (1 >= fraction) {
+            niceFraction = 1;
+        } else if (2 >= fraction) {
+            niceFraction = 2;
+        } else if (5 >= fraction) {
+            niceFraction = 5;
+        } else {
+            niceFraction = 10;
+        }
+    }
+    return niceFraction * Math.pow(10, exponent);
   }
 }

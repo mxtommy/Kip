@@ -64,6 +64,24 @@ $mat-night-accent: (
     )
 );
 
+$nightTheme-primary: mat-palette($mat-night-primary);
+$nightTheme-accent:  mat-palette($mat-night-accent);
+
+// The warn palette is optional (defaults to red).
+$nightTheme-warn:    mat-palette($mat-red);
+
+// Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
+// Pull from mat-palettes or use custom color ie. #e3ff43
+$mat-ngGauge: (
+    primary-gaugeFaceLight: mat-color($nightTheme-primary, 300),
+    primary-gaugeFaceDark: mat-color($nightTheme-accent, 900),
+    accent-gaugeFaceLight: mat-color($nightTheme-accent, 300),
+    accent-gaugeFaceDark: mat-color($nightTheme-accent, 900),
+    warn-gaugeFaceLight: mat-color($nightTheme-warn, 300),
+    warn-gaugeFaceDark: mat-color($nightTheme-warn, 900),
+);
+
+// Palette for widget-wind - wind instrument
 $mat-wind: (
     boat-background: rgb(75, 0, 0),
     heading-background: #310000,
@@ -76,13 +94,6 @@ $mat-wind: (
     starboard: #0d5500,
 );
 
-
-$nightTheme-primary: mat-palette($mat-night-primary);
-$nightTheme-accent:  mat-palette($mat-night-accent);
-
-// The warn palette is optional (defaults to red).
-$nightTheme-warn:    mat-palette($mat-red);
-
 //get our custom foreground/background
 $nightTheme-foreground: custom-theme-dark-foreground(#b81e1e);
 
@@ -90,6 +101,6 @@ $nightTheme-foreground: custom-theme-dark-foreground(#b81e1e);
 $nightTheme-temp-dark: mat-dark-theme($nightTheme-primary, $nightTheme-accent, $nightTheme-warn);
 
 //merge with custom foreground
-$nightTheme-dark: map-merge($nightTheme-temp-dark, (foreground: $nightTheme-foreground, wind: $mat-wind));
+$nightTheme-dark: map-merge($nightTheme-temp-dark, (foreground: $nightTheme-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
 
 
