@@ -1,4 +1,4 @@
-# Kip
+# Kip 
 
 This is a marine instrumentation package to display signalK data. Display can be split up in any arrangement to show any kind data available on the server. 
 
