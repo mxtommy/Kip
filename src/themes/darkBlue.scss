@@ -64,6 +64,24 @@ $mat-darkBlue-accent: (
   )
 );
 
+$darkBlueTheme-primary: mat-palette($mat-darkBlue-primary);
+$darkBlueTheme-accent:  mat-palette($mat-darkBlue-accent);
+
+// The warn palette is optional (defaults to red).
+$darkBlueTheme-warn:    mat-palette($mat-red);
+
+// Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
+// Pull from mat-palettes or use custom color ie. #e3ff43
+$mat-ngGauge: (
+    primary-gaugeFaceLight: mat-color($darkBlueTheme-primary, 300),
+    primary-gaugeFaceDark: mat-color($darkBlueTheme-primary, 900),
+    accent-gaugeFaceLight: mat-color($darkBlueTheme-accent, 300),
+    accent-gaugeFaceDark: mat-color($darkBlueTheme-accent, 900),
+    warn-gaugeFaceLight: mat-color($darkBlueTheme-warn, 300),
+    warn-gaugeFaceDark: mat-color($darkBlueTheme-warn, 900),
+);
+
+// Palette for widget-wind - wind instrument
 $mat-wind: (
   boat-background: #c7c7c7,
   heading-background: #c5c5c5,
@@ -76,13 +94,6 @@ $mat-wind: (
   starboard: #1fce04,
 );
 
-
-$darkBlueTheme-primary: mat-palette($mat-darkBlue-primary);
-$darkBlueTheme-accent:  mat-palette($mat-darkBlue-accent);
-
-// The warn palette is optional (defaults to red).
-$darkBlueTheme-warn:    mat-palette($mat-red);
-
 //get our custom foreground/background
 $darkBlueTheme-foreground: custom-theme-dark-foreground(#a5e1fd);
 $darkBlueTheme-background: custom-theme-light-background($mat-darkBlue-primary, 500);
@@ -91,5 +102,5 @@ $darkBlueTheme-background: custom-theme-light-background($mat-darkBlue-primary, 
 $darkBlueTheme-temp-dark: mat-dark-theme($darkBlueTheme-primary, $darkBlueTheme-accent, $darkBlueTheme-warn);
 
 //merge with custom foreground
-$darkBlueTheme-dark: map-merge($darkBlueTheme-temp-dark, (background: $darkBlueTheme-background, foreground: $darkBlueTheme-foreground, wind: $mat-wind));
+$darkBlueTheme-dark: map-merge($darkBlueTheme-temp-dark, (background: $darkBlueTheme-background, foreground: $darkBlueTheme-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
 

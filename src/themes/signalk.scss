@@ -64,6 +64,24 @@ $mat-signalk-secondary: (
     )
 );
 
+$signalKTheme-primary: mat-palette($mat-signalk);
+$signalKTheme-accent:  mat-palette($mat-signalk-secondary);
+
+// The warn palette is optional (defaults to red).
+$signalKTheme-warn:    mat-palette($mat-red);
+
+// Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
+// Pull from mat-palettes or use custom color ie. #e3ff43
+$mat-ngGauge: (
+    primary-gaugeFaceLight: mat-color($signalKTheme-primary, 300),
+    primary-gaugeFaceDark: mat-color($signalKTheme-primary, 900),
+    accent-gaugeFaceLight: mat-color($signalKTheme-accent, 300),
+    accent-gaugeFaceDark: mat-color($signalKTheme-accent, 900),
+    warn-gaugeFaceLight: mat-color($signalKTheme-warn, 300),
+    warn-gaugeFaceDark: mat-color($signalKTheme-warn, 900),
+);
+
+// Palette for widget-wind - wind instrument
 $mat-wind: (
     boat-background: #c7c7c7,
     heading-background: #c5c5c5,
@@ -76,15 +94,8 @@ $mat-wind: (
     starboard: #1fce04,
 );
 
-
-$signalKTheme-primary: mat-palette($mat-signalk);
-$signalKTheme-accent:  mat-palette($mat-signalk-secondary);
-
-// The warn palette is optional (defaults to red).
-$signalKTheme-warn:    mat-palette($mat-red);
-
 // Create the theme object (a Sass map containing all of the palettes).
 $signalKTheme-temp-light: mat-light-theme($signalKTheme-primary, $signalKTheme-accent, $signalKTheme-warn);
 
 //merge with custom background
-$signalKTheme-light: map-merge($signalKTheme-temp-light, (wind: $mat-wind));
+$signalKTheme-light: map-merge($signalKTheme-temp-light, (wind: $mat-wind, ngGauge: $mat-ngGauge));
