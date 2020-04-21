@@ -93,6 +93,7 @@
 @import 'themes/highContrast.scss';
 @import 'themes/darkBlue.scss';
 @import 'themes/modernTheme.scss';
+@import 'themes/blackTheme.scss';
 
 // import Components themes
 @import 'app/app.component.scss';
@@ -119,7 +120,7 @@
 
 @include theme-components($defaultTheme-light);
 
-.signalk {
+.signalk-light {
   @include theme-components($signalKTheme-light);
 }
 
@@ -134,10 +135,15 @@
   @include theme-components($platypusTheme-light);
 }
 
-.darkBlue {
+.darkBlue-dark {
   @include theme-components($darkBlueTheme-dark);
 }
 
 .modern-dark {
   @include theme-components($modernTheme-dark);
 }
+
+.black-dark {
+  @include theme-components($blackTheme-dark);
+}
+

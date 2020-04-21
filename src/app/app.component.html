@@ -5,32 +5,32 @@
     </div>
     <div class="menuBar">
       <div class="menuBarContainer theme-menu">
-        <div class="menuBarButtonGroup">
-          <button color="accent" mat-raised-button (click)="pageDown()">
+        <div class="menuBarButtonGroups">
+          <app-alarm-menu></app-alarm-menu>
+        </div>
+        <div class="menuBarButtonGroups">
+          <button color="accent"mat-flat-button class="menuBarNavButtons" (click)="pageDown()">
             <i class="fa fa-chevron-left fa-2x" aria-hidden="true"></i>
           </button>
         </div>
-        <div class="menuBarButtonGroup">
-          <app-alarm-menu></app-alarm-menu>
-        </div>
-        <div class="menuBarButtonGroup">
-          <button color="accent" mat-raised-button (click)="pageUp()">
+        <div class="menuBarButtonGroups">
+          <button color="accent" mat-flat-button class="menuBarNavButtons" (click)="pageUp()">
             <i class="fa fa-chevron-right fa-2x" aria-hidden="true"></i>
           </button>
         </div>
-        <div class="menuBarButtonGroup">
-            <button color="accent" mat-raised-button [matMenuTriggerFor]="settingsMenu" >
+        <div class="menuBarButtonGroups">
+            <button color="accent" mat-flat-button class="menuBarSettingsButton" [matMenuTriggerFor]="settingsMenu" >
               <i class="fa fa-bars fa-2x" aria-hidden="true"></i>
             </button>
             <mat-menu #settingsMenu="matMenu">
               <button mat-menu-item routerLink="/settings">
-                <span><i class="fa fa-cog" aria-hidden="true"></i> App Settings</span>
+                <span><i class="fa fa-cog" aria-hidden="true"></i> Configuration</span>
               </button>
               <button color="accent" mat-menu-item [matMenuTriggerFor]="themeMenu2" >
                 <span><i class="fa fa-paint-brush"></i> Themes</span>
               </button>
               <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
-                <span><i class="fa fa-plus-square" aria-hidden="true"></i> New Page</span>
+                <span><i class="fa fa-plus-square" aria-hidden="true"></i> Add Page</span>
               </button>
               <button mat-menu-item (click)="unlockPage()">
                 <span *ngIf="!unlockStatus"><i class="fa fa-unlock" aria-hidden="true"></i> Unlock</span>
@@ -43,12 +43,13 @@
             </mat-menu>
             <mat-menu #themeMenu2="matMenu">
               <button mat-menu-item (click)="setTheme('default-light')">Default</button>
-              <button mat-menu-item (click)="setTheme('signalk')">Signal K</button>
+              <button mat-menu-item (click)="setTheme('signalk-light')">Signal K</button>
               <button mat-menu-item (click)="setTheme('high-contrast-light')">High Contrast</button>
               <button mat-menu-item (click)="setTheme('night-dark')">Night (red)</button>
               <button mat-menu-item (click)="setTheme('platypus-light')">Platypus</button>
-              <button mat-menu-item (click)="setTheme('darkBlue')">DarkBlue</button>
-              <button mat-menu-item (click)="setTheme('modern-dark')">Modern</button>
+              <button mat-menu-item (click)="setTheme('darkBlue-dark')">Dark Blue</button>
+              <button mat-menu-item (click)="setTheme('modern-dark')">Modern Dark</button>
+              <button mat-menu-item (click)="setTheme('black-dark')">Black</button>
           </mat-menu>
         </div>
       </div>
