@@ -24,6 +24,7 @@
       <button
         mat-menu-item
         (click)="ackAlarm(alarm.key)"
+
         matTooltip="Silence Alarm (until state change)"
         >
         Acknowledge
@@ -31,6 +32,7 @@
       <button
         mat-menu-item
         (click)="ackAlarm(alarm.key, 300000)"
+
         matTooltip="Silence Alarm for 5 minutes(state change can re-trigger)"
         >
         Snooze (5 Min)
@@ -53,3 +55,4 @@
 
   </div>
 </mat-menu>
+

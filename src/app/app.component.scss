@@ -23,7 +23,12 @@
     // color: mat-color($primary, 500);
   }
 
-}
+
+    .menuBarButtonGroup {
+      background-color: mat-color($foreground, divider);
+    }
+
+ }
 
 .fullheight {
   height: 100%;

@@ -122,10 +122,10 @@ $mat-ngGauge: (
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: #ffffff,
-    heading-background: #1E1E1E,
-    true-wind-background: #f0ca31,
-    app-wind-background: #63afdf,
-    compass-dark: #3f3f3f,
+    heading-background: mat-color($modern-theme-special, 700),
+    true-wind-background: mat-color($modern-theme-accent, 500),
+    app-wind-background: mat-color($modern-theme-primary, 500),
+    compass-dark: mat-color($modern-theme-special, 600),
     compass-light: #888888,
     wind-rose-background: #ffffff,
     port: #d52626,
