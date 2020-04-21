@@ -2,6 +2,7 @@
 
 @mixin app-theme($theme) {
   $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
   $warn: map-get($theme, warn);
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
@@ -12,14 +13,16 @@
   }
 
   .theme-menu {
-    background-color: mat-color($primary, 900);
+    background-color: mat-color($accent, A200);
   }
 
-  .menuBarButtonGroup {
-    width: 100%;
-    text-align: center;
-    background-color: mat-color($foreground, divider);
+
+    // background-color: mat-color($foreground, divider);
+
+  .menuBarButtonGroups button {
+    // color: mat-color($primary, 500);
   }
+
 }
 
 .fullheight {
@@ -34,27 +37,46 @@
 }
 
 .mainWindow {
- /* width: 100%; */
   flex: 30;
-  /*
-  top: 0px;
-  bottom: 60px;
-  position: absolute;
-  */
-}
+ }
 
 .menuBar {
-  /*width: 100%;
-   height: 60px; */
   flex: 1;
- /*   bottom: 0px;
-      position: absolute;
-  background-color:  rgb(100,100,100);;
-  */
 }
 
 .menuBarContainer {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.menuBarContainer .menuBarButtonGroups {
+  flex-grow: 1;
+}
+
+.menuBarContainer .menuBarButtonGroups:first-child {
+  text-align: left;
+  margin-left: 2px;
+}
+
+.menuBarContainer .menuBarButtonGroups {
+  text-align: center;
+}
+
+.menuBarContainer .menuBarButtonGroups:last-child {
+  text-align: right;
+  margin-right: 2px;
+}
+
+.menuBarButtonGroups .menuBarNavButtons {
+  width: 99%;
+}
+
+.menuBarButtonGroups .menuBarAlarmsButton {
+  width: 25%;
+}
+
+.menuBarButtonGroups .menuBarSettingsButton {
+  width: 25%;
 }

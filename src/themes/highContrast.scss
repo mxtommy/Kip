@@ -1,7 +1,14 @@
+// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
+
+// We use Mat predefined palettes
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Generate mat-material default theme palettes. Generate now so we call pull if necessary
+// palette color later in this scss file.
+//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
+//    used for error and warning.
 $highContrast-primary: mat-palette($mat-grey);
 $highContrast-accent:  mat-palette($mat-grey, A200, A100, A400);
-
-// The warn palette is optional (defaults to red).
 $highContrast-warn:    mat-palette($mat-red);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
@@ -15,7 +22,8 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: mat-color($highContrast-warn, 900),
 );
 
-// Palette for widget-wind - wind instrument
+// Palette for widget-wind - wind instrument Component
+// * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: #c7c7c7,
     heading-background: #c5c5c5,
@@ -28,8 +36,9 @@ $mat-wind: (
     starboard: #1fce04,
 );
 
-
-// Create the theme object (a Sass map containing all of the palettes).
+// Make temp theme using default palettes
+// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $highContrast-temp-light: mat-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
 
+// Merge our mat-theme with component specific palettes
 $highContrast-light: map-merge($highContrast-temp-light, (wind: $mat-wind, ngGauge: $mat-ngGauge));

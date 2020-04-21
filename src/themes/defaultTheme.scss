@@ -1,7 +1,14 @@
+// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
+
+// We use Mat predefined palettes
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Generate mat-material default theme palettes. Generate now so we call pull if necessary
+// palette color later in this scss file.
+//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
+//    used for error and warning.
 $defaultTheme-primary: mat-palette($mat-cyan);
 $defaultTheme-accent:  mat-palette($mat-blue, A200, A100, A400);
-
-// The warn palette is optional (defaults to red).
 $defaultTheme-warn:    mat-palette($mat-red);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
@@ -15,7 +22,8 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: mat-color($defaultTheme-warn, 900),
 );
 
-// Palette for widget-wind - wind instrument
+// Palette for widget-wind - wind instrument Component
+// * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: #c7c7c7,
     heading-background: #c5c5c5,
@@ -28,11 +36,12 @@ $mat-wind: (
     starboard: #1fce04,
 );
 
-// custom background
+// use custom theming hack
 $defaultTheme-background: custom-theme-light-background($mat-blue, 100);
 
-// Create the mat-theme object (a Sass map containing all of the palettes). Note mat only supports 3 palettes by default - see next line
+// Make temp theme using default palettes
+// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $defaultTheme-temp-light: mat-light-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
 
-// Merge additional palettes in mat-theme object (add to Sass map containing all of the palettes).
+// Merge our mat-theme with component specific palettes
 $defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));

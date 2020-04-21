@@ -1,3 +1,4 @@
+// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
 $mat-night-primary: (
     50 : #ede1e1,
     100 : #d1b3b3,
@@ -64,10 +65,13 @@ $mat-night-accent: (
     )
 );
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Generate mat-material default theme palettes. Generate now so we call pull if necessary
+// palette color later in this scss file.
+//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
+//    used for error and warning.
 $nightTheme-primary: mat-palette($mat-night-primary);
 $nightTheme-accent:  mat-palette($mat-night-accent);
-
-// The warn palette is optional (defaults to red).
 $nightTheme-warn:    mat-palette($mat-red);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
@@ -81,7 +85,8 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: mat-color($nightTheme-warn, 900),
 );
 
-// Palette for widget-wind - wind instrument
+// Palette for widget-wind - wind instrument Component
+// * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: rgb(75, 0, 0),
     heading-background: #310000,
@@ -97,10 +102,11 @@ $mat-wind: (
 //get our custom foreground/background
 $nightTheme-foreground: custom-theme-dark-foreground(#b81e1e);
 
-//Generate theme
+// Make temp theme using default palettes
+// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $nightTheme-temp-dark: mat-dark-theme($nightTheme-primary, $nightTheme-accent, $nightTheme-warn);
 
-//merge with custom foreground
+// Merge our mat-theme with component specific palettes
 $nightTheme-dark: map-merge($nightTheme-temp-dark, (foreground: $nightTheme-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
 
 
