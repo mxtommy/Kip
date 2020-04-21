@@ -12,6 +12,7 @@ import {
   MatSelectModule,
   MatInputModule,
   MatToolbarModule,
+  MatTooltipModule,
   MatCheckboxModule,
   MatRadioModule,
   MatTabsModule,
@@ -19,10 +20,9 @@ import {
   MatCardModule,
   MatExpansionModule,
   MatSnackBarModule,
+  MatBadgeModule,
 } from '@angular/material';
 
-
-import {MatTooltipModule} from '@angular/material/tooltip';
 
 import { AngularSplitModule } from 'angular-split';
 
@@ -75,6 +75,7 @@ import { SettingsConfigComponent } from './settings-config/settings-config.compo
 import { GaugesModule } from 'ng-canvas-gauges';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
+import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -121,6 +122,7 @@ const appRoutes: Routes = [
     ObjectKeysPipe,
     SettingsUnitsComponent,
     WidgetIframeComponent,
+    AlarmMenuComponent,
   ],
   imports: [
     BrowserModule,
@@ -145,6 +147,7 @@ const appRoutes: Routes = [
     MatStepperModule,
     MatInputModule,
     MatExpansionModule,
+    MatBadgeModule,
     GaugesModule,
   ],
   entryComponents: [

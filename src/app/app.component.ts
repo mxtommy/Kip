@@ -24,7 +24,6 @@ export class AppComponent implements OnInit, OnDestroy {
   noSleep = new NoSleep();
 
   pageName: string = '';
-  rootPageIndexSub: Subscription;
 
   unlockStatus: boolean = false;
   unlockStatusSub: Subscription;
@@ -35,7 +34,9 @@ export class AppComponent implements OnInit, OnDestroy {
   themeName: string;
   themeClass: string = 'default-light fullheight';
   themeNameSub: Subscription;
+
   notificationSub: Subscription;
+
 
   constructor(
     private AppSettingsService: AppSettingsService,
@@ -62,8 +63,10 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
     this.DataSetService.startAllDataSets();
+    
+    // Snackbar Notification Code
+    this.notificationSub = this.NotificationsService.getNotificationObservable().subscribe(
 
-    this.notificationSub = this.NotificationsService.getObservable().subscribe(
       appNotififaction => {
         this._snackBar.open(appNotififaction.message, 'dismiss', {
           duration: appNotififaction.duration,
@@ -72,10 +75,10 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     )
 
+
   }
 
   ngOnDestroy() {
-    this.rootPageIndexSub.unsubscribe();
     this.unlockStatusSub.unsubscribe();
     this.themeNameSub.unsubscribe();
     this.notificationSub.unsubscribe();
@@ -85,6 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
   setTheme(theme: string) {
     this.AppSettingsService.setThemName(theme);
   }
+
 
   unlockPage() {
     if (this.unlockStatus) {
@@ -97,13 +101,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.AppSettingsService.setUnlockStatus(this.unlockStatus);
   }
 
+
   newPage() {
     this.LayoutSplitsService.newRootSplit();
       //this.router.navigate(['/page', rootNodes.findIndex(uuid => uuid == newuuid)]);
-  }
-
-  deletePage() {
-
   }
 
   pageDown() {

@@ -1,0 +1,52 @@
+<button [class.alarmCrit]="blinkCrit"
+        [class.alarmWarning]="blinkWarn"
+        mat-raised-button 
+        [matMenuTriggerFor]="alarmMenu"
+        [disabled]="alarmCount == 0"
+        [matBadgeHidden]="unAckAlarms == 0"
+        [matBadge]="unAckAlarms"
+        matBadgePosition="before"
+        matBadgeColor="warn">
+  <span class="fa fa-lg fa-bell"></span>
+</button>
+<mat-menu #alarmMenu="matMenu">
+  <div *ngFor="let alarm of alarms | keyvalue">
+    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.message">
+      <span *ngIf="alarm.value.ack" class="fa fa-lg fa-check"></span>
+      <span *ngIf="!alarm.value.ack && !pathIgnored(alarm.key)" class="fa fa-lg fa-exclamation"></span>
+      <span *ngIf="pathIgnored(alarm.key)" class="fa fa-lg fa-ban"></span>
+      {{ alarm.value.message }}
+    </button>
+    <mat-menu #actions="matMenu">
+      <button 
+        mat-menu-item 
+        (click)="ackAlarm(alarm.key)" 
+        matTooltip="Silence Alarm (until state change)"
+        >
+        Acknowledge
+      </button>
+      <button 
+        mat-menu-item 
+        (click)="ackAlarm(alarm.key, 300000)" 
+        matTooltip="Silence Alarm for 5 minutes(state change can re-trigger)"
+        >
+        Snooze (5 Min)
+      </button>
+      <button 
+        mat-menu-item 
+        (click)="ignoreAlarm(alarm.key)" 
+        matTooltip="Ignore Alarm (all states) until KIP restart"
+        >
+        Ignore (perm)
+      </button>  
+      <button 
+        mat-menu-item 
+        (click)="ignoreAlarm(alarm.key,300000)" 
+        matTooltip="Ignore Alarm (all states) for 5 minutes"
+        >
+        Ignore (5 Min)
+     </button>    
+    </mat-menu>
+
+  </div>
+</mat-menu>

@@ -178,10 +178,10 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.colorBar = getComputedStyle(this.backgroundElement.nativeElement).color;
     this.gaugeOptions.colorNeedleShadowUp = "";
     this.gaugeOptions.colorNeedleShadowDown = "black";
-    this.gaugeOptions.colorNeedleCircleInner = "";
-    this.gaugeOptions.colorNeedleCircleInnerEnd = "";
-    this.gaugeOptions.colorNeedleCircleOuter = "";
-    this.gaugeOptions.colorNeedleCircleOuterEnd = "";
+    this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
 
     // Theme colors
     switch (this.config.barColor) {
