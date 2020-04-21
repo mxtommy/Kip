@@ -1,7 +1,7 @@
 {
   "name": "@mxtommy/kip",
 
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "keywords": [
     "signalk-webapp",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/npm/npm.git"
+    "url": "https://github.com/mxtommy/Kip"
   },
   "dependencies": {
     "@angular/animations": "7.0.4",
