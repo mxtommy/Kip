@@ -1,34 +1,30 @@
 @import '~@angular/material/theming';
 
-
 @mixin app-theme($theme) {
+  $primary: map-get($theme, primary);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
 
-    $primary: map-get($theme, primary);
-    $warn: map-get($theme, warn);
-    $background: map-get($theme, background);
-    $foreground: map-get($theme, foreground);
+  .app-defaults {
+    background-color: mat-color($background, background);
+    color: mat-color($foreground, text);
+  }
 
-    .app-defaults {
-      background-color: mat-color($background, background);
-      color: mat-color($foreground, text);
-    }
+  .theme-menu {
+    background-color: mat-color($primary, 900);
+  }
 
-    .theme-menu {
-      background-color: mat-color($primary, 900);
-    }
-
-    .menuBarButtonGroup {
-      background-color: mat-color($foreground, divider);
-    }
-
- }
-
+  .menuBarButtonGroup {
+    width: 100%;
+    text-align: center;
+    background-color: mat-color($foreground, divider);
+  }
+}
 
 .fullheight {
   height: 100%;
 }
-
-
 
 .mainContainer {
   display: flex;
@@ -62,4 +58,3 @@
   flex-direction: row;
   justify-content: space-between;
 }
-

@@ -96,7 +96,7 @@ $mat-wind: (
 
 //get our custom foreground/background
 $darkBlueTheme-foreground: custom-theme-dark-foreground(#a5e1fd);
-$darkBlueTheme-background: custom-theme-light-background($mat-darkBlue-primary, 500);
+$darkBlueTheme-background: custom-theme-dark-background($mat-darkBlue-primary, 500);
 
 //Generate theme
 $darkBlueTheme-temp-dark: mat-dark-theme($darkBlueTheme-primary, $darkBlueTheme-accent, $darkBlueTheme-warn);
