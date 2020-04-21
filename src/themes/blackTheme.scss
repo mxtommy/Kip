@@ -1,5 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
-$modern-primary: (
+$black-primary: (
     50 : #ecf5fb,
     100 : #d0e7f5,
     200 : #b1d7ef,
@@ -32,7 +32,7 @@ $modern-primary: (
     )
 );
 
-$modern-accent: (
+$black-accent: (
     50 : #fdf9e6,
     100 : #fbefc1,
     200 : #f8e598,
@@ -44,7 +44,7 @@ $modern-accent: (
     800 : #e9b71f,
     900 : #e5ab13,
     A100 : #ffffff,
-    A200 : #1E1E1E, // used for bar: mat-theme-dark Divider. Original value #fff6e0
+    A200 : #1E1E1E, // original value #fff6e0
     A400 : #ffe6ad,
     A700 : #ffdf94,
     contrast: (
@@ -65,7 +65,7 @@ $modern-accent: (
     )
 );
 
-$modern-warn: (
+$black-warn: (
     50 : #fae5e5,
     100 : #f2bebe,
     200 : #ea9393,
@@ -98,46 +98,94 @@ $modern-warn: (
     )
 );
 
+$black-special: (
+    50 : #fae5e5,
+    100 : #f2bebe,
+    200 : #ea9393,
+    300 : #e26767,
+    400 : #389c19,
+    500 : #d02222,
+    600 : #3f3f3f,
+    700 : #1E1E1E,
+    800 : #121212,
+    900 : #000000,
+    A100 : #ffe7e7,
+    A200 : #ffb4b4,
+    A400 : #ff8181,
+    A700 : #ff6868,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Generate mat-material default theme palettes. Generate now so we call pull if necessary
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
-$modern-theme-primary: mat-palette($modern-primary);
-$modern-theme-accent:  mat-palette($modern-accent, A200, A100, A400);
-$modern-theme-warn:  mat-palette($modern-warn);
+
+$black-theme-primary: mat-palette($black-primary);
+$black-theme-accent:  mat-palette($black-accent, A200, A100, A400);
+$black-theme-warn:  mat-palette($black-warn);
+
+// Palettes for custom Components
 
 // widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: #92c7e9, //mat-color($modern-theme-primary, 300),
-    primary-gaugeFaceDark: #3586ca, // mat-color($modern-theme-primary, 900),
-    accent-gaugeFaceLight: #f5da6f,  //mat-color($modern-theme-accent, 300),
-    accent-gaugeFaceDark: #e5ab13,  //mat-color($modern-theme-accent, 900),
-    warn-gaugeFaceLight: #e26767,  //mat-color($modern-theme-warn, 300),
-    warn-gaugeFaceDark: #ba0d0d,  //mat-color($modern-theme-warn, 900),
+    primary-gaugeFaceLight: #92c7e9, //mat-color($black-theme-primary, 300),
+    primary-gaugeFaceDark: #3586ca, // mat-color($black-theme-primary, 900),
+    accent-gaugeFaceLight: #f5da6f,  //mat-color($black-theme-accent, 300),
+    accent-gaugeFaceDark: #e5ab13,  //mat-color($black-theme-accent, 900),
+    warn-gaugeFaceLight: #e26767,  //mat-color($black-theme-warn, 300),
+    warn-gaugeFaceDark: #ba0d0d,  //mat-color($black-theme-warn, 900),
 );
 
 // Palette for widget-wind - wind instrument Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: #ffffff,
-    heading-background: mat-color($modern-theme-special, 700),
-    true-wind-background: mat-color($modern-theme-accent, 500),
-    app-wind-background: mat-color($modern-theme-primary, 500),
-    compass-dark: mat-color($modern-theme-special, 600),
+    heading-background: #1E1E1E,
+    true-wind-background: #f0ca31,
+    app-wind-background: #63afdf,
+    compass-dark: #3f3f3f,
     compass-light: #888888,
     wind-rose-background: #ffffff,
     port: #d52626,
     starboard: #389c19,
 );
 
+
+$black-theme-special:  mat-palette($black-special); // TODO(David): clean later - do we need this?
+
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$modernTheme-temp: mat-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
+$blackTheme-temp: mat-dark-theme($black-theme-primary, $black-theme-accent, $black-theme-warn);
 
 
-// $modernTheme-dark-background: custom-theme-dark-background($modern-theme-special, 900); // TODO(david): Cleanup
+// $blackTheme-dark-background: custom-theme-dark-background($black-theme-special, 900); // TODO(david): Cleanup
 
 // Merge our mat-theme with component specific palettes
-$modernTheme-dark: map-merge($modernTheme-temp, (wind: $mat-wind, ngGauge: $mat-ngGauge));
+$blackTheme-dark: map-merge($blackTheme-temp, (wind: $mat-wind, ngGauge: $mat-ngGauge));
+
+
+
+// $blackTheme-dark-foreground: custom-theme-dark-foreground(white); // Kip theming hack
+
+// Merge custom theme values for Light/Dark - Foreground/Background and Wind instrument style
+// $blackTheme-dark-background: custom-theme-dark-background($black-theme-special, 900);
+// $blackTheme-dark-foreground: custom-theme-dark-foreground(white);
+// $blackTheme-dark: map-merge($blackTheme-dark-temp, (background: $blackTheme-dark-background, foreground: $blackTheme-dark-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));

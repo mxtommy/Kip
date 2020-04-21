@@ -1,3 +1,4 @@
+// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
 $mat-signalk: (
   50 : #e0e7f3,
   100 : #b3c2e0,
@@ -64,10 +65,13 @@ $mat-signalk-secondary: (
     )
 );
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Generate mat-material default theme palettes. Generate now so we call pull if necessary
+// palette color later in this scss file.
+//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
+//    used for error and warning.
 $signalKTheme-primary: mat-palette($mat-signalk);
 $signalKTheme-accent:  mat-palette($mat-signalk-secondary);
-
-// The warn palette is optional (defaults to red).
 $signalKTheme-warn:    mat-palette($mat-red);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
@@ -81,7 +85,8 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: mat-color($signalKTheme-warn, 900),
 );
 
-// Palette for widget-wind - wind instrument
+// Palette for widget-wind - wind instrument Component
+// * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: #c7c7c7,
     heading-background: #c5c5c5,
@@ -94,8 +99,9 @@ $mat-wind: (
     starboard: #1fce04,
 );
 
-// Create the theme object (a Sass map containing all of the palettes).
+// Make temp theme using default palettes
+// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $signalKTheme-temp-light: mat-light-theme($signalKTheme-primary, $signalKTheme-accent, $signalKTheme-warn);
 
-//merge with custom background
+// Merge our mat-theme with component specific palettes
 $signalKTheme-light: map-merge($signalKTheme-temp-light, (wind: $mat-wind, ngGauge: $mat-ngGauge));

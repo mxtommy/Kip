@@ -1,3 +1,4 @@
+// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
 $mat-darkBlue-primary: (
     50 : #e0e2ec,
     100 : #b3b7cf,
@@ -64,10 +65,13 @@ $mat-darkBlue-accent: (
   )
 );
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Generate mat-material default theme palettes. Generate now so we call pull if necessary
+// palette color later in this scss file.
+//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
+//    used for error and warning.
 $darkBlueTheme-primary: mat-palette($mat-darkBlue-primary);
 $darkBlueTheme-accent:  mat-palette($mat-darkBlue-accent);
-
-// The warn palette is optional (defaults to red).
 $darkBlueTheme-warn:    mat-palette($mat-red);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
@@ -81,7 +85,8 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: mat-color($darkBlueTheme-warn, 900),
 );
 
-// Palette for widget-wind - wind instrument
+// Palette for widget-wind - wind instrument Component
+// * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
   boat-background: #c7c7c7,
   heading-background: #c5c5c5,
@@ -94,13 +99,16 @@ $mat-wind: (
   starboard: #1fce04,
 );
 
-//get our custom foreground/background
+// use custom theming hack
 $darkBlueTheme-foreground: custom-theme-dark-foreground(#a5e1fd);
-$darkBlueTheme-background: custom-theme-light-background($mat-darkBlue-primary, 500);
+$darkBlueTheme-background: custom-theme-dark-background($mat-darkBlue-primary, 500);
 
-//Generate theme
+
+// Make temp theme using default palettes
+// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
+
 $darkBlueTheme-temp-dark: mat-dark-theme($darkBlueTheme-primary, $darkBlueTheme-accent, $darkBlueTheme-warn);
 
-//merge with custom foreground
+// Merge our mat-theme with component specific palettes
 $darkBlueTheme-dark: map-merge($darkBlueTheme-temp-dark, (background: $darkBlueTheme-background, foreground: $darkBlueTheme-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
 

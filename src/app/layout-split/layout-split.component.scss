@@ -1,12 +1,13 @@
 @mixin layout-split-theme($theme) {
 
-    $primary: map-get($theme, primary);
-    $warn: map-get($theme, warn);
-    $background: map-get($theme, background);
-    $foreground: map-get($theme, foreground);
+    $accent: map-get($theme, accent);
 
-    as-split-gutter {
-        background-color: mat-color($foreground, divider) !important;
+    as-split-gutter[ng-reflect-disabled=true] {
+      background-color: transparent !important;
+    }
+
+    as-split-gutter[ng-reflect-disabled=false] {
+      background-color: mat-color($accent, 700, 0.4) !important;
     }
 }
 

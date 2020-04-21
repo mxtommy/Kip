@@ -25,11 +25,12 @@
 
   }
   @keyframes blinkingAlarmCrit{
-    0%{		
+    0%{
       color: rgb(255, 232, 232);
       background-color: rgb(179, 0, 0);
     }
-    50%{	
+    50%{
+
       color: rgb(179, 0, 0);
       background-color: rgb(255, 232, 232);
     }
@@ -39,3 +40,4 @@
     }
   }
 }
+

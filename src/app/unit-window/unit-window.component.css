@@ -5,10 +5,21 @@
 }
 
 .unitWindow {
-    position: absolute;    
+    position: absolute;
     /*padding: 20px;*/
     width: 100%;
-    height: 100%;    
+    height: 100%;
+}
+
+.mat-card {
+  display: block;
+  position: absolute !important;
+  width: calc(100% - 4px);
+  height: calc(100% - 5px);
+  margin: 3px auto auto 2px;
+  padding: 0px;
+  transition: none;
+  transition-property: none;
 }
 
 .unitMenu {
@@ -17,8 +28,8 @@
     bottom: 5%;
 }
 
-.mat-select-trigger { 
-    min-width: 30px !important; 
+.mat-select-trigger {
+    min-width: 30px !important;
 }
 
 .full-width {
