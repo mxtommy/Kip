@@ -1,58 +1,57 @@
-<div id="{{widgetUUID}}" #autopilot style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
+<div id="{{widgetUUID}}" #autopilot style="display:block;position: relative;border:none;margin: 0px; padding: 0px; width: 100%; height: 100%;">
 
+  <div class="itemDisplay">
+    <div style="height: fit-content;width: fit-content;text-align: center;"><p style="margin: 0px;color: white">DISPLAY SCREEN</p><p style="margin: 0px;color: red">IMPORTANT: This Widget is not functional yet!</p></div>
+</div>
 
-  <div class="autopilotGridContainer">
-    <div>
-      <div class="itemDisplay">
-        <span>DISPLAY SCREEN</span>
-      </div>
-    <div>
-      <button mat-raised-button color="primary">Starboard Tack</button>
+  <div class class="autopilotGridBtnContainer">
+    <div class="itemStbTack">
+      <button mat-flat-button color="primary" class="autoPilotBtn">Std Tack</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">+1</button>
+    <div class="itemPlus1">
+      <button mat-flat-button color="primary" class="autoPilotBtn">+1°</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">-1</button>
+    <div class="itemMinus1">
+      <button mat-flat-button color="primary" class="autoPilotBtn">-1°</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">Port Tack</button>
+    <div class="itemPrtTack">
+      <button mat-flat-button color="primary" class="autoPilotBtn">Prt Tack</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">Standby</button>
+    <div class="itemStandby">
+      <button mat-flat-button color="accent" class="autoPilotBtn">Standby</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">+10</button>
+    <div class="itemPlus10">
+      <button mat-flat-button color="primary" class="autoPilotBtn">+10°</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">-10</button>
+    <div class="itemMinus10">
+      <button mat-flat-button color="primary" class="autoPilotBtn">-10°</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">Auto</button>
+    <div class="itemAuto">
+      <button mat-flat-button color="accent" class="autoPilotBtn">Auto</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">Wind</button>
+    <div class="itemWind">
+      <button mat-stroked-button color="primary" class="autoPilotBtn">Wind</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">Track</button>
+    <div class="itemTrack">
+      <button mat-stroked-button color="primary" class="autoPilotBtn">Track</button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">
+    <div class="itemPower">
+      <button mat-mini-fab color="primary" class="autoPilotBtnCtrl">
         <i class="fa fa-power-off" aria-hidden="true"></i>
       </button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">
+    <div class="itemMute">
+      <button mat-mini-fab color="primary" class="autoPilotBtnCtrl">
         <i class="fa fa-volume-off" aria-hidden="true"></i>
       </button>
     </div>
-    <div>
-      <button mat-raised-button color="primary">
+    <div class="itemMessage">
+      <button mat-mini-fab color="primary" class="autoPilotBtnCtrl">
         <i class="fa fa-envelope-o" aria-hidden="true"></i>
       </button>
     </div>
   </div>
-</div>
+
 
 
   <div class="settingsButton" *ngIf="unlockStatus">

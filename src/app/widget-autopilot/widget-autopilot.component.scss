@@ -9,33 +9,97 @@
 
   }
 
-.autopilotGridContainer {
-  width: 100%;
-  display: grid;
-  grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
-  grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row4-end] 25% [row-end];
-  grid-template-areas:
-    "pdisplay pdisplay pdisplay pdisplay"
-    "power . mute message"
-    "port plus1 minus1 starboard"
-    "standby plus10 minus10 auto";
-  row-gap: 5px;
-  justify-items: center;
-  align-items: middle;
-  justify-content: center;
-  align-content: start;
+.autoPilotBtn {
+  width:85px;
+}
 
-  // height: 200px;
+.autoPilotBtnCtrl {
+
 }
 
 .itemDisplay {
-  grid-area: pdisplay;
+  display: block;
+  position: relative;
   width: 90%;
-  height: 200px;
+  margin: auto;
+  height: calc(100% - 160px); // we remove autopilotGridBtnContainer height
+  min-height: 20%;
   background-color: black;
   text-align: center;
 }
 
+.autopilotGridBtnContainer {
+  display: grid;
+  width: fit-content;
+  margin: auto;
+  height: 160px;
+  grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
+  grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row-end];
+  grid-template-areas:
+    "power . mute message"
+    ". wind track ."
+    "port plus1 minus1 starboard"
+    "standbymode plus10 minus10 automode";
+  row-gap: 0px;
+  column-gap: 2px;
+  justify-items: center;
+  align-items: center;
+  justify-content: center;
+  align-content: start;
+}
+
 .itemPower {
   grid-area: power;
+}
+
+.itemStbTack {
+  grid-area: starboard;
+}
+
+.itemMute {
+  grid-area: mute;
+}
+
+.itemMessage {
+  grid-area: message;
+}
+
+.itemPrtTack {
+  grid-area: port;
+}
+
+.itemPlus1 {
+  grid-area: plus1;
+}
+
+.itemMinus1 {
+  grid-area: minus1;
+}
+
+.itemStbTack {
+  grid-area: starboard;
+}
+
+.itemStandby {
+  grid-area: standbymode;
+}
+
+.itemPlus10 {
+  grid-area: plus10;
+}
+
+.itemMinus10 {
+  grid-area: minus10;
+}
+
+.itemAuto {
+  grid-area: automode;
+}
+
+.itemWind {
+  grid-area: wind;
+}
+
+.itemTrack {
+  grid-area: track;
 }
