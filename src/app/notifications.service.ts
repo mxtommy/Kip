@@ -57,6 +57,10 @@ export class NotificationsService {
     //console.log(this.activeAlarms);
   }
 
-
+  // Called when signalk server reset
+  resetAlarms() {
+    this.activeAlarms = {};
+    this.activeAlarmsSubject.next(this.activeAlarms);
+  }
 
 }
