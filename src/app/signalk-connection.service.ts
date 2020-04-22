@@ -126,6 +126,7 @@ export class SignalKConnectionService {
         this.endpointWS = null;
         this.signalKURLOK.next(false);
         this.signalKURLMessage.next("Connecting...");
+        this.NotificationsService.resetAlarms();
         if (this.webSocket != null) {
             this.webSocket.close(); // TODO, new websocket gets created before this one closes sometimes. Need to make sure doesn't happen.
         }

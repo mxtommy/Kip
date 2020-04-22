@@ -64,6 +64,7 @@
           <button mat-raised-button color="accent"
             matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed"
             (click)="requestAuth()"
+            [disabled]="formSignalKURL.match('demo')"
             >
               Request
           </button>
