@@ -1,0 +1,41 @@
+@import '~@angular/material/theming';
+
+@mixin widget-autopilot-theme($theme) {
+
+    $primary: map-get($theme, primary);
+    $accent: map-get($theme, accent);
+    $warn: map-get($theme, warn);
+    $themeBackground: mat-get($theme, background);
+
+  }
+
+.autopilotGridContainer {
+  width: 100%;
+  display: grid;
+  grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
+  grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row4-end] 25% [row-end];
+  grid-template-areas:
+    "pdisplay pdisplay pdisplay pdisplay"
+    "power . mute message"
+    "port plus1 minus1 starboard"
+    "standby plus10 minus10 auto";
+  row-gap: 5px;
+  justify-items: center;
+  align-items: middle;
+  justify-content: center;
+  align-content: start;
+
+  // height: 200px;
+}
+
+.itemDisplay {
+  grid-area: pdisplay;
+  width: 90%;
+  height: 200px;
+  background-color: black;
+  text-align: center;
+}
+
+.itemPower {
+  grid-area: power;
+}

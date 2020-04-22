@@ -1,6 +1,59 @@
 <div id="{{widgetUUID}}" #autopilot style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
 
-<h1>Autopilot</h1>
+
+  <div class="autopilotGridContainer">
+    <div>
+      <div class="itemDisplay">
+        <span>DISPLAY SCREEN</span>
+      </div>
+    <div>
+      <button mat-raised-button color="primary">Starboard Tack</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">+1</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">-1</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">Port Tack</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">Standby</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">+10</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">-10</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">Auto</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">Wind</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">Track</button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">
+        <i class="fa fa-power-off" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">
+        <i class="fa fa-volume-off" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div>
+      <button mat-raised-button color="primary">
+        <i class="fa fa-envelope-o" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 
   <div class="settingsButton" *ngIf="unlockStatus">
     <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">

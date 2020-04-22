@@ -8,6 +8,20 @@ import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
 
+const commands = {
+  "auto":    {"path":"steering.autopilot.state","value":"auto"},
+  "wind":    {"path":"steering.autopilot.state","value":"wind"},
+  "route":   {"path":"steering.autopilot.state","value":"route"},
+  "standby": {"path":"steering.autopilot.state","value":"standby"},
+  "+1":      {"path":"steering.autopilot.actions.adjustHeading","value":1},
+  "+10":     {"path":"steering.autopilot.actions.adjustHeading","value":10},
+  "-1":      {"path":"steering.autopilot.actions.adjustHeading","value":-1},
+  "-10":     {"path":"steering.autopilot.actions.adjustHeading","value":-10},
+  "tackToPort":   {"path":"steering.autopilot.actions.tack","value":"port"},
+  "tackToStarboard":   {"path":"steering.autopilot.actions.tack","value":"starboard"},
+  "advanceWaypoint":   {"path":"steering.autopilot.actions.advanceWaypoint","value":"1"}
+}
+
 const defaultConfig: IWidgetConfig = {
   widgetLabel: 'N2k Autopilot',
   paths: {
