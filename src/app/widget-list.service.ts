@@ -13,6 +13,7 @@ import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { WidgetGaugeNgLinearComponent} from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent} from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
+import { WidgetAutopilotComponent } from "./widget-autopilot/widget-autopilot.component";
 
 export class widgetInfo {
   name: string;
@@ -80,6 +81,11 @@ export class WidgetListService {
       name: 'WidgetWindComponent',
       componentName: WidgetWindComponent,
       description: 'Wind Gauge',
+    },
+    {
+      name: 'WidgetAutopilotComponent',
+      componentName: WidgetAutopilotComponent,
+      description: 'N2k Autopilot',
     },
     {
       name: 'WidgetIframeComponent',

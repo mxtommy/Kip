@@ -1,0 +1,19 @@
+<div id="{{widgetUUID}}" #autopilot style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
+
+<h1>Autopilot</h1>
+
+  <div class="settingsButton" *ngIf="unlockStatus">
+    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
+        <span class="fa fa-cog"></span>
+    </button>
+  </div>
+  <div #primary class='primary' style="display: none;"></div>
+  <div #accent class='accent' style="display: none;"></div>
+  <div #warn class='warn' style="display: none;"></div>
+  <div #primaryDark class='primaryDark' style="display: none;"></div>
+  <div #accentDark class='accentDark' style="display: none;"></div>
+  <div #warnDark class='warnDark' style="display: none;"></div>
+  <div #background class='background' style="display: none;"></div>
+  <div #text class='text' style="display: none;"></div>
+</div>
+

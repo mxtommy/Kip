@@ -76,6 +76,7 @@ import { GaugesModule } from 'ng-canvas-gauges';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
+import { WidgetAutopilotComponent } from './widget-autopilot/widget-autopilot.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -123,6 +124,7 @@ const appRoutes: Routes = [
     SettingsUnitsComponent,
     WidgetIframeComponent,
     AlarmMenuComponent,
+    WidgetAutopilotComponent,
   ],
   imports: [
     BrowserModule,
@@ -164,6 +166,7 @@ const appRoutes: Routes = [
     WidgetSwitchComponent,
     WidgetIframeComponent,
     WidgetTutorialComponent,
+    WidgetAutopilotComponent,
 
     //dialogs
     ModalWidgetComponent,
