@@ -26,6 +26,14 @@
   min-height: 20%;
   background-color: black;
   text-align: center;
+  border-radius: 5px;
+}
+
+radial-gauge.autopilotScreen {
+  position: relative;
+  width: 100% !important;
+  height: auto !important;
+  // top: 6%;
 }
 
 .autopilotGridBtnContainer {
@@ -102,4 +110,14 @@
 
 .itemTrack {
   grid-area: track;
+}
+
+div.autopilotWidget {
+  display:block;
+  position: relative;
+  border:none;
+  margin: 0px;
+  padding:  5px 0px;
+  width: 100%;
+  height: calc(100% - 10px);
 }
