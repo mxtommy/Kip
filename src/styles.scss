@@ -99,20 +99,19 @@
 @import 'app/app.component.scss';
 @import 'app/layout-split/layout-split.component.scss';
 @import 'app/widget-blank/widget-blank.component.scss';
-@import 'app/svg-wind/svg-wind.component.scss';
+@import 'app/svg-wind/svg-wind.component.scss'; // for both svg-wind and wvg-autopilot
 @import 'app/widget-state/widget-state.component.scss';
 @import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
 @import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
 @import 'app/alarm-menu/alarm-menu.component.scss';
 @import 'app/widget-autopilot/widget-autopilot.component.scss';
 
-
 @mixin theme-components($theme) {
   @include angular-material-theme($theme);
   @include app-theme($theme);
   @include layout-split-theme($theme);
   @include widget-blank-theme($theme);
-  @include svg-wind-theme($theme);
+  @include svg-wind-theme($theme); // for both svg-wind and wvg-autopilot
   @include widget-state-theme($theme);
   @include widget-ngGauge-linear-theme($theme);
   @include widget-ngGauge-radial-theme($theme);

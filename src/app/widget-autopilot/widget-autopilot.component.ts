@@ -7,25 +7,23 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
-import { RadialGauge, RadialGaugeOptions } from 'ng-canvas-gauges';
 
-const commands = {
-  "auto":    {"path":"steering.autopilot.state","value":"auto"},
-  "wind":    {"path":"steering.autopilot.state","value":"wind"},
-  "route":   {"path":"steering.autopilot.state","value":"route"},
-  "standby": {"path":"steering.autopilot.state","value":"standby"},
-  "+1":      {"path":"steering.autopilot.actions.adjustHeading","value":1},
-  "+10":     {"path":"steering.autopilot.actions.adjustHeading","value":10},
-  "-1":      {"path":"steering.autopilot.actions.adjustHeading","value":-1},
-  "-10":     {"path":"steering.autopilot.actions.adjustHeading","value":-10},
-  "tackToPort":   {"path":"steering.autopilot.actions.tack","value":"port"},
-  "tackToStarboard":   {"path":"steering.autopilot.actions.tack","value":"starboard"},
-  "advanceWaypoint":   {"path":"steering.autopilot.actions.advanceWaypoint","value":"1"}
-}
 
 const defaultConfig: IWidgetConfig = {
   widgetLabel: 'N2k Autopilot',
   paths: {
+    "headingPath": {
+      description: "Heading",
+      path: 'self.navigation.courseOverGroundTrue',
+      source: 'default',
+      pathType: "number",
+    },
+    "trueWindAngle": {
+      description: "True Wind Angle",
+      path: 'self.environment.wind.angleTrueWater',
+      source: 'default',
+      pathType: "number",
+    },
     "gaugePath": {
       description: "Numeric Data",
       path: null,
@@ -54,7 +52,7 @@ const defaultConfig: IWidgetConfig = {
   templateUrl: './widget-autopilot.component.html',
   styleUrls: ['./widget-autopilot.component.scss']
 })
-export class WidgetAutopilotComponent implements OnInit, AfterContentInit, AfterContentChecked {
+export class WidgetAutopilotComponent implements OnInit, AfterContentInit, AfterContentChecked, OnDestroy {
   @ViewChild('autopilotScreen') private wrapper: ElementRef;
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
@@ -75,9 +73,11 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   dataValue = 0;
   valueSub: Subscription = null;
 
-  public gaugeOptions = {} as RadialGaugeOptions;
-  // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  public colorStrokeTicks: string = "";
+  currentHeading: number = 0;
+  headingSub: Subscription = null;
+
+  trueWindAngle: number = null;
+  trueWindAngleSub: Subscription = null;
 
   gaugeHeight = 0;
   gaugeWidth = 0;
@@ -100,7 +100,7 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     } else {
       this.config = this.activeWidget.config;
     }
-    this.subscribePath(); // TODO(david): setup data paths
+    this.startAllSubscriptions();
   }
 
   ngAfterContentChecked() {
@@ -108,7 +108,23 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   }
 
   ngAfterContentInit() {
-    this.updateGaugeConfig();
+  }
+
+  ngOnDestroy() {
+    this.stopAllSubscriptions();
+  }
+
+  startAllSubscriptions() {
+    this.subscribePath(); // TODO(david): setup data paths
+    this.subscribeHeading();
+    this.subscribeTrueWindAngle();
+  }
+
+  stopAllSubscriptions() {
+    this.unsubscribePath(); // TODO(david): setup data paths
+    this.unsubscribeHeading();
+    this.unsubscribeTrueWindAngle();
+
   }
 
   subscribePath() {
@@ -130,6 +146,66 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     }
   }
 
+  subscribeHeading() {
+    this.unsubscribeHeading();
+    if (typeof(this.config.paths['headingPath'].path) != 'string') { return } // nothing to sub to...
+    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['headingPath'].path, this.config.paths['headingPath'].source).subscribe(
+      newValue => {
+        if (newValue === null) {
+          this.currentHeading = 0;
+        } else {
+          this.currentHeading = this.UnitsService.convertUnit('deg', newValue);
+        }
+
+      }
+    );
+  }
+
+  unsubscribeHeading() {
+    if (this.headingSub !== null) {
+      this.headingSub.unsubscribe();
+      this.headingSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['headingPath'].path);
+    }
+  }
+
+  subscribeTrueWindAngle() {
+    this.unsubscribeTrueWindAngle();
+    if (typeof(this.config.paths['trueWindAngle'].path) != 'string') { return } // nothing to sub to...
+
+    this.trueWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['trueWindAngle'].path, this.config.paths['trueWindAngle'].source).subscribe(
+      newValue => {
+        if (newValue === null) {
+          this.trueWindAngle = null;
+          return;
+        }
+
+        let converted = this.UnitsService.convertUnit('deg', newValue);
+
+        // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
+          // 0-180+ for stb
+          // -0 to -180 for port
+          // need in 0-360
+
+        if (this.config.paths['trueWindAngle'].path.match('angleTrueWater')||
+        this.config.paths['trueWindAngle'].path.match('angleTrueGround')) {
+          //-180 to 180
+          this.trueWindAngle = this.addHeading(this.currentHeading, converted);
+        } else if (this.config.paths['trueWindAngle'].path.match('direction')) {
+          //0-360
+          this.trueWindAngle = converted;
+        }
+      }
+    );
+  }
+
+  unsubscribeTrueWindAngle() {
+    if (this.trueWindAngleSub !== null) {
+      this.trueWindAngleSub.unsubscribe();
+      this.trueWindAngleSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['trueWindAngle'].path);
+    }
+  }
 
   resizeWidget() {
     const rect = this.wrapper.nativeElement.getBoundingClientRect();
@@ -137,8 +213,8 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     if ((this.gaugeWidth != rect.width) || (this.gaugeHeight != rect.height)) {
       if (!this.isInResizeWindow) {
         this.isInResizeWindow = true;
-          this.gaugeOptions.height = rect.height;
-          this.gaugeOptions.width = rect.width;
+          // this.gaugeOptions.height = rect.height;
+          // this.gaugeOptions.width = rect.width;
           this.isInResizeWindow = false;
       }
     }
@@ -154,118 +230,21 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
       // save new settings
       if (result) {
         console.log(result);
+        this.stopAllSubscriptions();
         this.unsubscribePath();  //unsub now as we will change variables so wont know what was subbed before...
         this.config = result;
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
-        this.updateGaugeConfig();
+        this.startAllSubscriptions();
       }
     });
   }
 
-  updateGaugeConfig(){
-    //// Hack to get Theme colors using hidden mixin, DIV and @ViewChild
-    let themePaletteColor = "";
-    let themePaletteDarkColor = "";
-
-    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = getComputedStyle(this.textElement.nativeElement).color;
-
-    this.gaugeOptions.colorPlate = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeOptions.colorBar = getComputedStyle(this.backgroundElement.nativeElement).color;
-    this.gaugeOptions.colorNeedleShadowUp = "";
-    this.gaugeOptions.colorNeedleShadowDown = "black";
-    this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
-
-    // Theme colors
-    switch (this.config.barColor) {
-      case "primary":
-        themePaletteColor = getComputedStyle(this.primaryElement.nativeElement).color;
-        themePaletteDarkColor = getComputedStyle(this.primaryDarkElement.nativeElement).color;
-        this.gaugeOptions.colorBarProgress = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      case "accent":
-        themePaletteColor = getComputedStyle(this.accentElement.nativeElement).color;
-        themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
-        this.gaugeOptions.colorBarProgress = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      case "warn":
-        themePaletteColor = getComputedStyle(this.warnElement.nativeElement).color;
-        themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
-        this.gaugeOptions.colorBarProgress = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      default:
-        break;
-    }
-
-    // Config storage values
-    this.gaugeOptions.valueInt = this.config.numInt;
-    this.gaugeOptions.valueDec = this.config.numDecimal;
-
-    this.gaugeOptions.majorTicksInt = this.config.numInt;
-    this.gaugeOptions.majorTicksDec = this.config.numDecimal;
-
-    // Radial gauge type
-    let calculatedMajorTicks = [];// this.calculateMajorTicks(this.config.minValue, this.config.maxValue);
-
-    this.gaugeOptions.colorTitle = this.colorStrokeTicks = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
-
-    this.gaugeOptions.fontTitleSize = 20;
-    this.gaugeOptions.minValue = this.config.minValue;
-    this.gaugeOptions.maxValue = this.config.maxValue;
-    this.gaugeOptions.barProgress = true;
-    this.gaugeOptions.barWidth = 15;
-
-    this.gaugeOptions.valueBox = true;
-    this.gaugeOptions.fontValueSize = 60;
-    this.gaugeOptions.valueBoxWidth = 100;
-    this.gaugeOptions.valueBoxBorderRadius = 0;
-    this.gaugeOptions.valueBoxStroke = 0;
-    this.gaugeOptions.colorValueBoxBackground = "";
-
-    this.gaugeOptions.ticksAngle = 270;
-    this.gaugeOptions.startAngle = 45;
-    this.gaugeOptions.exactTicks = false;
-    this.gaugeOptions.strokeTicks = true;
-    this.gaugeOptions.majorTicks = [calculatedMajorTicks.toString()];
-    this.gaugeOptions.minorTicks = 2;
-    this.gaugeOptions.numbersMargin = 3;
-    this.gaugeOptions.fontNumbersSize = 15;
-    this.gaugeOptions.highlights = [];
-    this.gaugeOptions.highlightsWidth = 0;
-
-    this.gaugeOptions.needle = true;
-    this.gaugeOptions.needleType = "line";
-    this.gaugeOptions.needleWidth = 2;
-    this.gaugeOptions.needleShadow = false;
-    this.gaugeOptions.needleStart = 0;
-    this.gaugeOptions.needleEnd = 95;
-    this.gaugeOptions.needleCircleSize = 10;
-    this.gaugeOptions.needleCircleInner = false;
-    this.gaugeOptions.needleCircleOuter = false;
-
-    this.gaugeOptions.borders = false;
-    this.gaugeOptions.borderOuterWidth = 0;
-    this.gaugeOptions.borderMiddleWidth = 0;
-    this.gaugeOptions.borderInnerWidth = 0;
-    this.gaugeOptions.borderShadowWidth = 0;
-
-    this.gaugeOptions.animationTarget = "needle";
-    this.gaugeOptions.useMinPath = false;
+  addHeading(h1: number, h2: number) {
+    let h3 = h1 + h2;
+    while (h3 > 359) { h3 = h3 - 359; }
+    while (h3 < 0) { h3 = h3 + 359; }
+    return h3;
   }
-
-
-
 
 }

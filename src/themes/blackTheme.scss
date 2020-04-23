@@ -154,7 +154,7 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: #ba0d0d,  //mat-color($black-theme-warn, 900),
 );
 
-// Palette for widget-wind - wind instrument Component
+// Palette for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
     boat-background: #ffffff,
@@ -166,6 +166,8 @@ $mat-wind: (
     wind-rose-background: #ffffff,
     port: #d52626,
     starboard: #389c19,
+    rudder-port: #d52626,
+    rudder-starboard: #389c19,
 );
 
 

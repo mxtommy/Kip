@@ -77,6 +77,7 @@ import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-ga
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
 import { WidgetAutopilotComponent } from './widget-autopilot/widget-autopilot.component';
+import { SvgAutopilotComponent } from './svg-autopilot/svg-autopilot.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -125,6 +126,7 @@ const appRoutes: Routes = [
     WidgetIframeComponent,
     AlarmMenuComponent,
     WidgetAutopilotComponent,
+    SvgAutopilotComponent,
   ],
   imports: [
     BrowserModule,
