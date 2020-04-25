@@ -116,6 +116,7 @@
   @include widget-ngGauge-linear-theme($theme);
   @include widget-ngGauge-radial-theme($theme);
   @include alarm-menu-theme($theme);
+  @include widget-autopilot-theme($theme);
 }
 
 @include theme-components($defaultTheme-light);

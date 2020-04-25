@@ -1,7 +1,8 @@
-import { Component, Input, AfterViewInit, OnInit, OnChanges, AfterViewChecked, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, AfterViewInit, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { ResizedEvent } from 'angular-resize-event';
 
 declare var steelseries: any; // 3rd party
- 
+
 export const SteelBackgroundColors = {
   'darkGray': steelseries.BackgroundColor.DARK_GRAY,
   'satinGray': steelseries.BackgroundColor.SATIN_GRAY,
@@ -43,17 +44,17 @@ export const SteelFrameColors = {
   templateUrl: './gauge-steel.component.html',
   styleUrls: ['./gauge-steel.component.css']
 })
-export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, AfterViewChecked {
+export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
 
   @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
-  
+
   @Input('widgetUUID') widgetUUID: string;
   @Input('gaugeType') gaugeType: string; // linear or radial
   @Input('barGauge') barGauge: boolean;
 
   @Input('radialSize') radialSize?: string;
 
-  @Input('backgroundColor') backgroundColor?: string; 
+  @Input('backgroundColor') backgroundColor?: string;
   @Input('frameColor') frameColor: string;
 
   @Input('minValue') minValue: number;
@@ -67,7 +68,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
   @Input('value') value: number;
   gaugeWidth: number = 0;
   gaugeHeight: number = 0;
-  isInResizeWindow: boolean = false;
   gaugeStarted: boolean = false;
 
   constructor() { }
@@ -79,7 +79,7 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
   // common options for both radial and linear
 
   sections;
-  
+
 
   ngOnInit() {
 
@@ -88,11 +88,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
   ngAfterViewInit() {
     if (!this.gaugeType) { this.gaugeType = 'radial'; }
   }
-
-  ngAfterViewChecked() {
-    this.resizeWidget();
-  }
-
 
   buildOptions() {
     this.gaugeOptions = {};
@@ -173,19 +168,12 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
     }
 
 
-    //defaults 
+    //defaults
     this.gaugeOptions['lcdVisible'] = true;
     this.gaugeOptions['thresholdVisible'] = false;
     this.gaugeOptions['threshold'] = this.maxValue;
     this.gaugeOptions['ledVisible'] = false;
   }
-
-
-
-
-
-
-
 
   startGauge() {
     this.gaugeStarted = true;
@@ -202,33 +190,23 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
         this.gauge = new steelseries.LinearBargraph(this.widgetUUID, this.gaugeOptions);
       } else {
         this.gauge = new steelseries.Linear(this.widgetUUID, this.gaugeOptions);
-      }     
-    }
-   
-  }
-
-  resizeWidget() {
-    let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
-    
-    if (rect.height < 50) { return; }
-    if (rect.width < 50) { return; }
-    if ((this.gaugeWidth != rect.width) || (this.gaugeHeight != rect.height)) { 
-      if (!this.isInResizeWindow) {
-        this.isInResizeWindow = true;
-
-        setTimeout(() => { 
-          let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
-          this.gaugeWidth = rect.width; 
-          this.gaugeHeight = rect.height;
-          this.isInResizeWindow = false;
-          this.startGauge();
-           }, 1000);
       }
-      
     }
+
   }
 
+  onResized(event: ResizedEvent) {
+    if (event.newHeight < 50) {
+      return;
+    }
+    if (event.newWidth < 50) {
+      return;
+    }
 
+    this.gaugeWidth = event.newWidth;
+    this.gaugeHeight = event.newHeight;
+    this.startGauge();
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.gaugeStarted) { return; }
@@ -244,7 +222,7 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
         this.startGauge();//reset
       }
     }
-    
+
     if (changes.barGauge) {
       if ( !changes.barGauge.firstChange) {
         this.startGauge();//reset
@@ -261,40 +239,36 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges, Af
       if ( !changes.units.firstChange) {
         this.startGauge();//reset
       }
-    } 
+    }
     if (changes.minValue) {
       if ( !changes.minValue.firstChange) {
         this.startGauge();//reset
       }
-    } 
+    }
     if (changes.maxValue) {
       if ( !changes.maxValue.firstChange) {
         this.startGauge();//reset
       }
-    } 
+    }
 
     if (changes.radialSize) {
       if ( !changes.radialSize.firstChange) {
         this.startGauge();//reset
       }
-    } 
+    }
 
     if (changes.backgroundColor) {
       if ( !changes.backgroundColor.firstChange) {
         this.startGauge();//reset
       }
-    } 
+    }
 
     if (changes.frameColor) {
       if ( !changes.frameColor.firstChange) {
         this.startGauge();//reset
       }
-    }     
-
-
+    }
 
   }
-
-
 
 }

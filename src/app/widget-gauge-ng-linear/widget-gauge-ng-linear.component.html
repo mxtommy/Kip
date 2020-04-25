@@ -1,5 +1,5 @@
 <div style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
-  <div [className]="isGaugeVertical ? 'verticalLinearWrapper' : 'horizontalLinearWrapper'" #linearWrapperDiv>
+  <div [className]="isGaugeVertical ? 'verticalLinearWrapper' : 'horizontalLinearWrapper'" #linearWrapperDiv (resized)="onResized($event)">
     <linear-gauge class="linearGauge" id="{{widgetUUID}}" #linearGauge
       [attr.width]="gaugeOptions.width"
       [attr.height]="gaugeOptions.height"

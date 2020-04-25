@@ -25,6 +25,7 @@ import {
 
 
 import { AngularSplitModule } from 'angular-split';
+import { AngularResizedEventModule } from 'angular-resize-event';
 
 import { AppComponent } from './app.component';
 
@@ -135,6 +136,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */ } ),
     AngularSplitModule,
+    AngularResizedEventModule,
     BrowserAnimationsModule,
 
     MatMenuModule,

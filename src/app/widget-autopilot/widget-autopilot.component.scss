@@ -1,13 +1,32 @@
 @import '~@angular/material/theming';
 
+
 @mixin widget-autopilot-theme($theme) {
 
     $primary: map-get($theme, primary);
-    $accent: map-get($theme, accent);
     $warn: map-get($theme, warn);
-    $themeBackground: mat-get($theme, background);
+    $background: map-get($theme, background);
+    $foreground: map-get($theme, foreground);
+    $wind: map-get($theme, wind);
 
-  }
+
+    div.autopilotscreen {
+      display: block;
+      position: relative;
+      width: 90%;
+      margin: auto;
+      height: 35%; // need space for autopilotGridBtnContainer height
+      // min-height: 90px;
+      // min-width: 175px;
+      text-align: center;
+      border-radius: 5px;
+      border: 1px solid mat-color($foreground, divider);
+      box-shadow: inset 0px 2px 1px -1px rgba(0, 0, 0, 0.2), inset 0px 1px 1px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+      background-color: mat-color($foreground, dividers);
+    }
+}
+
+
 
 .autoPilotBtn {
   width:85px;
@@ -15,25 +34,6 @@
 
 .autoPilotBtnCtrl {
 
-}
-
-.itemDisplay {
-  display: block;
-  position: relative;
-  width: 90%;
-  margin: auto;
-  height: calc(100% - 160px); // we remove autopilotGridBtnContainer height
-  min-height: 20%;
-  // background-color: black;
-  text-align: center;
-  border-radius: 5px;
-}
-
-radial-gauge.autopilotScreen {
-  position: relative;
-  width: 100% !important;
-  height: auto !important;
-  // top: 6%;
 }
 
 .autopilotGridBtnContainer {
@@ -44,9 +44,9 @@ radial-gauge.autopilotScreen {
   grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
   grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row-end];
   grid-template-areas:
-    "power . mute message"
-    ". wind track ."
-    "port plus1 minus1 starboard"
+    "power . wind track"
+    ". mute message ."
+    "starboard plus1 minus1 port"
     "standbymode plus10 minus10 automode";
   row-gap: 0px;
   column-gap: 2px;

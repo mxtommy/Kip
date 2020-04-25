@@ -2,9 +2,6 @@ import { Component, OnInit, Input, ViewChild, ElementRef, SimpleChanges } from '
 import { isNumeric } from 'rxjs/util/isNumeric';
 import { isNumber } from 'util';
 
-const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
-
-
 @Component({
   selector: 'app-svg-autopilot',
   templateUrl: './svg-autopilot.component.html'
@@ -40,9 +37,11 @@ export class SvgAutopilotComponent implements OnInit {
         this.oldCompassRotate = this.newCompassRotate;
         this.newCompassRotate = changes.compassHeading.currentValue;// .toString();
         this.headingValue = this.newCompassRotate.toFixed(0);
-        this.compassAnimate.nativeElement.beginElement();
+        if (this.oldCompassRotate != this.newCompassRotate) {
+          this.compassAnimate.nativeElement.beginElement();
+        }
         this.updateTrueWind();// rotates with heading change
-       }
+      }
     }
 
     //trueWindAngle
@@ -59,7 +58,9 @@ export class SvgAutopilotComponent implements OnInit {
     this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0); //compass rotate is negative as we actually have to rotate counter clockwise
 
     if (this.trueWindAnimate) { // only update if on dom...
-      this.trueWindAnimate.nativeElement.beginElement();
+      if (this.oldTrueWindRotateAngle != this.newTrueWindRotateAngle) {
+        this.trueWindAnimate.nativeElement.beginElement();
+      }
     }
   }
 

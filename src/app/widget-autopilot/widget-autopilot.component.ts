@@ -1,6 +1,7 @@
 import { ViewChild, ElementRef, Component, OnInit, Input, AfterContentInit, AfterContentChecked, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
+import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
@@ -12,9 +13,9 @@ import { AppSettingsService } from '../app-settings.service';
 const defaultConfig: IWidgetConfig = {
   widgetLabel: 'N2k Autopilot',
   paths: {
-    "headingPath": {
-      description: "Heading",
-      path: 'self.navigation.courseOverGroundTrue',
+    "headingMagPath": {
+      description: "Heading Magnetic",
+      path: 'self.navigation.headingMagnetic',
       source: 'default',
       pathType: "number",
     },
@@ -79,10 +80,8 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   trueWindAngle: number = null;
   trueWindAngleSub: Subscription = null;
 
-  gaugeHeight = 0;
-  gaugeWidth = 0;
+  maxWidth = 0;
 
-  isInResizeWindow = false;
 
   constructor(
     public dialog:MatDialog,
@@ -104,7 +103,7 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   }
 
   ngAfterContentChecked() {
-    this.resizeWidget();
+
   }
 
   ngAfterContentInit() {
@@ -207,17 +206,8 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     }
   }
 
-  resizeWidget() {
-    const rect = this.wrapper.nativeElement.getBoundingClientRect();
-
-    if ((this.gaugeWidth != rect.width) || (this.gaugeHeight != rect.height)) {
-      if (!this.isInResizeWindow) {
-        this.isInResizeWindow = true;
-          // this.gaugeOptions.height = rect.height;
-          // this.gaugeOptions.width = rect.width;
-          this.isInResizeWindow = false;
-      }
-    }
+  onResized(event: ResizedEvent) {
+    this.maxWidth = event.newHeight * 1.77;
   }
 
   openWidgetSettings() {
