@@ -9,31 +9,99 @@
     $foreground: map-get($theme, foreground);
     $wind: map-get($theme, wind);
 
-
-    div.autopilotscreen {
+    DIV.apScreen {
       display: block;
       position: relative;
-      width: 90%;
+      width: 360px;
+      height: calc(202px + 18.5px); // add status bar
       margin: auto;
-      height: 35%; // need space for autopilotGridBtnContainer height
-      // min-height: 90px;
-      // min-width: 175px;
       text-align: center;
       border-radius: 5px;
       border: 1px solid mat-color($foreground, divider);
-      box-shadow: inset 0px 2px 1px -1px rgba(0, 0, 0, 0.2), inset 0px 1px 1px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+      // box-shadow: inset 0px 2px 1px -1px rgba(0, 0, 0, 0.2), inset 0px 1px 1px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
       background-color: mat-color($foreground, dividers);
+    }
+
+    .apScreen .apCompass {
+      position: relative;
+      width: 360px;
+      height: 202px;
+      margin: auto;
+      border-radius: 5px;
+    }
+
+    .apStatusBar {
+      width: 360px;
+      height: 18.5px;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      background-color: black;
+    }
+
+    .apStatusBar, .apStatusBar DIV {
+      display: inline-block;
+      position: relative;
+    }
+
+    .apStatusBar DIV {
+
+    }
+
+    .apScreen .apStencil {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 100%;
+      margin: auto;
+      border-radius: 5px;
+      z-index: 10;
+      vertical-align: middle;
+      background-color: mat-color($background, background);
+    }
+
+    .apStencil.confirmCommand {
+      z-index: 5;
+      visibility: hidden;
     }
 }
 
+div.autopilotWidget {
+  display:block;
+  position: relative;
+  border:none;
+  margin: 0px;
+  padding:  5px 0px;
+  width: 100%;
+  height: calc(100% - 10px);
+}
 
+.headerAutopilot {
+  display: block;
+  position: relative;
+  width: 346px;
+  margin: auto;
+}
+
+.headerAutopilot .apTitle {
+  display: inline-block;
+  font-weight: bold;
+  width: calc(100% - 64px);
+  margin: 0px;
+}
+
+.headerAutopilot .apPower {
+  display: inline-block;
+  width: 64px;
+  margin: 0px;
+}
+
+.powerBtn {
+
+}
 
 .autoPilotBtn {
   width:85px;
-}
-
-.autoPilotBtnCtrl {
-
 }
 
 .autopilotGridBtnContainer {
@@ -44,20 +112,16 @@
   grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
   grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row-end];
   grid-template-areas:
-    "power . wind track"
-    ". mute message ."
+    "mute message windmode trackmode"
+    ". . . nxtWp"
     "starboard plus1 minus1 port"
-    "standbymode plus10 minus10 automode";
+    "standby plus10 minus10 auto1";
   row-gap: 0px;
   column-gap: 2px;
   justify-items: center;
   align-items: center;
   justify-content: center;
   align-content: start;
-}
-
-.itemPower {
-  grid-area: power;
 }
 
 .itemStbTack {
@@ -84,12 +148,8 @@
   grid-area: minus1;
 }
 
-.itemStbTack {
-  grid-area: starboard;
-}
-
 .itemStandby {
-  grid-area: standbymode;
+  grid-area: standby;
 }
 
 .itemPlus10 {
@@ -101,23 +161,17 @@
 }
 
 .itemAuto {
-  grid-area: automode;
+  grid-area: auto1;
 }
 
-.itemWind {
-  grid-area: wind;
+.itemWindmode {
+  grid-area: windmode;
 }
 
-.itemTrack {
-  grid-area: track;
+.itemTrackmode {
+  grid-area: trackmode;
 }
 
-div.autopilotWidget {
-  display:block;
-  position: relative;
-  border:none;
-  margin: 0px;
-  padding:  5px 0px;
-  width: 100%;
-  height: calc(100% - 10px);
+.itemNxtWp {
+  grid-area: nxtWp;
 }

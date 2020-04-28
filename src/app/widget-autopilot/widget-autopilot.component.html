@@ -1,59 +1,86 @@
 <div id="{{widgetUUID}}" #autopilot class="autopilotWidget">
-<div class="autopilotscreen" #autopilotScreen [ngStyle]="{'max-width.px': maxWidth}" (resized)="onResized($event)">
-    <app-svg-autopilot
-        [compassHeading]="currentHeading"
-        [trueWindAngle]="trueWindAngle"
-    ></app-svg-autopilot>
-  </div>
-  <div class class="autopilotGridBtnContainer">
-    <div class="itemStbTack">
-      <button mat-flat-button color="primary" class="autoPilotBtn">Std Tack</button>
+  <div class="headerAutopilot">
+    <div class="apTitle">
+      <span>N2K Autopilot</span>
     </div>
-    <div class="itemPlus1">
-      <button mat-flat-button color="primary" class="autoPilotBtn">+1°</button>
-    </div>
-    <div class="itemMinus1">
-      <button mat-flat-button color="primary" class="autoPilotBtn">-1°</button>
-    </div>
-    <div class="itemPrtTack">
-      <button mat-flat-button color="primary" class="autoPilotBtn">Prt Tack</button>
-    </div>
-    <div class="itemStandby">
-      <button mat-flat-button color="accent" class="autoPilotBtn">Standby</button>
-    </div>
-    <div class="itemPlus10">
-      <button mat-flat-button color="primary" class="autoPilotBtn">+10°</button>
-    </div>
-    <div class="itemMinus10">
-      <button mat-flat-button color="primary" class="autoPilotBtn">-10°</button>
-    </div>
-    <div class="itemAuto">
-      <button mat-flat-button color="accent" class="autoPilotBtn">Auto</button>
-    </div>
-    <div class="itemWind">
-      <button mat-stroked-button color="primary" class="autoPilotBtn">Wind</button>
-    </div>
-    <div class="itemTrack">
-      <button mat-stroked-button color="primary" class="autoPilotBtn">Track</button>
-    </div>
-    <div class="itemPower">
-      <button mat-mini-fab color="warn" class="autoPilotBtnCtrl">
+    <div class="apPower">
+      <button mat-flat-button color="warn" class="powerBtn" id="powerBtn" #powerBtn disabled="false" (click)="powerBtnClick($event)">
         <i class="fa fa-power-off" aria-hidden="true"></i>
       </button>
     </div>
+  </div>
+  <div class="apScreen">
+    <div class="apCompass">
+      <app-svg-autopilot
+          [compassHeading]="currentHeading"
+          [appWindAngle]="appWindAngle"
+      ></app-svg-autopilot>
+    </div>
+    <div class="apStatusBar" #apStatusBar>
+      <div #countDown style="width: calc((100% - 50px)/2)"></div>
+      <div style="width: calc((100% - 50px)/2)">last alarm txt</div>
+      <div style="width: 25px;"><i class="fa fa-exchange" aria-hidden="true"></i></div>
+      <div style="width: 25px;"><i class="fa fa-exclamation-circle" aria-hidden="true"></i></div>
+    </div>
+    <div class="apStencil" #apStencil [@fadeInOut]="isApConnected ? 'connected' : 'disconnected'">
+      <p style="font-weight: bold;opacity: 75%;">OFFLINE</p>
+      <p style="opacity: 75%;">Press <i class="fa fa-power-off" aria-hidden="true"></i> to connect to SignalK server and activate this Autopilot Control Head.</p>
+    </div>
+    <div class="apStencil confirmCommand" #apStencilConfirmCommand>
+      empty apStencilConfirmCommand
+    </div>
+  </div>
+  <div class="autopilotGridBtnContainer">
+    <div class="itemStbTack">
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="stbTackBtn" #stbTackBtn disabled="true" (click)="buildAndSendCommand('tackToStarboard')">Std Tack</button>
+    </div>
+    <div class="itemPlus1">
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="plus1Btn" #plus1Btn disabled="true" (click)="buildAndSendCommand('+1')">+1°</button>
+    </div>
+    <div class="itemMinus1">
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="minus1Btn" #minus1Btn disabled="true" (click)="buildAndSendCommand('-1')">-1°</button>
+    </div>
+    <div class="itemPrtTack">
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="prtTackBtn" #prtTackBtn disabled="true" (click)="buildAndSendCommand('tackToPort')">Prt Tack</button>
+    </div>
+    <div class="itemStandby">
+      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="standbyBtn" #standbyBtn disabled="true" (click)="buildAndSendCommand('standby')">Standby</button>
+    </div>
+    <div class="itemPlus10">
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="plus10Btn" #plus10Btn disabled="true" (click)="buildAndSendCommand('+10')">+10°</button>
+    </div>
+    <div class="itemMinus10">
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="minus10Btn" #minus10Btn disabled="true" (click)="buildAndSendCommand('-10')">-10°</button>
+    </div>
+    <div class="itemAuto">
+      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="autoBtn" #autoBtn disabled="true" (click)="buildAndSendCommand('auto')">Auto</button>
+    </div>
+    <div class="itemWindmode">
+      <mat-slide-toggle class="example-margin" id="windModeBtn" #windModeBtn disabled="true" (click)="buildAndSendCommand('wind')"
+        color="primary"
+        checked="checked">Wind</mat-slide-toggle>
+    </div>
+    <div class="itemTrackmode">
+      <mat-slide-toggle class="example-margin" id="trackModeBtn" #trackModeBtn disabled="true" (click)="buildAndSendCommand('route')"
+        color="primary"
+        checked="checked">Track</mat-slide-toggle>
+    </div>
+    <div class="itemNxtWp" >
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="nxtWpBtn" #nxtWpBtn disabled="true">Next Wpt</button>
+    </div>
     <div class="itemMute">
-      <button mat-mini-fab color="primary" class="autoPilotBtnCtrl">
+      <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="muteBtn" #muteBtn disabled="true" (click)="sendSilence()">
         <i class="fa fa-volume-off" aria-hidden="true"></i>
       </button>
     </div>
     <div class="itemMessage">
-      <button mat-mini-fab color="primary" class="autoPilotBtnCtrl">
-        <i class="fa fa-envelope-o" aria-hidden="true"></i>
+      <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="messageBtn" #messageBtn disabled="true" (click)="notificationScroll()">
+        <span class="fa fa-envelope-o" aria-hidden="true" matBadge="3" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
       </button>
     </div>
   </div>
   <div class="settingsButton" *ngIf="unlockStatus">
-    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
+    <button type="button"  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
         <span class="fa fa-cog"></span>
     </button>
   </div>

@@ -9,10 +9,10 @@ import { isNumber } from 'util';
 })
 export class SvgAutopilotComponent implements OnInit {
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
-  @ViewChild('trueWindAnimate') trueWindAnimate: ElementRef;
+  @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
 
   @Input('compassHeading') compassHeading: number;
-  @Input('trueWindAngle') trueWindAngle: number;
+  @Input('appWindAngle') appWindAngle: number;
 
   constructor() { }
 
@@ -21,10 +21,12 @@ export class SvgAutopilotComponent implements OnInit {
   newCompassRotate: number = 0;
   headingValue: string ="0";
 
-  // true wind
-  oldTrueWindRotateAngle: string = "0";
-  newTrueWindRotateAngle: string = "0";
-  trueWindHeading: number = 0;
+  // Apparent wind
+  oldAppWindAngle: string = "0";
+  newAppWindAngle: string = "0";
+  oldAppWindRotateAngle: string = "0";
+  newAppWindRotateAngle: string = "0";
+  appWindHeading: number = 0;
 
   ngOnInit() {
   }
@@ -37,32 +39,25 @@ export class SvgAutopilotComponent implements OnInit {
         this.oldCompassRotate = this.newCompassRotate;
         this.newCompassRotate = changes.compassHeading.currentValue;// .toString();
         this.headingValue = this.newCompassRotate.toFixed(0);
-        if (this.oldCompassRotate != this.newCompassRotate) {
-          this.compassAnimate.nativeElement.beginElement();
+        this.compassAnimate.nativeElement.beginElement();
+      }
+    }
+
+    //appWindAngle
+    if (changes.appWindAngle) {
+      if (! changes.appWindAngle.firstChange) {
+        this.oldAppWindAngle = this.newAppWindAngle;
+        this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
+
+        if (this.appWindAnimate) { // only update if on dom...
+          this.appWindAnimate.nativeElement.beginElement();
         }
-        this.updateTrueWind();// rotates with heading change
-      }
-    }
-
-    //trueWindAngle
-    if (changes.trueWindAngle) {
-      if (! changes.trueWindAngle.firstChange) {
-        this.trueWindHeading = changes.trueWindAngle.currentValue;
-        this.updateTrueWind();
       }
     }
   }
 
-  updateTrueWind(){
-    this.oldTrueWindRotateAngle = this.newTrueWindRotateAngle;
-    this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0); //compass rotate is negative as we actually have to rotate counter clockwise
-
-    if (this.trueWindAnimate) { // only update if on dom...
-      if (this.oldTrueWindRotateAngle != this.newTrueWindRotateAngle) {
-        this.trueWindAnimate.nativeElement.beginElement();
-      }
-    }
-  }
+// value = this.options.value +
+          // ((((value - this.options.value) % 360) + 540) % 360) - 180;
 
 
   addHeading(h1: number, h2: number) {
