@@ -100,10 +100,10 @@
                   </mat-select>
                 </mat-form-field>
             </div>
-            <div class="full-width" *ngIf="(widgetConfig.barColor !== undefined) && (widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngRadial')">
+            <div class="full-width" *ngIf="(widgetConfig.barColor !== undefined)">
               <mat-form-field class="full-width">
                 <mat-select
-                placeholder="Gauge Bar Color"
+                placeholder="Theme Color"
                 formControlName="barColor"
                 name="barColor">
                   <mat-option value='primary'>Primary Color</mat-option>
