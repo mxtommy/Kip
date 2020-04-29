@@ -13,39 +13,84 @@ import { UnitsService } from '../units.service';
 const defaultConfig: IWidgetConfig = {
   widgetLabel: 'N2k Autopilot',
   paths: {
-    "headingMagPath": {
-      description: "Heading Magnetic",
-      path: 'self.navigation.courseOverGroundMagnetic',
+    "apStatePath": {
+      description: "Autopilot State",
+      path: 'self.steering.autopilot.state',
+      source: 'default',
+      pathType: "string",
+    },
+    "apTargetHeadingMagPath": {
+      description: "Autopilot Target Heading Mag",
+      path: 'self.steering.autopilot.target.headingMagnetic',
       source: 'default',
       pathType: "number",
     },
-    "appWindAngle": {
-      description: "Apparent Wind Angle",
+    "apTargetWindAngleAppPath": {
+      description: "Autopilot Target Wind Angle Apparent",
+      path: 'self.steering.autopilot.target.windAngleApparent',
+      source: 'default',
+      pathType: "number",
+    },
+    "apNotificationsPath": {
+      description: "Autopilot Notifications",
+      path: 'self.notifications.autopilot.*',
+      source: 'default',
+      pathType: "number",
+    },
+    "headingMagPath": {
+      description: "Heading Magnetic",
+      path: 'self.navigation.headingMagnetic',
+      source: 'default',
+      pathType: "number",
+    },
+    "headingTruePath": {
+      description: "Heading True",
+      path: 'self.navigation.headingTrue',
+      source: 'default',
+      pathType: "number",
+    },
+    "windAngleApparentPath": {
+      description: "Wind Angle Apparent",
       path: 'self.environment.wind.angleApparent',
       source: 'default',
       pathType: "number",
     },
-    "gaugePath": {
-      description: "Numeric Data",
-      path: null,
-      source: null,
+    "windAngleTrueWaterPath": {
+      description: "Wind Angle True Water",
+      path: 'self.environment.wind.angleTrueWater',
+      source: 'default',
       pathType: "number",
-    }
+    },
+    "rudderAnglePath": {
+      description: "Rudder Angle",
+      path: 'self.steering.rudderAngle',
+      source: 'default',
+      pathType: "number",
+    },
   },
   units: {
-    "gaugePath": "unitless"
+    "apStatePath": "unitless",
+    "apTargetHeadingMagPath": "angle",
+    "apTargetWindAngleAppPath": "angle",
+    "apNotificationsPath": "unitless",
+    "headingMagPath": "angle",
+    "headingTruePath": "angle",
+    "windAngleApparentPath": "angle",
+    "windAngleTrueWaterPath": "angle",
+    "rudderAnglePath": "angle",
   },
   selfPaths: true,
 
-  gaugeType: 'ngRadial',
-  gaugeTicks: false,
-  radialSize: 'measuring',
-  minValue: 0,
-  maxValue: 100,
-  numInt: 1,
-  numDecimal: 0,
+  gaugeType: '',
   barColor: 'accent',     // theme palette to select
 };
+
+const defaultPpreferedDisplayMode = {
+  wind: 'environment.wind.angleApparent',
+  route: 'navigation.headingMagnetic',
+  auto: 'navigation.headingMagnetic',
+  standby: 'navigation.headingMagnetic'
+}
 
 const commands = {
   "auto":    {"path":"steering.autopilot.state","value":"auto"},
@@ -70,7 +115,6 @@ const countDownDefault: number = 5;
   styleUrls: ['./widget-autopilot.component.scss'],
   animations: [
     trigger('fadeInOut', [
-
       state('connected', style({
         opacity: 0,
       })),
@@ -124,14 +168,14 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   activeWidget: IWidget;
   config: IWidgetConfig;
 
-  dataValue = 0;
-  valueSub: Subscription = null;
-
   currentHeading: number = 0;
   headingSub: Subscription = null;
 
   appWindAngle: number = null;
   appWindAngleSub: Subscription = null;
+
+  rudder: number = null;
+  rudderSub: Subscription = null;
 
   maxWidth = 0;
 
@@ -175,36 +219,17 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   }
 
   startAllSubscriptions() {
-    this.subscribePath(); // TODO(david): setup data paths
     this.subscribeHeading();
     this.subscribeAppWindAngle();
+    this.subscribeRudder();
     console.log("Autopilot Sub Started");
   }
 
   stopAllSubscriptions() {
-    this.unsubscribePath(); // TODO(david): setup data paths
     this.unsubscribeHeading();
     this.unsubscribeAppWindAngle();
+    this.unsubscribeRudder();
     console.log("Autopilot Sub Stopped");
-  }
-
-  subscribePath() {
-    this.unsubscribePath();
-    if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
-
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
-      newValue => {
-          this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
-        }
-    );
-  }
-
-  unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
-    }
   }
 
   subscribeHeading() {
@@ -233,9 +258,9 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
 
   subscribeAppWindAngle() {
     this.unsubscribeAppWindAngle();
-    if (typeof(this.config.paths['appWindAngle'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(this.config.paths['windAngleApparentPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['appWindAngle'].path, this.config.paths['appWindAngle'].source).subscribe(
+    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['windAngleApparentPath'].path, this.config.paths['windAngleApparentPath'].source).subscribe(
       newValue => {
         if (newValue === null) {
           this.appWindAngle = null;
@@ -260,7 +285,31 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     if (this.appWindAngleSub !== null) {
       this.appWindAngleSub.unsubscribe();
       this.appWindAngleSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['appWindAngle'].path);
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['windAngleApparentPath'].path);
+    }
+  }
+
+  subscribeRudder() {
+    this.unsubscribeRudder();
+    if (typeof(this.config.paths['rudderAnglePath'].path) != 'string') { return } // nothing to sub to...
+    this.rudderSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['rudderAnglePath'].path, this.config.paths['rudderAnglePath'].source).subscribe(
+      newValue => {
+        if (newValue === null) {
+          this.rudder = 0;
+        } else {
+
+          this.rudder = this.UnitsService.convertUnit('deg', newValue);
+        }
+
+      }
+    );
+  }
+
+  unsubscribeRudder() {
+    if (this.rudderSub !== null) {
+      this.rudderSub.unsubscribe();
+      this.rudderSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['rudderAnglePath'].path);
     }
   }
 
@@ -421,4 +470,7 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     }
   }
 
+  notificationScroll(){}
+
+  sendSilence() {}
 }

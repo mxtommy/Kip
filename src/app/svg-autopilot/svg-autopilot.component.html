@@ -520,24 +520,43 @@
     </g>
   </g>
 <!-- Rudder -->
-  <g
+  <g *ngIf="rudderAngle != null"
      transform="translate(-48.447528,53.7796)"
      style="display:inline"
      id="layerRudder">
-    <rect class="rudderPort"
-       y="-53.399956"
-       x="274.99667"
-       height="14.987642"
-       width="225.01849"
-       id="rudderAnglePrt"
-       style="display:inline;opacity:1;fill-opacity:1;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <rect class="rudderStarboard"
-       y="-53.399956"
-       x="49.430794"
-       height="14.987642"
-       width="225.01849"
-       id="rudderAngleStb"
-       style="display:inline;opacity:1;fill-opacity:1;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      y="-53.399956"
+      x="274.99667"
+      height="14.987642"
+      width="0"
+      id="rudderAnglePrt"
+      style="display:inline;opacity:1;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+      <animate #rudderStbAnimate attributeType="XML" attributeName="width"
+      [attr.from]="oldRudderStbAngle"
+      [attr.to]="newRudderStbAngle"
+      dur="0.5s"
+      begin="indefinite"
+      additive="replace"
+      fill="freeze"
+      />
+    </rect>
+    <rect class="rudderPort"
+        transform="scale(-1,1)"
+        y="-53.399956"
+        x="-274.44928"
+        height="14.987642"
+        width="0"
+        id="rudderAngleStb"
+        style="display:inline;opacity:1;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+      <animate #rudderPrtAnimate attributeType="XML" attributeName="width"
+        [attr.from]="oldRudderPrtAngle"
+        [attr.to]="newRudderPrtAngle"
+        dur="0.5s"
+        begin="indefinite"
+        additive="replace"
+        fill="freeze"
+      />
+    </rect>
   </g>
 <!-- Background -->
   <g

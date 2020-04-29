@@ -10,9 +10,12 @@ import { isNumber } from 'util';
 export class SvgAutopilotComponent implements OnInit {
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
   @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
+  @ViewChild('rudderPrtAnimate') rudderPrtAnimate: ElementRef;
+  @ViewChild('rudderStbAnimate') rudderStbAnimate: ElementRef;
 
   @Input('compassHeading') compassHeading: number;
   @Input('appWindAngle') appWindAngle: number;
+  @Input('rudderAngle') rudderAngle: number;
 
   constructor() { }
 
@@ -26,7 +29,13 @@ export class SvgAutopilotComponent implements OnInit {
   newAppWindAngle: string = "0";
   oldAppWindRotateAngle: string = "0";
   newAppWindRotateAngle: string = "0";
-  appWindHeading: number = 0;
+
+  // rudder
+  oldRudderPrtAngle: number = 0;
+  newRudderPrtAngle: number = 0;
+  oldRudderStbAngle: number = 0;
+  newRudderStbAngle: number = 0;
+
 
   ngOnInit() {
   }
@@ -37,7 +46,7 @@ export class SvgAutopilotComponent implements OnInit {
     if (changes.compassHeading) {
       if (! changes.compassHeading.firstChange) {
         this.oldCompassRotate = this.newCompassRotate;
-        this.newCompassRotate = changes.compassHeading.currentValue;// .toString();
+        this.newCompassRotate = changes.compassHeading.currentValue;
         this.headingValue = this.newCompassRotate.toFixed(0);
         this.compassAnimate.nativeElement.beginElement();
       }
@@ -53,11 +62,36 @@ export class SvgAutopilotComponent implements OnInit {
           this.appWindAnimate.nativeElement.beginElement();
         }
       }
+      // value = this.options.value +
+          // ((((value - this.options.value) % 360) + 540) % 360) - 180;
+    }
+
+    //rudderAngle
+    if (changes.rudderAngle) {
+      if (! changes.rudderAngle.firstChange) {
+        if (changes.rudderAngle.currentValue <=0) {
+          this.oldRudderPrtAngle = 0;
+          this.newRudderPrtAngle = 0;
+
+          this.oldRudderStbAngle = this.newRudderStbAngle
+          this.newRudderStbAngle = Math.round(changes.rudderAngle.currentValue * 7.16 * -1); //pixel to angle ratio for rudder box and set positive
+        } else {
+          this.oldRudderStbAngle = 0;
+          this.newRudderStbAngle = 0;
+
+          this.oldRudderPrtAngle = this.newRudderPrtAngle;
+          this.newRudderPrtAngle = Math.round(changes.rudderAngle.currentValue * 7.16); //pixel to angle ratio for rudder box
+        }
+
+        if (this.rudderPrtAnimate) { // only update if on dom...
+          this.rudderPrtAnimate.nativeElement.beginElement();
+        }
+        if (this.rudderStbAnimate) { // only update if on dom...
+          this.rudderStbAnimate.nativeElement.beginElement();
+        }
+      }
     }
   }
-
-// value = this.options.value +
-          // ((((value - this.options.value) % 360) + 540) % 360) - 180;
 
 
   addHeading(h1: number, h2: number) {
