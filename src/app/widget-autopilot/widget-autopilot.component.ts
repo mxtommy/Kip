@@ -106,8 +106,10 @@ const commands = {
   "advanceWaypoint":   {"path":"steering.autopilot.actions.advanceWaypoint","value":"1"}
 };
 
+const noData = '-- -- -- --';
+const noPilot = 'No pilot';
+const noHeading = '---&deg;';
 const countDownDefault: number = 5;
-
 
 @Component({
   selector: 'app-widget-autopilot',
@@ -130,7 +132,7 @@ const countDownDefault: number = 5;
     ]),
   ]
 })
-export class WidgetAutopilotComponent implements OnInit, AfterContentInit, AfterContentChecked, OnDestroy {
+export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
@@ -177,7 +179,7 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   rudder: number = null;
   rudderSub: Subscription = null;
 
-  maxWidth = 0;
+  maxWidth: number = 0;
 
   isApConnected: boolean = false;
 
@@ -185,6 +187,8 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
   handleConfirmActionTimeout = null;
   countDownValue: number = 0;
   actionToBeConfirmed: string = "";
+  skPathToAck = '';
+  preferedDisplayMode = defaultPpreferedDisplayMode;
   pilotStatus: string = "";
 
   // cmdConfirmed: boolean = false;
@@ -205,13 +209,6 @@ export class WidgetAutopilotComponent implements OnInit, AfterContentInit, After
     } else {
       this.config = this.activeWidget.config;
     }
-  }
-
-  ngAfterContentChecked() {
-
-  }
-
-  ngAfterContentInit() {
   }
 
   ngOnDestroy() {
