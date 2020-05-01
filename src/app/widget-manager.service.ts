@@ -51,6 +51,7 @@ export interface IWidgetConfig {
   rotateFace?: boolean;
   backgroundColor?: string;
   frameColor?: string;
+  autoStart?: boolean;
 
   //NG Gauge Data
   barColor?: string;

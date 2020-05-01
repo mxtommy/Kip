@@ -13,8 +13,10 @@
     <div class="apCompass">
       <app-svg-autopilot
           [compassHeading]="currentHeading"
-          [appWindAngle]="appWindAngle"
-          [rudderAngle]="rudder"
+          [appWindAngle]="currentAppWindAngle"
+          [rudderAngle]="currentRudder"
+          [apState]="currentAPState"
+          [apTargetAppWindAngle]="currentAPTargetAppWind"
       ></app-svg-autopilot>
     </div>
     <div class="apStatusBar" #apStatusBar>

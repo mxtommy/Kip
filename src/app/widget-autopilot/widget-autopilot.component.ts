@@ -69,7 +69,6 @@ const defaultConfig: IWidgetConfig = {
     },
   },
   units: {
-    "apState": "unitless",
     "apTargetHeadingMag": "angle",
     "apTargetWindAngleApp": "angle",
     "apNotifications": "unitless",
@@ -100,6 +99,7 @@ const defaultConfig: IWidgetConfig = {
 
   selfPaths: true,
   barColor: 'accent',     // theme palette to select
+  autoStart: false,
 };
 
 const defaultPpreferedDisplayMode = {
@@ -141,10 +141,10 @@ const countDownDefault: number = 5;
         opacity: 1,
       })),
       transition('connected => disconnected', [
-        animate('0.5s')
+        animate('.3s')
       ]),
       transition('disconnected => connected', [
-        animate('0.5s')
+        animate('1s')
       ]),
     ]),
   ]
@@ -156,7 +156,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   // AP screen
   @ViewChild('apStencil') ApStencil: ElementRef;
   @ViewChild('countDown') countDown: ElementRef;
-
   @ViewChild('apStencilConfirmCommand') apStencilConfirmCommand: ElementRef;
   // AP keypad
   @ViewChild('powerBtn') powerBtn: MatButton;
@@ -187,19 +186,25 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   activeWidget: IWidget;
   config: IWidgetConfig;
 
+  // Subscription stuff
+  currentAPState: any = null;
+  apStateSub: Subscription = null;
+
+  currentAPTargetAppWind: number = 0;
+  apTargetAppWindSub: Subscription = null;
+
   currentHeading: number = 0;
   headingSub: Subscription = null;
 
-  appWindAngle: number = null;
+  currentAppWindAngle: number = null;
   appWindAngleSub: Subscription = null;
 
-  rudder: number = null;
+  currentRudder: number = null;
   rudderSub: Subscription = null;
-
-  maxWidth: number = 0;
 
   isApConnected: boolean = false;
 
+  // Widget var
   handleCountDownCounterTimeout = null;
   handleConfirmActionTimeout = null;
   countDownValue: number = 0;
@@ -226,6 +231,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     } else {
       this.config = this.activeWidget.config;
     }
+    if (this.config.autoStart) {
+      this.startAP();
+    }
+
   }
 
   ngOnDestroy() {
@@ -236,6 +245,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.subscribeHeading();
     this.subscribeAppWindAngle();
     this.subscribeRudder();
+    this.subscribeAPState();
+    this.subscribeAPTargetAppWind();
     console.log("Autopilot Sub Started");
   }
 
@@ -243,7 +254,49 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.unsubscribeHeading();
     this.unsubscribeAppWindAngle();
     this.unsubscribeRudder();
-    console.log("Autopilot Sub Stopped");
+    this.unsubscribeAPState();
+    this.unsubscribeAPTargetAppWind();
+    console.log("Autopilot Subs Stopped");
+  }
+
+  subscribeAPTargetAppWind() {
+    this.unsubscribeAPTargetAppWind();
+    if (typeof(this.config.paths['apTargetWindAngleApp'].path) != 'string') { return } // nothing to sub to...
+    this.apTargetAppWindSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apTargetWindAngleApp'].path, this.config.paths['apTargetWindAngleApp'].source).subscribe(
+      newValue => {
+        if (newValue === null) {
+          this.currentAPTargetAppWind = 0;
+        } else {
+          this.currentAPTargetAppWind = this.UnitsService.convertUnit('deg', newValue);
+        }
+      }
+    );
+  }
+
+  unsubscribeAPTargetAppWind() {
+    if (this.apTargetAppWindSub !== null) {
+      this.apTargetAppWindSub.unsubscribe();
+      this.apTargetAppWindSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apTargetWindAngleApp'].path);
+    }
+  }
+
+  subscribeAPState() {
+    this.unsubscribeAPState();
+    if (typeof(this.config.paths['apState'].path) != 'string') { return } // nothing to sub to...
+    this.apStateSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apState'].path, this.config.paths['apState'].source).subscribe(
+      newValue => {
+        this.currentAPState = newValue;
+      }
+    );
+  }
+
+  unsubscribeAPState() {
+    if (this.apStateSub !== null) {
+      this.apStateSub.unsubscribe();
+      this.apStateSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apState'].path);
+    }
   }
 
   subscribeHeading() {
@@ -277,7 +330,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['windAngleApparent'].path, this.config.paths['windAngleApparent'].source).subscribe(
       newValue => {
         if (newValue === null) {
-          this.appWindAngle = null;
+          this.currentAppWindAngle = null;
           return;
         }
 
@@ -287,9 +340,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
         // need in 0-360
 
         if (converted < 0) {// stb
-          this.appWindAngle = 360 + converted; // adding a negative number subtracts it...
+          this.currentAppWindAngle = 360 + converted; // adding a negative number subtracts it...
         } else {
-          this.appWindAngle = converted;
+          this.currentAppWindAngle = converted;
         }
       }
     );
@@ -309,10 +362,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.rudderSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['rudderAngle'].path, this.config.paths['rudderAngle'].source).subscribe(
       newValue => {
         if (newValue === null) {
-          this.rudder = 0;
+          this.currentRudder = 0;
         } else {
 
-          this.rudder = this.UnitsService.convertUnit('deg', newValue);
+          this.currentRudder = this.UnitsService.convertUnit('deg', newValue);
         }
 
       }
@@ -325,10 +378,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.rudderSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['rudderAngle'].path);
     }
-  }
-
-  onResized(event: ResizedEvent) {
-    this.maxWidth = event.newHeight * 1.77;
   }
 
   openWidgetSettings() {
@@ -359,11 +408,16 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     return h3;
   }
 
-
   powerBtnClick(event: Event) {
-    if (this.isApConnected) {
+    this.startAP();
+  }
 
+  startAP() {
+    if (this.isApConnected) {
       this.stopAllSubscriptions();
+      this.config.autoStart = false; // save power on state to autostart or not
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+      console.log(this.config);
       this.isApConnected = false;
 
       this.autoBtn.disabled = true;
@@ -377,6 +431,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.prtTackBtn.disabled = true;
 
     } else {
+      this.config.autoStart = true; // save power on state to autostart or not
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+      console.log(this.config);
       this.startAllSubscriptions();
       this.isApConnected = true;
 
@@ -433,12 +490,15 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     //   alert('Not connected yet, please retry your command...');
     //   return null;
     // }
-    // console.log(cmdAction);
+    console.log(cmdAction);
     // errorIconDiv.style.visibility = 'hidden';
     // sendIconDiv.style.visibility = 'visible';
-    // var cmdActionJSON = JSON.stringify(cmdAction);
-    // var cmdJson = '{"context":"vessels.self","requestId":"184743-434373-348483","put":' + cmdActionJSON + '}';
-    // console.log(cmdJson);
+    var cmdActionJSON = JSON.stringify(cmdAction);
+    var cmdJson = '{"context":"vessels.self","requestId":"184743-434373-348483","put":' + cmdActionJSON + '}';
+    console.log(cmdJson);
+    console.log("State:" + this.currentAPState);
+    console.log("Target AppWind:" + this.currentAPTargetAppWind);
+
     // ws.send(cmdJson);
     // setTimeout(() => {sendIconDiv.style.visibility = 'hidden';}, timeoutBlink);
   }

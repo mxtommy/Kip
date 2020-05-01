@@ -16,6 +16,8 @@ export class SvgAutopilotComponent implements OnInit {
   @Input('compassHeading') compassHeading: number;
   @Input('appWindAngle') appWindAngle: number;
   @Input('rudderAngle') rudderAngle: number;
+  @Input('apState') apState: string;
+  @Input('apTargetAppWindAngle') apTargetAppWindAngle: string;
 
   constructor() { }
 
@@ -49,6 +51,20 @@ export class SvgAutopilotComponent implements OnInit {
         this.newCompassRotate = changes.compassHeading.currentValue;
         this.headingValue = this.newCompassRotate.toFixed(0);
         this.compassAnimate.nativeElement.beginElement();
+      }
+    }
+
+    //AP State
+    if (changes.apState) {
+      if (! changes.apState.firstChange) {
+        this.apState = this.apState.toUpperCase();
+      }
+    }
+
+    //AP Target Apparent Wind Angle
+    if (changes.apTargetAppWindAngle) {
+      if (! changes.apTargetAppWindAngle.firstChange) {
+        this.apTargetAppWindAngle = changes.apTargetAppWindAngle.currentValue.toFixed(0);
       }
     }
 

@@ -478,16 +478,20 @@
        xml:space="preserve"><tspan
          y="-5.9288187"
          x="53.518887"
-         id="tspan7336">Wind Vanaaaaaaaaaae</tspan></text>
+         id="tspan7336">
+          {{apState}}
+        </tspan>
+      </text>
     <text class="wind-text"
        id="textLockedWindAngle"
        y="-5.63585"
        x="388.37534"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.33333397px;line-height:1.25;font-family:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;stroke:none"
-       xml:space="preserve"><tspan
+       xml:space="preserve">
+       <tspan *ngIf="apState == 'Wind'"
          y="-5.63585"
          x="388.37534"
-         id="tspan7340">Wind: 30°S</tspan></text>
+         id="tspan7340">Wind: {{apTargetAppWindAngle}}°</tspan></text>
   </g>
 <!-- Heading -->
   <g
