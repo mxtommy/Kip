@@ -232,7 +232,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.config = this.activeWidget.config;
     }
     if (this.config.autoStart) {
-      this.startAP();
+      setTimeout(() => {this.startAP();)
     }
 
   }
