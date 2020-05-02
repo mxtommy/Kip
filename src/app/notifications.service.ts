@@ -51,10 +51,22 @@ export class NotificationsService {
         this.activeAlarmsSubject.next(this.activeAlarms);
       }
     } else {
-      this.activeAlarms[path] = notif;
-      this.activeAlarmsSubject.next(this.activeAlarms);
+      if (path in this.activeAlarms) {
+        //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
+        if (    (this.activeAlarms[path].state != notif.state) 
+              ||(this.activeAlarms[path].message != notif.message)
+              ||(JSON.stringify(this.activeAlarms[path].method) != JSON.stringify(notif.method)) ) { // no easy way to compare arrays??? ok...
+          this.activeAlarms[path] = notif;
+          this.activeAlarmsSubject.next(this.activeAlarms);
+          console.log("u");
+
+        }
+      } else {
+        // new alarm, add it
+        this.activeAlarms[path] = notif;
+        this.activeAlarmsSubject.next(this.activeAlarms);
+      }
     }
-    //console.log(this.activeAlarms);
   }
 
   // Called when signalk server reset
