@@ -4,7 +4,7 @@ import { MatDialog } from '@angular/material';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
-import { SignalkRequestsService } from '../signalk-requests.service';
+import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
@@ -38,6 +38,8 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
   dataTimestamp: number = Date.now();
   valueSub: Subscription = null;
 
+  skRequestSub: Subscription = null;
+
   state: boolean = null;
 
   constructor(
@@ -57,10 +59,12 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
+    this.subscribeSKRequest();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
+    this.unsubscribeSKRequest();
   }
 
   subscribePath() {
@@ -80,6 +84,26 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
       this.valueSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['statePath'].path);
     }
+  }
+
+  subscribeSKRequest() {
+    this.skRequestSub = this.SignalkRequestsService.subcribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID == this.widgetUUID) {
+        if (typeof requestResult.requestId !== 'undefined') {
+          if (requestResult.state === 'COMPLETED') {
+            if (requestResult.statusCode === 403) {
+              alert('[Status Code ' + requestResult.statusCode + ']: ' + 'You must be authenticated to send command');
+            } else if (requestResult.statusCode !== 200) {
+              // alert('[' + requestResult.statusCode + ']' + cmdResult.message);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  unsubscribeSKRequest() {
+    this.skRequestSub.unsubscribe();
   }
 
   sendDelta(value: boolean) {

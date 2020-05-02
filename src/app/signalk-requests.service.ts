@@ -13,6 +13,7 @@ export interface skRequest {
   state: string;
   statusCode: number;
   widgetUUID?: string;
+  message?: string;
 }
 
 @Injectable({
@@ -21,10 +22,10 @@ export interface skRequest {
 export class SignalkRequestsService {
 
   private requestStatus = new Subject<skRequest>(); // public Observable passing message post processing
-
   private requests: skRequest[] = []; // Private array of all requests.
 
-  constructor(private SignalKConnectionService: SignalKConnectionService,
+  constructor(
+    private SignalKConnectionService: SignalKConnectionService,
     private SignalKDeltaService: SignalKDeltaService,
     private AppSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
@@ -33,6 +34,15 @@ export class SignalkRequestsService {
 
       requestsSub = this.SignalKDeltaService.subcribeRequest().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
+      );
+
+      let endPointStatus: Subscription; // check if the Endpoint are reset
+      endPointStatus = this.SignalKConnectionService.getEndpointAPIStatus().subscribe(
+        status => {
+          if (!status) {
+            this.requests = []; // flush array to clean values that will become stale post error or server reconnect
+          }
+        }
       );
     }
 
@@ -101,6 +111,7 @@ export class SignalkRequestsService {
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
       this.requests[index].statusCode = delta.statusCode;
+      this.requests[index].message = delta.message;
       if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
         this.AppSettingsService.setSignalKToken(delta.accessRequest.token);
         this.NotificationsService.newNotification("Read/Write Token request approval received for server");
@@ -112,6 +123,7 @@ export class SignalkRequestsService {
         this.requests.splice(index, 1); // subject dispatched, cleanup array
       } catch (err) {
         this.requestStatus.error(err);
+        console.log(err);
         this.requests = []; // flush array to clean values that will become stale post error
       }
     }

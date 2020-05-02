@@ -28,6 +28,7 @@ export class SvgAutopilotComponent implements OnInit {
   @ViewChild('apStencil') ApStencil: ElementRef;
   @ViewChild('countDown') countDown: ElementRef;
   @ViewChild('apStencilConfirmCommand') apStencilConfirmCommand: ElementRef;
+
   // SVG
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
   @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
@@ -60,6 +61,8 @@ export class SvgAutopilotComponent implements OnInit {
   oldRudderStbAngle: number = 0;
   newRudderStbAngle: number = 0;
 
+  activityIconVisibility: string = "hidden;";
+  errorIconVisibility: string = "hidden";
 
   ngOnInit() {
   }

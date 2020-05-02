@@ -54,3 +54,10 @@
         fill: mat-color($wind, app-wind-background)
     }
 }
+
+// for Autopilot
+.activityIcon {
+  opacity: 40%;
+  visibility: hidden;
+  width:25px;
+}

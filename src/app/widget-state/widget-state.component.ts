@@ -4,7 +4,7 @@ import {MatDialog } from '@angular/material';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
-import { SignalkRequestsService } from '../signalk-requests.service';
+import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
@@ -43,6 +43,8 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
   pressed = false;
   timeoutHandler;
 
+  skRequestSub = new Subscription; // Request result observer
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -61,10 +63,12 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
     }
 
     this.subscribePath();
+    this.subscribeSKRequest();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
+    this.subscribeSKRequest();
   }
 
   subscribePath() {
@@ -84,6 +88,27 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
       this.valueSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['boolPath'].path)
     }
+  }
+
+  subscribeSKRequest() {
+    this.skRequestSub = this.SignalkRequestsService.subcribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID == this.widgetUUID) {
+        if (typeof requestResult.requestId !== 'undefined') {
+          if (requestResult.state === 'COMPLETED') {
+            if (requestResult.statusCode === 403) {
+              alert('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + 'You must be authenticated to send command');
+            } else if (requestResult.statusCode !== 200) {
+              alert('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + requestResult.message);
+              console.log('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + requestResult.message);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  unsubscribeSKRequest() {
+    this.skRequestSub.unsubscribe();
   }
 
   openWidgetSettings() {

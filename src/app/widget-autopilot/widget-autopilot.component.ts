@@ -1,11 +1,10 @@
-import { ViewChild, Input, ElementRef, Component, HostBinding, OnInit, AfterContentInit, AfterContentChecked, OnDestroy } from '@angular/core';
+import { ViewChild, Input, ElementRef, Component, HostBinding, OnInit, AfterContentInit, AfterContentChecked, OnDestroy, ViewChildren, ContentChild, ContentChildren } from '@angular/core';
 import { Subscription, Subject, Observable } from 'rxjs';
 import { MatDialog, MatButton } from '@angular/material';
 
 import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
 import { SignalKDeltaService } from '../signalk-delta.service';
-import { deltaMessage } from '../signalk-interfaces';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
@@ -129,6 +128,7 @@ const noData = '-- -- -- --';
 const noPilot = 'No pilot';
 const noHeading = '---&deg;';
 const countDownDefault: number = 5;
+const timeoutBlink = 250;
 
 @Component({
   selector: 'app-widget-autopilot',
@@ -154,6 +154,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   @ViewChild('nxtWpBtn') nxtWpBtn: MatButton;
   @ViewChild('muteBtn') muteBtn: MatButton;
   @ViewChild('messageBtn') messageBtn: MatButton;
+
+  // AP Screen
+  @ViewChild('appSvgAutopilot') apScreen : any;
 
   // hack to access material-theme palette colors
   @ViewChild('primary') private primaryElement: ElementRef;
@@ -190,6 +193,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   handleCountDownCounterTimeout = null;
   handleConfirmActionTimeout = null;
   countDownValue: number = 0;
+  handleReceiveTimeout = null;
   actionToBeConfirmed: string = "";
   skPathToAck = '';
   preferedDisplayMode = defaultPpreferedDisplayMode;
@@ -415,7 +419,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.stopAllSubscriptions();
       this.config.autoStart = false; // save power on state to autostart or not
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-      console.log(this.config);
       this.isApConnected = false;
 
       this.autoBtn.disabled = true;
@@ -431,7 +434,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     } else {
       this.config.autoStart = true; // save power on state to autostart or not
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-      console.log(this.config);
       this.startAllSubscriptions();
       this.isApConnected = true;
 
@@ -480,31 +482,31 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   sendCommand(cmdAction) {
-    // console.log("Command action:" +  JSON.stringify(cmdAction));
-
     let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetUUID);
+    this.apScreen.activityIconVisibility = "visible";
+    setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 
-    console.log("AP WIDGET put");
+    console.log("AP Action: " + cmdAction["value"]);
 
-    // console.log("COMMAND ID:" + requestId);
-
-    // errorIconDiv.style.visibility = 'visible';
-    // errorIconDiv.style.visibility = 'hidden';
-    // sendIconDiv.style.visibility = 'visible';
-
-    // ws.send(cmdJson);
-    // setTimeout(() => {sendIconDiv.style.visibility = 'hidden';}, timeoutBlink);
   }
 
   commandReceived(cmdResult: skRequest) {
-    console.log("Receive AP WIDGET");
-    // console.log("Put RequestId: " + cmdResult.requestId);
-    // console.log("Put Result: " + cmdResult.statusCode);
-    // console.log("Put State: " + cmdResult.state);
+    this.apScreen.activityIconVisibility = "visible";
+    clearTimeout(this.handleReceiveTimeout);
+    this.handleReceiveTimeout = setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 
-    // receiveIconDiv.style.visibility = 'visible';
-    // clearTimeout(handleReceiveTimeout);
-    // handleReceiveTimeout = setTimeout(() => {receiveIconDiv.style.visibility = 'hidden';}, timeoutBlink);
+    if (typeof cmdResult.requestId !== 'undefined') {
+      if (cmdResult.state === 'COMPLETED') {
+        if (cmdResult.statusCode === 403) {
+          this.apScreen.errorIconVisibility = "visible"
+          alert('[Status Code ' + cmdResult.statusCode + ']: ' + 'You must be authenticated to send command');
+        } else if (cmdResult.statusCode !== 200) {
+          this.apScreen.errorIconVisibility = 'visible';
+          alert('[' + cmdResult.statusCode + ']' + cmdResult.message);
+        }
+      }
+    }
+
     // var jsonData = JSON.parse(event.data)
     // if (typeof jsonData.requestId !== 'undefined') {
     //   if (jsonData.state === 'COMPLETED') {
@@ -516,9 +518,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     //       alert('[' + jsonData.statusCode + ']' + jsonData.message);
     //     }
     //   }
-    //   console.log(jsonData);
 
-
+    console.log("AP Received: \n" + JSON.stringify(cmdResult));
   }
 
   startConfirmCmd(cmd, message) {
