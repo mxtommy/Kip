@@ -9,30 +9,14 @@
       </button>
     </div>
   </div>
-  <div class="apScreen">
-    <div class="apCompass">
-      <app-svg-autopilot
-          [compassHeading]="currentHeading"
-          [appWindAngle]="currentAppWindAngle"
-          [rudderAngle]="currentRudder"
-          [apState]="currentAPState"
-          [apTargetAppWindAngle]="currentAPTargetAppWind"
-      ></app-svg-autopilot>
-    </div>
-    <div class="apStatusBar" #apStatusBar>
-      <div #countDown style="width: calc((100% - 50px)/2)"></div>
-      <div style="width: calc((100% - 50px)/2)">last alarm txt</div>
-      <div style="width: 25px;"><i class="fa fa-exchange" aria-hidden="true"></i></div>
-      <div style="width: 25px;"><i class="fa fa-exclamation-circle" aria-hidden="true"></i></div>
-    </div>
-    <div class="apStencil" #apStencil [@fadeInOut]="isApConnected ? 'connected' : 'disconnected'">
-      <p style="font-weight: bold;opacity: 75%;">OFFLINE</p>
-      <p style="opacity: 75%;">Press <i class="fa fa-power-off" aria-hidden="true"></i> to connect to SignalK server and activate this Autopilot Control Head.</p>
-    </div>
-    <div class="apStencil confirmCommand" #apStencilConfirmCommand>
-      empty apStencilConfirmCommand
-    </div>
-  </div>
+    <app-svg-autopilot
+        [compassHeading]="currentHeading"
+        [appWindAngle]="currentAppWindAngle"
+        [rudderAngle]="currentRudder"
+        [apState]="currentAPState"
+        [apTargetAppWindAngle]="currentAPTargetAppWind"
+        [isApConnected]="isApConnected"
+    ></app-svg-autopilot>
   <div class="autopilotGridBtnContainer">
     <div class="itemStbTack">
       <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="stbTackBtn" #stbTackBtn disabled="true" (click)="buildAndSendCommand('tackToStarboard')">Std Tack</button>

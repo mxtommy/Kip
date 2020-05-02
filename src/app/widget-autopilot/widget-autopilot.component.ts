@@ -1,13 +1,15 @@
 import { ViewChild, Input, ElementRef, Component, HostBinding, OnInit, AfterContentInit, AfterContentChecked, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject, Observable } from 'rxjs';
 import { MatDialog, MatButton } from '@angular/material';
-import { ResizedEvent } from 'angular-resize-event';
-import { trigger, state, style, animate, transition } from '@angular/animations';
 
 import { SignalKService } from '../signalk.service';
+import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
+import { SignalKDeltaService } from '../signalk-delta.service';
+import { deltaMessage } from '../signalk-interfaces';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+
 
 
 const defaultConfig: IWidgetConfig = {
@@ -132,31 +134,11 @@ const countDownDefault: number = 5;
   selector: 'app-widget-autopilot',
   templateUrl: './widget-autopilot.component.html',
   styleUrls: ['./widget-autopilot.component.scss'],
-  animations: [
-    trigger('fadeInOut', [
-      state('connected', style({
-        opacity: 0,
-      })),
-      state('disconnected', style({
-        opacity: 1,
-      })),
-      transition('connected => disconnected', [
-        animate('.3s')
-      ]),
-      transition('disconnected => connected', [
-        animate('1s')
-      ]),
-    ]),
-  ]
 })
 export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  // AP screen
-  @ViewChild('apStencil') ApStencil: ElementRef;
-  @ViewChild('countDown') countDown: ElementRef;
-  @ViewChild('apStencilConfirmCommand') apStencilConfirmCommand: ElementRef;
   // AP keypad
   @ViewChild('powerBtn') powerBtn: MatButton;
   @ViewChild('stbTackBtn') stbTackBtn: MatButton;
@@ -214,10 +196,13 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   pilotStatus: string = "";
 
   // cmdConfirmed: boolean = false;
+  skRequestSub = new Subscription; // Request result observer
 
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
+    private SignalkRequestsService: SignalkRequestsService,
+    private SignalKDeltaService: SignalKDeltaService,
     private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
   ) { }
@@ -232,9 +217,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.config = this.activeWidget.config;
     }
     if (this.config.autoStart) {
-      setTimeout(() => {this.startAP();)
+      setTimeout(() => {this.startAP();});
     }
-
   }
 
   ngOnDestroy() {
@@ -247,6 +231,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.subscribeRudder();
     this.subscribeAPState();
     this.subscribeAPTargetAppWind();
+    this.subscribeSKRequest();
     console.log("Autopilot Sub Started");
   }
 
@@ -256,7 +241,20 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.unsubscribeRudder();
     this.unsubscribeAPState();
     this.unsubscribeAPTargetAppWind();
+    this.unsubscribeSKRequest();
     console.log("Autopilot Subs Stopped");
+  }
+
+  subscribeSKRequest() {
+    this.skRequestSub = this.SignalkRequestsService.subcribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID == this.widgetUUID) {
+        this.commandReceived(requestResult);
+      }
+    });
+  }
+
+  unsubscribeSKRequest() {
+    this.skRequestSub.unsubscribe();
   }
 
   subscribeAPTargetAppWind() {
@@ -482,39 +480,59 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   sendCommand(cmdAction) {
-    console.log("Command action:" +  JSON.stringify(cmdAction));
-    // reconnect = true;
-    // wsConnect();
-    // if ((ws === null) || (ws.readyState !== 1)) {
-    //   errorIconDiv.style.visibility = 'visible';
-    //   alert('Not connected yet, please retry your command...');
-    //   return null;
-    // }
-    console.log(cmdAction);
+    // console.log("Command action:" +  JSON.stringify(cmdAction));
+
+    let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetUUID);
+
+    console.log("AP WIDGET put");
+
+    // console.log("COMMAND ID:" + requestId);
+
+    // errorIconDiv.style.visibility = 'visible';
     // errorIconDiv.style.visibility = 'hidden';
     // sendIconDiv.style.visibility = 'visible';
-    var cmdActionJSON = JSON.stringify(cmdAction);
-    var cmdJson = '{"context":"vessels.self","requestId":"184743-434373-348483","put":' + cmdActionJSON + '}';
-    console.log(cmdJson);
-    console.log("State:" + this.currentAPState);
-    console.log("Target AppWind:" + this.currentAPTargetAppWind);
 
     // ws.send(cmdJson);
     // setTimeout(() => {sendIconDiv.style.visibility = 'hidden';}, timeoutBlink);
+  }
+
+  commandReceived(cmdResult: skRequest) {
+    console.log("Receive AP WIDGET");
+    // console.log("Put RequestId: " + cmdResult.requestId);
+    // console.log("Put Result: " + cmdResult.statusCode);
+    // console.log("Put State: " + cmdResult.state);
+
+    // receiveIconDiv.style.visibility = 'visible';
+    // clearTimeout(handleReceiveTimeout);
+    // handleReceiveTimeout = setTimeout(() => {receiveIconDiv.style.visibility = 'hidden';}, timeoutBlink);
+    // var jsonData = JSON.parse(event.data)
+    // if (typeof jsonData.requestId !== 'undefined') {
+    //   if (jsonData.state === 'COMPLETED') {
+    //     if (jsonData.statusCode === 403) {
+    //       errorIconDiv.style.visibility = 'visible';
+    //       alert('[' + jsonData.statusCode + ']' + 'You must be authenticated to send command');
+    //     } else if (jsonData.statusCode !== 200) {
+    //       errorIconDiv.style.visibility = 'visible';
+    //       alert('[' + jsonData.statusCode + ']' + jsonData.message);
+    //     }
+    //   }
+    //   console.log(jsonData);
+
+
   }
 
   startConfirmCmd(cmd, message) {
     this.countDownValue = countDownDefault;
     this.actionToBeConfirmed = cmd;
     this.updateCountDownCounter();
-    this.apStencilConfirmCommand.nativeElement.innerHTML = '<p>' + message + '</p>';
-    this.apStencilConfirmCommand.nativeElement.style.visibility = 'visible';
+    // this.apStencilConfirmCommand.nativeElement.innerHTML = '<p>' + message + '</p>';
+    // this.apStencilConfirmCommand.nativeElement.style.visibility = 'visible';
 
     clearTimeout(this.handleConfirmActionTimeout);
 
     this.handleConfirmActionTimeout = setTimeout(() => {
-      this.apStencilConfirmCommand.nativeElement.style.visibility = 'hidden';
-      this.apStencilConfirmCommand.nativeElement.innerHTML = '';
+      // this.apStencilConfirmCommand.nativeElement.style.visibility = 'hidden';
+      // this.apStencilConfirmCommand.nativeElement.innerHTML = '';
       this.actionToBeConfirmed = '';
     }, 5000);
   }
@@ -523,9 +541,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     clearTimeout(this.handleConfirmActionTimeout);
     clearTimeout(this.handleCountDownCounterTimeout);
     this.countDownValue = -1;
-    this.countDown.nativeElement.innerHTML = "";
-    this.apStencilConfirmCommand.nativeElement.style.visibility = 'hidden';
-    this.apStencilConfirmCommand.nativeElement.innerHTML = '';
+    // this.countDown.nativeElement.innerHTML = "";
+    // this.apStencilConfirmCommand.nativeElement.style.visibility = 'hidden';
+    // this.apStencilConfirmCommand.nativeElement.innerHTML = '';
     this.actionToBeConfirmed = '';
     return null;
   }
@@ -533,14 +551,14 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   updateCountDownCounter() {
     if (this.countDownValue > 0) {
       clearTimeout(this.handleCountDownCounterTimeout);
-      this.countDown.nativeElement.innerHTML = this.countDownValue;
+      // this.countDown.nativeElement.innerHTML = this.countDownValue;
       this.countDownValue -= 1;
       this.handleCountDownCounterTimeout = setTimeout(() => {
         this.updateCountDownCounter();
       }, 1000);
     } else {
         clearTimeout(this.handleCountDownCounterTimeout);
-        this.countDown.nativeElement.innerHTML = '';
+        // this.countDown.nativeElement.innerHTML = '';
     }
   }
 

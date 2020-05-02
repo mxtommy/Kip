@@ -37,11 +37,11 @@ export class NotificationsService {
   }
 
   getNotificationObservable() {
-    // return this.notificationsSubject.asObservable();
+    return this.notificationsSubject.asObservable();
     return null;
   }
   getAlarmObservable() {
-    // return this.activeAlarmsSubject.asObservable();
+    return this.activeAlarmsSubject.asObservable();
     return null;
   }
 

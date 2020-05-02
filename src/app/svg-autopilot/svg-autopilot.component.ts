@@ -1,13 +1,34 @@
 import { Component, OnInit, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
-import { isNumeric } from 'rxjs/util/isNumeric';
-import { isNumber } from 'util';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+
 
 @Component({
   selector: 'app-svg-autopilot',
-  templateUrl: './svg-autopilot.component.html'
+  templateUrl: './svg-autopilot.component.html',
   // uses svg-wind SCSS styles
+  animations: [
+    trigger('fadeInOut', [
+      state('connected', style({
+        opacity: 0,
+      })),
+      state('disconnected', style({
+        opacity: 1,
+      })),
+      transition('connected => disconnected', [
+        animate('.3s')
+      ]),
+      transition('disconnected => connected', [
+        animate('1s')
+      ]),
+    ]),
+  ]
 })
 export class SvgAutopilotComponent implements OnInit {
+  // AP screen
+  @ViewChild('apStencil') ApStencil: ElementRef;
+  @ViewChild('countDown') countDown: ElementRef;
+  @ViewChild('apStencilConfirmCommand') apStencilConfirmCommand: ElementRef;
+  // SVG
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
   @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
   @ViewChild('rudderPrtAnimate') rudderPrtAnimate: ElementRef;
@@ -18,6 +39,7 @@ export class SvgAutopilotComponent implements OnInit {
   @Input('rudderAngle') rudderAngle: number;
   @Input('apState') apState: string;
   @Input('apTargetAppWindAngle') apTargetAppWindAngle: string;
+  @Input('isApConnected') isApConnected: boolean;
 
   constructor() { }
 
