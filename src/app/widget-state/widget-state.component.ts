@@ -91,7 +91,7 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
   }
 
   subscribeSKRequest() {
-    this.skRequestSub = this.SignalkRequestsService.subcribeRequest().subscribe(requestResult => {
+    this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetUUID) {
         if (typeof requestResult.requestId !== 'undefined') {
           if (requestResult.state === 'COMPLETED') {

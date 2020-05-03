@@ -131,11 +131,11 @@ export class SignalkRequestsService {
 
 
   /**
-   * Subscribe to SignalK put Request response. This allows you to inspect server response information such as State, Status Codes and such for further processing logic. Subscription object should be used for the Return :)
+   * Subscribe to SignalK request response. This allows you to inspect server response information such as State, Status Codes and such for further processing logic. Subscription object should be used for the Return :)
    *
    * @return Observable if type skRequest.
    */
-  public subcribeRequest(): Observable<skRequest> {
+  public subscribeRequest(): Observable<skRequest> {
     return this.requestStatus.asObservable();
   }
 

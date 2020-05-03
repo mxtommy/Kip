@@ -8,6 +8,7 @@ import { SignalKDeltaService } from '../signalk-delta.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
+import { NgSwitch, NgSwitchCase } from '@angular/common';
 
 
 
@@ -197,7 +198,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   actionToBeConfirmed: string = "";
   skPathToAck = '';
   preferedDisplayMode = defaultPpreferedDisplayMode;
-  pilotStatus: string = "";
+  pilotStatus: string = "";         // pilot current mode
 
   // cmdConfirmed: boolean = false;
   skRequestSub = new Subscription; // Request result observer
@@ -250,7 +251,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   subscribeSKRequest() {
-    this.skRequestSub = this.SignalkRequestsService.subcribeRequest().subscribe(requestResult => {
+    this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetUUID) {
         this.commandReceived(requestResult);
       }
@@ -289,6 +290,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.apStateSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apState'].path, this.config.paths['apState'].source).subscribe(
       newValue => {
         this.currentAPState = newValue;
+        this.SetKeyboardMode(this.currentAPState);
       }
     );
   }
@@ -415,7 +417,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   startAP() {
-    if (this.isApConnected) {
+    if (this.isApConnected) {       // Are the subs active and we pressed power, or are we back from another page
       this.stopAllSubscriptions();
       this.config.autoStart = false; // save power on state to autostart or not
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
@@ -431,8 +433,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.stbTackBtn.disabled = true;
       this.prtTackBtn.disabled = true;
 
+
     } else {
-      this.config.autoStart = true; // save power on state to autostart or not
+      this.config.autoStart = true; // save power-on state to autostart or not
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
       this.startAllSubscriptions();
       this.isApConnected = true;
@@ -446,6 +449,35 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.messageBtn.disabled = false;
       this.stbTackBtn.disabled = false;
       this.prtTackBtn.disabled = false;
+      this.apScreen.errorIconVisibility = 'hidden';
+    }
+  }
+
+  SetKeyboardMode(apMode: string) {
+    switch (apMode) {
+      case "standby":
+        break;
+
+      case "auto":
+        break;
+
+      case "wind":
+        break;
+
+      case "route":
+        this.autoBtn.disabled = false;
+        this.standbyBtn.disabled = false;
+        this.plus1Btn.disabled = true;
+        this.plus10Btn.disabled = true;
+        this.minus1Btn.disabled = true;
+        this.minus10Btn.disabled = true;
+        this.prtTackBtn.disabled = true;
+        this.stbTackBtn.disabled = true;
+
+        break;
+
+      default:
+        break;
     }
   }
 

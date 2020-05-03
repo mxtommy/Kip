@@ -1022,11 +1022,11 @@
     <div #countDown style="width: calc((100% - 50px)/2)"></div>
     <div style="width: calc((100% - 50px)/2)">last alarm txt</div>
     <div class="activityIcon" [style.visibility]="activityIconVisibility"><i class="fa fa-exchange" aria-hidden="true"></i></div>
-    <div style="width: 25px;" [style.visibility]="errorIconVisibility"><i class="fa fa-exclamation-circle" aria-hidden="true"></i></div>
+    <div style="width: 25px;" [style.visibility]="errorIconVisibility"><i class="fa fa-exclamation-triangle" style="color: yellow;" aria-hidden="true"></i></div>
   </div>
   <div class="apStencil" #apStencil [@fadeInOut]="isApConnected ? 'connected' : 'disconnected'">
     <p style="font-weight: bold;opacity: 75%;">OFFLINE</p>
-    <p style="opacity: 75%;">Press <i class="fa fa-power-off" aria-hidden="true"></i> to connect to SignalK server and activate this Autopilot Control Head.</p>
+    <p style="opacity: 75%;">Press <i class="fa fa-power-off" aria-hidden="true"></i> to connect to SignalK server</p>
   </div>
   <div class="apStencil confirmCommand" #apStencilConfirmCommand>
     empty apStencilConfirmCommand
