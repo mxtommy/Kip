@@ -1,15 +1,12 @@
 import { ViewChild, Input, ElementRef, Component, HostBinding, OnInit, AfterContentInit, AfterContentChecked, OnDestroy, ViewChildren, ContentChild, ContentChildren } from '@angular/core';
-import { Subscription, Subject, Observable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { MatDialog, MatButton } from '@angular/material';
 
 import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
-import { SignalKDeltaService } from '../signalk-delta.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-import { NgSwitch, NgSwitchCase } from '@angular/common';
-
 
 
 const defaultConfig: IWidgetConfig = {
@@ -173,7 +170,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   config: IWidgetConfig;
 
   // Subscription stuff
-  currentAPState: any = null;
+  currentAPState: any = null;      // Current Pilot Mode - used for display, keyboard state and buildCommand function
   apStateSub: Subscription = null;
 
   currentAPTargetAppWind: number = 0;
@@ -188,8 +185,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   currentRudder: number = null;
   rudderSub: Subscription = null;
 
-  isApConnected: boolean = false;
-
   // Widget var
   handleCountDownCounterTimeout = null;
   handleConfirmActionTimeout = null;
@@ -198,7 +193,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   actionToBeConfirmed: string = "";
   skPathToAck = '';
   preferedDisplayMode = defaultPpreferedDisplayMode;
-  pilotStatus: string = "";         // pilot current mode
+  isWChecked: boolean = false;       // used for Wind toggle
+  isTChecked: boolean = false;       // used for Track toggle
+  isApConnected: boolean = false;
 
   // cmdConfirmed: boolean = false;
   skRequestSub = new Subscription; // Request result observer
@@ -207,7 +204,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     public dialog:MatDialog,
     private SignalKService: SignalKService,
     private SignalkRequestsService: SignalkRequestsService,
-    private SignalKDeltaService: SignalKDeltaService,
     private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
   ) { }
@@ -222,7 +218,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.config = this.activeWidget.config;
     }
     if (this.config.autoStart) {
-      setTimeout(() => {this.startAP();});
+      setTimeout(() => {this.startApHead();});
     }
   }
 
@@ -413,67 +409,106 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   powerBtnClick(event: Event) {
-    this.startAP();
+    if (!this.isApConnected) {
+      this.startApHead();
+    } else {
+      this.stopApHead();
+    }
   }
 
-  startAP() {
-    if (this.isApConnected) {       // Are the subs active and we pressed power, or are we back from another page
-      this.stopAllSubscriptions();
-      this.config.autoStart = false; // save power on state to autostart or not
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-      this.isApConnected = false;
+  startApHead() {
+    this.startAllSubscriptions();
+    this.config.autoStart = true; // save power-on state to autostart or not
+    this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
 
-      this.autoBtn.disabled = true;
-      this.standbyBtn.disabled = true;
-      this.plus1Btn.disabled = true;
-      this.plus10Btn.disabled = true;
-      this.minus1Btn.disabled = true;
-      this.minus10Btn.disabled = true;
-      this.messageBtn.disabled = true;
-      this.stbTackBtn.disabled = true;
-      this.prtTackBtn.disabled = true;
+    this.isApConnected = true;
+    this.muteBtn.disabled = false;
+    this.messageBtn.disabled = false;
+  }
 
+  stopApHead() {
+    this.muteBtn.disabled = true;
+    this.messageBtn.disabled = true;
+    this.windModeBtn.disabled = true;
+    this.trackModeBtn.disabled = true;
+    this.nxtWpBtn.disabled = true;
+    this.autoBtn.disabled = true;
+    this.standbyBtn.disabled = true;
+    this.plus1Btn.disabled = true;
+    this.plus10Btn.disabled = true;
+    this.minus1Btn.disabled = true;
+    this.minus10Btn.disabled = true;
+    this.prtTackBtn.disabled = true;
+    this.stbTackBtn.disabled = true;
 
-    } else {
-      this.config.autoStart = true; // save power-on state to autostart or not
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-      this.startAllSubscriptions();
-      this.isApConnected = true;
+    this.apScreen.errorIconVisibility = 'hidden';
 
-      this.autoBtn.disabled = false;
-      this.standbyBtn.disabled = false;
-      this.plus1Btn.disabled = false;
-      this.plus10Btn.disabled = false;
-      this.minus1Btn.disabled = false;
-      this.minus10Btn.disabled = false;
-      this.messageBtn.disabled = false;
-      this.stbTackBtn.disabled = false;
-      this.prtTackBtn.disabled = false;
-      this.apScreen.errorIconVisibility = 'hidden';
-    }
+    this.isApConnected = false; // hide ap screen
+    this.stopAllSubscriptions();
+    this.config.autoStart = false; // save power on state to autostart or not
+    this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
   }
 
   SetKeyboardMode(apMode: string) {
     switch (apMode) {
       case "standby":
-        break;
-
-      case "auto":
-        break;
-
-      case "wind":
-        break;
-
-      case "route":
+        this.trackModeBtn.disabled = false;
+        this.nxtWpBtn.disabled = true;
         this.autoBtn.disabled = false;
         this.standbyBtn.disabled = false;
+
+        this.windModeBtn.disabled = false;
         this.plus1Btn.disabled = true;
         this.plus10Btn.disabled = true;
         this.minus1Btn.disabled = true;
         this.minus10Btn.disabled = true;
         this.prtTackBtn.disabled = true;
         this.stbTackBtn.disabled = true;
+        break;
 
+      case "auto":
+        this.trackModeBtn.disabled = false;
+        this.nxtWpBtn.disabled = true;
+        this.autoBtn.disabled = false;
+        this.standbyBtn.disabled = false;
+
+        this.windModeBtn.disabled = false;
+        this.plus1Btn.disabled = false;
+        this.plus10Btn.disabled = false;
+        this.minus1Btn.disabled = false;
+        this.minus10Btn.disabled = false;
+        this.prtTackBtn.disabled = true;
+        this.stbTackBtn.disabled = true;
+        break;
+
+      case "wind":
+        this.trackModeBtn.disabled = true;
+        this.nxtWpBtn.disabled = true;
+        this.autoBtn.disabled = false;
+        this.standbyBtn.disabled = false;
+
+        this.windModeBtn.disabled = true;
+        this.plus1Btn.disabled = false;
+        this.plus10Btn.disabled = false;
+        this.minus1Btn.disabled = false;
+        this.minus10Btn.disabled = false;
+        this.prtTackBtn.disabled = false;
+        this.stbTackBtn.disabled = false;
+        break;
+
+      case "route":
+        this.trackModeBtn.disabled = true;
+        this.nxtWpBtn.disabled = false;
+        this.autoBtn.disabled = false;
+        this.standbyBtn.disabled = false;
+
+        this.windModeBtn.disabled = true;
+        this.plus1Btn.disabled = true;
+        this.plus10Btn.disabled = true;
+        this.minus1Btn.disabled = true;
+        this.minus10Btn.disabled = true;
+        this.prtTackBtn.disabled = true;
+        this.stbTackBtn.disabled = true;
         break;
 
       default:
@@ -490,7 +525,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if ((this.actionToBeConfirmed !== '')&&(this.actionToBeConfirmed !== cmd)) {
       this.clearConfirmCmd();
     }
-    if ((cmd === 'route')&&(this.pilotStatus === 'route')&&(this.actionToBeConfirmed === '')) {
+    if ((cmd === 'route')&&(this.currentAPState === 'route')&&(this.actionToBeConfirmed === '')) {
       this.confirmAdvanceWaypoint(cmd);
       return null;
     }
@@ -500,7 +535,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
         this.sendCommand(commands['auto']); // force mode 'auto' to take a tack
         this.sendCommand(cmdAction);
       }
-      if ((cmd === 'route')&&(this.pilotStatus === 'route')) {
+      if ((cmd === 'route')&&(this.currentAPState === 'route')) {
         this.sendCommand(commands['advanceWaypoint']);
       }
       return null;
@@ -508,8 +543,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.sendCommand(cmdAction);
   }
 
-  confirmAdvanceWaypoint(cmd) {
-    let message = 'Repeat key TRACK<br>to confirm<br>Advance Waypoint';
+  confirmAdvanceWaypoint(cmd: string) {
+    let message: string = "Repeat key <b>[Next Wpt]</b><br>to confirm<br>Advance Waypoint";
     this.startConfirmCmd(cmd, message);
   }
 
@@ -530,43 +565,32 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (typeof cmdResult.requestId !== 'undefined') {
       if (cmdResult.state === 'COMPLETED') {
         if (cmdResult.statusCode === 403) {
-          this.apScreen.errorIconVisibility = "visible"
-          alert('[Status Code ' + cmdResult.statusCode + ']: ' + 'You must be authenticated to send command');
-        } else if (cmdResult.statusCode !== 200) {
+          cmdResult.message = "You must be authenticated to send command. Request an Authorization Token in Kip configuration. The request must be approved by a SignalK admin in Security > Access Requests."
+          this.displayApError(cmdResult);
           this.apScreen.errorIconVisibility = 'visible';
-          alert('[' + cmdResult.statusCode + ']' + cmdResult.message);
+        } else if (cmdResult.statusCode !== 200) {
+          this.displayApError(cmdResult);
         }
       }
     }
-
-    // var jsonData = JSON.parse(event.data)
-    // if (typeof jsonData.requestId !== 'undefined') {
-    //   if (jsonData.state === 'COMPLETED') {
-    //     if (jsonData.statusCode === 403) {
-    //       errorIconDiv.style.visibility = 'visible';
-    //       alert('[' + jsonData.statusCode + ']' + 'You must be authenticated to send command');
-    //     } else if (jsonData.statusCode !== 200) {
-    //       errorIconDiv.style.visibility = 'visible';
-    //       alert('[' + jsonData.statusCode + ']' + jsonData.message);
-    //     }
-    //   }
-
     console.log("AP Received: \n" + JSON.stringify(cmdResult));
   }
 
-  startConfirmCmd(cmd, message) {
+  startConfirmCmd(cmd: string, message: string) {
     this.countDownValue = countDownDefault;
     this.actionToBeConfirmed = cmd;
-    this.updateCountDownCounter();
-    // this.apStencilConfirmCommand.nativeElement.innerHTML = '<p>' + message + '</p>';
-    // this.apStencilConfirmCommand.nativeElement.style.visibility = 'visible';
+
+    this.apScreen.msgStencilInnerHTML = "<p>" + message + "</p>";
+    this.apScreen.msgStencilVisibility = "visible";
+
+    this.updateCountDownCounter(message);
 
     clearTimeout(this.handleConfirmActionTimeout);
 
     this.handleConfirmActionTimeout = setTimeout(() => {
-      // this.apStencilConfirmCommand.nativeElement.style.visibility = 'hidden';
-      // this.apStencilConfirmCommand.nativeElement.innerHTML = '';
-      this.actionToBeConfirmed = '';
+      this.apScreen.msgStencilVisibility = "hidden";
+      this.apScreen.msgStencilInnerHTML = "";
+      this.actionToBeConfirmed = "";
     }, 5000);
   }
 
@@ -574,25 +598,36 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     clearTimeout(this.handleConfirmActionTimeout);
     clearTimeout(this.handleCountDownCounterTimeout);
     this.countDownValue = -1;
-    // this.countDown.nativeElement.innerHTML = "";
-    // this.apStencilConfirmCommand.nativeElement.style.visibility = 'hidden';
-    // this.apStencilConfirmCommand.nativeElement.innerHTML = '';
+    this.apScreen.msgStencilVisibility = "hidden";
+    this.apScreen.msgStencilInnerHTML = "";
     this.actionToBeConfirmed = '';
     return null;
   }
 
-  updateCountDownCounter() {
+  updateCountDownCounter(message: string) {
     if (this.countDownValue > 0) {
       clearTimeout(this.handleCountDownCounterTimeout);
-      // this.countDown.nativeElement.innerHTML = this.countDownValue;
+      this.apScreen.msgStencilInnerHTML = "<p>" + message + "</p>" + "<h1 class='counterText'>" + this.countDownValue.toString() + "</h1>";
       this.countDownValue -= 1;
       this.handleCountDownCounterTimeout = setTimeout(() => {
-        this.updateCountDownCounter();
+        this.updateCountDownCounter(message);
       }, 1000);
     } else {
         clearTimeout(this.handleCountDownCounterTimeout);
-        // this.countDown.nativeElement.innerHTML = '';
     }
+  }
+
+  displayApError(cmdResult: skRequest) {
+    this.apScreen.errorStencilInnerText = cmdResult.message + " - Status Code " + cmdResult.statusCode;
+    this.apScreen.errorStencilVisibility = "visible";
+
+    clearTimeout(this.handleConfirmActionTimeout);
+
+    this.handleConfirmActionTimeout = setTimeout(() => {
+      this.apScreen.errorStencilVisibility = "hidden";
+      this.apScreen.errorStencilInnerText = "";
+    }, 5000);
+    this.apScreen.errorIconVisibility = 'visible';
   }
 
   notificationScroll(){}

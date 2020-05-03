@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { NgModel } from '@angular/forms';
 
 
 @Component({
@@ -27,7 +28,6 @@ export class SvgAutopilotComponent implements OnInit {
   // AP screen
   @ViewChild('apStencil') ApStencil: ElementRef;
   @ViewChild('countDown') countDown: ElementRef;
-  @ViewChild('apStencilConfirmCommand') apStencilConfirmCommand: ElementRef;
 
   // SVG
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
@@ -63,6 +63,11 @@ export class SvgAutopilotComponent implements OnInit {
 
   activityIconVisibility: string = "hidden;";
   errorIconVisibility: string = "hidden";
+  msgStencilVisibility: string = "hidden";
+  msgStencilInnerHTML: string = "Empty Message Stencil";
+  errorStencilVisibility: string = "hidden";
+  errorStencilInnerText: string = "Empty Error Stencil";
+
 
   ngOnInit() {
   }

@@ -43,26 +43,27 @@
       <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="autoBtn" #autoBtn disabled="true" (click)="buildAndSendCommand('auto')">Auto</button>
     </div>
     <div class="itemWindmode">
-      <mat-slide-toggle class="example-margin" id="windModeBtn" #windModeBtn disabled="true" (click)="buildAndSendCommand('wind')"
+      <mat-slide-toggle class="example-margin" id="windModeBtn" labelPosition="before" #windModeBtn disabled="true" (change)="buildAndSendCommand(isWChecked?'wind':'auto')"
         color="primary"
         checked="checked">Wind</mat-slide-toggle>
     </div>
     <div class="itemTrackmode">
-      <mat-slide-toggle class="example-margin" id="trackModeBtn" #trackModeBtn disabled="true" (click)="buildAndSendCommand('route')"
+      <mat-slide-toggle class="example-margin" id="trackModeBtn" labelPosition="before" #trackModeBtn disabled="true" (change)="buildAndSendCommand(isTChecked?'route':'auto')"
         color="primary"
         checked="checked">Track</mat-slide-toggle>
     </div>
     <div class="itemNxtWp" >
-      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="nxtWpBtn" #nxtWpBtn disabled="true">Next Wpt</button>
+      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="nxtWpBtn" #nxtWpBtn disabled="true" (click)="buildAndSendCommand('route')">Next Wpt</button>
     </div>
     <div class="itemMute">
       <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="muteBtn" #muteBtn disabled="true" (click)="sendSilence()">
-        <i class="fa fa-volume-off" aria-hidden="true"></i>
+        <i class="fa fa-bell-slash" aria-hidden="true"></i>
+        <i class="fa fa-bell" aria-hidden="true"></i>
       </button>
     </div>
     <div class="itemMessage">
       <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="messageBtn" #messageBtn disabled="true" (click)="notificationScroll()">
-        <span class="fa fa-envelope-o" aria-hidden="true" matBadge="3" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
+        <span class="fa fa-envelope" aria-hidden="true" matBadge="3" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
       </button>
     </div>
   </div>

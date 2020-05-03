@@ -1019,16 +1019,18 @@
     </svg>
   </div>
   <div class="apStatusBar" #apStatusBar>
-    <div #countDown style="width: calc((100% - 50px)/2)"></div>
-    <div style="width: calc((100% - 50px)/2)">last alarm txt</div>
+    <div style="width: calc((100% - 50px))">last alarm txt</div>
     <div class="activityIcon" [style.visibility]="activityIconVisibility"><i class="fa fa-exchange" aria-hidden="true"></i></div>
-    <div style="width: 25px;" [style.visibility]="errorIconVisibility"><i class="fa fa-exclamation-triangle" style="color: yellow;" aria-hidden="true"></i></div>
+    <div style="width: 25px;" [style.visibility]="errorIconVisibility"><i class="fa fa-exclamation-triangle" style="color: darkgoldenrod;" aria-hidden="true"></i></div>
   </div>
   <div class="apStencil" #apStencil [@fadeInOut]="isApConnected ? 'connected' : 'disconnected'">
     <p style="font-weight: bold;opacity: 75%;">OFFLINE</p>
     <p style="opacity: 75%;">Press <i class="fa fa-power-off" aria-hidden="true"></i> to connect to SignalK server</p>
   </div>
-  <div class="apStencil confirmCommand" #apStencilConfirmCommand>
-    empty apStencilConfirmCommand
+  <div class="apStencil confirmCommand" [style.visibility]="msgStencilVisibility" [innerHTML]="msgStencilInnerHTML">
+  </div>
+  <div class="apStencil error" [style.visibility]="errorStencilVisibility">
+    <i class="fa fa-exclamation-triangle fa-5x" style="color: darkgoldenrod;padding-top: 15px;" aria-hidden="true"></i>
+    <p [innerHTML]="errorStencilInnerText"></p>
   </div>
 </div>
