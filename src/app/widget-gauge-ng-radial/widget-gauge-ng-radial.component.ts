@@ -1,6 +1,7 @@
 import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, AfterContentInit, AfterContentChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
+import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
@@ -101,7 +102,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   ngAfterContentChecked() {
-    this.resizeWidget();
+    // this.resizeWidget();
   }
 
   subscribePath() {
@@ -415,11 +416,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     }
   }
 
-  resizeWidget() {
-    let rect = this.wrapper.nativeElement.getBoundingClientRect();
-
-    this.gaugeOptions.height = Math.floor(rect.height * 0.88);
-    this.gaugeOptions.width = Math.floor(rect.width * 0.88);
+  onResized(event: ResizedEvent) {
+    this.gaugeOptions.height = Math.floor(event.newHeight * 0.88);
+    this.gaugeOptions.width = Math.floor(event.newWidth * 0.88);
   }
 
   // Method to calculate nice values for min, max and range for the gaugeOptions.majorTicks

@@ -1,11 +1,12 @@
-import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, AfterContentChecked, Input, OnDestroy } from '@angular/core';
+import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
+import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
+import { UnitsService } from '../units.service' ;
 import { AppSettingsService } from '../app-settings.service';
 import { LinearGauge, LinearGaugeOptions } from 'ng-canvas-gauges';
 
@@ -40,7 +41,7 @@ const defaultConfig: IWidgetConfig = {
   styleUrls: ['./widget-gauge-ng-linear.component.scss']
 })
 
-export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
+export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterContentInit {
   @ViewChild('linearWrapperDiv') private wrapper: ElementRef;
   @ViewChild('linearGauge') public linearGauge: LinearGauge;
 
@@ -69,7 +70,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   public gaugeOptions = {} as LinearGaugeOptions;
 
   public isGaugeVertical: Boolean = true;
-  private isInResizeWindow: boolean = false;
 
   constructor(
     public dialog:MatDialog,
@@ -99,10 +99,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   ngAfterContentInit(){
     this.updateGaugeConfig();
-  }
-
-  ngAfterContentChecked() {
-    this.resizeWidget();
   }
 
   subscribePath() {
@@ -348,28 +344,16 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     }
   }
 
-  resizeWidget() {
-    let rect = this.wrapper.nativeElement.getBoundingClientRect();
+  onResized(event: ResizedEvent) {
 
-    if ((this.gaugeOptions.width != rect.width) || (this.gaugeOptions.height != rect.height)) {
-      if (!this.isInResizeWindow) {
-        this.isInResizeWindow = true;
+    this.gaugeOptions.height = event.newHeight;
 
-        setTimeout(() => {
-          let rect = this.wrapper.nativeElement.getBoundingClientRect();
-          this.gaugeOptions.height = rect.height;
-
-          if (this.isGaugeVertical == true) {
-            this.gaugeOptions.width = (rect.height * 0.30);
-          }
-          else {
-            this.gaugeOptions.width = rect.width;
-          }
-
-          this.isInResizeWindow = false;
-          }, 10);
-      }
-
+    if (this.isGaugeVertical == true) {
+      this.gaugeOptions.width = (event.newHeight * 0.30);
+    }
+    else {
+      this.gaugeOptions.width = event.newWidth;
     }
   }
+
 }

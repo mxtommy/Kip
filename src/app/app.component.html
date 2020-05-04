@@ -6,7 +6,7 @@
     <div class="menuBar">
       <div class="menuBarContainer theme-menu">
         <div class="menuBarButtonGroups">
-          <app-alarm-menu></app-alarm-menu>
+
         </div>
         <div class="menuBarButtonGroups">
           <button color="accent"mat-flat-button class="menuBarNavButtons" (click)="pageDown()">
@@ -42,16 +42,39 @@
               </button>
             </mat-menu>
             <mat-menu #themeMenu2="matMenu">
-              <button mat-menu-item (click)="setTheme('default-light')">Default</button>
-              <button mat-menu-item (click)="setTheme('signalk-light')">Signal K</button>
-              <button mat-menu-item (click)="setTheme('high-contrast-light')">High Contrast</button>
-              <button mat-menu-item (click)="setTheme('night-dark')">Night (red)</button>
-              <button mat-menu-item (click)="setTheme('platypus-light')">Platypus</button>
-              <button mat-menu-item (click)="setTheme('darkBlue-dark')">Dark Blue</button>
-              <button mat-menu-item (click)="setTheme('modern-dark')">Modern Dark</button>
-              <button mat-menu-item (click)="setTheme('black-dark')">Black</button>
+              <button mat-menu-item (click)="setTheme('default-light')">
+                <span><i *ngIf="themeName == 'default-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Default</span>
+                  <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <button mat-menu-item (click)="setTheme('signalk-light')">
+                <span><i *ngIf="themeName == 'signalk-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Signal K</span>
+                  <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <button mat-menu-item (click)="setTheme('high-contrast-light')">
+                <span><i *ngIf="themeName == 'high-contrast-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> High Contrast</span>
+                  <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <button mat-menu-item (click)="setTheme('night-dark')">
+                <span><i *ngIf="themeName == 'night-dark' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Night (red)</span>
+                  <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <button mat-menu-item (click)="setTheme('platypus-light')">
+                <span><i *ngIf="themeName == 'platypus-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Platypus</span>
+                <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <button mat-menu-item (click)="setTheme('darkBlue-dark')">
+                <span><i *ngIf="themeName == 'darkBlue-dark' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Dark Blue</span>
+                <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <button mat-menu-item (click)="setTheme('modern-dark')">
+                <span><i *ngIf="themeName == 'modern-dark' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Modern Dark</span>
+                <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button>
+              <!-- <button mat-menu-item (click)="setTheme('black-dark')">
+                <span><i *ngIf="themeName == 'black-dark' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Black</span>
+                <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+              </button> -->
           </mat-menu>
-
         </div>
       </div>
     </div>

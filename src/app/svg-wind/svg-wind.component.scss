@@ -39,6 +39,13 @@
         stroke: mat-color($wind, starboard);
     }
 
+    .rudderPort {
+      fill: mat-color($wind, rudder-port);
+    }
+    .rudderStarboard  {
+      fill: mat-color($wind, rudder-starboard);
+    }
+
     .true-wind {
         fill: mat-color($wind, true-wind-background)
     }
@@ -46,4 +53,11 @@
     .app-wind {
         fill: mat-color($wind, app-wind-background)
     }
+}
+
+// for Autopilot
+.activityIcon {
+  opacity: 40%;
+  color: white;
+  width:25px;
 }

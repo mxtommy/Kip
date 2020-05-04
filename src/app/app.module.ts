@@ -21,10 +21,12 @@ import {
   MatExpansionModule,
   MatSnackBarModule,
   MatBadgeModule,
+  MatSlideToggleModule,
 } from '@angular/material';
 
 
 import { AngularSplitModule } from 'angular-split';
+import { AngularResizedEventModule } from 'angular-resize-event';
 
 import { AppComponent } from './app.component';
 
@@ -76,6 +78,8 @@ import { GaugesModule } from 'ng-canvas-gauges';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
+import { WidgetAutopilotComponent } from './widget-autopilot/widget-autopilot.component';
+import { SvgAutopilotComponent } from './svg-autopilot/svg-autopilot.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -123,6 +127,8 @@ const appRoutes: Routes = [
     SettingsUnitsComponent,
     WidgetIframeComponent,
     AlarmMenuComponent,
+    WidgetAutopilotComponent,
+    SvgAutopilotComponent,
   ],
   imports: [
     BrowserModule,
@@ -131,6 +137,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */ } ),
     AngularSplitModule,
+    AngularResizedEventModule,
     BrowserAnimationsModule,
 
     MatMenuModule,
@@ -148,6 +155,7 @@ const appRoutes: Routes = [
     MatInputModule,
     MatExpansionModule,
     MatBadgeModule,
+    MatSlideToggleModule,
     GaugesModule,
   ],
   entryComponents: [
@@ -164,6 +172,7 @@ const appRoutes: Routes = [
     WidgetSwitchComponent,
     WidgetIframeComponent,
     WidgetTutorialComponent,
+    WidgetAutopilotComponent,
 
     //dialogs
     ModalWidgetComponent,

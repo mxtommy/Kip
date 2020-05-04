@@ -1,6 +1,5 @@
 {
   "name": "@mxtommy/kip",
-
   "version": "1.0.3",
   "license": "MIT",
   "keywords": [
@@ -41,6 +40,7 @@
     "@angular/platform-browser-dynamic": "7.0.4",
     "@angular/platform-server": "7.0.4",
     "@angular/router": "7.0.4",
+    "angular-resize-event": "^1.2.1",
     "angular-split": "^1.0.0-rc.3",
     "chart.js": "^2.7.3",
     "compare-versions": "^3.6.0",

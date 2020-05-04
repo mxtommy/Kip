@@ -22,6 +22,7 @@ export interface deltaMessage {
   context: string;
   self?: string;
   version?: string;
+  message?: string;
   accessRequest?: {
     permission?: string;
     token?: string

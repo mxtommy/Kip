@@ -1,10 +1,10 @@
-import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import {MatDialog } from '@angular/material';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
-import { SignalkRequestsService } from '../signalk-requests.service';
+import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
@@ -22,7 +22,6 @@ const defaultConfig: IWidgetConfig = {
   putEnable: false,
   putMomentary: false,
   putMomentaryValue: true
-
 };
 
 
@@ -44,6 +43,8 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
   pressed = false;
   timeoutHandler;
 
+  skRequestSub = new Subscription; // Request result observer
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -62,10 +63,12 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
     }
 
     this.subscribePath();
+    this.subscribeSKRequest();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
+    this.subscribeSKRequest();
   }
 
   subscribePath() {
@@ -87,8 +90,28 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
     }
   }
 
-  openWidgetSettings() {
+  subscribeSKRequest() {
+    this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID == this.widgetUUID) {
+        if (typeof requestResult.requestId !== 'undefined') {
+          if (requestResult.state === 'COMPLETED') {
+            if (requestResult.statusCode === 403) {
+              alert('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + 'You must be authenticated to send command');
+            } else if (requestResult.statusCode !== 200) {
+              alert('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + requestResult.message);
+              console.log('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + requestResult.message);
+            }
+          }
+        }
+      }
+    });
+  }
 
+  unsubscribeSKRequest() {
+    this.skRequestSub.unsubscribe();
+  }
+
+  openWidgetSettings() {
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
       data: this.config
@@ -103,11 +126,8 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
       }
-
     });
   }
-
-
 
   handleClickDown() {
     if (!this.config.putEnable) { return; }
@@ -117,30 +137,28 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
       this.SignalkRequestsService.putRequest(
         this.config.paths['boolPath'].path,
         this.config.paths['boolPath'].source,
-        !this.state);
+        this.widgetUUID
+      );
+
+      if (!this.state) {
         return;
+      }
     } else {
       // momentary mode
       this.pressed = true;
 
       // send it once to start
-      this.SignalkRequestsService.putRequest(
-        this.config.paths['boolPath'].path,
-        this.config.paths['boolPath'].source,
-        this.config.putMomentaryValue);
+      this.SignalkRequestsService.putRequest(this.config.paths['boolPath'].path, this.config.paths['boolPath'].source, this.widgetUUID);
+
       //send it again every 20ms
       this.timeoutHandler = setInterval(() => {
-        this.SignalkRequestsService.putRequest(
-          this.config.paths['boolPath'].path,
-          this.config.paths['boolPath'].source,
-          this.config.putMomentaryValue);
-        }, 100);
+        this.SignalkRequestsService.putRequest(this.config.paths['boolPath'].path, this.config.paths['boolPath'].source, this.widgetUUID);
+        this.config.putMomentaryValue;
+      }, 100);
 
       return;
     }
-
   }
-
 
   handleClickUp() {
     if (!this.config.putEnable || !this.pressed) { return; }
@@ -149,25 +167,11 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
       this.pressed = false;
       clearInterval(this.timeoutHandler);
       // momentary mode
-      this.SignalkRequestsService.putRequest(
-        this.config.paths['boolPath'].path,
-        this.config.paths['boolPath'].source,
-        !this.config.putMomentaryValue);
+      this.SignalkRequestsService.putRequest(this.config.paths['boolPath'].path, this.config.paths['boolPath'].source, this.widgetUUID);
+      if (!this.config.putMomentaryValue) {
         return;
+      }
     }
-
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

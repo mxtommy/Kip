@@ -32,15 +32,17 @@ export class NotificationsService {
 
   newNotification(message: string, durtion: number = 10000) {
     console.log(message);
-    
+
     this.notificationsSubject.next({ message: message, duration: durtion});
   }
 
   getNotificationObservable() {
     return this.notificationsSubject.asObservable();
+    return null;
   }
   getAlarmObservable() {
     return this.activeAlarmsSubject.asObservable();
+    return null;
   }
 
   processNotificationDelta(path: string, notif: signalKNotification) {

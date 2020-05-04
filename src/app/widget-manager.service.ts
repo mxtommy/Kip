@@ -17,6 +17,16 @@ export interface IWidgetConfig {
   units?: {
     [key: string]: string; // key should match key in paths, specifies unit for that path
   }
+  usage?: {
+    [key: string]: string[]; // Autopilot: key should match key in paths, specifies autopilot widget possible paths for AP mode
+  }
+  handleTimeout?: {
+    [key: string]: any; // Autopilot: key should match key in paths, specifies autopilot widget paths command timeout handle
+  }
+  typeVal?: {
+    [key: string]: string; // Autopilot: key should match key in paths, specifies autopilot widget paths value type for AP mode
+  }
+
   widgetLabel?: string;
   selfPaths?: boolean;
 
@@ -41,6 +51,7 @@ export interface IWidgetConfig {
   rotateFace?: boolean;
   backgroundColor?: string;
   frameColor?: string;
+  autoStart?: boolean;
 
   //NG Gauge Data
   barColor?: string;

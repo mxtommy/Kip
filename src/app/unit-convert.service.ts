@@ -38,11 +38,15 @@ export class UnitConvertService {
       "km": Qty.swiftConverter('m', 'km'),
       "nm": Qty.swiftConverter('m', 'nmi')
     },
-    'electrity': {
+    'volume': {
+      "liter": Qty.swiftConverter('m^3', 'liter'),
+      "gallon": Qty.swiftConverter('m^3', 'gallon'),
+      "m3": Qty.swiftConverter('m^3', 'm^3'),
+    },
+    'electrical': {
       "volts": function(v) { return v; },
       "amps": function(v) { return v; },
-
-    },    
+    },
     'pressure': {
       "pascal": Qty.swiftConverter('pascal', 'pascal'),
       "hPa": Qty.swiftConverter('pascal', 'hPa'),
@@ -55,13 +59,13 @@ export class UnitConvertService {
       "seconds": Qty.swiftConverter('s', 's'),
       "minutes": Qty.swiftConverter('s', 'minutes'),
       "hours": Qty.swiftConverter('s', 'hours'),
-      "days": Qty.swiftConverter('s', 'days')      
+      "days": Qty.swiftConverter('s', 'days')
     },
     'angularVelocity': {
       "rad/s": Qty.swiftConverter('rad/s', 'rad/s'),
       "deg/s": Qty.swiftConverter('rad/s', 'deg/s'),
       "deg/min": Qty.swiftConverter('rad/s', 'deg/min')
-    }, 
+    },
     'angle': {
       "rad": Qty.swiftConverter('rad', 'rad'),
       "deg": Qty.swiftConverter('rad', 'deg')
@@ -70,11 +74,11 @@ export class UnitConvertService {
       '%': function(v) { return v * 100 },
     }
 
-  }; 
+  };
 
   getConverter() {
     return this.conversions;
   }
-  
+
 
 }

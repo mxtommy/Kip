@@ -1,4 +1,4 @@
-<div class="wrapper" #wrapperDiv>
+<div class="wrapper" #wrapperDiv (resized)="onResized($event)">
   <radial-gauge class="radialGauge" id="{{widgetUUID}}" #radialGauge
     [attr.width]="gaugeOptions.width"
     [attr.height]="gaugeOptions.height"

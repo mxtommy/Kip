@@ -1,10 +1,10 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog } from '@angular/material';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { SignalKService, pathObject } from '../signalk.service';
-import { SignalkRequestsService } from '../signalk-requests.service';
+import { SignalKService } from '../signalk.service';
+import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 
 
@@ -21,8 +21,6 @@ const defaultConfig: IWidgetConfig = {
   selfPaths: true,
 };
 
-
-
 @Component({
   selector: 'app-widget-switch',
   templateUrl: './widget-switch.component.html',
@@ -35,10 +33,12 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
 
   activeWidget: IWidget;
   config: IWidgetConfig;
-  
+
   dataValue: number = null;
   dataTimestamp: number = Date.now();
   valueSub: Subscription = null;
+
+  skRequestSub: Subscription = null;
 
   state: boolean = null;
 
@@ -59,10 +59,12 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
+    this.subscribeSKRequest();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
+    this.unsubscribeSKRequest();
   }
 
   subscribePath() {
@@ -84,15 +86,31 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
     }
   }
 
-
-  sendDelta(value: boolean) {
-   this.SignalkRequestsService.putRequest(this.config.paths['statePath'].path, this.config.paths['statePath'].source, value);
+  subscribeSKRequest() {
+    this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID == this.widgetUUID) {
+        if (typeof requestResult.requestId !== 'undefined') {
+          if (requestResult.state === 'COMPLETED') {
+            if (requestResult.statusCode === 403) {
+              alert('[Status Code ' + requestResult.statusCode + ']: ' + 'You must be authenticated to send command');
+            } else if (requestResult.statusCode !== 200) {
+              // alert('[' + requestResult.statusCode + ']' + cmdResult.message);
+            }
+          }
+        }
+      }
+    });
   }
 
+  unsubscribeSKRequest() {
+    this.skRequestSub.unsubscribe();
+  }
 
+  sendDelta(value: boolean) {
+   this.SignalkRequestsService.putRequest(this.config.paths['statePath'].path, value, this.widgetUUID);
+  }
 
   openWidgetSettings() {
-
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
       data: this.config
@@ -107,16 +125,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
       }
-
     });
-
   }
-
-
-
-
-
-
-
 
 }
