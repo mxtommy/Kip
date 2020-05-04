@@ -96,7 +96,7 @@ const defaultConfig: IWidgetConfig = {
     "windAngleTrueWater": 'TWA',
   },
 
-  selfPaths: true,
+  // selfPaths: true,     // removed option. We never want to operation other vessel's AP!!!
   barColor: 'accent',     // theme palette to select
   autoStart: false,
 };
@@ -549,11 +549,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   sendCommand(cmdAction) {
+
     let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetUUID);
     this.apScreen.activityIconVisibility = "visible";
     setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 
-    console.log("AP Action: " + cmdAction["value"]);
+    console.log("AP Action:\n" + JSON.stringify(cmdAction));
 
   }
 
@@ -562,18 +563,11 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     clearTimeout(this.handleReceiveTimeout);
     this.handleReceiveTimeout = setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 
-    if (typeof cmdResult.requestId !== 'undefined') {
-      if (cmdResult.state === 'COMPLETED') {
-        if (cmdResult.statusCode === 403) {
-          cmdResult.message = "You must be authenticated to send command. Request an Authorization Token in Kip configuration. The request must be approved by a SignalK admin in Security > Access Requests."
-          this.displayApError(cmdResult);
-          this.apScreen.errorIconVisibility = 'visible';
-        } else if (cmdResult.statusCode !== 200) {
-          this.displayApError(cmdResult);
-        }
-      }
+    if (cmdResult.statusCode != 200){
+      this.displayApError(cmdResult);
+    } else {
+      console.log("AP Received: \n" + JSON.stringify(cmdResult));
     }
-    console.log("AP Received: \n" + JSON.stringify(cmdResult));
   }
 
   startConfirmCmd(cmd: string, message: string) {
@@ -618,7 +612,11 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   displayApError(cmdResult: skRequest) {
-    this.apScreen.errorStencilInnerText = cmdResult.message + " - Status Code " + cmdResult.statusCode;
+    let errMsg = cmdResult.statusCode + " - " +cmdResult.statusCodeDescription;
+    if (cmdResult.message){
+      errMsg = errMsg + " Server Message: " + cmdResult.message;
+    }
+    this.apScreen.errorStencilInnerText = errMsg;
     this.apScreen.errorStencilVisibility = "visible";
 
     clearTimeout(this.handleConfirmActionTimeout);
@@ -626,7 +624,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.handleConfirmActionTimeout = setTimeout(() => {
       this.apScreen.errorStencilVisibility = "hidden";
       this.apScreen.errorStencilInnerText = "";
-    }, 5000);
+    }, 6000);
     this.apScreen.errorIconVisibility = 'visible';
   }
 

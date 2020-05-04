@@ -7,11 +7,22 @@ import { deltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
 
-
+const deltaStatusCodes = {
+  200: "The request was successfully.",
+  202: "The request is awaiting authorization.",
+  400: "Bad Client request format.",
+  401: "The request has not been applied because it lacks valid authentication credentials.",
+  403: "You must be authenticated to send command. Request a Client Authorization Token from Kip configuration. The request must be approved by a SignalK admin in Security > Access Requests.",
+  405: "The server does not support the request.",
+  500: "The request failed.",
+  502: "Something went wrong carrying out the request on the server side.",
+  504: "Timeout on the server side trying to carry out the request."
+}
 export interface skRequest {
   requestId: string;
   state: string;
   statusCode: number;
+  statusCodeDescription?: string;
   widgetUUID?: string;
   message?: string;
 }
@@ -85,11 +96,12 @@ export class SignalkRequestsService {
      */
   public putRequest(path: string, value: any, widgetUUID: string): string {
     let requestId = this.newUuid();
-    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
+    let selfContext: string = "vessels.self";    // TODO: hard coded context. Could be dynamic at some point
     let message = {
+      "context": selfContext,
       "requestId": requestId,
       "put": {
-        "path": noSelfPath,
+        "path": path,
         "value": value
       }
     }
@@ -107,29 +119,44 @@ export class SignalkRequestsService {
   }
 
   private updateRequest(delta: deltaMessage) {
-   let index = this.requests.findIndex(r => r.requestId == delta.requestId);
+    let index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
       this.requests[index].statusCode = delta.statusCode;
       this.requests[index].message = delta.message;
+
+      const currentStatusCode = deltaStatusCodes[delta.statusCode];
+      if (typeof currentStatusCode == 'undefined') {
+        this.requests[index].statusCodeDescription = "Unknown request Status Code returned."
+      } else {
+        this.requests[index].statusCodeDescription = currentStatusCode;
+      }
+
+      if (this.requests[index].statusCode == 202) {
+        this.NotificationsService.newNotification(this.requests[index].statusCodeDescription);
+        return;
+      }
+
       if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
         this.AppSettingsService.setSignalKToken(delta.accessRequest.token);
-        this.NotificationsService.newNotification("Read/Write Token request approval received for server");
-        console.log("New R/W token received");
+        this.NotificationsService.newNotification(delta.accessRequest.permission + ": Read/Write Token request response received for server.");
+        console.log(delta.accessRequest.permission + ": New R/W token response received");
       }
 
       try {
-        this.requestStatus.next(this.requests[index]); // Broadcast results
-        this.requests.splice(index, 1); // subject dispatched, cleanup array
+        this.requestStatus.next(this.requests[index]);    // Broadcast results
+        this.requests.splice(index, 1);                 // result dispatched, cleanup array
       } catch (err) {
         this.requestStatus.error(err);
         console.log(err);
         this.requests = []; // flush array to clean values that will become stale post error
       }
+
+    } else {
+      this.NotificationsService.newNotification("Received Unknown PUT delta:\n" + JSON.stringify(delta));
+      console.log("Received Unknown PUT delta requestId:\n" + JSON.stringify(delta))
     }
   }
-
-
   /**
    * Subscribe to SignalK request response. This allows you to inspect server response information such as State, Status Codes and such for further processing logic. Subscription object should be used for the Return :)
    *
