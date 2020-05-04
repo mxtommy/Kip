@@ -96,12 +96,13 @@ export class SignalkRequestsService {
      */
   public putRequest(path: string, value: any, widgetUUID: string): string {
     let requestId = this.newUuid();
+    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
     let selfContext: string = "vessels.self";    // TODO: hard coded context. Could be dynamic at some point
     let message = {
       "context": selfContext,
       "requestId": requestId,
       "put": {
-        "path": path,
+        "path": noSelfPath,
         "value": value
       }
     }

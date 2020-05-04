@@ -67,6 +67,8 @@ export class SvgAutopilotComponent implements OnInit {
   msgStencilInnerHTML: string = "Empty Message Stencil";
   errorStencilVisibility: string = "hidden";
   errorStencilInnerText: string = "Empty Error Stencil";
+  messageVisibility: string = "hidden";
+  messageInnerText: string = "";
 
 
   ngOnInit() {

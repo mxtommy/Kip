@@ -1019,7 +1019,7 @@
     </svg>
   </div>
   <div class="apStatusBar" #apStatusBar>
-    <div style="width: calc((100% - 50px))">last alarm txt</div>
+    <div class="" style="width: calc((100% - 50px))" [style.visibility]="messageVisibility" [innerText]="messageInnerText"></div>
     <div class="activityIcon" [style.visibility]="activityIconVisibility"><i class="fa fa-exchange" aria-hidden="true"></i></div>
     <div style="width: 25px;" [style.visibility]="errorIconVisibility"><i class="fa fa-exclamation-triangle" style="color: darkgoldenrod;" aria-hidden="true"></i></div>
   </div>

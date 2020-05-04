@@ -185,20 +185,24 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   currentRudder: number = null;
   rudderSub: Subscription = null;
 
+  skApNotificationSub =  new Subscription;
+  skRequestSub = new Subscription; // signalk-Request result observer
+
   // Widget var
   handleCountDownCounterTimeout = null;
   handleConfirmActionTimeout = null;
-  countDownValue: number = 0;
+  handleMessageTimeout = null;
   handleReceiveTimeout = null;
+  handleDisplayErrorTimeout = null;
+  countDownValue: number = 0;
   actionToBeConfirmed: string = "";
-  skPathToAck = '';
+  skPathToAck: string = "";
   preferedDisplayMode = defaultPpreferedDisplayMode;
   isWChecked: boolean = false;       // used for Wind toggle
   isTChecked: boolean = false;       // used for Track toggle
   isApConnected: boolean = false;
-
-  // cmdConfirmed: boolean = false;
-  skRequestSub = new Subscription; // Request result observer
+  notificationsArray = {};
+  alarmsCount: number = 0;
 
   constructor(
     public dialog:MatDialog,
@@ -220,7 +224,21 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
+    //  this.demoMode(); return; // demo mode for troubleshooting
   }
+
+  demoMode() {
+    // var headingPath = 'environment.wind.angleTrueWater';
+    // this.setPilotStatus('wind');
+    // this.buildHeadindValue( headingPath, 1.74);
+    // clearTimeout(displayByPathParams[headingPath].handleTimeout);
+    this.setNotificationMessage('{"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift"}}');
+    // powerOffIconDiv.style.visibility = 'hidden';
+    // powerOnIconDiv.style.visibility = 'visible';
+    // countDownCounterDiv.innerHTML = countDownDefault.toString();
+  }
+
+
 
   ngOnDestroy() {
     this.stopAllSubscriptions();
@@ -233,6 +251,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.subscribeAPState();
     this.subscribeAPTargetAppWind();
     this.subscribeSKRequest();
+    this.subscribeAPNotification();
     console.log("Autopilot Sub Started");
   }
 
@@ -243,7 +262,22 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.unsubscribeAPState();
     this.unsubscribeAPTargetAppWind();
     this.unsubscribeSKRequest();
+    this.unsubscribeAPNotification();
     console.log("Autopilot Subs Stopped");
+  }
+
+  subscribeAPNotification() {
+    this.unsubscribeAPTargetAppWind();
+    if (typeof(this.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
+    this.skApNotificationSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apNotifications'].path, this.config.paths['apNotifications'].source).subscribe(
+      newValue => {
+          this.setNotificationMessage(newValue);
+        }
+    );
+  }
+
+  unsubscribeAPNotification() {
+    this.skApNotificationSub.unsubscribe();
   }
 
   subscribeSKRequest() {
@@ -422,7 +456,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
 
     this.isApConnected = true;
-    this.muteBtn.disabled = false;
+    this.muteBtn.disabled = true;
     this.messageBtn.disabled = false;
   }
 
@@ -487,7 +521,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
         this.autoBtn.disabled = false;
         this.standbyBtn.disabled = false;
 
-        this.windModeBtn.disabled = true;
+        this.windModeBtn.disabled = false;
         this.plus1Btn.disabled = false;
         this.plus10Btn.disabled = false;
         this.minus1Btn.disabled = false;
@@ -525,6 +559,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if ((this.actionToBeConfirmed !== '')&&(this.actionToBeConfirmed !== cmd)) {
       this.clearConfirmCmd();
     }
+    if (((cmd === 'tackToPort')||(cmd === 'tackToStarboard'))&&(this.actionToBeConfirmed === '')) {
+      this.confirmTack(cmd);
+      return null;
+    }
     if ((cmd === 'route')&&(this.currentAPState === 'route')&&(this.actionToBeConfirmed === '')) {
       this.confirmAdvanceWaypoint(cmd);
       return null;
@@ -548,14 +586,27 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.startConfirmCmd(cmd, message);
   }
 
-  sendCommand(cmdAction) {
+  confirmTack(cmd: string) {
+    let message = "Repeat same key<br>to confirm<br>tack to ";
+    if (cmd === "tackToPort") {
+      message += "port";
+      this.actionToBeConfirmed = cmd;
+    } else if (cmd === "tackToStarboard") {
+        message += "starboard";
+        this.actionToBeConfirmed = cmd;
+      } else {
+          this.actionToBeConfirmed = "";
+          return null;
+        }
+    this.startConfirmCmd(cmd, message);
+  }
 
+  sendCommand(cmdAction) {
     let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetUUID);
     this.apScreen.activityIconVisibility = "visible";
     setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 
     console.log("AP Action:\n" + JSON.stringify(cmdAction));
-
   }
 
   commandReceived(cmdResult: skRequest) {
@@ -619,16 +670,104 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.apScreen.errorStencilInnerText = errMsg;
     this.apScreen.errorStencilVisibility = "visible";
 
-    clearTimeout(this.handleConfirmActionTimeout);
+    clearTimeout(this.handleDisplayErrorTimeout);
 
-    this.handleConfirmActionTimeout = setTimeout(() => {
+    this.handleDisplayErrorTimeout = setTimeout(() => {
       this.apScreen.errorStencilVisibility = "hidden";
       this.apScreen.errorStencilInnerText = "";
     }, 6000);
     this.apScreen.errorIconVisibility = 'visible';
   }
 
-  notificationScroll(){}
+  getNextNotification(skPath: string): string {
+    let notificationsKeys = Object.keys(this.notificationsArray);
+    let newSkPathToAck: string = "";
+    let index: number = 0;
+    if (notificationsKeys.length > 0) {
+      if (typeof skPath !== "undefined") {
+        index = notificationsKeys.indexOf(skPath) + 1;
+      } else {
+          index = 0;
+        }
+      if (notificationsKeys.length <= index) {
+        index = 0;
+      }
+      newSkPathToAck = notificationsKeys[index];
+    }
+    return newSkPathToAck;
+  }
 
-  sendSilence() {}
+  setNotificationMessage(value) {
+    this.apScreen.activityIconVisibility = "visible";
+    clearTimeout(this.handleReceiveTimeout);
+    this.handleReceiveTimeout = setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
+
+    if (typeof value.path !== 'undefined') {
+      value.path = value.path.replace('notifications.', '');
+      if (typeof value.value !== 'undefined') {
+        if (value.value.state === 'normal') {
+          if (this.apScreen.messageInnerText === this.notificationsArray[value.path]) {
+            this.apScreen.messageInnerText = '';
+          }
+          delete this.notificationsArray[value.path]
+        } else {
+            this.notificationsArray[value.path] = value.value.message.replace("Pilot", "");
+            this.apScreen.messageInnerText = this.notificationsArray[value.path];
+          }
+      }
+    }
+    this.alarmsCount = Object.keys(this.notificationsArray).length;
+    if (this.alarmsCount > 0) {
+      this.muteBtn.disabled = false;
+      if (this.apScreen.messageInnerText == "") {
+        this.apScreen.messageInnerText = Object.keys(this.notificationsArray)[0];
+      }
+    } else {
+        this.muteBtn.disabled = true;
+        this.alarmsCount = 0;
+        this.apScreen.messageInnerText = "";
+      }
+  }
+
+  notificationToValue(skPathToAck: string): string {
+    let message: string = this.notificationsArray[skPathToAck];
+    if (typeof message == "undefined") {
+      message = "No alarm present...";
+    }
+    return message;
+  }
+
+  notificationScroll() {
+    if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
+      this.skPathToAck = Object.keys(this.notificationsArray)[0];
+    }
+
+    this.skPathToAck = this.getNextNotification(this.skPathToAck);
+    // Not sure about this DIV ??? May be message area???
+    // silenceScreenTextDiv.innerHTML = notificationToValue(skPathToAck);
+    this.apScreen.messageInnerText = this.notificationToValue(this.skPathToAck);
+    this.apScreen.messageVisibility = 'visible';
+    clearTimeout(this.handleMessageTimeout);
+    this.handleMessageTimeout = setTimeout(() => {
+      this.apScreen.messageInnerText = "";
+      this.apScreen.messageVisibility = 'hidden';
+    }, 2000);
+  }
+
+  sendSilence() {
+    if (this.apScreen.messageVisibility != 'visible') {
+      this.apScreen.messageVisibility = 'visible';
+
+      if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
+        this.skPathToAck = Object.keys(this.notificationsArray)[0];
+      }
+    } else {
+        if (this.skPathToAck !== "") {
+          this.sendCommand({"path":"notifications." + this.skPathToAck + ".state","value":"normal"});
+          // this.sendCommand({"path":"notifications." + skPathToAck + ".method","value":[]});
+        }
+        this.apScreen.messageVisibility = 'hidden';
+      }
+      this.apScreen.messageInnerText = this.notificationToValue(this.skPathToAck);
+  }
 }
