@@ -38,11 +38,9 @@ export class NotificationsService {
 
   getNotificationObservable() {
     return this.notificationsSubject.asObservable();
-    return null;
   }
   getAlarmObservable() {
     return this.activeAlarmsSubject.asObservable();
-    return null;
   }
 
   processNotificationDelta(path: string, notif: signalKNotification) {
@@ -60,7 +58,6 @@ export class NotificationsService {
               ||(JSON.stringify(this.activeAlarms[path].method) != JSON.stringify(notif.method)) ) { // no easy way to compare arrays??? ok...
           this.activeAlarms[path] = notif;
           this.activeAlarmsSubject.next(this.activeAlarms);
-          console.log("u");
 
         }
       } else {

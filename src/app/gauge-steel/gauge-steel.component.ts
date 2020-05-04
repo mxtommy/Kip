@@ -68,6 +68,7 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
   @Input('value') value: number;
   gaugeWidth: number = 0;
   gaugeHeight: number = 0;
+  isInResizeWindow: boolean = false;
   gaugeStarted: boolean = false;
 
   constructor() { }
@@ -202,10 +203,17 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
     if (event.newWidth < 50) {
       return;
     }
+    if (!this.isInResizeWindow) {
+      this.isInResizeWindow = true;
 
-    this.gaugeWidth = event.newWidth;
-    this.gaugeHeight = event.newHeight;
-    this.startGauge();
+      setTimeout(() => { 
+        let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
+        this.gaugeWidth = rect.width; 
+        this.gaugeHeight = rect.height;
+        this.isInResizeWindow = false;
+        this.startGauge();
+         }, 1000);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
