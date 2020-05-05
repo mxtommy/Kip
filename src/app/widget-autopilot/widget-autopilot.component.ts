@@ -1,4 +1,4 @@
-import { ViewChild, Input, ElementRef, Component, HostBinding, OnInit, AfterContentInit, AfterContentChecked, OnDestroy, ViewChildren, ContentChild, ContentChildren } from '@angular/core';
+import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog, MatButton } from '@angular/material';
 
@@ -204,6 +204,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   notificationsArray = {};
   alarmsCount: number = 0;
 
+  notificationTest = {};
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -224,18 +226,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
-    //  this.demoMode(); return; // demo mode for troubleshooting
+    this.demoMode(); return; // demo mode for troubleshooting
   }
 
   demoMode() {
-    // var headingPath = 'environment.wind.angleTrueWater';
-    // this.setPilotStatus('wind');
-    // this.buildHeadindValue( headingPath, 1.74);
-    // clearTimeout(displayByPathParams[headingPath].handleTimeout);
-    this.setNotificationMessage('{"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift"}}');
-    // powerOffIconDiv.style.visibility = 'hidden';
-    // powerOnIconDiv.style.visibility = 'visible';
-    // countDownCounterDiv.innerHTML = countDownDefault.toString();
+
+    // this.setNotificationMessage('{"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift"}}');
   }
 
 
@@ -267,11 +263,16 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   subscribeAPNotification() {
-    this.unsubscribeAPTargetAppWind();
     if (typeof(this.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
     this.skApNotificationSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apNotifications'].path, this.config.paths['apNotifications'].source).subscribe(
       newValue => {
+
+          if (newValue == null) {
+            console.log("undefined:" + newValue);
+          } else {
           this.setNotificationMessage(newValue);
+          console.log(newValue);
+          }
         }
     );
   }
@@ -315,7 +316,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   subscribeAPState() {
-    this.unsubscribeAPState();
     if (typeof(this.config.paths['apState'].path) != 'string') { return } // nothing to sub to...
     this.apStateSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apState'].path, this.config.paths['apState'].source).subscribe(
       newValue => {
@@ -326,11 +326,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   unsubscribeAPState() {
-    if (this.apStateSub !== null) {
       this.apStateSub.unsubscribe();
-      this.apStateSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apState'].path);
-    }
   }
 
   subscribeHeading() {

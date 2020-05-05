@@ -93,15 +93,14 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
   subscribeSKRequest() {
     this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetUUID) {
-        if (typeof requestResult.requestId !== 'undefined') {
-          if (requestResult.state === 'COMPLETED') {
-            if (requestResult.statusCode === 403) {
-              alert('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + 'You must be authenticated to send command');
-            } else if (requestResult.statusCode !== 200) {
-              alert('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + requestResult.message);
-              console.log('[Widget Name: ' + this.config.widgetLabel + ']: Status Code: ' + requestResult.statusCode + '\n' + requestResult.message);
-            }
+        if (requestResult.statusCode != 200){
+          let errMsg = requestResult.statusCode + " - " +requestResult.statusCodeDescription;
+          if (requestResult.message){
+            errMsg = errMsg + " Server Message: " + requestResult.message;
           }
+          alert('[Widget Name: ' + errMsg);
+        } else {
+          console.log("AP Received: \n" + JSON.stringify(requestResult));
         }
       }
     });
