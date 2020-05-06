@@ -30,10 +30,10 @@ export class NotificationsService {
 
   constructor() { }
 
-  newNotification(message: string, durtion: number = 10000) {
+  newNotification(message: string, duration: number = 10000) {
     console.log(message);
 
-    this.notificationsSubject.next({ message: message, duration: durtion});
+    this.notificationsSubject.next({ message: message, duration: duration});
   }
 
   getNotificationObservable() {
@@ -53,7 +53,7 @@ export class NotificationsService {
     } else {
       if (path in this.activeAlarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.activeAlarms[path].state != notif.state) 
+        if (    (this.activeAlarms[path].state != notif.state)
               ||(this.activeAlarms[path].message != notif.message)
               ||(JSON.stringify(this.activeAlarms[path].method) != JSON.stringify(notif.method)) ) { // no easy way to compare arrays??? ok...
           this.activeAlarms[path] = notif;

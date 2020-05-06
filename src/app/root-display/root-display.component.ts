@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SignalKConnectionService } from '../signalk-connection.service';
+import { NotificationsService } from '../notifications.service';
 
 import { AppSettingsService } from '../app-settings.service';
 import { LayoutSplitsService } from '../layout-splits.service';
@@ -10,7 +11,7 @@ import { LayoutSplitsService } from '../layout-splits.service';
 @Component({
   selector: 'app-root-display',
   templateUrl: './root-display.component.html',
-  styleUrls: ['./root-display.component.css']
+  styleUrls: []
 })
 export class RootDisplayComponent implements OnInit, OnDestroy {
 
@@ -23,13 +24,13 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
 
-  connectionOverlayDisplay = "none";
   connectionStatusSub: Subscription;
 
   constructor(  private AppSettingsService: AppSettingsService,
                 private SignalKConnectionService: SignalKConnectionService,
                 private LayoutSplitsService: LayoutSplitsService,
-                private route: ActivatedRoute
+                private route: ActivatedRoute,
+                private notificationsService : NotificationsService,
                 ) { }
 
   ngOnInit() {
@@ -55,11 +56,13 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
     );
 
     this.connectionStatusSub = this.SignalKConnectionService.getEndpointWSStatus().subscribe(
-      status => { 
+      status => {
         if (status) {
-          this.connectionOverlayDisplay = "none";
+          //TODO: Issue with the sub being initialized to true and update to true very
+          // fast, causing view content changes error. No solution for now
+          this.notificationsService.newNotification("Connected to server.", 1000);
         } else {
-          this.connectionOverlayDisplay = "block";
+          this.notificationsService.newNotification("Lost connection to server. Attempting reconnection...", 0);
         }
       }
     );

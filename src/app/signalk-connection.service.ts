@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { of ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { of , Observable , BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
@@ -12,7 +12,7 @@ import { NotificationsService } from './notifications.service';
 
 
 interface signalKEndpointResponse {
-    endpoints: { 
+    endpoints: {
         v1: {
             version: string;
             "signalk-http"?: string;
@@ -38,7 +38,7 @@ export interface signalKStatus {
     },
     websocket: {
         status: boolean;
-        message: string;        
+        message: string;
     }
 
 }
@@ -91,16 +91,16 @@ export class SignalKConnectionService {
         private SignalKService: SignalKService,
         private SignalKDeltaService: SignalKDeltaService,
         private SignalKFullService: SignalKFullService,
-        private AppSettingsService: AppSettingsService, 
+        private AppSettingsService: AppSettingsService,
         private NotificationsService: NotificationsService,
-        private http: HttpClient) 
+        private http: HttpClient)
     {
         // when signalKUrl changes, do stuff
         this.AppSettingsService.getSignalKURLAsO().subscribe(
           newURL => {
             this.signalKURL = newURL;
             if (this.webSocket !== null) {
-              
+
             }
             this.resetSignalK();
           }
@@ -133,7 +133,7 @@ export class SignalKConnectionService {
         this.restStatusOk.next(false);
         this.restStatusMessage.next('waiting for endpoint');
 
-        
+
         let fullURL = this.signalKURL;
         let re = new RegExp("signalk/?$");
         if (!re.test(fullURL)) {
@@ -144,13 +144,13 @@ export class SignalKConnectionService {
             // when we go ok, this runs
             response => {
                 this.signalKURLOK.next(true);
-                this.signalKURLMessage.next("HTTP " + response.status + ": " + response.statusText 
+                this.signalKURLMessage.next("HTTP " + response.status + ": " + response.statusText
                     + ". Server: " + response.body.server.id + " Ver: " + response.body.server.version);
                 this.endpointREST = response.body.endpoints.v1["signalk-http"];
                 this.endpointWS = response.body.endpoints.v1["signalk-ws"];
                 this.callREST();
                 this.connectEndpointWS();
-                
+
             },
             // When not ok, this runs...
             (err: HttpErrorResponse) => {
@@ -165,6 +165,7 @@ export class SignalKConnectionService {
                 this.signalKURLOK.next(false);
                 this.signalKURLMessage.next(err.message);
                 this.webSocketStatusOK.next(false);
+                this.restStatusOk.next(false);
             }
         );
     }
@@ -175,8 +176,8 @@ export class SignalKConnectionService {
             response => {
                 this.restStatusOk.next(true);
                 this.restStatusMessage.next("HTTP " + response.status + ": " + response.statusText );
-                this.SignalKFullService.processFullUpdate(response.body);   
-                
+                this.SignalKFullService.processFullUpdate(response.body);
+
             },
             // When not ok, this runs...
             (err: HttpErrorResponse) => {
@@ -191,7 +192,7 @@ export class SignalKConnectionService {
                 this.restStatusOk.next(false);
                 this.restStatusMessage.next(err.message);
             }
-        );    
+        );
     }
 
     connectEndpointWS() {
@@ -210,7 +211,6 @@ export class SignalKConnectionService {
         this.webSocket.onopen = function (event){
             this.webSocketStatusOK.next(true);
             this.webSocketStatusMessage.next("Connected");
-            this.NotificationsService.newNotification("Connected to server", 1000);
         }.bind(this);
 
         this.webSocket.onerror = function (event) {
@@ -241,7 +241,7 @@ export class SignalKConnectionService {
     }
 
     postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
-        
+
 
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/"+ configName;
@@ -260,7 +260,7 @@ export class SignalKConnectionService {
 
 
 
-    
+
 
     getApplicationDataKeys(scope: string): Observable<string[]> {
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
@@ -274,7 +274,7 @@ export class SignalKConnectionService {
 
       return this.http.get<string[]>(url, options).pipe(
         tap(_ => {
-          console.log("Server Stored Configs for "+ scope +": "); console.log(_) 
+          console.log("Server Stored Configs for "+ scope +": "); console.log(_)
         }),
         catchError(this.handleError<string[]>('getApplicationDataKeys', []))
       );
@@ -291,7 +291,7 @@ export class SignalKConnectionService {
       }
       return this.http.get<appSettings>(url, options).pipe(
         tap(_ => {
-          console.log("Fetched Stored Configs for "+ scope +" / "+ configName); 
+          console.log("Fetched Stored Configs for "+ scope +" / "+ configName);
         }),
         catchError(this.handleError<appSettings>('getApplicationData'))
       );

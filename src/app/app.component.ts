@@ -64,13 +64,13 @@ export class AppComponent implements OnInit, OnDestroy {
     )
     this.DataSetService.startAllDataSets();
 
-    
+
     // Snackbar Notification Code
     this.notificationSub = this.NotificationsService.getNotificationObservable().subscribe(
 
-      appNotififaction => {
-        this._snackBar.open(appNotififaction.message, 'dismiss', {
-          duration: appNotififaction.duration,
+      appNotification => {
+        this._snackBar.open(appNotification.message, 'dismiss', {
+          duration: appNotification.duration,
           verticalPosition: 'top'
         });
       }
