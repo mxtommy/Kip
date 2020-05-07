@@ -43,7 +43,7 @@ export class SignalkRequestsService {
     ) {
       let requestsSub: Subscription; // used to get all the requests from signalk-delta while avoiding circular dependencies in services...
 
-      requestsSub = this.SignalKDeltaService.subcribeRequest().subscribe(
+      requestsSub = this.SignalKDeltaService.subscribeRequest().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
       );
 

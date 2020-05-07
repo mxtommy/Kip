@@ -2,20 +2,27 @@ import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { isNull } from 'util';
 
+/**
+ * Snack-bar notification message interface.
+ */
 export interface AppNotification {
   message: string;
   duration: number;
 }
-
-interface signalKNotification {
+/**
+ * SignalK Notification Object interface.
+ */
+interface SignalKNotification {
   state: string;
   message: string;
   method: string[];
   ack?: boolean;
 }
-
-export interface activeAlarms {
-  [path: string]: signalKNotification;
+/**
+ * Array of active alarms. Contains alarm paths and SignalK notification object details
+ */
+export interface ActiveAlarms {
+  [path: string]: SignalKNotification;
 }
 
 @Injectable({
@@ -24,12 +31,16 @@ export interface activeAlarms {
 export class NotificationsService {
 
   notificationsSubject: Subject<AppNotification> = new Subject<AppNotification>();
-  activeAlarmsSubject: BehaviorSubject<activeAlarms> = new BehaviorSubject<activeAlarms>({});
+  activeAlarmsSubject: BehaviorSubject<ActiveAlarms> = new BehaviorSubject<ActiveAlarms>({});
 
-  activeAlarms: activeAlarms = {};
+  activeAlarms: ActiveAlarms = {};
 
   constructor() { }
-
+  /**
+ * Display Kip Snackbar notification.
+ * @param message Text to be displayed.
+ * @param duration Display duration in milliseconds before automatic dismissal. Duration value of 0 is indefinite or until use clicks Dismiss button. Defaults to 10000 of no value is provided.
+ */
   newNotification(message: string, duration: number = 10000) {
     console.log(message);
 
@@ -42,9 +53,13 @@ export class NotificationsService {
   getAlarmObservable() {
     return this.activeAlarmsSubject.asObservable();
   }
-
-  processNotificationDelta(path: string, notif: signalKNotification) {
-    if (isNull(notif)) {
+/**
+ * Send SignalK Delta update to Kip Notification system to process Alarms and Notifications.
+ * @param path path of Notification message
+ * @param notificationValue Content of the message. Must conform to SignalKNotification interface.
+ */
+  public processNotificationDelta(path: string, notificationValue: SignalKNotification) {
+    if (isNull(notificationValue)) {
       // erase any alarms with path
       if (path in this.activeAlarms) {
         delete this.activeAlarms[path];
@@ -53,23 +68,25 @@ export class NotificationsService {
     } else {
       if (path in this.activeAlarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.activeAlarms[path].state != notif.state)
-              ||(this.activeAlarms[path].message != notif.message)
-              ||(JSON.stringify(this.activeAlarms[path].method) != JSON.stringify(notif.method)) ) { // no easy way to compare arrays??? ok...
-          this.activeAlarms[path] = notif;
+        if (    (this.activeAlarms[path].state != notificationValue.state)
+              ||(this.activeAlarms[path].message != notificationValue.message)
+              ||(JSON.stringify(this.activeAlarms[path].method) != JSON.stringify(notificationValue.method)) ) { // no easy way to compare arrays??? ok...
+          this.activeAlarms[path] = notificationValue;
           this.activeAlarmsSubject.next(this.activeAlarms);
 
         }
       } else {
         // new alarm, add it
-        this.activeAlarms[path] = notif;
+        this.activeAlarms[path] = notificationValue;
         this.activeAlarmsSubject.next(this.activeAlarms);
       }
     }
   }
-
-  // Called when signalk server reset
-  resetAlarms() {
+/**
+ * Clears all Kip Notification Alarm system (internal array and Observers).
+ * Used when server connection need to be reset and the Kip state restored fresh.
+ */
+  public resetAlarms() {
     this.activeAlarms = {};
     this.activeAlarmsSubject.next(this.activeAlarms);
   }

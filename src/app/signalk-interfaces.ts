@@ -1,4 +1,6 @@
-
+/**
+ * Not used
+ */
 export interface updateMessage {
   source: {
     label: string;
@@ -13,7 +15,9 @@ export interface updateMessage {
     value: any;
   }[]
 }
-
+/**
+ * SignalK Delta low level raw message interface.
+ */
 export interface deltaMessage {
   updates?: updateMessage[];
   requestId?: string;

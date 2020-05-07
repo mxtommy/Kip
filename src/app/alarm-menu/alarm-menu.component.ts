@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NotificationsService, activeAlarms } from '../notifications.service';
+import { NotificationsService, ActiveAlarms } from '../notifications.service';
 import { Subscription } from 'rxjs';
 import { Howl, Howler} from 'howler';
 
@@ -13,7 +13,7 @@ export class AlarmMenuComponent implements OnInit {
 
   alarmSub: Subscription;
 
-  alarms: activeAlarms = {};
+  alarms: ActiveAlarms = {};
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;
@@ -79,7 +79,7 @@ export class AlarmMenuComponent implements OnInit {
           case 'emergency':
             if (alarm.method.includes('sound')) { aSev = 2; }
             if (alarm.method.includes('visual')) { vSev = 2; }
-            
+
         }
         audioSev = Math.max(audioSev, aSev);
         visualSev = Math.max(visualSev, vSev)
@@ -111,10 +111,10 @@ export class AlarmMenuComponent implements OnInit {
         case 2:
           this.blinkCrit = true;
           this.blinkWarn = false;
-     
+
       }
 
-    } 
+    }
   }
 
   ackAlarm(path: string, timeout: number = 0) {
