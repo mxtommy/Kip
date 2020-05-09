@@ -1,8 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { SignalKConnectionService } from '../signalk-connection.service';
-import { NotificationsService } from '../notifications.service';
 
 import { AppSettingsService } from '../app-settings.service';
 import { LayoutSplitsService } from '../layout-splits.service';
@@ -24,13 +22,9 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
 
-  connectionStatusSub: Subscription;
-
   constructor(  private AppSettingsService: AppSettingsService,
-                private SignalKConnectionService: SignalKConnectionService,
                 private LayoutSplitsService: LayoutSplitsService,
                 private route: ActivatedRoute,
-                private notificationsService : NotificationsService,
                 ) { }
 
   ngOnInit() {
@@ -54,19 +48,6 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
         this.unlockStatus = unlockStatus;
       }
     );
-
-    this.connectionStatusSub = this.SignalKConnectionService.getEndpointWSStatus().subscribe(
-      status => {
-        if (status) {
-          //TODO: Issue with the sub being initialized to true and update to true very
-          // fast, causing view content changes error. No solution for now
-          this.notificationsService.newNotification("Connected to server.", 1000);
-        } else {
-          this.notificationsService.newNotification("Lost connection to server. Attempting reconnection...", 0);
-        }
-      }
-    );
-
   }
 
   ngOnDestroy() {

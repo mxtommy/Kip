@@ -1,7 +1,5 @@
 <br>
 <mat-card>
-
-
   <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
     <mat-form-field class="almost-full-width">
       <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
@@ -15,12 +13,12 @@
   <table>
     <tr>
       <td>
-        API URL: 
+        API URL:
       </td>
       <td>
-        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointAPIStatus"></i>
-        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointAPIStatus"></i>
-        {{ endpointAPIStatusMessage }}
+        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
+        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
+        {{ signalKConnectionsStatus.endpoint.message }}
       </td>
     </tr>
     <tr>
@@ -28,38 +26,38 @@
         Websocket Status:
       </td>
       <td>
-        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointWSStatus"></i>
-        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointWSStatus"></i>
-        {{ endpointWSMessage }}
+        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
+        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
+        {{ signalKConnectionsStatus.websocket.message }}
       </td>
     </tr>
     <tr>
       <td>
-        HTTP REST Status: 
+        HTTP REST Status:
       </td>
       <td>
-        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointRESTStatus"></i>
-        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!endpointRESTStatus"></i>
-        {{ endpointRESTMessage }}
+        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
+        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
+        {{ signalKConnectionsStatus.rest.message }}
       </td>
     </tr>
     <tr>
       <td>
-        SignalK R/W Token: 
+        SignalK R/W Token:
       </td>
       <td>
-        <div *ngIf="authToken">
+        <div *ngIf="formAuthToken">
           <i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>
-          {{ authToken | slice : 0 : 15}}...
-          <button mat-button 
+          {{ formAuthToken | slice : 0 : 15}}...
+          <button mat-button
             matTooltip="Delete Token"
             (click)="clearAuth()"
             >
               Clear
           </button>
         </div>
-        
-        <div *ngIf="!authToken">
+
+        <div *ngIf="!formAuthToken">
           <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
           <button mat-raised-button color="accent"
             matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed"
@@ -69,7 +67,7 @@
               Request
           </button>
         </div>
-        
+
       </td>
     </tr>
   </table>

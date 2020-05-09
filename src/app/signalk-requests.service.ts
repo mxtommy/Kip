@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subscription ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
@@ -48,9 +48,9 @@ export class SignalkRequestsService {
       );
 
       let endPointStatus: Subscription; // check if the Endpoint are reset
-      endPointStatus = this.SignalKConnectionService.getEndpointAPIStatus().subscribe(
-        status => {
-          if (!status) {
+      endPointStatus = this.SignalKConnectionService.getSignalKConnectionsStatus().subscribe(
+        signalKConnections => {
+          if (!signalKConnections.rest.status) {
             this.requests = []; // flush array to clean values that will become stale post error or server reconnect
           }
         }
@@ -139,7 +139,7 @@ export class SignalkRequestsService {
       }
 
       if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-        this.AppSettingsService.setSignalKToken(delta.accessRequest.token);
+        this.AppSettingsService.setSignalKToken({token: delta.accessRequest.token, new: true});
         this.NotificationsService.newNotification(delta.accessRequest.permission + ": Read/Write Token request response received for server.");
         console.log(delta.accessRequest.permission + ": New R/W token response received");
       }

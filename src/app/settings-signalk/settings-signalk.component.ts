@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { AppSettingsService } from '../app-settings.service';
-import { SignalKConnectionService } from '../signalk-connection.service';
+import { AppSettingsService, SignalKToken, SignalKUrl } from '../app-settings.service';
+import { SignalKConnectionService, SignalKStatus } from '../signalk-connection.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 
 
@@ -14,65 +14,49 @@ import { SignalkRequestsService } from '../signalk-requests.service';
 export class SettingsSignalkComponent implements OnInit {
 
   formSignalKURL: string;
-  authToken: string;
-  
-  endpointAPIStatus: boolean;
-  endpointAPIStatusMessage: string;
-  endpointWSStatus: boolean;
-  endpointWSMessage: string;
-  endpointRESTStatus: boolean;
-  endpointRESTMessage: string;
+  formAuthToken: string;
+
+  signalKConnectionsStatus: SignalKStatus;
+  signalKConnectionsStatusSub: Subscription;
 
   authTokenSub: Subscription;
-  endpointAPIStatusSub: Subscription;
-  endpointAPIStatusMessageSub: Subscription;
-  endpointWSStatusSub: Subscription;
-  endpointWSMessageSub: Subscription;
-  endpointRESTStatusSub: Subscription;
-  endpointRESTMessageSub: Subscription;
-  
+
   constructor(
-    private AppSettingsService: AppSettingsService, 
+    private AppSettingsService: AppSettingsService,
     private SignalKConnectionService: SignalKConnectionService,
     private SignalkRequestsService: SignalkRequestsService) { }
 
   ngOnInit() {
-    // get SignalKurl Status
-    this.formSignalKURL = this.AppSettingsService.getSignalKURL();
-    
-    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => { this.authToken = token; });
+    // get SignalKurl
+    this.formSignalKURL = this.AppSettingsService.getSignalKURL().url;
 
-    // sub for signalk status stuff
-    this.endpointAPIStatusSub = this.SignalKConnectionService.getEndpointAPIStatus().subscribe(status => { this.endpointAPIStatus = status; });
-    this.endpointAPIStatusMessageSub = this.SignalKConnectionService.getEndpointAPIStatusMessage().subscribe(message => { this.endpointAPIStatusMessage = message; });
-    this.endpointWSStatusSub = this.SignalKConnectionService.getEndpointWSStatus().subscribe(status => { this.endpointWSStatus = status; });
-    this.endpointWSMessageSub = this.SignalKConnectionService.getEndpointWSMessage().subscribe(message => { this.endpointWSMessage = message; });
-    this.endpointRESTStatusSub = this.SignalKConnectionService.getEndpointRESTStatus().subscribe(status => { this.endpointRESTStatus = status; });
-    this.endpointRESTMessageSub = this.SignalKConnectionService.getEndpointRESTMessage().subscribe(message => { this.endpointRESTMessage = message; });
+    // sub for R/W Token
+    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
+      this.formAuthToken = token.token;
+    });
+
+    // sub for signalk connection status
+    this.signalKConnectionsStatusSub = this.SignalKConnectionService.getSignalKConnectionsStatus().subscribe(status => {
+      this.signalKConnectionsStatus = status;
+    });
   }
 
 
   ngOnDestroy() {
-    this.endpointAPIStatusSub.unsubscribe();
-    this.endpointAPIStatusMessageSub.unsubscribe();
-    this.endpointWSStatusSub.unsubscribe();
-    this.endpointWSMessageSub.unsubscribe();
-    this.endpointRESTStatusSub.unsubscribe();
-    this.endpointRESTMessageSub.unsubscribe();
+    this.signalKConnectionsStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();
   }
 
   updateSignalKURL() {
-    this.AppSettingsService.setSignalKURL(this.formSignalKURL);
+    this.AppSettingsService.setSignalKURL({url: this.formSignalKURL, new: true});
   }
 
   requestAuth() {
     this.SignalkRequestsService.requestAuth();
   }
- 
+
   clearAuth() {
-    this.AppSettingsService.setSignalKToken(null);
+    this.AppSettingsService.setSignalKToken({token: null, new: true});
   }
-  
 
 }

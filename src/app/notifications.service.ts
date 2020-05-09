@@ -1,3 +1,6 @@
+/**
+ * This class handles both App alarms, alerts, and notifications message
+ */
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { isNull } from 'util';
@@ -12,7 +15,7 @@ export interface AppNotification {
 /**
  * SignalK Notification Object interface.
  */
-interface SignalKNotification {
+export interface SignalKNotification {
   state: string;
   message: string;
   method: string[];
@@ -30,10 +33,10 @@ export interface ActiveAlarms {
 })
 export class NotificationsService {
 
-  notificationsSubject: Subject<AppNotification> = new Subject<AppNotification>();
-  activeAlarmsSubject: BehaviorSubject<ActiveAlarms> = new BehaviorSubject<ActiveAlarms>({});
+  notificationsSubject: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
+  private activeAlarmsSubject: BehaviorSubject<ActiveAlarms> = new BehaviorSubject<ActiveAlarms>({}); // for alarms
 
-  activeAlarms: ActiveAlarms = {};
+  private activeAlarms: ActiveAlarms = {}; // local array of Alarms
 
   constructor() { }
   /**
@@ -47,10 +50,25 @@ export class NotificationsService {
     this.notificationsSubject.next({ message: message, duration: duration});
   }
 
-  getNotificationObservable() {
+  registerAlarm() {}
+  clearAlarm() {}
+  muteAlarm() {}
+
+
+
+
+
+
+  /**
+   * Observable to snackbar notification. Use in app.component root only.
+   */
+  public getNotificationObservable() {
     return this.notificationsSubject.asObservable();
   }
-  getAlarmObservable() {
+  /**
+   * Observable to Alarm notification. Use by observers whom are interested in Alarms such as Widgets and Alarm menu.
+   */
+  public getAlarmObservable() {
     return this.activeAlarmsSubject.asObservable();
   }
 /**
@@ -59,8 +77,9 @@ export class NotificationsService {
  * @param notificationValue Content of the message. Must conform to SignalKNotification interface.
  */
   public processNotificationDelta(path: string, notificationValue: SignalKNotification) {
+    return null; // TODO(David): remove temp disable
     if (isNull(notificationValue)) {
-      // erase any alarms with path
+      // Cleanup any alarms with this path
       if (path in this.activeAlarms) {
         delete this.activeAlarms[path];
         this.activeAlarmsSubject.next(this.activeAlarms);
@@ -76,7 +95,7 @@ export class NotificationsService {
 
         }
       } else {
-        // new alarm, add it
+        // new alarm, add it and send
         this.activeAlarms[path] = notificationValue;
         this.activeAlarmsSubject.next(this.activeAlarms);
       }
