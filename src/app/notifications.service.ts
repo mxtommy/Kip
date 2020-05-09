@@ -12,13 +12,43 @@ export interface AppNotification {
   message: string;
   duration: number;
 }
+// displayScale type restriction
+const types = ["linear", "logarithmic", "squareroot", "power"] as const;
+type Type = typeof types[number];
+
+// alert methods restriction
+const methods = ["visual", "sound"] as const;
+type Method = typeof methods[number];
+
 /**
- * SignalK Notification Object interface.
+ * SignalK Notification Object interface. Follow URL for full SignalK specification
+ * and description of fields:
+ * @url https://signalk.org/specification/1.4.0/doc/data_model_metadata.html
+ * Kip additional fields
+ * @param state ???
+ * @param message ???
+ * @param ack ??
  */
 export interface SignalKNotification {
+  description?: string;
+  displayName?: string;
+  longName?: string;
+  shortName?: string;
+  timeout?: number;
+  displayScale?: {
+    lower: number;
+    upper: number;
+    type: Type;
+  }
+  alertMethod?: Method[];
+  warnMethod?: Method[];
+  alarmMethod?: Method[];
+  emergencyMethod?: Method[];
+  zones?: string;
+
   state: string;
   message: string;
-  method: string[];
+  method: Method[];
   ack?: boolean;
 }
 /**
@@ -38,7 +68,9 @@ export class NotificationsService {
 
   private activeAlarms: ActiveAlarms = {}; // local array of Alarms
 
-  constructor() { }
+  constructor() {
+
+  }
   /**
  * Display Kip Snackbar notification.
  * @param message Text to be displayed.
@@ -50,34 +82,57 @@ export class NotificationsService {
     this.notificationsSubject.next({ message: message, duration: duration});
   }
 
-  registerAlarm() {}
-  clearAlarm() {}
-  muteAlarm() {}
+  public listAlarms() {}
+    /**
+   * Clears all Kip internal Notification Alarm system/array.
+   * Used when server connection is reset or changed and the Kip app state
+   * must be restored fresh.
+   * @usageNotes Internal function - Do not use.
+   */
+  public resetAlarms() {
+    this.activeAlarms = {};
+    this.activeAlarmsSubject.next(this.activeAlarms);
+  }
 
+  public subscribeAlarm() {}
+  public unsubscribeAlarm() {}
 
+  public getAlarm() {}
+  public sendAlarm() {}
 
-
+  public acknowledgeAlarm() {}
+  public muteAlarm() {}
+  public clearAlarm() {}
 
 
   /**
-   * Observable to snackbar notification. Use in app.component root only.
+   * Observable to submit snackbar notification. Use in app.component root only as
+   * Kip Snackbar Notifications handling should be centralized.
+   * @usageNotes To submit a notification to the snackbar, use newNotification().
+   * Notifications are purely client side and have no relation or
+   * interaction with the SignalK server.
    */
   public getNotificationObservable() {
     return this.notificationsSubject.asObservable();
   }
   /**
-   * Observable to Alarm notification. Use by observers whom are interested in Alarms such as Widgets and Alarm menu.
+   * Observable to Alarm notification. Use by observers whom are interested in Alarms
+   * such as Widgets and Alarm menu.
    */
   public getAlarmObservable() {
     return this.activeAlarmsSubject.asObservable();
   }
 /**
- * Send SignalK Delta update to Kip Notification system to process Alarms and Notifications.
- * @param path path of Notification message
+ * Processes SignalK Delta metadata containing Notifications information and
+ * routes to Kip Notification system as Alarms and Notifications.
+ * @param path path of message ie. the subject of the message
  * @param notificationValue Content of the message. Must conform to SignalKNotification interface.
+ * @usageNotes This function is internal and should not be used.
  */
   public processNotificationDelta(path: string, notificationValue: SignalKNotification) {
-    return null; // TODO(David): remove temp disable
+    // return null; // TODO(David): remove temp disable
+
+    // TODO(david): deal with = When an alarms is removed, a delta should be sent to subscribers with the path and a null value.
     if (isNull(notificationValue)) {
       // Cleanup any alarms with this path
       if (path in this.activeAlarms) {
@@ -100,14 +155,6 @@ export class NotificationsService {
         this.activeAlarmsSubject.next(this.activeAlarms);
       }
     }
-  }
-/**
- * Clears all Kip Notification Alarm system (internal array and Observers).
- * Used when server connection need to be reset and the Kip state restored fresh.
- */
-  public resetAlarms() {
-    this.activeAlarms = {};
-    this.activeAlarmsSubject.next(this.activeAlarms);
   }
 
 }

@@ -25,7 +25,7 @@ export class AlarmMenuComponent implements OnInit {
   critSound;
 
   constructor(
-    private NotificationsService: NotificationsService,
+    private notificationsService: NotificationsService,
   ) { }
 
   ngOnInit() {
@@ -40,11 +40,12 @@ export class AlarmMenuComponent implements OnInit {
     });
     // Alarm code
 
-    this.alarmSub = this.NotificationsService.getAlarmObservable().subscribe(
+    this.alarmSub = this.notificationsService.getAlarmObservable().subscribe(
       alarms  => {
         this.alarms = alarms;
         this.updateAlarms();
-        }
+        // this.NotificationsService.
+      }
     );
   }
 
