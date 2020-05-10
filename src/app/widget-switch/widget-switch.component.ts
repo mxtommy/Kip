@@ -9,7 +9,7 @@ import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.
 
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: null,
+  displayName: null,
   paths: {
     "statePath": {
       description: "State Data",
@@ -18,7 +18,7 @@ const defaultConfig: IWidgetConfig = {
       pathType: "boolean",
     }
   },
-  selfPaths: true,
+  filterSelfPaths: true,
 };
 
 @Component({

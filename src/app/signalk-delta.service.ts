@@ -21,6 +21,10 @@ export class SignalKDeltaService {
     ) {
       this.notificationServiceSettings = appSettingsService.getNotificationServiceSettingsAsO().subscribe(value => {
         this.disableNotifications = value;
+        if (this.disableNotifications) {
+          this.notificationsService.resetAlarms();
+        }
+
       });
      }
 

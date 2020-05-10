@@ -11,7 +11,7 @@ import { AppSettingsService } from '../app-settings.service';
 import { RadialGauge, RadialGaugeOptions } from 'ng-canvas-gauges';
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: null,
+  displayName: null,
   paths: {
     "gaugePath": {
       description: "Numeric Data",
@@ -23,7 +23,7 @@ const defaultConfig: IWidgetConfig = {
   units: {
     "gaugePath": "unitless"
   },
-  selfPaths: true,
+  filterSelfPaths: true,
 
   gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
   gaugeTicks: false,

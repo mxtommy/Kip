@@ -3,6 +3,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { SignalKNotification } from "./signalk-interfaces";
 import { isNull } from 'util';
 
 /**
@@ -13,57 +14,28 @@ export interface AppNotification {
   duration: number;
 }
 
-// alarm state type restriction
-const states = ["normal", "warn", "alert", "alarm", "emergency"] as ["normal", "warn", "alert", "alarm", "emergency"];
-type State = typeof states[number];
+// Alarms type restrictions (Duplicate from SignalK-interfaces. TypeScript v3.x interface extends bug)
+const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
+export type State = typeof states[number];
 
-
-// displayScale type restriction
-const types = ["linear", "logarithmic", "squareroot", "power"] as ["linear", "logarithmic", "squareroot", "power"];
-type Type = typeof types[number];
-
-// alert methods restriction
 const methods = ["visual", "sound"] as ["visual", "sound"];
-type Method = typeof methods[number];
+export type Method = typeof methods[number];
 
 /**
- * SignalK Notification Object interface. Follow URL for full SignalK specification
- * and description of fields:
- * @url https://signalk.org/specification/1.4.0/doc/data_model_metadata.html
- * Kip additional fields
- * @param state alarms state ie: normal, alert, alarm, emergency
- * @param message ???
- * @param ack ??
- */
-export interface SignalKNotification {
-  // normal state value
-  state: State;
-  message: string;
-  method: Method[];
-  // meta?????
-  description?: string;
-  displayName?: string;
-  longName?: string;
-  shortName?: string;
-  timeout?: number;
-  displayScale?: {
-    lower: number;
-    upper: number;
-    type: Type;
-  }
-  // elevated state value
-  alertMethod?: Method[];
-  warnMethod?: Method[];
-  alarmMethod?: Method[];
-  emergencyMethod?: Method[];
-  zones?: []
-  ack?: boolean;
-}
-/**
- * Array of active alarms. Contains alarm paths and SignalK notification object details
+ * Represents a Kip Alarms. Contains alarm paths and SignalK notification object details
  */
 export interface Alarm {
-  [path: string]: SignalKNotification;
+// TODO: When we upgrade Angular version and TypeScript version, we
+// can use 'implements SignalKNotification' to extend and not repeat
+//  all this interface and Method + State const!
+value: {
+    method: Method[],
+    state: State,
+    message: string
+  },
+  timestamp: string,
+  $source: string,
+  ack?: boolean,
 }
 
 
@@ -73,8 +45,8 @@ export interface Alarm {
 export class NotificationsService {
 
   public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
-  private activeAlarmsSubject: BehaviorSubject<Alarm> = new BehaviorSubject<Alarm>({}); // for alarms
-  private alarms: Alarm = {}; // local array of Alarms
+  private activeAlarmsSubject: BehaviorSubject<Array<Alarm>> = new BehaviorSubject<Array<Alarm>>([]); // for alarms
+  private alarms: Array<Alarm> = []; // local array of Alarms
 
 
   constructor( ) { }
@@ -97,7 +69,7 @@ export class NotificationsService {
    * @usageNotes Internal function - Do not use.
    */
   public resetAlarms() {
-    this.alarms = {};
+    this.alarms = [];
     this.activeAlarmsSubject.next(this.alarms);
   }
 
@@ -108,11 +80,11 @@ export class NotificationsService {
    *  returns an Observable of type alarms containing alarms. Used
    * by observers whom are interested in Alarms such as Widgets and Alarm menu.
    */
-  public getAlarms(): Observable<Alarm> {
+  public getAlarms(): Observable<Alarm[]> {
     return this.activeAlarmsSubject.asObservable();
   }
 
-  public sendAlarm(path: string, value: SignalKNotification) {
+  public sendAlarm(path: string, value: Alarm) {
     this.alarms[path] = value;
     this.activeAlarmsSubject.next(this.alarms);
   }
@@ -155,9 +127,9 @@ export class NotificationsService {
     } else {
       if (path in this.alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.alarms[path].state != notificationValue.state)
-              ||(this.alarms[path].message != notificationValue.message)
-              ||(JSON.stringify(this.alarms[path].method) != JSON.stringify(notificationValue.method)) ) { // no easy way to compare arrays??? ok...
+        if (    (this.alarms[path].state != notificationValue['state'])
+              ||(this.alarms[path].message != notificationValue['message'])
+              ||(JSON.stringify(this.alarms[path].method) != JSON.stringify(notificationValue['method'])) ) { // no easy way to compare arrays??? ok...
 
           this.sendAlarm(path, notificationValue);
         }

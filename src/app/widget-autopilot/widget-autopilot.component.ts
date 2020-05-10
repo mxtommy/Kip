@@ -10,7 +10,10 @@ import { UnitsService } from '../units.service';
 
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: 'N2k Autopilot',
+  displayName: 'N2k Autopilot',
+  filterSelfPaths: true,
+  useMetadata: false,
+  useZones: false,
   paths: {
     "apState": {
       description: "Autopilot State",
@@ -83,12 +86,6 @@ const defaultConfig: IWidgetConfig = {
     "windAngleApparent": ['wind'],
     "windAngleTrueWater": ['wind'],
   },
-  handleTimeout: {
-    "headingMag": null,
-    "headingTrue": null,
-    "windAngleApparent": null,
-    "windAngleTrueWater": null,
-  },
   typeVal: {
     "headingMag": 'Mag',
     "headingTrue": 'True',
@@ -96,7 +93,7 @@ const defaultConfig: IWidgetConfig = {
     "windAngleTrueWater": 'TWA',
   },
 
-  // selfPaths: true,     // removed option. We never want to operation other vessel's AP!!!
+  // filterSelfPaths: true,     // removed option. We never want to operation other vessel's AP!!!
   barColor: 'accent',     // theme palette to select
   autoStart: false,
 };
@@ -268,7 +265,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       newValue => {
 
           if (newValue == null) {
-            console.log("undefined:" + newValue);
+            console.log("Null AP Notification: probably a clear message that is not handled");
           } else {
           this.setNotificationMessage(newValue);
           console.log(newValue);

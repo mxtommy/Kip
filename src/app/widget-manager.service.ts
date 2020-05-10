@@ -1,18 +1,16 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-
 import { AppSettingsService } from './app-settings.service';
+import { Format, Policy } from "./signalk-interfaces";
 
 export interface IWidget {
   uuid: string;
-  name?: string;
   type: string;
   config: IWidgetConfig;
 }
 
 export interface IWidgetConfig {
   paths?: {
-    [key: string]: ISignalKPathInfo;
+    [key: string]: IWidgetPaths;
   }
   units?: {
     [key: string]: string; // key should match key in paths, specifies unit for that path
@@ -20,15 +18,14 @@ export interface IWidgetConfig {
   usage?: {
     [key: string]: string[]; // Autopilot: key should match key in paths, specifies autopilot widget possible paths for AP mode
   }
-  handleTimeout?: {
-    [key: string]: any; // Autopilot: key should match key in paths, specifies autopilot widget paths command timeout handle
-  }
   typeVal?: {
     [key: string]: string; // Autopilot: key should match key in paths, specifies autopilot widget paths value type for AP mode
   }
 
-  widgetLabel?: string;
-  selfPaths?: boolean;
+  displayName?: string;
+  filterSelfPaths?: boolean; //widget filter paths?
+  useMetadata?: boolean; // use server info
+  useZones?: boolean;  // use zone for values
 
   //numeric data
   numDecimal?: number; // number of decimal places if a number
@@ -36,7 +33,7 @@ export interface IWidgetConfig {
   showMin?: boolean;
   showMax?: boolean;
 
-  //Wind Gague data
+  //Wind Gauge data
   windSectorEnable?: boolean;
   windSectorWindowSeconds?: number;
   laylineEnable?: boolean;
@@ -74,11 +71,15 @@ export interface IWidgetConfig {
 }
 
 
-interface ISignalKPathInfo {
+interface IWidgetPaths {
   description: string;
   path: string;       //can be null or set
   source: string;     //can be null or set
   pathType: string;
+  period?: number;    // Signalk optional stream subscription detail / future used when switch stream subscribe=all to =none
+  format?: Format;     // Signalk optional stream subscription detail
+  policy?: Policy;     // Signalk optional stream subscription detail
+  minPeriod?: number;  // Signalk optional stream subscription detail
 }
 
 

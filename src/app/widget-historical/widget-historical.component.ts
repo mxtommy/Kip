@@ -11,7 +11,7 @@ import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: null,
+  displayName: null,
   units: {
     "dataset": "unitless"
   },
@@ -107,7 +107,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       // Setup DataSets
       let ds: IDataSetOptions[] = [
         {
-          label: this.config.widgetLabel + '-Avg.',
+          label: this.config.displayName + '-Avg.',
           data: this.chartDataAvg,
           fill: 'false',
           //borderWidth: 1
@@ -117,7 +117,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       if (this.config.displayMinMax) {
         ds.push(
           {
-            label: this.config.widgetLabel + '-Min',
+            label: this.config.displayName + '-Min',
             data: this.chartDataMin,
             fill: '+1',
             //borderWidth: 1
@@ -125,7 +125,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             borderDash: [ 5, 5 ]
         },
         {
-            label: this.config.widgetLabel + '-Max',
+            label: this.config.displayName + '-Max',
             data: this.chartDataMax,
             fill: '-1',
             //borderWidth: 1

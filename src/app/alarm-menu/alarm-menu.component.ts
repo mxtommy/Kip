@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NotificationsService, Alarm } from '../notifications.service';
+import { NotificationsService, Alarm, State, Method } from '../notifications.service';
 import { AppSettingsService } from '../app-settings.service';
 import { Subscription } from 'rxjs';
-import { Howl, Howler} from 'howler';
+import { Howl } from 'howler';
 
 
 @Component({
@@ -16,7 +16,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   notificationServiceSettings: Subscription;
 
   notificationDisabled: boolean;
-  alarms: Alarm = {};
+  alarms: Alarm[] = [];
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;

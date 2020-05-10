@@ -6,8 +6,8 @@
             <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetUrl !== undefined)">
                 <input type="url" matInput placeholder="URL" name="widgetUrl" formControlName="widgetUrl">
             </mat-form-field>
-            <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetLabel !== undefined)">
-              <input matInput placeholder="Widget Label" name="widgetLabel" formControlName="widgetLabel">
+            <mat-form-field class="full-width" *ngIf="(widgetConfig.displayName !== undefined)">
+              <input matInput placeholder="Widget Label" name="displayName" formControlName="displayName">
             </mat-form-field>
             <div class="full-width" *ngIf="(widgetConfig.numInt !== undefined)">
               <mat-form-field class="half-width">
@@ -120,10 +120,10 @@
           <span *ngIf="!formMaster.controls.paths.valid" class="warning fa fa-exclamation-circle"></span> Paths
         </ng-template>
         <modal-path-selector class="full-width" *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
-          [formGroup]="formMaster.controls.paths.controls[pathForm]" [selfPaths]="formMaster.value.selfPaths"
+          [formGroup]="formMaster.controls.paths.controls[pathForm]" [filterSelfPaths]="formMaster.value.filterSelfPaths"
           ></modal-path-selector>
 
-        <mat-checkbox name="selfPaths" formControlName="selfPaths">
+        <mat-checkbox name="filterSelfPaths" formControlName="filterSelfPaths">
         Restric to own vessel
         </mat-checkbox>
       </mat-tab>

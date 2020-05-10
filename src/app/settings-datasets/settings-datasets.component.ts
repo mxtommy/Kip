@@ -43,7 +43,7 @@ export class SettingsDatasetsComponent implements OnInit {
   }
 
 
-  deleteDataSet(uuid:string) { 
+  deleteDataSet(uuid:string) {
     this.DataSetService.deleteDataSet(uuid); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
     this.loadDataSets();
   }
@@ -66,7 +66,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   availablePaths: string[] = [];
   availableSources: string[] = [];
-  selfPaths:boolean = true;
+  filterSelfPaths:boolean = true;
 
   constructor(
     private SignalKService: SignalKService,
@@ -88,9 +88,9 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   addNewDataSet() {
     this.DataSetService.addDataSet(
-      this.settingsForm.selectedPath, 
-      this.settingsForm.selectedSource, 
-      this.settingsForm.interval, 
+      this.settingsForm.selectedPath,
+      this.settingsForm.selectedSource,
+      this.settingsForm.interval,
       this.settingsForm.dataPoints);
     this.dialogRef.close();
   }

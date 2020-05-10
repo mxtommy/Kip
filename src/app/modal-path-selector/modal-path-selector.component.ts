@@ -11,7 +11,7 @@ export class ModalPathSelectorComponent implements OnInit {
 
   @Input() formGroup: FormGroup;
 
-  @Input() selfPaths: boolean;
+  @Input() filterSelfPaths: boolean;
 
   availablePaths: Array<string> = [];
   availableSources: Array<string>;
@@ -24,8 +24,8 @@ export class ModalPathSelectorComponent implements OnInit {
 
     //populate sources for this path (or just the current setting if we know nothing about the path)
     let pathObject = this.SignalKService.getPathObject(this.formGroup.value.path);
-    if (pathObject === null) { 
-      this.availableSources = [this.formGroup.value.source]; 
+    if (pathObject === null) {
+      this.availableSources = [this.formGroup.value.source];
     } else {
       this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     }
@@ -36,8 +36,8 @@ export class ModalPathSelectorComponent implements OnInit {
   detectNewPath() {
     this.formGroup.controls.path.valueChanges.subscribe(newValue => {
       let pathObject = this.SignalKService.getPathObject(newValue);
-      if (pathObject === null) { 
-        this.availableSources = ['default']; 
+      if (pathObject === null) {
+        this.availableSources = ['default'];
       } else {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       }

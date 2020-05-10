@@ -5,13 +5,11 @@ export const DemoConfig = {
   "signalKUrl": "http://demo.signalk.org",
   "signalKToken": null,
   "themeName": "default-light",
-  "disableNotifications": false,
   "widgets": [
     {
-      "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
+      "uuid": "7298b3be-232f-48bf-9b3d-3b445131a908",
       "type": "WidgetNumeric",
       "config": {
-        "widgetLabel": "Depth Feet",
         "paths": {
           "numericPath": {
             "description": "Numeric Data",
@@ -23,7 +21,10 @@ export const DemoConfig = {
         "units": {
           "numericPath": "feet"
         },
-        "selfPaths": true,
+        "displayName": "Depth Feet",
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "showMin": true,
         "showMax": false,
         "numDecimal": 1,
@@ -70,7 +71,9 @@ export const DemoConfig = {
           "trueWindSpeed": "knots",
           "appWindSpeed": "knots"
         },
-        "selfPaths": true,
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "windSectorEnable": true,
         "windSectorWindowSeconds": 10,
         "laylineEnable": true,
@@ -81,7 +84,6 @@ export const DemoConfig = {
       "uuid": "912b86e4-e068-49e9-9f75-a2292d772578",
       "type": "WidgetGaugeComponent",
       "config": {
-        "widgetLabel": "Speed over ground",
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",
@@ -93,7 +95,10 @@ export const DemoConfig = {
         "units": {
           "gaugePath": "knots"
         },
-        "selfPaths": true,
+        "displayName": "Speed over ground",
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "gaugeType": "radial",
         "barGraph": false,
         "radialSize": "full",
@@ -108,7 +113,6 @@ export const DemoConfig = {
       "uuid": "85525ebc-c40c-41e6-8379-05d573a331e1",
       "type": "WidgetGaugeComponent",
       "config": {
-        "widgetLabel": "Apparent Wind Speed",
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",
@@ -120,7 +124,10 @@ export const DemoConfig = {
         "units": {
           "gaugePath": "knots"
         },
-        "selfPaths": true,
+        "displayName": "Apparent Wind Speed",
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "gaugeType": "linear",
         "barGraph": true,
         "radialSize": "full",
@@ -135,7 +142,6 @@ export const DemoConfig = {
       "uuid": "a49a59c6-b83d-40e0-b759-9d153da69105",
       "type": "WidgetNumeric",
       "config": {
-        "widgetLabel": "Speed (water)",
         "paths": {
           "numericPath": {
             "description": "Numeric Data",
@@ -147,7 +153,10 @@ export const DemoConfig = {
         "units": {
           "numericPath": "knots"
         },
-        "selfPaths": true,
+        "displayName": "Speed (water)",
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "showMin": false,
         "showMax": true,
         "numDecimal": 1,
@@ -158,7 +167,6 @@ export const DemoConfig = {
       "uuid": "62fa8155-10fd-49cb-a495-cee6e9491b8a",
       "type": "WidgetNumeric",
       "config": {
-        "widgetLabel": "VMG",
         "paths": {
           "numericPath": {
             "description": "Numeric Data",
@@ -170,7 +178,10 @@ export const DemoConfig = {
         "units": {
           "numericPath": "knots"
         },
-        "selfPaths": true,
+        "displayName": "VMG",
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "showMin": false,
         "showMax": false,
         "numDecimal": 1,
@@ -181,10 +192,13 @@ export const DemoConfig = {
       "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
       "type": "WidgetHistorical",
       "config": {
-        "widgetLabel": "WindSpeed True",
         "units": {
           "dataset": "knots"
         },
+        "displayName": "WindSpeed True",
+        "filterSelfPaths": true,
+        "useMetadata": false,
+        "useZones":false,
         "dataSetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
         "displayMinMax": false,
@@ -249,7 +263,7 @@ export const DemoConfig = {
       "direction": "vertical",
       "splitAreas": [
         {
-          "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
+          "uuid": "7298b3be-232f-48bf-9b3d-3b445131a908",
           "type": "widget",
           "size": 33.13526570048309
         },
@@ -285,5 +299,20 @@ export const DemoConfig = {
   ],
   "rootSplits": [
     "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  ]
+  ],
+  "unitDefaults": {
+    "unitless": "unitless",
+    "speed": "kph",
+    "flow": "l/h",
+    "temp": "C",
+    "length": "m",
+    "volume": "liter",
+    "electrical": "volts",
+    "pressure": "mmHg",
+    "angularVelocity": "deg/min",
+    "frequency": "Hz",
+    "angle": "deg",
+    "ratio": "percent"
+  },
+  "disableNotifications": false
 }

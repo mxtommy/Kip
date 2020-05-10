@@ -7,7 +7,7 @@ import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
-import { NotificationsService, SignalKNotification } from './notifications.service';
+import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
 
 
