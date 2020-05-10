@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { NotificationsService, ActiveAlarms } from '../notifications.service';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NotificationsService, Alarm } from '../notifications.service';
+import { AppSettingsService } from '../app-settings.service';
 import { Subscription } from 'rxjs';
 import { Howl, Howler} from 'howler';
 
@@ -9,11 +10,13 @@ import { Howl, Howler} from 'howler';
   templateUrl: './alarm-menu.component.html',
   styleUrls: ['./alarm-menu.component.scss']
 })
-export class AlarmMenuComponent implements OnInit {
+export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   alarmSub: Subscription;
+  notificationServiceSettings: Subscription;
 
-  alarms: ActiveAlarms = {};
+  notificationDisabled: boolean;
+  alarms: Alarm = {};
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;
@@ -26,7 +29,12 @@ export class AlarmMenuComponent implements OnInit {
 
   constructor(
     private notificationsService: NotificationsService,
-  ) { }
+    private appSettingsService: AppSettingsService,
+  ) {
+    this.notificationServiceSettings = appSettingsService.getNotificationServiceSettingsAsO().subscribe(value => {
+      this.notificationDisabled = value;
+    });
+  }
 
   ngOnInit() {
 
@@ -40,9 +48,9 @@ export class AlarmMenuComponent implements OnInit {
     });
     // Alarm code
 
-    this.alarmSub = this.notificationsService.getAlarmObservable().subscribe(
-      alarms  => {
-        this.alarms = alarms;
+    this.alarmSub = this.notificationsService.getAlarms().subscribe(
+      message  => {
+        this.alarms = message;
         this.updateAlarms();
         // this.NotificationsService.
       }
@@ -154,6 +162,11 @@ export class AlarmMenuComponent implements OnInit {
 
   pathIgnored(path: string) {
     return this.ignoredPaths.includes(path);
+  }
+
+  ngOnDestroy() {
+    this.notificationServiceSettings.unsubscribe();
+    this.alarmSub.unsubscribe();
   }
 
 }

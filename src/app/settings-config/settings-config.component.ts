@@ -86,7 +86,7 @@ export class SettingsConfigComponent implements OnInit {
 
   saveServerSettings() {
     this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, this.applicationConfig).subscribe(result => {
-      this.NotificationsService.newNotification("Configuration Saved!", 3000);
+      this.NotificationsService.sendSnackbarNotification("Configuration Saved!", 3000);
     });
   }
 

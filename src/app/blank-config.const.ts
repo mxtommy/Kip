@@ -3,6 +3,7 @@ export const BlankConfig = {
     "signalKUrl": "", // get's overwritten with host
     "signalKToken": null,
     "themeName": "default-light",
+    "disableNotifications": false,
     "widgets": [
       {
         "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
@@ -17,13 +18,13 @@ export const BlankConfig = {
       "flow": 'l/h',
       "temp": 'C',
       "length": 'm',
-      "electrity": 'volts',
+      "electricity": 'volts',
       "pressure": 'mmHg',
       "angularVelocity": 'deg/min',
       "frequency": 'Hz',
       "angle": 'deg',
       "ratio": 'percent'
-    },    
+    },
     "dataSets": [],
     "splitSets": [
       {

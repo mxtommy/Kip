@@ -67,7 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
     // Snackbar Notification Code
-    this.appNotificationSub = this.notificationsService.getNotificationObservable().subscribe(
+    this.appNotificationSub = this.notificationsService.getSnackbarAppNotifications().subscribe(
 
       appNotification => {
         this._snackBar.open(appNotification.message, 'dismiss', {
@@ -97,13 +97,13 @@ export class AppComponent implements OnInit, OnDestroy {
   displayConnectionsStatusNotification(connectionsStatus: SignalKStatus) {
     if (connectionsStatus.operation == 1) { // starting server
       if (!connectionsStatus.endpoint.status) {
-        this.notificationsService.newNotification(connectionsStatus.endpoint.message, 5000);
+        this.notificationsService.sendSnackbarNotification(connectionsStatus.endpoint.message, 5000);
       } else {
-        this.notificationsService.newNotification("Connected to SignalK Server.", 5000);
+        this.notificationsService.sendSnackbarNotification("Connected to SignalK Server.", 5000);
       }
     }
     if (connectionsStatus.operation == 3) { // URL changed/reset
-      this.notificationsService.newNotification("Connection Update/Reset successful.", 5000);
+      this.notificationsService.sendSnackbarNotification("Connection Update/Reset successful.", 5000);
     }
   }
 

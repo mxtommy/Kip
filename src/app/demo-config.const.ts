@@ -5,6 +5,7 @@ export const DemoConfig = {
   "signalKUrl": "http://demo.signalk.org",
   "signalKToken": null,
   "themeName": "default-light",
+  "disableNotifications": false,
   "widgets": [
     {
       "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
@@ -171,7 +172,7 @@ export const DemoConfig = {
         },
         "selfPaths": true,
         "showMin": false,
-        "showMax": false,        
+        "showMax": false,
         "numDecimal": 1,
         "numInt": 1
       }

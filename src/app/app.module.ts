@@ -80,6 +80,7 @@ import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-ga
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
 import { WidgetAutopilotComponent } from './widget-autopilot/widget-autopilot.component';
 import { SvgAutopilotComponent } from './svg-autopilot/svg-autopilot.component';
+import { SettingsNotificationsComponent } from './settings-notifications/settings-notifications.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -129,6 +130,7 @@ const appRoutes: Routes = [
     AlarmMenuComponent,
     WidgetAutopilotComponent,
     SvgAutopilotComponent,
+    SettingsNotificationsComponent,
   ],
   imports: [
     BrowserModule,

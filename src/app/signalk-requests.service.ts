@@ -134,13 +134,13 @@ export class SignalkRequestsService {
       }
 
       if (this.requests[index].statusCode == 202) {
-        this.NotificationsService.newNotification(this.requests[index].statusCodeDescription);
+        this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
         return;
       }
 
       if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
         this.AppSettingsService.setSignalKToken({token: delta.accessRequest.token, new: true});
-        this.NotificationsService.newNotification(delta.accessRequest.permission + ": Read/Write Token request response received for server.");
+        this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Read/Write Token request response received for server.");
         console.log(delta.accessRequest.permission + ": New R/W token response received");
       }
 
@@ -154,7 +154,7 @@ export class SignalkRequestsService {
       }
 
     } else {
-      this.NotificationsService.newNotification("Received Unknown PUT delta:\n" + JSON.stringify(delta));
+      this.NotificationsService.sendSnackbarNotification("Received Unknown PUT delta:\n" + JSON.stringify(delta));
       console.log("Received Unknown PUT delta requestId:\n" + JSON.stringify(delta))
     }
   }

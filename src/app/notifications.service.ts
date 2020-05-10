@@ -2,7 +2,7 @@
  * This class handles both App alarms, alerts, and notifications message
  */
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject } from 'rxjs';
+import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { isNull } from 'util';
 
 /**
@@ -12,12 +12,18 @@ export interface AppNotification {
   message: string;
   duration: number;
 }
+
+// alarm state type restriction
+const states = ["normal", "warn", "alert", "alarm", "emergency"] as ["normal", "warn", "alert", "alarm", "emergency"];
+type State = typeof states[number];
+
+
 // displayScale type restriction
-const types = ["linear", "logarithmic", "squareroot", "power"] as const;
+const types = ["linear", "logarithmic", "squareroot", "power"] as ["linear", "logarithmic", "squareroot", "power"];
 type Type = typeof types[number];
 
 // alert methods restriction
-const methods = ["visual", "sound"] as const;
+const methods = ["visual", "sound"] as ["visual", "sound"];
 type Method = typeof methods[number];
 
 /**
@@ -25,11 +31,16 @@ type Method = typeof methods[number];
  * and description of fields:
  * @url https://signalk.org/specification/1.4.0/doc/data_model_metadata.html
  * Kip additional fields
- * @param state ???
+ * @param state alarms state ie: normal, alert, alarm, emergency
  * @param message ???
  * @param ack ??
  */
 export interface SignalKNotification {
+  // normal state value
+  state: State;
+  message: string;
+  method: Method[];
+  // meta?????
   description?: string;
   displayName?: string;
   longName?: string;
@@ -40,49 +51,45 @@ export interface SignalKNotification {
     upper: number;
     type: Type;
   }
+  // elevated state value
   alertMethod?: Method[];
   warnMethod?: Method[];
   alarmMethod?: Method[];
   emergencyMethod?: Method[];
-  zones?: string;
-
-  state: string;
-  message: string;
-  method: Method[];
+  zones?: []
   ack?: boolean;
 }
 /**
  * Array of active alarms. Contains alarm paths and SignalK notification object details
  */
-export interface ActiveAlarms {
+export interface Alarm {
   [path: string]: SignalKNotification;
 }
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationsService {
 
-  notificationsSubject: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
-  private activeAlarmsSubject: BehaviorSubject<ActiveAlarms> = new BehaviorSubject<ActiveAlarms>({}); // for alarms
+  public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
+  private activeAlarmsSubject: BehaviorSubject<Alarm> = new BehaviorSubject<Alarm>({}); // for alarms
+  private alarms: Alarm = {}; // local array of Alarms
 
-  private activeAlarms: ActiveAlarms = {}; // local array of Alarms
 
-  constructor() {
+  constructor( ) { }
 
-  }
-  /**
- * Display Kip Snackbar notification.
- * @param message Text to be displayed.
- * @param duration Display duration in milliseconds before automatic dismissal. Duration value of 0 is indefinite or until use clicks Dismiss button. Defaults to 10000 of no value is provided.
- */
-  newNotification(message: string, duration: number = 10000) {
-    console.log(message);
-
-    this.notificationsSubject.next({ message: message, duration: duration});
+    /**
+   * Display Kip Snackbar notification.
+   * @param message Text to be displayed.
+   * @param duration Display duration in milliseconds before automatic dismissal. Duration value of 0 is indefinite or until use clicks Dismiss button. Defaults to 10000 of no value is provided.
+   */
+    sendSnackbarNotification(message: string, duration: number = 10000) {
+    this.snackbarAppNotifications.next({ message: message, duration: duration});
   }
 
   public listAlarms() {}
+
     /**
    * Clears all Kip internal Notification Alarm system/array.
    * Used when server connection is reset or changed and the Kip app state
@@ -90,38 +97,50 @@ export class NotificationsService {
    * @usageNotes Internal function - Do not use.
    */
   public resetAlarms() {
-    this.activeAlarms = {};
-    this.activeAlarmsSubject.next(this.activeAlarms);
+    this.alarms = {};
+    this.activeAlarmsSubject.next(this.alarms);
   }
 
   public subscribeAlarm() {}
   public unsubscribeAlarm() {}
 
-  public getAlarm() {}
-  public sendAlarm() {}
+  /**
+   *  returns an Observable of type alarms containing alarms. Used
+   * by observers whom are interested in Alarms such as Widgets and Alarm menu.
+   */
+  public getAlarms(): Observable<Alarm> {
+    return this.activeAlarmsSubject.asObservable();
+  }
+
+  public sendAlarm(path: string, value: SignalKNotification) {
+    this.alarms[path] = value;
+    this.activeAlarmsSubject.next(this.alarms);
+  }
 
   public acknowledgeAlarm() {}
   public muteAlarm() {}
-  public clearAlarm() {}
+
+  /*
+  * removes one alarm
+  */
+  public clearAlarm(path: string) {
+    if (path in this.alarms) {
+      delete this.alarms[path];
+      this.activeAlarmsSubject.next(this.alarms);
+    }
+  }
 
 
   /**
-   * Observable to submit snackbar notification. Use in app.component root only as
-   * Kip Snackbar Notifications handling should be centralized.
-   * @usageNotes To submit a notification to the snackbar, use newNotification().
-   * Notifications are purely client side and have no relation or
-   * interaction with the SignalK server.
+   * Observable to receive Kip app Snackbar notification. Use in app.component ONLY.
+   * @usageNotes To send a Snackbar notification, use sendSnackbarNotification().
+   * Notifications are purely client side and have no relationship or
+   * interactions with the SignalK server.
    */
-  public getNotificationObservable() {
-    return this.notificationsSubject.asObservable();
+  public getSnackbarAppNotifications() {
+    return this.snackbarAppNotifications.asObservable();
   }
-  /**
-   * Observable to Alarm notification. Use by observers whom are interested in Alarms
-   * such as Widgets and Alarm menu.
-   */
-  public getAlarmObservable() {
-    return this.activeAlarmsSubject.asObservable();
-  }
+
 /**
  * Processes SignalK Delta metadata containing Notifications information and
  * routes to Kip Notification system as Alarms and Notifications.
@@ -130,29 +149,21 @@ export class NotificationsService {
  * @usageNotes This function is internal and should not be used.
  */
   public processNotificationDelta(path: string, notificationValue: SignalKNotification) {
-    // return null; // TODO(David): remove temp disable
-
-    // TODO(david): deal with = When an alarms is removed, a delta should be sent to subscribers with the path and a null value.
     if (isNull(notificationValue)) {
-      // Cleanup any alarms with this path
-      if (path in this.activeAlarms) {
-        delete this.activeAlarms[path];
-        this.activeAlarmsSubject.next(this.activeAlarms);
-      }
+      // Alarm removed/cleared on server.
+      this.clearAlarm(path);
     } else {
-      if (path in this.activeAlarms) {
+      if (path in this.alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.activeAlarms[path].state != notificationValue.state)
-              ||(this.activeAlarms[path].message != notificationValue.message)
-              ||(JSON.stringify(this.activeAlarms[path].method) != JSON.stringify(notificationValue.method)) ) { // no easy way to compare arrays??? ok...
-          this.activeAlarms[path] = notificationValue;
-          this.activeAlarmsSubject.next(this.activeAlarms);
+        if (    (this.alarms[path].state != notificationValue.state)
+              ||(this.alarms[path].message != notificationValue.message)
+              ||(JSON.stringify(this.alarms[path].method) != JSON.stringify(notificationValue.method)) ) { // no easy way to compare arrays??? ok...
 
+          this.sendAlarm(path, notificationValue);
         }
       } else {
         // new alarm, add it and send
-        this.activeAlarms[path] = notificationValue;
-        this.activeAlarmsSubject.next(this.activeAlarms);
+        this.sendAlarm(path, notificationValue);
       }
     }
   }

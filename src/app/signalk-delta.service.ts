@@ -1,19 +1,28 @@
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject } from 'rxjs';
+import { Observable ,  Subject, Subscription } from 'rxjs';
 import { SignalKService } from './signalk.service';
 import { deltaMessage } from './signalk-interfaces';
 import { NotificationsService } from './notifications.service';
+import { AppSettingsService } from "./app-settings.service";
 
 
 @Injectable()
 export class SignalKDeltaService {
 
-  signalKRequests = new Subject<deltaMessage>(); // requests service subs to this (avoids circular dependency in services)
+  signalKRequests = new Subject<deltaMessage>();      // requests service subs to this (avoids circular dependency in services)
+  private disableNotifications: boolean;
+  private notificationServiceSettings: Subscription;
+
 
   constructor(
     private SignalKService: SignalKService,
     private notificationsService: NotificationsService,
-    ) { }
+    private appSettingsService: AppSettingsService,
+    ) {
+      this.notificationServiceSettings = appSettingsService.getNotificationServiceSettingsAsO().subscribe(value => {
+        this.disableNotifications = value;
+      });
+     }
 
 
   processWebsocketMessage(message: deltaMessage) {
@@ -71,6 +80,9 @@ export class SignalKDeltaService {
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
       for (let value of update.values) {
         if (/^notifications./.test(value.path)) {   // is a notification message, pass to notification service
+          if (this.disableNotifications) {          // Notifications are disabled in app settings - do nothing.
+            return null;
+          }
           this.notificationsService.processNotificationDelta(value.path, value.value);
         } else {
           // it's a data update. Update local tree

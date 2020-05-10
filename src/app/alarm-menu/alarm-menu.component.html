@@ -2,14 +2,18 @@
         [class.alarmCrit]="blinkCrit"
         [class.alarmWarning]="blinkWarn"
         [matMenuTriggerFor]="alarmMenu"
-        [disabled]="alarmCount == 0">
-  <span [matBadgeHidden]="!unAckAlarms"
+        [disabled]="alarmCount == 0 || notificationDisabled">
+  <span *ngIf="!notificationDisabled" [matBadgeHidden]="!unAckAlarms"
         [matBadge]="unAckAlarms"
         matBadgeSize="medium"
         matBadgePosition="after"
         matBadgeOverlap="false"
         matBadgeColor="warn"
         class="fa fa-bell fa-2x">
+  </span>
+  <span *ngIf="notificationDisabled" class="fa-stack fa-lg">
+    <i class="fa fa-bell fa-1x" aria-hidden="true"></i>
+    <i class="fa fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
   </span>
 </button>
 <mat-menu #alarmMenu="matMenu">

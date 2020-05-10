@@ -1,0 +1,8 @@
+<br/>
+<mat-card>
+  <form name="notificationSetting">
+    <mat-slide-toggle name="disableNotifications" [(ngModel)]="disableNotifications">Disable All Notifications</mat-slide-toggle>
+    <br/>
+    <button mat-raised-button (click)='saveNotificationsSettings()'>Save</button>
+</form>
+</mat-card>

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { IDataSet } from './data-set.service';
@@ -28,6 +28,7 @@ export interface AppSettings {
   splitSets: ISplitSet[];
   rootSplits: string[];
   unitDefaults: IUnitDefaults;
+  disableNotifications: boolean;
 }
 
 export interface SignalKUrl {
@@ -45,15 +46,14 @@ export class AppSettingsService {
   signalKToken: BehaviorSubject<SignalKToken> = new BehaviorSubject<SignalKToken>(null);
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
-
+  kipKNotificationServiceSettings: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
 
   widgets: Array<IWidget>;
-
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
-
-  themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   dataSets: IDataSet[] = [];
+  disableNotifications: boolean;
   root
 
   constructor(
@@ -78,7 +78,7 @@ export class AppSettingsService {
     let skToken: SignalKToken = {token: storageObject.signalKToken, new: false};
 
     this.signalKUrl.next(skUrl);
-    this.signalKToken.next(skToken)
+    this.signalKToken.next(skToken);
     this.themeName.next(storageObject['themeName']);
     this.widgets = storageObject.widgets;
     this.unlockStatus.next(storageObject['unlockStatus']);
@@ -90,6 +90,7 @@ export class AppSettingsService {
     } else {
       this.unitDefaults.next(initialDefaultUnits);
     }
+    this.kipKNotificationServiceSettings.next(storageObject['disableNotifications']);
   }
 
   //UnitDefaults
@@ -181,8 +182,22 @@ export class AppSettingsService {
     return this.dataSets;
   }
 
+  // Notification Service Setting
+  public getNotificationServiceSettingsAsO() {
+    return this.kipKNotificationServiceSettings.asObservable();
+  }
+
+  public getNotificationServiceSettings() {
+    return this.kipKNotificationServiceSettings.getValue();
+  }
+
+  public setNotificationServiceSettings(disableNotifications: boolean) {
+    this.kipKNotificationServiceSettings.next(disableNotifications);
+    this.saveToLocalStorage();
+  }
+
   // saving.
-  buildStorageObject() {
+  private buildStorageObject() {
     let storageObject: AppSettings = {
       configVersion: configVersion,
       signalKUrl: this.signalKUrl.getValue().url,
@@ -194,6 +209,7 @@ export class AppSettingsService {
       splitSets: this.splitSets,
       rootSplits: this.rootSplits,
       unitDefaults: this.unitDefaults.getValue(),
+      disableNotifications: this.kipKNotificationServiceSettings.getValue(),
     }
     return storageObject;
   }
