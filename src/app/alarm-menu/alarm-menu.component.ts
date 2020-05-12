@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NotificationsService, Alarm, State, Method } from '../notifications.service';
+import { NotificationsService, Alarm } from '../notifications.service';
 import { AppSettingsService } from '../app-settings.service';
 import { Subscription } from 'rxjs';
 import { Howl } from 'howler';
@@ -16,7 +16,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   notificationServiceSettings: Subscription;
 
   notificationDisabled: boolean;
-  alarms: Alarm[] = [];
+  alarms: { [path: string]: Alarm };
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;
@@ -26,6 +26,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   warningSound;
   critSound;
+  showNormalNotifications: boolean = true;
 
   constructor(
     private notificationsService: NotificationsService,
@@ -50,14 +51,15 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
     this.alarmSub = this.notificationsService.getAlarms().subscribe(
       message  => {
-        this.alarms = message;
+        this.alarms = message; //TODO: Use observer filters and variables
         this.updateAlarms();
-        // this.NotificationsService.
       }
     );
   }
 
-
+  /**
+   * main alert management function. Called on Observable message
+   */
   updateAlarms() {
     this.alarmCount = Object.keys(this.alarms).length;
     this.unAckAlarms = 0;
@@ -78,16 +80,17 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
         this.unAckAlarms++;
         let aSev = 0;
         let vSev = 0;
-        switch (alarm.state) {
+
+        switch (alarm.notification['state']) {
           case 'alert':
           case 'warn':
-            if (alarm.method.includes('sound')) { aSev = 1; }
-            if (alarm.method.includes('visual')) { vSev = 1; }
+            if (alarm.notification['method'].includes('sound')) { aSev = 1; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 1; }
             break;
           case 'alarm':
           case 'emergency':
-            if (alarm.method.includes('sound')) { aSev = 2; }
-            if (alarm.method.includes('visual')) { vSev = 2; }
+            if (alarm.notification['method'].includes('sound')) { aSev = 2; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 2; }
 
         }
         audioSev = Math.max(audioSev, aSev);
@@ -162,6 +165,14 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   pathIgnored(path: string) {
     return this.ignoredPaths.includes(path);
+  }
+
+  /**
+   * Used by ngFor to tracks alarm items by key for menu optimization
+   * @param alarm object in question
+   */
+  trackAlarmPath(index, alarm) {
+    return alarm ? alarm.value.path : undefined;
   }
 
   ngOnDestroy() {

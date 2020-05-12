@@ -1,8 +1,35 @@
 <br/>
-<mat-card>
-  <form name="notificationSetting">
-    <mat-slide-toggle name="disableNotifications" [(ngModel)]="disableNotifications">Disable All Notifications</mat-slide-toggle>
+<form name="notificationSetting">
+  <mat-slide-toggle name="disableNotifications" [(ngModel)]="disableNotifications">Disable All Notifications</mat-slide-toggle>
+  <br/> <br/>
+  <mat-card>
+    <mat-accordion>
+      <mat-expansion-panel expanded="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Notification Menu
+          </mat-panel-title>
+          <mat-panel-description>
+            Configure display options
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <mat-checkbox>Ignore <b>Normal</b> state notifications</mat-checkbox>
+        <br/>
+        <mat-checkbox>Groupe notifications by source types</mat-checkbox>
+      </mat-expansion-panel>
+      <mat-expansion-panel expanded="false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Audio
+          </mat-panel-title>
+          <mat-panel-description>
+            Configure sound options
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <mat-checkbox>Disable <b>all</b> audio notifications</mat-checkbox>
+      </mat-expansion-panel>
+    </mat-accordion>
     <br/>
-    <button mat-raised-button (click)='saveNotificationsSettings()'>Save</button>
+    <button mat-raised-button color="accent" (click)='saveNotificationsSettings()'>Save</button>
+  </mat-card>
 </form>
-</mat-card>

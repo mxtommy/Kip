@@ -1,7 +1,6 @@
-<button color="accent" mat-flat-button class="menuBarAlarmsButton"
+<button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton"
         [class.alarmCrit]="blinkCrit"
         [class.alarmWarning]="blinkWarn"
-        [matMenuTriggerFor]="alarmMenu"
         [disabled]="alarmCount == 0 || notificationDisabled">
   <span *ngIf="!notificationDisabled" [matBadgeHidden]="!unAckAlarms"
         [matBadge]="unAckAlarms"
@@ -17,12 +16,12 @@
   </span>
 </button>
 <mat-menu #alarmMenu="matMenu">
-  <div *ngFor="let alarm of alarms | keyvalue">
-    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.message">
+  <div *ngFor="let alarm of alarms | keyvalue; index as i; trackBy:trackAlarmPath">
+    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.notification.message">
       <span *ngIf="alarm.value.ack" class="fa fa-lg fa-check"></span>
       <span *ngIf="!alarm.value.ack && !pathIgnored(alarm.key)" class="fa fa-lg fa-exclamation"></span>
       <span *ngIf="pathIgnored(alarm.key)" class="fa fa-lg fa-ban"></span>
-      {{ alarm.value.message }}
+      {{ alarm.value.notification.message }}
     </button>
     <mat-menu #actions="matMenu">
       <button
@@ -54,9 +53,7 @@
         matTooltip="Ignore Alarm (all states) for 5 minutes"
         >
         Ignore (5 Min)
-     </button>
+      </button>
     </mat-menu>
-
   </div>
 </mat-menu>
-
