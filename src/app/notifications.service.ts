@@ -2,8 +2,9 @@
  * This class handles both App notifications Snackbar and SignalK Notifications
  */
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { Subject, BehaviorSubject, Observable, Subscription, config } from 'rxjs';
 import { SignalKNotification } from "./signalk-interfaces";
+import { AppSettingsService, INotificationConfig } from "./app-settings.service";
 import { isNull } from 'util';
 
 /**
@@ -24,7 +25,9 @@ export interface AppNotification {
  */
 export interface Alarm {
   path: string;
-  ack?: boolean;
+  type: string;
+  isAck: boolean;
+  isMuted: boolean;
   notification: SignalKNotification;
 }
 
@@ -33,11 +36,25 @@ export interface Alarm {
   providedIn: 'root'
 })
 export class NotificationsService {
+  private notificationServiceSettings: Subscription;
+  private notificationConfig: INotificationConfig;
+
   private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
   private activeAlarmsSubject = new BehaviorSubject<any>({});
   public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
 
-  constructor( ) { }
+  constructor(
+    private appSettingsService: AppSettingsService,
+    ) {
+    // Observe Notification configuration
+    this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+      this.notificationConfig = config;
+      if (this.notificationConfig.disableNotifications) {
+        this.resetAlarms();
+      }
+
+    });
+   }
 
   /**
    * Display Kip Snackbar notification.
@@ -51,12 +68,13 @@ export class NotificationsService {
     this.snackbarAppNotifications.next({ message: message, duration: duration});
   }
 
+  public subscribeAlarms() {}
+  public unsubscribeAlarms() {}
   public listAlarms() {}
 
   /**
    * Clears all Kip internal Notification Alarm system/array.
-   * Used when server connection is reset or changed and the Kip app state
-   * must be restored fresh.
+   * Used when server connection is reset/changed or the notification disabled.
    *
    * @usageNotes Internal function - Do not use.
    */
@@ -64,9 +82,6 @@ export class NotificationsService {
     this.alarms = {};
     this.activeAlarmsSubject.next(this.alarms);
   }
-
-  public subscribeAlarms() {}
-  public unsubscribeAlarms() {}
 
   /**
    * Returns an Observable of type alarms containing alarms. Used
@@ -79,14 +94,19 @@ export class NotificationsService {
   /**
    * Add new Alarm and send
    * @param path SignalK path of the notification
-   * @param notification Content of the notification as SignalKNotification
+   * @param notification Raw content of the notification message from SignalK server as SignalKNotification
    */
   public addAlarm(path: string, notification: SignalKNotification) {
     let newAlarm: Alarm = {
-      path: path,         // duplicate from Alarm Object key index for added scope from individual alarm scope
+      path: path,         // duplicate from Alarm Object key index for added scope from individual alarm context
+      type: "device",
+      isAck: false,
+      isMuted: false,
       notification: notification,
-      ack: false,
     };
+    if (/^notifications.security./.test(path)) {
+      newAlarm. type = "security";
+    }
     this.alarms[path] = newAlarm;
     this.activeAlarmsSubject.next(this.alarms);
   }
@@ -115,7 +135,20 @@ export class NotificationsService {
     return false;
   }
 
-  public acknowledgeAlarm() {}
+  /**
+   * Set Acknowledgement and send to other observers so they can react accordingly
+   * @param path alarm to acknowledge
+   * @return true of alarms found, else false
+   */
+  public acknowledgeAlarm(path: string): boolean {
+    if (path in this.alarms) {
+      this.alarms[path].isAck = true;
+      this.activeAlarmsSubject.next(this.alarms);
+      return true;
+    }
+    return false;
+  }
+
   public muteAlarm() {}
 
   /**
@@ -138,6 +171,10 @@ export class NotificationsService {
  * @usageNotes This function is internal and should not be used.
  */
   public processNotificationDelta(path: string, notificationValue: SignalKNotification) {
+    if (this.notificationConfig.disableNotifications) {
+      return;
+    }
+
     if (isNull(notificationValue)) {
       // Alarm removed/cleared on server.
       if (this.deleteAlarm(path)) {};

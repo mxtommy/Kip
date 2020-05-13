@@ -1,7 +1,7 @@
 
 
 export const DemoConfig = {
-  "configVersion": 3,
+  "configVersion": 4,
   "signalKUrl": "http://demo.signalk.org",
   "signalKToken": null,
   "themeName": "default-light",
@@ -314,5 +314,23 @@ export const DemoConfig = {
     "angle": "deg",
     "ratio": "percent"
   },
-  "disableNotifications": false
+  "notificationConfig": {
+    "disableNotifications": false,
+    "menuGrouping": true,
+    "security": {
+      "disableSecurity": true,
+    },
+    "devices": {
+      "disableDevices": false,
+      "showNormalState": false,
+    },
+    "sound": {
+      "disableSound": false,
+      "muteNormal": false,
+      "muteWarning": false,
+      "muteAlert": false,
+      "muteAlarm": false,
+      "muteEmergency": false,
+    },
+  }
 }

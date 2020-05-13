@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService, INotificationConfig } from '../app-settings.service';
 
 
 @Component({
@@ -9,18 +9,18 @@ import { AppSettingsService } from '../app-settings.service';
 })
 export class SettingsNotificationsComponent implements OnInit {
 
-  disableNotifications: boolean;
+  notificationConfig: INotificationConfig;
 
   constructor(
     private appSettingsService: AppSettingsService,
   ) { }
 
   ngOnInit() {
-    this.disableNotifications = this.appSettingsService.getNotificationServiceSettings();
+    this.notificationConfig = this.appSettingsService.getNotificationConfig();
   }
 
   saveNotificationsSettings() {
-    this.appSettingsService.setNotificationServiceSettings(this.disableNotifications);
+    this.appSettingsService.setNotificationConfig(this.notificationConfig);
   }
 
 }

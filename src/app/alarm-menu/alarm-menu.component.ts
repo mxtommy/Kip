@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NotificationsService, Alarm } from '../notifications.service';
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService, INotificationConfig } from '../app-settings.service';
 import { Subscription } from 'rxjs';
 import { Howl } from 'howler';
 
@@ -26,14 +26,14 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   warningSound;
   critSound;
-  showNormalNotifications: boolean = true;
+  notificationConfig: INotificationConfig;
 
   constructor(
     private notificationsService: NotificationsService,
     private appSettingsService: AppSettingsService,
   ) {
-    this.notificationServiceSettings = appSettingsService.getNotificationServiceSettingsAsO().subscribe(value => {
-      this.notificationDisabled = value;
+    this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+      this.notificationConfig = config;
     });
   }
 
@@ -75,7 +75,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
       for (const [path, alarm] of Object.entries(this.alarms))
       {
-        if (alarm.ack) { continue; }
+        if (alarm.isAck) { continue; }
         if (this.ignoredPaths.includes(path)) { continue; }
         this.unAckAlarms++;
         let aSev = 0;
@@ -131,13 +131,13 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   ackAlarm(path: string, timeout: number = 0) {
     if (path in this.alarms) {
-      this.alarms[path].ack = true;
+      this.alarms[path].isAck = true;
     }
     if (timeout > 0) {
       setTimeout(()=>{
         console.log("unack: "+ path);
         if (path in this.alarms) {
-          this.alarms[path].ack = false;
+          this.alarms[path].isAck = false;
         }
         this.updateAlarms();
       }, timeout);

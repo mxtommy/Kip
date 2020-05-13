@@ -10,28 +10,14 @@ import { AppSettingsService } from "./app-settings.service";
 export class SignalKDeltaService {
 
   signalKRequests = new Subject<deltaMessage>();      // requests service subs to this (avoids circular dependency in services)
-  private disableNotifications: boolean;
-  private notificationServiceSettings: Subscription;
-
 
   constructor(
     private SignalKService: SignalKService,
     private notificationsService: NotificationsService,
-    private appSettingsService: AppSettingsService,
-    ) {
-      this.notificationServiceSettings = appSettingsService.getNotificationServiceSettingsAsO().subscribe(value => {
-        this.disableNotifications = value;
-        if (this.disableNotifications) {
-          this.notificationsService.resetAlarms();
-        }
-
-      });
-     }
-
+    ) { }
 
   processWebsocketMessage(message: deltaMessage) {
     // Read raw message and route to appropriate sub
-
     if (typeof(message.self) != 'undefined') {  // is Hello message
       this.SignalKService.setSelf(message.self);
       this.SignalKService.setServerVersion(message.version);
@@ -84,9 +70,6 @@ export class SignalKDeltaService {
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
       for (let value of update.values) {
         if (/^notifications./.test(value.path)) {   // is a notification message, pass to notification service
-          if (this.disableNotifications) {          // Notifications are disabled in app settings - do nothing.
-            return null;
-          }
           this.notificationsService.processNotificationDelta(value.path, value.value);
         } else {
           // it's a data update. Update local tree

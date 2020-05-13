@@ -1,34 +1,20 @@
-<div class="settingsWindow">
-  <mat-tab-group class="">
-    <mat-tab label="Server">
-      <div class="">
-        <app-settings-signalk></app-settings-signalk>
-      </div>
-    </mat-tab>
-    <mat-tab label="Historical Data">
-      <div class="">
-        <app-settings-datasets></app-settings-datasets>
-      </div>
-    </mat-tab>
-    <!--<mat-tab label="Derived Data">
-      <div class="">
-        <app-settings-derived></app-settings-derived>
-      </div>
-    </mat-tab> -->
-    <mat-tab label="Units">
-      <div class="">
-        <app-settings-units></app-settings-units>
-      </div>
-    </mat-tab>
-    <mat-tab label="Notifications">
-      <div class="">
-        <settings-notifications></settings-notifications>
-      </div>
-    </mat-tab>
-    <mat-tab label="Configuration">
-      <div class="">
-        <app-settings-config></app-settings-config>
-      </div>
-    </mat-tab>
-  </mat-tab-group>
-</div>
+<mat-tab-group class="settingsWindow">
+  <mat-tab label="Server">
+      <app-settings-signalk class="settingsPanels"></app-settings-signalk>
+  </mat-tab>
+  <mat-tab label="Historical Data">
+      <app-settings-datasets class="settingsPanels"></app-settings-datasets>
+  </mat-tab>
+  <!--<mat-tab class="settingsPanels" label="Derived Data">
+      <app-settings-derived></app-settings-derived>
+  </mat-tab> -->
+  <mat-tab label="Units">
+      <app-settings-units class="settingsPanels"></app-settings-units>
+  </mat-tab>
+  <mat-tab label="Notifications">
+      <settings-notifications class="settingsPanels"></settings-notifications>
+  </mat-tab>
+  <mat-tab label="Configuration">
+      <app-settings-config class="settingsPanels"></app-settings-config>
+  </mat-tab>
+</mat-tab-group>

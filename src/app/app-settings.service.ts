@@ -10,11 +10,12 @@ import { IUnitDefaults } from './units.service';
 import { BlankConfig } from './blank-config.const';
 import { DemoConfig } from './demo-config.const';
 import { initialDefaultUnits } from './defaultUnits.const'
+import { DefaultNotificationConfig } from './blank-Notification-config.const';
 import { isNumber } from 'util';
 
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'default-light';
-const configVersion = 3; // used to invalidate old configs to avoir errors loading it.
+const configVersion = 4; // used to invalidate old configs to avoir errors loading it.
 
 
 export interface AppSettings {
@@ -28,7 +29,27 @@ export interface AppSettings {
   splitSets: ISplitSet[];
   rootSplits: string[];
   unitDefaults: IUnitDefaults;
+  notificationConfig?: INotificationConfig;
+}
+
+export interface INotificationConfig {
   disableNotifications: boolean;
+  menuGrouping: boolean;
+  security: {
+    disableSecurity: boolean;
+  },
+  devices: {
+    disableDevices: boolean;
+    showNormalState: boolean;
+  },
+  sound: {
+    disableSound: boolean;
+    muteNormal: boolean;
+    muteWarning: boolean;
+    muteAlert: boolean;
+    muteAlarm: boolean;
+    muteEmergency: boolean;
+  },
 }
 
 export interface SignalKUrl {
@@ -46,14 +67,13 @@ export class AppSettingsService {
   signalKToken: BehaviorSubject<SignalKToken> = new BehaviorSubject<SignalKToken>(null);
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
-  kipKNotificationServiceSettings: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(null);
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
 
   widgets: Array<IWidget>;
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
   dataSets: IDataSet[] = [];
-  disableNotifications: boolean;
   root
 
   constructor(
@@ -90,7 +110,7 @@ export class AppSettingsService {
     } else {
       this.unitDefaults.next(initialDefaultUnits);
     }
-    this.kipKNotificationServiceSettings.next(storageObject['disableNotifications']);
+    this.kipKNotificationConfig.next(storageObject.notificationConfig);
   }
 
   //UnitDefaults
@@ -156,7 +176,6 @@ export class AppSettingsService {
     this.saveToLocalStorage();
   }
 
-
    // Layout SplitSets
   getSplitSets() {
     return this.splitSets;
@@ -183,17 +202,23 @@ export class AppSettingsService {
   }
 
   // Notification Service Setting
-  public getNotificationServiceSettingsAsO() {
-    return this.kipKNotificationServiceSettings.asObservable();
+  public getNotificationConfigService() {
+    return this.kipKNotificationConfig.asObservable();
   }
 
-  public getNotificationServiceSettings() {
-    return this.kipKNotificationServiceSettings.getValue();
+  public getNotificationConfig(): INotificationConfig {
+    return this.kipKNotificationConfig.getValue();
   }
 
-  public setNotificationServiceSettings(disableNotifications: boolean) {
-    this.kipKNotificationServiceSettings.next(disableNotifications);
+  public setNotificationConfig(notificationConfig: INotificationConfig) {
+    this.kipKNotificationConfig.next(notificationConfig);
     this.saveToLocalStorage();
+  }
+
+  getDefaultNotification(): INotificationConfig {
+    let config = DefaultNotificationConfig;
+    localStorage.setItem('notificationConfig', JSON.stringify(config));
+    return config;
   }
 
   // saving.
@@ -209,7 +234,7 @@ export class AppSettingsService {
       splitSets: this.splitSets,
       rootSplits: this.rootSplits,
       unitDefaults: this.unitDefaults.getValue(),
-      disableNotifications: this.kipKNotificationServiceSettings.getValue(),
+      notificationConfig: this.kipKNotificationConfig.getValue(),
     }
     return storageObject;
   }
@@ -235,7 +260,6 @@ export class AppSettingsService {
 
   loadDemoConfig() {
     this.replaceConfig(JSON.stringify(DemoConfig));
-
   }
 
   reloadApp() {
@@ -244,10 +268,12 @@ export class AppSettingsService {
   }
 
   getDefaultConfig(): AppSettings {
-    let config = BlankConfig;
+    let config: AppSettings = BlankConfig;
+    config.notificationConfig = DefaultNotificationConfig;
     config.signalKUrl = window.location.origin;
     config['configVersion'] = configVersion;
     localStorage.setItem('signalKData', JSON.stringify(config));
     return config;
   }
+
 }

@@ -1,10 +1,9 @@
-<br>
 <mat-card>
   <form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster">
     <mat-form-field class="" *ngFor="let unitType of defaultUnits | keyvalue">
-      <mat-select 
-        [placeholder] = "unitType.key" 
-        [formControlName] = "unitType.key" 
+      <mat-select
+        [placeholder] = "unitType.key"
+        [formControlName] = "unitType.key"
         >
         <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit" >{{ unit }}</mat-option>
 
@@ -13,6 +12,6 @@
     <br>
     <mat-dialog-actions>
       <button mat-raised-button color="accent" type="submit" [disabled]="!formUnitMaster.valid" >Save</button>
-  </mat-dialog-actions>  
+  </mat-dialog-actions>
   </form>
 </mat-card>
