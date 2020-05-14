@@ -64,11 +64,11 @@ export interface SignalKToken {
 @Injectable()
 export class AppSettingsService {
   signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
-  signalKToken: BehaviorSubject<SignalKToken> = new BehaviorSubject<SignalKToken>(null);
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
-  kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(null);
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
+  signalKToken: BehaviorSubject<SignalKToken>;
+  kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
 
   widgets: Array<IWidget>;
   splitSets: ISplitSet[] = [];
@@ -79,7 +79,7 @@ export class AppSettingsService {
   constructor(
     private router: Router) {
 
-    let storageObject: AppSettings
+    let storageObject: AppSettings;
     if (localStorage.getItem('signalKData') == null) {
       storageObject = this.getDefaultConfig();
     }
@@ -98,7 +98,7 @@ export class AppSettingsService {
     let skToken: SignalKToken = {token: storageObject.signalKToken, new: false};
 
     this.signalKUrl.next(skUrl);
-    this.signalKToken.next(skToken);
+    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
     this.themeName.next(storageObject['themeName']);
     this.widgets = storageObject.widgets;
     this.unlockStatus.next(storageObject['unlockStatus']);
@@ -110,7 +110,7 @@ export class AppSettingsService {
     } else {
       this.unitDefaults.next(initialDefaultUnits);
     }
-    this.kipKNotificationConfig.next(storageObject.notificationConfig);
+    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(storageObject.notificationConfig);
   }
 
   //UnitDefaults

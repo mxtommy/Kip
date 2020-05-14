@@ -33,12 +33,6 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     private appSettingsService: AppSettingsService,
   ) {
     this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
-      // if (config == undefined) {return}
-      // if (config.devices.showNormalState != this.notificationConfig.devices.showNormalState) {
-      //   if (config.devices.showNormalState == false) {
-      //     this.alarms = {};
-      //   }
-      // }
       this.notificationConfig = config;
     });
   }
