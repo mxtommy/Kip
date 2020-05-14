@@ -11,7 +11,7 @@ import { isNumeric } from 'rxjs/util/isNumeric';
 
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: null,
+  displayName: null,
   paths: {
     "numericPath": {
       description: "Numeric Data",
@@ -23,7 +23,7 @@ const defaultConfig: IWidgetConfig = {
   units: {
     "numericPath": "unitless"
   },
-  selfPaths: true,
+  filterSelfPaths: true,
   showMax: false,
   showMin: false,
   numDecimal: 1,
@@ -258,11 +258,11 @@ unsubscribeTheme(){
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
-    if (this.config.widgetLabel === null) { return; }
+    if (this.config.displayName === null) { return; }
     var fontSize = 1;
 
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.config.widgetLabel).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasBGCtx.measureText(this.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
@@ -270,7 +270,7 @@ unsubscribeTheme(){
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
     this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasBGCtx.fillText(this.config.widgetLabel,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasBGCtx.fillText(this.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
   drawUnit() {

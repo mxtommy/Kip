@@ -17,17 +17,17 @@ export class SettingsUnitsComponent implements OnInit {
 
   groupUnits: {[key: string]: string[]} = {};
   defaultUnits: IUnitDefaults;
-  
 
-  
-  constructor( 
-    private UnitsService: UnitsService, 
+
+
+  constructor(
+    private UnitsService: UnitsService,
     private AppSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
     ) { }
 
   ngOnInit() {
-    
+
     this.defaultUnits = this.AppSettingsService.getDefaultUnits();
 
     //format data a bit better for consumption in template
@@ -49,7 +49,7 @@ export class SettingsUnitsComponent implements OnInit {
 
   submitConfig() {
     this.AppSettingsService.setDefaultUnits(this.formUnitMaster.value);
-    this.NotificationsService.newNotification("Saved Default Units", 5000);
+    this.NotificationsService.sendSnackbarNotification("Saved Default Units", 5000);
   }
 
 }

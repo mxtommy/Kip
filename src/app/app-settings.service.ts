@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
-
 
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
@@ -11,54 +10,79 @@ import { IUnitDefaults } from './units.service';
 import { BlankConfig } from './blank-config.const';
 import { DemoConfig } from './demo-config.const';
 import { initialDefaultUnits } from './defaultUnits.const'
+import { DefaultNotificationConfig } from './blank-Notification-config.const';
 import { isNumber } from 'util';
 
-const defaultSignalKUrl = 'http://demo.signalk.org/signalk';
+const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'default-light';
-const configVersion = 3; // used to invalidate old configs to avoir errors loading it.
+const configVersion = 4; // used to invalidate old configs to avoir errors loading it.
 
 
-export interface appSettings {
+export interface AppSettings {
   configVersion: number;
   signalKUrl: string;
   signalKToken: string;
   themeName: string;
-  widgets: Array<IWidget>; 
+  widgets: Array<IWidget>;
   unlockStatus: boolean;
   dataSets: IDataSet[];
   splitSets: ISplitSet[];
   rootSplits: string[];
   unitDefaults: IUnitDefaults;
+  notificationConfig?: INotificationConfig;
 }
 
+export interface INotificationConfig {
+  disableNotifications: boolean;
+  menuGrouping: boolean;
+  security: {
+    disableSecurity: boolean;
+  },
+  devices: {
+    disableDevices: boolean;
+    showNormalState: boolean;
+  },
+  sound: {
+    disableSound: boolean;
+    muteNormal: boolean;
+    muteWarning: boolean;
+    muteAlert: boolean;
+    muteAlarm: boolean;
+    muteEmergency: boolean;
+  },
+}
 
+export interface SignalKUrl {
+  url: string;
+  new: boolean;
+}
+
+export interface SignalKToken {
+  token: string;
+  new: boolean;
+}
 @Injectable()
 export class AppSettingsService {
-
-
-
-  signalKUrl: BehaviorSubject<string> = new BehaviorSubject<string>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
-  signalKToken: BehaviorSubject<string> = new BehaviorSubject<string>(null);
+  signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
-
+  themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
+  signalKToken: BehaviorSubject<SignalKToken>;
+  kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
 
   widgets: Array<IWidget>;
-
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
-
-  themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   dataSets: IDataSet[] = [];
   root
 
   constructor(
     private router: Router) {
 
-    let storageObject: appSettings
+    let storageObject: AppSettings;
     if (localStorage.getItem('signalKData') == null) {
       storageObject = this.getDefaultConfig();
-    } 
+    }
     storageObject = JSON.parse(localStorage.getItem('signalKData'));
     if (!isNumber(storageObject.configVersion) || (storageObject.configVersion != configVersion)) {
       console.error("Invalid config version, loading default");
@@ -66,13 +90,15 @@ export class AppSettingsService {
     }
 
     this.loadSettings(storageObject);
-      
   }
 
 
-  loadSettings(storageObject: appSettings) {
-    this.signalKUrl.next(storageObject['signalKUrl']);
-    this.signalKToken.next(storageObject['signalKToken'])
+  loadSettings(storageObject: AppSettings) {
+    let skUrl: SignalKUrl = {url: storageObject.signalKUrl, new: false};
+    let skToken: SignalKToken = {token: storageObject.signalKToken, new: false};
+
+    this.signalKUrl.next(skUrl);
+    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
     this.themeName.next(storageObject['themeName']);
     this.widgets = storageObject.widgets;
     this.unlockStatus.next(storageObject['unlockStatus']);
@@ -84,6 +110,7 @@ export class AppSettingsService {
     } else {
       this.unitDefaults.next(initialDefaultUnits);
     }
+    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(storageObject.notificationConfig);
   }
 
   //UnitDefaults
@@ -105,22 +132,22 @@ export class AppSettingsService {
   getSignalKURL() {
     return this.signalKUrl.getValue();
   }
-  setSignalKURL(value: string) {
+  setSignalKURL(value: SignalKUrl) {
     this.signalKUrl.next(value);
     this.saveToLocalStorage();
   }
 
-    // SignalKToken
-    getSignalKTokenAsO() {
-      return this.signalKToken.asObservable();
-    }
-    getSignalKToken() {
-      return this.signalKToken.getValue();
-    }
-    setSignalKToken(value: string) {
-      this.signalKToken.next(value);
-      this.saveToLocalStorage();
-    }
+  // SignalKToken
+  getSignalKTokenAsO() {
+    return this.signalKToken.asObservable();
+  }
+  getSignalKToken() {
+    return this.signalKToken.getValue();
+  }
+  setSignalKToken(value: SignalKToken) {
+    this.signalKToken.next(value);
+    this.saveToLocalStorage();
+  }
 
   // UnlockStatus
   getUnlockStatusAsO() {
@@ -149,7 +176,6 @@ export class AppSettingsService {
     this.saveToLocalStorage();
   }
 
-
    // Layout SplitSets
   getSplitSets() {
     return this.splitSets;
@@ -175,15 +201,32 @@ export class AppSettingsService {
     return this.dataSets;
   }
 
+  // Notification Service Setting
+  public getNotificationConfigService() {
+    return this.kipKNotificationConfig.asObservable();
+  }
 
-  // saving. 
+  public getNotificationConfig(): INotificationConfig {
+    return this.kipKNotificationConfig.getValue();
+  }
 
+  public setNotificationConfig(notificationConfig: INotificationConfig) {
+    this.kipKNotificationConfig.next(notificationConfig);
+    this.saveToLocalStorage();
+  }
 
-  buildStorageObject() {
-    let storageObject: appSettings = {
+  getDefaultNotification(): INotificationConfig {
+    let config = DefaultNotificationConfig;
+    localStorage.setItem('notificationConfig', JSON.stringify(config));
+    return config;
+  }
+
+  // saving.
+  private buildStorageObject() {
+    let storageObject: AppSettings = {
       configVersion: configVersion,
-      signalKUrl: this.signalKUrl.getValue(),
-      signalKToken: this.signalKToken.getValue(),
+      signalKUrl: this.signalKUrl.getValue().url,
+      signalKToken: this.signalKToken.getValue().token,
       themeName: this.themeName.getValue(),
       widgets: this.widgets,
       unlockStatus: this.unlockStatus.getValue(),
@@ -191,14 +234,14 @@ export class AppSettingsService {
       splitSets: this.splitSets,
       rootSplits: this.rootSplits,
       unitDefaults: this.unitDefaults.getValue(),
+      notificationConfig: this.kipKNotificationConfig.getValue(),
     }
     return storageObject;
   }
 
   getAppConfig() {
-    return this.buildStorageObject(); 
+    return this.buildStorageObject();
   }
-
 
   saveToLocalStorage() {
     console.log("Saving Config to LocalStorage");
@@ -217,7 +260,6 @@ export class AppSettingsService {
 
   loadDemoConfig() {
     this.replaceConfig(JSON.stringify(DemoConfig));
-
   }
 
   reloadApp() {
@@ -225,11 +267,13 @@ export class AppSettingsService {
     setTimeout(()=>{ location.reload() }, 200);
   }
 
-  getDefaultConfig(): appSettings {
-    let config = BlankConfig;
+  getDefaultConfig(): AppSettings {
+    let config: AppSettings = BlankConfig;
+    config.notificationConfig = DefaultNotificationConfig;
     config.signalKUrl = window.location.origin;
     config['configVersion'] = configVersion;
     localStorage.setItem('signalKData', JSON.stringify(config));
     return config;
   }
+
 }

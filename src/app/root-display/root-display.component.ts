@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { Router, ActivatedRoute } from '@angular/router';
-import { SignalKConnectionService } from '../signalk-connection.service';
+import { ActivatedRoute } from '@angular/router';
 
 import { AppSettingsService } from '../app-settings.service';
 import { LayoutSplitsService } from '../layout-splits.service';
@@ -10,7 +9,7 @@ import { LayoutSplitsService } from '../layout-splits.service';
 @Component({
   selector: 'app-root-display',
   templateUrl: './root-display.component.html',
-  styleUrls: ['./root-display.component.css']
+  styleUrls: []
 })
 export class RootDisplayComponent implements OnInit, OnDestroy {
 
@@ -23,13 +22,9 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
 
-  connectionOverlayDisplay = "none";
-  connectionStatusSub: Subscription;
-
   constructor(  private AppSettingsService: AppSettingsService,
-                private SignalKConnectionService: SignalKConnectionService,
                 private LayoutSplitsService: LayoutSplitsService,
-                private route: ActivatedRoute
+                private route: ActivatedRoute,
                 ) { }
 
   ngOnInit() {
@@ -53,17 +48,6 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
         this.unlockStatus = unlockStatus;
       }
     );
-
-    this.connectionStatusSub = this.SignalKConnectionService.getEndpointWSStatus().subscribe(
-      status => { 
-        if (status) {
-          this.connectionOverlayDisplay = "none";
-        } else {
-          this.connectionOverlayDisplay = "block";
-        }
-      }
-    );
-
   }
 
   ngOnDestroy() {

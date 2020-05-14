@@ -57,13 +57,14 @@
     </div>
     <div class="itemMute">
       <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="muteBtn" #muteBtn disabled="true" (click)="sendSilence()">
-        <i class="fa fa-bell-slash" aria-hidden="true"></i>
-        <i class="fa fa-bell" aria-hidden="true"></i>
+        <i *ngIf="alarmsCount" class="fa fa-bell-slash" aria-hidden="true"></i>
+        <i *ngIf="!alarmsCount" class="fa fa-bell" aria-hidden="true"></i>
       </button>
     </div>
     <div class="itemMessage">
       <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="messageBtn" #messageBtn disabled="true" (click)="notificationScroll()">
-        <span class="fa fa-envelope" aria-hidden="true" matBadge="3" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
+        <span class="fa fa-envelope" aria-hidden="true"></span>
+        <span *ngIf="alarmsCount" matBadge="{{alarmsCount}}" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
       </button>
     </div>
   </div>

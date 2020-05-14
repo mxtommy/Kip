@@ -46,12 +46,12 @@ const defaultConfig: IWidgetConfig = {
     "trueWindSpeed": "knots",
     "appWindSpeed": "knots"
   },
-  selfPaths: true,
+  filterSelfPaths: true,
   windSectorEnable: true,
   windSectorWindowSeconds: 10,
   laylineEnable: true,
   laylineAngle: 35,
-  
+
 };
 
 
@@ -64,7 +64,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
-  
+
   activeWidget: IWidget;
   config: IWidgetConfig;
 
@@ -90,7 +90,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   trueWindMinHistoric: number;
   trueWindMidHistoric: number;
   trueWindMaxHistoric: number;
-    
+
   windSectorObservableSub: Subscription;
 
 
@@ -132,8 +132,8 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindAngle();
     this.unsubscribeAppWindSpeed();
     this.unsubscribeTrueWindAngle();
-    this.unsubscribeTrueWindSpeed();   
-    this.stopWindSectors(); 
+    this.unsubscribeTrueWindSpeed();
+    this.stopWindSectors();
   }
 
   subscribeHeading() {
@@ -146,7 +146,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         } else {
           this.currentHeading = this.UnitsService.convertUnit('deg', newValue);
         }
-        
+
       }
     );
   }
@@ -197,7 +197,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
           this.trueWindAngle = null;
           return;
         }
-       
+
         let converted = this.UnitsService.convertUnit('deg', newValue);
 
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
@@ -213,7 +213,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
           //0-360
           this.trueWindAngle = converted;
         }
-        
+
         //add to historical for wind sectors
         if (this.config.windSectorEnable) {
           this.addHistoricalTrue(this.trueWindAngle);
@@ -300,7 +300,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       this.appWindSpeedSub.unsubscribe();
       this.appWindSpeedSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['appWindSpeed'].path);
-    }   
+    }
   }
 
   unsubscribeTrueWindAngle() {
@@ -316,7 +316,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
       this.trueWindSpeedSub.unsubscribe();
       this.trueWindSpeedSub = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['trueWindSpeed'].path);
-    }   
+    }
   }
 
 
@@ -339,7 +339,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
   openWidgetSettings() {
 
- 
+
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
       data: this.config

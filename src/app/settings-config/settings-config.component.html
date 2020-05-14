@@ -1,4 +1,3 @@
-<br>
 <mat-accordion>
   <mat-expansion-panel [expanded]="supportApplicationData" [disabled]="!supportApplicationData">
     <mat-expansion-panel-header >Load Config from Server <div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div></mat-expansion-panel-header>
@@ -33,16 +32,16 @@
         <mat-radio-group aria-label="Scope" [formControl]="configScope">
           <mat-radio-button value="global">Global (needs Admin priv)</mat-radio-button>
           <mat-radio-button value="user">User</mat-radio-button>
-        </mat-radio-group>        
+        </mat-radio-group>
       </div>
-      <button mat-raised-button type="button" [disabled]="!hasToken" color="accent"(click)='saveServerSettings()'>Save</button>  
+      <button mat-raised-button type="button" [disabled]="!hasToken" color="accent"(click)='saveServerSettings()'>Save</button>
     </mat-action-row>
   </mat-expansion-panel>
 
   <mat-expansion-panel>
     <mat-expansion-panel-header>Raw JSON Config</mat-expansion-panel-header>
     <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
-        
+
 
       <mat-form-field class="config-size">
           <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Application Configuration" wrap="off" [(ngModel)]="jsonConfig"></textarea>
@@ -50,7 +49,7 @@
       <button mat-raised-button type="button" color="warn" (click)='resetSettings()'>Clear Config</button>
       <button mat-raised-button color="accent" type="submit">Save Raw Config</button>
       <button mat-raised-button type="button" color="warn" (click)='loadDemoConfig()'>Load Demo Config</button>
-      
+
     </form>
   </mat-expansion-panel>
 </mat-accordion>

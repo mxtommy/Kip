@@ -1,9 +1,8 @@
-<button color="accent" mat-flat-button class="menuBarAlarmsButton"
+<button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton"
         [class.alarmCrit]="blinkCrit"
         [class.alarmWarning]="blinkWarn"
-        [matMenuTriggerFor]="alarmMenu"
-        [disabled]="alarmCount == 0">
-  <span [matBadgeHidden]="!unAckAlarms"
+        [disabled]="alarmCount == 0 || notificationConfig.disableNotifications">
+  <span *ngIf="!notificationConfig.disableNotifications" [matBadgeHidden]="!unAckAlarms"
         [matBadge]="unAckAlarms"
         matBadgeSize="medium"
         matBadgePosition="after"
@@ -11,14 +10,18 @@
         matBadgeColor="warn"
         class="fa fa-bell fa-2x">
   </span>
+  <span *ngIf="notificationConfig.disableNotifications" class="fa-stack fa-lg">
+    <i class="fa fa-bell fa-1x" aria-hidden="true"></i>
+    <i class="fa fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
+  </span>
 </button>
 <mat-menu #alarmMenu="matMenu">
-  <div *ngFor="let alarm of alarms | keyvalue">
-    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.message">
+  <div *ngFor="let alarm of alarms | keyvalue; index as i; trackBy:trackAlarmPath">
+    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.notification.message">
       <span *ngIf="alarm.value.ack" class="fa fa-lg fa-check"></span>
       <span *ngIf="!alarm.value.ack && !pathIgnored(alarm.key)" class="fa fa-lg fa-exclamation"></span>
       <span *ngIf="pathIgnored(alarm.key)" class="fa fa-lg fa-ban"></span>
-      {{ alarm.value.message }}
+      {{ alarm.value.notification.message }}
     </button>
     <mat-menu #actions="matMenu">
       <button
@@ -50,9 +53,7 @@
         matTooltip="Ignore Alarm (all states) for 5 minutes"
         >
         Ignore (5 Min)
-     </button>
+      </button>
     </mat-menu>
-
   </div>
 </mat-menu>
-

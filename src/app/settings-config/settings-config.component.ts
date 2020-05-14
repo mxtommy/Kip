@@ -44,21 +44,25 @@ export class SettingsConfigComponent implements OnInit {
 
 
   ngOnInit() {
-   
 
-    this.serverSupportSaveSub = this.SignalKService.getServerSupportApplicationDataAsO().subscribe(supprted => {
-      this.supportApplicationData = supprted;
-      if (supprted) {
+
+    this.serverSupportSaveSub = this.SignalKService.getServerSupportApplicationDataAsO().subscribe(supported => {
+      this.supportApplicationData = supported;
+      if (supported) {
         this.getPossibleConfigs();
       }
     });
 
     this.applicationConfig = this.AppSettingsService.getAppConfig();
     this.jsonConfig = JSON.stringify(this.applicationConfig, null, 2);
-    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => { 
-      if (token) { this.hasToken = true; } else { this.hasToken = false; }
+    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
+      if (token.token) {
+        this.hasToken = true;
+      } else {
+        this.hasToken = false;
+      }
     });
-    
+
   }
 
   getPossibleConfigs() {
@@ -74,7 +78,7 @@ export class SettingsConfigComponent implements OnInit {
       }
     });
   }
-  
+
   ngOnDestroy() {
     this.authTokenSub.unsubscribe();
     this.serverSupportSaveSub.unsubscribe();
@@ -82,7 +86,7 @@ export class SettingsConfigComponent implements OnInit {
 
   saveServerSettings() {
     this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, this.applicationConfig).subscribe(result => {
-      this.NotificationsService.newNotification("Configration Saved!", 3000);
+      this.NotificationsService.sendSnackbarNotification("Configuration Saved!", 3000);
     });
   }
 
@@ -90,8 +94,8 @@ export class SettingsConfigComponent implements OnInit {
     this.SignalKConnectionService.getApplicationData(this.configLoad.value.scope, this.configLoad.value.name).subscribe(newConfig => {
       this.AppSettingsService.replaceConfig(JSON.stringify(newConfig));
     });
-  
-    
+
+
   }
 
   resetSettings() {

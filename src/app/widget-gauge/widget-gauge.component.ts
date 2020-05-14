@@ -10,7 +10,7 @@ import { UnitsService } from '../units.service';
 
 
 const defaultConfig: IWidgetConfig = {
-  widgetLabel: null,
+  displayName: null,
   paths: {
     "gaugePath": {
       description: "Numeric Data",
@@ -22,8 +22,8 @@ const defaultConfig: IWidgetConfig = {
   units: {
     "gaugePath": "unitless"
   },
-  selfPaths: true,
-  
+  filterSelfPaths: true,
+
   gaugeType: 'linear',
   barGraph: false,    // if linear/radial, is it digital?
   radialSize: 'full',
@@ -44,7 +44,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
-  
+
 
   activeWidget: IWidget;
   config: IWidgetConfig;
@@ -52,7 +52,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
   dataValue: any = null;
 
   valueSub: Subscription = null;
-  
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -70,7 +70,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
       this.config = this.activeWidget.config;
     }
     this.subscribePath();
-   
+
   }
 
   ngOnDestroy() {
@@ -116,7 +116,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
 
     });
 
-  }  
-  
+  }
+
 
 }

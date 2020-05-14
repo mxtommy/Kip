@@ -138,8 +138,5 @@ $mat-wind: (
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $modernTheme-temp: mat-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
 
-
-// $modernTheme-dark-background: custom-theme-dark-background($modern-theme-special, 900); // TODO(david): Cleanup
-
 // Merge our mat-theme with component specific palettes
 $modernTheme-dark: map-merge($modernTheme-temp, (wind: $mat-wind, ngGauge: $mat-ngGauge));

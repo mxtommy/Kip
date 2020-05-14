@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { NotificationsService, activeAlarms } from '../notifications.service';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NotificationsService, Alarm } from '../notifications.service';
+import { AppSettingsService, INotificationConfig } from '../app-settings.service';
 import { Subscription } from 'rxjs';
-import { Howl, Howler} from 'howler';
+import { Howl } from 'howler';
 
 
 @Component({
@@ -9,11 +10,13 @@ import { Howl, Howler} from 'howler';
   templateUrl: './alarm-menu.component.html',
   styleUrls: ['./alarm-menu.component.scss']
 })
-export class AlarmMenuComponent implements OnInit {
+export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   alarmSub: Subscription;
+  private notificationServiceSettings: Subscription;
 
-  alarms: activeAlarms = {};
+  alarms: { [path: string]: Alarm };
+  rawAlarms: { [path: string]: Alarm };
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;
@@ -23,10 +26,16 @@ export class AlarmMenuComponent implements OnInit {
 
   warningSound;
   critSound;
+  notificationConfig: INotificationConfig;
 
   constructor(
-    private NotificationsService: NotificationsService,
-  ) { }
+    private notificationsService: NotificationsService,
+    private appSettingsService: AppSettingsService,
+  ) {
+    this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+      this.notificationConfig = config;
+    });
+  }
 
   ngOnInit() {
 
@@ -40,16 +49,34 @@ export class AlarmMenuComponent implements OnInit {
     });
     // Alarm code
 
-    this.alarmSub = this.NotificationsService.getAlarmObservable().subscribe(
-      alarms  => {
-        this.alarms = alarms;
+    this.alarmSub = this.notificationsService.getAlarms().subscribe(
+      message => {
+        this.rawAlarms = message;
         this.updateAlarms();
-        }
+      }
     );
   }
 
-
   updateAlarms() {
+    // we use this as a staging area to limit menu update events when we play to the Alarms record
+    if (!this.notificationConfig.devices.showNormalState) {
+      for (const [path, alarm] of Object.entries(this.rawAlarms)) {
+        let alarm = this.rawAlarms[path];
+
+        if (alarm.notification['state'] == 'normal') {
+          delete this.rawAlarms[path];
+          break;
+        }
+      }
+    }
+    this.alarms = this.rawAlarms;
+    this.updateMenu();
+  }
+
+  /**
+   * main alert management function. Called on Observable message
+   */
+  updateMenu() {
     this.alarmCount = Object.keys(this.alarms).length;
     this.unAckAlarms = 0;
     this.blinkWarn = false;
@@ -64,22 +91,23 @@ export class AlarmMenuComponent implements OnInit {
 
       for (const [path, alarm] of Object.entries(this.alarms))
       {
-        if (alarm.ack) { continue; }
+        if (alarm.isAck) { continue; }
         if (this.ignoredPaths.includes(path)) { continue; }
         this.unAckAlarms++;
         let aSev = 0;
         let vSev = 0;
-        switch (alarm.state) {
+
+        switch (alarm.notification['state']) {
           case 'alert':
           case 'warn':
-            if (alarm.method.includes('sound')) { aSev = 1; }
-            if (alarm.method.includes('visual')) { vSev = 1; }
+            if (alarm.notification['method'].includes('sound')) { aSev = 1; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 1; }
             break;
           case 'alarm':
           case 'emergency':
-            if (alarm.method.includes('sound')) { aSev = 2; }
-            if (alarm.method.includes('visual')) { vSev = 2; }
-            
+            if (alarm.notification['method'].includes('sound')) { aSev = 2; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 2; }
+
         }
         audioSev = Math.max(audioSev, aSev);
         visualSev = Math.max(visualSev, vSev)
@@ -111,21 +139,21 @@ export class AlarmMenuComponent implements OnInit {
         case 2:
           this.blinkCrit = true;
           this.blinkWarn = false;
-     
+
       }
 
-    } 
+    }
   }
 
   ackAlarm(path: string, timeout: number = 0) {
     if (path in this.alarms) {
-      this.alarms[path].ack = true;
+      this.alarms[path].isAck = true;
     }
     if (timeout > 0) {
       setTimeout(()=>{
         console.log("unack: "+ path);
         if (path in this.alarms) {
-          this.alarms[path].ack = false;
+          this.alarms[path].isAck = false;
         }
         this.updateAlarms();
       }, timeout);
@@ -153,6 +181,19 @@ export class AlarmMenuComponent implements OnInit {
 
   pathIgnored(path: string) {
     return this.ignoredPaths.includes(path);
+  }
+
+  /**
+   * Used by ngFor to tracks alarm items by key for menu optimization
+   * @param alarm object in question
+   */
+  trackAlarmPath(index, alarm) {
+    return alarm ? alarm.value.path : undefined;
+  }
+
+  ngOnDestroy() {
+    this.notificationServiceSettings.unsubscribe();
+    this.alarmSub.unsubscribe();
   }
 
 }

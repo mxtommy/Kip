@@ -2,14 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
 import { LayoutSplitsService } from './layout-splits.service';
-
 import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
+import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
 
 
 declare var NoSleep: any; //3rd party
@@ -35,16 +34,18 @@ export class AppComponent implements OnInit, OnDestroy {
   themeClass: string = 'default-light fullheight';
   themeNameSub: Subscription;
 
-  notificationSub: Subscription;
-
+  appNotificationSub: Subscription;
+  connectionStatusSub: Subscription;
 
   constructor(
     private AppSettingsService: AppSettingsService,
     private DataSetService: DataSetService,
-    private NotificationsService: NotificationsService,
+    private notificationsService: NotificationsService,
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
-    private LayoutSplitsService: LayoutSplitsService) { }
+    private LayoutSplitsService: LayoutSplitsService,
+    private signalKConnectionService: SignalKConnectionService,
+    ) { }
 
 
   ngOnInit() {
@@ -64,17 +65,24 @@ export class AppComponent implements OnInit, OnDestroy {
     )
     this.DataSetService.startAllDataSets();
 
-    
-    // Snackbar Notification Code
-    this.notificationSub = this.NotificationsService.getNotificationObservable().subscribe(
 
-      appNotififaction => {
-        this._snackBar.open(appNotififaction.message, 'dismiss', {
-          duration: appNotififaction.duration,
+    // Snackbar Notification Code
+    this.appNotificationSub = this.notificationsService.getSnackbarAppNotifications().subscribe(
+
+      appNotification => {
+        this._snackBar.open(appNotification.message, 'dismiss', {
+          duration: appNotification.duration,
           verticalPosition: 'top'
         });
       }
     )
+
+    // Connection Status Notification sub
+    this.connectionStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(
+      status => {
+        this.displayConnectionsStatusNotification(status);
+      }
+    );
 
 
   }
@@ -82,8 +90,21 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.unlockStatusSub.unsubscribe();
     this.themeNameSub.unsubscribe();
-    this.notificationSub.unsubscribe();
+    this.appNotificationSub.unsubscribe();
+    this.connectionStatusSub.unsubscribe();
+  }
 
+  displayConnectionsStatusNotification(connectionsStatus: SignalKStatus) {
+    if (connectionsStatus.operation == 1) { // starting server
+      if (!connectionsStatus.endpoint.status) {
+        this.notificationsService.sendSnackbarNotification(connectionsStatus.endpoint.message, 5000);
+      } else {
+        this.notificationsService.sendSnackbarNotification("Connected to SignalK Server.", 5000);
+      }
+    }
+    if (connectionsStatus.operation == 3) { // URL changed/reset
+      this.notificationsService.sendSnackbarNotification("Connection Update/Reset successful.", 5000);
+    }
   }
 
   setTheme(theme: string) {

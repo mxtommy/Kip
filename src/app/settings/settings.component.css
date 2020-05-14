@@ -1,4 +1,9 @@
 .settingsWindow {
-    padding: 20px;
+  padding-left: 0px;
+}
+
+.settingsPanels {
+  display: block;
+  padding: 3px;
 }
 

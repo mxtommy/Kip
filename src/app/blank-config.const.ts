@@ -1,5 +1,5 @@
 export const BlankConfig = {
-    "configVersion": 0,
+    "configVersion": 4,
     "signalKUrl": "", // get's overwritten with host
     "signalKToken": null,
     "themeName": "default-light",
@@ -17,13 +17,13 @@ export const BlankConfig = {
       "flow": 'l/h',
       "temp": 'C',
       "length": 'm',
-      "electrity": 'volts',
+      "electricity": 'volts',
       "pressure": 'mmHg',
       "angularVelocity": 'deg/min',
       "frequency": 'Hz',
       "angle": 'deg',
       "ratio": 'percent'
-    },    
+    },
     "dataSets": [],
     "splitSets": [
       {

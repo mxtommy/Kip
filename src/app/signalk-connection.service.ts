@@ -1,18 +1,17 @@
 import { Injectable } from '@angular/core';
-import { of ,  Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { of , Observable , BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
-import { AppSettingsService, appSettings } from './app-settings.service';
+import { AppSettingsService, AppSettings, SignalKToken, SignalKUrl } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 import { NotificationsService } from './notifications.service';
 
 
-
-interface signalKEndpointResponse {
-    endpoints: { 
+interface SignalKEndpointResponse {
+    endpoints: {
         v1: {
             version: string;
             "signalk-http"?: string;
@@ -26,8 +25,17 @@ interface signalKEndpointResponse {
     }
 }
 
-// TODO, use this instead of individual vars
-export interface signalKStatus {
+/**
+   * Represent SignalK connection's statuses.
+   * @usageNotes `operation` field describes the type of operation being
+   * performed on the connections.
+   * `0 = Never Stated` (app just started),
+   * `1 = Connecting to server`,
+   * `2 = Active connection being reset` (issues on client, server killing client connection or network issue),
+   * `3 = App URL Changed` - reconnecting,
+   * `4 = adding R/W authorization token to WebSock`
+   */
+export interface SignalKStatus {
     endpoint: {
         status: boolean;
         message: string;
@@ -38,202 +46,206 @@ export interface signalKStatus {
     },
     websocket: {
         status: boolean;
-        message: string;        
-    }
-
+        message: string;
+    },
+  operation: number;
 }
-
 
 @Injectable()
 export class SignalKConnectionService {
 
-
     // Main URL Variables
-    signalKURL: string;
-    signalKToken: string;
+    signalKURL: SignalKUrl;
+    signalKToken: SignalKToken;
     endpointREST: string;
     endpointWS: string;
 
     // Websocket
     webSocket: WebSocket = null;
 
-    // status
-    signalKStatus: BehaviorSubject<signalKStatus> = new BehaviorSubject<signalKStatus>({
-        endpoint: {
-            status: false,
-            message: 'Not yet connected'
-        },
-        rest: {
-            status: false,
-            message: 'Not yet connected'
-        },
-        websocket: {
-            status: false,
-            message: 'Not yet connected'
-        }
-    });
+    // SignalK connections current status initialization
+    currentSkStatus: SignalKStatus = {
+      endpoint: {
+          status: false,
+          message: 'Not yet connected'
+      },
+      rest: {
+          status: false,
+          message: 'Not yet connected'
+      },
+      websocket: {
+          status: false,
+          message: 'Not yet connected'
+      },
+      operation: 0
+    };
 
-    signalKURLOK: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    signalKURLMessage: BehaviorSubject<string> = new BehaviorSubject<string>('');
-
-
-    webSocketStatusOK:  BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true); // defaults to true so we don't say not connected right away
-    webSocketStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('waiting to connect');
-
-    // REST API
-    restStatusOk: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    restStatusMessage: BehaviorSubject<string> = new BehaviorSubject<string>('waiting for endpoint');
-
+    signalKStatus: BehaviorSubject<SignalKStatus> = new BehaviorSubject<SignalKStatus>(this.currentSkStatus);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //// constructor, mostly sub to stuff for changes.
     constructor(
-        private SignalKService: SignalKService,
-        private SignalKDeltaService: SignalKDeltaService,
+        private signalKService: SignalKService,
+        private signalKDeltaService: SignalKDeltaService,
         private SignalKFullService: SignalKFullService,
-        private AppSettingsService: AppSettingsService, 
-        private NotificationsService: NotificationsService,
-        private http: HttpClient) 
+        private appSettingsService: AppSettingsService,
+        private notificationsService: NotificationsService,
+        private http: HttpClient)
     {
         // when signalKUrl changes, do stuff
-        this.AppSettingsService.getSignalKURLAsO().subscribe(
+        this.appSettingsService.getSignalKURLAsO().subscribe(
           newURL => {
             this.signalKURL = newURL;
-            if (this.webSocket !== null) {
-              
+
+            if (this.signalKURL.new) {
+              this.currentSkStatus.operation = 3; // URL Changed
+              this.resetSignalK();
+            } else {
+              this.currentSkStatus.operation = 1; // Startup connection
             }
-            this.resetSignalK();
           }
         );
         // when token changes, do stuff
-        this.AppSettingsService.getSignalKTokenAsO().subscribe(
+        this.appSettingsService.getSignalKTokenAsO().subscribe(
           newToken => {
             this.signalKToken = newToken;
-            if (this.webSocket !== null) {
-              this.webSocket.close();
+
+            if (this.signalKToken.new) {
+              this.currentSkStatus.operation = 4; // Token update
+              this.resetSignalK();
+            } else {
+              this.currentSkStatus.operation = 1; // Token update
+              this.resetSignalK();
             }
           }
         );
     }
 
-
-
     resetSignalK() {
-        // TODO close current connections/reset data, check api version... assuming v1
-        console.debug("Reseting SignalK URL: " + this.signalKURL);
-        this.SignalKService.resetSignalKData();
-        this.endpointREST = null;
-        this.endpointWS = null;
-        this.signalKURLOK.next(false);
-        this.signalKURLMessage.next("Connecting...");
-        this.NotificationsService.resetAlarms();
-        if (this.webSocket != null) {
-            this.webSocket.close(); // TODO, new websocket gets created before this one closes sometimes. Need to make sure doesn't happen.
-        }
-        this.restStatusOk.next(false);
-        this.restStatusMessage.next('waiting for endpoint');
+      // TODO close current connections/reset data, check api version... assuming v1
+      console.debug("Resting SignalK URL: " + this.signalKURL.url);
 
-        
-        let fullURL = this.signalKURL;
-        let re = new RegExp("signalk/?$");
-        if (!re.test(fullURL)) {
-            fullURL = fullURL + "/signalk/";
-        }
+      // clean close if open
+      if (this.webSocket != null && this.webSocket.OPEN) {
+        this.webSocket.close();
+      }
 
-        this.http.get<signalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
-            // when we go ok, this runs
-            response => {
-                this.signalKURLOK.next(true);
-                this.signalKURLMessage.next("HTTP " + response.status + ": " + response.statusText 
-                    + ". Server: " + response.body.server.id + " Ver: " + response.body.server.version);
-                this.endpointREST = response.body.endpoints.v1["signalk-http"];
-                this.endpointWS = response.body.endpoints.v1["signalk-ws"];
-                this.callREST();
-                this.connectEndpointWS();
-                
-            },
-            // When not ok, this runs...
-            (err: HttpErrorResponse) => {
-                if (err.error instanceof Error) {
-                    // A client-side or network error occurred. Handle it accordingly.
-                    console.log('An error occurred:', err.error.message);
-                  } else {
-                    // The backend returned an unsuccessful response code.
-                    // The response body may contain clues as to what went wrong,
-                    console.log(err);
-                  }
-                this.signalKURLOK.next(false);
-                this.signalKURLMessage.next(err.message);
-                this.webSocketStatusOK.next(false);
+      this.currentSkStatus.endpoint.message = "Connecting...";
+      this.currentSkStatus.endpoint.status = false;
+      this.currentSkStatus.rest.message = "Connecting...";
+      this.currentSkStatus.rest.status = false;
+      this.currentSkStatus.websocket.message = "Connecting...";
+      this.currentSkStatus.websocket.status = false;
+      this.signalKStatus.next(this.currentSkStatus);
+
+      this.notificationsService.resetAlarms();
+
+      let fullURL = this.signalKURL.url;
+      let re = new RegExp("signalk/?$");
+      if (!re.test(fullURL)) {
+          fullURL = fullURL + "/signalk/";
+      }
+
+      // this.signalKDeltaService.resetSignalKData(); // can't find this in our code.
+      this.endpointREST = null;
+      this.endpointWS = null;
+
+      this.http.get<SignalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
+        // when we go ok, this runs
+        response => {
+          this.endpointREST = response.body.endpoints.v1["signalk-http"];
+          this.endpointWS = response.body.endpoints.v1["signalk-ws"];
+
+          this.currentSkStatus.endpoint.status = true;
+          this.currentSkStatus.endpoint.message = "HTTP " + response.status + ": " + response.statusText + ". Server: " + response.body.server.id + " Ver: " + response.body.server.version;
+
+          this.callREST();
+          this.connectEndpointWS();
+
+          this.signalKStatus.next(this.currentSkStatus);
+        },
+        // When not ok, this runs...
+        (err: HttpErrorResponse) => {
+          if (err.error instanceof Error) {
+              // A client-side or network error occurred. Handle it accordingly.
+              console.log('An HTTP connection error occurred:', err.error.message);
+            } else {
+              // The backend returned an unsuccessful response code.
+              // The response body may contain clues as to what went wrong,
+              console.log(err);
             }
-        );
+          this.currentSkStatus.endpoint.status = false;
+          this.currentSkStatus.endpoint.message = err.message;
+          this.signalKStatus.next(this.currentSkStatus);
+        }
+      );
     }
 
     callREST() {
         this.http.get(this.endpointREST, {observe: 'response'}).subscribe(
             // when we go ok, this runs
             response => {
-                this.restStatusOk.next(true);
-                this.restStatusMessage.next("HTTP " + response.status + ": " + response.statusText );
-                this.SignalKFullService.processFullUpdate(response.body);   
-                
+              this.currentSkStatus.rest.status = true;
+              this.currentSkStatus.rest.message = "REST " + response.status + ": " + response.statusText;
+              this.SignalKFullService.processFullUpdate(response.body);
             },
             // When not ok, this runs...
             (err: HttpErrorResponse) => {
                 if (err.error instanceof Error) {
-                    // A client-side or network error occurred. Handle it accordingly.
-                    console.log('An error occurred:', err.error.message);
-                  } else {
+                  // A client-side or network error occurred. Handle it accordingly.
+                  this.currentSkStatus.rest.message = err.error.message;
+                  console.log('A REST error occurred:', err.error.message);
+                } else {
                     // The backend returned an unsuccessful response code.
                     // The response body may contain clues as to what went wrong,
+                    this.currentSkStatus.rest.message = "Unspecified REST error";
                     console.log(err);
-                  }
-                this.restStatusOk.next(false);
-                this.restStatusMessage.next(err.message);
+                }
+                this.currentSkStatus.rest.status = false;
             }
-        );    
+        );
     }
 
     connectEndpointWS() {
-        if (this.endpointWS === null) {
-            //no endpoint, try again later....
-            setTimeout(()=>{ this.connectEndpointWS();}, 3000);
-            return;
-        }
+      if (this.endpointWS === null) {
+        //no endpoint, try again later....
+        setTimeout(()=>{ this.connectEndpointWS();}, 3000);
+        return;
+      }
 
-        let endpointArgs = "?subscribe=all";
-        if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
-          endpointArgs += "&token="+this.signalKToken;
-        }
-        this.webSocketStatusMessage.next("Connecting...");
-        this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
-        this.webSocket.onopen = function (event){
-            this.webSocketStatusOK.next(true);
-            this.webSocketStatusMessage.next("Connected");
-            this.NotificationsService.newNotification("Connected to server", 1000);
-        }.bind(this);
+      let endpointArgs = "?subscribe=all";
 
-        this.webSocket.onerror = function (event) {
-            this.webSocketStatusOK.next(false);
-            this.webSocketStatusMessage.next('Unspecified Error');
-            setTimeout(()=>{ this.connectEndpointWS();}, 3000);
-        }.bind(this);
+      if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
+        endpointArgs += "&token="+this.signalKToken.token;
+      }
 
-        this.webSocket.onclose = function (event) {
-            this.webSocketStatusOK.next(false);
-            this.webSocketStatusMessage.next("Disconnected");
-            setTimeout(()=>{ this.connectEndpointWS();}, 3000);
-        }.bind(this);
+      this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
 
-        this.webSocket.onmessage = function(message) {
-            this.SignalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
-        }.bind(this);
+      this.webSocket.onopen = function (event){
+        this.currentSkStatus.websocket.message = "WebSocket Connected";
+        this.currentSkStatus.websocket.status = true;
+      }.bind(this);
+
+      this.webSocket.onerror = function (event) {
+        this.currentSkStatus.websocket.message = "Unspecified WebSocket error";
+        this.currentSkStatus.websocket.status = false;
+        setTimeout(()=>{ this.connectEndpointWS();}, 3000);
+      }.bind(this);
+
+      this.webSocket.onclose = function (event) {
+        this.currentSkStatus.websocket.message = "WebSocket closed";
+        this.currentSkStatus.websocket.status = false;
+        setTimeout(()=>{ this.connectEndpointWS();}, 3000);
+      }.bind(this);
+
+      this.webSocket.onmessage = function(message) {
+          this.signalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
+      }.bind(this);
     }
-
 
     publishDelta(message: string) {
 
-      if (!this.webSocketStatusOK.value) {
+      if (!this.currentSkStatus.websocket.status) {
         console.log("Tried to publish delta while not connected to Websocket");
         return;
       }
@@ -241,15 +253,15 @@ export class SignalKConnectionService {
     }
 
     postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
-        
+
 
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/"+ configName;
 
       let options = {};
 
-      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
-        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
       }
       return this.http.post<any>(url, data, options).pipe(
         catchError(this.handleError<string[]>('postApplicationData', []))
@@ -257,47 +269,40 @@ export class SignalKConnectionService {
 
     }
 
-
-
-
-    
-
     getApplicationDataKeys(scope: string): Observable<string[]> {
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/?keys=true";
 
       let options = {};
 
-      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
-        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
       }
 
       return this.http.get<string[]>(url, options).pipe(
         tap(_ => {
-          console.log("Server Stored Configs for "+ scope +": "); console.log(_) 
+          console.log("Server Stored Configs for "+ scope +": "); console.log(_)
         }),
         catchError(this.handleError<string[]>('getApplicationDataKeys', []))
       );
 
     }
 
-    getApplicationData(scope: string, configName: string): Observable<appSettings>{
+    getApplicationData(scope: string, configName: string): Observable<AppSettings>{
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/" + configName;
       let options = {};
 
-      if ((this.signalKToken !== null)&&(this.signalKToken != "")) {
-        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken);
+      if ((this.signalKToken.token !== null) && (this.signalKToken.token != "")) {
+        options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
       }
-      return this.http.get<appSettings>(url, options).pipe(
+      return this.http.get<AppSettings>(url, options).pipe(
         tap(_ => {
-          console.log("Fetched Stored Configs for "+ scope +" / "+ configName); 
+          console.log("Fetched Stored Configs for "+ scope +" / "+ configName);
         }),
-        catchError(this.handleError<appSettings>('getApplicationData'))
+        catchError(this.handleError<AppSettings>('getApplicationData'))
       );
     }
-
-
     /**
      * Handle Http operation that failed.
      * Let the app continue.
@@ -318,26 +323,9 @@ export class SignalKConnectionService {
       };
     }
 
-    //borring stuff, return observables etc
-
-    getEndpointAPIStatus() {
-        return this.signalKURLOK.asObservable();
+    // SignalK Connections Status observable
+    getSignalKConnectionsStatus() {
+      return this.signalKStatus.asObservable();
     }
-    getEndpointAPIStatusMessage() {
-        return this.signalKURLMessage.asObservable();
-    }
-    getEndpointWSStatus() {
-        return this.webSocketStatusOK.asObservable();
-    }
-    getEndpointWSMessage() {
-        return this.webSocketStatusMessage.asObservable();
-    }
-    getEndpointRESTStatus() {
-        return this.restStatusOk.asObservable();
-    }
-    getEndpointRESTMessage() {
-        return this.restStatusMessage.asObservable();
-    }
-
 
 }
