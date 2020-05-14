@@ -13,10 +13,10 @@ import { Howl } from 'howler';
 export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   alarmSub: Subscription;
-  notificationServiceSettings: Subscription;
+  private notificationServiceSettings: Subscription;
 
-  notificationDisabled: boolean;
   alarms: { [path: string]: Alarm };
+  rawAlarms: { [path: string]: Alarm };
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;
@@ -33,6 +33,12 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     private appSettingsService: AppSettingsService,
   ) {
     this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+      // if (config == undefined) {return}
+      // if (config.devices.showNormalState != this.notificationConfig.devices.showNormalState) {
+      //   if (config.devices.showNormalState == false) {
+      //     this.alarms = {};
+      //   }
+      // }
       this.notificationConfig = config;
     });
   }
@@ -50,17 +56,33 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     // Alarm code
 
     this.alarmSub = this.notificationsService.getAlarms().subscribe(
-      message  => {
-        this.alarms = message; //TODO: Use observer filters and variables
+      message => {
+        this.rawAlarms = message;
         this.updateAlarms();
       }
     );
   }
 
+  updateAlarms() {
+    // we use this as a staging area to limit menu update events when we play to the Alarms record
+    if (!this.notificationConfig.devices.showNormalState) {
+      for (const [path, alarm] of Object.entries(this.rawAlarms)) {
+        let alarm = this.rawAlarms[path];
+
+        if (alarm.notification['state'] == 'normal') {
+          delete this.rawAlarms[path];
+          break;
+        }
+      }
+    }
+    this.alarms = this.rawAlarms;
+    this.updateMenu();
+  }
+
   /**
    * main alert management function. Called on Observable message
    */
-  updateAlarms() {
+  updateMenu() {
     this.alarmCount = Object.keys(this.alarms).length;
     this.unAckAlarms = 0;
     this.blinkWarn = false;

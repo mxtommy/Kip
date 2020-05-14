@@ -2,7 +2,7 @@
  * This class handles both App notifications Snackbar and SignalK Notifications
  */
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject, Observable, Subscription, config } from 'rxjs';
+import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { SignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService, INotificationConfig } from "./app-settings.service";
 import { isNull } from 'util';
@@ -52,7 +52,6 @@ export class NotificationsService {
       if (this.notificationConfig.disableNotifications) {
         this.resetAlarms();
       }
-
     });
    }
 
@@ -105,7 +104,7 @@ export class NotificationsService {
       notification: notification,
     };
     if (/^notifications.security./.test(path)) {
-      newAlarm. type = "security";
+      return; // as per sbender this part is not ready in the spec
     }
     this.alarms[path] = newAlarm;
     this.activeAlarmsSubject.next(this.alarms);
