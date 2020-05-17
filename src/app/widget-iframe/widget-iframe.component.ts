@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 
 
 

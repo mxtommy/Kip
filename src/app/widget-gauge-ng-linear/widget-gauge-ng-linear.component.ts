@@ -1,6 +1,6 @@
 import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalKService } from '../signalk.service';
