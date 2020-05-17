@@ -4,6 +4,7 @@ import { AppSettingsService, INotificationConfig } from '../app-settings.service
 import { Subscription } from 'rxjs';
 import { Howl } from 'howler';
 
+// TODO: move Sound feature to service or class and refactor. Will be used by Alarm Menu, Snackbar and Widgets
 const alarmTrack = {
   1000 : 'notification', //filler
   1001 : 'alert',
@@ -12,6 +13,18 @@ const alarmTrack = {
   1004 : 'emergency',
 };
 
+interface IMenuNode {
+  [key: string]: any;
+  label: string;
+  childNode?: [IMenuItem | IMenuNode];
+}
+interface IMenuItem {
+  [key: string]: any;
+  label: string;
+  Alarm?: Alarm;
+}
+
+
 @Component({
   selector: 'app-alarm-menu',
   templateUrl: './alarm-menu.component.html',
@@ -19,20 +32,25 @@ const alarmTrack = {
 })
 export class AlarmMenuComponent implements OnInit, OnDestroy {
 
-  alarmSub: Subscription;
+  private alarmSub: Subscription;
   private notificationServiceSettings: Subscription;
 
   alarms: { [path: string]: Alarm };
-  alarmsStream: { [path: string]: Alarm };
+  notificationAlarms: { [path: string]: Alarm };
+  alarmMenu: { [key: string]: string | IMenuItem | IMenuItem } = {}; // local menu array with string key
 
+  // Menu properties
   ignoredPaths: string[] = [];
-
   alarmCount: number = 0;
   unAckAlarms: number = 0;
   blinkWarn: boolean = false;
   blinkCrit: boolean = false;
+
+  // sounds properties
   howlPlayer: Howl;
   activeAlarmSoundtrack: number;
+  activeHowlId: number;
+  isHowlIdMuted: boolean = false;
 
   notificationConfig: INotificationConfig;
 
@@ -49,29 +67,139 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     // init Alarm stream
     this.alarmSub = this.notificationsService.getAlarms().subscribe(
       message => {
-        this.alarmsStream = message;
-        this.updateAlarms();
+        this.notificationAlarms = message;
+        // Disabling notifications is done at the service level. No need to handle it here
+        this.buildAlarmMenu();
       }
     );
     // init alarm player
+    // TODO: move Sound feature to service or class and refactor. Will be used by Alarm Menu, Snackbar and Widgets
     this.howlPlayer = this.getPlayer(1000);
   }
 
-  updateAlarms() {
-    // we use this as a staging area to limit menu update events when we play to the Alarms record
+  // we use this as a staging area to limit menu update events we build the menu from Alarms record
+  buildAlarmMenu() {
+    // clean notificationAlarms based on App Notification settings
     if (!this.notificationConfig.devices.showNormalState) {
-      for (const [path, alarm] of Object.entries(this.alarmsStream)) {
-        let alarm = this.alarmsStream[path];
+      for (const [path, alarm] of Object.entries(this.notificationAlarms)) {
+        let alarm = this.notificationAlarms[path];
 
-        if (alarm.notification['state'] == 'normal' && alarm.notification['type'] == 'device') {
-          delete this.alarmsStream[path];
+        if (alarm.notification['state'] == 'normal' && alarm['type'] == 'device') {
+          delete this.notificationAlarms[path];
           break;
         }
       }
     }
-    this.alarms = this.alarmsStream;
+
+
+
+    // build menu structure
+    // for (const [path, alarm] of Object.entries(this.notificationAlarms)) {
+
+    //   let menuPathsArray = this.notificationAlarms[path].path.split(".");
+    //   menuPathsArray.splice(0, 1);
+
+    //   // build object hierarchy
+    //   for (let index = 0; index < menuPathsArray.length; index++) {
+    //     let thisMenuPath = menuPathsArray[index];
+
+    //     // root items
+    //     if (index == 0) {
+    //       let rootMenuItem = this.createMenuRootItem(thisMenuPath);
+
+    //       if (rootMenuItem == null) {
+    //         // console.log("Do nothing");
+    //       } else {
+    //         this.alarmMenu[thisMenuPath] = rootMenuItem;
+    //         // console.log("Created" + rootMenuItem);
+    //       }
+    //     } else {
+    //       let node = this.createMenuChildItem(thisMenuPath, index, menuPathsArray, alarm);
+    //     }
+
+    //   }
+    // }
+    this.alarms = this.notificationAlarms;
     this.updateMenu();
   }
+
+  createMenuRootItem(itemLabel: string): IMenuNode | null {
+    let item: IMenuNode = {
+      label: itemLabel
+    }
+
+    if(Object.entries(this.alarmMenu).length) {
+      let i = Object.keys(this.alarmMenu).indexOf(itemLabel);
+      if(i == -1) {
+        console.log("Root: " + itemLabel + " not found. Search index: " + i);
+        return item;
+      } else {
+        console.log("Root: " + itemLabel + " found. Search index: " + i);
+        console.log(JSON.stringify(Object.values(this.alarmMenu)));
+        return null;
+      }
+    }
+    console.log(JSON.stringify(Object.values(this.alarmMenu)));
+    return item;
+  }
+
+  createMenuChildItem(itemLabel: string, pathPositionIndex: number, pathArray: string[], alarm: Alarm): IMenuItem | IMenuNode {
+    let item;
+
+    const lastPosition = pathArray.length - 1;
+    let parentLabel = pathArray[pathPositionIndex - 1];
+    let indexParentNode = Object.keys(this.alarmMenu).indexOf(pathArray[parentLabel]);
+
+    if (pathPositionIndex != lastPosition) {
+      item = {
+        label: pathArray[pathPositionIndex],
+      }
+    } else {
+      item = {
+        label: pathArray[pathPositionIndex],
+        Alarm: alarm,
+      }
+    }
+
+    for (const [label, menuNode] of Object.entries(this.alarmMenu)) {
+        if (label == parentLabel) {
+          console.log(JSON.stringify(menuNode));
+          menuNode['childNode'] = item;
+
+          if (pathPositionIndex != lastPosition) {
+            pathPositionIndex++;
+            if (pathPositionIndex != (lastPosition)) {
+              item = {
+                label: pathArray[pathPositionIndex]
+              }
+            } else {
+              item = {
+                label: pathArray[pathPositionIndex],
+                Alarm: alarm,
+              }
+            }
+            menuNode['childNode'][0].childNode = item;
+          }
+        }
+      }
+
+    return null;
+  }
+
+  // createMenuChildItem(itemLabel: String, pathPositionIndex: number, pathArray: string[]): IMenuItem | IMenuNode | null {
+
+  //   for (const [label, menuItem] of Object.entries(this.alarmMenu)) {
+  //     else if (pathPositionIndex > 1 && pathPositionIndex < pathArray.length) {
+  //       if (pathArray[pathPositionIndex - 1] == label) {
+  //         console.log("Equal: " + pathArray[pathPositionIndex - 1] + " - " + label);
+  //         menuItem.childNode = newItem;
+  //       } else {
+  //         console.log("Different: " + pathArray[pathPositionIndex - 1] + " - " + label);
+  //       }
+  //     }
+  //   }
+  //   return newItem;
+  // }
 
   /**
    * main menu management function.
@@ -109,17 +237,17 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
           case 'warn':          // user attention needed ie.: auto-pilot detected Wind Shift (go check if it's all fine), bilge pump activated (check if you have an issue).
             if (alarm.notification['method'].includes('sound')) { aSev = 2; }
-            if (alarm.notification['method'].includes('visual')) { vSev = 2; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 1; }
             break;
 
           case 'alarm':         // a problem that requires immediate user attention ie.: auto-pilot can't stay on course, engine temp above specs.
             if (alarm.notification['method'].includes('sound')) { aSev = 3; }
-            if (alarm.notification['method'].includes('visual')) { vSev = 3; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 2; }
             break;
 
           case 'emergency':     // safety threatening event ie.: MOB, collision eminent (AIS related), ran aground (water depth lower than keel draft)
             if (alarm.notification['method'].includes('sound')) { aSev = 4; }
-            if (alarm.notification['method'].includes('visual')) { vSev = 4; }
+            if (alarm.notification['method'].includes('visual')) { vSev = 2; }
             break;
 
           default: // we don;t know this one. Tell the user.
@@ -162,15 +290,15 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
         if (path in this.alarms) {
           this.alarms[path].isAck = false;
         }
-        this.updateAlarms();
+        this.updateMenu();
       }, timeout);
     }
-    this.updateAlarms();
+    this.updateMenu();
   }
 
   ignoreAlarm(path: string, timeout: number = 0) {
     this.ignoredPaths.push(path);
-    this.updateAlarms();
+    this.updateMenu();
     if (timeout > 0) {
       setTimeout(()=>{
         console.log("unIgnore: "+ path);
@@ -180,7 +308,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
             this.ignoredPaths.splice(index,1);
           }
         }
-        this.updateAlarms();
+        this.updateMenu();
       }, timeout);
     }
 
@@ -198,15 +326,13 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     if (this.activeAlarmSoundtrack == trackId) {   // same track, do nothing
       return;
     }
-
     if (trackId == 1000) {   // Stop track
       this.howlPlayer.stop();
       return;
     }
-
     this.howlPlayer.stop();
     this.howlPlayer = this.getPlayer(trackId);
-    this.howlPlayer.play();
+    this.activeHowlId = this.howlPlayer.play();
   }
 
   /**
@@ -236,6 +362,16 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
         }
       });
     return player;
+  }
+
+  /**
+   * mute Howl Player active track ei.: howlId. Note Howl howlId is not the
+   * same as Player Soundtrack TrackId which represents the selected sound file.
+   * @param state sound muted boolean state
+   */
+  mutePlayer(state) {
+    this.howlPlayer.mute(state, this.activeHowlId);
+    this.isHowlIdMuted = state;
   }
 
   /**
