@@ -39,5 +39,9 @@
       background-color: rgb(179, 0, 0);
     }
   }
+  .muteSoundButton:hover {
+    background: rgba(255, 255, 255, 0.04); // mat-list hover bug fixed in recent versions.
+  }
+
 }
 

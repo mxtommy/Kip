@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Howl } from 'howler';
 import { LayoutSplitsService } from './layout-splits.service';
 import * as screenfull from 'screenfull';
 
@@ -74,6 +75,31 @@ export class AppComponent implements OnInit, OnDestroy {
           duration: appNotification.duration,
           verticalPosition: 'top'
         });
+
+        if (!this.AppSettingsService.getNotificationConfig().sound.disableSound) {
+          let sound = new Howl({
+            src: ['assets/notification.mp3'],
+            autoUnlock: true,
+            autoSuspend: false,
+            autoplay: true,
+            preload: true,
+            loop: false,
+            volume: 0.3,
+            onend: function() {
+              // console.log('Finished!');
+            },
+            onloaderror: function() {
+              console.log("snackbar: player onload error");
+            },
+            onplayerror: function() {
+              console.log("snackbar: player locked");
+              this.howlPlayer.once('unlock', function() {
+                this.howlPlayer.play();
+              });
+            }
+          });
+          sound.play();
+        }
       }
     )
 
