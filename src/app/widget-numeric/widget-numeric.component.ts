@@ -38,9 +38,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
-  @ViewChild('canvasEl') canvasEl: ElementRef;
-  @ViewChild('canvasBG') canvasBG: ElementRef;
-  @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
+  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
+  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
@@ -214,9 +214,10 @@ unsubscribeTheme(){
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText: any;
 
-    if (isNaN(Number(this.dataValue))) {
-      let converted: number = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
-      if (isNaN(Number(converted))) { // retest as convert stuff might have returned a text string
+    if (this.dataValue != null) {
+      let converted: number = Number(this.dataValue);
+      converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
+      if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
         valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
       } else {
         valueText = converted;
@@ -300,9 +301,9 @@ unsubscribeTheme(){
     let valueText: string = '';
 
     if (this.config.showMin) {
-      if (isNaN(Number(this.minValue))) {
-        let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
-        if (isNaN(Number(converted))) { // retest as convert stuff might have returned a text string
+      if (this.minValue != null) {
+        let converted: number = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
+        if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Min: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
           valueText = valueText + " Min: " + converted;
@@ -313,9 +314,9 @@ unsubscribeTheme(){
       }
     }
     if (this.config.showMax) {
-      if (isNaN(Number(this.maxValue))) {
+      if (this.maxValue != null) {
         let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.maxValue);
-        if (isNaN(Number(converted))) { // retest as convert stuff might have returned a text string
+        if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Max: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
           valueText = valueText + " Max: " + converted;

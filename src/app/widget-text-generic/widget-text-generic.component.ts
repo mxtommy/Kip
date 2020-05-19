@@ -31,9 +31,9 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
-  @ViewChild('canvasEl') canvasEl: ElementRef;
-  @ViewChild('canvasBG') canvasBG: ElementRef;
-  @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
+  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
+  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   activeWidget: IWidget;
     config: IWidgetConfig;

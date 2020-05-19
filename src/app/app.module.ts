@@ -72,7 +72,7 @@ import { SettingsUnitsComponent } from './settings-units/settings-units.componen
 import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 
-import { GaugesModule } from 'ng-canvas-gauges';
+import { GaugesModule } from '@biacsics/ng-canvas-gauges';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';

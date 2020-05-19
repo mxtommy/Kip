@@ -26,14 +26,14 @@ import { NgModel } from '@angular/forms';
 })
 export class SvgAutopilotComponent implements OnInit {
   // AP screen
-  @ViewChild('apStencil') ApStencil: ElementRef;
-  @ViewChild('countDown') countDown: ElementRef;
+  @ViewChild('apStencil', {static: true, read: ElementRef}) ApStencil: ElementRef;
+  @ViewChild('countDown', {static: true, read: ElementRef}) countDown: ElementRef;
 
   // SVG
-  @ViewChild('compassAnimate') compassAnimate: ElementRef;
-  @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
-  @ViewChild('rudderPrtAnimate') rudderPrtAnimate: ElementRef;
-  @ViewChild('rudderStbAnimate') rudderStbAnimate: ElementRef;
+  @ViewChild('compassAnimate', {static: true, read: ElementRef}) compassAnimate: ElementRef;
+  @ViewChild('appWindAnimate', {static: true, read: ElementRef}) appWindAnimate: ElementRef;
+  @ViewChild('rudderPrtAnimate', {static: true, read: ElementRef}) rudderPrtAnimate: ElementRef;
+  @ViewChild('rudderStbAnimate', {static: true, read: ElementRef}) rudderStbAnimate: ElementRef;
 
   @Input('compassHeading') compassHeading: number;
   @Input('appWindAngle') appWindAngle: number;

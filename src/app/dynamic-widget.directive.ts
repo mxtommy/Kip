@@ -5,5 +5,7 @@ import { Directive, ViewContainerRef } from '@angular/core';
 })
 export class DynamicWidgetDirective {
 
-  constructor(public viewContainerRef: ViewContainerRef) { }
+  constructor(public viewContainerRef: ViewContainerRef) {
+    viewContainerRef.constructor.name === "ViewContainerRef"; // true
+   }
 }

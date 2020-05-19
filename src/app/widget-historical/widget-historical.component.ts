@@ -42,7 +42,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  @ViewChild('lineGraph') lineGraph: ElementRef;
+  @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
