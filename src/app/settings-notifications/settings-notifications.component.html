@@ -11,15 +11,15 @@
             Control what messages the server will send
           </mat-panel-description>
         </mat-expansion-panel-header>
-        <h4>Security</h4>
-        <mat-checkbox [(ngModel)]="notificationConfig.security.disableSecurity" [ngModelOptions]="{standalone: true}">Disable all Security notifications</mat-checkbox>
-        <h4>Devices</h4>
-        <mat-checkbox [(ngModel)]="notificationConfig.devices.disableDevices" [ngModelOptions]="{standalone: true}">Disable all Devices notifications</mat-checkbox>
-        <br/>
+        <!-- <h4>Security</h4>
+        <mat-checkbox [(ngModel)]="notificationConfig.security.disableSecurity" [ngModelOptions]="{standalone: true}">Disable all Security notifications</mat-checkbox> -->
+        <!-- <h4>Devices</h4> -->
+        <!-- <mat-checkbox [(ngModel)]="notificationConfig.devices.disableDevices" [ngModelOptions]="{standalone: true}">Disable all Devices notifications</mat-checkbox>
+        <br/> -->
         <mat-checkbox [(ngModel)]="notificationConfig.devices.showNormalState" [ngModelOptions]="{standalone: true}">Show Devices Informational notifications</mat-checkbox>
       </mat-expansion-panel>
 
-      <mat-expansion-panel expanded="false">
+      <!-- <mat-expansion-panel expanded="false">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Menu
@@ -30,7 +30,7 @@
         </mat-expansion-panel-header>
         <h3>Display</h3>
         <mat-checkbox [(ngModel)]="notificationConfig.menuGrouping" [ngModelOptions]="{standalone: true}">Groupe notifications by source types</mat-checkbox>
-      </mat-expansion-panel>
+      </mat-expansion-panel> -->
 
       <mat-expansion-panel expanded="false">
         <mat-expansion-panel-header>
@@ -42,7 +42,7 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <mat-checkbox [(ngModel)]="notificationConfig.sound.disableSound" [ngModelOptions]="{standalone: true}">Disable All Audio notification</mat-checkbox>
-        <br/>
+        <!-- <br/>
         <mat-checkbox [(ngModel)]="notificationConfig.sound.muteNormal" [ngModelOptions]="{standalone: true}">Disable <b>Information</b> notifications audio</mat-checkbox>
         <br/>
         <mat-checkbox [(ngModel)]="notificationConfig.sound.muteWarning" [ngModelOptions]="{standalone: true}">Disable <b>Warning</b> notifications audio</mat-checkbox>
@@ -51,7 +51,7 @@
         <br/>
         <mat-checkbox [(ngModel)]="notificationConfig.sound.muteAlarm" [ngModelOptions]="{standalone: true}">Disable <b>Alarm Severity</b> notifications audio</mat-checkbox>
         <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteEmergency" [ngModelOptions]="{standalone: true}">Disable <b>Emergency Severity</b> notifications audio</mat-checkbox>
+        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteEmergency" [ngModelOptions]="{standalone: true}">Disable <b>Emergency Severity</b> notifications audio</mat-checkbox> -->
       </mat-expansion-panel>
     </mat-accordion>
     <br/>

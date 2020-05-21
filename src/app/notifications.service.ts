@@ -104,7 +104,7 @@ export class NotificationsService {
       notification: notification,
     };
     if (/^notifications.security./.test(path)) {
-      return; // as per sbender this part is not ready in the spec
+      return; // as per sbender this part is not ready in the spec - Don't add to alarms
     }
     this.alarms[path] = newAlarm;
     this.activeAlarmsSubject.next(this.alarms);
@@ -147,8 +147,6 @@ export class NotificationsService {
     }
     return false;
   }
-
-  public muteAlarm() {}
 
   /**
    * Observable to receive Kip app Snackbar notification. Use in app.component ONLY.

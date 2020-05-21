@@ -23,6 +23,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 
+
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizedEventModule } from 'angular-resize-event';
 
@@ -156,6 +157,7 @@ const appRoutes: Routes = [
     MatExpansionModule,
     MatBadgeModule,
     MatSlideToggleModule,
+    MatListModule,
     GaugesModule,
   ],
   entryComponents: [
