@@ -1,6 +1,4 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
-import { isNumeric } from 'rxjs/util/isNumeric';
-import { isNumber } from 'util';
+import { Component, OnInit, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
 
@@ -16,7 +14,7 @@ export class SvgWindComponent implements OnInit {
   @ViewChild('trueWindAnimate') trueWindAnimate: ElementRef;
   //@ViewChild('laylinePortAnimate') laylinePortAnimate: ElementRef;
   //@ViewChild('laylineStbAnimate') laylineStbAnimate: ElementRef;
-  
+
 
   @Input('compassHeading') compassHeading: number;
   @Input('trueWindAngle') trueWindAngle: number;
@@ -29,8 +27,8 @@ export class SvgWindComponent implements OnInit {
   @Input('trueWindMinHistoric') trueWindMinHistoric: number;
   @Input('trueWindMidHistoric') trueWindMidHistoric: number;
   @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
-  
-  
+
+
 
   constructor() { }
 
@@ -60,7 +58,7 @@ export class SvgWindComponent implements OnInit {
 
 
   }
-  
+
 
   ngOnChanges(changes: SimpleChanges) {
 
@@ -81,7 +79,7 @@ export class SvgWindComponent implements OnInit {
       if (! changes.appWindAngle.firstChange) {
         this.oldAppWindAngle = this.newAppWindAngle;
         this.newAppWindAngle = changes.appWindAngle.currentValue; //.toString();
-        
+
         if (this.appWindAnimate) { // only update if on dom...
           this.appWindAnimate.nativeElement.beginElement();
         }
@@ -110,9 +108,9 @@ export class SvgWindComponent implements OnInit {
 
     //Min/Max
     if (changes.trueWindMinHistoric || changes.trueWindMaxHistoric) {
-      if (isNumber(this.trueWindMinHistoric) && isNumber(this.trueWindMaxHistoric)) {
+      if (isNaN(Number((this.trueWindMinHistoric))) && isNaN(Number(this.trueWindMaxHistoric))) {
         this.updateWindSectors();
-      } 
+      }
     }
 
   }
@@ -132,7 +130,7 @@ export class SvgWindComponent implements OnInit {
     let portX = 160 * Math.sin((portLaylineRotate*Math.PI)/180) + 250; //250 is middle
     let portY = (160 * Math.cos((portLaylineRotate*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
     this.laylinePortPath = 'M 250,250 ' + portX +',' + portY;
-    
+
     let stbdLaylineRotate = this.addHeading(Number(this.newTrueWindRotateAngle), (this.laylineAngle));
     //find xy of that roation (160 = radius of inner circle)
     let stbdX = 160 * Math.sin((stbdLaylineRotate*Math.PI)/180) + 250; //250 is middle
@@ -169,7 +167,7 @@ export class SvgWindComponent implements OnInit {
     let stbdMinX = 160 * Math.sin((stbdMin*Math.PI)/180) + 250; //250 is middle
     let stbdMinY = (160 * Math.cos((stbdMin*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
     let stbdMidX = 160 * Math.sin((stbdMid*Math.PI)/180) + 250; //250 is middle
-    let stbdMidY = (160 * Math.cos((stbdMid*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top    
+    let stbdMidY = (160 * Math.cos((stbdMid*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
     let stbdMaxX = 160 * Math.sin((stbdMax*Math.PI)/180) + 250; //250 is middle
     let stbdMaxY = (160 * Math.cos((stbdMax*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
 

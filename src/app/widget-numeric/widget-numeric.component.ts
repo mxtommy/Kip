@@ -1,13 +1,12 @@
 import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
-import { isNumeric } from 'rxjs/util/isNumeric';
 
 
 const defaultConfig: IWidgetConfig = {
@@ -39,9 +38,9 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
-  @ViewChild('canvasEl') canvasEl: ElementRef;
-  @ViewChild('canvasBG') canvasBG: ElementRef;
-  @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
+  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
+  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
@@ -213,11 +212,12 @@ unsubscribeTheme(){
   drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
-    let valueText : string;
+    let valueText: any;
 
-    if (isNumeric(this.dataValue)) {
-      let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
-      if (isNumeric(converted)) { // retest as convert stuff might have returned a text string
+    if (this.dataValue != null) {
+      let converted: number = Number(this.dataValue);
+      converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
+      if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
         valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
       } else {
         valueText = converted;
@@ -301,9 +301,9 @@ unsubscribeTheme(){
     let valueText: string = '';
 
     if (this.config.showMin) {
-      if (isNumeric(this.minValue)) {
-        let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
-        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string
+      if (this.minValue != null) {
+        let converted: number = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
+        if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Min: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
           valueText = valueText + " Min: " + converted;
@@ -314,9 +314,9 @@ unsubscribeTheme(){
       }
     }
     if (this.config.showMax) {
-      if (isNumeric(this.maxValue)) {
+      if (this.maxValue != null) {
         let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.maxValue);
-        if (isNumeric(converted)) { // retest as convert stuff might have returned a text string
+        if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Max: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
           valueText = valueText + " Max: " + converted;

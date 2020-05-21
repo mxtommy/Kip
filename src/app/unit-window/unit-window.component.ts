@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild } from '@angular/core';
-import {MatDialog,MatDialogRef,MAT_DIALOG_DATA } from '@angular/material';
+import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NgModel } from '@angular/forms';
 
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -15,7 +15,7 @@ import { WidgetListService, widgetInfo } from '../widget-list.service';
 export class UnitWindowComponent implements OnInit {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
-  @ViewChild(DynamicWidgetDirective) dynamicWidget: DynamicWidgetDirective;
+  @ViewChild(DynamicWidgetDirective, {static: true, read: ViewContainerRef}) dynamicWidget : ViewContainerRef;
 
 
   activeWidget: IWidget;
@@ -34,9 +34,10 @@ export class UnitWindowComponent implements OnInit {
 
     //dynamically load component.
     let componentFactory = this.componentFactoryResolver.resolveComponentFactory(componentName);
-    let viewContainerRef = this.dynamicWidget.viewContainerRef;
-    viewContainerRef.clear();
-    this.componentRef = viewContainerRef.createComponent(componentFactory);
+    // let viewContainerRef = this.dynamicWidget;
+    // viewContainerRef.clear();
+    this.dynamicWidget.clear();
+    this.componentRef = this.dynamicWidget.createComponent(componentFactory);
 
     // inject info into new component
     this.instance = <DynamicComponentData> this.componentRef.instance;

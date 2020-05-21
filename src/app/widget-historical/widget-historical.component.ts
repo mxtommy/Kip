@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input, Inject } from '@angular/core';
 import * as Chart from 'chart.js';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
@@ -42,7 +42,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  @ViewChild('lineGraph') lineGraph: ElementRef;
+  @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;

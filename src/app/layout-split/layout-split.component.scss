@@ -2,12 +2,8 @@
 
     $accent: map-get($theme, accent);
 
-    as-split-gutter[ng-reflect-disabled=true] {
+    .as-split-gutter {
       background-color: transparent !important;
-    }
-
-    as-split-gutter[ng-reflect-disabled=false] {
-      background-color: mat-color($accent, 700, 0.4) !important;
     }
 }
 

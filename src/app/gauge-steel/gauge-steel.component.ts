@@ -46,7 +46,7 @@ export const SteelFrameColors = {
 })
 export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
 
-  @ViewChild('wrapperDiv') wrapperDiv: ElementRef;
+  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('gaugeType') gaugeType: string; // linear or radial
@@ -206,9 +206,9 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
     if (!this.isInResizeWindow) {
       this.isInResizeWindow = true;
 
-      setTimeout(() => { 
+      setTimeout(() => {
         let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
-        this.gaugeWidth = rect.width; 
+        this.gaugeWidth = rect.width;
         this.gaugeHeight = rect.height;
         this.isInResizeWindow = false;
         this.startGauge();

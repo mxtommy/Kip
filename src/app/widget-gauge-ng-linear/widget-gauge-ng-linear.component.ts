@@ -1,6 +1,6 @@
 import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalKService } from '../signalk.service';
@@ -8,7 +8,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service' ;
 import { AppSettingsService } from '../app-settings.service';
-import { LinearGauge, LinearGaugeOptions } from 'ng-canvas-gauges';
+import { LinearGauge, LinearGaugeOptions } from '@biacsics/ng-canvas-gauges';
 
 
 const defaultConfig: IWidgetConfig = {
@@ -42,19 +42,19 @@ const defaultConfig: IWidgetConfig = {
 })
 
 export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterContentInit {
-  @ViewChild('linearWrapperDiv') private wrapper: ElementRef;
-  @ViewChild('linearGauge') public linearGauge: LinearGauge;
+  @ViewChild('linearWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
+  @ViewChild('linearGauge', {static: true, read: ElementRef}) protected linearGauge: ElementRef;
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  @ViewChild('primary') private primaryElement: ElementRef;
-  @ViewChild('accent') private accentElement: ElementRef;
-  @ViewChild('warn') private warnElement: ElementRef;
-  @ViewChild('primaryDark') private primaryDarkElement: ElementRef;
-  @ViewChild('accentDark') private accentDarkElement: ElementRef;
-  @ViewChild('warnDark') private warnDarkElement: ElementRef;
-  @ViewChild('background') private backgroundElement: ElementRef;
+  @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
+  @ViewChild('accent', {static: true, read: ElementRef}) private accentElement: ElementRef;
+  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
+  @ViewChild('primaryDark', {static: true, read: ElementRef}) private primaryDarkElement: ElementRef;
+  @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDarkElement: ElementRef;
+  @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
+  @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;

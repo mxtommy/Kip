@@ -5,25 +5,23 @@ import { FormsModule }   from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {
-  MatMenuModule,
-  MatButtonModule,
-  MatDialogModule,
-  MatSelectModule,
-  MatInputModule,
-  MatToolbarModule,
-  MatTooltipModule,
-  MatCheckboxModule,
-  MatRadioModule,
-  MatTabsModule,
-  MatStepperModule,
-  MatCardModule,
-  MatExpansionModule,
-  MatSnackBarModule,
-  MatBadgeModule,
-  MatSlideToggleModule,
-  MatListModule,
-} from '@angular/material';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 
 
 import { AngularSplitModule } from 'angular-split';
@@ -75,7 +73,7 @@ import { SettingsUnitsComponent } from './settings-units/settings-units.componen
 import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 
-import { GaugesModule } from 'ng-canvas-gauges';
+import { GaugesModule } from '@biacsics/ng-canvas-gauges';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
