@@ -8,7 +8,7 @@
         matBadgePosition="after"
         matBadgeOverlap="false"
         matBadgeColor="warn"
-        class="fa fa-bell fa-2x">
+        class="fa fa-envelope fa-2x matBadge">
   </span>
   <span *ngIf="notificationConfig.disableNotifications" class="fa-stack fa-lg">
     <i class="fa fa-bell fa-1x" aria-hidden="true"></i>
@@ -59,8 +59,12 @@
   <mat-action-list>
     <mat-divider></mat-divider>
     <button mat-list-item class="muteSoundButton" matTooltip="Mute notification sounds" (click)="mutePlayer(isHowlIdMuted ? false : true)">
-      <span *ngIf="!isHowlIdMuted">Mute Sound</span>
-      <span *ngIf="isHowlIdMuted">Unmute Sound</span>
+      <span *ngIf="!isHowlIdMuted">
+        <i class="fa fa-bell" aria-hidden="true"></i> Mute Alarm Audio
+      </span>
+      <span *ngIf="isHowlIdMuted">
+        <i class="fa fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
+      </span>
     </button>
   </mat-action-list>
 </mat-menu>

@@ -8,6 +8,9 @@
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
 
+  .matBadge {
+    z-index: 1000;
+  }
 
   // Alarm button when warning
   .alarmWarning {

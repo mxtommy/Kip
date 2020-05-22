@@ -265,9 +265,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.skApNotificationSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apNotifications'].path, this.config.paths['apNotifications'].source).subscribe(
       newValue => {
 
-          if (newValue == null) {
-            console.log("Null AP Notification: probably a clear message that is not handled");
-          } else {
+          if (!newValue == null) {
           this.setNotificationMessage(newValue);
           console.log(newValue);
           }
