@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
 
@@ -7,7 +7,7 @@ const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*
   templateUrl: './svg-wind.component.html',
   styleUrls: ['./svg-wind.component.css']
 })
-export class SvgWindComponent implements OnInit {
+export class SvgWindComponent {
 
   @ViewChild('compassAnimate') compassAnimate: ElementRef;
   @ViewChild('appWindAnimate') appWindAnimate: ElementRef;
@@ -54,10 +54,6 @@ export class SvgWindComponent implements OnInit {
   //WindSectors
   portWindSectorPath: string = "none";
   stbdWindSectorPath: string = "none";
-  ngOnInit() {
-
-
-  }
 
 
   ngOnChanges(changes: SimpleChanges) {
@@ -78,10 +74,46 @@ export class SvgWindComponent implements OnInit {
     if (changes.appWindAngle) {
       if (! changes.appWindAngle.firstChange) {
         this.oldAppWindAngle = this.newAppWindAngle;
-        this.newAppWindAngle = changes.appWindAngle.currentValue; //.toString();
+        this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
 
-        if (this.appWindAnimate) { // only update if on dom...
-          this.appWindAnimate.nativeElement.beginElement();
+        let oldAngle = Number(this.oldAppWindAngle)
+        let newAngle = Number(this.newAppWindAngle);
+        let diff = oldAngle - newAngle;
+
+        // only update if on DOM and value rounded changed
+        if (this.appWindAnimate && (diff != 0)) {
+          // Special cases to smooth out passing between 359 to/from 0
+          // if more than half the circle, it could need to go over the 359 / 0 values
+          if ( Math.abs(diff) > 180 ) {
+            // In what direction are we moving?
+            if (Math.sign(diff) == 1) {
+              if (oldAngle == 359) {
+                // special cases
+                this.oldAppWindAngle = "0";
+                this.appWindAnimate.nativeElement.beginElement();
+              } else {
+                this.newAppWindAngle = "359";
+                this.appWindAnimate.nativeElement.beginElement();
+                this.oldAppWindAngle = "0";
+                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
+                this.appWindAnimate.nativeElement.beginElement();
+              }
+            } else {
+              if (oldAngle == 0) {
+                // special cases
+                this.oldAppWindAngle = "359";
+                this.appWindAnimate.nativeElement.beginElement();
+              } else {
+                this.newAppWindAngle = "0";
+                this.appWindAnimate.nativeElement.beginElement();
+                this.oldAppWindAngle = "359";
+                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
+                this.appWindAnimate.nativeElement.beginElement();
+              }
+            }
+          } else {
+            this.appWindAnimate.nativeElement.beginElement();
+          }
         }
       }
     }
@@ -99,6 +131,7 @@ export class SvgWindComponent implements OnInit {
         this.updateTrueWind();
       }
     }
+
     //trueWindSpeed
     if (changes.trueWindSpeed) {
       if (! changes.trueWindSpeed.firstChange) {
@@ -119,20 +152,57 @@ export class SvgWindComponent implements OnInit {
     this.oldTrueWindRotateAngle = this.newTrueWindRotateAngle;
     this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0); //compass rotate is negative as we actually have to rotate counter clockwise
 
-    if (this.trueWindAnimate) { // only update if on dom...
-      this.trueWindAnimate.nativeElement.beginElement();
+
+    let oldAngle = Number(this.oldTrueWindRotateAngle)
+    let newAngle = Number(this.newTrueWindRotateAngle);
+    let diff = oldAngle - newAngle;
+
+    // only update if on DOM and value rounded changed
+    if (this.trueWindAnimate && (diff != 0)) {
+      // Special cases to smooth out passing between 359 to/from 0
+      // if more than half the circle, it could need to go over the 359 / 0 values
+      if ( Math.abs(diff) > 180 ) {
+        // In what direction are we moving?
+        if (Math.sign(diff) == 1) {
+          if (oldAngle == 359) {
+            // special cases
+            this.oldTrueWindRotateAngle = "0";
+            this.trueWindAnimate.nativeElement.beginElement();
+          } else {
+            this.newTrueWindRotateAngle = "359";
+            this.trueWindAnimate.nativeElement.beginElement();
+            this.oldTrueWindRotateAngle = "0";
+            this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0);
+            this.trueWindAnimate.nativeElement.beginElement();
+          }
+        } else {
+          if (oldAngle == 0) {
+            // special cases
+            this.oldTrueWindRotateAngle = "359";
+            this.trueWindAnimate.nativeElement.beginElement();
+          } else {
+            this.newTrueWindRotateAngle = "0";
+            this.trueWindAnimate.nativeElement.beginElement();
+            this.oldTrueWindRotateAngle = "359";
+            this.newTrueWindRotateAngle = this.addHeading(this.trueWindHeading, (this.newCompassRotate*-1)).toFixed(0);
+            this.trueWindAnimate.nativeElement.beginElement();
+          }
+        }
+      } else {
+        this.trueWindAnimate.nativeElement.beginElement();
+      }
     }
 
     //calculate laylines
 
     let portLaylineRotate = this.addHeading(Number(this.newTrueWindRotateAngle), (this.laylineAngle*-1));
-    //find xy of that roation (160 = radius of inner circle)
+    //find xy of that rotation (160 = radius of inner circle)
     let portX = 160 * Math.sin((portLaylineRotate*Math.PI)/180) + 250; //250 is middle
     let portY = (160 * Math.cos((portLaylineRotate*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
     this.laylinePortPath = 'M 250,250 ' + portX +',' + portY;
 
     let stbdLaylineRotate = this.addHeading(Number(this.newTrueWindRotateAngle), (this.laylineAngle));
-    //find xy of that roation (160 = radius of inner circle)
+    //find xy of that rotation (160 = radius of inner circle)
     let stbdX = 160 * Math.sin((stbdLaylineRotate*Math.PI)/180) + 250; //250 is middle
     let stbdY = (160 * Math.cos((stbdLaylineRotate*Math.PI)/180)*-1) + 250; //-1 since SVG 0 is at top
     this.laylineStbdPath = 'M 250,250 ' + stbdX +',' + stbdY;

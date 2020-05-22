@@ -101,9 +101,10 @@ export class SvgAutopilotComponent {
     if (changes.appWindAngle) {
       if (! changes.appWindAngle.firstChange) {
         this.oldAppWindAngle = this.newAppWindAngle;
+        this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
 
-        let oldAngle = Number(this.newAppWindAngle)
-        let newAngle = Number(changes.appWindAngle.currentValue.toFixed(0));
+        let oldAngle = Number(this.oldAppWindAngle)
+        let newAngle = Number(this.newAppWindAngle);
         let diff = oldAngle - newAngle;
 
         // only update if on DOM and value rounded changed
@@ -116,7 +117,6 @@ export class SvgAutopilotComponent {
               if (oldAngle == 359) {
                 // special cases
                 this.oldAppWindAngle = "0";
-                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
                 this.appWindAnimate.nativeElement.beginElement();
               } else {
                 this.newAppWindAngle = "359";
@@ -129,7 +129,6 @@ export class SvgAutopilotComponent {
               if (oldAngle == 0) {
                 // special cases
                 this.oldAppWindAngle = "359";
-                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
                 this.appWindAnimate.nativeElement.beginElement();
               } else {
                 this.newAppWindAngle = "0";
@@ -140,12 +139,10 @@ export class SvgAutopilotComponent {
               }
             }
           } else {
-            this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
             this.appWindAnimate.nativeElement.beginElement();
           }
         }
       }
-
     }
 
     //rudderAngle
