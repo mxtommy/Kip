@@ -87,13 +87,12 @@
 
 //Import themes
 @import 'themes/defaultTheme.scss';
-@import 'themes/signalk.scss';
-@import 'themes/nightTheme.scss';
+@import 'themes/signalkTheme.scss';
 @import 'themes/platypusTheme.scss';
-@import 'themes/highContrast.scss';
-@import 'themes/darkBlue.scss';
+@import 'themes/highContrastTheme.scss';
+@import 'themes/darkBlueTheme.scss';
 @import 'themes/modernTheme.scss';
-@import 'themes/blackTheme.scss';
+@import 'themes/nightMode.scss';
 
 // import Components themes
 @import 'app/app.component.scss';
@@ -111,7 +110,7 @@
   @include app-theme($theme);
   @include layout-split-theme($theme);
   @include widget-blank-theme($theme);
-  @include svg-wind-theme($theme); // for both svg-wind and wvg-autopilot
+  @include svg-wind-theme($theme); // for both svg-wind and svg-autopilot
   @include widget-state-theme($theme);
   @include widget-ngGauge-linear-theme($theme);
   @include widget-ngGauge-radial-theme($theme);
@@ -129,9 +128,6 @@
   @include theme-components($highContrast-light);
 }
 
-.night-dark {
-  @include theme-components($nightTheme-dark);
-}
 .platypus-light {
   @include theme-components($platypusTheme-light);
 }
@@ -144,7 +140,7 @@
   @include theme-components($modernTheme-dark);
 }
 
-.black-dark {
-  @include theme-components($blackTheme-dark);
+.nightMode {
+  @include theme-components($nightMode-dark);
 }
 

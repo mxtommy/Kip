@@ -36,6 +36,8 @@ export class AppComponent implements OnInit, OnDestroy {
   themeClass: string = 'default-light fullheight';
   themeNameSub: Subscription;
 
+  isNightMode: boolean = false;
+
   appNotificationSub: Subscription;
   connectionStatusSub: Subscription;
 
@@ -138,6 +140,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.AppSettingsService.setThemName(theme);
   }
 
+  setNightMode(nightMode: boolean) {
+    this.isNightMode = nightMode;
+    if (this.isNightMode) {
+      this.AppSettingsService.setThemName("nightMode");
+    } else {
+      this.AppSettingsService.setThemName(this.AppSettingsService.getThemeName());
+    }
+  }
 
   unlockPage() {
     if (this.unlockStatus) {

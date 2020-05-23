@@ -1,15 +1,15 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
-$black-primary: (
+$nightMode-primary: (
     50 : #ecf5fb,
-    100 : #d0e7f5,
+    100 : #9b0000,
     200 : #b1d7ef,
-    300 : #92c7e9,
+    300 : #9b0000,
     400 : #7abbe4,
-    500 : #63afdf,
+    500 : #9b0000,
     600 : #5ba8db,
-    700 : #519fd7,
+    700 : #9b0000,
     800 : #4796d2,
-    900 : #3586ca,
+    900 : #9b0000,
     A100 : #ffffff,
     A200 : #e0f0ff,
     A400 : #add8ff,
@@ -24,7 +24,7 @@ $black-primary: (
         600 : #000000,
         700 : #000000,
         800 : #000000,
-        900 : #ffffff,
+        900 : #000000,
         A100 : #000000,
         A200 : #000000,
         A400 : #000000,
@@ -32,19 +32,19 @@ $black-primary: (
     )
 );
 
-$black-accent: (
+$nightMode-accent: (
     50 : #fdf9e6,
-    100 : #fbefc1,
+    100 : #9b0000,
     200 : #f8e598,
-    300 : #f5da6f,
+    300 : #9b0000,
     400 : #f2d250,
-    500 : #f0ca31,
+    500 : #9b0000,
     600 : #eec52c,
-    700 : #ecbd25,
+    700 : #9b0000,
     800 : #e9b71f,
-    900 : #e5ab13,
+    900 : #9b0000,
     A100 : #ffffff,
-    A200 : #1E1E1E, // original value #fff6e0
+    A200 : #121212, // Menubar original value #fff6e0 000000 1E1E1E
     A400 : #ffe6ad,
     A700 : #ffdf94,
     contrast: (
@@ -59,23 +59,23 @@ $black-accent: (
         800 : #000000,
         900 : #000000,
         A100 : #000000,
-        A200 : #ffffff,
+        A200 : #9b0000,
         A400 : #000000,
         A700 : #000000,
     )
 );
 
-$black-warn: (
+$nightMode-warn: (
     50 : #fae5e5,
     100 : #f2bebe,
     200 : #ea9393,
     300 : #e26767,
     400 : #db4747,
-    500 : #d52626,
+    500 : #9b0000,
     600 : #d02222,
-    700 : #ca1c1c,
+    700 : #9b0000,
     800 : #c41717,
-    900 : #ba0d0d,
+    900 : #9b0000,
     A100 : #ffe7e7,
     A200 : #ffb4b4,
     A400 : #ff8181,
@@ -85,12 +85,12 @@ $black-warn: (
         100 : #000000,
         200 : #000000,
         300 : #000000,
-        400 : #ffffff,
-        500 : #ffffff,
-        600 : #ffffff,
-        700 : #ffffff,
-        800 : #ffffff,
-        900 : #ffffff,
+        400 : #000000,
+        500 : #000000,
+        600 : #000000,
+        700 : #000000,
+        800 : #000000,
+        900 : #000000,
         A100 : #000000,
         A200 : #000000,
         A400 : #000000,
@@ -98,17 +98,17 @@ $black-warn: (
     )
 );
 
-$black-special: (
+$nightMode-special: (
     50 : #fae5e5,
     100 : #f2bebe,
     200 : #ea9393,
     300 : #e26767,
     400 : #389c19,
-    500 : #d02222,
+    500 : #121212, // background
     600 : #3f3f3f,
-    700 : #1E1E1E,
-    800 : #121212,
-    900 : #000000,
+    700 : #000000, // mat cards 1e1e1e
+    800 : #000000, // 121212
+    900 : #121212, // 000000
     A100 : #ffe7e7,
     A200 : #ffb4b4,
     A400 : #ff8181,
@@ -137,57 +137,48 @@ $black-special: (
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
 
-$black-theme-primary: mat-palette($black-primary);
-$black-theme-accent:  mat-palette($black-accent, A200, A100, A400);
-$black-theme-warn:  mat-palette($black-warn);
+$nightMode-theme-primary: mat-palette($nightMode-primary);
+$nightMode-theme-accent:  mat-palette($nightMode-accent, A200, A100, A400);
+$nightMode-theme-warn:  mat-palette($nightMode-warn);
+
+$nightMode-theme-special:  mat-palette($nightMode-special); // Used to override MAterial Dark Theme colors and make it really black!
 
 // Palettes for custom Components
 
 // widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: #92c7e9, //mat-color($black-theme-primary, 300),
-    primary-gaugeFaceDark: #3586ca, // mat-color($black-theme-primary, 900),
-    accent-gaugeFaceLight: #f5da6f,  //mat-color($black-theme-accent, 300),
-    accent-gaugeFaceDark: #e5ab13,  //mat-color($black-theme-accent, 900),
-    warn-gaugeFaceLight: #e26767,  //mat-color($black-theme-warn, 300),
-    warn-gaugeFaceDark: #ba0d0d,  //mat-color($black-theme-warn, 900),
+    primary-gaugeFaceLight: #9b0000,
+    primary-gaugeFaceDark: #9b0000,
+    accent-gaugeFaceLight: #9b0000,
+    accent-gaugeFaceDark: #9b0000,
+    warn-gaugeFaceLight: #9b0000,
+    warn-gaugeFaceDark: #9b0000,
 );
 
 // Palette for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
-    boat-background: #ffffff,
+    boat-background: #9b0000,
     heading-background: #1E1E1E,
-    true-wind-background: #f0ca31,
-    app-wind-background: #63afdf,
-    compass-dark: #3f3f3f,
-    compass-light: #888888,
-    wind-rose-background: #ffffff,
-    port: #d52626,
-    starboard: #389c19,
-    rudder-port: #d52626,
+    true-wind-background: #5f5013,
+    app-wind-background: #083958,
+    compass-dark: #2c1515,
+    compass-light: #462121,
+    wind-rose-background: #2c1a1a,
+    port: #9b0000,
+    starboard: #17420a,
+    rudder-port: #9b0000,
     rudder-starboard: #389c19,
 );
 
-
-$black-theme-special:  mat-palette($black-special); // TODO(David): clean later - do we need this?
-
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$blackTheme-temp: mat-dark-theme($black-theme-primary, $black-theme-accent, $black-theme-warn);
+$nightMode-temp: mat-dark-theme($nightMode-theme-primary, $nightMode-theme-accent, $nightMode-theme-warn);
 
 
-// $blackTheme-dark-background: custom-theme-dark-background($black-theme-special, 900); // TODO(david): Cleanup
-
+// Customer Material Dark-theme black background
+$nightMode-background: custom-theme-dark-background($nightMode-theme-special, 500);
+$nightMode-foreground: custom-theme-dark-foreground(#9b0000);
 // Merge our mat-theme with component specific palettes
-$blackTheme-dark: map-merge($blackTheme-temp, (wind: $mat-wind, ngGauge: $mat-ngGauge));
-
-
-
-// $blackTheme-dark-foreground: custom-theme-dark-foreground(white); // Kip theming hack
-
-// Merge custom theme values for Light/Dark - Foreground/Background and Wind instrument style
-// $blackTheme-dark-background: custom-theme-dark-background($black-theme-special, 900);
-// $blackTheme-dark-foreground: custom-theme-dark-foreground(white);
-// $blackTheme-dark: map-merge($blackTheme-dark-temp, (background: $blackTheme-dark-background, foreground: $blackTheme-dark-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
+$nightMode-dark: map-merge($nightMode-temp, (background: $nightMode-background,foreground: $nightMode-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));

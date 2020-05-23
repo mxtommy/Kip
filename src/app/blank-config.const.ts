@@ -13,7 +13,7 @@ export const BlankConfig = {
     "unlockStatus": false,
     "unitDefaults": {
       "unitless": 'unitless',
-      "speed": 'kph',
+      "speed": 'knots',
       "flow": 'l/h',
       "temp": 'C',
       "length": 'm',

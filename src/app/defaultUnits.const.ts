@@ -3,7 +3,7 @@ import { IUnitDefaults } from './units.service';
 
 export const initialDefaultUnits: IUnitDefaults = {
   "unitless": 'unitless',
-  "speed": 'kph',
+  "speed": 'knots',
   "flow": 'l/h',
   "temp": 'C',
   "length": 'm',
