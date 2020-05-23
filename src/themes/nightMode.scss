@@ -1,15 +1,15 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
 $nightMode-primary: (
     50 : #ecf5fb,
-    100 : #9b0000,
+    100 : #520000,
     200 : #b1d7ef,
-    300 : #9b0000,
+    300 : #520000,
     400 : #7abbe4,
-    500 : #9b0000,
+    500 : #520000,
     600 : #5ba8db,
-    700 : #9b0000,
+    700 : #520000,
     800 : #4796d2,
-    900 : #9b0000,
+    900 : #520000,
     A100 : #ffffff,
     A200 : #e0f0ff,
     A400 : #add8ff,
@@ -34,15 +34,15 @@ $nightMode-primary: (
 
 $nightMode-accent: (
     50 : #fdf9e6,
-    100 : #9b0000,
+    100 : #520000,
     200 : #f8e598,
-    300 : #9b0000,
+    300 : #520000,
     400 : #f2d250,
-    500 : #9b0000,
+    500 : #520000,
     600 : #eec52c,
-    700 : #9b0000,
+    700 : #520000,
     800 : #e9b71f,
-    900 : #9b0000,
+    900 : #520000,
     A100 : #ffffff,
     A200 : #121212, // Menubar original value #fff6e0 000000 1E1E1E
     A400 : #ffe6ad,
@@ -59,7 +59,7 @@ $nightMode-accent: (
         800 : #000000,
         900 : #000000,
         A100 : #000000,
-        A200 : #9b0000,
+        A200 : #520000,
         A400 : #000000,
         A700 : #000000,
     )
@@ -71,11 +71,11 @@ $nightMode-warn: (
     200 : #ea9393,
     300 : #e26767,
     400 : #db4747,
-    500 : #9b0000,
+    500 : #520000,
     600 : #d02222,
-    700 : #9b0000,
+    700 : #520000,
     800 : #c41717,
-    900 : #9b0000,
+    900 : #520000,
     A100 : #ffe7e7,
     A200 : #ffb4b4,
     A400 : #ff8181,
@@ -104,7 +104,7 @@ $nightMode-special: (
     200 : #ea9393,
     300 : #e26767,
     400 : #389c19,
-    500 : #121212, // background
+    500 : #0e0d0d, // background
     600 : #3f3f3f,
     700 : #000000, // mat cards 1e1e1e
     800 : #000000, // 121212
@@ -148,27 +148,27 @@ $nightMode-theme-special:  mat-palette($nightMode-special); // Used to override 
 // widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: #9b0000,
-    primary-gaugeFaceDark: #9b0000,
-    accent-gaugeFaceLight: #9b0000,
-    accent-gaugeFaceDark: #9b0000,
-    warn-gaugeFaceLight: #9b0000,
-    warn-gaugeFaceDark: #9b0000,
+    primary-gaugeFaceLight: #520000,
+    primary-gaugeFaceDark: #520000,
+    accent-gaugeFaceLight: #520000,
+    accent-gaugeFaceDark: #520000,
+    warn-gaugeFaceLight: #520000,
+    warn-gaugeFaceDark: #520000,
 );
 
 // Palette for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-wind: (
-    boat-background: #9b0000,
+    boat-background: #520000,
     heading-background: #1E1E1E,
     true-wind-background: #5f5013,
     app-wind-background: #083958,
     compass-dark: #2c1515,
     compass-light: #462121,
     wind-rose-background: #2c1a1a,
-    port: #9b0000,
+    port: #520000,
     starboard: #17420a,
-    rudder-port: #9b0000,
+    rudder-port: #520000,
     rudder-starboard: #389c19,
 );
 
@@ -179,6 +179,6 @@ $nightMode-temp: mat-dark-theme($nightMode-theme-primary, $nightMode-theme-accen
 
 // Customer Material Dark-theme black background
 $nightMode-background: custom-theme-dark-background($nightMode-theme-special, 500);
-$nightMode-foreground: custom-theme-dark-foreground(#9b0000);
+$nightMode-foreground: custom-theme-dark-foreground(#520000);
 // Merge our mat-theme with component specific palettes
 $nightMode-dark: map-merge($nightMode-temp, (background: $nightMode-background,foreground: $nightMode-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
