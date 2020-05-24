@@ -31,6 +31,7 @@ export class UnitsService {
     { group: 'volume', units: [ 'liter', 'gallon', 'm3' ] },
     { group: 'electrical', units: [ 'amps', 'volts' ] },
     { group: 'pressure', units: [ 'pascal', 'hPa', 'bar', 'mbar', 'psi', 'mmHg', 'inHg' ] },
+    { group: 'time', units: [ 'seconds', 'minutes', 'hours', 'days' ] },
     { group: 'angularVelocity', units: [ 'rad/s', 'deg/s', 'deg/min',  ] },
     { group: 'angle', units: [ 'rad', 'deg', 'grad' ] },
     { group: 'frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
@@ -64,24 +65,24 @@ this.conversionList[group].push(unit);
 //  speed
     'knots': Qty.swiftConverter("m/s", "kn"),
     'kph': Qty.swiftConverter("m/s", "kph"),
-    'm/s': Qty.swiftConverter("m/s", "m/s"),
+    'm/s': function(v) { return v; },
     'mph': Qty.swiftConverter("m/s", "mph"),
 // volume
     "liter": Qty.swiftConverter('m^3', 'liter'),
     "gallon": Qty.swiftConverter('m^3', 'gallon'),
-    "m3": Qty.swiftConverter('m^3', 'm^3'),
+    "m3": function(v) { return v; },
 //  flow
-    'm3/s': Qty.swiftConverter("m^3/s", "m^3/s"),
+    'm3/s': function(v) { return v; },
     'l/min': Qty.swiftConverter("m^3/s", "liter/minute"),
     'l/h': Qty.swiftConverter("m^3/s", "liter/hour"),
     'g/min': Qty.swiftConverter("m^3/s", "gallon/minute"),
     'g/h': Qty.swiftConverter("m^3/s", "gallon/hour"),
 //  temp
-    "K": Qty.swiftConverter("tempK", "tempK"),
+    "K": function(v) { return v; },
     "C": Qty.swiftConverter("tempK", "tempC"),
     "F": Qty.swiftConverter("tempK", "tempF"),
 //  length
-    "m": Qty.swiftConverter('m', 'm'),
+    "m": function(v) { return v; },
     "fathom": Qty.swiftConverter('m', 'fathom'),
     "feet": Qty.swiftConverter('m', 'foot'),
     "km": Qty.swiftConverter('m', 'km'),
@@ -91,15 +92,20 @@ this.conversionList[group].push(unit);
     "volts": function(v) { return v; },
     "amps": function(v) { return v; },
 //  pressure
-    "pascal": Qty.swiftConverter('pascal', 'pascal'),
+    "pascal": function(v) { return v; },
     "hPa": Qty.swiftConverter('pascal', 'hPa'),
     "bar": Qty.swiftConverter('pascal', 'bar'),
     "mbar": Qty.swiftConverter('pascal', 'millibar'),
     "psi": Qty.swiftConverter('pascal', 'psi'),
     "mmHg": Qty.swiftConverter('pascal', 'mmHg'),
     "inHg": Qty.swiftConverter('pascal', 'inHg'),
+//  Time
+    "seconds": function(v) { return v; },
+    "minutes": Qty.swiftConverter('s', 'minutes'),
+    "hours": Qty.swiftConverter('s', 'hours'),
+    "days": Qty.swiftConverter('s', 'days'),
 //  angularVelocity
-    "rad/s": Qty.swiftConverter('rad/s', 'rad/s'),
+    "rad/s": function(v) { return v; },
     "deg/s": Qty.swiftConverter('rad/s', 'deg/s'),
     "deg/min": Qty.swiftConverter('rad/s', 'deg/min'),
 //  frequency
@@ -109,7 +115,7 @@ this.conversionList[group].push(unit);
     "MHz": function(v) { return v/1000000; },
     "GHz": function(v) { return v/1000000000; },
 //  angle
-    "rad": Qty.swiftConverter('rad', 'rad'),
+    "rad": function(v) { return v; },
     "deg": Qty.swiftConverter('rad', 'deg'),
 //   ratio
     'percent': function(v) { return v * 100 },
