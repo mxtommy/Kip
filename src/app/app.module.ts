@@ -81,6 +81,8 @@ import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
 import { WidgetAutopilotComponent } from './widget-autopilot/widget-autopilot.component';
 import { SvgAutopilotComponent } from './svg-autopilot/svg-autopilot.component';
 import { SettingsNotificationsComponent } from './settings-notifications/settings-notifications.component';
+import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-simple-linear-gauge.component';
+import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -131,6 +133,8 @@ const appRoutes: Routes = [
     WidgetAutopilotComponent,
     SvgAutopilotComponent,
     SettingsNotificationsComponent,
+    SvgSimpleLinearGaugeComponent,
+    WidgetSimpleLinearComponent,
   ],
   imports: [
     BrowserModule,
@@ -176,6 +180,7 @@ const appRoutes: Routes = [
     WidgetIframeComponent,
     WidgetTutorialComponent,
     WidgetAutopilotComponent,
+    WidgetSimpleLinearComponent,
 
     //dialogs
     ModalWidgetComponent,
@@ -198,8 +203,5 @@ const appRoutes: Routes = [
   ],
   bootstrap: [AppComponent]
 })
-
-
-
 
 export class AppModule { }

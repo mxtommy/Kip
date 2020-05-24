@@ -1,6 +1,5 @@
 import { Component, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
-import { NgModel } from '@angular/forms';
 
 
 @Component({

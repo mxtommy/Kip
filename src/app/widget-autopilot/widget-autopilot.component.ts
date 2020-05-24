@@ -166,6 +166,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   activeWidget: IWidget;
   config: IWidgetConfig;
+  displayName: string;
 
   // Subscription stuff
   currentAPState: any = null;      // Current Pilot Mode - used for display, keyboard state and buildCommand function
@@ -220,6 +221,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.config = defaultConfig; // load default config.
     } else {
       this.config = this.activeWidget.config;
+      this.displayName = this.config.displayName;
     }
     if (this.config.autoStart) {
       setTimeout(() => {this.startApHead();});
@@ -416,6 +418,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       // save new settings
       if (result) {
         this.config = result;
+        this.displayName = this.config.displayName;
         console.log(result);
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
 

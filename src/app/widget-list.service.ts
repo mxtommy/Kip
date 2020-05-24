@@ -14,6 +14,7 @@ import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.compo
 import { WidgetGaugeNgLinearComponent} from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent} from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { WidgetAutopilotComponent } from "./widget-autopilot/widget-autopilot.component";
+import { WidgetSimpleLinearComponent } from "./widget-simple-linear/widget-simple-linear.component";
 
 export class widgetInfo {
   name: string;
@@ -57,6 +58,11 @@ export class WidgetListService {
       componentName: WidgetSwitchComponent,
       description: 'Switch Input',
     },  */
+    {
+      name: 'WidgetSimpleLinearComponent',
+      componentName: WidgetSimpleLinearComponent,
+      description: "Linear Electrical Gauge"
+    },
     {
       name: 'WidgetGaugeNgLinearComponent',
       componentName: WidgetGaugeNgLinearComponent,

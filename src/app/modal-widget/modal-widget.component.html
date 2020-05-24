@@ -128,7 +128,23 @@
         </mat-checkbox>
       </mat-tab>
 <!-- Gauge stuff -->
-      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType !== undefined">
+      <!-- Simple Linear -->
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'simpleLinear'">
+        <div class="tab-content">
+          <mat-form-field class="full-width">
+              <mat-select
+                  placeholder="Unit Label Options"
+                  formControlName="gaugeUnitLabelFormat"
+                  name="gaugeUnitLabelFormat">
+                  <mat-option value="full">Full Label</mat-option>
+                  <mat-option value="abr">First Letter Only</mat-option>
+              </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-tab>
+
+      <!-- steel & ng-canvas gauges -->
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial' || widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical'">
         <div class="tab-content">
           <mat-form-field class="full-width" *ngIf="widgetConfig.gaugeType !== 'ngRadial'">
               <mat-select

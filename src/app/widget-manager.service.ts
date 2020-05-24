@@ -41,18 +41,18 @@ export interface IWidgetConfig {
 
   //gauge Data
   gaugeType?: string;
+  gaugeUnitLabelFormat?: string;
+  gaugeTicks?: boolean;
   barGraph?: boolean;
+  backgroundColor?: string;
+  frameColor?: string;
+  barColor?: string;
   radialSize?: string;
   minValue?: number;
   maxValue?: number;
   rotateFace?: boolean;
-  backgroundColor?: string;
-  frameColor?: string;
   autoStart?: boolean;
 
-  //NG Gauge Data
-  barColor?: string;
-  gaugeTicks?: boolean;
 
   //Historical
   dataSetUUID?: string;
