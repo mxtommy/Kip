@@ -408,7 +408,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.borderShadowWidth = 0;
 
         this.gaugeOptions.animationTarget = "needle";
-        this.gaugeOptions.useMinPath = false;
+        this.gaugeOptions.useMinPath = true;
         break;
 
       default:
