@@ -23,20 +23,25 @@ export class UnitsService {
   defaultUnitsSub: Subscription;
 
   conversionList: IUnitInfo[] = [
-    { group: 'unitless', units: [ 'unitless' ] },
-    { group: 'speed', units: [ 'knots','kph', 'mph', 'm/s' ] },
-    { group: 'flow', units: ['m3/s', 'l/min', 'l/h', 'g/min', 'g/h' ] },
-    { group: 'temp', units: [ 'K', 'C', 'F' ] },
-    { group: 'length', units: [ 'm', 'fathom', 'feet', 'km', 'nm', 'mi' ] },
-    { group: 'volume', units: [ 'liter', 'gallon', 'm3' ] },
-    { group: 'electrical', units: [ 'amps', 'volts' ] },
-    { group: 'pressure', units: [ 'pascal', 'hPa', 'bar', 'mbar', 'psi', 'mmHg', 'inHg' ] },
-    { group: 'time', units: [ 'seconds', 'minutes', 'hours', 'days' ] },
-    { group: 'angularVelocity', units: [ 'rad/s', 'deg/s', 'deg/min',  ] },
-    { group: 'angle', units: [ 'rad', 'deg', 'grad' ] },
-    { group: 'frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
-    { group: 'ratio', units: [ 'percent' ] },
-    { group: 'position', units: [ 'latitudeMin', 'latitudeSec', 'longitudeMin', 'longitudeSec' ] },
+    { group: 'Unitless', units: [ 'unitless' ] },
+    { group: 'Speed', units: [ 'knots','kph', 'mph', 'm/s' ] },
+    { group: 'Flow', units: ['m3/s', 'l/min', 'l/h', 'g/min', 'g/h' ] },
+    { group: 'Temperature', units: [ 'K', 'celsius', 'fahrenheit' ] },
+    { group: 'Length', units: [ 'm', 'fathom', 'feet', 'km', 'nm', 'mi' ] },
+    { group: 'Volume', units: [ 'liter', 'gallon', 'm3' ] },
+    { group: 'Current', units: [ 'A' ] },
+    { group: 'Potential', units: [ 'V' ] },
+    { group: 'Charge', units: [ 'C' ] },
+    { group: 'Power', units: [ 'W' ] },
+    { group: 'Energy', units: [ 'J' ] },
+    { group: 'Pressure', units: [ 'Pa', 'bar', 'psi', 'mmHg', 'inHg' ] },
+    { group: 'Density', units: [ 'kg/m3' ] },
+    { group: 'Time', units: [ 's', 'Minutes', 'Hours', 'Days' ] },
+    { group: 'Angular Velocity', units: [ 'rad/s', 'deg/s', 'deg/min',  ] },
+    { group: 'Angle', units: [ 'rad', 'deg', 'grad' ] },
+    { group: 'Frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
+    { group: 'Ratio', units: [ 'ratio' ] },
+    { group: 'Position', units: [ 'latitudeMin', 'latitudeSec', 'longitudeMin', 'longitudeSec' ] },
   ];
 
 
@@ -79,8 +84,8 @@ this.conversionList[group].push(unit);
     'g/h': Qty.swiftConverter("m^3/s", "gallon/hour"),
 //  temp
     "K": function(v) { return v; },
-    "C": Qty.swiftConverter("tempK", "tempC"),
-    "F": Qty.swiftConverter("tempK", "tempF"),
+    "celsius": Qty.swiftConverter("tempK", "tempC"),
+    "fahrenheit": Qty.swiftConverter("tempK", "tempF"),
 //  length
     "m": function(v) { return v; },
     "fathom": Qty.swiftConverter('m', 'fathom'),
@@ -88,22 +93,29 @@ this.conversionList[group].push(unit);
     "km": Qty.swiftConverter('m', 'km'),
     "nm": Qty.swiftConverter('m', 'nmi'),
     "mi": Qty.swiftConverter('m', 'mi'),
-//  electrical
-    "volts": function(v) { return v; },
-    "amps": function(v) { return v; },
+//  Potential
+    "V": function(v) { return v; },
+//  Current
+    "A": function(v) { return v; },
+// charge
+    "C": function(v) { return v; },
+// Power
+    "W": function(v) { return v; },
+// Energy
+    "J": function(v) { return v; },
 //  pressure
-    "pascal": function(v) { return v; },
-    "hPa": Qty.swiftConverter('pascal', 'hPa'),
-    "bar": Qty.swiftConverter('pascal', 'bar'),
-    "mbar": Qty.swiftConverter('pascal', 'millibar'),
-    "psi": Qty.swiftConverter('pascal', 'psi'),
-    "mmHg": Qty.swiftConverter('pascal', 'mmHg'),
-    "inHg": Qty.swiftConverter('pascal', 'inHg'),
+    "Pa": function(v) { return v; },
+    "bar": Qty.swiftConverter('Pa', 'bar'),
+    "psi": Qty.swiftConverter('Pa', 'psi'),
+    "mmHg": Qty.swiftConverter('Pa', 'mmHg'),
+    "inHg": Qty.swiftConverter('Pa', 'inHg'),
+// Density - Description: Current outside air density
+    "kg/m3": function(v) { return v; },
 //  Time
-    "seconds": function(v) { return v; },
-    "minutes": Qty.swiftConverter('s', 'minutes'),
-    "hours": Qty.swiftConverter('s', 'hours'),
-    "days": Qty.swiftConverter('s', 'days'),
+    "s": function(v) { return v; },
+    "Minutes": Qty.swiftConverter('s', 'minutes'),
+    "Hours": Qty.swiftConverter('s', 'hours'),
+    "Days": Qty.swiftConverter('s', 'days'),
 //  angularVelocity
     "rad/s": function(v) { return v; },
     "deg/s": Qty.swiftConverter('rad/s', 'deg/s'),
@@ -118,7 +130,7 @@ this.conversionList[group].push(unit);
     "rad": function(v) { return v; },
     "deg": Qty.swiftConverter('rad', 'deg'),
 //   ratio
-    'percent': function(v) { return v * 100 },
+    'ratio': function(v) { return v * 100 },
 // lat/lon
     'latitudeMin': function(v) {
         let degree = Math.trunc(v);
