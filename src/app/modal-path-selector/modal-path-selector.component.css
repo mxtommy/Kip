@@ -2,7 +2,8 @@
     width: 100%;
 }
 .width-path {
-    width: 75%;
+    width: calc(75% - 30px);
+    padding-right: 30px;
 }
 .width-source {
     width: 20%;

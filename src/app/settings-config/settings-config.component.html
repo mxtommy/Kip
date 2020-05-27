@@ -1,4 +1,8 @@
 <mat-accordion>
+  <mat-card-header>
+    <mat-card-title>Configuration Management</mat-card-title>
+    <mat-card-subtitle>Kip configuration can be stored and retrieved from the SignalK server. This enables configuration sharing (Kip Widgets and Kip general settings) with multiple devices.</mat-card-subtitle>
+  </mat-card-header>
   <mat-expansion-panel [expanded]="supportApplicationData" [disabled]="!supportApplicationData">
     <mat-expansion-panel-header >Load Config from Server <div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div></mat-expansion-panel-header>
     <form class="server-form">

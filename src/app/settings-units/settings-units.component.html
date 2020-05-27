@@ -1,4 +1,8 @@
 <mat-card>
+  <mat-card-header>
+    <mat-card-title>Application Default Units</mat-card-title>
+    <mat-card-subtitle>Set the default units preferences per types of unit groups. The values will be automatically converted for display.</mat-card-subtitle>
+  </mat-card-header>
   <form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster">
     <mat-form-field class="UnitSettings" *ngFor="let unitType of defaultUnits | keyvalue">
       <mat-select
