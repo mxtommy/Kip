@@ -1,11 +1,11 @@
 <mat-card>
   <form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster">
-    <mat-form-field class="" *ngFor="let unitType of defaultUnits | keyvalue">
+    <mat-form-field class="UnitSettings" *ngFor="let unitType of defaultUnits | keyvalue">
       <mat-select
         [placeholder] = "unitType.key"
         [formControlName] = "unitType.key"
         >
-        <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit" >{{ unit }}</mat-option>
+        <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit.measure" >{{ unit.description }}</mat-option>
 
       </mat-select>
     </mat-form-field>

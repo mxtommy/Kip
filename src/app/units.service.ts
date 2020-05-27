@@ -5,10 +5,25 @@ import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { Subscription } from 'rxjs';
 
-export interface IUnitInfo {
+/**
+ *  Group of Kip units array
+ */
+export interface IUnitGroup {
   group: string;
-  units: string[];
+  units: IUnit[];
+}[]
+
+/**
+ * Individual Kip units system measures definition
+ */
+export interface IUnit {
+  measure: string;
+  description: string;
 }
+
+/**
+ * Interface for defaults Units per unit Groups to be applied
+ */
 export interface IUnitDefaults {
   [key: string]: string;
 }
@@ -22,26 +37,89 @@ export class UnitsService {
   defaultUnits: IUnitDefaults;
   defaultUnitsSub: Subscription;
 
-  conversionList: IUnitInfo[] = [
-    { group: 'Unitless', units: [ 'unitless' ] },
-    { group: 'Speed', units: [ 'knots','kph', 'mph', 'm/s' ] },
-    { group: 'Flow', units: ['m3/s', 'l/min', 'l/h', 'g/min', 'g/h' ] },
-    { group: 'Temperature', units: [ 'K', 'celsius', 'fahrenheit' ] },
-    { group: 'Length', units: [ 'm', 'fathom', 'feet', 'km', 'nm', 'mi' ] },
-    { group: 'Volume', units: [ 'liter', 'gallon', 'm3' ] },
-    { group: 'Current', units: [ 'A' ] },
-    { group: 'Potential', units: [ 'V' ] },
-    { group: 'Charge', units: [ 'C' ] },
-    { group: 'Power', units: [ 'W' ] },
-    { group: 'Energy', units: [ 'J' ] },
-    { group: 'Pressure', units: [ 'Pa', 'bar', 'psi', 'mmHg', 'inHg' ] },
-    { group: 'Density', units: [ 'kg/m3' ] },
-    { group: 'Time', units: [ 's', 'Minutes', 'Hours', 'Days' ] },
-    { group: 'Angular Velocity', units: [ 'rad/s', 'deg/s', 'deg/min',  ] },
-    { group: 'Angle', units: [ 'rad', 'deg', 'grad' ] },
-    { group: 'Frequency', units: [ 'rpm', 'Hz', 'KHz', 'MHz', 'GHz' ] },
-    { group: 'Ratio', units: [ 'ratio' ] },
-    { group: 'Position', units: [ 'latitudeMin', 'latitudeSec', 'longitudeMin', 'longitudeSec' ] },
+  /**
+   * Definition of available Kip units to be used for conversion.
+   * Measure property has to match one Unit Conversion Function for proper operation.
+   * Description is human readable property.
+   */
+  conversionList: IUnitGroup[] = [
+    { group: 'Unitless', units: [
+      { measure: 'unitless', description: "No predetermined unit" }
+    ] },
+    { group: 'Speed', units: [
+      { measure: 'knots', description: "Knots - Nautical miles per hour"},
+      { measure: 'kph', description: "kph - Kilometers per hour"},
+      { measure: 'mph', description: "mph - Miles per hour"},
+      { measure: 'm/s', description: "m/s - Meters per second (default)"}
+    ] },
+    { group: 'Flow', units: [
+      { measure: 'm3/s', description: "Cubic meters per second (default)"},
+      { measure: 'l/min', description: "Litters per minute"},
+      { measure: 'l/h', description: "Litters per hour"},
+      { measure: 'g/min', description: "Gallons per minute"},
+      { measure: 'g/h', description: "Gallons per hour"}
+    ] },
+    { group: 'Temperature', units: [
+      { measure: 'K', description: "Kelvin (default)"},
+      { measure: 'celsius', description: "Celsius"},
+      { measure: 'fahrenheit', description: "Fahrenheit"}
+     ] },
+    { group: 'Length', units: [
+      { measure: 'm', description: "Metres (default)"},
+      { measure: 'fathom', description: "Fathoms"},
+      { measure: 'feet', description: "Feets"},
+      { measure: 'km', description: "Kilometers"},
+      { measure: 'nm', description: "Nautical Miles"},
+      { measure: 'mi', description: "Miles"},
+    ] },
+    { group: 'Volume', units: [
+      { measure: 'liter', description: "Liters (default)"},
+      { measure: 'm3', description: "Cubic Meters"},
+      { measure: 'gallon', description: "Gallons"},
+     ] },
+    { group: 'Current', units: [ { measure: 'A', description: "Amperes"} ] },
+    { group: 'Potential', units: [ { measure: 'V', description: "Volts"} ] },
+    { group: 'Charge', units: [ { measure: 'C', description: "Current"} ] },
+    { group: 'Power', units: [ { measure: 'W', description: "Watts"} ] },
+    { group: 'Energy', units: [ { measure: 'J', description: "Joules"} ] },
+    { group: 'Pressure', units: [
+      { measure: 'Pa', description: "Pascal (default)" },
+      { measure: 'bar', description: "Bars" },
+      { measure: 'psi', description: "psi" },
+      { measure: 'mmHg', description: "mmHg" },
+      { measure: 'inHg', description: "inHg" },
+    ] },
+    { group: 'Density', units: [ { measure: 'kg/m3', description: "Air density - kg/cubic meter"} ] },
+    { group: 'Time', units: [
+      { measure: 's', description: "Seconds (default)" },
+      { measure: 'Minutes', description: "Minutes" },
+      { measure: 'Hours', description: "Hours" },
+      { measure: 'Days', description: "Days" },
+    ] },
+    { group: 'Angular Velocity', units: [
+      { measure: 'rad/s', description: "Radians per second" },
+      { measure: 'deg/s', description: "Degrees per second" },
+      { measure: 'deg/min', description: "Degrees per minute" },
+    ] },
+    { group: 'Angle', units: [
+      { measure: 'rad', description: "Radians" },
+      { measure: 'deg', description: "Degrees" },
+      { measure: 'grad', description: "Gradians" },
+    ] },
+    { group: 'Frequency', units: [
+      { measure: 'rpm', description: "RPM - Rotations per minute" },
+      { measure: 'Hz', description: "Hz - Hertz (default)" },
+      { measure: 'KHz', description: "KHz - KiloHertz" },
+      { measure: 'MHz', description: "MHz - MegaHertz" },
+      { measure: 'GHz', description: "GHz - GigaHertz" },
+    ] },
+    { group: 'Ratio', units: [ { measure: 'ratio', description: "% - Percentage value" } ] },
+    { group: 'Position', units: [
+      { measure: 'latitudeMin', description: "Latitude in minutes" },
+      { measure: 'latitudeSec', description: "Latitude in seconds" },
+      { measure: 'longitudeMin', description: "Longitude in minutes" },
+      { measure: 'longitudeSec', description: "Longitude in seconds" },
+    ] },
   ];
 
 
@@ -169,18 +247,45 @@ this.conversionList[group].push(unit);
   }
 
 
-
-  getConversionsForPath(path: string): { default: string, conversions: IUnitInfo[]} {
+  /**
+   * Obtain a list of possible Kip value type conversions for a given path. ie,.: Speed conversion group
+   * (kph, Knots, etc.). The conversion list will be trimmed to only the conversions for the group in question.
+   * If a default value type (provided by server) for a path cannot be found,
+   * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
+   * but Kip does not handle it...yet.
+   *
+   * @param path The SignalK path of the value
+   * @return conversions Full list array or subset of list array
+   */
+  getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
     let pathUnitType = this.SignalKService.getPathUnitType(path);
-    if (pathUnitType === null) { return { default: 'unitless', conversions: this.conversionList }; } // if it's unknown units for this path let them choose from all
-    let group = this.conversionList.find(el => el.units.includes(pathUnitType));
-    if (group === undefined) { return { default: 'unitless', conversions: this.conversionList }; }
-    let arr = this.conversionList.filter( el => el.group == group.group);
-    if (arr.length > 0) {
-      return { default: this.defaultUnits[group.group], conversions: arr};
-    } else {
+    let groupList = [];
+    let isUnitInList: boolean = false;
+
+    // if this Path has no predefined Unit type (from Meta or elsewhere) set to unitless
+    if (pathUnitType === null) {
       return { default: 'unitless', conversions: this.conversionList };
+    } else {
+      // if this Widget has a configured Unit for this Path, only return all Units within same group.
+      // The Assumption is that we should only use conversions group rules.
+      for (let index = 0; index < this.conversionList.length; index++) {
+        const unitGroup:IUnitGroup = this.conversionList[index];
+
+        unitGroup.units.forEach(unit => {
+          if (unit.measure == pathUnitType) {
+            isUnitInList = true;
+            groupList.push(unitGroup);
+          }
+        });
+      }
     }
+
+    if (isUnitInList) {
+      return { default: pathUnitType, conversions: groupList };
+    }
+    // default if we have a unit for the Path but it's not know by Kip
+    console.log("Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
+    return { default: 'unitless', conversions: this.conversionList };
   }
 
   convertUnit(unit: string, value: number): number {
@@ -192,7 +297,7 @@ this.conversionList[group].push(unit);
   getDefaults(): IUnitDefaults {
     return this.defaultUnits;
   }
-  getConversions(): IUnitInfo[] {
+  getConversions(): IUnitGroup[] {
     return this.conversionList;
   }
 
