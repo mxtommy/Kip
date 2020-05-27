@@ -44,7 +44,7 @@ export class UnitsService {
    */
   conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
-      { measure: 'unitless', description: "No predetermined unit" }
+      { measure: 'unitless', description: "No predetermined unit, or string value" }
     ] },
     { group: 'Speed', units: [
       { measure: 'knots', description: "Knots - Nautical miles per hour"},

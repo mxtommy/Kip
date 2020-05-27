@@ -19,7 +19,7 @@ const defaultConfig: IWidgetConfig = {
     }
   },
   units: {
-    "gaugePath": "volts"
+    "gaugePath": "V"
   },
   filterSelfPaths: true,
   minValue: 0,
