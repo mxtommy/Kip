@@ -1,4 +1,8 @@
 <mat-card>
+  <mat-card-header>
+    <mat-card-title>Connection Details</mat-card-title>
+    <mat-card-subtitle>Enter the URL and port to your server (ie http://my.server.com:3000), or Request and Clear a server Token.<br>Token is only required to submit commands, such as sending Autopilot direction or mode commands. Token requests must be approved from the server, by a server administrator.</mat-card-subtitle>
+  </mat-card-header>
   <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
     <mat-form-field class="almost-full-width">
       <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">

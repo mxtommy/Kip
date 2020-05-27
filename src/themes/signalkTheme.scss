@@ -1,8 +1,8 @@
-// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theminf
+// Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
 $mat-signalk: (
   50 : #e0e7f3,
   100 : #b3c2e0,
-  200 : #8099cc,
+  200 : #ffffff, //mat card. original palette color #8099cc
   300 : #4d70b8,
   400 : #2652a8,
   500 : #003399,
@@ -44,7 +44,7 @@ $mat-signalk-secondary: (
     800 : #ffb900,
     900 : #ffad00,
     A100 : #ffffff,
-    A200 : #fffaf2,
+    A200 : #ffcc00,
     A400 : #ffe8bf,
     A700 : #ffdfa6,
     contrast: (
@@ -101,9 +101,11 @@ $mat-wind: (
     rudder-starboard: #389c19,
 );
 
+$signalKTheme-background: custom-theme-light-background($signalKTheme-primary, 50);
+
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $signalKTheme-temp-light: mat-light-theme($signalKTheme-primary, $signalKTheme-accent, $signalKTheme-warn);
 
 // Merge our mat-theme with component specific palettes
-$signalKTheme-light: map-merge($signalKTheme-temp-light, (wind: $mat-wind, ngGauge: $mat-ngGauge));
+$signalKTheme-light: map-merge($signalKTheme-temp-light, (background: $signalKTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));

@@ -1,0 +1,64 @@
+@import '~@angular/material/theming';
+
+@mixin widget-simple-linear-theme($theme) {
+
+  $ngGauge: map-get($theme, ngGauge);
+  $themeForeground: map-get($theme, foreground);
+
+  app-widget-simple-linear {
+      .primary {
+        color: mat-color($ngGauge, primary-gaugeFaceLight);
+      }
+      .accent {
+        color: mat-color($ngGauge, accent-gaugeFaceLight);
+      }
+      .warn {
+        color: mat-color($ngGauge, warn-gaugeFaceLight);
+      }
+      .primaryDark {
+        color: mat-color($ngGauge, primary-gaugeFaceDark);
+      }
+      .accentDark {
+        color: mat-color($ngGauge, accent-gaugeFaceDark);
+      }
+      .warnDark {
+        color: mat-color($ngGauge, warn-gaugeFaceDark);
+      }
+      .background {
+        color: mat-color($themeForeground, divider);
+      }
+      .text {
+        color: mat-color($themeForeground, text);
+      }
+  }
+}
+
+.simpleLinearGauge {
+  display:block;
+  position: relative;
+  border:none;
+  margin: 0px;
+  padding:  5px 0px;
+  width: 100%;
+  height: 100%;
+}
+
+.settingsButton {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+
+.tab-group {
+  border: 1px solid #e8e8e8;
+}
+
+.tab-content {
+  padding: 16px;
+}
+
+.full-width {
+  width: 100%;
+}

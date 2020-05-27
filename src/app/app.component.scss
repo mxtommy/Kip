@@ -16,17 +16,9 @@
     background-color: mat-color($accent, A200);
   }
 
-
-    // background-color: mat-color($foreground, divider);
-
-  .menuBarButtonGroups button {
-    // color: mat-color($primary, 500);
+  .menuBarButtonGroup {
+    background-color: mat-color($foreground, divider);
   }
-
-
-    .menuBarButtonGroup {
-      background-color: mat-color($foreground, divider);
-    }
 
  }
 

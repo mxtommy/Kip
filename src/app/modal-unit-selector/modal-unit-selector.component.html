@@ -1,14 +1,14 @@
 <div [formGroup]="formGroup">
-  <mat-form-field class="width-full"  >
-      <mat-select 
-          [placeholder]="path" 
+  <mat-form-field class="width-full">
+      <mat-select
+          [placeholder]="path"
           [formControlName]="controlName"
           required>
         <mat-optgroup *ngFor="let group of unitList" [label]="group.group">
-          <mat-option *ngFor="let unit of group.units" [value]="unit">
-               {{unit}}
+          <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
+            {{unit.description}}
           </mat-option>
         </mat-optgroup>
-      </mat-select> 
+      </mat-select>
   </mat-form-field>
 </div>

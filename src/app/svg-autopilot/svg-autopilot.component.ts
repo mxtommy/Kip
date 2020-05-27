@@ -1,6 +1,5 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
-import { NgModel } from '@angular/forms';
 
 
 @Component({
@@ -24,7 +23,7 @@ import { NgModel } from '@angular/forms';
     ]),
   ]
 })
-export class SvgAutopilotComponent implements OnInit {
+export class SvgAutopilotComponent {
   // AP screen
   @ViewChild('apStencil', {static: true, read: ElementRef}) ApStencil: ElementRef;
   @ViewChild('countDown', {static: true, read: ElementRef}) countDown: ElementRef;
@@ -71,9 +70,6 @@ export class SvgAutopilotComponent implements OnInit {
   messageInnerText: string = "";
 
 
-  ngOnInit() {
-  }
-
   ngOnChanges(changes: SimpleChanges) {
 
     //heading
@@ -106,12 +102,46 @@ export class SvgAutopilotComponent implements OnInit {
         this.oldAppWindAngle = this.newAppWindAngle;
         this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
 
-        if (this.appWindAnimate) { // only update if on dom...
-          this.appWindAnimate.nativeElement.beginElement();
+        let oldAngle = Number(this.oldAppWindAngle)
+        let newAngle = Number(this.newAppWindAngle);
+        let diff = oldAngle - newAngle;
+
+        // only update if on DOM and value rounded changed
+        if (this.appWindAnimate && (diff != 0)) {
+          // Special cases to smooth out passing between 359 to/from 0
+          // if more than half the circle, it could need to go over the 359 / 0 values
+          if ( Math.abs(diff) > 180 ) {
+            // In what direction are we moving?
+            if (Math.sign(diff) == 1) {
+              if (oldAngle == 359) {
+                // special cases
+                this.oldAppWindAngle = "0";
+                this.appWindAnimate.nativeElement.beginElement();
+              } else {
+                this.newAppWindAngle = "359";
+                this.appWindAnimate.nativeElement.beginElement();
+                this.oldAppWindAngle = "0";
+                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
+                this.appWindAnimate.nativeElement.beginElement();
+              }
+            } else {
+              if (oldAngle == 0) {
+                // special cases
+                this.oldAppWindAngle = "359";
+                this.appWindAnimate.nativeElement.beginElement();
+              } else {
+                this.newAppWindAngle = "0";
+                this.appWindAnimate.nativeElement.beginElement();
+                this.oldAppWindAngle = "359";
+                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
+                this.appWindAnimate.nativeElement.beginElement();
+              }
+            }
+          } else {
+            this.appWindAnimate.nativeElement.beginElement();
+          }
         }
       }
-      // value = this.options.value +
-          // ((((value - this.options.value) % 360) + 540) % 360) - 180;
     }
 
     //rudderAngle
@@ -139,14 +169,6 @@ export class SvgAutopilotComponent implements OnInit {
         }
       }
     }
-  }
-
-
-  addHeading(h1: number, h2: number) {
-    let h3 = h1 + h2;
-    while (h3 > 359) { h3 = h3 - 359; }
-    while (h3 < 0) { h3 = h3 + 359; }
-    return h3;
   }
 
 }

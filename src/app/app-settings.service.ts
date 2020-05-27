@@ -162,9 +162,17 @@ export class AppSettingsService {
   getThemeNameAsO() {
     return this.themeName.asObservable();
   }
-  setThemName(newName: string) {
-    this.themeName.next(newName);
-    this.saveToLocalStorage();
+
+  setThemName(newTheme: string) {
+    this.themeName.next(newTheme);
+    if (newTheme != "nightMode") { // don't save NightMode, only temporary
+      this.saveToLocalStorage();
+    }
+  }
+
+  getThemeName(): string {
+    let config: AppSettings = JSON.parse(localStorage.getItem('signalKData'));;
+    return config.themeName;
   }
 
   // Widgets
@@ -239,7 +247,7 @@ export class AppSettingsService {
     return storageObject;
   }
 
-  getAppConfig() {
+  getAppConfig(): AppSettings {
     return this.buildStorageObject();
   }
 

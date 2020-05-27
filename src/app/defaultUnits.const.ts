@@ -2,16 +2,22 @@ import { IUnitDefaults } from './units.service';
 
 
 export const initialDefaultUnits: IUnitDefaults = {
-  "unitless": 'unitless',
-  "speed": 'kph',
-  "flow": 'l/h',
-  "temp": 'C',
-  "length": 'm',
-  "volume": 'liter',
-  "electrical": 'volts',
-  "pressure": 'mmHg',
-  "angularVelocity": 'deg/min',
-  "frequency": 'Hz',
-  "angle": 'deg',
-  "ratio": 'percent'
+  "Unitless": 'unitless',
+  "Speed": 'knots',
+  "Flow": 'l/h',
+  "Temperature": 'celsius',
+  "Length": 'm',
+  "Volume": 'liter',
+  "Current": 'A',
+  "Potential": 'V',
+  "Charge": 'C',
+  "Power": 'W',
+  "Energy": 'J',
+  "Pressure": 'mmHg',
+  "Density": 'kg/m3',
+  "Time": 'Hours',
+  "Angular Velocity": 'deg/min',
+  "Angle": 'deg',
+  "Frequency": 'Hz',
+  "Ratio": 'ratio'
 }

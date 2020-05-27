@@ -53,7 +53,10 @@ export class SignalKService {
   serverSupportApplicationData: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
   serverVersion: BehaviorSubject<string> = new BehaviorSubject<string>(null) // version of the signalk server
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
+
+  // Local array of paths containing received SignalK Data and used to source Observers
   paths: pathObject[] = [];
+  // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
 
   constructor() { }
@@ -63,7 +66,7 @@ export class SignalKService {
     //this.pathRegister = []; //why empty path register? That's what our widgets want...
     this.selfurn = 'self';
   }
-  
+
   unsubscribePath(uuid, path) {
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) {
@@ -77,7 +80,7 @@ export class SignalKService {
     if (registerIndex >= 0) { // exists
       return this.pathRegister[registerIndex].observable.asObservable();
     }
-    
+
     //find if we already have a value for this path to return.
     let currentValue = null;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
@@ -89,8 +92,8 @@ export class SignalKService {
       } else if (source in this.paths[pathIndex].sources) {
         currentValue = this.paths[pathIndex].sources[source].value;
       }
-                  
-    } 
+
+    }
 
     let newRegister = {
       uuid: uuid,
@@ -107,12 +110,11 @@ export class SignalKService {
     return this.pathRegister[pathIndex].observable.asObservable();
   }
 
-
   setSelf(value: string) {
     console.debug('Setting self to: ' + value);
     this.selfurn = value;
   }
- 
+
   setServerVersion(version: string) {
     console.log("Server version:" + version);
     if (version) {
@@ -137,7 +139,7 @@ export class SignalKService {
     // update existing if exists.
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) { // exists
-     
+
       // update data
       this.paths[pathIndex].sources[source] = {
         timestamp: timestamp,
@@ -159,7 +161,7 @@ export class SignalKService {
       pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     }
 
-    
+
     // push it to any subscriptions of that data
     this.pathRegister.filter(pathRegister => pathRegister.path == pathSelf).forEach(
       pathRegister => {
@@ -202,7 +204,6 @@ export class SignalKService {
     }
   }
 
-
   getPathsByType(requestedType: string) {
     let paths: string[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
@@ -223,7 +224,11 @@ export class SignalKService {
   getPathUnitType(path: string): string {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
-    if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) { return this.paths[pathIndex].meta.units; } else { return null; }
+    if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {
+      return this.paths[pathIndex].meta.units;
+    } else {
+      return null;
+    }
   }
 
 

@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl, Validators }    from '@angular/forms';
+import { FormGroup, FormControl }    from '@angular/forms';
 import { AppSettingsService } from '../app-settings.service';
 import { NotificationsService } from '../notifications.service';
 
-import { IUnitInfo, IUnitDefaults, UnitsService } from '../units.service';
-
+import { IUnitDefaults, UnitsService, IUnit } from '../units.service';
 
 @Component({
   selector: 'app-settings-units',
@@ -15,7 +14,7 @@ export class SettingsUnitsComponent implements OnInit {
 
   formUnitMaster: FormGroup;
 
-  groupUnits: {[key: string]: string[]} = {};
+  groupUnits: {[key: string]: IUnit}[] = [];
   defaultUnits: IUnitDefaults;
 
 
@@ -30,11 +29,19 @@ export class SettingsUnitsComponent implements OnInit {
 
     this.defaultUnits = this.AppSettingsService.getDefaultUnits();
 
-    //format data a bit better for consumption in template
+    //format unit group data a bit better for consumption in template
     let unitGroupsRaw = this.UnitsService.getConversions();
-    unitGroupsRaw.forEach(entry => {
-      this.groupUnits[entry.group] = entry.units;
-    });
+
+    for (let gindex = 0; gindex < unitGroupsRaw.length; gindex++) {
+      const unitGroup = unitGroupsRaw[gindex];
+      let units = [];
+
+      for (let index = 0; index < unitGroup.units.length; index++) {
+        const unit = unitGroup.units[index];
+        units.push(unit);
+      }
+      this.groupUnits[unitGroup.group] = units;
+    }
 
     //generate formGroup
     let groups = new FormGroup({});

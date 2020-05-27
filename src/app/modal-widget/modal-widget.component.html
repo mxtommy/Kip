@@ -128,49 +128,83 @@
         </mat-checkbox>
       </mat-tab>
 <!-- Gauge stuff -->
-      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType !== undefined">
+      <!-- Simple Linear gauge -->
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'simpleLinear'">
         <div class="tab-content">
-          <mat-form-field class="full-width" *ngIf="widgetConfig.gaugeType !== 'ngRadial'">
+          <mat-form-field class="full-width">
               <mat-select
-                  placeholder="Gauge Type"
-                  formControlName="gaugeType"
-                  name="gaugeType">
-                  <mat-option *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'" value="linear">Linear</mat-option>
-                  <mat-option *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'" value="radial">Radial</mat-option>
-                  <mat-option *ngIf="widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical'" value="ngLinearVertical">Vertical layout</mat-option>
-                  <mat-option *ngIf="widgetConfig.gaugeType == 'ngLinearHorizontal' || widgetConfig.gaugeType == 'ngLinearVertical'" value="ngLinearHorizontal">Horizontal layout</mat-option>
-                  <!-- <mat-option value="compass">Compass</mat-option> -->
+                placeholder="Unit Label Options"
+                formControlName="gaugeUnitLabelFormat"
+                name="gaugeUnitLabelFormat">
+                <mat-option value="full">Full Label</mat-option>
+                <mat-option value="abr">First Letter Only</mat-option>
               </mat-select>
           </mat-form-field>
-          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial') || (formMaster.controls.gaugeType.value == 'linear')">
-              <mat-checkbox
-              formControlName="barGraph"
-                  name="barGraph"
-                  >
-                  Digital display
-              </mat-checkbox>
-          </p>
-          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial') || (formMaster.controls.gaugeType.value == 'ngRadial')" >
-              <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'radial'" name="radialSize" formControlName="radialSize">
-                <mat-radio-button value="quarter">1/4</mat-radio-button>
-                <mat-radio-button value="half">1/2</mat-radio-button>
-                <mat-radio-button value="three-quarter">3/4</mat-radio-button>
-                <mat-radio-button value="full">Full</mat-radio-button>
-              </mat-radio-group>
-              <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'ngRadial'" name="radialSize" formControlName="radialSize">
+        </div>
+      </mat-tab>
+
+      <!-- ng-canvas Radial gauges -->
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'ngRadial'">
+        <div class="tab-content">
+            <p>
+              <mat-radio-group name="radialSize" formControlName="radialSize">
                 <mat-radio-button value="measuring">Measuring</mat-radio-button>
                 <mat-radio-button value="capacity">Capacity</mat-radio-button>
                 <mat-radio-button value="marineCompass">Marine Compass</mat-radio-button>
                 <mat-radio-button value="baseplateCompass">Baseplate Compass</mat-radio-button>
               </mat-radio-group>
-          </p>
-          <p *ngIf="formMaster.controls.gaugeType.value == 'ngLinearVertical' || formMaster.controls.gaugeType.value == 'ngLinearHorizontal'" >
+            </p>
+        </div>
+      </mat-tab>
+
+      <!-- ng-canvas Linear gauges -->
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngLinearHorizontal'">
+        <div class="tab-content">
+          <mat-form-field class="full-width">
+              <mat-select
+                  placeholder="Gauge Type"
+                  formControlName="gaugeType"
+                  name="gaugeType">
+                  <mat-option value="ngLinearVertical">Vertical layout</mat-option>
+                  <mat-option value="ngLinearHorizontal">Horizontal layout</mat-option>
+              </mat-select>
+          </mat-form-field>
+          <p>
             <mat-checkbox
               formControlName="gaugeTicks"
-                name="gaugeTicks"
-                >
+              name="gaugeTicks">
                 Display Gauge Thicks
-              </mat-checkbox>
+            </mat-checkbox>
+          </p>
+        </div>
+      </mat-tab>
+
+      <!-- steel gauge -->
+      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'">
+        <div class="tab-content">
+          <mat-form-field class="full-width">
+              <mat-select
+                  placeholder="Gauge Type"
+                  formControlName="gaugeType"
+                  name="gaugeType">
+                  <mat-option value="linear">Linear</mat-option>
+                  <mat-option value="radial">Radial</mat-option>
+              </mat-select>
+          </mat-form-field>
+          <p>
+            <mat-checkbox
+              formControlName="barGraph"
+              name="barGraph">
+                Digital display
+            </mat-checkbox>
+          </p>
+          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial')" >
+            <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'radial'" name="radialSize" formControlName="radialSize">
+              <mat-radio-button value="quarter">1/4</mat-radio-button>
+              <mat-radio-button value="half">1/2</mat-radio-button>
+              <mat-radio-button value="three-quarter">3/4</mat-radio-button>
+              <mat-radio-button value="full">Full</mat-radio-button>
+            </mat-radio-group>
           </p>
         </div>
       </mat-tab>
