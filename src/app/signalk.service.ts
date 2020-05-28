@@ -196,7 +196,7 @@ export class SignalKService {
     }
   }
 
-  setMeta(path: string, meta) {
+  setMeta(path: string, meta) { //TODO(David): Look at Meta and maybe build Zones
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex > 0) {
@@ -204,7 +204,7 @@ export class SignalKService {
     }
   }
 
-  getPathsByType(requestedType: string) {
+  getPathsByType(requestedType: string) { //TODO: See how we should handle string type value. We should probably return error and not search for it, plus remove from the Units UI.
     let paths: string[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
        if (this.paths[i].type == requestedType) {
@@ -221,7 +221,7 @@ export class SignalKService {
 
   }
 
-  getPathUnitType(path: string): string {
+  getPathUnitType(path: string): string { //TODO(David): Look at Unit Path Type
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {

@@ -36,6 +36,9 @@ interface SignalKEndpointResponse {
    * `4 = adding R/W authorization token to WebSock`
    */
 export interface SignalKStatus {
+    server: {
+      version: string;
+    },
     endpoint: {
         status: boolean;
         message: string;
@@ -65,6 +68,9 @@ export class SignalKConnectionService {
 
     // SignalK connections current status initialization
     currentSkStatus: SignalKStatus = {
+      server: {
+          version: "",
+      },
       endpoint: {
           status: false,
           message: 'Not yet connected'
@@ -123,7 +129,7 @@ export class SignalKConnectionService {
 
     resetSignalK() {
       // TODO close current connections/reset data, check api version... assuming v1
-      console.debug("Resting SignalK URL: " + this.signalKURL.url);
+      console.debug("Resting URL: " + this.signalKURL.url);
 
       // clean close if open
       if (this.webSocket != null && this.webSocket.OPEN) {
@@ -157,7 +163,8 @@ export class SignalKConnectionService {
           this.endpointWS = response.body.endpoints.v1["signalk-ws"];
 
           this.currentSkStatus.endpoint.status = true;
-          this.currentSkStatus.endpoint.message = "HTTP " + response.status + ": " + response.statusText + ". Server: " + response.body.server.id + " Ver: " + response.body.server.version;
+          this.currentSkStatus.endpoint.message = response.status.toString();
+          this.currentSkStatus.server.version = response.body.server.id + " " + response.body.server.version;
 
           this.callREST();
           this.connectEndpointWS();
@@ -186,7 +193,7 @@ export class SignalKConnectionService {
             // when we go ok, this runs
             response => {
               this.currentSkStatus.rest.status = true;
-              this.currentSkStatus.rest.message = "REST " + response.status + ": " + response.statusText;
+              this.currentSkStatus.rest.message = response.status.toString();
               this.SignalKFullService.processFullUpdate(response.body);
             },
             // When not ok, this runs...
@@ -222,7 +229,7 @@ export class SignalKConnectionService {
       this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
 
       this.webSocket.onopen = function (event){
-        this.currentSkStatus.websocket.message = "WebSocket Connected";
+        this.currentSkStatus.websocket.message = "Connected";
         this.currentSkStatus.websocket.status = true;
       }.bind(this);
 

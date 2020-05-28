@@ -1,0 +1,39 @@
+@import '~@angular/material/theming';
+
+@mixin theme-settings-data($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  table, th, td {
+    border-bottom: 1px solid mat-color($foreground, divider);
+  }
+
+  th {
+    padding: 10px;
+    text-align: left;
+    background-color: mat-color($accent, 300);
+    color: mat-color($foreground, text);
+  }
+
+  td {
+    padding: 5px 5px 5px 10px;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  tr:nth-child(even) {
+    background-color: mat-color($background, hover);
+  }
+
+}
+
+.full-width {
+    width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+}

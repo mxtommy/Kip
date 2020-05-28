@@ -98,13 +98,14 @@
 @import 'app/app.component.scss';
 @import 'app/layout-split/layout-split.component.scss';
 @import 'app/widget-blank/widget-blank.component.scss';
-@import 'app/svg-wind/svg-wind.component.scss'; // for both svg-wind and wvg-autopilot
+@import 'app/svg-wind/svg-wind.component.scss'; // for most svg Widget components
 @import 'app/widget-state/widget-state.component.scss';
 @import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
 @import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
 @import 'app/alarm-menu/alarm-menu.component.scss';
 @import 'app/widget-autopilot/widget-autopilot.component.scss';
 @import 'app/widget-simple-linear/widget-simple-linear.component.scss';
+@import 'app/settings-datasets/settings-datasets.component.scss';
 
 
 @mixin theme-components($theme) {
@@ -119,6 +120,7 @@
   @include alarm-menu-theme($theme);
   @include widget-autopilot-theme($theme);
   @include widget-simple-linear-theme($theme);
+  @include theme-settings-data($theme)
 }
 
 @include theme-components($defaultTheme-light);

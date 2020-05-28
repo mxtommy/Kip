@@ -1,42 +1,43 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Data Sets Configuration</mat-card-title>
-    <mat-card-subtitle>Create recording data sets to be used with the Historical DataSet Widget.</mat-card-subtitle>
-  </mat-card-header>
-  <form name="existingDataSet" #existingDataSet="ngForm">
+<form name="existingDataSet" #existingDataSet="ngForm">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Datasets Configuration</mat-card-title>
+      <mat-card-subtitle>Create recording datasets to be used with the Historical DataSet Widget.</mat-card-subtitle>
+    </mat-card-header>
+    <div style="overflow-x:auto;">
+      <table>
+          <tr>
+              <th>
+                  Path
+              </th>
+              <th>
+                  Interval
+              </th>
+              <th>
+                  Data Points
+              </th>
+              <th>
 
-    <table>
-        <tr>
-            <th>
-                Path
-            </th>
-            <th>
-                Interval
-            </th>
-            <th>
-                DataPoints
-            </th>
-            <th></th>
-        </tr>
-        <tr *ngFor="let ds of dataSets">
-            <td>
-                {{ ds.path }}
-            </td>
-            <td>
-                {{ ds.updateTimer }}
-            </td>
-            <td>
-                {{ ds.dataPoints }}
-            </td>
-            <td>
-                <button mat-raised-button color=warn (click)="deleteDataSet(ds.uuid)">Delete</button>
-            </td>
-        </tr>
-    </table>
-
-    <button mat-raised-button  (click)='openNewDataSetModal()'>Add New</button>
+              </th>
+          </tr>
+          <tr *ngFor="let ds of dataSets">
+              <td>
+                  {{ ds.path }}
+              </td>
+              <td>
+                  {{ ds.updateTimer }} Sec
+              </td>
+              <td>
+                  {{ ds.dataPoints }}
+              </td>
+              <td>
+                  <button mat-raised-button color="accent" (click)="deleteDataSet(ds.uuid)">Delete</button>
+              </td>
+          </tr>
+      </table>
+    </div>
+    <mat-card-actions align="start">
+      <button mat-raised-button color="accent" (click)='openNewDataSetModal()'>Add New Dataset</button>
+    </mat-card-actions>
+  </mat-card>
 </form>
-</mat-card>
-
-
-

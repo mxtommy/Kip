@@ -14,7 +14,7 @@ interface settingsForm {
 @Component({
   selector: 'app-settings-datasets',
   templateUrl: './settings-datasets.component.html',
-  styleUrls: ['./settings-datasets.component.css']
+  styleUrls: ['./settings-datasets.component.scss']
 })
 export class SettingsDatasetsComponent implements OnInit {
 
@@ -53,7 +53,7 @@ export class SettingsDatasetsComponent implements OnInit {
 @Component({
   selector: 'app-settings-datasets-modal',
   templateUrl: './settings-datasets.modal.html',
-  styleUrls: ['./settings-datasets.component.css']
+  styleUrls: ['./settings-datasets.component.scss']
 })
 export class SettingsDatasetsModalComponent implements OnInit {
 
