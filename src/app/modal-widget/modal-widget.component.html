@@ -6,64 +6,71 @@
         <div class="tab-content">
             <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetUrl !== undefined)" appearance="outline" floatLabel="always">
               <mat-label>URL</mat-label>
-              <input type="url" matInput placeholder="Type URL here..." name="widgetUrl" formControlName="widgetUrl">
+              <input type="url" matInput placeholder="Enter URL to page/resource" name="widgetUrl" formControlName="widgetUrl">
             </mat-form-field>
             <mat-form-field class="full-width" *ngIf="(widgetConfig.displayName !== undefined)" appearance="outline" floatLabel="always">
               <mat-label>Widget Label</mat-label>
-              <input matInput placeholder="Type a label to display" name="displayName" formControlName="displayName">
+              <input matInput placeholder="Enter a label to display" name="displayName" formControlName="displayName">
             </mat-form-field>
             <div class="full-width" *ngIf="(widgetConfig.numInt !== undefined)">
-              <mat-form-field class="half-width" appearance="outline" floatLabel="always">
-                <mat-label>Min Number of Integer Places</mat-label>
-                <input type="number" min="0" max="5" matInput placeholder="Min Number of Integer Places" name="numInt"  formControlName="numInt">
+              <mat-form-field class="minField" appearance="outline" floatLabel="always">
+                <mat-label>Minimum Integer Places</mat-label>
+                <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numInt"  formControlName="numInt">
               </mat-form-field>
-              <mat-form-field class="half-width" appearance="outline" floatLabel="always">
-                <mat-label>Min Number of Decimals</mat-label>
-                <input type="number" min="0" max="5" matInput placeholder="Min Number of Decimals" name="numDecimal"  formControlName="numDecimal">
+              <mat-form-field class="maxField" appearance="outline" floatLabel="always">
+                <mat-label>Minimum of Decimals</mat-label>
+                <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal">
               </mat-form-field>
             </div>
-            <div class="full-width"  *ngIf="(widgetConfig.showMax !== undefined)">
-              <mat-checkbox name="showMax" formControlName="showMax">
-                Show Max recorded value
-              </mat-checkbox>
-            </div>
-            <div class="full-width"  *ngIf="(widgetConfig.showMin !== undefined)">
-              <mat-checkbox name="showMin" formControlName="showMin">
-                Show Min recorded value
-              </mat-checkbox>
+            <div class="full-width">
+              <div class="minField"  *ngIf="(widgetConfig.showMax !== undefined)">
+                <mat-checkbox name="showMax" formControlName="showMax">
+                  Show Max recorded value
+                </mat-checkbox>
+              </div>
+              <div class="maxField"  *ngIf="(widgetConfig.showMin !== undefined)">
+                <mat-checkbox name="showMin" formControlName="showMin">
+                  Show Min recorded value
+                </mat-checkbox>
+              </div>
             </div>
 <!-- sailgauge stuff -->
             <div class="full-width" *ngIf="(widgetConfig.laylineEnable !== undefined)">
-              <mat-form-field class="half-width">
-                <input type="number" min="10" max="90" matInput placeholder="Layline Angle" name="laylineAngle"  formControlName="laylineAngle">
+              <mat-form-field class="minField" appearance="outline" floatLabel="always">
+                <mat-label>Layline Angle</mat-label>
+                <input type="number" min="10" max="90" matInput placeholder="Select angle..." name="laylineAngle"  formControlName="laylineAngle">
               </mat-form-field>
               <mat-checkbox name="laylineEnable" formControlName="laylineEnable">
-                Laylines
+                Show Laylines
               </mat-checkbox>
             </div>
             <div class="full-width" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
-              <mat-form-field class="half-width">
-                <input type="number" min="1" max="90" matInput placeholder="Windsector duration" name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
+              <mat-form-field class="minField" appearance="outline" floatLabel="always">
+                <mat-label>Wind Sector Duration</mat-label>
+                <input type="number" min="1" max="90" matInput placeholder="Select or enter duration..." name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
               </mat-form-field>
               <mat-checkbox name="windSectorEnable" formControlName="windSectorEnable">
-                Wind Sectors
+                Show Wind Sectors
               </mat-checkbox>
             </div>
 <!-- end sailgague -->
 
             <div class="full-width" *ngIf="(widgetConfig.minValue !== undefined)">
-                <mat-form-field class="half-width">
-                  <input matInput type="number" placeholder="Minimum Value" name="minValue" formControlName="minValue">
+                <mat-form-field class="minField" appearance="outline" floatLabel="always">
+                  <mat-label>Minimum Value</mat-label>
+                  <input matInput type="number" name="minValue" formControlName="minValue" placeholder="Enter or select number...">
                 </mat-form-field>
-                <mat-form-field class="half-width">
-                  <input matInput type="number" placeholder="Maximum Value" name="maxValue" formControlName="maxValue">
+                <mat-form-field class="maxField" appearance="outline" floatLabel="always">
+                  <mat-label>Maximum Value</mat-label>
+                  <input matInput type="number" name="maxValue" formControlName="maxValue" placeholder="Enter or select number...">
                 </mat-form-field>
             </div>
 <!-- Gauge stuff -->
             <div class="full-width" *ngIf="(widgetConfig.backgroundColor !== undefined) && (widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial')">
-              <mat-form-field class="full-width">
+              <mat-form-field class="minField" appearance="outline" floatLabel="always">
+                <mat-label>Background Style</mat-label>
                 <mat-select
-                placeholder="Background Style"
+                placeholder="Select style..."
                 formControlName="backgroundColor"
                 name="backgroundColor">
                   <mat-option value='darkGray'>Dark Gray</mat-option>
@@ -86,9 +93,10 @@
                   <mat-option value='turned'>Turned</mat-option>
                 </mat-select>
               </mat-form-field>
-              <mat-form-field class="full-width">
+              <mat-form-field class="maxField" appearance="outline" floatLabel="always">
+                  <mat-label>Frame Style</mat-label>
                   <mat-select
-                  placeholder="Frame Style"
+                  placeholder="Select style..."
                   formControlName="frameColor"
                   name="frameColor">
                     <mat-option value='blackMetal'>Black Metal</mat-option>
@@ -137,9 +145,10 @@
       <!-- Simple Linear gauge -->
       <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'simpleLinear'">
         <div class="tab-content">
-          <mat-form-field class="full-width">
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Unit Label Options</mat-label>
               <mat-select
-                placeholder="Unit Label Options"
+                placeholder="Select label format"
                 formControlName="gaugeUnitLabelFormat"
                 name="gaugeUnitLabelFormat">
                 <mat-option value="full">Full Label</mat-option>
@@ -166,14 +175,15 @@
       <!-- ng-canvas Linear gauges -->
       <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngLinearHorizontal'">
         <div class="tab-content">
-          <mat-form-field class="full-width">
-              <mat-select
-                  placeholder="Gauge Type"
-                  formControlName="gaugeType"
-                  name="gaugeType">
-                  <mat-option value="ngLinearVertical">Vertical layout</mat-option>
-                  <mat-option value="ngLinearHorizontal">Horizontal layout</mat-option>
-              </mat-select>
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Gauge Type</mat-label>
+            <mat-select
+                placeholder="Select type..."
+                formControlName="gaugeType"
+                name="gaugeType">
+                <mat-option value="ngLinearVertical">Vertical layout</mat-option>
+                <mat-option value="ngLinearHorizontal">Horizontal layout</mat-option>
+            </mat-select>
           </mat-form-field>
           <p>
             <mat-checkbox
@@ -188,14 +198,15 @@
       <!-- steel gauge -->
       <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'">
         <div class="tab-content">
-          <mat-form-field class="full-width">
-              <mat-select
-                  placeholder="Gauge Type"
-                  formControlName="gaugeType"
-                  name="gaugeType">
-                  <mat-option value="linear">Linear</mat-option>
-                  <mat-option value="radial">Radial</mat-option>
-              </mat-select>
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Gauge Type</mat-label>
+            <mat-select
+                placeholder="Select type..."
+                formControlName="gaugeType"
+                name="gaugeType">
+                <mat-option value="linear">Linear</mat-option>
+                <mat-option value="radial">Radial</mat-option>
+            </mat-select>
           </mat-form-field>
           <p>
             <mat-checkbox
@@ -249,14 +260,15 @@
 <!-- End PUT Requests-->
 
 <!-- Historical stuff -->
-      <mat-tab label="DataSet" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
+      <mat-tab label="Dataset" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
           <ng-template mat-tab-label>
-              <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> DataSet
+              <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> Dataset
           </ng-template>
           <div class="tab-content">
-            <mat-form-field class="full-width">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+              <mat-label>Configured Datasets</mat-label>
               <mat-select
-                  placeholder="Data Set"
+                  placeholder="Select dataset to use..."
                   formControlName="dataSetUUID"
                   name="dataSetUUID"
                   required>
@@ -276,14 +288,14 @@
                 <mat-checkbox
                   formControlName="displayMinMax"
                   name="displayMinMax">
-                    Include Min/Max
+                    Display Min/Max value
                 </mat-checkbox>
             </p>
             <p>
                 <mat-checkbox
                   formControlName="includeZero"
                   name="includeZero">
-                    Include Origin (aka 0)
+                    Y axis always start from zero
                 </mat-checkbox>
             </p>
           </div>
@@ -291,14 +303,14 @@
 <!-- end Historical -->
 
 <!-- Meta stuff -->
-      <mat-tab label="Meta" *ngIf="widgetConfig.useMetadata != undefined && widgetConfig.useZone != undefined">
+      <mat-tab label="Metadata" *ngIf="widgetConfig.useMetadata != undefined && widgetConfig.useZone != undefined">
         <div class="tab-content">
           <mat-checkbox *ngIf="widgetConfig.useMetadata != undefined" name="useMetadata" formControlName="useMetadata">
-            Use Meta
+            Use Metadata
           </mat-checkbox>
           <br/>
           <mat-checkbox *ngIf="widgetConfig.useZone != undefined" name="useZone" formControlName="useZone">
-            Use Zone
+            Use Metadata Zones
           </mat-checkbox>
         </div>
       </mat-tab>
