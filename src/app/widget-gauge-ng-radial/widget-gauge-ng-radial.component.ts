@@ -12,19 +12,19 @@ import { RadialGauge, RadialGaugeOptions } from '@biacsics/ng-canvas-gauges';
 
 const defaultConfig: IWidgetConfig = {
   displayName: null,
+  filterSelfPaths: true,
+  useMetadata: true,
+  useZone: false,
   paths: {
     "gaugePath": {
       description: "Numeric Data",
       path: null,
       source: null,
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "unitless"
     }
   },
-  units: {
-    "gaugePath": "unitless"
-  },
-  filterSelfPaths: true,
-
   gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
   gaugeTicks: false,
   radialSize: 'measuring',
@@ -111,7 +111,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
+        this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue);
 
         // Limit gauge progressbar overflow
         if (this.dataValue >= this.config.maxValue) {

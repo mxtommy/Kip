@@ -1,24 +1,47 @@
 <div [formGroup]="formGroup">
-    <mat-form-field class="width-path"  >
-        <mat-select
-            [placeholder]="formGroup.value.description"
+  <div class="pathGroup" *ngIf="formGroup.value.isPathConfigurable">
+    <p>{{formGroup.value.description}}</p>
+    <div class="pathGroupFields">
+      <mat-form-field class="pathField" appearance="outline" floatLabel="always">
+        <mat-label>SignalK Path</mat-label>
+        <mat-select #pathFormControl
+            placeholder="Select path"
             formControlName="path"
+            disableRipple
             required>
-            <mat-option *ngFor="let path of (availablePaths | filterSelf: filterSelfPaths)" [value]="path">
+            <mat-option *ngFor="let path of availablePaths" [value]="path">
                 {{path}}
             </mat-option>
         </mat-select>
-    </mat-form-field>
-    <mat-form-field class="width-source">
+      </mat-form-field>
+      <mat-form-field class="sourceField" appearance="outline">
+        <mat-label>Data Source</mat-label>
         <mat-select
-            placeholder="Source"
+            placeholder="Select source"
             formControlName="source"
+            [disabled]="formGroup.value.path == null"
+            disableRipple
             required>
             <mat-option *ngFor="let source of availableSources" [value]="source">
                 {{source}}
             </mat-option>
         </mat-select>
-    </mat-form-field>
+      </mat-form-field>
+      <mat-form-field class="unitField" *ngIf="formGroup.value.pathType == 'number'" appearance="outline">
+        <mat-label>Display Format</mat-label>
+        <mat-select
+            placeholder="Select unit"
+            formControlName="convertUnitTo"
+            [disabled]="formGroup.value.path == null"
+            disableRipple
+            required>
+            <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
+              <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
+                {{unit.description}}
+              </mat-option>
+            </mat-optgroup>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
 </div>
-<!--
-    <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsData.signalKPath">Next</button>-->

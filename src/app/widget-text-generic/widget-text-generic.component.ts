@@ -11,15 +11,18 @@ import { isNull } from 'util';
 
 const defaultConfig: IWidgetConfig = {
   displayName: null,
+  filterSelfPaths: true,
+  useMetadata: true,
+  useZone: false,
   paths: {
     "stringPath": {
       description: "String Data",
       path: null,
       source: null,
       pathType: "string",
+      isPathConfigurable: true,
     }
   },
-  filterSelfPaths: true
 };
 
 @Component({

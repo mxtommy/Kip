@@ -15,16 +15,15 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.environment.depth.belowTransducer",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "feet"
           }
-        },
-        "units": {
-          "numericPath": "feet"
         },
         "displayName": "Depth Feet",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "showMin": true,
         "showMax": false,
         "numDecimal": 1,
@@ -40,40 +39,46 @@ export const DemoConfig = {
             "description": "Heading",
             "path": "self.navigation.courseOverGroundTrue",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
           },
           "trueWindAngle": {
             "description": "True Wind Angle",
             "path": "self.environment.wind.angleTrueWater",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
           },
           "trueWindSpeed": {
             "description": "True Wind Speed",
             "path": "self.environment.wind.speedTrue",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           },
           "appWindAngle": {
             "description": "Apparent Wind Angle",
             "path": "self.environment.wind.angleApparent",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
           },
           "appWindSpeed": {
             "description": "Apparent Wind Speed",
             "path": "self.environment.wind.speedApparent",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "trueWindSpeed": "knots",
-          "appWindSpeed": "knots"
         },
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "windSectorEnable": true,
         "windSectorWindowSeconds": 10,
         "laylineEnable": true,
@@ -89,16 +94,15 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.navigation.speedOverGround",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "gaugePath": "knots"
         },
         "displayName": "Speed over ground",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "gaugeType": "radial",
         "barGraph": false,
         "radialSize": "full",
@@ -118,16 +122,15 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.environment.wind.speedApparent",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "gaugePath": "knots"
         },
         "displayName": "Apparent Wind Speed",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "gaugeType": "linear",
         "barGraph": true,
         "radialSize": "full",
@@ -147,16 +150,15 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.navigation.speedThroughWater",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "numericPath": "knots"
         },
         "displayName": "Speed (water)",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "showMin": false,
         "showMax": true,
         "numDecimal": 1,
@@ -172,16 +174,15 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.performance.velocityMadeGood",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "numericPath": "knots"
         },
         "displayName": "VMG",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "showMin": false,
         "showMax": false,
         "numDecimal": 1,
@@ -192,13 +193,13 @@ export const DemoConfig = {
       "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
       "type": "WidgetHistorical",
       "config": {
-        "units": {
-          "dataset": "knots"
+        "dataset": {
+          "convertUnitTo": "knots"
         },
         "displayName": "WindSpeed True",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone":false,
         "dataSetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
         "displayMinMax": false,

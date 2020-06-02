@@ -13,6 +13,7 @@ import { IWidgetConfig } from '../widget-manager.service';
 })
 export class ModalWidgetComponent implements OnInit {
 
+  titleDialog: string = "Widget Options";
   formMaster: FormGroup;
   availableDataSets: IDataSet[];
 
@@ -30,25 +31,36 @@ export class ModalWidgetComponent implements OnInit {
     this.formMaster.updateValueAndValidity();
   }
 
-  generateFormGroups(formData: Object): FormGroup {
+  generateFormGroups(formData: Object, objectType?: string): FormGroup {
     let groups = new FormGroup({});
     Object.keys(formData).forEach (key => {
+      // handle Objects
       if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
-        groups.addControl(key, this.generateFormGroups(formData[key]));
+        groups.addControl(key, this.generateFormGroups(formData[key], key));
+
       } else {
-        // Use switch in case we need more then Required form validator at some point.
-        switch (key) {
-          case "path": groups.addControl(key, new FormControl(formData[key], Validators.required));
+      // Handle Primitives - property values
+        if (objectType == "units") {
+          // If we are building units list
+          let unitConfig = this.widgetConfig.paths[key];
+          if (unitConfig.pathType == "number") {
+            groups.addControl(key, new FormControl(formData[key])); //only add control if it's a number. Strings and booleans don't have units and conversions yet...
+          }
+        } else {
+          // not building Units list
+          // Use switch in case we will need more Required form validator at some point.
+          switch (key) {
+            case "path": groups.addControl(key, new FormControl(formData[key], Validators.required));
             break;
 
-          case "dataSetUUID": groups.addControl(key, new FormControl(formData[key], Validators.required));
-          break;
-
-          default: groups.addControl(key, new FormControl(formData[key]));
+            case "dataSetUUID": groups.addControl(key, new FormControl(formData[key], Validators.required));
             break;
+
+            default: groups.addControl(key, new FormControl(formData[key]));
+            break;
+          }
         }
       }
-
     });
     return groups;
   }

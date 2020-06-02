@@ -204,11 +204,23 @@ export class SignalKService {
     }
   }
 
-  getPathsByType(requestedType: string) { //TODO: See how we should handle string type value. We should probably return error and not search for it, plus remove from the Units UI.
+  /**
+   * Returns a list of all known SignalK paths of the specified type (sting or numeric)
+   * @param valueType data type: string or numeric
+   * @param selfOnly if true, returns only paths the begins with "self". If false or not specified, everything known
+   * @return array of signalK path string
+   */
+  getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO: See how we should handle string type value. We should probably return error and not search for it, plus remove from the Units UI.
     let paths: string[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
-       if (this.paths[i].type == requestedType) {
-        paths.push(this.paths[i].path);
+       if (this.paths[i].type == valueType) {
+         if (selfOnly) {
+          if (this.paths[i].path.startsWith("self")) {
+            paths.push(this.paths[i].path);
+          }
+         } else {
+          paths.push(this.paths[i].path);
+         }
       }
     }
     return paths; // copy it....
@@ -217,7 +229,8 @@ export class SignalKService {
   getPathObject(path): pathObject {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
-    return this.paths[pathIndex];
+    let foundPathObject: pathObject = JSON.parse(JSON.stringify(this.paths[pathIndex])); // so we don't return the object reference and hamper garbage collection/leak memory
+    return foundPathObject;
 
   }
 

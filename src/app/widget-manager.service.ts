@@ -9,23 +9,22 @@ export interface IWidget {
 }
 
 export interface IWidgetConfig {
+  displayName?: string;
+  filterSelfPaths?: boolean; //widget filter self paths only?
+  useMetadata?: boolean; // use server meta info
+  useZone?: boolean;  // use zone for info
   paths?: {
     [key: string]: IWidgetPaths;
-  }
-  units?: {
-    [key: string]: string; // key should match key in paths, specifies unit for that path
-  }
+  },
+  dataset?: {
+    convertUnitTo: string;
+  },
   usage?: {
     [key: string]: string[]; // Autopilot: key should match key in paths, specifies autopilot widget possible paths for AP mode
-  }
+  },
   typeVal?: {
     [key: string]: string; // Autopilot: key should match key in paths, specifies autopilot widget paths value type for AP mode
-  }
-
-  displayName?: string;
-  filterSelfPaths?: boolean; //widget filter paths?
-  useMetadata?: boolean; // use server info
-  useZones?: boolean;  // use zone for values
+  },
 
   //numeric data
   numDecimal?: number; // number of decimal places if a number
@@ -53,7 +52,6 @@ export interface IWidgetConfig {
   rotateFace?: boolean;
   autoStart?: boolean;
 
-
   //Historical
   dataSetUUID?: string;
   invertData?: boolean;
@@ -70,16 +68,18 @@ export interface IWidgetConfig {
   widgetUrl?: string;
 }
 
-
 interface IWidgetPaths {
   description: string;
-  path: string;       //can be null or set
-  source: string;     //can be null or set
-  pathType: string;
-  period?: number;    // Signalk optional stream subscription detail / future used when switch stream subscribe=all to =none
-  format?: Format;     // Signalk optional stream subscription detail
-  policy?: Policy;     // Signalk optional stream subscription detail
-  minPeriod?: number;  // Signalk optional stream subscription detail
+  path: string | null;       //can be null or set
+  source: string | null;     //can be null or set
+  pathType: string  | null;
+  pathFilter?: string,     //Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
+  convertUnitTo?: string;    // Convert SignalK value to specific format for display. Also used as a source to identify conversion group
+  isPathConfigurable?: boolean; // should we show this path in Widget Path config or is it static and hidden
+  period?: number;    // SignalK - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000
+  format?: Format;     // SignalK - format=[delta|full] specifies delta or full format. Default: delta
+  policy?: Policy;     // SignalK - policy=[instant|ideal|fixed]. Default: ideal
+  minPeriod?: number;  // SignalK - minPeriod=[millisecs] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network.
 }
 
 

@@ -9,7 +9,7 @@
     font-title-weight="bold"
     [attr.color-title]="gaugeOptions.colorTitle"
 
-    [attr.units]="config.units['gaugePath']"
+    [attr.units]="config.paths['gaugePath'].convertUnitTo"
     [value]="dataValue"
     [attr.min-value]="config.minValue"
     [attr.max-value]="config.maxValue"
