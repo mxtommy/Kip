@@ -32,6 +32,25 @@ export interface AppSettings {
   notificationConfig?: INotificationConfig;
 }
 
+export interface IAppConfig {
+  configVersion: number;
+  signalKUrl: string;
+  signalKToken: string;
+  themeName: string;
+  unlockStatus: boolean;
+  unitDefaults: IUnitDefaults;
+  notificationConfig?: INotificationConfig;
+}
+
+export interface IWidgetConfig {
+  widgets: Array<IWidget>;
+}
+
+export interface ILayoutConfig {
+  splitSets: ISplitSet[];
+  rootSplits: string[];
+}
+
 export interface INotificationConfig {
   disableNotifications: boolean;
   menuGrouping: boolean;
@@ -61,6 +80,8 @@ export interface SignalKToken {
   token: string;
   new: boolean;
 }
+
+
 @Injectable()
 export class AppSettingsService {
   signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
@@ -93,7 +114,7 @@ export class AppSettingsService {
   }
 
 
-  loadSettings(storageObject: AppSettings) {
+  private loadSettings(storageObject: AppSettings) {
     let skUrl: SignalKUrl = {url: storageObject.signalKUrl, new: false};
     let skToken: SignalKToken = {token: storageObject.signalKToken, new: false};
 
@@ -120,6 +141,7 @@ export class AppSettingsService {
   getDefaultUnits() {
     return this.unitDefaults.getValue();
   }
+
   setDefaultUnits(newDefaults: IUnitDefaults) {
     this.unitDefaults.next(newDefaults);
     this.saveToLocalStorage();

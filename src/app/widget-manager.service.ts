@@ -75,7 +75,7 @@ interface IWidgetPaths {
   pathType: string  | null;
   pathFilter?: string,     //Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
   convertUnitTo?: string;    // Convert SignalK value to specific format for display. Also used as a source to identify conversion group
-  isPathConfigurable?: boolean; // should we show this path in Widget Path config or is it static and hidden
+  isPathConfigurable: boolean; // should we show this path in Widget Path config or is it static and hidden
   period?: number;    // SignalK - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000
   format?: Format;     // SignalK - format=[delta|full] specifies delta or full format. Default: delta
   policy?: Policy;     // SignalK - policy=[instant|ideal|fixed]. Default: ideal

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable ,  Subject, Subscription } from 'rxjs';
 import { SignalKService } from './signalk.service';
-import { deltaMessage } from './signalk-interfaces';
+import { IDeltaMessage } from './signalk-interfaces';
 import { NotificationsService } from './notifications.service';
 import { AppSettingsService } from "./app-settings.service";
 
@@ -9,14 +9,14 @@ import { AppSettingsService } from "./app-settings.service";
 @Injectable()
 export class SignalKDeltaService {
 
-  signalKRequests = new Subject<deltaMessage>();      // requests service subs to this (avoids circular dependency in services)
+  signalKRequests = new Subject<IDeltaMessage>();      // requests service subs to this (avoids circular dependency in services)
 
   constructor(
     private SignalKService: SignalKService,
     private notificationsService: NotificationsService,
     ) { }
 
-  processWebsocketMessage(message: deltaMessage) {
+  processWebsocketMessage(message: IDeltaMessage) {
     // Read raw message and route to appropriate sub
     if (typeof(message.self) != 'undefined') {  // is Hello message
       this.SignalKService.setSelf(message.self);
@@ -35,7 +35,7 @@ export class SignalKDeltaService {
 
   }
 
-  public processUpdateDelta(message:deltaMessage) {
+  public processUpdateDelta(message:IDeltaMessage) {
     let context: string;
     if (typeof(message.context) == 'undefined') {
       context = 'self'; //default if not defined
@@ -89,7 +89,7 @@ export class SignalKDeltaService {
     }
   }
 
-  public subscribeRequest(): Observable<deltaMessage> {
+  public subscribeRequest(): Observable<IDeltaMessage> {
     return this.signalKRequests.asObservable();
   }
 

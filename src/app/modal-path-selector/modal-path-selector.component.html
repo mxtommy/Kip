@@ -4,35 +4,41 @@
     <div class="pathGroupFields">
       <mat-form-field class="pathField" appearance="outline" floatLabel="always">
         <mat-label>SignalK Path</mat-label>
-        <mat-select #pathFormControl
+        <mat-select
             placeholder="Select path"
             formControlName="path"
             disableRipple
             required>
-            <mat-option *ngFor="let path of availablePaths" [value]="path">
-                {{path}}
+            <mat-select-trigger>{{formGroup.value.path}}</mat-select-trigger>
+            <mat-option *ngFor="let pathAndMeta of availablePaths" [value]="pathAndMeta.path" style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
+              <ng-container *ngIf="(pathAndMeta.meta != undefined)">
+                <span>{{pathAndMeta.path}}</span>
+                <br>
+                <small class="pathMetaDescription">{{pathAndMeta.meta.description}}</small>
+              </ng-container>
+              <ng-container *ngIf="(pathAndMeta.meta == undefined)">
+                  {{pathAndMeta.path}}
+              </ng-container>
             </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="sourceField" appearance="outline">
+      <mat-form-field class="sourceField" appearance="outline" floatLabel="always">
         <mat-label>Data Source</mat-label>
         <mat-select
             placeholder="Select source"
             formControlName="source"
-            [disabled]="formGroup.value.path == null"
-            disableRipple
+            Ripple
             required>
             <mat-option *ngFor="let source of availableSources" [value]="source">
                 {{source}}
             </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="unitField" *ngIf="formGroup.value.pathType == 'number'" appearance="outline">
+      <mat-form-field class="unitField" *ngIf="formGroup.value.pathType == 'number'" appearance="outline" floatLabel="always">
         <mat-label>Display Format</mat-label>
         <mat-select
             placeholder="Select unit"
             formControlName="convertUnitTo"
-            [disabled]="formGroup.value.path == null"
             disableRipple
             required>
             <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">

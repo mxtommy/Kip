@@ -1,7 +1,8 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { SignalKService, pathObject } from '../signalk.service';
+import { SignalKService } from '../signalk.service';
+import { IPathObject } from "../signalk-interfaces";
 import { DataSetService, IDataSet } from '../data-set.service';
 
 interface settingsForm {

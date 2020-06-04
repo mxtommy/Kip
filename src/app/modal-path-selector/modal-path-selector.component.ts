@@ -1,24 +1,27 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SignalKService } from '../signalk.service';
+import { IPathAndMetaObjects } from "../signalk-interfaces";
 import { UnitsService, IUnitGroup } from '../units.service';
 import { FormGroup } from '@angular/forms';
+
 
 @Component({
   selector: 'modal-path-selector',
   templateUrl: './modal-path-selector.component.html',
-  styleUrls: ['./modal-path-selector.component.css']
+  styleUrls: ['./modal-path-selector.component.scss']
 })
 export class ModalPathSelectorComponent implements OnInit {
   //path control
   @Input() formGroup: FormGroup;
   @Input() filterSelfPaths: boolean;
-  availablePaths: Array<string> = [];
+  @Input() useMetadata: boolean;
+  availablePaths: IPathAndMetaObjects[];
 
   //source control
   availableSources: Array<string>;
 
   //unit control
-  unitList: {default: string, conversions: IUnitGroup[] };
+  unitList: {default?: string, conversions?: IUnitGroup[] };
   default: string;
 
   constructor(
@@ -27,8 +30,17 @@ export class ModalPathSelectorComponent implements OnInit {
     ) { }
 
   ngOnInit() {
+    this.unitList = {};
+
+    //disable formControl if path is empty - a new, not configured widget...
+    if (this.formGroup.value.path == null) {
+      this.formGroup.controls['source'].disable();
+      if (this.formGroup.value.pathType == "number") {
+        this.formGroup.controls['convertUnitTo'].disable();
+      }
+    }
     //populate available paths
-    this.availablePaths = this.signalKService.getPathsByType(this.formGroup.value.pathType, this.filterSelfPaths).sort();
+    this.getPaths(this.filterSelfPaths);
 
     //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
     this.updateSourcesAndUnits();
@@ -36,18 +48,30 @@ export class ModalPathSelectorComponent implements OnInit {
     //subscribe to path formControl changes
     this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
       this.updateSourcesAndUnits();
-      this.formGroup.controls['source'].patchValue('default');
-      this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
+      try {
+        if (pathValue != null && this.formGroup.controls['source'].disabled) {
+          this.formGroup.controls['source'].enable();
+          this.formGroup.controls['source'].patchValue('default');
+        }
 
-      if (pathValue != null && this.formGroup.controls['source'].disabled) {
-        this.formGroup.controls['source'].enable;
+        if (this.formGroup.controls['pathType'].value == "number" && this.formGroup.controls['convertUnitTo'].disabled) {
+          this.formGroup.controls['convertUnitTo'].enable();
+        }
+        this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
+      } catch (error) {
+        console.debug(error);
       }
     });
 
     //subscribe to filterSelfPaths formControl changes
     this.formGroup.parent.parent.controls['filterSelfPaths'].valueChanges.subscribe(val => {
-      this.availablePaths = this.signalKService.getPathsByType(this.formGroup.value.pathType, val).sort();
+      this.getPaths(val);
     });
+  }
+
+  getPaths(isOnlySef: boolean) {
+    this.availablePaths = this.signalKService.getPathsAndMetaByType(this.formGroup.value.pathType, isOnlySef).sort();
+    // this.availablePaths = this.signalKService.getPathsByType(this.formGroup.value.pathType, OnlySef, true).sort();
   }
 
   updateSourcesAndUnits() {
@@ -59,9 +83,19 @@ export class ModalPathSelectorComponent implements OnInit {
       }
     } else {
       let pathObject = this.signalKService.getPathObject(this.formGroup.controls['path'].value);
-      this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    }
+      if (pathObject != null) {
+        this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+      } else {
+        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL or SignalK server config. We need to disable the fields.
+        try {
+          this.formGroup.controls['source'].disable();
+          this.formGroup.controls['convertUnitTo'].disable();
+        } catch (error) {
+          console.debug(error);
+        }
 
+      }
+    }
     this.unitList = this.unitsService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
   }
 

@@ -3,7 +3,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { SignalKNotification } from "./signalk-interfaces";
+import { ISignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService, INotificationConfig } from "./app-settings.service";
 import { isNull } from 'util';
 
@@ -21,14 +21,14 @@ export interface AppNotification {
  *
  * @path SignalK alarm path - Defines source of the alarm
  * @ack Optional Alarm acknowledgment property
- * @notification Native SignalK Notification message as Object SignalKNotification
+ * @notification Native SignalK Notification message as Object ISignalKNotification
  */
 export interface Alarm {
   path: string;
   type: string;
   isAck: boolean;
   isMuted: boolean;
-  notification: SignalKNotification;
+  notification: ISignalKNotification;
 }
 
 
@@ -93,9 +93,9 @@ export class NotificationsService {
   /**
    * Add new Alarm and send
    * @param path SignalK path of the notification
-   * @param notification Raw content of the notification message from SignalK server as SignalKNotification
+   * @param notification Raw content of the notification message from SignalK server as ISignalKNotification
    */
-  public addAlarm(path: string, notification: SignalKNotification) {
+  public addAlarm(path: string, notification: ISignalKNotification) {
     let newAlarm: Alarm = {
       path: path,         // duplicate from Alarm Object key index for added scope from individual alarm context
       type: "device",
@@ -115,7 +115,7 @@ export class NotificationsService {
    * @param path
    * @param notification
    */
-  public updateAlarm(path: string, notification: SignalKNotification) {
+  public updateAlarm(path: string, notification: ISignalKNotification) {
     this.alarms[path].notification = notification;
     this.activeAlarmsSubject.next(this.alarms);
   }
@@ -164,10 +164,10 @@ export class NotificationsService {
  * routes to Kip Notification system as Alarms and Notifications.
  *
  * @param path path of message ie. the subject of the message
- * @param notificationValue Content of the message. Must conform to SignalKNotification interface.
+ * @param notificationValue Content of the message. Must conform to ISignalKNotification interface.
  * @usageNotes This function is internal and should not be used.
  */
-  public processNotificationDelta(path: string, notificationValue: SignalKNotification) {
+  public processNotificationDelta(path: string, notificationValue: ISignalKNotification) {
     if (this.notificationConfig.disableNotifications) {
       return;
     }

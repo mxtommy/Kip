@@ -143,7 +143,7 @@
       </mat-tab>
 <!-- Gauge stuff -->
       <!-- Simple Linear gauge -->
-      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'simpleLinear'">
+      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'simpleLinear'">
         <div class="tab-content">
           <mat-form-field class="full-width" appearance="outline" floatLabel="always">
             <mat-label>Unit Label Options</mat-label>
@@ -159,7 +159,7 @@
       </mat-tab>
 
       <!-- ng-canvas Radial gauges -->
-      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'ngRadial'">
+      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'ngRadial'">
         <div class="tab-content">
             <p>
               <mat-radio-group name="radialSize" formControlName="radialSize">
@@ -173,7 +173,7 @@
       </mat-tab>
 
       <!-- ng-canvas Linear gauges -->
-      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngLinearHorizontal'">
+      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngLinearHorizontal'">
         <div class="tab-content">
           <mat-form-field class="full-width" appearance="outline" floatLabel="always">
             <mat-label>Gauge Type</mat-label>
@@ -196,7 +196,7 @@
       </mat-tab>
 
       <!-- steel gauge -->
-      <mat-tab label="Gauge" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'">
+      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'">
         <div class="tab-content">
           <mat-form-field class="full-width" appearance="outline" floatLabel="always">
             <mat-label>Gauge Type</mat-label>

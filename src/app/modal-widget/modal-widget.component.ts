@@ -24,9 +24,7 @@ export class ModalWidgetComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    //load datasets
     this.availableDataSets = this.DataSetService.getDataSets().sort();
-
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.formMaster.updateValueAndValidity();
   }
@@ -36,8 +34,17 @@ export class ModalWidgetComponent implements OnInit {
     Object.keys(formData).forEach (key => {
       // handle Objects
       if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
-        groups.addControl(key, this.generateFormGroups(formData[key], key));
+        switch (objectType) {
+          case "paths":
+            //if we are building Paths sub formGroups, skip none configurable
+            if (this.widgetConfig.paths[key].isPathConfigurable) {
+              groups.addControl(key, this.generateFormGroups(formData[key], key));
+            }
+            break;
 
+          default: groups.addControl(key, this.generateFormGroups(formData[key], key));
+            break;
+        }
       } else {
       // Handle Primitives - property values
         if (objectType == "units") {

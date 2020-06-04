@@ -3,7 +3,7 @@ import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
 import { SignalKConnectionService } from './signalk-connection.service';
-import { deltaMessage } from './signalk-interfaces';
+import { IDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
 
@@ -123,7 +123,7 @@ export class SignalkRequestsService {
    *
    * @param delta SignalK Delta message
    */
-  private updateRequest(delta: deltaMessage) {
+  private updateRequest(delta: IDeltaMessage) {
     let index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
