@@ -130,7 +130,7 @@ export class LayoutSplitsService {
   }
 
   newRootSplit() {
-    //create new root split //TODO, need to update route.
+    //create new root split
     let uuid = this.newUuid();
     let newWidget = this.WidgetManagerService.newWidget();
     let newRootSplit: ISplitSet = {

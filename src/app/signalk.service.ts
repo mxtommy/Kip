@@ -175,7 +175,7 @@ export class SignalKService {
    * @param selfOnly if true, returns only paths the begins with "self". If false or not specified, everything known
    * @return array of signalK path string
    */
-  getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO: See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
+  getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let paths: string[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
        if (this.paths[i].type == valueType) {
@@ -192,7 +192,7 @@ export class SignalKService {
   }
 
 
-  getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathAndMetaObjects[] { //TODO: See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
+  getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathAndMetaObjects[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let pathsMeta: IPathAndMetaObjects[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
        if (this.paths[i].type == valueType) {
