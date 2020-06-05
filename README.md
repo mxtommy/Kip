@@ -26,24 +26,26 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   ![Light Blue Theme](./KipSample-3-1024x488.png)
 
 ### Accessible Night Mode
-  Switch to night mode with a quick access button. Look dark here but at night...perfect!
-  
+  Switch to night mode with a quick access button, regardless of the selected theme. Look dark here but at night...perfect!
+
   ![Light Blue Theme](./KipNightMode-1024x488.png)
 
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
 Built purposeful screen(s) with however many gauges you want, where you want them. 
- <p align="center">
-  <img src="./KipWidgetConfig-layout-1024x488.png" height="488" width="1024">
+
   Split page zones, resize and Widgets. Add as many pages as you whish to keep things focused!
-  <img src="./KipConfig-display-1024x488.png" height="488" width="1024">
+  ![Layout Configuration Image](./KipWidgetConfig-layout-1024x488.png)
+  
   Easy basic gauge config.
-  <img src="./KipWidgetConfig-paths-1024x488.png" height="488" width="1024">
-  Wee what SignalK has to offer and use it.
-  <img src="./KipConfig-Units-1024x488.png" height="488" width="1024">
+  ![Gauge Configuration Image](./KipConfig-display-1024x488.png) 
+  
+  See what SignalK has to offer that you can leverage in a gauge.
+  ![Path Configuration Image](./KipWidgetConfig-paths-1024x488.png)
+  
   Many units are supported. Choose your prefered App defaults and tweak it gauge by gauge. Kip will convert the units for you.
-</p>
+  ![Path Configuration Image](./KipConfig-Units-1024x488.png) 
 
 ### Reusable Gauge Library
 Get the latest version of Kip to see what's new!
