@@ -42,7 +42,6 @@ The app is an Angular-cli app. Install dependencies with `npm install`. Then run
 
 ## Feature Ideas
 
-
  * More Customization options for Historical Charts
  * Attitude Indicator
  * Sailing Polars with ChartJS Radar type chart?
