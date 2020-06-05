@@ -61,13 +61,14 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 Kip is built on Angular 9 using various open-source assets. All free!
 
 **Tools**
+
 Linux, Macs, Pi or Windows dev platform supported
 1. Install the latest Node version
 2. Download you favorite coding IDE (we use the free Visual Code)
 3. Create your own GitHub Kip fork and configure your IDE source control to point to this Fork (With Visual Code, GitHub support is built-in)
 
 **Setup**
-1. Create a GutHub Branch of your own Kip Fork
+1. Create a GitHub Branch of your own Kip Fork
 2. Checkout this new Branch to get the source code locally.
 3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project folder.
 4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read local Kip project dependencies (see Steps 2), download and install everything automatically for you.
@@ -75,11 +76,13 @@ Linux, Macs, Pi or Windows dev platform supported
 
 **Work**
 1. Fire up your local dev instance with CLI using `ng serve`.
-2. Point your favorite browser to `http://localhost:4200/` and voila!.
+2. Point your favorite browser to `http://localhost:4200/` and voila!
+
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
 
 **Publish**
 1. From your Fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
+
 Or
 2. Build your own version:
   1. Use the `-prod` flag for a production build.
