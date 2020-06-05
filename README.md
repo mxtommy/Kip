@@ -16,39 +16,39 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 ### Built-in Theme Sample
 <p align="center">
   Modern Dark Theme
-  <img src="./KipSample-1-1024x488.png" height="1024" width="488">
+  <img src="./KipSample-1-1024x488.png" height="488" width="1024">
   SignalK Inspired Theme
-  <img src="./KipSample-2-1024x488.png" height="1024" width="488">
+  <img src="./KipSample-2-1024x488.png" height="488" width="1024">
   Light Blue Theme
-  <img src="./KipSample-3-1024x488.png" height="1024" width="488">
+  <img src="./KipSample-3-1024x488.png" height="488" width="1024">
   Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
 </p>
 
 ### Accessible Night Mode
 <p align="center">
-  <img src="./KipNightMode-1024x488.png" height="1024" width="488">
+  <img src="./KipNightMode-1024x488.png" height="488" width="1024">
 </p>
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
 Built purposeful screen(s) with however many gauges you want, where you want them. 
  <p align="center">
-  <img src="./KipWidgetConfig-layout-1024x488.png" height="1024" width="488">
+  <img src="./KipWidgetConfig-layout-1024x488.png" height="488" width="1024">
   Split page zones, resize and Widgets. Add as many pages as you whish to keep things focused!
-  <img src="./KipConfig-display-1024x488.png" height="1024" width="488">
+  <img src="./KipConfig-display-1024x488.png" height="488" width="1024">
   Easy basic gauge config.
-  <img src="./KipWidgetConfig-paths-1024x488.png" height="1024" width="488">
+  <img src="./KipWidgetConfig-paths-1024x488.png" height="488" width="1024">
   Wee what SignalK has to offer and use it.
-  <img src="./KipConfig-Units-1024x488.png" height="1024" width="488">
+  <img src="./KipConfig-Units-1024x488.png" height="488" width="1024">
   Many units are supported. Choose your prefered App defaults and tweak it gauge by gauge. Kip will convert the units for you.
 </p>
 
 ### Reusable Gauge Library
 Get the latest version of Kip to see what's new!
 <p align="center">
-  <img src="./KipGaugeSample-1-1024x545.png" height="1024" width="545">
+  <img src="./KipGaugeSample-1-1024x545.png" height="545" width="1024">
   Sample gauge types
-  <img src="./KipMonitor-1024x488.png" height="1024" width="488">
+  <img src="./KipMonitor-1024x488.png" height="488" width="1024">
   Electrical and Tank monitoring sample 
 </p>
 
