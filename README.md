@@ -13,7 +13,7 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 
 ## Themes and Night Mode features
 
-<p align="center">
+<p align="center" style="width: 80%">
   <img src="./KipSample-1.png">
   <img src="./KipSample-2.png">
   <img src="./KipNightMode.png">
