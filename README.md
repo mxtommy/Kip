@@ -14,7 +14,8 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 # Features
 ## User Experience
 ### Built-in Theme Sample
-
+  Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
+  
   Modern Dark Theme
   ![Modern Dark Theme](./KipSample-1-1024x488.png)
   
@@ -23,8 +24,6 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   
   Light Blue Theme
    ![Light Blue Theme](./KipSample-3-1024x488.png)
-  
-  Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
 
 ### Accessible Night Mode
 <p align="center">
