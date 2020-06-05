@@ -11,9 +11,28 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 - Layout and configuration should be both easy to operate and flexible
 - Compatibility with Chromium browser and other device form factor improtant (**HELP WANTED)  
 
-## Sample Layouts
+## Themes and Night Mode features
 
-<p align="center"><img src="./GaugeSample0.png"><img src="./GaugeSample1.png"><img src="./GaugeSample2.png"></p>
+<p align="center">
+  <img src="./KipSample-1.png">
+  <img src="./KipSample-2.png">
+  <img src="./KipNightMode.png">
+</p>
+
+## Easy and flexible configuration
+
+<p align="center">
+  <img src="./KipConfig.png">
+  <img src="./KipWidgetConfig.png">
+  <img src="./KipNightMode.png">
+</p>
+
+## Sample Layouts and Gauges
+
+<p align="center">
+  <img src="./KipMonitor.png">
+  <img src="./GaugeSample1.png">
+</p>
 
 ## Developing
 
