@@ -84,6 +84,7 @@ Linux, Macs, Pi or Windows dev platform supported
 1. From your Fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
 
 Or
+
 2. Build your own version:
   1. Use the `-prod` flag for a production build.
   2. To generate a npm package, run `npm run-script build-npm`.
