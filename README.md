@@ -26,7 +26,7 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   ![Light Blue Theme](./KipSample-3-1024x488.png)
 
 ### Accessible Night Mode
-  Switch to night mode with a quick access button, regardless of the selected theme. Look dark here but at night...perfect!
+  Keep your night vision with a quick Night Mode access button, regardless of the selected theme. The below image looks very dark, but at night...it's perfect!
 
   ![Light Blue Theme](./KipNightMode-1024x488.png)
 
@@ -35,16 +35,16 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 ### Flexible and Easy
   Built purposeful screen(s) with however many gauges you want, where you want them. 
 
-  Split page zones, resize and add Widgets. Add as many pages as you whish to keep things focused!
+  Split or delete gauge zones, resize and position, then simply add the gauge of your choosing. Add as many pages as you whish to keep screens purposeful.
   ![Layouts Configuration Image](./KipWidgetConfig-layout-1024x488.png)
   
   Easy basic gauge config.
   ![Gauges Configuration Image](./KipConfig-display-1024x488.png) 
   
-  See what SignalK has to offer that you can leverage in a gauge.
+  See what SignalK has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
   ![Paths Configuration Image](./KipWidgetConfig-paths-1024x488.png)
   
-  Many units are supported. Choose your prefered App defaults and tweak it gauge by gauge. Kip will convert the units for you.
+  Many units are supported. Choose your prefered App defaults, than tweak it gauge by gauge as necessary. Kip will convert the displayed units for you.
   ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
 ### Reusable Gauge Library
@@ -61,27 +61,30 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 Kip is built on Angular 9 using various open-source assets. All free!
 
 **Tools**
+Linux, Macs, Pi or Windows dev platform supported
 1. Install the latest Node version
 2. Download you favorite coding IDE (we use the free Visual Code)
-3. Create your own GitHub Branch and configure IDE source control (Out of the box with Visual Code)
-4. Checkout your Branch locally
+3. Create your own GitHub Kip fork and configure your IDE source control to point to this Fork (With Visual Code, GitHub support is built-in)
 
 **Setup**
-1. In a command shell, go to the root of you local project folder.
-2. Install project dependencies using NPM package and dependency manager with `npm install`. NPM will read local Kip project dependencies (see Tools - steps 4) and will download and install everything automatically for you!
-3. Build the app locally using Angular-CLI by running `ng build`. CLI tool will read local Kip project configuration (see Tools - steps 4) and build everything.
+1. Create a GutHub Branch of your own Kip Fork
+2. Checkout this new Branch to get the source code locally.
+3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project folder.
+4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read local Kip project dependencies (see Steps 2), download and install everything automatically for you.
+5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will read local Kip project configuration (see Tools - steps 4) and build everything.
 
 **Work**
 1. Fire up your local dev instance with CLI using `ng serve`.
-2. Point your browser to `http://localhost:4200/` and voila!.
-As you work on source code and save files, the app will automatically reload in the browser with your latest changes.
+2. Point your favorite browser to `http://localhost:4200/` and voila!.
+*As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
 
 **Publish**
-1. Make a GitHub pull request to Kip to have your code reviewed, merged and part of the next release.
+1. From your Fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
 Or
 2. Build your own version:
   1. Use the `-prod` flag for a production build.
   2. To generate a npm package, run `npm run-script build-npm`.
+  3. Deploy and have fun!
 
 **Collaborate**
 Join us on Slack -> SignalK-dev / Apps_and_client channel. We will hook up and assist as best we can.
