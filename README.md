@@ -16,16 +16,13 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 ### Built-in Theme Sample
 
   Modern Dark Theme
-  ![Image of Yaktocat](./KipSample-1-1024x488.png)
+  ![Modern Dark Theme](./KipSample-1-1024x488.png)
   
   SignalK Inspired Theme
-  <img src="./KipSample-1-1024x488.png" height="488" width="1024">
-  
-  SignalK Inspired Theme
-  <img src="./KipSample-2-1024x488.png" height="488" width="1024">
+   ![SignalK Inspired Theme](./KipSample-2-1024x488.png)
   
   Light Blue Theme
-  <img src="./KipSample-3-1024x488.png" height="488" width="1024">
+   ![Light Blue Theme](./KipSample-3-1024x488.png)
   
   Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
 
