@@ -3,9 +3,10 @@
     <mat-card-title>Configuration Management</mat-card-title>
     <mat-card-subtitle>Kip configuration can be stored and retrieved from the SignalK server. This enables configuration sharing (Kip Widgets and Kip general settings) with multiple devices.</mat-card-subtitle>
   </mat-card-header>
+  <p>Server Storage</p>
   <mat-accordion>
     <form>
-      <mat-expansion-panel [expanded]="supportApplicationData" [disabled]="!supportApplicationData">
+      <mat-expansion-panel [disabled]="!supportApplicationData">
         <mat-expansion-panel-header >Load Config from Server <div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div></mat-expansion-panel-header>
           <mat-form-field>
             <mat-label>Config Name</mat-label>
@@ -39,18 +40,54 @@
           </mat-action-row>
       </mat-expansion-panel>
     </form>
-    <form name="widgetSettingsForm" (ngSubmit)="submitConfig()">
+    <p>Local Storage</p>
+    <form name="appSettingsForm" (ngSubmit)="submitConfig('appConfig')">
       <mat-expansion-panel>
-        <mat-expansion-panel-header>Raw JSON Config</mat-expansion-panel-header>
+        <mat-expansion-panel-header>Application</mat-expansion-panel-header>
         <mat-form-field class="config-size">
-            <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Application Configuration" wrap="off" [(ngModel)]="jsonConfig"></textarea>
+            <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Application JSON configuration" wrap="off" [(ngModel)]="appJSONConfig"></textarea>
         </mat-form-field>
         <mat-action-row>
-          <button mat-raised-button type="button" color="warn" (click)='loadDemoConfig()'>Load Demo Config</button>
-          <button mat-raised-button type="button" color="warn" (click)='resetSettings()'>Clear Config</button>
+          <button mat-raised-button type="submit" color="accent">Save Edits</button>
+        </mat-action-row>
+      </mat-expansion-panel>
+    </form>
+    <form name="widgetSettingsForm" (ngSubmit)="submitConfig('widgetConfig')">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>Widgets</mat-expansion-panel-header>
+        <mat-form-field class="config-size">
+            <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Widget JSON configuration" wrap="off" [(ngModel)]="widgetJSONConfig"></textarea>
+        </mat-form-field>
+        <mat-action-row>
+          <button mat-raised-button type="submit" color="accent">Save Edits</button>
+        </mat-action-row>
+      </mat-expansion-panel>
+    </form>
+    <form name="layoutSettingsForm" (ngSubmit)="submitConfig('layoutConfig')">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>Layouts</mat-expansion-panel-header>
+        <mat-form-field class="config-size">
+            <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Layout JSON configuration" wrap="off" [(ngModel)]="layoutJSONConfig"></textarea>
+        </mat-form-field>
+        <mat-action-row>
+          <button mat-raised-button type="submit" color="accent">Save Edits</button>
+        </mat-action-row>
+      </mat-expansion-panel>
+    </form>
+    <form name="themeSettingsForm" (ngSubmit)="submitConfig('themeConfig')">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>Theme</mat-expansion-panel-header>
+        <mat-form-field class="config-size">
+            <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Theme JSON configuration" wrap="off" [(ngModel)]="themeJSONConfig"></textarea>
+        </mat-form-field>
+        <mat-action-row>
           <button mat-raised-button type="submit" color="accent">Save Edits</button>
         </mat-action-row>
       </mat-expansion-panel>
     </form>
   </mat-accordion>
+  <mat-card-actions align="end">
+    <button mat-raised-button type="button" color="warn" (click)='loadDemoConfig()'>Load Demo Config</button>
+    <button mat-raised-button type="button" color="warn" (click)='resetSettings()'>Erase Config</button>
+  </mat-card-actions>
 </mat-card>

@@ -65,10 +65,7 @@
       </tr>
     </table>
     <br/>
-    <mat-card-actions align="start">
-      <button mat-raised-button type="submit" color="accent" style="margin-right: 10px;" [disabled]="!signalKForm.form.valid">
-        Connect
-      </button>
+    <mat-card-actions align="end">
       <span *ngIf="formAuthToken">
         <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="clearAuth()">
           Delete Token
@@ -79,6 +76,9 @@
           Request Token
         </button>
       </span>
+      <button mat-raised-button type="submit" color="accent" style="margin-left: 10px;" [disabled]="!signalKForm.form.valid">
+        Connect
+      </button>
     </mat-card-actions>
   </mat-card>
 </form>

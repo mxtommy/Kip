@@ -7,39 +7,28 @@ import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
-import { BlankConfig } from './blank-config.const';
-import { DemoConfig } from './demo-config.const';
-import { initialDefaultUnits } from './defaultUnits.const'
-import { DefaultNotificationConfig } from './blank-Notification-config.const';
+import { DefaultAppConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from './config.blank.const';
+import { DefaultUnitsConfig } from './config.blank.units.const'
+import { DefaultNotificationConfig } from './config.blank.notification.const';
+import { DemoAppConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig } from './config.demo.const';
 import { isNumber } from 'util';
 
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
-const defaultTheme = 'default-light';
-const configVersion = 4; // used to invalidate old configs to avoir errors loading it.
-
-
-export interface AppSettings {
-  configVersion: number;
-  signalKUrl: string;
-  signalKToken: string;
-  themeName: string;
-  widgets: Array<IWidget>;
-  unlockStatus: boolean;
-  dataSets: IDataSet[];
-  splitSets: ISplitSet[];
-  rootSplits: string[];
-  unitDefaults: IUnitDefaults;
-  notificationConfig?: INotificationConfig;
-}
+const defaultTheme = 'modern-dark';
+const configVersion = 5; // used to invalidate old configs.
 
 export interface IAppConfig {
   configVersion: number;
   signalKUrl: string;
   signalKToken: string;
-  themeName: string;
   unlockStatus: boolean;
+  dataSets: IDataSet[];
   unitDefaults: IUnitDefaults;
-  notificationConfig?: INotificationConfig;
+  notificationConfig: INotificationConfig;
+}
+
+export interface IThemeConfig {
+  themeName: string;
 }
 
 export interface IWidgetConfig {
@@ -97,137 +86,195 @@ export class AppSettingsService {
   dataSets: IDataSet[] = [];
   root
 
-  constructor(
-    private router: Router) {
+  constructor(private router: Router) {
+    let appConfig: IAppConfig;
+    let widgetConfig: IWidgetConfig;
+    let layoutConfig: ILayoutConfig;
+    let themeConfig: IThemeConfig;
 
-    let storageObject: AppSettings;
-    if (localStorage.getItem('signalKData') == null) {
-      storageObject = this.getDefaultConfig();
-    }
-    storageObject = JSON.parse(localStorage.getItem('signalKData'));
-    if (!isNumber(storageObject.configVersion) || (storageObject.configVersion != configVersion)) {
-      console.error("Invalid config version, loading default");
-      storageObject = this.getDefaultConfig();
-    }
+    if (window.localStorage) {
+      // localStorage supported
 
-    this.loadSettings(storageObject);
+      appConfig = JSON.parse(localStorage.getItem("appConfig"));
+
+      if (appConfig == null) {
+        console.log("Error loading App config. resetting and loading all default.");
+        localStorage.clear();
+        appConfig = this.getDefaultAppConfig();
+        widgetConfig = this.getDefaultWidgetConfig();
+        layoutConfig = this.getDefaultLayoutConfig();
+        themeConfig = this.getDefaultThemeConfig();
+      }
+
+      if (!isNumber(appConfig.configVersion) || (appConfig.configVersion != configVersion)) {
+        console.error("Invalid config version, resetting and loading all default.");
+        localStorage.clear();
+        appConfig = this.getDefaultAppConfig();
+        widgetConfig = this.getDefaultWidgetConfig();
+        layoutConfig = this.getDefaultLayoutConfig();
+        themeConfig = this.getDefaultThemeConfig();
+      } else {
+        widgetConfig = this.loadLocalStorageConfig("widgetConfig");
+        layoutConfig = this.loadLocalStorageConfig("layoutConfig");
+        themeConfig = this.loadLocalStorageConfig("themeConfig");
+      }
+
+      this.pushSettings(appConfig, widgetConfig, layoutConfig, themeConfig);
+    } else {
+      console.log("***** LocalStorage NOT SUPPORTED by browser *****\nThis is required by Kip...");
+    }
   }
 
+  loadLocalStorageConfig(type: string) {
+    // we don't support AppConfig here. It needs a version check and full config invalidation.
+    let config;
+    config = JSON.parse(localStorage.getItem(type));
 
-  private loadSettings(storageObject: AppSettings) {
-    let skUrl: SignalKUrl = {url: storageObject.signalKUrl, new: false};
-    let skToken: SignalKToken = {token: storageObject.signalKToken, new: false};
+    if (config == null) {
+      console.log("Error loading " + type +  " config. Force loading " + type + " defaults.");
+      switch (type) {
+        case "widgetConfig":
+          config = this.getDefaultWidgetConfig();
+          break;
 
+        case "layoutConfig":
+          config = this.getDefaultLayoutConfig();
+          break;
+
+        case "themeConfig":
+          config = this.getDefaultThemeConfig();
+          break;
+      }
+    }
+    return config;
+  }
+
+  private pushSettings(appConfig: IAppConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig) {
+    this.themeName.next(themeConfig['themeName']);
+
+    let skUrl: SignalKUrl = {url: appConfig.signalKUrl, new: false};
+    let skToken: SignalKToken = {token: appConfig.signalKToken, new: false};
     this.signalKUrl.next(skUrl);
     this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
-    this.themeName.next(storageObject['themeName']);
-    this.widgets = storageObject.widgets;
-    this.unlockStatus.next(storageObject['unlockStatus']);
-    this.dataSets = storageObject.dataSets;
-    this.splitSets = storageObject.splitSets;
-    this.rootSplits = storageObject.rootSplits;
-    if ('unitDefaults' in storageObject) {
-      this.unitDefaults.next(storageObject.unitDefaults);
-    } else {
-      this.unitDefaults.next(initialDefaultUnits);
-    }
-    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(storageObject.notificationConfig);
+    this.unlockStatus.next(appConfig['unlockStatus']);
+    this.dataSets = appConfig.dataSets;
+    this.unitDefaults.next(appConfig.unitDefaults);
+    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
+
+    this.widgets = widgetConfig.widgets;
+
+    this.splitSets = layoutConfig.splitSets;
+    this.rootSplits = layoutConfig.rootSplits;
   }
 
   //UnitDefaults
-  getDefaultUnitsAsO() {
+  public getDefaultUnitsAsO() {
     return this.unitDefaults.asObservable();
   }
-  getDefaultUnits() {
+  public getDefaultUnits() {
     return this.unitDefaults.getValue();
   }
-
-  setDefaultUnits(newDefaults: IUnitDefaults) {
+  public setDefaultUnits(newDefaults: IUnitDefaults) {
     this.unitDefaults.next(newDefaults);
-    this.saveToLocalStorage();
+    this.saveAppConfigToLocalStorage();
+  }
+
+  // App config - use by Settings Config Component
+  public getAppConfig(): IAppConfig {
+    return this.buildAppStorageObject();
+  }
+
+  public getWidgetConfig(): IWidgetConfig {
+    return this.buildWidgetStorageObject();
+  }
+
+  public getLayoutConfig(): ILayoutConfig {
+    return this.buildLayoutStorageObject();
+  }
+
+  public getThemeConfig(): IThemeConfig {
+    return this.buildThemeStorageObject();
   }
 
   // SignalKURL
-  getSignalKURLAsO() {
+  public getSignalKURLAsO() {
     return this.signalKUrl.asObservable();
   }
-  getSignalKURL() {
+  public getSignalKURL() {
     return this.signalKUrl.getValue();
   }
-  setSignalKURL(value: SignalKUrl) {
+  public setSignalKURL(value: SignalKUrl) {
     this.signalKUrl.next(value);
-    this.saveToLocalStorage();
+    this.saveAppConfigToLocalStorage();
   }
 
   // SignalKToken
-  getSignalKTokenAsO() {
+  public getSignalKTokenAsO() {
     return this.signalKToken.asObservable();
   }
-  getSignalKToken() {
+  public getSignalKToken() {
     return this.signalKToken.getValue();
   }
-  setSignalKToken(value: SignalKToken) {
+  public setSignalKToken(value: SignalKToken) {
     this.signalKToken.next(value);
-    this.saveToLocalStorage();
+    this.saveAppConfigToLocalStorage();
   }
 
   // UnlockStatus
-  getUnlockStatusAsO() {
+  public getUnlockStatusAsO() {
     return this.unlockStatus.asObservable();
   }
-  setUnlockStatus(value) {
+  public setUnlockStatus(value) {
     this.unlockStatus.next(value);
-    this.saveToLocalStorage();
+    this.saveAppConfigToLocalStorage();
   }
 
   // Themes
-  getThemeNameAsO() {
+  public getThemeNameAsO() {
     return this.themeName.asObservable();
   }
-
-  setThemName(newTheme: string) {
+  public setThemName(newTheme: string) {
     this.themeName.next(newTheme);
     if (newTheme != "nightMode") { // don't save NightMode, only temporary
-      this.saveToLocalStorage();
+      this.saveThemeConfigToLocalStorage();
     }
   }
-
-  getThemeName(): string {
-    let config: AppSettings = JSON.parse(localStorage.getItem('signalKData'));;
+  public getThemeName(): string {
+    let config: IThemeConfig = JSON.parse(localStorage.getItem('themeConfig'));;
     return config.themeName;
   }
 
   // Widgets
-  getWidgets() {
+  public getWidgets() {
     return this.widgets;
   }
-  saveWidgets(widgets: Array<IWidget>) {
+  public saveWidgets(widgets: Array<IWidget>) {
     this.widgets = widgets;
-    this.saveToLocalStorage();
+    this.saveWidgetConfigToLocalStorage();
   }
 
-   // Layout SplitSets
-  getSplitSets() {
+  // Layout SplitSets
+  public getSplitSets() {
     return this.splitSets;
   }
-  getRootSplits() {
+  public getRootSplits() {
     return this.rootSplits;
   }
-  saveSplitSets(splitSets) {
+  public saveSplitSets(splitSets) {
     this.splitSets = splitSets;
-    this.saveToLocalStorage();
+    this.saveLayoutConfigToLocalStorage();
   }
-  saveRootUUIDs(rootUUIDs) {
+  public saveRootUUIDs(rootUUIDs) {
     this.rootSplits = rootUUIDs;
-    this.saveToLocalStorage();
+    this.saveLayoutConfigToLocalStorage();
   }
 
   // DataSets
-  saveDataSets(dataSets) {
+  public saveDataSets(dataSets) {
     this.dataSets = dataSets;
-    this.saveToLocalStorage();
+    this.saveAppConfigToLocalStorage();
   }
-  getDataSets() {
+  public getDataSets() {
     return this.dataSets;
   }
 
@@ -235,75 +282,124 @@ export class AppSettingsService {
   public getNotificationConfigService() {
     return this.kipKNotificationConfig.asObservable();
   }
-
   public getNotificationConfig(): INotificationConfig {
     return this.kipKNotificationConfig.getValue();
   }
-
   public setNotificationConfig(notificationConfig: INotificationConfig) {
     this.kipKNotificationConfig.next(notificationConfig);
-    this.saveToLocalStorage();
+    this.saveAppConfigToLocalStorage();
   }
 
-  getDefaultNotification(): INotificationConfig {
-    let config = DefaultNotificationConfig;
-    localStorage.setItem('notificationConfig', JSON.stringify(config));
-    return config;
+  //Config manipulation: RAW and SignalK server - used by Settings Config Component
+  public resetSettings() {
+    localStorage.clear();
+    this.reloadApp();
   }
 
-  // saving.
-  private buildStorageObject() {
-    let storageObject: AppSettings = {
+  public replaceConfig(configType: string, newConfig: string, reloadApp?: boolean) {
+    localStorage.setItem(configType, newConfig);
+    if (reloadApp) {
+      this.reloadApp();
+    }
+  }
+
+  public loadDemoConfig() {
+    localStorage.clear();
+    this.replaceConfig("appConfig", JSON.stringify(DemoAppConfig));
+    this.replaceConfig("widgetConfig", JSON.stringify(DemoWidgetConfig));
+    this.replaceConfig("layoutConfig", JSON.stringify(DemoLayoutConfig));
+    this.replaceConfig("themeConfig", JSON.stringify(DemoThemeConfig), true);
+  }
+
+  public reloadApp() {
+    this.router.navigate(['/']);
+    setTimeout(()=>{ location.reload() }, 200);
+  }
+
+  //// Storage Objects
+  // building from running data
+  private buildAppStorageObject() {
+    let storageObject: IAppConfig = {
       configVersion: configVersion,
       signalKUrl: this.signalKUrl.getValue().url,
       signalKToken: this.signalKToken.getValue().token,
-      themeName: this.themeName.getValue(),
-      widgets: this.widgets,
       unlockStatus: this.unlockStatus.getValue(),
       dataSets: this.dataSets,
-      splitSets: this.splitSets,
-      rootSplits: this.rootSplits,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
     }
     return storageObject;
   }
 
-  getAppConfig(): AppSettings {
-    return this.buildStorageObject();
+  private buildWidgetStorageObject() {
+    let storageObject: IWidgetConfig = {
+      widgets: this.widgets,
+      }
+    return storageObject;
   }
 
-  saveToLocalStorage() {
-    console.log("Saving Config to LocalStorage");
-    localStorage.setItem('signalKData', JSON.stringify(this.buildStorageObject()));
+  private buildLayoutStorageObject() {
+    let storageObject: ILayoutConfig = {
+      splitSets: this.splitSets,
+      rootSplits: this.rootSplits,
+      }
+    return storageObject;
   }
 
-  resetSettings() {
-    localStorage.removeItem("signalKData");
-    this.reloadApp();
+  private buildThemeStorageObject() {
+    let storageObject: IThemeConfig = {
+      themeName: this.themeName.getValue()
+      }
+    return storageObject;
   }
 
-  replaceConfig(newConfig: string) {
-    localStorage.setItem('signalKData', newConfig);
-    this.reloadApp();
+  //Saving to Storage
+  private saveAppConfigToLocalStorage() {
+    console.log("Saving App config to LocalStorage");
+    localStorage.setItem('appConfig', JSON.stringify(this.buildAppStorageObject()));
   }
 
-  loadDemoConfig() {
-    this.replaceConfig(JSON.stringify(DemoConfig));
+  private saveWidgetConfigToLocalStorage() {
+    console.log("Saving Widget config to LocalStorage");
+    localStorage.setItem('widgetConfig', JSON.stringify(this.buildWidgetStorageObject()));
   }
 
-  reloadApp() {
-    this.router.navigate(['/']);
-    setTimeout(()=>{ location.reload() }, 200);
+  private saveLayoutConfigToLocalStorage() {
+    console.log("Saving Layout config to LocalStorage");
+    localStorage.setItem('LayoutConfig', JSON.stringify(this.buildLayoutStorageObject()));
   }
 
-  getDefaultConfig(): AppSettings {
-    let config: AppSettings = BlankConfig;
+  private saveThemeConfigToLocalStorage() {
+    console.log("Saving Theme config to LocalStorage");
+    localStorage.setItem('themeConfig', JSON.stringify(this.buildThemeStorageObject()));
+  }
+
+  // Private Defaults Loading functions
+  private getDefaultAppConfig(): IAppConfig {
+    let config: IAppConfig = DefaultAppConfig;
     config.notificationConfig = DefaultNotificationConfig;
+    config.unitDefaults = DefaultUnitsConfig;
     config.signalKUrl = window.location.origin;
     config['configVersion'] = configVersion;
-    localStorage.setItem('signalKData', JSON.stringify(config));
+    localStorage.setItem('appConfig', JSON.stringify(config));
     return config;
   }
 
+  private getDefaultWidgetConfig(): IWidgetConfig {
+    let config: IWidgetConfig = DefaultWidgetConfig;
+    localStorage.setItem("widgetConfig", JSON.stringify(config));
+    return config;
+  }
+
+  private getDefaultLayoutConfig(): ILayoutConfig {
+    let config: ILayoutConfig = DefaultLayoutConfig;
+    localStorage.setItem("layoutConfig", JSON.stringify(config));
+    return config;
+  }
+
+  private getDefaultThemeConfig(): IThemeConfig {
+    let config: IThemeConfig = DefaultThemeConfig;
+    localStorage.setItem("themeConfig", JSON.stringify(config));
+    return config;
+  }
 }

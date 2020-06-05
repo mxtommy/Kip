@@ -12,7 +12,7 @@
         <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit.measure" >{{ unit.description }}</mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-card-actions align="start">
+    <mat-card-actions align="end">
       <button mat-raised-button color="accent" type="submit" [disabled]="!formUnitMaster.valid">Save</button>
     </mat-card-actions>
   </mat-card>
