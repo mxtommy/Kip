@@ -124,7 +124,6 @@ const appRoutes: Routes = [
     ModalWidgetComponent,
     WidgetSwitchComponent,
     ModalPathSelectorComponent,
-    ModalUnitSelectorComponent,
     ObjectKeysPipe,
     SettingsUnitsComponent,
     WidgetIframeComponent,
