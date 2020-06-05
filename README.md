@@ -9,7 +9,7 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 - Anything displayed should be as big as possible in the given space
 - Touchscreen user experience should be excellent
 - Layout and configuration should be both easy to operate and flexible
-- Compatibility with Chromium browser and other device form factor improtant (**HELP WANTED)  
+- Compatibility with Chromium browser and other device form factor important (**HELP WANTED)  
 
 ## Themes and Night Mode features
 
