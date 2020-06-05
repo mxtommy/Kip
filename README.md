@@ -33,42 +33,65 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
-Built purposeful screen(s) with however many gauges you want, where you want them. 
+  Built purposeful screen(s) with however many gauges you want, where you want them. 
 
-  Split page zones, resize and Widgets. Add as many pages as you whish to keep things focused!
-  ![Layout Configuration Image](./KipWidgetConfig-layout-1024x488.png)
+  Split page zones, resize and add Widgets. Add as many pages as you whish to keep things focused!
+  ![Layouts Configuration Image](./KipWidgetConfig-layout-1024x488.png)
   
   Easy basic gauge config.
-  ![Gauge Configuration Image](./KipConfig-display-1024x488.png) 
+  ![Gauges Configuration Image](./KipConfig-display-1024x488.png) 
   
   See what SignalK has to offer that you can leverage in a gauge.
-  ![Path Configuration Image](./KipWidgetConfig-paths-1024x488.png)
+  ![Paths Configuration Image](./KipWidgetConfig-paths-1024x488.png)
   
   Many units are supported. Choose your prefered App defaults and tweak it gauge by gauge. Kip will convert the units for you.
-  ![Path Configuration Image](./KipConfig-Units-1024x488.png) 
+  ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
 ### Reusable Gauge Library
-Get the latest version of Kip to see what's new!
-<p align="center">
-  <img src="./KipGaugeSample-1-1024x545.png" height="545" width="1024">
+  Get the latest version of Kip to see what's new!
+
   Sample gauge types
-  <img src="./KipMonitor-1024x488.png" height="488" width="1024">
+  ![Sample Gauges Image](./KipGaugeSample-1-1024x545.png)
+  
   Electrical and Tank monitoring sample 
-</p>
+  ![Electrical Concept Image](./KipMonitor-1024x488.png)
 
 # Developing
 
-The app is an Angular-cli app. Install dependencies with `npm install`. Then run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files. Run `ng build` to build the project. The build artifacts will be stored in the `public/` directory. Use the `-prod` flag for a production build. To prepare for npm, run `npm run-script build-npm`.
+Kip is built on Angular 9 using various open-source assets. All free!
 
+**Tools**
+1. Install the latest Node version
+2. Download you favorite coding IDE (we use the free Visual Code)
+3. Create your own GitHub Branch and configure IDE source control (Out of the box with Visual Code)
+4. Checkout your Branch locally
 
+**Setup**
+1. In a command shell, go to the root of you local project folder.
+2. Install project dependencies using NPM package and dependency manager with `npm install`. NPM will read local Kip project dependencies (see Tools - steps 4) and will download and install everything automatically for you!
+3. Build the app locally using Angular-CLI by running `ng build`. CLI tool will read local Kip project configuration (see Tools - steps 4) and build everything.
+
+**Work**
+1. Fire up your local dev instance with CLI using `ng serve`.
+2. Point your browser to `http://localhost:4200/` and voila!.
+As you work on source code and save files, the app will automatically reload in the browser with your latest changes.
+
+**Publish**
+1. Make a GitHub pull request to Kip to have your code reviewed, merged and part of the next release.
+Or
+2. Build your own version:
+  1. Use the `-prod` flag for a production build.
+  2. To generate a npm package, run `npm run-script build-npm`.
+
+**Collaborate**
+Join us on Slack -> SignalK-dev / Apps_and_client channel. We will hook up and assist as best we can.
 
 # Feature Ideas
-
  * More Customization options for Historical Charts
  * Attitude Indicator
  * Sailing Polars with ChartJS Radar type chart?
  * More Customization options for radial/linear Gauges
- * Gauge Zones
+ * Gauge SignalK Zones support
  * Overview page to quickly scroll through known path info.
  * Show alarms on numeric displays based on zones
  * Pre-created widgets for commonly used displays
