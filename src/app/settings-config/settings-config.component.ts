@@ -24,8 +24,6 @@ export class SettingsConfigComponent implements OnInit {
   layoutJSONConfig: string = '';
   themeJSONConfig: string = '';
 
-  applicationConfig: Object;
-
   hasToken: boolean = false;
   supportApplicationData: boolean = false;
   possibleConfigs: possibleConfig[] = [];
@@ -53,8 +51,6 @@ export class SettingsConfigComponent implements OnInit {
         this.getPossibleConfigs();
       }
     });
-
-    this.applicationConfig = this.AppSettingsService.getAppConfig(); //TODO:Fix server Config feature
 
     this.appJSONConfig = JSON.stringify(this.AppSettingsService.getAppConfig(), null, 2);
     this.widgetJSONConfig = JSON.stringify(this.AppSettingsService.getWidgetConfig(), null, 2);
@@ -86,14 +82,75 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   saveServerSettings() {
-    this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, this.applicationConfig).subscribe(result => {
-      this.NotificationsService.sendSnackbarNotification("Configuration Saved!", 3000);
+    const app = this.AppSettingsService.getAppConfig();
+    const widget = this.AppSettingsService.getWidgetConfig();
+    const layout = this.AppSettingsService.getLayoutConfig();
+    const theme = this.AppSettingsService.getThemeConfig();
+    const config = Object.assign(app, widget, layout, theme);
+
+    this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, config).subscribe(result => {
+      this.NotificationsService.sendSnackbarNotification("Configuration saved to SignalK server", 3000);
     });
   }
 
   loadServerSettings() {
     this.SignalKConnectionService.getApplicationData(this.configLoad.value.scope, this.configLoad.value.name).subscribe(newConfig => {
-      this.AppSettingsService.replaceConfig("fixMe", JSON.stringify(newConfig), true);
+      let app: IAppConfig;
+      let widget: IWidgetConfig;
+      let layout: ILayoutConfig;
+      let theme: IThemeConfig;
+
+      newConfig.forEach(element => {
+        switch (element) {
+          case "configVersion":
+            app.configVersion = element;
+            break;
+
+          case "dataSets":
+            app.dataSets = element;
+            break;
+
+          case "notificationConfig":
+            app.notificationConfig = element;
+            break;
+
+          case "rootSplits":
+            layout.rootSplits = element;
+            break;
+
+          case "signalKToken":
+            app.signalKToken = element;
+            break;
+
+          case "signalKUrl":
+            app.signalKUrl = element;
+            break;
+
+          case "splitSets":
+            layout.splitSets = element;
+            break;
+
+          case "themeName":
+            theme.themeName = element;
+            break;
+
+          case "unitDefaults":
+            app.unitDefaults = element;
+            break;
+
+          case "unlockStatus":
+            app.unlockStatus = element;
+            break;
+
+          case "widgets":
+            widget.widgets = element;
+            break;
+        }
+        this.AppSettingsService.replaceConfig("appConfig", JSON.stringify(newConfig), false);
+        this.AppSettingsService.replaceConfig("widgetConfig", JSON.stringify(newConfig), false);
+        this.AppSettingsService.replaceConfig("layoutConfig", JSON.stringify(newConfig), false);
+        this.AppSettingsService.replaceConfig("themeConfig", JSON.stringify(newConfig), true);
+      });
     });
 
 

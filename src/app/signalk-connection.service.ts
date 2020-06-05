@@ -3,7 +3,7 @@ import { of , Observable , BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
-import { AppSettingsService, IAppConfig, SignalKToken, SignalKUrl } from './app-settings.service';
+import { AppSettingsService, SignalKToken, SignalKUrl } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
@@ -259,7 +259,7 @@ export class SignalKConnectionService {
       this.webSocket.send(message);
     }
 
-    postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> { //TODO: fix server Config
+    postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
 
 
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
@@ -276,7 +276,7 @@ export class SignalKConnectionService {
 
     }
 
-    getApplicationDataKeys(scope: string): Observable<string[]> { //TODO: fix server Config
+    getApplicationDataKeys(scope: string): Observable<string[]> {
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/?keys=true";
 
@@ -295,7 +295,7 @@ export class SignalKConnectionService {
 
     }
 
-    getApplicationData(scope: string, configName: string): Observable<IAppConfig>{ //TODO: fix server Config
+    getApplicationData(scope: string, configName: string): Observable<any>{
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/" + configName;
       let options = {};
@@ -303,11 +303,11 @@ export class SignalKConnectionService {
       if ((this.signalKToken.token !== null) && (this.signalKToken.token != "")) {
         options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
       }
-      return this.http.get<IAppConfig>(url, options).pipe(
+      return this.http.get<any>(url, options).pipe(
         tap(_ => {
           console.log("Fetched Stored Configs for "+ scope +" / "+ configName);
         }),
-        catchError(this.handleError<IAppConfig>('getApplicationData'))
+        catchError(this.handleError<any>('getApplicationData'))
       );
     }
     /**

@@ -296,6 +296,12 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
+  /**
+   * Updates keys of localStorage config and reloads apps if required to apply new config. IMPORTANT NOTE: Kip does not apply config unless app is reloaded
+   * @param configType String of either appConfig, widgetConfig, layoutConfig or themeConfig.
+   * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
+   * @param reloadApp Optional Boolean. If True reloads the app, else does nothing. Defaults to False.
+   */
   public replaceConfig(configType: string, newConfig: string, reloadApp?: boolean) {
     localStorage.setItem(configType, newConfig);
     if (reloadApp) {
