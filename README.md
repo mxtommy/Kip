@@ -15,20 +15,21 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 ## User Experience
 ### Built-in Theme Sample
   Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
-  
+
   Modern Dark Theme
   ![Modern Dark Theme](./KipSample-1-1024x488.png)
   
   SignalK Inspired Theme
-   ![SignalK Inspired Theme](./KipSample-2-1024x488.png)
+  ![SignalK Inspired Theme](./KipSample-2-1024x488.png)
   
   Light Blue Theme
-   ![Light Blue Theme](./KipSample-3-1024x488.png)
+  ![Light Blue Theme](./KipSample-3-1024x488.png)
 
 ### Accessible Night Mode
-<p align="center">
-  <img src="./KipNightMode-1024x488.png" height="488" width="1024">
-</p>
+  Switch to night mode with a quick access button. Look dark here but at night...perfect!
+  
+  ![Light Blue Theme](./KipNightMode-1024x488.png)
+
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
