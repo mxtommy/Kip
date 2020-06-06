@@ -12,6 +12,13 @@ interface pathRegistration {
 }
 
 
+export interface updateStatistics {
+  currentSecond: number; // number up updates in the last second
+  secondsUpdates: number[]; // number of updates receieved for each of the last 60 seconds
+  minutesUpdates: number[]; // number of updates receieved for each of the last 60 minutes
+
+}
+
 @Injectable()
 export class SignalKService {
 
@@ -24,11 +31,53 @@ export class SignalKService {
   // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
 
-  constructor() { }
+  // Performance stats
+  updateStatistics: updateStatistics = {
+    currentSecond: 0,
+    secondsUpdates: [],
+    minutesUpdates:  [],
+  }
+  secondsUpdatesBehaviorSubject: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
+  minutesUpdatesBehaviorSubject: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
+
+
+  constructor() { 
+    //every second update the stats for seconds array
+    setInterval(() => {
+      
+      // if seconds is more than 60 long, remove item
+      if (this.updateStatistics.secondsUpdates.length >= 60) {
+        this.updateStatistics.secondsUpdates.shift() //removes first item
+      }
+      this.updateStatistics.secondsUpdates.push(this.updateStatistics.currentSecond);
+      this.updateStatistics.currentSecond = 0;
+      this.secondsUpdatesBehaviorSubject.next(this.updateStatistics.secondsUpdates);
+    }, 1000);
+
+    // every minute update status for minute array
+    setInterval(() => {
+      
+      // if seconds is more than 60 long, remove item
+      if (this.updateStatistics.minutesUpdates.length >= 60) {
+        this.updateStatistics.minutesUpdates.shift() //removes first item
+      }
+      this.updateStatistics.minutesUpdates.push(this.updateStatistics.secondsUpdates.reduce((a, b) => a + b, 0)); //sums the second array
+      this.minutesUpdatesBehaviorSubject.next(this.updateStatistics.minutesUpdates)
+
+    }, 60000);
+
+  }
+
+  getupdateStatsSecond() {
+    return this.secondsUpdatesBehaviorSubject.asObservable();
+  }
+
+  getupdateStatMinute() {
+    return this.minutesUpdatesBehaviorSubject.asObservable();
+  }
 
   resetSignalKData() {
     this.paths = [];
-    //this.pathRegister = []; //why empty path register? That's what our widgets want...
     this.selfurn = 'self';
   }
 
@@ -99,6 +148,7 @@ export class SignalKService {
   }
 
   updatePathData(path: string, source: string, timestamp: number, value: any) {
+    this.updateStatistics.currentSecond++;
     // convert the selfURN to "self"
     let pathSelf: string = path.replace(this.selfurn, 'self');
     // update existing if exists.
