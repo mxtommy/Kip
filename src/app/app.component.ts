@@ -33,7 +33,7 @@ export class AppComponent implements OnInit, OnDestroy {
   screenfull: Screenfull;
 
   themeName: string;
-  themeClass: string = 'default-light fullheight';
+  themeClass: string = 'modern-dark fullheight';
   themeNameSub: Subscription;
 
   isNightMode: boolean = false;

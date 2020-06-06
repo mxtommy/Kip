@@ -1,0 +1,39 @@
+@import '~@angular/material/theming';
+
+@mixin modal-path-selector-theme($theme) {
+
+  $themeForeground: map-get($theme, foreground);
+
+    .pathMetaDescription {
+      font: small-caption;
+      color: mat-color($themeForeground, disabled-text);
+  }
+
+}
+
+.pathGroup {
+  display: inline-block;
+  width: calc(100%);
+}
+
+.pathGroupFields {
+  display: inline-block;
+  padding-left: 15px;
+  width: calc(100% - 30px);
+}
+
+.pathField {
+  display: inline-block;
+  width: 100%;
+}
+
+.sourceField {
+  display: inline-block;
+  width: calc(50% - 15px);
+  padding-right: 30px;
+}
+
+.unitField {
+  display: inline-block;
+  width: calc(50% - 15px);
+}

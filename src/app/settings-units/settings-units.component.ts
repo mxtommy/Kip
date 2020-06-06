@@ -21,13 +21,13 @@ export class SettingsUnitsComponent implements OnInit {
 
   constructor(
     private UnitsService: UnitsService,
-    private AppSettingsService: AppSettingsService,
-    private NotificationsService: NotificationsService,
+    private appSettingsService: AppSettingsService,
+    private notificationsService: NotificationsService,
     ) { }
 
   ngOnInit() {
 
-    this.defaultUnits = this.AppSettingsService.getDefaultUnits();
+    this.defaultUnits = this.appSettingsService.getDefaultUnits();
 
     //format unit group data a bit better for consumption in template
     let unitGroupsRaw = this.UnitsService.getConversions();
@@ -55,8 +55,8 @@ export class SettingsUnitsComponent implements OnInit {
   }
 
   submitConfig() {
-    this.AppSettingsService.setDefaultUnits(this.formUnitMaster.value);
-    this.NotificationsService.sendSnackbarNotification("Saved Default Units", 5000);
+    this.appSettingsService.setDefaultUnits(this.formUnitMaster.value);
+    this.notificationsService.sendSnackbarNotification("Default units configuration saved", 5000);
   }
 
 }

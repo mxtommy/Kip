@@ -10,48 +10,55 @@ import { UnitsService } from '../units.service';
 
 
 const defaultConfig: IWidgetConfig = {
+  filterSelfPaths: true,
+  useMetadata: true,
+  useZone: false,
   paths: {
     "headingPath": {
       description: "Heading",
       path: 'self.navigation.courseOverGroundTrue',
       source: 'default',
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "deg"
     },
     "trueWindAngle": {
       description: "True Wind Angle",
       path: 'self.environment.wind.angleTrueWater',
       source: 'default',
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "deg"
     },
     "trueWindSpeed": {
       description: "True Wind Speed",
       path: 'self.environment.wind.speedTrue',
       source: 'default',
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "knots"
     },
     "appWindAngle": {
       description: "Apparent Wind Angle",
       path: 'self.environment.wind.angleApparent',
       source: 'default',
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "deg"
     },
     "appWindSpeed": {
       description: "Apparent Wind Speed",
       path: 'self.environment.wind.speedApparent',
       source: 'default',
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "knots"
     },
   },
-  units: {
-    "trueWindSpeed": "knots",
-    "appWindSpeed": "knots"
-  },
-  filterSelfPaths: true,
   windSectorEnable: true,
   windSectorWindowSeconds: 10,
   laylineEnable: true,
   laylineAngle: 35,
-
 };
 
 
@@ -182,7 +189,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
     this.appWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['appWindSpeed'].path, this.config.paths['appWindSpeed'].source).subscribe(
       newValue => {
-        this.appWindSpeed = this.UnitsService.convertUnit(this.config.units['appWindSpeed'], newValue);
+        this.appWindSpeed = this.UnitsService.convertUnit(this.config.paths['appWindSpeed'].convertUnitTo, newValue);
       }
     );
   }
@@ -228,7 +235,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
     this.trueWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['trueWindSpeed'].path, this.config.paths['trueWindSpeed'].source).subscribe(
       newValue => {
-        this.trueWindSpeed = this.UnitsService.convertUnit(this.config.units['trueWindSpeed'], newValue);
+        this.trueWindSpeed = this.UnitsService.convertUnit(this.config.paths['trueWindSpeed'].convertUnitTo, newValue);
       }
     );
   }

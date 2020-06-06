@@ -14,73 +14,80 @@ const defaultConfig: IWidgetConfig = {
   displayName: 'N2k Autopilot',
   filterSelfPaths: true,
   useMetadata: false,
-  useZones: false,
+  useZone: false,
   paths: {
     "apState": {
       description: "Autopilot State",
       path: 'self.steering.autopilot.state',
       source: 'default',
       pathType: "string",
+      isPathConfigurable: false,
+      convertUnitTo: "",
     },
     "apTargetHeadingMag": {
       description: "Autopilot Target Heading Mag",
       path: 'self.steering.autopilot.target.headingMagnetic',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
     "apTargetWindAngleApp": {
       description: "Autopilot Target Wind Angle Apparent",
       path: 'self.steering.autopilot.target.windAngleApparent',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
     "apNotifications": {
       description: "Autopilot Notifications",
-      path: 'self.notifications.autopilot.*',
+      path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* type subscription paths in sk service and widget config modal
       source: 'default',
       pathType: "string",
+      convertUnitTo: "",
+      isPathConfigurable: false,
     },
     "headingMag": {
       description: "Heading Magnetic",
       path: 'self.navigation.headingMagnetic',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
     "headingTrue": {
       description: "Heading True",
       path: 'self.navigation.headingTrue',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
     "windAngleApparent": {
       description: "Wind Angle Apparent",
       path: 'self.environment.wind.angleApparent',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
     "windAngleTrueWater": {
       description: "Wind Angle True Water",
       path: 'self.environment.wind.angleTrueWater',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
     "rudderAngle": {
       description: "Rudder Angle",
       path: 'self.steering.rudderAngle',
       source: 'default',
       pathType: "number",
+      convertUnitTo: "deg",
+      isPathConfigurable: true,
     },
-  },
-  units: {
-    "apState": "unitless",
-    "apTargetHeadingMag": "deg",
-    "apTargetWindAngleApp": "deg",
-    "apNotifications": "unitless",
-    "headingMag": "deg",
-    "headingTrue": "deg",
-    "windAngleApparent": "deg",
-    "windAngleTrueWater": "deg",
-    "rudderAngle": "deg",
   },
   usage: {
     "headingMag": ['wind', 'route', 'auto', 'standby'],
@@ -94,8 +101,6 @@ const defaultConfig: IWidgetConfig = {
     "windAngleApparent": 'AWA',
     "windAngleTrueWater": 'TWA',
   },
-
-  // filterSelfPaths: true,     // removed option. We never want to operation other vessel's AP!!!
   barColor: 'accent',     // theme palette to select
   autoStart: false,
 };
@@ -227,15 +232,13 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
-    this.demoMode(); return; // demo mode for troubleshooting
+    // this.demoMode(); // demo mode for troubleshooting
   }
 
   demoMode() {
 
     // this.setNotificationMessage('{"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift"}}');
   }
-
-
 
   ngOnDestroy() {
     this.stopAllSubscriptions();
@@ -277,7 +280,11 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   unsubscribeAPNotification() {
-    this.skApNotificationSub.unsubscribe();
+    if (this.skApNotificationSub !== null) {
+      this.skApNotificationSub.unsubscribe();
+      this.skApNotificationSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apNotifications'].path);
+    }
   }
 
   subscribeSKRequest() {
@@ -289,7 +296,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   unsubscribeSKRequest() {
-    this.skRequestSub.unsubscribe();
+    if (this.skRequestSub !== null) {
+      this.skRequestSub.unsubscribe();
+      this.skRequestSub = null;
+    }
   }
 
   subscribeAPTargetAppWind() {
@@ -325,7 +335,11 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   unsubscribeAPState() {
+    if (this.apStateSub !== null) {
       this.apStateSub.unsubscribe();
+      this.apStateSub = null;
+      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apState'].path);
+    }
   }
 
   subscribeHeading() {

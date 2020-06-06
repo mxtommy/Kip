@@ -31,12 +31,12 @@ export class LayoutSplitsService {
   splitSetObs: Array<ISplitSetObs> = [];
   rootUUIDs: Array<string> = [];
   activeRoot: BehaviorSubject<string> = new BehaviorSubject<string>(null);
-  
+
   constructor(
     private AppSettingsService: AppSettingsService,
     private WidgetManagerService: WidgetManagerService,
-    private router: Router) {  
-    this.splitSets = this.AppSettingsService.getSplitSets(); 
+    private router: Router) {
+    this.splitSets = this.AppSettingsService.getSplitSets();
     // prepare subs
     for (let i=0; i<this.splitSets.length; i++) {
       this.splitSetObs.push({uuid: this.splitSets[i].uuid, observable: new BehaviorSubject(this.splitSets[i])} );
@@ -56,7 +56,7 @@ export class LayoutSplitsService {
   getActiveRootSub() {
     return this.activeRoot.asObservable();
   }
-  
+
   setActiveRootIndex(index: number) {
     if (this.rootUUIDs[index]) {
       this.activeRoot.next(this.rootUUIDs[index]);
@@ -67,19 +67,27 @@ export class LayoutSplitsService {
 
   nextRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
-    if (currentIndex >= this.rootUUIDs.length - 1) {
+    if (currentIndex == -1) {
       this.router.navigate(['/page', 0]);
-    } else {
+    } else if (this.router.url != "/settings") {
       this.router.navigate(['/page', currentIndex + 1]);
+    } else {
+      this.router.navigate(['/page', currentIndex]);
     }
   }
 
   previousRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
-    if (currentIndex == 0) {
-      this.router.navigate(['/page', this.rootUUIDs.length - 1]); // going down from 0, go to max
+    if (currentIndex == -1) {
+      this.router.navigate(['/page', 0]);
+    } else if (this.router.url != "/settings") {
+      if (currentIndex == 0) {
+        this.router.navigate(['/page', this.rootUUIDs.length - 1]);
+      } else {
+        this.router.navigate(['/page', currentIndex - 1]);
+      }
     } else {
-      this.router.navigate(['/page', currentIndex - 1]);
+      this.router.navigate(['/page', currentIndex]);
     }
   }
 
@@ -95,7 +103,7 @@ export class LayoutSplitsService {
     return this.splitSets[splitIndex];
   }
 
-   //should only ever be called when changing directions. widgetUUID of area we're splitting 
+   //should only ever be called when changing directions. widgetUUID of area we're splitting
    // becomes first area of new split
   newSplit(parentUUID: string, direction: string, widget1UUID: string, widget2UUID) {
     let uuid = this.newUuid();
@@ -122,7 +130,7 @@ export class LayoutSplitsService {
   }
 
   newRootSplit() {
-    //create new root split //TODO, need to update route.
+    //create new root split
     let uuid = this.newUuid();
     let newWidget = this.WidgetManagerService.newWidget();
     let newRootSplit: ISplitSet = {
@@ -133,7 +141,7 @@ export class LayoutSplitsService {
     this.splitSets.push(newRootSplit);
 
     this.splitSetObs.push({uuid: uuid, observable: new BehaviorSubject(newRootSplit)});
-    
+
     this.rootUUIDs.push(uuid);
     this.saveRootUUIDs();
 
@@ -143,17 +151,17 @@ export class LayoutSplitsService {
 
   splitArea(splitSetUUID: string, areaUUID: string, direction: string) {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }    
+    if (splitIndex < 0) { return null; }
     let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(
                 area => area.uuid == areaUUID
             );
-    if (areaIndex < 0) { return; } // not found....   
-    
+    if (areaIndex < 0) { return; } // not found....
+
     // get current size so we can split it in two
     let currentSize = this.splitSets[splitIndex].splitAreas[areaIndex].size;
     let area1Size = currentSize / 2;
     let area2Size = currentSize - area1Size;
-    
+
     let newWidgetUUID = this.WidgetManagerService.newWidget();
     let newArea = {
         uuid: newWidgetUUID,
@@ -164,12 +172,12 @@ export class LayoutSplitsService {
     // test currect direction. If we're splitting in same direction, we just add another
     // area. If we're splitting in other direction, we need a new splitSet...
     if (this.splitSets[splitIndex].direction == direction) {
-    
+
       // same direction, add new area after specified area
-                
+
       this.splitSets[splitIndex].splitAreas[areaIndex].size = area1Size;
       this.splitSets[splitIndex].splitAreas.splice(areaIndex+1, 0, newArea);
-        
+
     } else {
       let newSplitUUID = this.newSplit(splitSetUUID, direction, areaUUID, newWidgetUUID);
       this.splitSets[splitIndex].splitAreas[areaIndex].uuid = newSplitUUID;
@@ -180,10 +188,10 @@ export class LayoutSplitsService {
 
   updateSplitSizes(splitSetUUID: string, sizesArray: Array<number>) {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }   
+    if (splitIndex < 0) { return null; }
     for (let i=0; i < sizesArray.length; i++) {
       this.splitSets[splitIndex].splitAreas[i].size = sizesArray[i];
-    }  
+    }
     this.updateSplit(splitSetUUID);
   }
 
@@ -191,7 +199,7 @@ export class LayoutSplitsService {
   deleteArea(splitSetUUID, areaUUID) {
 
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }   
+    if (splitIndex < 0) { return null; }
     // if num of areas in split > 1, delete the area from the splitset.
     // delete widget too! :P
     if (this.splitSets[splitIndex].splitAreas.length > 1) {
@@ -199,12 +207,12 @@ export class LayoutSplitsService {
       this.WidgetManagerService.deleteWidget(areaUUID);
 
       //delete Area
-      let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(w => w.uuid == areaUUID)    
+      let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(w => w.uuid == areaUUID)
       if (areaIndex < 0) { return null; } // not found?
       //delete area
       this.splitSets[splitIndex].splitAreas.splice(areaIndex,1);
       this.updateSplit(splitSetUUID);
-      
+
     } else {
       // We're the last area in the splitset, so delete the whole splitset
       this.WidgetManagerService.deleteWidget(areaUUID);
@@ -227,7 +235,7 @@ export class LayoutSplitsService {
           this.newRootSplit();
           this.setActiveRootIndex(0);
         }
-       
+
         this.nextRoot();
       } else {
         // we're not the root, so find parent split and clear there.
@@ -235,24 +243,24 @@ export class LayoutSplitsService {
         // find parent split,
         let parentIndex = this.splitSets.findIndex( sSet => sSet.uuid == this.splitSets[splitIndex].parentUUID);
         let parentUUID = this.splitSets[parentIndex].uuid;
-        
+
         //delete this splitset...
         this.splitSets.splice(splitIndex, 1);
         // we don't delete the sub, otherwise might get areas
-        
+
         this.deleteArea(parentUUID, splitSetUUID);
         }
 
 
     }
-    
 
-    
+
+
   }
 
   updateSplit(splitSetUUID: string) {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }    
+    if (splitIndex < 0) { return null; }
 
     let subIndex = this.splitSetObs.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (subIndex < 0) { return null; }

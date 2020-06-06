@@ -11,3 +11,14 @@
 .mat-radio-button ~ .mat-radio-button {
   margin-left: 16px;
 }
+
+.minField {
+  display: inline-block;
+  width: calc(50% - 15px);
+  padding-right: 30px;
+}
+
+.maxField {
+  display: inline-block;
+  width: calc(50% - 15px);
+}

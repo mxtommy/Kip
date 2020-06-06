@@ -61,7 +61,7 @@
 
 <mat-menu #themesMenu="matMenu" xPosition="before">
   <button mat-menu-item (click)="setTheme('default-light')">
-    <span><i *ngIf="themeName == 'default-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Default</span>
+    <span><i *ngIf="themeName == 'default-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Light Blue</span>
       <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
   <button mat-menu-item (click)="setTheme('signalk-light')">

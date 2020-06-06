@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
-import { SignalKService, pathObject } from '../signalk.service';
+import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
@@ -11,19 +11,19 @@ import { UnitsService } from '../units.service';
 
 const defaultConfig: IWidgetConfig = {
   displayName: null,
+  filterSelfPaths: true,
+  useMetadata: true,
+  useZone: false,
   paths: {
     "gaugePath": {
       description: "Numeric Data",
       path: null,
       source: null,
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "unitless"
     }
   },
-  units: {
-    "gaugePath": "unitless"
-  },
-  filterSelfPaths: true,
-
   gaugeType: 'linear',
   barGraph: false,    // if linear/radial, is it digital?
   radialSize: 'full',
@@ -84,7 +84,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.config.units['gaugePath'], newValue);
+        this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue);
       }
     );
   }

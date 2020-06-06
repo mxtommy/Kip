@@ -1,10 +1,64 @@
-
-
-export const DemoConfig = {
-  "configVersion": 4,
+// Demo Mode config settings file
+export const DemoAppConfig = {
+  "configVersion": 5,
   "signalKUrl": "http://demo.signalk.org",
   "signalKToken": null,
-  "themeName": "default-light",
+  "unlockStatus": false,
+  "dataSets": [
+    {
+      "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
+      "path": "self.environment.wind.speedTrue",
+      "signalKSource": "default",
+      "updateTimer": 1,
+      "dataPoints": 15
+    }
+  ],
+  "unitDefaults": {
+    "Unitless": 'unitless',
+    "Speed": 'knots',
+    "Flow": 'l/h',
+    "Temperature": 'celsius',
+    "Length": 'm',
+    "Volume": 'liter',
+    "Current": 'A',
+    "Potential": 'V',
+    "Charge": 'C',
+    "Power": 'W',
+    "Energy": 'J',
+    "Pressure": 'mmHg',
+    "Density": 'kg/m3',
+    "Time": 'Hours',
+    "Angular Velocity": 'deg/min',
+    "Angle": 'deg',
+    "Frequency": 'Hz',
+    "Ratio": 'ratio'
+  },
+  "notificationConfig": {
+    "disableNotifications": false,
+    "menuGrouping": true,
+    "security": {
+      "disableSecurity": true,
+    },
+    "devices": {
+      "disableDevices": false,
+      "showNormalState": false,
+    },
+    "sound": {
+      "disableSound": false,
+      "muteNormal": false,
+      "muteWarning": false,
+      "muteAlert": false,
+      "muteAlarm": false,
+      "muteEmergency": false,
+    },
+  }
+}
+
+export const DemoThemeConfig = {
+  "themeName": "modern-dark"
+  }
+
+export const DemoWidgetConfig = {
   "widgets": [
     {
       "uuid": "7298b3be-232f-48bf-9b3d-3b445131a908",
@@ -15,17 +69,16 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.environment.depth.belowTransducer",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "m"
           }
         },
-        "units": {
-          "numericPath": "feet"
-        },
-        "displayName": "Depth Feet",
+        "displayName": "Depth",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
-        "showMin": true,
+        "useZone": false,
+        "showMin": false,
         "showMax": false,
         "numDecimal": 1,
         "numInt": 1
@@ -40,40 +93,46 @@ export const DemoConfig = {
             "description": "Heading",
             "path": "self.navigation.courseOverGroundTrue",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
           },
           "trueWindAngle": {
             "description": "True Wind Angle",
             "path": "self.environment.wind.angleTrueWater",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
           },
           "trueWindSpeed": {
             "description": "True Wind Speed",
             "path": "self.environment.wind.speedTrue",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           },
           "appWindAngle": {
             "description": "Apparent Wind Angle",
             "path": "self.environment.wind.angleApparent",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
           },
           "appWindSpeed": {
             "description": "Apparent Wind Speed",
             "path": "self.environment.wind.speedApparent",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "trueWindSpeed": "knots",
-          "appWindSpeed": "knots"
         },
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone": false,
         "windSectorEnable": true,
         "windSectorWindowSeconds": 10,
         "laylineEnable": true,
@@ -82,60 +141,57 @@ export const DemoConfig = {
     },
     {
       "uuid": "912b86e4-e068-49e9-9f75-a2292d772578",
-      "type": "WidgetGaugeComponent",
+      "type": "WidgetGaugeNgRadialComponent",
       "config": {
+        "displayName": "SOG",
+        "filterSelfPaths": true,
+        "useMetadata": true,
+        "useZone": false,
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",
             "path": "self.navigation.speedOverGround",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
         },
-        "units": {
-          "gaugePath": "knots"
-        },
-        "displayName": "Speed over ground",
-        "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZones":false,
-        "gaugeType": "radial",
-        "barGraph": false,
-        "radialSize": "full",
+        "gaugeType": "ngRadial",
+        "gaugeTicks": false,
+        "radialSize": "measuring",
         "minValue": 0,
         "maxValue": 10,
-        "rotateFace": false,
-        "backgroundColor": "turned",
-        "frameColor": "tiltedBlack"
+        "numInt": 1,
+        "numDecimal": 1,
+        "barColor": "accent"
       }
     },
     {
       "uuid": "85525ebc-c40c-41e6-8379-05d573a331e1",
-      "type": "WidgetGaugeComponent",
+      "type": "WidgetGaugeNgLinearComponent",
       "config": {
+        "displayName": "Apparent Wind Speed",
+        "filterSelfPaths": true,
+        "useMetadata": true,
+        "useZone": false,
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",
             "path": "self.environment.wind.speedApparent",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
         },
-        "units": {
-          "gaugePath": "knots"
-        },
-        "displayName": "Apparent Wind Speed",
-        "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZones":false,
-        "gaugeType": "linear",
-        "barGraph": true,
-        "radialSize": "full",
+        "gaugeType": "ngLinearHorizontal",
+        "gaugeTicks": true,
         "minValue": 0,
         "maxValue": 30,
-        "rotateFace": false,
-        "backgroundColor": "stainless",
-        "frameColor": "chrome"
+        "numInt": 1,
+        "numDecimal": 1,
+        "barColor": "accent"
       }
     },
     {
@@ -147,17 +203,16 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.navigation.speedThroughWater",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
         },
-        "units": {
-          "numericPath": "knots"
-        },
-        "displayName": "Speed (water)",
+        "displayName": "Speed",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
-        "showMin": false,
+        "useZone": false,
+        "showMin": true,
         "showMax": true,
         "numDecimal": 1,
         "numInt": 1
@@ -172,18 +227,17 @@ export const DemoConfig = {
             "description": "Numeric Data",
             "path": "self.performance.velocityMadeGood",
             "source": "default",
-            "pathType": "number"
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "knots"
           }
-        },
-        "units": {
-          "numericPath": "knots"
         },
         "displayName": "VMG",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
-        "showMin": false,
-        "showMax": false,
+        "useZone": false,
+        "showMin": true,
+        "showMax": true,
         "numDecimal": 1,
         "numInt": 1
       }
@@ -192,13 +246,13 @@ export const DemoConfig = {
       "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
       "type": "WidgetHistorical",
       "config": {
-        "units": {
-          "dataset": "knots"
+        "dataset": {
+          "convertUnitTo": "knots"
         },
         "displayName": "WindSpeed True",
         "filterSelfPaths": true,
         "useMetadata": false,
-        "useZones":false,
+        "useZone": false,
         "dataSetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
         "displayMinMax": false,
@@ -206,18 +260,39 @@ export const DemoConfig = {
         "minValue": null,
         "maxValue": null
       }
-    }
-  ],
-  "unlockStatus": false,
-  "dataSets": [
+    },
     {
-      "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-      "path": "self.environment.wind.speedTrue",
-      "signalKSource": "default",
-      "updateTimer": 1,
-      "dataPoints": 15
+      "uuid": "66eb9453-73a2-4f69-9fc6-ececd3f96ce6",
+      "type": "WidgetGaugeNgRadialComponent",
+      "config": {
+        "displayName": "COG (True)",
+        "filterSelfPaths": true,
+        "useMetadata": true,
+        "useZone": false,
+        "paths": {
+          "gaugePath": {
+            "description": "Numeric Data",
+            "path": "self.navigation.courseOverGroundTrue",
+            "source": "default",
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg"
+          }
+        },
+        "gaugeType": "ngRadial",
+        "gaugeTicks": false,
+        "radialSize": "baseplateCompass",
+        "minValue": 0,
+        "maxValue": 360,
+        "numInt": 1,
+        "numDecimal": 0,
+        "barColor": "accent"
+      }
     }
-  ],
+  ]
+}
+
+export const DemoLayoutConfig = {
   "splitSets": [
     {
       "uuid": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
@@ -226,17 +301,17 @@ export const DemoConfig = {
         {
           "uuid": "d107e54d-2db5-4abf-aba7-b96ce19f5abd",
           "type": "splitSet",
-          "size": 27.406021225904265
+          "size": 30.079353380503136
         },
         {
           "uuid": "9249373f-7aa4-4673-8004-3e4e900e0b3d",
           "type": "splitSet",
-          "size": 45.296959997548555
+          "size": 38.1436713836478
         },
         {
           "uuid": "d5be7f74-28c0-484c-a0cd-e623eb5db837",
           "type": "splitSet",
-          "size": 27.297018776547173
+          "size": 31.776975235849058
         }
       ]
     },
@@ -248,12 +323,12 @@ export const DemoConfig = {
         {
           "uuid": "7298b3be-232f-48bf-9b3d-3b433131a908",
           "type": "widget",
-          "size": 77.30434782608697
+          "size": 71.69133771929825
         },
         {
           "uuid": "85525ebc-c40c-41e6-8379-05d573a331e1",
           "type": "widget",
-          "size": 22.69565217391304
+          "size": 28.308662280701753
         }
       ]
     },
@@ -295,48 +370,21 @@ export const DemoConfig = {
           "size": 25
         }
       ]
+    },
+    {
+      "uuid": "d735c561-d413-4f7e-93d9-2c494e16184e",
+      "direction": "horizontal",
+      "splitAreas": [
+        {
+          "uuid": "66eb9453-73a2-4f69-9fc6-ececd3f96ce6",
+          "type": "widget",
+          "size": 100
+        }
+      ]
     }
   ],
   "rootSplits": [
-    "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  ],
-  "unitDefaults": {
-    "Unitless": 'unitless',
-    "Speed": 'knots',
-    "Flow": 'l/h',
-    "Temperature": 'celsius',
-    "Length": 'm',
-    "Volume": 'liter',
-    "Current": 'A',
-    "Potential": 'V',
-    "Charge": 'C',
-    "Power": 'W',
-    "Energy": 'J',
-    "Pressure": 'mmHg',
-    "Density": 'kg/m3',
-    "Time": 'Hours',
-    "Angular Velocity": 'deg/min',
-    "Angle": 'deg',
-    "Frequency": 'Hz',
-    "Ratio": 'ratio'
-  },
-  "notificationConfig": {
-    "disableNotifications": false,
-    "menuGrouping": true,
-    "security": {
-      "disableSecurity": true,
-    },
-    "devices": {
-      "disableDevices": false,
-      "showNormalState": false,
-    },
-    "sound": {
-      "disableSound": false,
-      "muteNormal": false,
-      "muteWarning": false,
-      "muteAlert": false,
-      "muteAlarm": false,
-      "muteEmergency": false,
-    },
-  }
+    "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
+    "d735c561-d413-4f7e-93d9-2c494e16184e"
+  ]
 }

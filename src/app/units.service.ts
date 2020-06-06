@@ -44,7 +44,7 @@ export class UnitsService {
    */
   conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
-      { measure: 'unitless', description: "No predetermined unit, or string value" }
+      { measure: 'unitless', description: "As-Is numeric value" }
     ] },
     { group: 'Speed', units: [
       { measure: 'knots', description: "Knots - Nautical miles per hour"},
@@ -207,6 +207,7 @@ this.conversionList[group].push(unit);
 //  angle
     "rad": function(v) { return v; },
     "deg": Qty.swiftConverter('rad', 'deg'),
+    "grad": Qty.swiftConverter('rad', 'grad'),
 //   ratio
     'ratio': function(v) { return v * 100 },
 // lat/lon
@@ -245,7 +246,6 @@ this.conversionList[group].push(unit);
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
   }
-
 
   /**
    * Obtain a list of possible Kip value type conversions for a given path. ie,.: Speed conversion group

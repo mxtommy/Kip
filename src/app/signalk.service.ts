@@ -1,38 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
+import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import * as compareVersions from 'compare-versions';
-
-
-export enum SIUnits {
-  'V',
-  'm/s',
-  'K'
-}
-
-
-
-export class pathObject {
-  path: string;
-  defaultSource: string; // default source
-  sources: {
-    [sourceName: string]: { // per source data
-      timestamp: number;
-      value: any;
-    }
-  }
-  meta?: {
-    label?: string;
-    abbreviation?: string;
-    units?: string;
-    zones?: {
-      state: string;
-      lower?: number;
-      upper?: number;
-      message?: string;
-    }[];
-  }
-  type: string;
-}
 
 
 interface pathRegistration {
@@ -42,10 +11,6 @@ interface pathRegistration {
   observable: BehaviorSubject<any>;
 }
 
-export interface pathInfo {
-  path: string;
-
-}
 
 @Injectable()
 export class SignalKService {
@@ -55,7 +20,7 @@ export class SignalKService {
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received SignalK Data and used to source Observers
-  paths: pathObject[] = [];
+  paths: IPathObject[] = [];
   // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
 
@@ -196,7 +161,7 @@ export class SignalKService {
     }
   }
 
-  setMeta(path: string, meta) {
+  setMeta(path: string, meta) { //TODO(David): Look at Meta and maybe build Zones
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex > 0) {
@@ -204,24 +169,62 @@ export class SignalKService {
     }
   }
 
-  getPathsByType(requestedType: string) {
+  /**
+   * Returns a list of all known SignalK paths of the specified type (sting or numeric)
+   * @param valueType data type: string or numeric
+   * @param selfOnly if true, returns only paths the begins with "self". If false or not specified, everything known
+   * @return array of signalK path string
+   */
+  getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let paths: string[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
-       if (this.paths[i].type == requestedType) {
-        paths.push(this.paths[i].path);
+       if (this.paths[i].type == valueType) {
+         if (selfOnly) {
+          if (this.paths[i].path.startsWith("self")) {
+            paths.push(this.paths[i].path);
+          }
+         } else {
+          paths.push(this.paths[i].path);
+         }
       }
     }
     return paths; // copy it....
   }
 
-  getPathObject(path): pathObject {
+
+  getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathAndMetaObjects[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
+    let pathsMeta: IPathAndMetaObjects[] = [];
+    for (let i = 0; i < this.paths.length;  i++) {
+       if (this.paths[i].type == valueType) {
+         if (selfOnly) {
+          if (this.paths[i].path.startsWith("self")) {
+            let p:IPathAndMetaObjects = {
+              path: this.paths[i].path,
+              meta: this.paths[i].meta,
+            };
+            pathsMeta.push(p);
+          }
+         } else {
+          let p:IPathAndMetaObjects = {
+            path: this.paths[i].path,
+            meta: this.paths[i].meta,
+          };
+          pathsMeta.push(p);
+         }
+      }
+    }
+    return pathsMeta; // copy it....
+  }
+
+  getPathObject(path): IPathObject {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
-    return this.paths[pathIndex];
+    let foundPathObject: IPathObject = JSON.parse(JSON.stringify(this.paths[pathIndex])); // so we don't return the object reference and hamper garbage collection/leak memory
+    return foundPathObject;
 
   }
 
-  getPathUnitType(path: string): string {
+  getPathUnitType(path: string): string { //TODO(David): Look at Unit Path Type
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {

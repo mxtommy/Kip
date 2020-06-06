@@ -1,7 +1,7 @@
 import { IUnitDefaults } from './units.service';
 
 
-export const initialDefaultUnits: IUnitDefaults = {
+export const DefaultUnitsConfig: IUnitDefaults = {
   "Unitless": 'unitless',
   "Speed": 'knots',
   "Flow": 'l/h',

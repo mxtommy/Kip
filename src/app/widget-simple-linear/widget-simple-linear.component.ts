@@ -10,18 +10,19 @@ import { AppSettingsService } from '../app-settings.service';
 
 const defaultConfig: IWidgetConfig = {
   displayName: "Display Name",
+  filterSelfPaths: true,
+  useMetadata: true,
+  useZone: false,
   paths: {
     "gaugePath": {
       description: "Numeric Data",
       path: null,
       source: null,
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "v"
     }
   },
-  units: {
-    "gaugePath": "V"
-  },
-  filterSelfPaths: true,
   minValue: 0,
   maxValue: 14.4,
   numInt: 1,
@@ -111,9 +112,9 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
 
     // set Units label sting based on gauge config
     if (this.config.gaugeUnitLabelFormat == "abr") {
-      this.unitsLabel = this.config.units['gaugePath'].substr(0,1);
+      this.unitsLabel = this.config.paths['gaugePath'].convertUnitTo.substr(0,1);
     } else {
-      this.unitsLabel = this.config.units['gaugePath'];
+      this.unitsLabel = this.config.paths['gaugePath'].convertUnitTo;
     }
 
     if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
@@ -123,7 +124,7 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
         if (newValue == null) {return}
 
         // convert to unit and format value using widget settings
-        let value  = this.unitsService.convertUnit(this.config.units['gaugePath'], newValue).toFixed(this.config.numDecimal);
+        let value  = this.unitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue).toFixed(this.config.numDecimal);
 
         // Format display value using widget settings
         let displayValue = value;

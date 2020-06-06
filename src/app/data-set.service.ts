@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
-
 import { Subscription ,  Observable ,  BehaviorSubject, interval } from 'rxjs';
-
-
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
-
 
 
 export interface dataPoint {
@@ -56,7 +52,7 @@ export class DataSetService {
   constructor(
     private AppSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
-  ) { 
+  ) {
       this.dataSets = AppSettingsService.getDataSets();
   }
 
@@ -80,7 +76,7 @@ export class DataSetService {
     if (registerIndex >= 0) { // exists
       return this.dataSetRegister[registerIndex].observable.asObservable();
     }
-    
+
 
     //find if we already have a value for this dataSet to return.
     let currentDataSet: dataPoint[];
@@ -142,28 +138,28 @@ export class DataSetService {
       dataCache: null,
     });
     dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
-    
+
 
     // initialize data
     this.dataSetSub[dataSubIndex].data = [];
     //for (let i=0; i<this.dataSets[dataIndex].dataPoints; i++) {
     //    this.dataSetSub[dataSubIndex].data.push(null);
     //}
-    
+
     // inistialize dataCache
     this.dataSetSub[dataSubIndex].dataCache = {
         runningTotal: 0,
         numberOfPoints: 0,
         minValue: null,
-        maxValue: null           
+        maxValue: null
     }
-    
+
     //Subscribe to path data
     this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path, this.dataSets[dataIndex].signalKSource).subscribe(
       newValue => {
         this.updateDataCache(uuid, newValue);
     });
-    
+
     // start update timer
     this.dataSetSub[dataSubIndex].updateTimerSub = interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
         this.aggregateDataCache(uuid);
@@ -247,8 +243,8 @@ export class DataSetService {
           runningTotal: 0,
           numberOfPoints: 0,
           minValue: null,
-          maxValue: null           
-      }       
+          maxValue: null
+      }
     // ... push to registered graphs...
 
     for (let i = 0; i < this.dataSetRegister.length;  i++) {
@@ -273,5 +269,5 @@ export class DataSetService {
     }
   }
 
-  
+
 }

@@ -1,49 +1,102 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { SignalKService, pathObject } from '../signalk.service';
+import { SignalKService } from '../signalk.service';
+import { IPathAndMetaObjects } from "../signalk-interfaces";
+import { UnitsService, IUnitGroup } from '../units.service';
 import { FormGroup } from '@angular/forms';
+
 
 @Component({
   selector: 'modal-path-selector',
   templateUrl: './modal-path-selector.component.html',
-  styleUrls: ['./modal-path-selector.component.css']
+  styleUrls: ['./modal-path-selector.component.scss']
 })
 export class ModalPathSelectorComponent implements OnInit {
-
+  //path control
   @Input() formGroup: FormGroup;
-
   @Input() filterSelfPaths: boolean;
+  @Input() useMetadata: boolean;
+  availablePaths: IPathAndMetaObjects[];
 
-  availablePaths: Array<string> = [];
+  //source control
   availableSources: Array<string>;
 
-  constructor(private SignalKService: SignalKService) { }
+  //unit control
+  unitList: {default?: string, conversions?: IUnitGroup[] };
+  default: string;
+
+  constructor(
+    private signalKService: SignalKService,
+    private unitsService: UnitsService
+    ) { }
 
   ngOnInit() {
-    //populate available choices
-    this.availablePaths = this.SignalKService.getPathsByType(this.formGroup.value.pathType).sort();
+    this.unitList = {};
 
-    //populate sources for this path (or just the current setting if we know nothing about the path)
-    let pathObject = this.SignalKService.getPathObject(this.formGroup.value.path);
-    if (pathObject === null) {
-      this.availableSources = [this.formGroup.value.source];
-    } else {
-      this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    }
-
-    this.detectNewPath();
-  }
-
-  detectNewPath() {
-    this.formGroup.controls.path.valueChanges.subscribe(newValue => {
-      let pathObject = this.SignalKService.getPathObject(newValue);
-      if (pathObject === null) {
-        this.availableSources = ['default'];
-      } else {
-        this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+    //disable formControl if path is empty - a new, not configured widget...
+    if (this.formGroup.value.path == null) {
+      this.formGroup.controls['source'].disable();
+      if (this.formGroup.value.pathType == "number") {
+        this.formGroup.controls['convertUnitTo'].disable();
       }
-      this.formGroup.controls.source.setValue('default');
+    }
+    //populate available paths
+    this.getPaths(this.filterSelfPaths);
+
+    //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
+    this.updateSourcesAndUnits();
+
+    //subscribe to path formControl changes
+    this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
+      this.updateSourcesAndUnits();
+      try {
+        if (pathValue != null && this.formGroup.controls['source'].disabled) {
+          this.formGroup.controls['source'].enable();
+          this.formGroup.controls['source'].patchValue('default');
+        }
+
+        if (this.formGroup.controls['pathType'].value == "number" && this.formGroup.controls['convertUnitTo'].disabled) {
+          this.formGroup.controls['convertUnitTo'].enable();
+        }
+        this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
+      } catch (error) {
+        console.debug(error);
+      }
+    });
+
+    //subscribe to filterSelfPaths formControl changes
+    this.formGroup.parent.parent.controls['filterSelfPaths'].valueChanges.subscribe(val => {
+      this.getPaths(val);
     });
   }
 
+  getPaths(isOnlySef: boolean) {
+    this.availablePaths = this.signalKService.getPathsAndMetaByType(this.formGroup.value.pathType, isOnlySef).sort();
+    // this.availablePaths = this.signalKService.getPathsByType(this.formGroup.value.pathType, OnlySef, true).sort();
+  }
+
+  updateSourcesAndUnits() {
+    if (this.formGroup.controls['path'].value == undefined || this.formGroup.controls['path'].value == null || this.formGroup.controls['path'].value == "") {
+      if (this.formGroup.value.source == undefined || this.formGroup.value.source == null || this.formGroup.value.source == "") {
+        this.availableSources = ['default'];
+      } else {
+        this.availableSources = ['default'].concat([this.formGroup.value.source]);
+      }
+    } else {
+      let pathObject = this.signalKService.getPathObject(this.formGroup.controls['path'].value);
+      if (pathObject != null) {
+        this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+      } else {
+        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL or SignalK server config. We need to disable the fields.
+        try {
+          this.formGroup.controls['source'].disable();
+          this.formGroup.controls['convertUnitTo'].disable();
+        } catch (error) {
+          console.debug(error);
+        }
+
+      }
+    }
+    this.unitList = this.unitsService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+  }
 
 }

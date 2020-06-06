@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AppSettingsService, INotificationConfig } from '../app-settings.service';
+import { NotificationsService } from '../notifications.service';
 
 
 @Component({
@@ -12,6 +13,7 @@ export class SettingsNotificationsComponent implements OnInit {
   notificationConfig: INotificationConfig;
 
   constructor(
+    private notificationsService: NotificationsService,
     private appSettingsService: AppSettingsService,
   ) { }
 
@@ -21,6 +23,7 @@ export class SettingsNotificationsComponent implements OnInit {
 
   saveNotificationsSettings() {
     this.appSettingsService.setNotificationConfig(this.notificationConfig);
+    this.notificationsService.sendSnackbarNotification("Notification configuration saved", 5000);
   }
 
 }

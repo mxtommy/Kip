@@ -58,7 +58,8 @@
         <mat-checkbox [(ngModel)]="notificationConfig.sound.muteEmergency" [ngModelOptions]="{standalone: true}">Disable <b>Emergency Severity</b> notifications audio</mat-checkbox> -->
       </mat-expansion-panel>
     </mat-accordion>
-    <br/>
-    <button mat-raised-button color="accent" (click)='saveNotificationsSettings()'>Save</button>
+    <mat-card-actions align="end">
+      <button mat-raised-button color="accent" (click)='saveNotificationsSettings()'>Save</button>
+    </mat-card-actions>
   </mat-card>
 </form>

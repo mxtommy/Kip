@@ -1,77 +1,84 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Connection Details</mat-card-title>
-    <mat-card-subtitle>Enter the URL and port to your server (ie http://my.server.com:3000), or Request and Clear a server Token.<br>Token is only required to submit commands, such as sending Autopilot direction or mode commands. Token requests must be approved from the server, by a server administrator.</mat-card-subtitle>
-  </mat-card-header>
-  <form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
-    <mat-form-field class="almost-full-width">
+<form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Connection Details</mat-card-title>
+      <mat-card-subtitle>Enter the URL and port to your server (ie http://my.server.com:3000), or Request and Clear a server Token.<br>Token is only required to submit commands, such as sending Autopilot direction or mode commands. Token requests must be approved from the server, by a server administrator.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-form-field class="connectUrlInput">
       <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
       <mat-error>
         Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com"
       </mat-error>
     </mat-form-field>
-    <button type="submit" mat-raised-button color="accent" [disabled]="!signalKForm.form.valid">Update/Reset</button>
-  </form>
-  <br>
-  <table>
-    <tr>
-      <td>
-        API URL:
-      </td>
-      <td>
-        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
-        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
-        {{ signalKConnectionsStatus.endpoint.message }}
-      </td>
-    </tr>
-    <tr>
-      <td>
-        Websocket Status:
-      </td>
-      <td>
-        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
-        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
-        {{ signalKConnectionsStatus.websocket.message }}
-      </td>
-    </tr>
-    <tr>
-      <td>
-        HTTP REST Status:
-      </td>
-      <td>
-        <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
-        <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
-        {{ signalKConnectionsStatus.rest.message }}
-      </td>
-    </tr>
-    <tr>
-      <td>
-        SignalK R/W Token:
-      </td>
-      <td>
-        <div *ngIf="formAuthToken">
-          <i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>
-          {{ formAuthToken | slice : 0 : 15}}...
-          <button mat-button
-            matTooltip="Delete Token"
-            (click)="clearAuth()"
-            >
-              Clear
-          </button>
-        </div>
-
-        <div *ngIf="!formAuthToken">
-          <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
-          <button mat-raised-button color="accent"
-            matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed"
-            (click)="requestAuth()"
-            [disabled]="formSignalKURL.match('demo')"
-            >
-              Request
-          </button>
-        </div>
-
-      </td>
-    </tr>
-  </table>
-</mat-card>
+    <table style="margin-left: 30px;font-size: 12px;">
+      <tr>
+        <td>
+          Version:
+        </td>
+        <td>
+          {{ signalKConnectionsStatus.server.version }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Status:
+        </td>
+        <td>
+          <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
+          <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
+          {{ signalKConnectionsStatus.endpoint.message }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Websocket:
+        </td>
+        <td>
+          <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
+          <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
+          {{ signalKConnectionsStatus.websocket.message }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          REST:
+        </td>
+        <td>
+          <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
+          <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
+          {{ signalKConnectionsStatus.rest.message }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Token:
+        </td>
+        <td>
+          <div *ngIf="formAuthToken">
+            <i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>
+            {{ formAuthToken | slice : 0 : 20}}...
+          </div>
+          <div *ngIf="!formAuthToken">
+            <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <br/>
+    <mat-card-actions align="end">
+      <span *ngIf="formAuthToken">
+        <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="clearAuth()">
+          Delete Token
+        </button>
+      </span>
+      <span *ngIf="!formAuthToken">
+        <button mat-raised-button color="primary" matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed" (click)="requestAuth()" [disabled]="formSignalKURL.match('demo')">
+          Request Token
+        </button>
+      </span>
+      <button mat-raised-button type="submit" color="accent" style="margin-left: 10px;" [disabled]="!signalKForm.form.valid">
+        Connect
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</form>

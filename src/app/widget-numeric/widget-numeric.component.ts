@@ -11,18 +11,19 @@ import { AppSettingsService } from '../app-settings.service';
 
 const defaultConfig: IWidgetConfig = {
   displayName: null,
+  filterSelfPaths: true,
+  useMetadata: true,
+  useZone: false,
   paths: {
     "numericPath": {
       description: "Numeric Data",
       path: null,
       source: null,
       pathType: "number",
+      isPathConfigurable: true,
+      convertUnitTo: "unitless"
     }
   },
-  units: {
-    "numericPath": "unitless"
-  },
-  filterSelfPaths: true,
   showMax: false,
   showMin: false,
   numDecimal: 1,
@@ -216,7 +217,7 @@ unsubscribeTheme(){
 
     if (this.dataValue != null) {
       let converted: number = Number(this.dataValue);
-      converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.dataValue);
+      converted = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.dataValue);
       if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
         valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
       } else {
@@ -274,9 +275,9 @@ unsubscribeTheme(){
   }
 
   drawUnit() {
-    if (this.config.units['numericPath'] == 'unitless') { return; }
-    if (this.config.units['numericPath'].startsWith('lat')) { return; }
-    if (this.config.units['numericPath'].startsWith('lon')) { return; }
+    if (this.config.paths['numericPath'].convertUnitTo == 'unitless') { return; }
+    if (this.config.paths['numericPath'].convertUnitTo.startsWith('lat')) { return; }
+    if (this.config.paths['numericPath'].convertUnitTo.startsWith('lon')) { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
@@ -284,14 +285,14 @@ unsubscribeTheme(){
     var fontSize = 1;
 
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.config.units['numericPath']).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasBGCtx.measureText(this.config.paths['numericPath'].convertUnitTo).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
     this.canvasBGCtx.textAlign = "right";
     this.canvasBGCtx.textBaseline="bottom";
     this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasBGCtx.fillText(this.config.units['numericPath'],this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+    this.canvasBGCtx.fillText(this.config.paths['numericPath'].convertUnitTo,this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
   drawMinMax() {
@@ -302,7 +303,7 @@ unsubscribeTheme(){
 
     if (this.config.showMin) {
       if (this.minValue != null) {
-        let converted: number = this.UnitsService.convertUnit(this.config.units['numericPath'], this.minValue);
+        let converted: number = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.minValue);
         if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Min: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
@@ -315,7 +316,7 @@ unsubscribeTheme(){
     }
     if (this.config.showMax) {
       if (this.maxValue != null) {
-        let converted = this.UnitsService.convertUnit(this.config.units['numericPath'], this.maxValue);
+        let converted = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.maxValue);
         if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
           valueText = valueText + " Max: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
         } else {
