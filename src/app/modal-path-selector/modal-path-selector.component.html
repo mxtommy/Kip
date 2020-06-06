@@ -4,23 +4,32 @@
     <div class="pathGroupFields">
       <mat-form-field class="pathField" appearance="outline" floatLabel="always">
         <mat-label>SignalK Path</mat-label>
-        <mat-select
-            placeholder="Select path"
-            formControlName="path"
-            disableRipple
-            required>
-            <mat-select-trigger>{{formGroup.value.path}}</mat-select-trigger>
-            <mat-option *ngFor="let pathAndMeta of availablePaths" [value]="pathAndMeta.path" style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
-              <ng-container *ngIf="(pathAndMeta.meta != undefined)">
-                <span>{{pathAndMeta.path}}</span>
-                <br>
-                <small class="pathMetaDescription">{{pathAndMeta.meta.description}}</small>
-              </ng-container>
-              <ng-container *ngIf="(pathAndMeta.meta == undefined)">
-                  {{pathAndMeta.path}}
-              </ng-container>
-            </mat-option>
-        </mat-select>
+        <input type="text" matInput
+          placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
+          formControlName="path"
+          required
+          [matAutocomplete]="pathAutoComplete">
+        <button mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].patchValue('')">
+          <span class="fa fa-close"></span>
+        </button>
+        <mat-autocomplete #pathAutoComplete="matAutocomplete">
+          <mat-option *ngFor="let pathAndMeta of filteredPaths | async" [value]="pathAndMeta.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
+            <ng-container *ngIf="(pathAndMeta.meta != undefined)">
+              <span>{{pathAndMeta.path}}</span>
+              <br>
+              <small class="pathMetaDescription">{{pathAndMeta.meta.description}}</small>
+            </ng-container>
+            <ng-container *ngIf="(pathAndMeta.meta == undefined)">
+                {{pathAndMeta.path}}
+            </ng-container>
+          </mat-option>
+        </mat-autocomplete>
+        <mat-error *ngIf="formGroup.controls['path'].hasError('required')">
+          Path <strong>required</strong>
+        </mat-error>
+        <mat-error *ngIf="formGroup.controls['path'].hasError('requireMatch')">
+          Please select an existing path
+        </mat-error>
       </mat-form-field>
       <mat-form-field class="sourceField" appearance="outline" floatLabel="always">
         <mat-label>Data Source</mat-label>

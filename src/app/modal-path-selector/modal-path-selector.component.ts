@@ -1,8 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChange  } from '@angular/core';
 import { SignalKService } from '../signalk.service';
 import { IPathAndMetaObjects } from "../signalk-interfaces";
 import { UnitsService, IUnitGroup } from '../units.service';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, FormControl,Validators } from '@angular/forms';
+import { map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs'
 
 
 @Component({
@@ -10,12 +12,13 @@ import { FormGroup } from '@angular/forms';
   templateUrl: './modal-path-selector.component.html',
   styleUrls: ['./modal-path-selector.component.scss']
 })
-export class ModalPathSelectorComponent implements OnInit {
+export class ModalPathSelectorComponent implements OnInit, OnChanges {
   //path control
   @Input() formGroup: FormGroup;
   @Input() filterSelfPaths: boolean;
   @Input() useMetadata: boolean;
   availablePaths: IPathAndMetaObjects[];
+  filteredPaths: Observable<IPathAndMetaObjects[]> = new Observable;
 
   //source control
   availableSources: Array<string>;
@@ -24,6 +27,17 @@ export class ModalPathSelectorComponent implements OnInit {
   unitList: {default?: string, conversions?: IUnitGroup[] };
   default: string;
 
+  ////require-match validation for path
+  requirePathMatch = (allPathsAndMeta: IPathAndMetaObjects[]) => {
+    return (control: FormControl) => {
+      const selection: any = control.value;
+      if (allPathsAndMeta.some(pm => pm.path === selection)) {
+        return null;
+      }
+      return { requireMatch: true };
+    }
+  }
+
   constructor(
     private signalKService: SignalKService,
     private unitsService: UnitsService
@@ -31,7 +45,6 @@ export class ModalPathSelectorComponent implements OnInit {
 
   ngOnInit() {
     this.unitList = {};
-
     //disable formControl if path is empty - a new, not configured widget...
     if (this.formGroup.value.path == null) {
       this.formGroup.controls['source'].disable();
@@ -45,34 +58,52 @@ export class ModalPathSelectorComponent implements OnInit {
     //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
     this.updateSourcesAndUnits();
 
+    // autocomplete filtering
+    this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(startWith(''), map(value => this.filterPaths(value)))
+
+
+
     //subscribe to path formControl changes
     this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
+
       this.updateSourcesAndUnits();
       try {
-        if (pathValue != null && this.formGroup.controls['source'].disabled) {
+        if (this.formGroup.controls['path'].valid) {
           this.formGroup.controls['source'].enable();
           this.formGroup.controls['source'].patchValue('default');
-        }
-
-        if (this.formGroup.controls['pathType'].value == "number" && this.formGroup.controls['convertUnitTo'].disabled) {
           this.formGroup.controls['convertUnitTo'].enable();
+          this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
+        } else {
+          this.formGroup.controls['source'].disable();
+          this.formGroup.controls['convertUnitTo'].disable();
         }
-        this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
       } catch (error) {
         console.debug(error);
       }
     });
 
-    //subscribe to filterSelfPaths formControl changes
-    this.formGroup.parent.parent.controls['filterSelfPaths'].valueChanges.subscribe(val => {
-      this.getPaths(val);
-    });
   }
+
+  ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
+    //subscribe to filterSelfPaths formControl changes
+    if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
+      this.getPaths(this.filterSelfPaths);
+      this.formGroup.controls['path'].patchValue("");
+    }
+ }
 
   getPaths(isOnlySef: boolean) {
     this.availablePaths = this.signalKService.getPathsAndMetaByType(this.formGroup.value.pathType, isOnlySef).sort();
-    // this.availablePaths = this.signalKService.getPathsByType(this.formGroup.value.pathType, OnlySef, true).sort();
+    // path validator (must be path in available) Need to reset validators when paths change
+    this.formGroup.controls['path'].setValidators([Validators.required, this.requirePathMatch(this.availablePaths)]);
   }
+
+  filterPaths( value: string ): IPathAndMetaObjects[] {
+    const filterValue = value.toLowerCase();
+    return this.availablePaths.filter(pathAndMetaObj => pathAndMetaObj.path.toLowerCase().includes(filterValue)).slice(0,50);
+  }
+  
+
 
   updateSourcesAndUnits() {
     if (this.formGroup.controls['path'].value == undefined || this.formGroup.controls['path'].value == null || this.formGroup.controls['path'].value == "") {

@@ -47,7 +47,7 @@ export class ModalWidgetComponent implements OnInit {
         }
       } else {
       // Handle Primitives - property values
-        if (objectType == "units") {
+        if (objectType == "convertUnitTo") {
           // If we are building units list
           let unitConfig = this.widgetConfig.paths[key];
           if (unitConfig.pathType == "number") {
