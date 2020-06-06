@@ -226,7 +226,9 @@ export class AppSettingsService {
   }
   public setUnlockStatus(value) {
     this.unlockStatus.next(value);
-    this.saveAppConfigToLocalStorage();
+    if (!value) {
+      this.saveLayoutConfigToLocalStorage();
+    }
   }
 
   // Themes
@@ -366,13 +368,13 @@ export class AppSettingsService {
   }
 
   private saveWidgetConfigToLocalStorage() {
-    console.log("Saving Widget config to LocalStorage");
+    console.log("Saving Widgets config to LocalStorage");
     localStorage.setItem('widgetConfig', JSON.stringify(this.buildWidgetStorageObject()));
   }
 
   private saveLayoutConfigToLocalStorage() {
-    console.log("Saving Layout config to LocalStorage");
-    localStorage.setItem('LayoutConfig', JSON.stringify(this.buildLayoutStorageObject()));
+    console.log("Saving Layouts config to LocalStorage");
+    localStorage.setItem('layoutConfig', JSON.stringify(this.buildLayoutStorageObject()));
   }
 
   private saveThemeConfigToLocalStorage() {
