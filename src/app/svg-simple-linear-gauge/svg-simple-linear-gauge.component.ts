@@ -32,7 +32,7 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges {
       }
     }
 
-    // Data Value
+    // Gauge bar value
     if (changes.gaugeValue) {
       if (! changes.gaugeValue.firstChange) {
         // scale value to svg gauge pixel length (195), proportional to gauge min/max set values

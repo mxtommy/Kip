@@ -14,8 +14,7 @@
    id="svg8">
    <defs
      id="defs2">
-    <linearGradient
-       id="gaugeBarGradient">
+    <linearGradient id="gaugeBarGradient">
       <stop
          id="stop849"
          offset="0"
@@ -60,7 +59,7 @@
           y="0"
           ry="0"
           style="mix-blend-mode:normal;fill-opacity:1;stroke-width:0.0864229;"
-          [style.fill]="barColor"/>
+          />
         <rect
           id="GaugeValueGradient"
           transform="scale(-1,1)"
@@ -72,7 +71,7 @@
           style="display:inline;opacity:0.38141;mix-blend-mode:multiply;fill:url(#linearGradient855);fill-opacity:1;stroke-width:0.0864229"/>
       </g>
     </defs>
-    <use xlink:href="#gaugeBar" transform="translate(5,30)">
+    <use xlink:href="#gaugeBar" transform="translate(5,30)" [style.fill]="barColor">
       <animateTransform #gaugeBarAnimate attributeName="transform"
       type="scale"
       [attr.from]="oldGaugeValue + ' 1'"
