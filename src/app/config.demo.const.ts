@@ -1,6 +1,7 @@
 // Demo Mode config settings file
 export const DemoAppConfig = {
   "configVersion": 5,
+  "kipUUID": newUuid(),
   "signalKUrl": "http://demo.signalk.org",
   "signalKToken": null,
   "unlockStatus": false,
@@ -387,4 +388,12 @@ export const DemoLayoutConfig = {
     "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
     "d735c561-d413-4f7e-93d9-2c494e16184e"
   ]
+}
+
+
+function newUuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+  });
 }

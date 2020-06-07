@@ -82,75 +82,32 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   saveServerSettings() {
-    const app = this.AppSettingsService.getAppConfig();
-    const widget = this.AppSettingsService.getWidgetConfig();
-    const layout = this.AppSettingsService.getLayoutConfig();
-    const theme = this.AppSettingsService.getThemeConfig();
-    const config = Object.assign(app, widget, layout, theme);
+    let allConfig = {};
+    allConfig['app'] = this.AppSettingsService.getAppConfig();
+    allConfig['widget'] = this.AppSettingsService.getWidgetConfig();
+    allConfig['layout'] = this.AppSettingsService.getLayoutConfig();
+    allConfig['theme'] = this.AppSettingsService.getThemeConfig();
 
-    this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, config).subscribe(result => {
+
+    this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, allConfig).subscribe(result => {
       this.NotificationsService.sendSnackbarNotification("Configuration saved to SignalK server", 3000);
     });
   }
 
   loadServerSettings() {
     this.SignalKConnectionService.getApplicationData(this.configLoad.value.scope, this.configLoad.value.name).subscribe(newConfig => {
-      let app: IAppConfig;
-      let widget: IWidgetConfig;
-      let layout: ILayoutConfig;
-      let theme: IThemeConfig;
+      let app: IAppConfig = newConfig['app'];
+      let widget: IWidgetConfig = newConfig['widget'];
+      let layout: ILayoutConfig = newConfig['layout'];
+      let theme: IThemeConfig = newConfig['theme'];
 
-      newConfig.forEach(element => {
-        switch (element) {
-          case "configVersion":
-            app.configVersion = element;
-            break;
+      // preserve kip uuid
+      app.kipUUID = this.AppSettingsService.getKipUUID();
 
-          case "dataSets":
-            app.dataSets = element;
-            break;
-
-          case "notificationConfig":
-            app.notificationConfig = element;
-            break;
-
-          case "rootSplits":
-            layout.rootSplits = element;
-            break;
-
-          case "signalKToken":
-            app.signalKToken = element;
-            break;
-
-          case "signalKUrl":
-            app.signalKUrl = element;
-            break;
-
-          case "splitSets":
-            layout.splitSets = element;
-            break;
-
-          case "themeName":
-            theme.themeName = element;
-            break;
-
-          case "unitDefaults":
-            app.unitDefaults = element;
-            break;
-
-          case "unlockStatus":
-            app.unlockStatus = element;
-            break;
-
-          case "widgets":
-            widget.widgets = element;
-            break;
-        }
-        this.AppSettingsService.replaceConfig("appConfig", JSON.stringify(newConfig), false);
-        this.AppSettingsService.replaceConfig("widgetConfig", JSON.stringify(newConfig), false);
-        this.AppSettingsService.replaceConfig("layoutConfig", JSON.stringify(newConfig), false);
-        this.AppSettingsService.replaceConfig("themeConfig", JSON.stringify(newConfig), true);
-      });
+      this.AppSettingsService.replaceConfig("appConfig", JSON.stringify(app), false);
+      this.AppSettingsService.replaceConfig("widgetConfig", JSON.stringify(widget), false);
+      this.AppSettingsService.replaceConfig("layoutConfig", JSON.stringify(layout), false);
+      this.AppSettingsService.replaceConfig("themeConfig", JSON.stringify(theme), true);
     });
 
 

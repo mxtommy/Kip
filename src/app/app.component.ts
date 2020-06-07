@@ -4,8 +4,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './layout-splits.service';
-import { Screenfull } from "screenfull";
-
+import * as screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
@@ -30,7 +29,6 @@ export class AppComponent implements OnInit, OnDestroy {
   unlockStatusSub: Subscription;
 
   fullscreenStatus = false;
-  screenfull: Screenfull;
 
   themeName: string;
   themeClass: string = 'modern-dark fullheight';
@@ -177,16 +175,17 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   toggleFullScreen() {
-    if (!this.fullscreenStatus) {
-      this.screenfull.request();
-      this.noSleep.enable();
-    } else {
-      if (this.screenfull.isFullscreen) {
-        this.screenfull.exit();
+    if (screenfull.isEnabled) {
+      if (!this.fullscreenStatus) {
+        screenfull.request();
+        this.noSleep.enable();
+      } else {
+        if (screenfull.isFullscreen) {
+          screenfull.exit();
+        }
+        this.noSleep.disable();
       }
-      this.noSleep.disable();
     }
-
     this.fullscreenStatus = !this.fullscreenStatus;
   }
 

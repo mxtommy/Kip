@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { isNumber } from 'util';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
 
@@ -227,7 +228,6 @@ export class SvgWindComponent {
     let portLgArcFl =   Math.abs(angle([portMinX,portMinY],[portMidX,portMidY],[portMaxX,portMaxY])) > Math.PI/2 ? 0 : 1;
     let portSweepFl =           angle([portMaxX,portMaxY],[portMinX,portMinY],[portMidX,portMidY])  > 0    ? 0 : 1;
 
-
     this.portWindSectorPath = 'M 250,250 L ' + portMinX + ',' + portMinY + ' A 160,160 0 ' + portLgArcFl + ' ' + portSweepFl + ' ' + portMaxX + ',' + portMaxY +' z';
     //////////
     let stbdMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (this.newCompassRotate*-1)), (this.laylineAngle));
@@ -251,7 +251,7 @@ export class SvgWindComponent {
 
 
 
-  addHeading(h1: number, h2: number) {
+  addHeading(h1: number = 0, h2: number = 0) {
     let h3 = h1 + h2;
     while (h3 > 359) { h3 = h3 - 359; }
     while (h3 < 0) { h3 = h3 + 359; }

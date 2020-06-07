@@ -19,6 +19,7 @@ const configVersion = 5; // used to invalidate old configs.
 
 export interface IAppConfig {
   configVersion: number;
+  kipUUID: string; 
   signalKUrl: string;
   signalKToken: string;
   unlockStatus: boolean;
@@ -79,6 +80,7 @@ export class AppSettingsService {
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   signalKToken: BehaviorSubject<SignalKToken>;
   kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
+  kipUUID: string;
 
   widgets: Array<IWidget>;
   splitSets: ISplitSet[] = [];
@@ -91,6 +93,7 @@ export class AppSettingsService {
     let widgetConfig: IWidgetConfig;
     let layoutConfig: ILayoutConfig;
     let themeConfig: IThemeConfig;
+    
 
     if (window.localStorage) {
       // localStorage supported
@@ -160,7 +163,7 @@ export class AppSettingsService {
     this.dataSets = appConfig.dataSets;
     this.unitDefaults.next(appConfig.unitDefaults);
     this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
-
+    this.kipUUID = appConfig.kipUUID;
     this.widgets = widgetConfig.widgets;
 
     this.splitSets = layoutConfig.splitSets;
@@ -194,6 +197,10 @@ export class AppSettingsService {
 
   public getThemeConfig(): IThemeConfig {
     return this.buildThemeStorageObject();
+  }
+
+  public getKipUUID() {
+    return this.kipUUID;
   }
 
   // SignalKURL
@@ -329,6 +336,7 @@ export class AppSettingsService {
   private buildAppStorageObject() {
     let storageObject: IAppConfig = {
       configVersion: configVersion,
+      kipUUID: this.kipUUID,
       signalKUrl: this.signalKUrl.getValue().url,
       signalKToken: this.signalKToken.getValue().token,
       unlockStatus: this.unlockStatus.getValue(),
@@ -389,6 +397,7 @@ export class AppSettingsService {
     config.unitDefaults = DefaultUnitsConfig;
     config.signalKUrl = window.location.origin;
     config['configVersion'] = configVersion;
+    config.kipUUID = this.newUuid();
     localStorage.setItem('appConfig', JSON.stringify(config));
     return config;
   }
@@ -410,4 +419,13 @@ export class AppSettingsService {
     localStorage.setItem("themeConfig", JSON.stringify(config));
     return config;
   }
+
+
+  private newUuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+    });
+  }
+
 }

@@ -129,10 +129,11 @@ export class SignalKConnectionService {
 
     resetSignalK() {
       // TODO close current connections/reset data, check api version... assuming v1
-      console.debug("Resting URL: " + this.signalKURL.url);
+      console.debug("Resetting URL: " + this.signalKURL.url);
 
       // clean close if open
-      if (this.webSocket != null && this.webSocket.OPEN) {
+      if (this.webSocket != null && this.webSocket.readyState < 2) { // 0 = connecting, 1 = open, 2 = closing, 3 = closed
+        console.debug("Closing existing WS Connection")
         this.webSocket.close();
       }
 
@@ -220,6 +221,11 @@ export class SignalKConnectionService {
         return;
       }
 
+      // don't reopen an existing connection
+      if (this.webSocket != null && this.webSocket.readyState < 2) { // 0 = connecting, 1 = open, 2 = closing, 3 = closed
+        return;
+      }
+
       let endpointArgs = "?subscribe=all";
 
       if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
@@ -227,7 +233,6 @@ export class SignalKConnectionService {
       }
 
       this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
-
       this.webSocket.onopen = function (event){
         this.currentSkStatus.websocket.message = "Connected";
         this.currentSkStatus.websocket.status = true;
@@ -256,6 +261,7 @@ export class SignalKConnectionService {
         console.log("Tried to publish delta while not connected to Websocket");
         return;
       }
+      console.log(message);
       this.webSocket.send(message);
     }
 

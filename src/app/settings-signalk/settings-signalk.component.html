@@ -77,7 +77,7 @@
         </button>
       </span>
       <span *ngIf="!formAuthToken">
-        <button mat-raised-button color="primary" matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed" (click)="requestAuth()" [disabled]="formSignalKURL.match('demo')">
+        <button mat-raised-button type="button" color="primary" matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed" (click)="requestAuth()" [disabled]="formSignalKURL.match('demo')">
           Request Token
         </button>
       </span>

@@ -70,9 +70,9 @@ export class SignalkRequestsService {
     let accessRequest = {
       requestId: requestId,
       accessRequest: {
-        clientId: this.newUuid(),
+        clientId: this.AppSettingsService.getKipUUID(),
         description: "Kip web app",
-        permissions: "readwrite"
+        permissions: "admin"
       }
     }
 
@@ -145,7 +145,7 @@ export class SignalkRequestsService {
           console.log(delta.accessRequest.permission + ": New R/W token response received");
         }
       } else {
-        this.NotificationsService.sendSnackbarNotification("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode]);
+        this.NotificationsService.sendSnackbarNotification("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
         console.log("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
