@@ -71,10 +71,12 @@
     <path *ngIf="portWindSectorPath != 'none'"
        [attr.d]="portWindSectorPath"
        id="path7337"
-       style="fill:#ff3b3b;fill-opacity:0.80952382;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668" />
+       class="wind-sector-port"
+       style=";fill-opacity:0.80952382;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668" />
     <path *ngIf="stbdWindSectorPath != 'none'"
        [attr.d]="stbdWindSectorPath"
-       style="fill:#3db72f;fill-opacity:0.79487179;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668"
+       class="wind-sector-stbd"
+       style="fill-opacity:0.79487179;stroke:#000000;stroke-width:1.86536205;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.48351668"
        id="path7339"/>
   </g>
   <!-- laylines -->
@@ -84,11 +86,13 @@
      *ngIf="laylineEnable">
     <path *ngIf="trueWindAngle != null"
        id="path177"
+       class="laylines"
        [attr.d]="laylinePortPath"
-       style="fill:none;stroke:#f50000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+       style="fill:none;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:7" />
       
     <path *ngIf="trueWindAngle != null"
-       style="fill:none;stroke:#139800;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       class="laylines"
+       style="fill:none;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:7"
        [attr.d]="laylineStbdPath"
        id="path984" />
 

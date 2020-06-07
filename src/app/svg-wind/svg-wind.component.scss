@@ -22,6 +22,18 @@
         fill: mat-color($foreground, text);
     }
 
+    .laylines {
+      stroke:  mat-color($foreground, text);
+    }
+
+    .wind-sector-port {
+      fill: mat-color($wind, port);
+    }
+
+    .wind-sector-stbd {
+      fill: mat-color($wind, starboard);
+    }
+
     .compass-outer-ring {
         stroke: mat-color($wind, compass-dark);
     }
