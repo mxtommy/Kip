@@ -95,6 +95,7 @@ export class UnitsService {
       { measure: 'Minutes', description: "Minutes" },
       { measure: 'Hours', description: "Hours" },
       { measure: 'Days', description: "Days" },
+      { measure: 'HH:MM:SS', description: "Hours:Minute:seconds"}
     ] },
     { group: 'Angular Velocity', units: [
       { measure: 'rad/s', description: "Radians per second" },
@@ -194,6 +195,15 @@ this.conversionList[group].push(unit);
     "Minutes": Qty.swiftConverter('s', 'minutes'),
     "Hours": Qty.swiftConverter('s', 'hours'),
     "Days": Qty.swiftConverter('s', 'days'),
+    "HH:MM:SS": function(v) {
+      v = parseInt(v, 10);
+      if (v < 0) { v = v *-1} // always positive
+
+      var h = Math.floor(v / 3600);
+      var m = Math.floor(v % 3600 / 60);
+      var s = Math.floor(v % 3600 % 60);
+      return ('0' + h).slice(-2) + ":" + ('0' + m).slice(-2) + ":" + ('0' + s).slice(-2);
+    },
 //  angularVelocity
     "rad/s": function(v) { return v; },
     "deg/s": Qty.swiftConverter('rad/s', 'deg/s'),
