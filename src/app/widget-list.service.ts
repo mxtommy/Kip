@@ -16,13 +16,15 @@ import { WidgetGaugeNgRadialComponent} from './widget-gauge-ng-radial/widget-gau
 import { WidgetAutopilotComponent } from "./widget-autopilot/widget-autopilot.component";
 import { WidgetSimpleLinearComponent } from "./widget-simple-linear/widget-simple-linear.component";
 
-export class widgetInfo {
+class widgetInfo {
   name: string;
   componentName;
   description: string;
 }
 
-
+export class widgetList {
+  [groupname: string]: widgetInfo[];
+}
 
 
 @Injectable()
@@ -31,87 +33,103 @@ export class WidgetListService {
   constructor() { }
 
 
-  widgetList: widgetInfo[] =
-  [
-    {
-      name: 'WidgetBlank',
-      componentName: WidgetBlankComponent,
-      description: 'Blank',
-    },
-    {
-      name: 'WidgetNumeric',
-      componentName: WidgetNumericComponent,
-      description: 'Numeric Value',
-    },
-    {
-      name: 'WidgetTextGeneric',
-      componentName: WidgetTextGenericComponent,
-      description: 'Text Value',
-    },
-    {
-      name: 'WidgetStateComponent',
-      componentName: WidgetStateComponent,
-      description: 'State (boolean) Value',
-    },/*
+  widgetList: widgetList = {
+    "Basic": [
+      {
+        name: 'WidgetBlank',
+        componentName: WidgetBlankComponent,
+        description: 'Blank',
+      },
+      {
+        name: 'WidgetNumeric',
+        componentName: WidgetNumericComponent,
+        description: 'Numeric Value',
+      },
+      {
+        name: 'WidgetTextGeneric',
+        componentName: WidgetTextGenericComponent,
+        description: 'Text Value',
+      },
+      {
+        name: 'WidgetStateComponent',
+        componentName: WidgetStateComponent,
+        description: 'State (boolean) Value',
+      },      
+    ],
+    "Gauge": [
+      {
+        name: 'WidgetSimpleLinearComponent',
+        componentName: WidgetSimpleLinearComponent,
+        description: "Linear Electrical Gauge"
+      },
+      {
+        name: 'WidgetGaugeNgLinearComponent',
+        componentName: WidgetGaugeNgLinearComponent,
+        description: "Linear Gauge"
+      },
+      {
+        name: 'WidgetGaugeNgRadialComponent',
+        componentName: WidgetGaugeNgRadialComponent,
+        description: "Radial Gauge"
+      },
+      {
+        name: 'WidgetGaugeComponent',
+        componentName: WidgetGaugeComponent,
+        description: "Steel Gauge (Radial/Linear)"
+      },
+    ],
+    "Components": [
+      {
+        name: 'WidgetHistorical',
+        componentName: WidgetHistoricalComponent,
+        description: 'Historical DataSet',
+      },
+      {
+        name: 'WidgetWindComponent',
+        componentName: WidgetWindComponent,
+        description: 'Wind Gauge',
+      },
+      {
+        name: 'WidgetAutopilotComponent',
+        componentName: WidgetAutopilotComponent,
+        description: 'N2k Autopilot',
+      },
+      {
+        name: 'WidgetIframeComponent',
+        componentName: WidgetIframeComponent,
+        description: 'Embed Webpage',
+      },
+      {
+        name: 'WidgetTutorial',
+        componentName: WidgetTutorialComponent,
+        description: 'Tutorial'
+      }
+    ]
+
+  };
+  
+
+/*
     {
       name: 'WidgetSwitchComponent',
       componentName: WidgetSwitchComponent,
       description: 'Switch Input',
     },  */
-    {
-      name: 'WidgetSimpleLinearComponent',
-      componentName: WidgetSimpleLinearComponent,
-      description: "Linear Electrical Gauge"
-    },
-    {
-      name: 'WidgetGaugeNgLinearComponent',
-      componentName: WidgetGaugeNgLinearComponent,
-      description: "Linear Gauge"
-    },
-    {
-      name: 'WidgetGaugeNgRadialComponent',
-      componentName: WidgetGaugeNgRadialComponent,
-      description: "Radial Gauge"
-    },
-    {
-      name: 'WidgetGaugeComponent',
-      componentName: WidgetGaugeComponent,
-      description: "Steel Gauge (Radial/Linear)"
-    },
-    {
-      name: 'WidgetHistorical',
-      componentName: WidgetHistoricalComponent,
-      description: 'Historical DataSet',
-    },
-    {
-      name: 'WidgetWindComponent',
-      componentName: WidgetWindComponent,
-      description: 'Wind Gauge',
-    },
-    {
-      name: 'WidgetAutopilotComponent',
-      componentName: WidgetAutopilotComponent,
-      description: 'N2k Autopilot',
-    },
-    {
-      name: 'WidgetIframeComponent',
-      componentName: WidgetIframeComponent,
-      description: 'Embed Webpage',
-    },
-    {
-      name: 'WidgetTutorial',
-      componentName: WidgetTutorialComponent,
-      description: 'Tutorial'
-    }
-  ];
+
+
+
+  
 
   getComponentName(typeName: string) {
-    let type = this.widgetList.find(c => c.name == typeName).componentName;
-    return type || WidgetUnknownComponent;
+    for (let [group, widgetList] of Object.entries(this.widgetList)) {
+      let widget = widgetList.find(c => c.name == typeName);
+      if (widget) { return widget.componentName; }
+    }
+    return WidgetUnknownComponent;
   }
 
 
   getList (){
-    return this.widgetList.filter(w => w.name != 'WidgetTutorial');
+    return this.widgetList;
   }
 }

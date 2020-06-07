@@ -3,6 +3,7 @@ import { IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from "./app-se
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 5,
   "signalKUrl": "", // get's overwritten with host
+  "kipUUID": newUuid(),
   "signalKToken": null,
   "unlockStatus": false,
   "dataSets": [],
@@ -41,4 +42,12 @@ export const DefaultLayoutConfig: ILayoutConfig = {
 
 export const DefaultThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
+}
+
+
+function newUuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+  });
 }

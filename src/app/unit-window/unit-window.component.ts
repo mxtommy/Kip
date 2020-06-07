@@ -1,11 +1,12 @@
 import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NgModel } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 
-import { WidgetListService, widgetInfo } from '../widget-list.service';
+import { WidgetListService, widgetList } from '../widget-list.service';
 
 @Component({
   selector: 'app-unit-window',
@@ -66,10 +67,13 @@ export class UnitWindowComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (this.widgetListService.getList().findIndex(w => w.name == result) >= 0 ) {
-        if (this.activeWidget.type != result) {
-          this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
-          this.ngOnInit();
+      let fullWidgetList = this.widgetListService.getList();
+      for (let [group, widgetList] of Object.entries(fullWidgetList)) {
+        if (widgetList.findIndex(w => w.name == result) >= 0 ) {
+          if (this.activeWidget.type != result) {
+            this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
+            this.ngOnInit();
+          }
         }
       }
     });
@@ -92,8 +96,8 @@ export abstract class DynamicComponentData {
 export class UnitWindowModalComponent implements OnInit {
 
   newWidget: string;
-  widgetList: widgetInfo[];
-
+  widgetList: widgetList;
+  selectedTab = new FormControl(0);
 
   constructor(
     private widgetListService: WidgetListService,
@@ -104,10 +108,23 @@ export class UnitWindowModalComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  keepOrder = (a, b) => { // needed so that keyvalue filter doesn't resort
+    return a;
+  }
 
   ngOnInit() {
     this.widgetList = this.widgetListService.getList();
     this.newWidget = this.data.currentType;
+    // find index of the group conatining the existing type;
+    let index=0;
+    for (let [group, groupWidgetList] of Object.entries(this.widgetList)) {
+      if (groupWidgetList.findIndex(w => w.name == this.data.currentType) >= 0 ) {
+        this.selectedTab.setValue(index);
+        break;
+      }
+      index++;
+    }
+
   }
 
   submitNewWidget() {
