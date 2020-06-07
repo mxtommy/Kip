@@ -1,4 +1,27 @@
-### V1.0.0
+# V1.1.0
+* A lot of code cleanup!
+* UI refresh/cleanup
+* Updated dependencies to latest Angular/etc
+* Path selection dropdown in Widget settings modal replaced with auto-complete. Also has path description if available
+* Config has UUID to that instance (for identifying to server)
+* Settings page has updates per second graph
+* Start of support for metadata in widgets
+* additional notifications settings
+* fix Wind gauge wind sectors theming
+* Widget select modal refactor into groups
+
+### V1.0.3
+* updated navbar styling
+* Theme work/cleanup
+* Work on ng gauges
+ 
+### V1.0.2
+* Tooltip for long messages, and hide badge when 0 unacked alarms 
+
+### V1.0.1
+* Respect methods for alarms! 
+
+# V1.0.0
 * add ngcanvasgauges and new modern theme (thanks godind!)
 * new Theme change event allowing widgets to subscribe to theme changes (thanks godind!)
 * Historical Graph color change on theme update
