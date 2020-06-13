@@ -1,3 +1,11 @@
+# V1.1.2
+* Don't save unlock status in config (not needed)
+* Add hPA/mbar units
+* Fix unit selection on historical widgets
+
+# V1.1.1
+* Fix base Href
+
 # V1.1.0
 * A lot of code cleanup!
 * UI refresh/cleanup

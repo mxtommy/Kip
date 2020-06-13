@@ -15,14 +15,13 @@ import { isNumber } from 'util';
 
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'modern-dark';
-const configVersion = 5; // used to invalidate old configs.
+const configVersion = 6; // used to invalidate old configs.
 
 export interface IAppConfig {
   configVersion: number;
   kipUUID: string; 
   signalKUrl: string;
   signalKToken: string;
-  unlockStatus: boolean;
   dataSets: IDataSet[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;
@@ -159,7 +158,6 @@ export class AppSettingsService {
     let skToken: SignalKToken = {token: appConfig.signalKToken, new: false};
     this.signalKUrl.next(skUrl);
     this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
-    this.unlockStatus.next(appConfig['unlockStatus']);
     this.dataSets = appConfig.dataSets;
     this.unitDefaults.next(appConfig.unitDefaults);
     this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
@@ -233,9 +231,6 @@ export class AppSettingsService {
   }
   public setUnlockStatus(value) {
     this.unlockStatus.next(value);
-    if (!value) {
-      this.saveLayoutConfigToLocalStorage();
-    }
   }
 
   // Themes
@@ -339,7 +334,6 @@ export class AppSettingsService {
       kipUUID: this.kipUUID,
       signalKUrl: this.signalKUrl.getValue().url,
       signalKToken: this.signalKToken.getValue().token,
-      unlockStatus: this.unlockStatus.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),

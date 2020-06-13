@@ -88,6 +88,8 @@ export class UnitsService {
       { measure: 'psi', description: "psi" },
       { measure: 'mmHg', description: "mmHg" },
       { measure: 'inHg', description: "inHg" },
+      { measure: 'hPa', description: "hPa" },
+      { measure: 'mbar', description: "mbar" },
     ] },
     { group: 'Density', units: [ { measure: 'kg/m3', description: "Air density - kg/cubic meter"} ] },
     { group: 'Time', units: [
@@ -188,6 +190,8 @@ this.conversionList[group].push(unit);
     "psi": Qty.swiftConverter('Pa', 'psi'),
     "mmHg": Qty.swiftConverter('Pa', 'mmHg'),
     "inHg": Qty.swiftConverter('Pa', 'inHg'),
+    "hPa": Qty.swiftConverter('Pa', 'hPa'),
+    "mbar": Qty.swiftConverter('Pa', 'millibar'),
 // Density - Description: Current outside air density
     "kg/m3": function(v) { return v; },
 //  Time

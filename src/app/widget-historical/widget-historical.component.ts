@@ -15,9 +15,7 @@ const defaultConfig: IWidgetConfig = {
   filterSelfPaths: true,
   useMetadata: false,
   useZone: false,
-  dataset: {
-    convertUnitTo: "unitless"
-  },
+  convertUnitTo: "unitless",
   dataSetUUID: null,
   invertData: false,
   displayMinMax: false,
@@ -222,7 +220,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 }
                 this.chartDataAvg.push({
                   t: dataSet[i].timestamp,
-                  y: (this.UnitsService.convertUnit(this.config.dataset.convertUnitTo, dataSet[i].average) * invert).toFixed(2)
+                  y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].average) * invert).toFixed(2)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
@@ -239,11 +237,11 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                   } else {
                     this.chartDataMin.push({
                         t: dataSet[i].timestamp,
-                        y: (this.UnitsService.convertUnit(this.config.dataset.convertUnitTo, dataSet[i].minValue) * invert).toFixed(2)
+                        y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].minValue) * invert).toFixed(2)
                     });
                     this.chartDataMax.push({
                         t: dataSet[i].timestamp,
-                        y: (this.UnitsService.convertUnit(this.config.dataset.convertUnitTo, dataSet[i].maxValue) * invert).toFixed(2)
+                        y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].maxValue) * invert).toFixed(2)
                     });
                   }
                 }

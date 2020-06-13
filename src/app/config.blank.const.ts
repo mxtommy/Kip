@@ -5,7 +5,6 @@ export const DefaultAppConfig: IAppConfig = {
   "signalKUrl": "", // get's overwritten with host
   "kipUUID": newUuid(),
   "signalKToken": null,
-  "unlockStatus": false,
   "dataSets": [],
   "unitDefaults": null,
   "notificationConfig": null,

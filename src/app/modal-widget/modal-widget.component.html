@@ -276,6 +276,20 @@
                   </mat-option>
                 </mat-select>
             </mat-form-field>
+            <mat-form-field class="unitField" appearance="outline" floatLabel="always">
+              <mat-label>Display Format</mat-label>
+              <mat-select
+                  placeholder="Select unit"
+                  formControlName="convertUnitTo"
+                  disableRipple
+                  required>
+                  <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
+                    <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
+                      {{unit.description}}
+                    </mat-option>
+                  </mat-optgroup>
+              </mat-select>
+            </mat-form-field>
             <p>
                 <mat-checkbox
                   formControlName="invertData"

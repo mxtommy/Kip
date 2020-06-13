@@ -16,9 +16,7 @@ export interface IWidgetConfig {
   paths?: {
     [key: string]: IWidgetPaths;
   },
-  dataset?: {
-    convertUnitTo: string;
-  },
+  convertUnitTo?: string;
   usage?: {
     [key: string]: string[]; // Autopilot: key should match key in paths, specifies autopilot widget possible paths for AP mode
   },

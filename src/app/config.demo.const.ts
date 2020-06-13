@@ -1,10 +1,12 @@
+import { IAppConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig } from './app-settings.service';
+
+
 // Demo Mode config settings file
-export const DemoAppConfig = {
-  "configVersion": 5,
+export const DemoAppConfig: IAppConfig = {
+  "configVersion": 6,
   "kipUUID": newUuid(),
   "signalKUrl": "http://demo.signalk.org",
   "signalKToken": null,
-  "unlockStatus": false,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
@@ -55,11 +57,11 @@ export const DemoAppConfig = {
   }
 }
 
-export const DemoThemeConfig = {
+export const DemoThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
   }
 
-export const DemoWidgetConfig = {
+export const DemoWidgetConfig: IWidgetConfig = {
   "widgets": [
     {
       "uuid": "7298b3be-232f-48bf-9b3d-3b445131a908",
@@ -247,9 +249,7 @@ export const DemoWidgetConfig = {
       "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
       "type": "WidgetHistorical",
       "config": {
-        "dataset": {
-          "convertUnitTo": "knots"
-        },
+        "convertUnitTo": "knots",
         "displayName": "WindSpeed True",
         "filterSelfPaths": true,
         "useMetadata": false,
@@ -293,7 +293,7 @@ export const DemoWidgetConfig = {
   ]
 }
 
-export const DemoLayoutConfig = {
+export const DemoLayoutConfig: ILayoutConfig = {
   "splitSets": [
     {
       "uuid": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",

@@ -2,6 +2,7 @@ import { Component, OnInit,  Inject } from '@angular/core';
 import { FormGroup, FormControl, Validators }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
+import { UnitsService, IUnitGroup } from '../units.service';
 import { DataSetService, IDataSet } from '../data-set.service';
 import { IWidgetConfig } from '../widget-manager.service';
 
@@ -16,15 +17,19 @@ export class ModalWidgetComponent implements OnInit {
   titleDialog: string = "Widget Options";
   formMaster: FormGroup;
   availableDataSets: IDataSet[];
+  unitList: {default?: string, conversions?: IUnitGroup[] } = {};
+
 
   constructor(
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
     private DataSetService: DataSetService,
+    private unitsService: UnitsService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetConfig
   ) { }
 
   ngOnInit() {
     this.availableDataSets = this.DataSetService.getDataSets().sort();
+    this.unitList = this.unitsService.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.formMaster.updateValueAndValidity();
   }
@@ -50,8 +55,8 @@ export class ModalWidgetComponent implements OnInit {
         if (objectType == "convertUnitTo") {
           // If we are building units list
           let unitConfig = this.widgetConfig.paths[key];
-          if (unitConfig.pathType == "number") {
-            groups.addControl(key, new FormControl(formData[key])); //only add control if it's a number. Strings and booleans don't have units and conversions yet...
+          if ( (unitConfig.pathType == "number") || ('datasetUUID' in this.widgetConfig)) {
+            groups.addControl(key, new FormControl(formData[key])); //only add control if it's a number or historical graph. Strings and booleans don't have units and conversions yet...
           }
         } else {
           // not building Units list
