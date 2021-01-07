@@ -1,3 +1,7 @@
+# V1.2.0
+* Update to Angular 11
+* Update of all dependencies
+
 # V1.1.2
 * Don't save unlock status in config (not needed)
 * Add hPA/mbar units

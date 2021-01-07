@@ -6,6 +6,8 @@
     "kip": {
       "root": "",
       "sourceRoot": "src",
+      "schematics": {},
+      "prefix": "app",
       "projectType": "application",
       "architect": {
         "build": {
@@ -76,7 +78,7 @@
             "main": "src/test.ts",
             "karmaConfig": "./karma.conf.js",
             "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
+            "tsConfig": "./tsconfig.spec.json",
             "scripts": [],
             "styles": [
               "src/styles.css",
@@ -118,7 +120,7 @@
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": [
-              "e2e/tsconfig.e2e.json"
+              "e2e/tsconfig.json"
             ],
             "exclude": [
               "**/node_modules/**"
@@ -131,8 +133,8 @@
   "defaultProject": "kip",
   "schematics": {
     "@schematics/angular:component": {
-      "prefix": "app",
-      "style": "css"
+/*      "style": "css",        */
+      "styleext": "scss"
     },
     "@schematics/angular:directive": {
       "prefix": "app"

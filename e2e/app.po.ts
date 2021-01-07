@@ -1,11 +1,11 @@
 import { browser, by, element } from 'protractor';
 
-export class SailmonitorPage {
-  navigateTo() {
-    return browser.get('/');
+export class AppPage {
+  async navigateTo(): Promise<unknown> {
+    return browser.get(browser.baseUrl);
   }
 
-  getParagraphText() {
-    return element(by.css('app-root h1')).getText();
+  async getTitleText(): Promise<string> {
+    return element(by.css('app-root .content span')).getText();
   }
 }
