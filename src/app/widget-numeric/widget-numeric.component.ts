@@ -276,6 +276,7 @@ unsubscribeTheme(){
 
   drawUnit() {
     if (this.config.paths['numericPath'].convertUnitTo == 'unitless') { return; }
+    if (this.config.paths['numericPath'].convertUnitTo.startsWith('percent')) { return; }
     if (this.config.paths['numericPath'].convertUnitTo.startsWith('lat')) { return; }
     if (this.config.paths['numericPath'].convertUnitTo.startsWith('lon')) { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));

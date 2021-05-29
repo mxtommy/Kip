@@ -116,7 +116,11 @@ export class UnitsService {
       { measure: 'MHz', description: "MHz - MegaHertz" },
       { measure: 'GHz', description: "GHz - GigaHertz" },
     ] },
-    { group: 'Ratio', units: [ { measure: 'ratio', description: "% - Percentage value" } ] },
+    { group: 'Ratio', units: [ 
+      { measure: 'percent', description: "% - Percentage value (value multiplied by 100)" },
+      { measure: 'percentraw', description: "% - Percentage value (value unchanged)" },
+      { measure: 'ratio', description: "Ratio 0-1 (value multiplied by 100)" }
+    ] },
     { group: 'Position', units: [
       { measure: 'latitudeMin', description: "Latitude in minutes" },
       { measure: 'latitudeSec', description: "Latitude in seconds" },
@@ -223,6 +227,8 @@ this.conversionList[group].push(unit);
     "deg": Qty.swiftConverter('rad', 'deg'),
     "grad": Qty.swiftConverter('rad', 'grad'),
 //   ratio
+    'percent': function(v) { return (v * 100) + '%' },
+    'percentraw': function(v) { return v + '%' },
     'ratio': function(v) { return v * 100 },
 // lat/lon
     'latitudeMin': function(v) {
