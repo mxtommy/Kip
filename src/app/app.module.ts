@@ -139,7 +139,7 @@ const appRoutes: Routes = [
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */ } ),
+    RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */, relativeLinkResolution: 'legacy' } ),
     AngularSplitModule,
     AngularResizedEventModule,
     BrowserAnimationsModule,

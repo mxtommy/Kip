@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { SettingsSignalkComponent } from './settings-signalk.component';
 
@@ -6,7 +6,7 @@ describe('SettingsSignalkComponent', () => {
   let component: SettingsSignalkComponent;
   let fixture: ComponentFixture<SettingsSignalkComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ SettingsSignalkComponent ]
     })

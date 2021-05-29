@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetSimpleLinearComponent } from './widget-simple-linear.component';
 
@@ -6,7 +6,7 @@ describe('WidgetSimpleLinearComponent', () => {
   let component: WidgetSimpleLinearComponent;
   let fixture: ComponentFixture<WidgetSimpleLinearComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetSimpleLinearComponent ]
     })

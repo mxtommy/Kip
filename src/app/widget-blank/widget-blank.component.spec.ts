@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetBlankComponent } from './widget-blank.component';
 
@@ -6,7 +6,7 @@ describe('WidgetBlankComponent', () => {
   let component: WidgetBlankComponent;
   let fixture: ComponentFixture<WidgetBlankComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetBlankComponent ]
     })

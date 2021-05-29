@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetGaugeComponent } from './widget-gauge.component';
 
@@ -6,7 +6,7 @@ describe('WidgetGaugeComponent', () => {
   let component: WidgetGaugeComponent;
   let fixture: ComponentFixture<WidgetGaugeComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetGaugeComponent ]
     })

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetIframeComponent } from './widget-iframe.component';
 
@@ -6,7 +6,7 @@ describe('WidgetIframeComponent', () => {
   let component: WidgetIframeComponent;
   let fixture: ComponentFixture<WidgetIframeComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetIframeComponent ]
     })

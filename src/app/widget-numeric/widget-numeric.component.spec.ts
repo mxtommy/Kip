@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetNumericComponent } from './widget-numeric.component';
 
@@ -6,7 +6,7 @@ describe('WidgetNumericComponent', () => {
   let component: WidgetNumericComponent;
   let fixture: ComponentFixture<WidgetNumericComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetNumericComponent ]
     })
