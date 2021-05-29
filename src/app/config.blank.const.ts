@@ -1,7 +1,7 @@
 import { IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from "./app-settings.service";
 
 export const DefaultAppConfig: IAppConfig = {
-  "configVersion": 5,
+  "configVersion": 6,
   "signalKUrl": "", // get's overwritten with host
   "kipUUID": newUuid(),
   "signalKToken": null,
