@@ -219,6 +219,9 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
         } else if (this.config.paths['trueWindAngle'].path.match('direction')) {
           //0-360
           this.trueWindAngle = converted;
+        } else {
+          // some other path... assume it's the angle 
+          this.trueWindAngle = converted;
         }
 
         //add to historical for wind sectors

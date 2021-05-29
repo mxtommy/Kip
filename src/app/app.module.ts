@@ -164,28 +164,6 @@ const appRoutes: Routes = [
     MatAutocompleteModule,
     GaugesModule,
   ],
-  entryComponents: [
-    WidgetUnknownComponent,
-    WidgetBlankComponent,
-    WidgetNumericComponent,
-    WidgetTextGenericComponent,
-    WidgetHistoricalComponent,
-    WidgetWindComponent,
-    WidgetGaugeComponent,
-    WidgetGaugeNgLinearComponent,
-    WidgetGaugeNgRadialComponent,
-    WidgetStateComponent,
-    WidgetSwitchComponent,
-    WidgetIframeComponent,
-    WidgetTutorialComponent,
-    WidgetAutopilotComponent,
-    WidgetSimpleLinearComponent,
-
-    //dialogs
-    ModalWidgetComponent,
-    UnitWindowModalComponent,
-    SettingsDatasetsModalComponent,
-  ],
   providers: [
     SignalKService,
     SignalKConnectionService,
