@@ -43,7 +43,7 @@
     "@biacsics/ng-canvas-gauges": "^6.0.7",
     "angular-resize-event": "^2.1.0",
     "angular-split": "^3.0.3",
-    "chart.js": "^2.9.3",
+    "chart.js": "^2.9.4",
     "compare-versions": "^3.6.0",
     "core-js": "^3.6.5",
     "howler": "^2.2.0",
