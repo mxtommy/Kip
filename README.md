@@ -58,7 +58,7 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 
 # Developing
 
-Kip is built on Angular 9 using various open-source assets. All free!
+Kip is built on Angular using various open-source assets. All free!
 
 **Tools**
 
