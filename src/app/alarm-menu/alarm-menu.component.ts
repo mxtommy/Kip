@@ -81,7 +81,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   buildAlarmMenu() {
     // clean notificationAlarms based on App Notification settings
     if (!this.notificationConfig.devices.showNormalState) {
-      for (const [path, alarm] of Object.entries(this.notificationAlarms)) {
+      for (const [path, thealarm] of Object.entries(this.notificationAlarms)) {
         let alarm = this.notificationAlarms[path];
 
         if (alarm.notification['state'] == 'normal' && alarm['type'] == 'device') {
