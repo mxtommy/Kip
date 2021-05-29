@@ -27,7 +27,8 @@
     "type": "git",
     "url": "https://github.com/mxtommy/Kip"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "@angular/animations": "11.2.14",
     "@angular/cdk": "^11.2.13",
     "@angular/common": "11.2.14",
@@ -52,9 +53,7 @@
     "rxjs": "^6.6.7",
     "screenfull": "^5.1.0",
     "tslib": "^2.2.0",
-    "zone.js": "~0.10.2"
-  },
-  "devDependencies": {
+    "zone.js": "~0.10.2",
     "@angular-devkit/build-angular": "~0.1102.13",
     "@angular/cli": "^11.2.13",
     "@angular/compiler-cli": "11.2.14",
