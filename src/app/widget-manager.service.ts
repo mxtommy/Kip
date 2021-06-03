@@ -49,6 +49,7 @@ export interface IWidgetConfig {
   maxValue?: number;
   rotateFace?: boolean;
   autoStart?: boolean;
+  compassUseNumbers?: boolean;
 
   //Historical
   dataSetUUID?: string;

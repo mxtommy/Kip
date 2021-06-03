@@ -160,12 +160,21 @@
       <!-- ng-canvas Radial gauges -->
       <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'ngRadial'">
         <div class="tab-content">
+          
             <p>
-              <mat-radio-group name="radialSize" formControlName="radialSize">
-                <mat-radio-button value="measuring">Measuring</mat-radio-button>
-                <mat-radio-button value="capacity">Capacity</mat-radio-button>
-                <mat-radio-button value="marineCompass">Marine Compass</mat-radio-button>
-                <mat-radio-button value="baseplateCompass">Baseplate Compass</mat-radio-button>
+              <label id="radial-type-label">Radial Gauge type:</label>
+              <mat-radio-group class="radio-group" aria-labelledby="radial-type-label" name="radialSize" formControlName="radialSize">
+                <mat-radio-button class="radio-button" value="measuring">Measuring</mat-radio-button>
+                <mat-radio-button class="radio-button" value="capacity">Capacity</mat-radio-button>
+                <mat-radio-button class="radio-button" value="marineCompass">Marine Compass</mat-radio-button>
+                <mat-radio-button class="radio-button" value="baseplateCompass">Baseplate Compass</mat-radio-button>
+              </mat-radio-group>
+            </p>
+            <p *ngIf="['marineCompass','baseplateCompass'].indexOf(formMaster.controls.radialSize.value) > -1">
+              <label id="tick-type-label">Tick Labels:</label>
+              <mat-radio-group class="radio-group" aria-labelledby="tick-type-label" name="compassUseNumbers" formControlName="compassUseNumbers">
+                <mat-radio-button class="radio-button" [value]="false">N/E/S/W</mat-radio-button>
+                <mat-radio-button class="radio-button" [value]="true">0/90/180/270</mat-radio-button>
               </mat-radio-group>
             </p>
         </div>

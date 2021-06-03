@@ -28,6 +28,7 @@ const defaultConfig: IWidgetConfig = {
   gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
   gaugeTicks: false,
   radialSize: 'measuring',
+  compassUseNumbers: false,
   minValue: 0,
   maxValue: 100,
   numInt: 1,
@@ -70,6 +71,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   public gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
   public colorStrokeTicks: string = "";
+  public unitName: string = null;
 
   constructor(
     public dialog:MatDialog,
@@ -87,6 +89,11 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
       this.config = defaultConfig; // load default config.
     } else {
       this.config = this.activeWidget.config;
+      //new config option, might not be set.
+      if (!('compassUseNumbers' in this.config)) {
+        console.log("compassUseNumbers not set");
+        this.config.compassUseNumbers = false;
+      }
     }
     this.subscribePath();
     this.subscribeTheme();
@@ -224,6 +231,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     // Radial gauge type
     switch(this.config.radialSize) {
       case "capacity":
+        this.unitName = this.config.paths['gaugePath'].convertUnitTo;
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks drawing firs tick always and using color="" does not work
         this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
         this.gaugeOptions.fontTitleSize = 60;
@@ -271,6 +279,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         break;
 
       case "measuring":
+        this.unitName = this.config.paths['gaugePath'].convertUnitTo;
         let calculatedMajorTicks = this.calculateMajorTicks(this.config.minValue, this.config.maxValue);
 
         this.gaugeOptions.colorTitle = this.colorStrokeTicks = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
@@ -320,6 +329,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         break;
 
       case "marineCompass":
+        // overwrite min/max/unit to make sure we don't limit
+        this.config.minValue = 0;
+        this.config.maxValue = 360;
+        this.config.paths["gaugePath"].convertUnitTo = "deg";
+        this.unitName = null;
+
+
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = 0;
@@ -338,7 +354,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.startAngle = 180;
         this.gaugeOptions.exactTicks = false;
         this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
+         
+        this.gaugeOptions.majorTicks = this.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
         this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;
         this.gaugeOptions.minorTicks = 22;
@@ -366,6 +383,12 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         break;
 
       case "baseplateCompass":
+        // overwrite min/max/unit to make sure we don't limit
+        this.config.minValue = 0;
+        this.config.maxValue = 360;
+        this.config.paths["gaugePath"].convertUnitTo = "deg";
+        this.unitName = null;
+
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = 0;
@@ -384,7 +407,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.startAngle = 180;
         this.gaugeOptions.exactTicks = false;
         this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.majorTicks = this.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
         this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;
         this.gaugeOptions.minorTicks = 22;
