@@ -1,0 +1,43 @@
+<div class="full-display">
+  <mat-form-field>
+    <mat-label>Filter</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="self." #input>
+  </mat-form-field>
+  
+  
+  <div class="mat-elevation-z8 full-width">
+    <table mat-table class="full-display" [dataSource]="tableData" matSort>
+  
+      <!-- Path Column -->
+      <ng-container matColumnDef="path">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Path </th>
+        <td mat-cell *matCellDef="let element"> {{element.path}} </td>
+      </ng-container>
+    
+      <!-- Source/value Column -->
+      <ng-container matColumnDef="defaultSource">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Source / Value</th>
+        <td mat-cell *matCellDef="let element">
+        <table>
+          <tr *ngFor="let item of element.sources |keyvalue">
+            <td>{{item.key}}</td>
+            <td>{{item.value.value}}</td>
+          </tr>
+        </table> 
+        </td>
+     </ng-container>
+    
+  
+  
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    
+      <!-- Row shown when there is no matching data. -->
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" colspan="4">No data matching the filter "{{input.value}}"</td>
+      </tr>
+    </table>
+    <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+  </div>
+</div>
+

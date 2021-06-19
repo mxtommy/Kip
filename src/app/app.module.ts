@@ -23,7 +23,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
 import { MatAutocompleteModule } from '@angular/material/autocomplete'; 
-
+import { MatTableModule } from '@angular/material/table'; 
+import { MatPaginatorModule } from '@angular/material/paginator'; 
+import { MatSortModule } from '@angular/material/sort'; 
 
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizedEventModule } from 'angular-resize-event';
@@ -82,11 +84,14 @@ import { SvgAutopilotComponent } from './svg-autopilot/svg-autopilot.component';
 import { SettingsNotificationsComponent } from './settings-notifications/settings-notifications.component';
 import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
+import { DataBrowserComponent } from './data-browser/data-browser.component';
+
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
   { path: 'settings',  component: SettingsComponent },
+  { path: 'data',  component: DataBrowserComponent },
   { path: 'reset', component: ResetConfigComponent },
   { path: 'demo', component: ResetConfigComponent }
 ];
@@ -133,6 +138,7 @@ const appRoutes: Routes = [
     SettingsNotificationsComponent,
     SvgSimpleLinearGaugeComponent,
     WidgetSimpleLinearComponent,
+    DataBrowserComponent,
   ],
   imports: [
     BrowserModule,
@@ -163,6 +169,9 @@ const appRoutes: Routes = [
     MatListModule,
     MatAutocompleteModule,
     GaugesModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
   ],
   providers: [
     SignalKService,

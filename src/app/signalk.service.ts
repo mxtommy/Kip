@@ -31,6 +31,9 @@ export class SignalKService {
   // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
 
+  // path Observable
+  pathsObservale: BehaviorSubject<IPathObject[]> = new BehaviorSubject<IPathObject[]>([]);
+
   // Performance stats
   updateStatistics: updateStatistics = {
     currentSecond: 0,
@@ -201,6 +204,9 @@ export class SignalKService {
       }
     );
 
+    // push it to paths observer
+    this.pathsObservale.next(this.paths);
+
   }
 
   setDefaultSource(path: string, source: string) {
@@ -241,6 +247,9 @@ export class SignalKService {
     return paths; // copy it....
   }
 
+  getPathsObservable(): Observable<IPathObject[]> {
+    return this.pathsObservale.asObservable();
+  }
 
   getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathAndMetaObjects[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let pathsMeta: IPathAndMetaObjects[] = [];
