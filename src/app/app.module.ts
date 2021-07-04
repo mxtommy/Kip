@@ -44,7 +44,6 @@ import { LayoutSplitsService } from './layout-splits.service';
 import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
-import { UnitConvertService } from './unit-convert.service';
 import { UnitsService } from './units.service';
 import { NotificationsService } from './notifications.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
@@ -185,7 +184,6 @@ const appRoutes: Routes = [
     LayoutSplitsService,
     WidgetListService,
     WidgetManagerService,
-    UnitConvertService,
     UnitsService,
     AppSettingsService,
     NotificationsService

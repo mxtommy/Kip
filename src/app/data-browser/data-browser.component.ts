@@ -51,7 +51,6 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
     this.tableData.paginator = this.paginator;
     this.tableData.sort = this.sort;
     this.tableData.filter = "self.";
-    console.log(window.innerHeight);
     this.setNumPerPage(window.innerHeight);
   }
 
