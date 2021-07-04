@@ -1,0 +1,17 @@
+<div mat-dialog-content>
+  <p>Select Unit type</p>
+  <mat-form-field appearance="fill" color="accent">
+    <mat-label>Unit</mat-label>
+    <mat-select [(value)]="data.selectedUnit">
+      <mat-optgroup *ngFor="let unitgroup of data.units.conversions" [label]="unitgroup.group">
+        <mat-option *ngFor="let unit of unitgroup.units" [value]="unit.measure">
+          {{unit.measure}}
+        </mat-option>
+      </mat-optgroup>
+    </mat-select>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button [mat-dialog-close]="data.selectedUnit" cdkFocusInitial>Ok</button>
+</div>

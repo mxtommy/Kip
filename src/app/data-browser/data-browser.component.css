@@ -21,11 +21,9 @@
 
 .table-container{
   max-height: 70vh;
-  overflow: auto
+  overflow: auto;
 }
 .paginator{
-  //margin-right: 155px;
   width: 100%;
-  //max-width: 80%;
   position: sticky;
 }

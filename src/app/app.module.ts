@@ -85,6 +85,7 @@ import { SettingsNotificationsComponent } from './settings-notifications/setting
 import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
+import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
 
 
 const appRoutes: Routes = [
@@ -139,6 +140,8 @@ const appRoutes: Routes = [
     SvgSimpleLinearGaugeComponent,
     WidgetSimpleLinearComponent,
     DataBrowserComponent,
+    DataBrowserRowComponent,
+    DialogUnitSelect,
   ],
   imports: [
     BrowserModule,

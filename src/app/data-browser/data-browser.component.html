@@ -6,7 +6,7 @@
   
   
   <div class="mat-elevation-z8 full-width table-container">
-    <table mat-table class="full-display" [dataSource]="tableData" matSort>
+    <table mat-table class="full-display" [dataSource]="tableData" [trackBy]="trackByPath" matSort matSortActive="path" matSortDirection="asc">
   
       <!-- Path Column -->
       <ng-container matColumnDef="path">
@@ -19,9 +19,8 @@
         <th mat-header-cell *matHeaderCellDef mat-sort-header> Source / Value</th>
         <td mat-cell *matCellDef="let element">
         <table width="100%">
-          <tr *ngFor="let item of element.sources |keyvalue">
-            <td width="30%">{{item.key}}</td>
-            <td width="70%">{{item.value.value}}</td>
+          <tr width="100%" *ngFor="let item of element.sources |keyvalue; trackBy: trackBySource">
+            <data-browser-row width="100%" [path]="element.path" [source]="item.key" [pathValue]="item.value.value"></data-browser-row>
           </tr>
         </table> 
         </td>

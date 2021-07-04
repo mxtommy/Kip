@@ -77,10 +77,19 @@ export class UnitsService {
       { measure: 'm3', description: "Cubic Meters"},
       { measure: 'gallon', description: "Gallons"},
      ] },
-    { group: 'Current', units: [ { measure: 'A', description: "Amperes"} ] },
-    { group: 'Potential', units: [ { measure: 'V', description: "Volts"} ] },
+    { group: 'Current', units: [
+      { measure: 'A', description: "Amperes"},
+      { measure: 'mA', description: "Milliamperes"} 
+    ] },
+    { group: 'Potential', units: [ 
+      { measure: 'V', description: "Volts"},
+      { measure: 'mV', description: "Millivolts"} 
+    ] },
     { group: 'Charge', units: [ { measure: 'C', description: "Current"} ] },
-    { group: 'Power', units: [ { measure: 'W', description: "Watts"} ] },
+    { group: 'Power', units: [ 
+      { measure: 'W', description: "Watts"},
+      { measure: 'mW', description: "Milliwatts"},
+    ] },
     { group: 'Energy', units: [ { measure: 'J', description: "Joules"} ] },
     { group: 'Pressure', units: [
       { measure: 'Pa', description: "Pascal (default)" },
@@ -180,12 +189,15 @@ this.conversionList[group].push(unit);
     "mi": Qty.swiftConverter('m', 'mi'),
 //  Potential
     "V": function(v) { return v; },
+    "mV": function(v) { return v/1000; },
 //  Current
     "A": function(v) { return v; },
+    "mA": function(v) { return v/1000; },
 // charge
     "C": function(v) { return v; },
 // Power
     "W": function(v) { return v; },
+    "mW": function(v) { return v/1000; },
 // Energy
     "J": function(v) { return v; },
 //  pressure
@@ -281,7 +293,7 @@ this.conversionList[group].push(unit);
     let pathUnitType = this.SignalKService.getPathUnitType(path);
     let groupList = [];
     let isUnitInList: boolean = false;
-
+    let defaultUnit: string = "unitless"
     // if this Path has no predefined Unit type (from Meta or elsewhere) set to unitless
     if (pathUnitType === null) {
       return { default: 'unitless', conversions: this.conversionList };
@@ -294,6 +306,7 @@ this.conversionList[group].push(unit);
         unitGroup.units.forEach(unit => {
           if (unit.measure == pathUnitType) {
             isUnitInList = true;
+            defaultUnit = this.defaultUnits[unitGroup.group];
             groupList.push(unitGroup);
           }
         });
@@ -301,7 +314,7 @@ this.conversionList[group].push(unit);
     }
 
     if (isUnitInList) {
-      return { default: pathUnitType, conversions: groupList };
+      return { default: defaultUnit, conversions: groupList };
     }
     // default if we have a unit for the Path but it's not know by Kip
     console.log("Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");

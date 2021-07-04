@@ -63,6 +63,15 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
       this.tableData.paginator.firstPage();
     }
   }
+  
+  trackByPath(index: number, item: IPathObject): string {
+    return `${item.path}`;
+  }
+
+  trackBySource(index: number, item): string {
+    return `${item.key}`;
+  }
+
 
   setNumPerPage(heightPx: number){
     if (heightPx > 750 && heightPx < 900) {
@@ -76,5 +85,6 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
   }
 
 
+  
 
 }
