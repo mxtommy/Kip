@@ -48,9 +48,6 @@ export class SignalKFullService {
       
       let timestamp = Date.parse(data.timestamp);
 
-      // try and get metadata.
-      if (typeof(data['meta']) == 'object') {
-        this.SignalKService.setMeta(path, data['meta']);
 
       // is it a normal value, or a compound value?
       if ('value' in data) {
@@ -58,18 +55,22 @@ export class SignalKFullService {
           // compound
           Object.keys(data['value']).forEach(key => {
             this.SignalKService.updatePathData(path+"."+key, source, timestamp, data.value[key]);
-            this.SignalKService.setDefaultSource(path+"."+key, source);            
+            this.SignalKService.setDefaultSource(path+"."+key, source);       
+            // try and get metadata.
+            if (typeof(data['meta']) == 'object') {
+              this.SignalKService.setMeta(path+"."+key, data['meta']);
+            }                 
           });
         } else {
           //simple
           this.SignalKService.updatePathData(path, source, timestamp, data.value);
-          this.SignalKService.setDefaultSource(path, source);      
-          }
-        }     
+          this.SignalKService.setDefaultSource(path, source);     
+          // try and get metadata.
+          if (typeof(data['meta']) == 'object') {
+            this.SignalKService.setMeta(path, data['meta']);
+          } 
+        }
       }
-
-
-      this.SignalKService.setDefaultSource(path, source);      
 
       return;
     }
