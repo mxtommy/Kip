@@ -7,3 +7,7 @@
 .full-width {
   width: 100%;
 }
+.mat-column-path {
+  flex: 0 0 50%;
+  width: 50%;
+}
