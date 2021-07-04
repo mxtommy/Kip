@@ -74,6 +74,7 @@ export class SignalKDeltaService {
         } else {
           // it's a data update. Update local tree
           let fullPath = context + '.' + value.path;
+          if (value.path == '') { fullPath = context; } // if path is empty we shouldn't have a . at the end
           if ( (typeof(value.value) == 'object') && (value.value !== null)) {
             // compound data
             let keys = Object.keys(value.value);

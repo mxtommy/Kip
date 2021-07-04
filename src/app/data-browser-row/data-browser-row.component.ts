@@ -24,7 +24,7 @@ export class DataBrowserRowComponent implements OnInit {
     private unitsService: UnitsService,
     public dialog: MatDialog
   ) { 
-    console.log("created")
+
   }
 
   ngOnInit() {
