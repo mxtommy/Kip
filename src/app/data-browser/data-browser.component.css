@@ -7,7 +7,25 @@
 .full-width {
   width: 100%;
 }
+.full-height {
+  height: 100%;
+}
 .mat-column-path {
   flex: 0 0 50%;
   width: 50%;
+}
+.mat-table {
+  overflow: auto;
+  max-height: 270px;
+}
+
+.table-container{
+  max-height: 70vh;
+  overflow: auto
+}
+.paginator{
+  //margin-right: 155px;
+  width: 100%;
+  //max-width: 80%;
+  position: sticky;
 }

@@ -1,11 +1,11 @@
-<div class="full-display">
+<div class="full-display"  (window:resize)="onResize($event)">
   <mat-form-field>
     <mat-label>Filter</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="self." #input>
   </mat-form-field>
   
   
-  <div class="mat-elevation-z8 full-width">
+  <div class="mat-elevation-z8 full-width table-container">
     <table mat-table class="full-display" [dataSource]="tableData" matSort>
   
       <!-- Path Column -->
@@ -37,7 +37,9 @@
         <td class="mat-cell" colspan="4">No data matching the filter "{{input.value}}"</td>
       </tr>
     </table>
-    <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+  </div>
+  <div class="paginator">
+    <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
   </div>
 </div>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild,ElementRef } from '@angular/core';
 import { Subscription, Observable, ReplaySubject } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -20,6 +20,8 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort) sort: MatSort;
 
   pathsSub: Subscription;
+  pageSize = 10;
+
 
   tableData = new MatTableDataSource([]);
 
@@ -28,20 +30,29 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
   constructor(
     private appSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
-  ) { }
+    private el:ElementRef,
+  ) { 
+    
+  }
+
+  onResize(event) {
+    this.setNumPerPage(event.target.innerHeight);
+  }
 
   ngOnInit() {
     setTimeout(()=>{
       this.pathsSub = this.SignalKService.getPathsObservable().subscribe(paths => {
         this.tableData.data = paths
       })},0); // settimeout to make it async otherwise delays page load
+    
   }
 
   ngAfterViewInit() {
     this.tableData.paginator = this.paginator;
     this.tableData.sort = this.sort;
-    this.tableData.filter = "self."
-
+    this.tableData.filter = "self.";
+    console.log(window.innerHeight);
+    this.setNumPerPage(window.innerHeight);
   }
 
   applyFilter(event: Event) {
@@ -50,6 +61,17 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
 
     if (this.tableData.paginator) {
       this.tableData.paginator.firstPage();
+    }
+  }
+
+  setNumPerPage(heightPx: number){
+    if (heightPx > 750 && heightPx < 900) {
+      this.pageSize = 10;
+    }
+    else if (heightPx > 900) {
+      this.pageSize = 15;
+    } else {
+      this.pageSize = 5;
     }
   }
 
