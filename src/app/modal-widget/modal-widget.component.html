@@ -123,6 +123,7 @@
                   <mat-option value='primary'>Primary Color</mat-option>
                   <mat-option value='accent'>Accent Color</mat-option>
                   <mat-option value='warn'>Warn Color</mat-option>
+                  <mat-option *ngIf="(widgetConfig.gaugeType == 'ngLinearVertical') || (widgetConfig.gaugeType == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
@@ -197,7 +198,7 @@
             <mat-checkbox
               formControlName="gaugeTicks"
               name="gaugeTicks">
-                Display Gauge Thicks
+                Display Gauge Ticks
             </mat-checkbox>
           </p>
         </div>

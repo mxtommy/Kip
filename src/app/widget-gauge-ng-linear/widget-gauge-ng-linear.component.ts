@@ -187,23 +187,36 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
           this.gaugeOptions.colorBarProgress = themePaletteColor;
           this.gaugeOptions.colorBarProgressEnd = themePaletteDarkColor;
           this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+          this.gaugeOptions.needleWidth = 5;
         break;
 
-        case "accent":
+      case "accent":
           themePaletteColor = getComputedStyle(this.accentElement.nativeElement).color;
           themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
           this.gaugeOptions.colorBarProgress = themePaletteColor;
           this.gaugeOptions.colorBarProgressEnd = themePaletteDarkColor;
           this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        break;
+          this.gaugeOptions.needleWidth = 5;
+          break;
 
-        case "warn":
+      case "warn":
           themePaletteColor = getComputedStyle(this.warnElement.nativeElement).color;
           themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
           this.gaugeOptions.colorBarProgress = themePaletteColor;
           this.gaugeOptions.colorBarProgressEnd = themePaletteDarkColor;
           this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+          this.gaugeOptions.needleWidth = 5;
         break;
+
+      case "nobar":
+          themePaletteColor = getComputedStyle(this.backgroundElement.nativeElement).color;
+          themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;    
+          this.gaugeOptions.colorBar = themePaletteColor;
+          this.gaugeOptions.colorBarProgress = themePaletteColor;
+          this.gaugeOptions.colorBarProgressEnd = themePaletteColor;
+          this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+          this.gaugeOptions.needleWidth = 20;
+
 
         default:
         break;
@@ -230,7 +243,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
     this.gaugeOptions.needle = true;
     this.gaugeOptions.needleType = "line";
-    this.gaugeOptions.needleWidth = 5;
     this.gaugeOptions.needleShadow = false;
     this.gaugeOptions.needleSide = "both";
 
