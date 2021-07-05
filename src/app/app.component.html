@@ -29,6 +29,9 @@
 </div>
 
 <mat-menu #settingsMenu="matMenu">
+  <button mat-menu-item routerLink="/help">
+    <span><i class="fa fa-question-circle" aria-hidden="true"></i> Help</span>
+  </button>
   <button mat-menu-item [matMenuTriggerFor]="configMenu">
     <span><i class="fa fa-cog" aria-hidden="true"></i> Configuration</span>
   </button>

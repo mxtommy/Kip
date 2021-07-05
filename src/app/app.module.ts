@@ -31,6 +31,7 @@ import { AngularSplitModule } from 'angular-split';
 import { AngularResizedEventModule } from 'angular-resize-event';
 
 import { AppComponent } from './app.component';
+import { AppHelpComponent } from './app-help/app-help.component';
 
 import { FitTextDirective } from './fit-text.directive';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
@@ -91,6 +92,7 @@ const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
   { path: 'settings',  component: SettingsComponent },
+  { path: 'help', component: AppHelpComponent },
   { path: 'data',  component: DataBrowserComponent },
   { path: 'reset', component: ResetConfigComponent },
   { path: 'demo', component: ResetConfigComponent }
@@ -99,6 +101,7 @@ const appRoutes: Routes = [
 @NgModule({
   declarations: [
     AppComponent,
+    AppHelpComponent,
     SettingsComponent,
     UnitWindowComponent,
     UnitWindowModalComponent,
