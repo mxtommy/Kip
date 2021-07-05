@@ -189,15 +189,15 @@ this.conversionList[group].push(unit);
     "mi": Qty.swiftConverter('m', 'mi'),
 //  Potential
     "V": function(v) { return v; },
-    "mV": function(v) { return v/1000; },
+    "mV": function(v) { return v*1000; },
 //  Current
     "A": function(v) { return v; },
-    "mA": function(v) { return v/1000; },
+    "mA": function(v) { return v*1000; },
 // charge
     "C": function(v) { return v; },
 // Power
     "W": function(v) { return v; },
-    "mW": function(v) { return v/1000; },
+    "mW": function(v) { return v*1000; },
 // Energy
     "J": function(v) { return v; },
 //  pressure
