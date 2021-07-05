@@ -232,22 +232,23 @@ unsubscribeTheme(){
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
-      //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
-      // set font small and make bigger until we hit a max.
-      this.valueFontSize = 1;
-      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-      //first increase fontsize by 10, skips lots of loops.
-      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
-        this.valueFontSize = this.valueFontSize + 10;
+      // start with large font, no sense in going bigger than the size of the canvas :) 
+      this.valueFontSize = maxTextHeight;
+      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      let measure = this.canvasCtx.measureText(valueText).width;
+      
+      // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
+      if (measure > maxTextWidth) {
+        let estimateRatio = maxTextWidth / measure;
+        this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
-      // now decrease by 1 to find the right size
-      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
+      // now decrease by 1 to in case still too big
+      while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
         this.valueFontSize--;
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
     }
-
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
@@ -260,12 +261,22 @@ unsubscribeTheme(){
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
     if (this.config.displayName === null) { return; }
-    var fontSize = 1;
 
-    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
-        this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    // start with large font, no sense in going bigger than the size of the canvas :) 
+    var fontSize = maxTextHeight;
+    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    let measure = this.canvasBGCtx.measureText(this.config.displayName).width;
+    
+    // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
+    if (measure > maxTextWidth) {
+      let estimateRatio = maxTextWidth / measure;
+      fontSize = Math.floor(fontSize * estimateRatio);
+      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    }
+    // now decrease by 1 to in case still too big
+    while (this.canvasBGCtx.measureText(this.config.displayName).width > maxTextWidth && fontSize > 0) {
+      fontSize--;
+      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
 
     this.canvasBGCtx.textAlign = "left";
@@ -282,15 +293,24 @@ unsubscribeTheme(){
     if (this.config.paths['numericPath'].convertUnitTo.startsWith('lon')) { return; }
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
-    // set font small and make bigger until we hit a max.
 
-    var fontSize = 1;
-
-    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.config.paths['numericPath'].convertUnitTo).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
-        this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    // start with large font, no sense in going bigger than the size of the canvas :) 
+    var fontSize = maxTextHeight;
+    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    let measure = this.canvasBGCtx.measureText(this.config.paths['numericPath'].convertUnitTo).width;
+    
+    // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
+    if (measure > maxTextWidth) {
+      let estimateRatio = maxTextWidth / measure;
+      fontSize = Math.floor(fontSize * estimateRatio);
+      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
+    // now decrease by 1 to in case still too big
+    while (this.canvasBGCtx.measureText(this.config.paths['numericPath'].convertUnitTo).width > maxTextWidth && fontSize > 0) {
+      fontSize--;
+      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    }
+
     this.canvasBGCtx.textAlign = "right";
     this.canvasBGCtx.textBaseline="bottom";
     this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
@@ -334,13 +354,24 @@ unsubscribeTheme(){
       this.currentMinMaxLength = valueText.length;
       var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.6));
       var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.85));
-      // set font small and make bigger until we hit a max.
-      this.minMaxFontSize = 1;
-      this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.minMaxFontSize < maxTextHeight)) {
-        this.minMaxFontSize++;
-        this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+
+      // start with large font, no sense in going bigger than the size of the canvas :) 
+      this.minMaxFontSize = maxTextHeight;
+      this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+      let measure = this.canvasBGCtx.measureText(valueText).width;
+      
+      // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
+      if (measure > maxTextWidth) {
+        let estimateRatio = maxTextWidth / measure;
+        this.minMaxFontSize = Math.floor(this.minMaxFontSize * estimateRatio);
+        this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
       }
+      // now decrease by 1 to in case still too big
+      while (this.canvasBGCtx.measureText(valueText).width > maxTextWidth && this.minMaxFontSize > 0) {
+        this.minMaxFontSize--;
+        this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+      }
+
     }
 
     this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";

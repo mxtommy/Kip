@@ -47,7 +47,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   valueFontSize: number = 1;
   currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  currentMinMaxLength: number = 0;
   canvasCtx;
   canvasBGCtx;
 
@@ -104,7 +103,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       this.canvasBG.nativeElement.width = Math.floor(rect.width);
       this.canvasBG.nativeElement.height = Math.floor(rect.height);
       this.currentValueLength = 0; //will force resetting the font size
-      this.currentMinMaxLength = 0;
       this.updateCanvas();
       this.updateCanvasBG();
     }
@@ -163,6 +161,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
         this.config = result;
         this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
         this.subscribePath();
+        this.resizeWidget();
       }
 
     });
@@ -196,7 +195,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText : string;
 
-    if (isNull(this.dataValue)) {
+    if (this.dataValue === null) {
       valueText = "--";
     } else {
       valueText = this.dataValue;
@@ -206,17 +205,19 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
-      //TODO: at high res.large area, this can take way too long :( (500ms+) (added skip by 10 which helps, still feel it could be better...)
-      // set font small and make bigger until we hit a max.
-      this.valueFontSize = 1;
-      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-      //first increase fontsize by 10, skips lots of loops.
-      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
-        this.valueFontSize = this.valueFontSize + 10;
+      // start with large font, no sense in going bigger than the size of the canvas :) 
+      this.valueFontSize = maxTextHeight;
+      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      let measure = this.canvasCtx.measureText(valueText).width;
+      
+      // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
+      if (measure > maxTextWidth) {
+        let estimateRatio = maxTextWidth / measure;
+        this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
-      // now decrease by 1 to find the right size
-      while ( (this.canvasCtx.measureText(valueText).width < maxTextWidth) && (this.valueFontSize < maxTextHeight)) {
+      // now decrease by 1 to in case still too big
+      while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
         this.valueFontSize--;
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
