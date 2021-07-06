@@ -212,7 +212,7 @@ export class SignalKService {
   setDefaultSource(path: string, source: string) {
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
-    if (pathIndex > 0) {
+    if (pathIndex >= 0) {
       this.paths[pathIndex].defaultSource = source;
     }
   }
@@ -220,7 +220,7 @@ export class SignalKService {
   setMeta(path: string, meta) { //TODO(David): Look at Meta and maybe build Zones
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
-    if (pathIndex > 0) {
+    if (pathIndex >= 0) {
       this.paths[pathIndex].meta = meta;
     }
   }
@@ -285,7 +285,9 @@ export class SignalKService {
 
   getPathUnitType(path: string): string { //TODO(David): Look at Unit Path Type
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    if (path.includes('environment.water.temperature')) { console.log(path); }
     if (pathIndex < 0) { return null; }
+    if (path.includes('environment.water.temperature')) { console.log(this.paths[pathIndex]); }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {
       return this.paths[pathIndex].meta.units;
     } else {
