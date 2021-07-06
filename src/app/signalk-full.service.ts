@@ -54,17 +54,23 @@ export class SignalKFullService {
         if (typeof(data['value']) == 'object' && (data['value'] !== null)) {
           // compound
           Object.keys(data['value']).forEach(key => {
-            this.SignalKService.updatePathData(path+"."+key, source, timestamp, data.value[key]);
-            this.SignalKService.setDefaultSource(path+"."+key, source);       
+            let compoundPath = path+"."+key;
+            this.SignalKService.updatePathData(compoundPath, source, timestamp, data.value[key]);
+            this.SignalKService.setDefaultSource(compoundPath, source);       
             // try and get metadata.
             if (typeof(data['meta']) == 'object') {
-              this.SignalKService.setMeta(path+"."+key, data['meta']);
-            }                 
+              //does meta have one with properties for each one?
+              if (typeof(data.meta['properties']) == 'object' && typeof(data.meta.properties[key]) == 'object') {
+                this.SignalKService.setMeta(compoundPath, data.meta.properties[key]);
+              } else {
+                this.SignalKService.setMeta(compoundPath, data['meta']);
+              }
+            }
           });
         } else {
           //simple
           this.SignalKService.updatePathData(path, source, timestamp, data.value);
-          this.SignalKService.setDefaultSource(path, source);     
+          this.SignalKService.setDefaultSource(path, source);
           // try and get metadata.
           if (typeof(data['meta']) == 'object') {
             this.SignalKService.setMeta(path, data['meta']);
