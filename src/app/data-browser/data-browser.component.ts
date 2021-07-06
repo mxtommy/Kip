@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild,ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild,ElementRef,ChangeDetectorRef} from '@angular/core';
 import { Subscription, Observable, ReplaySubject } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -31,6 +31,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
     private appSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
     private el:ElementRef,
+    private cdRef: ChangeDetectorRef,
   ) { 
     
   }
@@ -52,6 +53,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
     this.tableData.sort = this.sort;
     this.tableData.filter = "self.";
     this.setNumPerPage(window.innerHeight);
+    this.cdRef.detectChanges();
   }
 
   applyFilter(event: Event) {
