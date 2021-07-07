@@ -11,8 +11,6 @@ import { AppSettingsService } from '../app-settings.service';
 const defaultConfig: IWidgetConfig = {
   displayName: "Display Name",
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "gaugePath": {
       description: "Numeric Data",

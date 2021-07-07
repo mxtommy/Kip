@@ -13,8 +13,6 @@ import { AppSettingsService } from '../app-settings.service';
 const defaultConfig: IWidgetConfig = {
   displayName: null,
   filterSelfPaths: true,
-  useMetadata: false,
-  useZone: false,
   convertUnitTo: "unitless",
   dataSetUUID: null,
   invertData: false,

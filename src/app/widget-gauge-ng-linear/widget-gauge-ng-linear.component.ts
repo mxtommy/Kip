@@ -14,8 +14,6 @@ import { LinearGauge, LinearGaugeOptions } from '@biacsics/ng-canvas-gauges';
 const defaultConfig: IWidgetConfig = {
   displayName: null,
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "gaugePath": {
       description: "Numeric Data",

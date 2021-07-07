@@ -16,7 +16,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
   //path control
   @Input() formGroup: FormGroup;
   @Input() filterSelfPaths: boolean;
-  @Input() useMetadata: boolean;
   availablePaths: IPathAndMetaObjects[];
   filteredPaths: Observable<IPathAndMetaObjects[]> = new Observable;
 

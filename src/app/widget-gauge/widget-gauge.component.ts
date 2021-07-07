@@ -12,8 +12,6 @@ import { UnitsService } from '../units.service';
 const defaultConfig: IWidgetConfig = {
   displayName: null,
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "gaugePath": {
       description: "Numeric Data",

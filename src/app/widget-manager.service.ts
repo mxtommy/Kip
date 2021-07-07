@@ -2,6 +2,12 @@ import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
 import { Format, Policy } from "./signalk-interfaces";
 
+export interface IZone {
+  lower: number;
+  upper: number;
+  state: string; // 'warning' or 'alarm'
+}
+
 export interface IWidget {
   uuid: string;
   type: string;
@@ -11,8 +17,6 @@ export interface IWidget {
 export interface IWidgetConfig {
   displayName?: string;
   filterSelfPaths?: boolean; //widget filter self paths only?
-  useMetadata?: boolean; // use server meta info
-  useZone?: boolean;  // use zone for info
   paths?: {
     [key: string]: IWidgetPaths;
   },

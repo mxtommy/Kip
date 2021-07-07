@@ -11,8 +11,6 @@ import { UnitsService } from '../units.service';
 
 const defaultConfig: IWidgetConfig = {
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "headingPath": {
       description: "Heading",

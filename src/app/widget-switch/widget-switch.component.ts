@@ -12,8 +12,6 @@ import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.
 const defaultConfig: IWidgetConfig = {
   displayName: null,
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "statePath": {
       description: "State Data",

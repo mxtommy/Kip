@@ -325,19 +325,6 @@
       </mat-tab>
 <!-- end Historical -->
 
-<!-- Meta stuff -->
-      <mat-tab label="Metadata" *ngIf="widgetConfig.useMetadata != undefined && widgetConfig.useZone != undefined">
-        <div class="tab-content">
-          <mat-checkbox *ngIf="widgetConfig.useMetadata != undefined" name="useMetadata" formControlName="useMetadata">
-            Use Metadata
-          </mat-checkbox>
-          <br/>
-          <mat-checkbox *ngIf="widgetConfig.useZone != undefined" name="useZone" formControlName="useZone">
-            Use Metadata Zones
-          </mat-checkbox>
-        </div>
-      </mat-tab>
-<!-- End Meta -->
     </mat-tab-group>
   </mat-dialog-content>
   <mat-dialog-actions>

@@ -11,8 +11,6 @@ import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.
 const defaultConfig: IWidgetConfig = {
   displayName: null,
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "boolPath": {
       description: "Boolean Data",

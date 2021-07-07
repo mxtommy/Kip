@@ -79,8 +79,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
         },
         "displayName": "Depth",
         "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZone": false,
         "showMin": false,
         "showMax": false,
         "numDecimal": 1,
@@ -134,8 +132,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
           }
         },
         "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZone": false,
         "windSectorEnable": true,
         "windSectorWindowSeconds": 10,
         "laylineEnable": true,
@@ -148,8 +144,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
       "config": {
         "displayName": "SOG",
         "filterSelfPaths": true,
-        "useMetadata": true,
-        "useZone": false,
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",
@@ -176,8 +170,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
       "config": {
         "displayName": "Apparent Wind Speed",
         "filterSelfPaths": true,
-        "useMetadata": true,
-        "useZone": false,
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",
@@ -213,8 +205,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
         },
         "displayName": "Speed",
         "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZone": false,
         "showMin": true,
         "showMax": true,
         "numDecimal": 1,
@@ -237,8 +227,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
         },
         "displayName": "VMG",
         "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZone": false,
         "showMin": true,
         "showMax": true,
         "numDecimal": 1,
@@ -252,8 +240,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
         "convertUnitTo": "knots",
         "displayName": "WindSpeed True",
         "filterSelfPaths": true,
-        "useMetadata": false,
-        "useZone": false,
         "dataSetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
         "displayMinMax": false,
@@ -268,8 +254,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
       "config": {
         "displayName": "COG (True)",
         "filterSelfPaths": true,
-        "useMetadata": true,
-        "useZone": false,
         "paths": {
           "gaugePath": {
             "description": "Numeric Data",

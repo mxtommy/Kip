@@ -12,8 +12,6 @@ import { isNull } from 'util';
 const defaultConfig: IWidgetConfig = {
   displayName: null,
   filterSelfPaths: true,
-  useMetadata: true,
-  useZone: false,
   paths: {
     "stringPath": {
       description: "String Data",

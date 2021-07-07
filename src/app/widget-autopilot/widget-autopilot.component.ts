@@ -13,8 +13,6 @@ import { UnitsService } from '../units.service';
 const defaultConfig: IWidgetConfig = {
   displayName: 'N2k Autopilot',
   filterSelfPaths: true,
-  useMetadata: false,
-  useZone: false,
   paths: {
     "apState": {
       description: "Autopilot State",
