@@ -244,6 +244,7 @@ this.conversionList[group].push(unit);
     'ratio': function(v) { return v * 100 },
 // lat/lon
     'latitudeMin': function(v) {
+        v = Qty(v, 'rad').to('deg').scalar ;
         let degree = Math.trunc(v);
         let s = 'N';
         if (v < 0) { s = 'S'; degree = degree * -1 }
@@ -251,6 +252,7 @@ this.conversionList[group].push(unit);
         return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
       },
     'latitudeSec': function(v) {
+      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'N';
       if (v < 0) { s = 'S'; degree = degree * -1 }
@@ -261,6 +263,7 @@ this.conversionList[group].push(unit);
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
     'longitudeMin': function(v) {
+      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
@@ -268,6 +271,7 @@ this.conversionList[group].push(unit);
       return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
     },
     'longitudeSec': function(v) {
+      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
@@ -303,6 +307,11 @@ this.conversionList[group].push(unit);
       for (let index = 0; index < this.conversionList.length; index++) {
         const unitGroup:IUnitGroup = this.conversionList[index];
 
+         // add position group if position path
+         if (unitGroup.group == 'Position' && (path.includes('position.latitude') || path.includes('position.longitude'))) {
+          groupList.push(unitGroup)
+        }
+
         unitGroup.units.forEach(unit => {
           if (unit.measure == pathUnitType) {
             isUnitInList = true;
@@ -314,6 +323,7 @@ this.conversionList[group].push(unit);
     }
 
     if (isUnitInList) {
+
       return { default: defaultUnit, conversions: groupList };
     }
     // default if we have a unit for the Path but it's not know by Kip

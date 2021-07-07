@@ -3,6 +3,8 @@ import { Observable ,  Subject ,  BehaviorSubject } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import * as compareVersions from 'compare-versions';
 
+import * as Qty from 'js-quantities';
+
 
 interface pathRegistration {
   uuid: string;
@@ -21,6 +23,8 @@ export interface updateStatistics {
 
 @Injectable()
 export class SignalKService {
+
+  degToRad = Qty.swiftConverter('deg', 'rad');
 
   serverSupportApplicationData: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
   serverVersion: BehaviorSubject<string> = new BehaviorSubject<string>(null) // version of the signalk server
@@ -154,6 +158,12 @@ export class SignalKService {
     this.updateStatistics.currentSecond++;
     // convert the selfURN to "self"
     let pathSelf: string = path.replace(this.selfurn, 'self');
+
+    // position data is sent as degrees. KIP expects everything to be in SI, so rad.
+    if (pathSelf.includes('position.latitude') || pathSelf.includes('position.longitude')) {
+      value = this.degToRad(value);
+    }
+
     // update existing if exists.
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) { // exists
@@ -285,9 +295,7 @@ export class SignalKService {
 
   getPathUnitType(path: string): string { //TODO(David): Look at Unit Path Type
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
-    if (path.includes('environment.water.temperature')) { console.log(path); }
     if (pathIndex < 0) { return null; }
-    if (path.includes('environment.water.temperature')) { console.log(this.paths[pathIndex]); }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {
       return this.paths[pathIndex].meta.units;
     } else {
