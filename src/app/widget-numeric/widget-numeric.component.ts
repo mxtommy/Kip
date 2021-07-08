@@ -22,6 +22,7 @@ const defaultConfig: IWidgetConfig = {
       convertUnitTo: "unitless"
     }
   },
+  zones: [],
   showMax: false,
   showMin: false,
   numDecimal: 1,
@@ -79,6 +80,12 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.config = defaultConfig; // load default config.
     } else {
       this.config = this.activeWidget.config;
+
+      //new config options, might not be set.
+      if (!('zones' in this.config)) {
+        console.log("zones not set");
+        this.config.zones = [];
+      }
     }
     this.subscribePath();
     this.subscribeTheme();

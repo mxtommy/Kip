@@ -31,3 +31,8 @@
 .radio-button {
   margin-left: 16px;
 }
+
+.thirdField {
+  display: inline-block;
+  width: calc(33% - 15px);
+}

@@ -324,8 +324,39 @@
           </div>
       </mat-tab>
 <!-- end Historical -->
+      <!-- Zone stuff -->
+      <mat-tab label="Zones" *ngIf="(widgetConfig.zones !== undefined)">
+        <div class="tab-content">
+          <div formArrayName="zones" *ngFor="let zone of formMaster.controls.zones.controls; let i = index">
+            <div [formGroupName]="i" class="full-width">
+              <mat-form-field class="thirdField" appearance="outline" floatLabel="always">
+                <mat-label>Lower value</mat-label>
+                <input type="number" matInput placeholder="Enter or select number..." name="lower"  formControlName="lower">
+              </mat-form-field>
+              <mat-form-field class="thirdField" appearance="outline" floatLabel="always">
+                <mat-label>Upper value</mat-label>
+                <input type="number" matInput placeholder="Enter or select number..." name="upper"  formControlName="upper">
+              </mat-form-field>
+              <mat-form-field class="thirdField" appearance="outline" floatLabel="always">
+                <mat-label>State</mat-label>
+                <mat-select
+                placeholder="Value State"
+                formControlName="state"
+                name="state">
+                  <mat-option value='warning'>Warning</mat-option>
+                  <mat-option value='alarm'>Alarm</mat-option>
+                </mat-select>
+              </mat-form-field>              
+              <button type="button" mat-button mat-icon-button aria-label="Clear" (click)="delZone(i)">
+                <span class="fa fa-close"></span>
+              </button>
+            </div>
+          </div> 
+          <button type="button" mat-raised-button (click)="addZone()">Add</button>
+        </div>
+      </mat-tab>
 
-    </mat-tab-group>
+</mat-tab-group>
   </mat-dialog-content>
   <mat-dialog-actions>
       <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
