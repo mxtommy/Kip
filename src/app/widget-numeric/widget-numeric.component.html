@@ -1,6 +1,9 @@
 <div #wrapperDiv class="textGenericWrapper">
   <canvas id="canvasValue" #canvasEl></canvas>
   <canvas id="cancasBG" class="numeric-labels" #canvasBG></canvas>
+
+  <div #warn class='warn' style="display: none;"></div>
+
   <div class="settingsButton" *ngIf="unlockStatus">
     <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
         <span class="fa fa-cog"></span>
