@@ -28,8 +28,6 @@ export interface IWidgetConfig {
     [key: string]: string; // Autopilot: key should match key in paths, specifies autopilot widget paths value type for AP mode
   },
 
-  zones?: IZone[];
-  
   //numeric data
   numDecimal?: number; // number of decimal places if a number
   numInt?: number;

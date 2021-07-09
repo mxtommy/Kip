@@ -1,10 +1,10 @@
 import { Component, OnInit,  Inject } from '@angular/core';
-import { FormGroup, FormArray, FormControl, Validators }    from '@angular/forms';
+import { FormGroup, FormControl, Validators }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { UnitsService, IUnitGroup } from '../units.service';
 import { DataSetService, IDataSet } from '../data-set.service';
-import { IWidgetConfig, IZone } from '../widget-manager.service';
+import { IWidgetConfig } from '../widget-manager.service';
 
 
 @Component({
@@ -15,7 +15,7 @@ import { IWidgetConfig, IZone } from '../widget-manager.service';
 export class ModalWidgetComponent implements OnInit {
 
   titleDialog: string = "Widget Options";
-  formMaster; //: FormGroup; Can't type it or everything is "Abstract" Typed and can't access things like Arr
+  formMaster: FormGroup;
   availableDataSets: IDataSet[];
   unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
@@ -38,7 +38,7 @@ export class ModalWidgetComponent implements OnInit {
     let groups = new FormGroup({});
     Object.keys(formData).forEach (key => {
       // handle Objects
-      if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) && !(Array.isArray(formData[key]) ) ) {
+      if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
         switch (objectType) {
           case "paths":
             //if we are building Paths sub formGroups, skip none configurable
@@ -50,14 +50,6 @@ export class ModalWidgetComponent implements OnInit {
           default: groups.addControl(key, this.generateFormGroups(formData[key], key));
             break;
         }
-      } else if (Array.isArray(formData[key])) {
-        let formArray = new FormArray([]);
-        formData[key].forEach(element => {
-          formArray.push(this.generateFormGroups(element));
-        });
-
-        groups.addControl(key, formArray);
-
       } else {
       // Handle Primitives - property values
         if (objectType == "convertUnitTo") {
@@ -83,22 +75,6 @@ export class ModalWidgetComponent implements OnInit {
       }
     });
     return groups;
-  }
-
-  addZone() {
-    let zone = new FormGroup({});
-    zone.addControl('upper', new FormControl(null));
-    zone.addControl('lower', new FormControl(null));
-    zone.addControl('state', new FormControl('warning', Validators.required));
-
-    if ('zones' in this.formMaster.controls) {
-      this.formMaster.controls.zones.push(zone);
-    }
-  }
-
-  delZone(index: number) {
-    this.formMaster.controls.zones.controls.splice(index,1);
-    this.formMaster.controls.zones.updateValueAndValidity();
   }
 
   submitConfig() {

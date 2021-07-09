@@ -1,21 +1,3 @@
-# V1.1.3
-## Features
-* Set Zones! Numeric Widget
-* New Data Browser feature!
-* New Help section
-* Added choice between numeric and cardinal ticks on compass (0,90,180,270 vs N,E,S,W)
-* Added percent unit
-* Optimize font size calculations by up to 50x on numeric widget
-* Added a new color option on linear gauges (No Progress). Makes it just the needle, usefull for example rudder position
-
-## Bugfix/Other
-* Fix blank config version
-* Update Dependencies to latest (Angular 11)
-* Fix full tree API parsing (might not work with very old server versions though...) (commit 30220f0)
-* Fix various small typos / small bugs
-* Position updates are in deg, but KIP expects rad. Convert deg to rad on incoming position data.
-* Fix metadata parsing
-
 # V1.1.2
 * Don't save unlock status in config (not needed)
 * Add hPA/mbar units
