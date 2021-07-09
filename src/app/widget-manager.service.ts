@@ -2,12 +2,6 @@ import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
 import { Format, Policy } from "./signalk-interfaces";
 
-export interface IZone {
-  lower: number;
-  upper: number;
-  state: string; // 'warning' or 'alarm'
-}
-
 export interface IWidget {
   uuid: string;
   type: string;

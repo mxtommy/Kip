@@ -60,6 +60,18 @@ export interface INotificationConfig {
   },
 }
 
+export interface IZone {
+  uuid: string;
+  path: string;
+  unit: string;
+  upper: number;
+  lower: number;
+  state: string;
+}
+export interface IZonesConfig {
+  zones: Array<IZone>;
+}
+
 export interface SignalKUrl {
   url: string;
   new: boolean;
@@ -85,6 +97,7 @@ export class AppSettingsService {
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
   dataSets: IDataSet[] = [];
+  zones: BehaviorSubject<Array<IZone>> = new BehaviorSubject<Array<IZone>>([]);
   root
 
   constructor(private router: Router) {
@@ -92,7 +105,7 @@ export class AppSettingsService {
     let widgetConfig: IWidgetConfig;
     let layoutConfig: ILayoutConfig;
     let themeConfig: IThemeConfig;
-    
+    let zonesConfig: IZonesConfig;
 
     if (window.localStorage) {
       // localStorage supported
@@ -106,6 +119,7 @@ export class AppSettingsService {
         widgetConfig = this.getDefaultWidgetConfig();
         layoutConfig = this.getDefaultLayoutConfig();
         themeConfig = this.getDefaultThemeConfig();
+        zonesConfig = { zones: [] };
       }
 
       if (!isNumber(appConfig.configVersion) || (appConfig.configVersion != configVersion)) {
@@ -115,13 +129,15 @@ export class AppSettingsService {
         widgetConfig = this.getDefaultWidgetConfig();
         layoutConfig = this.getDefaultLayoutConfig();
         themeConfig = this.getDefaultThemeConfig();
+        zonesConfig = { zones: [] };
       } else {
         widgetConfig = this.loadLocalStorageConfig("widgetConfig");
         layoutConfig = this.loadLocalStorageConfig("layoutConfig");
         themeConfig = this.loadLocalStorageConfig("themeConfig");
+        zonesConfig = this.loadLocalStorageConfig("zonesConfig");
       }
 
-      this.pushSettings(appConfig, widgetConfig, layoutConfig, themeConfig);
+      this.pushSettings(appConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
     } else {
       console.log("***** LocalStorage NOT SUPPORTED by browser *****\nThis is required by Kip...");
     }
@@ -146,12 +162,16 @@ export class AppSettingsService {
         case "themeConfig":
           config = this.getDefaultThemeConfig();
           break;
+
+        case "zonesConfig":
+            config = { zones: [] };
+            break;
       }
     }
     return config;
   }
 
-  private pushSettings(appConfig: IAppConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig) {
+  private pushSettings(appConfig: IAppConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig, zonesConfig: IZonesConfig) {
     this.themeName.next(themeConfig['themeName']);
 
     let skUrl: SignalKUrl = {url: appConfig.signalKUrl, new: false};
@@ -163,6 +183,7 @@ export class AppSettingsService {
     this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
     this.kipUUID = appConfig.kipUUID;
     this.widgets = widgetConfig.widgets;
+    this.zones.next(zonesConfig.zones);
 
     this.splitSets = layoutConfig.splitSets;
     this.rootSplits = layoutConfig.rootSplits;
@@ -282,6 +303,18 @@ export class AppSettingsService {
     return this.dataSets;
   }
 
+  // Zones
+  public saveZones(zones: Array<IZone>) {
+    this.zones.next(zones);
+    this.saveZonesConfigToLocalStorage();
+  }
+  public getZonesAsO() {
+    return this.zones.asObservable();
+  }
+  public getZones() {
+    return this.zones.getValue();
+  }
+
   // Notification Service Setting
   public getNotificationConfigService() {
     return this.kipKNotificationConfig.asObservable();
@@ -363,6 +396,13 @@ export class AppSettingsService {
     return storageObject;
   }
 
+  private buildZonesStorageObject() {
+    let storageObject: IZonesConfig = {
+      zones: this.zones.getValue()
+      }
+    return storageObject;
+  }
+
   //Saving to Storage
   private saveAppConfigToLocalStorage() {
     console.log("Saving App config to LocalStorage");
@@ -382,6 +422,11 @@ export class AppSettingsService {
   private saveThemeConfigToLocalStorage() {
     console.log("Saving Theme config to LocalStorage");
     localStorage.setItem('themeConfig', JSON.stringify(this.buildThemeStorageObject()));
+  }
+
+  private saveZonesConfigToLocalStorage() {
+    console.log("Saving Zones config to LocalStorage");
+    localStorage.setItem('zonesConfig', JSON.stringify(this.buildZonesStorageObject()));
   }
 
   // Private Defaults Loading functions

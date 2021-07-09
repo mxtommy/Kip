@@ -94,7 +94,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
   getPaths(isOnlySef: boolean) {
     this.availablePaths = this.signalKService.getPathsAndMetaByType(this.formGroup.value.pathType, isOnlySef).sort();
     // path validator (must be path in available) Need to reset validators when paths change
-    this.formGroup.controls['path'].setValidators([Validators.required, this.requirePathMatch(this.availablePaths)]);
+    this.formGroup.controls['path'].setValidators([Validators.required]); //, this.requirePathMatch(this.availablePaths)]); // allow non-existing paths, maybe new path?
   }
 
   filterPaths( value: string ): IPathAndMetaObjects[] {

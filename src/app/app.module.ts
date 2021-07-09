@@ -72,6 +72,7 @@ import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
 import { ObjectKeysPipe } from './object-keys.pipe';
 import { SettingsUnitsComponent } from './settings-units/settings-units.component';
+import { SettingsZonesComponent, DialogNewZone } from './settings-zones/settings-zones.component';
 import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 
@@ -134,6 +135,7 @@ const appRoutes: Routes = [
     ModalPathSelectorComponent,
     ObjectKeysPipe,
     SettingsUnitsComponent,
+    SettingsZonesComponent,
     WidgetIframeComponent,
     AlarmMenuComponent,
     WidgetAutopilotComponent,
@@ -144,6 +146,7 @@ const appRoutes: Routes = [
     DataBrowserComponent,
     DataBrowserRowComponent,
     DialogUnitSelect,
+    DialogNewZone,
   ],
   imports: [
     BrowserModule,
