@@ -42,15 +42,12 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
-  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
-
   activeWidget: IWidget;
   config: IWidgetConfig;
 
   dataValue: number = null;
   maxValue: number = null;
   minValue: number = null;
-  state: string = "normal";
   dataTimestamp: number = Date.now();
   currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentMinMaxLength: number = 0;
@@ -151,45 +148,23 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     }
   }
 
-  // Subscribe to theme event
-  subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.updateCanvas();
-        this.updateCanvasBG();
-      }, 100);
-    })
+// Subscribe to theme event
+subscribeTheme() {
+  this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    themeChange => {
+     setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+      this.updateCanvas();
+      this.updateCanvasBG();
+     }, 100);
+  })
+}
+
+unsubscribeTheme(){
+  if (this.themeNameSub !== null) {
+    this.themeNameSub.unsubscribe();
+    this.themeNameSub = null;
   }
-
-  unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
-    }
-  }
-
-  setZoneState(value) {
-
-    let state = "normal";
-    this.config.zones.forEach(zone => {
-      let lower = zone.lower || -Infinity;
-      let upper = zone.upper || Infinity;
-      if (value >= lower && value <= upper) {
-        if (state != "alarm") {
-          state = zone.state;
-        }
-      }
-    })
-    console.log(state);
-
-    switch (state) {
-      
-    }
-
-        this.state = state;
-  }
-
+}
 
   openWidgetSettings() {
 
@@ -244,10 +219,10 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText: any;
+
     if (this.dataValue != null) {
       let converted: number = Number(this.dataValue);
       converted = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.dataValue);
-      this.setZoneState(converted);
       if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
         valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
       } else {
@@ -257,7 +232,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     } else {
       valueText = "--";
     }
-
     //check if length of string has changed since laste time.
     if (this.currentValueLength != valueText.length) {
       //we need to set font size...
@@ -280,23 +254,10 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
     }
-
-    // color
-    switch (this.state) {
-      case "warning":
-        this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
-        console.log(window.getComputedStyle(this.warnElement.nativeElement).color);
-        break;
-
-      default:
-        this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-
-    }
-
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
-
+    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
