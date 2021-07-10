@@ -1,3 +1,22 @@
+@import '~@angular/material/theming';
+
+@mixin widget-numeric-theme($theme) {
+  $primary: map-get($theme, primary);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+  $wind: map-get($theme, wind);
+
+  .warn {
+    color: mat-color($warn, 500);
+  }
+
+  .warn-contrast {
+    color: mat-contrast($warn, 500);
+  }
+
+}
+
 canvas.numeric-labels {
 }
 
@@ -7,7 +26,7 @@ canvas.numeric-labels {
     height: 100%;
 }
 
-canvas {
+.canvas-size {
     position: absolute;
     top: 0;
     left: 0;

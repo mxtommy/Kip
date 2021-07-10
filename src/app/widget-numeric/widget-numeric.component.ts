@@ -6,7 +6,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService, ZoneState } from '../app-settings.service';
 
 
 const defaultConfig: IWidgetConfig = {
@@ -40,11 +40,14 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
+  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
+  @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetConfig;
 
   dataValue: number = null;
+  zoneState: ZoneState = null;
   maxValue: number = null;
   minValue: number = null;
   dataTimestamp: number = Date.now();
@@ -52,6 +55,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   currentMinMaxLength: number = 0;
   valueFontSize: number = 1;
   minMaxFontSize: number = 1;
+  flashOn: boolean = false;
+  flashInterval;
 
   //subs
   valueSub: Subscription = null;
@@ -91,6 +96,10 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   ngOnDestroy() {
     this.unsubscribePath();
     this.unsubscribeTheme();
+    if (this.flashInterval) {
+      clearInterval(this.flashInterval);
+      this.flashInterval = null;
+    }
   }
 
   ngAfterViewChecked() {
@@ -122,6 +131,20 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue.value;
+        this.zoneState = newValue.state;
+        //start flashing if alarm
+        if (this.zoneState == ZoneState.alarm && !this.flashInterval) {
+          this.flashInterval = setInterval(() => { 
+            this.flashOn = !this.flashOn;
+            this.updateCanvas();
+          }, 350); // used to flash stuff in alarm
+        } else if (this.zoneState != ZoneState.alarm) {
+          // stop alarming if not in alarm state
+          if (this.flashInterval) {
+            clearInterval(this.flashInterval);
+            this.flashInterval = null;
+          }
+        }
         // init min/max
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }
@@ -247,10 +270,36 @@ unsubscribeTheme(){
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
     }
+
+    // get color based on zone
+    switch (this.zoneState) {
+
+      case ZoneState.alarm:
+
+        if (this.flashOn) {
+          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+        } else {
+          // draw warn background
+          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+          this.canvasCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          // text color
+          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnContrastElement.nativeElement).color;
+        }
+
+
+        break;
+
+      case ZoneState.warning:
+        this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+        break;
+
+      default:
+        this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    }
+
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 

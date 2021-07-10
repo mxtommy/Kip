@@ -1,5 +1,6 @@
 # V1.1.3
 ## Features
+* Numeric widget supports zones! Red text on warning, flashing red background on alarm.
 * Set Zones in settings!
 * New Data Browser feature!
 * New Help section

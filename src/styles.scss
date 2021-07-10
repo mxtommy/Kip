@@ -102,6 +102,7 @@
 @import 'app/svg-wind/svg-wind.component.scss'; // for most svg Widget components
 @import 'app/widget-state/widget-state.component.scss';
 @import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
+@import 'app/widget-numeric/widget-numeric.component.scss';
 @import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
 @import 'app/alarm-menu/alarm-menu.component.scss';
 @import 'app/widget-autopilot/widget-autopilot.component.scss';
@@ -119,6 +120,7 @@
   @include widget-blank-theme($theme);
   @include svg-wind-theme($theme); // for both svg-wind and svg-autopilot
   @include widget-state-theme($theme);
+  @include widget-numeric-theme($theme);
   @include widget-ngGauge-linear-theme($theme);
   @include widget-ngGauge-radial-theme($theme);
   @include alarm-menu-theme($theme);
