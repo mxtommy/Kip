@@ -126,7 +126,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
       }
     }
-    this.unitList = this.unitsService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+    this.unitList = this.signalKService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
   }
 
 }

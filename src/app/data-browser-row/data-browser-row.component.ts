@@ -1,8 +1,8 @@
 import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { UnitsService, IUnitGroup } from '../units.service';
-
+import { SignalKService } from '../signalk.service';
+import { UnitsService } from '../units.service';
 
 
 @Component({
@@ -21,6 +21,7 @@ export class DataBrowserRowComponent implements OnInit {
   selectedUnit: string = "unitless"
 
   constructor(
+    private signalKService: SignalKService,
     private unitsService: UnitsService,
     public dialog: MatDialog
   ) { 
@@ -28,7 +29,7 @@ export class DataBrowserRowComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.units = this.unitsService.getConversionsForPath(this.path);
+    this.units = this.signalKService.getConversionsForPath(this.path);
     this.selectedUnit = this.units.default;
   }
 

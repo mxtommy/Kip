@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import * as Qty from 'js-quantities';
 
 import { AppSettingsService } from './app-settings.service';
-import { SignalKService } from './signalk.service';
 import { Subscription } from 'rxjs';
 
 /**
@@ -140,7 +139,7 @@ export class UnitsService {
 
 
   constructor(  private AppSettingsService: AppSettingsService,
-    private SignalKService: SignalKService) {
+    ) {
       this.defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
         newDefaults => {
           this.defaultUnits = newDefaults;
@@ -283,53 +282,7 @@ this.conversionList[group].push(unit);
     },
   }
 
-  /**
-   * Obtain a list of possible Kip value type conversions for a given path. ie,.: Speed conversion group
-   * (kph, Knots, etc.). The conversion list will be trimmed to only the conversions for the group in question.
-   * If a default value type (provided by server) for a path cannot be found,
-   * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
-   * but Kip does not handle it...yet.
-   *
-   * @param path The SignalK path of the value
-   * @return conversions Full list array or subset of list array
-   */
-  getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
-    let pathUnitType = this.SignalKService.getPathUnitType(path);
-    let groupList = [];
-    let isUnitInList: boolean = false;
-    let defaultUnit: string = "unitless"
-    // if this Path has no predefined Unit type (from Meta or elsewhere) set to unitless
-    if (pathUnitType === null) {
-      return { default: 'unitless', conversions: this.conversionList };
-    } else {
-      // if this Widget has a configured Unit for this Path, only return all Units within same group.
-      // The Assumption is that we should only use conversions group rules.
-      for (let index = 0; index < this.conversionList.length; index++) {
-        const unitGroup:IUnitGroup = this.conversionList[index];
 
-         // add position group if position path
-         if (unitGroup.group == 'Position' && (path.includes('position.latitude') || path.includes('position.longitude'))) {
-          groupList.push(unitGroup)
-        }
-
-        unitGroup.units.forEach(unit => {
-          if (unit.measure == pathUnitType) {
-            isUnitInList = true;
-            defaultUnit = this.defaultUnits[unitGroup.group];
-            groupList.push(unitGroup);
-          }
-        });
-      }
-    }
-
-    if (isUnitInList) {
-
-      return { default: defaultUnit, conversions: groupList };
-    }
-    // default if we have a unit for the Path but it's not know by Kip
-    console.log("Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
-    return { default: 'unitless', conversions: this.conversionList };
-  }
 
   convertUnit(unit: string, value: number): number {
     if (!(unit in this.unitConversionFunctions)) { return null; }
