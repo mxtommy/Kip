@@ -121,7 +121,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
-        this.dataValue = newValue;
+        this.dataValue = newValue.value;
         // init min/max
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }

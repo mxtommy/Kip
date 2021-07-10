@@ -1,3 +1,6 @@
+import { ZoneState } from './app-settings.service';
+
+
 // Metadata, Notification and Stream Subscription type restrictions.
 const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
 type State = typeof states[number];
@@ -64,6 +67,7 @@ export interface IPathObject {
   }
   meta?: ISignalKMetadata;
   type: string;
+  state: ZoneState;
 }
 
 /**

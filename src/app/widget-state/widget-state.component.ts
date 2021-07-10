@@ -79,7 +79,7 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
 
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['boolPath'].path, this.config.paths['boolPath'].source).subscribe(
       newValue => {
-        this.state = newValue;
+        this.state = newValue.value;
       }
     );
   }

@@ -119,10 +119,10 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
 
     this.valueSub = this.signalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
-        if (newValue == null) {return}
+        if (newValue.value == null) {return}
 
         // convert to unit and format value using widget settings
-        let value  = this.unitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue).toFixed(this.config.numDecimal);
+        let value  = this.unitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value).toFixed(this.config.numDecimal);
 
         // Format display value using widget settings
         let displayValue = value;

@@ -146,10 +146,10 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     if (typeof(this.config.paths['headingPath'].path) != 'string') { return } // nothing to sub to...
     this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['headingPath'].path, this.config.paths['headingPath'].source).subscribe(
       newValue => {
-        if (newValue === null) {
+        if (newValue.value === null) {
           this.currentHeading = 0;
         } else {
-          this.currentHeading = this.UnitsService.convertUnit('deg', newValue);
+          this.currentHeading = this.UnitsService.convertUnit('deg', newValue.value);
         }
 
       }
@@ -162,12 +162,12 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
     this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['appWindAngle'].path, this.config.paths['appWindAngle'].source).subscribe(
       newValue => {
-        if (newValue === null) {
+        if (newValue.value === null) {
           this.appWindAngle = null;
           return;
         }
 
-        let converted = this.UnitsService.convertUnit('deg', newValue);
+        let converted = this.UnitsService.convertUnit('deg', newValue.value);
         // 0-180+ for stb
         // -0 to -180 for port
         // need in 0-360
@@ -187,7 +187,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
     this.appWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['appWindSpeed'].path, this.config.paths['appWindSpeed'].source).subscribe(
       newValue => {
-        this.appWindSpeed = this.UnitsService.convertUnit(this.config.paths['appWindSpeed'].convertUnitTo, newValue);
+        this.appWindSpeed = this.UnitsService.convertUnit(this.config.paths['appWindSpeed'].convertUnitTo, newValue.value);
       }
     );
   }
@@ -198,12 +198,12 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
     this.trueWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['trueWindAngle'].path, this.config.paths['trueWindAngle'].source).subscribe(
       newValue => {
-        if (newValue === null) {
+        if (newValue.value === null) {
           this.trueWindAngle = null;
           return;
         }
 
-        let converted = this.UnitsService.convertUnit('deg', newValue);
+        let converted = this.UnitsService.convertUnit('deg', newValue.value);
 
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
           // 0-180+ for stb
@@ -236,7 +236,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
 
     this.trueWindSpeedSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['trueWindSpeed'].path, this.config.paths['trueWindSpeed'].source).subscribe(
       newValue => {
-        this.trueWindSpeed = this.UnitsService.convertUnit(this.config.paths['trueWindSpeed'].convertUnitTo, newValue);
+        this.trueWindSpeed = this.UnitsService.convertUnit(this.config.paths['trueWindSpeed'].convertUnitTo, newValue.value);
       }
     );
   }

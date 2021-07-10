@@ -3,17 +3,21 @@ import { Observable ,  Subject ,  BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import * as compareVersions from 'compare-versions';
 
-import { AppSettingsService } from './app-settings.service';
+import { AppSettingsService, IZone, ZoneState } from './app-settings.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 
 import * as Qty from 'js-quantities';
 
+interface pathRegistrationValue {
+  value: any;
+  state: ZoneState;
+};
 
 interface pathRegistration {
   uuid: string;
   path: string;
-  source?: string; // if this is set, updates to observable are the direct value of this source...
-  observable: BehaviorSubject<any>;
+  source: string; // if this is set, updates to observable are the direct value of this source...
+  observable: BehaviorSubject<pathRegistrationValue>;
 }
 
 
@@ -52,10 +56,12 @@ export class SignalKService {
 
   defaultUnits: IUnitDefaults;
   defaultUnitsSub: Subscription;
-  conversionList: IUnitGroup[]
+  conversionList: IUnitGroup[];
+  zonesSub: Subscription;
+  zones: Array<IZone> = [];
 
   constructor(
-    private AppSettingsService: AppSettingsService,
+    private appSettingsService: AppSettingsService,
     private UnitService: UnitsService) { 
     //every second update the stats for seconds array
     setInterval(() => {
@@ -81,12 +87,15 @@ export class SignalKService {
 
     }, 60000);
 
-    this.defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
+    this.defaultUnitsSub = this.appSettingsService.getDefaultUnitsAsO().subscribe(
       newDefaults => {
         this.defaultUnits = newDefaults;
       }
     );
     this.conversionList = this.UnitService.getConversions();
+    this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
+      this.zones = zones;
+    });
 
   }
 
@@ -110,7 +119,7 @@ export class SignalKService {
     }
   }
 
-  subscribePath(uuid: string, path: string, source: string = null) {
+  subscribePath(uuid: string, path: string, source: string) {
     //see if already subscribed, if yes return that...
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
@@ -119,6 +128,7 @@ export class SignalKService {
 
     //find if we already have a value for this path to return.
     let currentValue = null;
+    let state = ZoneState.normal;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex >= 0) { // exists
       if (source === null) {
@@ -128,17 +138,16 @@ export class SignalKService {
       } else if (source in this.paths[pathIndex].sources) {
         currentValue = this.paths[pathIndex].sources[source].value;
       }
-
+      state = this.paths[pathIndex].state;
     }
 
     let newRegister = {
       uuid: uuid,
       path: path,
-      observable: new BehaviorSubject<any>(currentValue)
+      source: source,
+      observable: new BehaviorSubject<pathRegistrationValue>({ value: currentValue, state: state })
     };
-    if (source !== null) {
-      newRegister['source'] = source;
-    }
+
     //register
     this.pathRegister.push(newRegister);
     // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
@@ -199,33 +208,45 @@ export class SignalKService {
             value: value
           }
         },
-        type: typeof(value)
+        type: typeof(value),
+        state: ZoneState.normal
       });
       pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     }
 
+    // Check for any zones to set state
+    let state: ZoneState = ZoneState.normal;
+    this.zones.forEach(zone => {
+      if (zone.path != pathSelf) { return; }
+      let lower = zone.lower || -Infinity;
+      let upper = zone.upper || Infinity;
+      let convertedValue = this.UnitService.convertUnit(zone.unit, value);
+      if (convertedValue >= lower && convertedValue <= upper) {
+        //in zone
+        state = Math.max(state, zone.state);
+      }
+    });
+    this.paths[pathIndex].state = state;
 
     // push it to any subscriptions of that data
     this.pathRegister.filter(pathRegister => pathRegister.path == pathSelf).forEach(
       pathRegister => {
-        // new type sub that just wants the value
-        if ("source" in pathRegister) {
-          let source: string = null;
-          if (pathRegister.source == 'default') {
-            source = this.paths[pathIndex].defaultSource;
-          } else if (pathRegister.source in this.paths[pathIndex].sources) {
-            source = pathRegister.source;
-          } else {
-            //we're looking for a source we don't know of... do nothing I guess?
-          }
-          if (source !== null) {
-            pathRegister.observable.next(this.paths[pathIndex].sources[source].value);
-          }
 
+        let source: string = null;
+        if (pathRegister.source == 'default') {
+          source = this.paths[pathIndex].defaultSource;
+        } else if (pathRegister.source in this.paths[pathIndex].sources) {
+          source = pathRegister.source;
         } else {
-          //old type sub that wants whole pathObject...
-          pathRegister.observable.next(this.paths[pathIndex]);
+          //we're looking for a source we don't know of... do nothing I guess?
         }
+        if (source !== null) {
+          pathRegister.observable.next({ 
+            value: this.paths[pathIndex].sources[source].value, 
+            state: this.paths[pathIndex].state 
+          });
+        }
+
       }
     );
 

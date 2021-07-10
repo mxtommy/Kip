@@ -157,7 +157,7 @@ export class DataSetService {
     //Subscribe to path data
     this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path, this.dataSets[dataIndex].signalKSource).subscribe(
       newValue => {
-        this.updateDataCache(uuid, newValue);
+        this.updateDataCache(uuid, newValue.value);
     });
 
     // start update timer
