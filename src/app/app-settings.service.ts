@@ -60,13 +60,18 @@ export interface INotificationConfig {
   },
 }
 
+export enum ZoneState {
+  normal = 0,
+  warning = 1,
+  alarm = 2,
+}
 export interface IZone {
   uuid: string;
   path: string;
   unit: string;
   upper: number;
   lower: number;
-  state: string;
+  state: ZoneState;
 }
 export interface IZonesConfig {
   zones: Array<IZone>;

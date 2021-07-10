@@ -6,7 +6,7 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
-import { AppSettingsService, IZone } from '../app-settings.service';
+import { AppSettingsService, IZone, ZoneState } from '../app-settings.service';
 import { IPathAndMetaObjects } from "../signalk-interfaces";
 
 @Component({
