@@ -144,7 +144,7 @@ export class SettingsConfigComponent implements OnInit {
 
       case "zonesConfig":
         console.log(this.zonesJSONConfig);
-        this.AppSettingsService.replaceConfig(configType, this.zonesJSONConfig, false);
+        this.AppSettingsService.replaceConfig(configType, this.zonesJSONConfig, true);
         break;
     }
   }
