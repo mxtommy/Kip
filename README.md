@@ -81,14 +81,15 @@ Linux, Macs, Pi or Windows dev platform supported
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
 
 **Publish**
-1. From your Fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
+1. From your Fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release. 
 
 Or
 
 2. Build your own version:
   1. Use the `-prod` flag for a production build.
   2. To generate a npm package, run `npm run-script build-npm`.
-  3. Deploy and have fun!
+  3. Warning: Git Bash seems to mess up Base Href, fix it in public/index.html if needed
+  4. Deploy and have fun! 
 
 **Collaborate**
 Join us on Slack -> SignalK-dev / Apps_and_client channel. We will hook up and assist as best we can.
