@@ -92,7 +92,7 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
           lower: result.lower,
           path: result.path.path,
           unit: result.path.convertUnitTo,
-          state: result.state
+          state: parseInt(result.state)
         });
         console.log(zones);
         this.appSettingsService.saveZones(zones);
@@ -115,7 +115,7 @@ export class DialogNewZone {
   newZoneForm: FormGroup = new FormGroup({
     upper: new FormControl(null),
     lower: new FormControl(null),
-    state: new FormControl('normal', Validators.required),
+    state: new FormControl('0', Validators.required),
     filterSelfPaths: new FormControl(true),
     path: new FormGroup({
       description: new FormControl("Numeric Data"),
