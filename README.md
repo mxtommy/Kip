@@ -98,7 +98,4 @@ Join us on Slack -> SignalK-dev / Apps_and_client channel. We will hook up and a
  * Attitude Indicator
  * Sailing Polars with ChartJS Radar type chart?
  * More Customization options for radial/linear Gauges
- * Gauge SignalK Zones support
- * Overview page to quickly scroll through known path info.
- * Show alarms on numeric displays based on zones
  * Pre-created widgets for commonly used displays

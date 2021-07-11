@@ -1,4 +1,4 @@
-# V1.1.3
+# V1.2.0
 ## Features
 * Radial / Linear Gauges support zones! Sets colors on gauge and red value on warn/alarm.
 * Numeric widget supports zones! Red text on warning, flashing red background on alarm.
@@ -12,6 +12,7 @@
 * Added a new color option on linear gauges (No Progress). Makes it just the needle, usefull for example rudder position
 
 ## Bugfix/Other
+* Refactor alarms/notification service.
 * Fix blank config version
 * Update Dependencies to latest (Angular 11)
 * Fix full tree API parsing (might not work with very old server versions though...) (commit 30220f0)

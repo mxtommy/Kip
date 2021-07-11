@@ -4,6 +4,7 @@ import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import * as compareVersions from 'compare-versions';
 
 import { AppSettingsService, IZone, ZoneState } from './app-settings.service';
+import { NotificationsService } from './notifications.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 
 import * as Qty from 'js-quantities';
@@ -62,7 +63,8 @@ export class SignalKService {
 
   constructor(
     private appSettingsService: AppSettingsService,
-    private UnitService: UnitsService) { 
+    private UnitService: UnitsService,
+    private NotificationsService: NotificationsService) { 
     //every second update the stats for seconds array
     setInterval(() => {
       
@@ -226,6 +228,42 @@ export class SignalKService {
         state = Math.max(state, zone.state);
       }
     });
+    // if we're not in alarm, and new state is alarm, sound the alarm!
+    // @ts-ignore
+    if (state != ZoneState.normal && state != this.paths[pathIndex].state) {
+      let stateString; // notif service needs string....
+      let methods;
+      switch (state) {
+        // @ts-ignore
+        case ZoneState.alarm:
+          stateString = "alarm"
+          methods = [ 'visual' ];
+          break;
+
+        // @ts-ignore
+        case ZoneState.warning:
+            stateString = "warn"
+            methods = [ 'visual' ];
+            break;
+
+      }
+
+
+      //start
+      this.NotificationsService.addAlarm(pathSelf, {
+        method: methods,
+        state: stateString,
+        message: pathSelf + ' value in ' + stateString,
+        timestamp: Date.now().toString(),
+      })
+    }
+
+    // if we're in alarm, and new state is not alarm, stop the alarm
+    // @ts-ignore
+    if (this.paths[pathIndex].state != ZoneState.normal && state == ZoneState.normal) {
+      this.NotificationsService.deleteAlarm(pathSelf);
+    }
+
     this.paths[pathIndex].state = state;
 
     // push it to any subscriptions of that data

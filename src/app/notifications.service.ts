@@ -7,6 +7,17 @@ import { ISignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService, INotificationConfig } from "./app-settings.service";
 import { isNull } from 'util';
 
+import { Howl } from 'howler';
+
+const alarmTrack = {
+  1000 : 'notification', //filler
+  1001 : 'alert',
+  1002 : 'warn',
+  1003 : 'alarm',
+  1004 : 'emergency',
+};
+
+
 /**
  * Snack-bar notification message interface.
  */
@@ -27,10 +38,19 @@ export interface Alarm {
   path: string;
   type: string;
   isAck: boolean;
-  isMuted: boolean;
   notification: ISignalKNotification;
 }
 
+/**
+ * Alarm information, some stats used
+ */
+export interface IAlarmInfo {
+  audioSev: number;
+  visualSev: number;
+  alarmCount: number;
+  unackCount: number;
+  isMuted: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -41,18 +61,35 @@ export class NotificationsService {
 
   private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
   private activeAlarmsSubject = new BehaviorSubject<any>({});
+  private alarmsInfo: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({
+    audioSev: 0,
+    visualSev: 0,
+    alarmCount: 0,
+    unackCount: 0,
+    isMuted: false
+  });
   public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
+
+  // sounds properties
+  howlPlayer: Howl;
+  activeAlarmSoundtrack: number;
+  activeHowlId: number;
+  isHowlIdMuted: boolean = false;
+
 
   constructor(
     private appSettingsService: AppSettingsService,
     ) {
     // Observe Notification configuration
-    this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+    this.notificationServiceSettings = this.appSettingsService.getNotificationConfigService().subscribe(config => {
       this.notificationConfig = config;
       if (this.notificationConfig.disableNotifications) {
         this.resetAlarms();
       }
     });
+
+    // init alarm player
+    this.howlPlayer = this.getPlayer(1000);
    }
 
   /**
@@ -96,17 +133,25 @@ export class NotificationsService {
    * @param notification Raw content of the notification message from SignalK server as ISignalKNotification
    */
   public addAlarm(path: string, notification: ISignalKNotification) {
-    let newAlarm: Alarm = {
-      path: path,         // duplicate from Alarm Object key index for added scope from individual alarm context
-      type: "device",
-      isAck: false,
-      isMuted: false,
-      notification: notification,
-    };
+
     if (/^notifications.security./.test(path)) {
       return; // as per sbender this part is not ready in the spec - Don't add to alarms
     }
-    this.alarms[path] = newAlarm;
+
+    if (this.notificationConfig.disableNotifications) { return; }
+
+    if (path in this.alarms) {
+      this.alarms[path].notification = notification;
+    } else {
+      let newAlarm: Alarm = {
+        path: path,         // duplicate from Alarm Object key index for added scope from individual alarm context
+        type: "device",
+        isAck: false,
+        notification: notification,
+      };
+      this.alarms[path] = newAlarm;
+    }
+    this.checkAlarms();
     this.activeAlarmsSubject.next(this.alarms);
   }
 
@@ -117,6 +162,7 @@ export class NotificationsService {
    */
   public updateAlarm(path: string, notification: ISignalKNotification) {
     this.alarms[path].notification = notification;
+    this.checkAlarms();
     this.activeAlarmsSubject.next(this.alarms);
   }
 
@@ -128,6 +174,7 @@ export class NotificationsService {
   public deleteAlarm(path: string): boolean {
     if (path in this.alarms) {
       delete this.alarms[path];
+      this.checkAlarms();
       this.activeAlarmsSubject.next(this.alarms);
       return true;
     }
@@ -137,15 +184,95 @@ export class NotificationsService {
   /**
    * Set Acknowledgement and send to other observers so they can react accordingly
    * @param path alarm to acknowledge
+   * @param timeout if set will unacknowledge in this time
    * @return true of alarms found, else false
    */
-  public acknowledgeAlarm(path: string): boolean {
+  public acknowledgeAlarm(path: string, timeout: number = 0): boolean {
     if (path in this.alarms) {
       this.alarms[path].isAck = true;
-      this.activeAlarmsSubject.next(this.alarms);
+      this.activeAlarmsSubject.next(this.alarms);      
+      if (timeout > 0) {
+        setTimeout(()=>{
+          console.log("unack: "+ path);
+          if (path in this.alarms) {
+            this.alarms[path].isAck = false;
+            this.activeAlarmsSubject.next(this.alarms);
+          }
+        }, timeout);
+      }
+      this.checkAlarms();
       return true;
     }
-    return false;
+    return false
+  }
+
+  /**
+   * Checks all alarms for worst state, and sets any visualSev/AudioSev
+   * @returns 
+   */
+  public checkAlarms() {
+    // find worse alarm state
+    let unAckAlarms = 0;
+    let audioSev = 0;
+    let visualSev = 0;
+    for (const [path, alarm] of Object.entries(this.alarms))
+    {
+      if (alarm.isAck) { continue; }
+      unAckAlarms++;
+      let aSev = 0;
+      let vSev = 0;
+
+      switch (alarm.notification['state']) {
+        //case 'nominal':       // not sure yet... spec not clear. Maybe only relevant for Zones
+        case 'normal':        // information only ie.: engine temperature normal. Not usually displayed
+          if (alarm.notification['method'].includes('sound')) { aSev = 0; }
+          if (alarm.notification['method'].includes('visual')) { aSev = 0; }
+          break;
+
+        case 'alert':         // user informational event ie.: auto-pilot waypoint reached, Engine Started/stopped, ect.
+          if (alarm.notification['method'].includes('sound')) { aSev = 1; }
+          if (alarm.notification['method'].includes('visual')) { vSev = 1; }
+          break;
+
+        case 'warn':          // user attention needed ie.: auto-pilot detected Wind Shift (go check if it's all fine), bilge pump activated (check if you have an issue).
+          if (alarm.notification['method'].includes('sound')) { aSev = 2; }
+          if (alarm.notification['method'].includes('visual')) { vSev = 1; }
+          break;
+
+        case 'alarm':         // a problem that requires immediate user attention ie.: auto-pilot can't stay on course, engine temp above specs.
+          if (alarm.notification['method'].includes('sound')) { aSev = 3; }
+          if (alarm.notification['method'].includes('visual')) { vSev = 2; }
+          break;
+
+        case 'emergency':     // safety threatening event ie.: MOB, collision eminent (AIS related), ran aground (water depth lower than keel draft)
+          if (alarm.notification['method'].includes('sound')) { aSev = 4; }
+          if (alarm.notification['method'].includes('visual')) { vSev = 2; }
+          break;
+
+        default: // we don;t know this one. Tell the user.
+          aSev = 0;
+          vSev = 0;
+          this.sendSnackbarNotification("Unknown Notification State received from SignalK", 0);
+          console.log("Unknown Notification State received from SignalK\n" + JSON.stringify(alarm));
+      }
+      audioSev = Math.max(audioSev, aSev);
+      visualSev = Math.max(visualSev, vSev);
+    }
+    
+    if (!this.notificationConfig.sound.disableSound) {
+      this.playAlarm(1000 + audioSev);
+    }
+    this.alarmsInfo.next({
+      audioSev: audioSev,
+      visualSev: visualSev,
+      alarmCount: Object.keys(this.alarms).length,
+      unackCount: unAckAlarms,
+      isMuted: this.isHowlIdMuted
+    });
+  }
+
+  getAlarmInfoAsO() {
+    return this.alarmsInfo.asObservable();
   }
 
   /**
@@ -189,5 +316,64 @@ export class NotificationsService {
       }
     }
   }
+
+  /**
+   * Load player with a specific track in loop mode.
+   * @param track track ID to play. See const for definition
+   */
+   getPlayer(track: number): Howl {
+    this.activeAlarmSoundtrack = track;
+    let player = new Howl({
+        src: ['assets/' + alarmTrack[track] + '.mp3'],
+        autoUnlock: true,
+        autoSuspend: false,
+        autoplay: false,
+        preload: true,
+        loop: true,
+        onend: function() {
+          // console.log('Finished!');
+        },
+        onloaderror: function() {
+          console.log("player onload error");
+        },
+        onplayerror: function() {
+          console.log("player locked");
+          this.howlPlayer.once('unlock', function() {
+            this.howlPlayer.play();
+          });
+        }
+      });
+    return player;
+  }
+
+    /**
+   * mute Howl Player active track ei.: howlId. Note Howl howlId is not the
+   * same as Player Soundtrack TrackId which represents the selected sound file.
+   * @param state sound muted boolean state
+   */
+    mutePlayer(state) {
+      this.howlPlayer.mute(state, this.activeHowlId);
+      this.isHowlIdMuted = state;
+      this.checkAlarms(); //make sure to push updated info tro alarm menu
+    }
+
+   /**
+   * play audio notification sound
+   * @param trackId track to play
+   */
+   playAlarm(trackId: number) {
+    if (this.activeAlarmSoundtrack == trackId) {   // same track, do nothing
+      return;
+    }
+    if (trackId == 1000) {   // Stop track
+      this.howlPlayer.stop();
+      this.activeAlarmSoundtrack = 1000;
+      return;
+    }
+    this.howlPlayer.stop();
+    this.howlPlayer = this.getPlayer(trackId);
+    this.activeHowlId = this.howlPlayer.play();
+  }
+
 
 }

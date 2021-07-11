@@ -117,13 +117,10 @@ export interface IPathAndMetaObjects {
  * @url https://signalk.org/specification/1.4.0/doc/notifications.html
  */
 export interface ISignalKNotification {
-  value: {
-    method: Method[],
-    state: State,
-    message: string
-  },
+  method: Method[],
+  state: State,
+  message: string
   timestamp: string,
-  $source: string,
 }
 
 export interface IPathInfo {
