@@ -1,9 +1,10 @@
 # V1.1.3
 ## Features
+* Radial / Linear Gauges support zones! Sets colors on gauge and red value on warn/alarm.
 * Numeric widget supports zones! Red text on warning, flashing red background on alarm.
 * Set Zones in settings!
 * New Data Browser feature!
-* New Help section
+* Start of a Help section (still needs some more content)
 * Added choice between numeric and cardinal ticks on compass (0,90,180,270 vs N,E,S,W)
 * Allow paths that do not exist in path input.
 * Added percent unit

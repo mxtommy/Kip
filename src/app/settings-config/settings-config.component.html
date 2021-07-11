@@ -1,46 +1,50 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Configuration Management</mat-card-title>
-    <mat-card-subtitle>Kip configuration can be stored and retrieved from the SignalK server. This enables configuration sharing (Kip Widgets and Kip general settings) with multiple devices.</mat-card-subtitle>
-  </mat-card-header>
-  <p>Server Storage</p>
-  <mat-accordion>
-    <form>
-      <mat-expansion-panel [disabled]="!supportApplicationData">
-        <mat-expansion-panel-header >Load Config from Server <div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div></mat-expansion-panel-header>
-          <mat-form-field>
-            <mat-label>Config Name</mat-label>
-            <mat-select required [formControl]="configLoad">
-              <mat-option *ngFor="let config of possibleConfigs" [value]="config">
-                {{config.scope}} / {{config.name}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-action-row >
-            <button mat-raised-button type="button" color="warn" [disabled]="!(configLoad.valid && configLoad.dirty)" (click)='loadServerSettings()'>Load</button>
-          </mat-action-row>
-      </mat-expansion-panel>
-    </form>
-    <form>
-      <mat-expansion-panel [disabled]="!supportApplicationData">
-        <mat-expansion-panel-header >Save Config to Server<div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div></mat-expansion-panel-header>
-          <mat-form-field class="almost-full-width">
-            <mat-label>Server Config Name</mat-label>
-            <input matInput name="serverConfigName" placeholder="Config Name" [formControl]="configName">
-          </mat-form-field>
-          <mat-action-row>
-            <div *ngIf="!hasToken">R/W token required for SignalK Server</div>
-            <div *ngIf="hasToken">
-              <mat-radio-group aria-label="Scope" [formControl]="configScope">
-                <mat-radio-button value="global">Global (needs Admin priv)</mat-radio-button>
-                <mat-radio-button value="user">User</mat-radio-button>
-              </mat-radio-group>
-            </div>
-            <button mat-raised-button type="button" [disabled]="!hasToken" color="accent"(click)='saveServerSettings()'>Save</button>
-          </mat-action-row>
-      </mat-expansion-panel>
-    </form>
-    <p>Local Storage</p>
+<mat-tab-group>
+  <mat-tab label="Server">
+    <p>Kip configuration can be stored and retrieved from the SignalK server. This enables configuration sharing (Kip Widgets and Kip general settings) with multiple devices. Note you require a token on the server in order to save config.</p>
+    <div class="config-row">
+      <div class="config-column">
+        <mat-card>
+          <form>
+            Load Config from Server <div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div>
+            <mat-form-field class="almost-full-width">
+              <mat-label>Config Name</mat-label>
+              <mat-select required [formControl]="configLoad">
+                <mat-option *ngFor="let config of possibleConfigs" [value]="config">
+                  {{config.scope}} / {{config.name}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-card-actions align="end">
+              <button mat-raised-button type="button" color="warn" [disabled]="!(configLoad.valid && configLoad.dirty)" (click)='loadServerSettings()'>Load</button>
+            </mat-card-actions>
+
+          </form>
+        </mat-card>
+      </div>
+      <div class="config-column">
+        <mat-card>
+          <form>
+            Save Config to Server<div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div>
+              <mat-form-field class="almost-full-width">
+                <mat-label>Server Config Name</mat-label>
+                <input matInput name="serverConfigName" placeholder="Config Name" [formControl]="configName">
+              </mat-form-field>
+              <mat-card-actions align="end">
+                <div *ngIf="!hasToken">R/W token required for SignalK Server</div>
+                <div *ngIf="hasToken">
+                  <mat-radio-group aria-label="Scope" [formControl]="configScope">
+                    <mat-radio-button value="global">Global (needs Admin priv)</mat-radio-button>
+                    <mat-radio-button value="user">User</mat-radio-button>
+                  </mat-radio-group>
+                </div>
+                <button mat-raised-button type="button" [disabled]="!hasToken" color="accent"(click)='saveServerSettings()'>Save</button>
+              </mat-card-actions>
+          </form>
+        </mat-card>
+      </div>
+    </div>
+  </mat-tab>
+  <mat-tab label="Browser Config">
     <form name="appSettingsForm" (ngSubmit)="submitConfig('appConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Application</mat-expansion-panel-header>
@@ -96,9 +100,19 @@
         </mat-action-row>
       </mat-expansion-panel>
     </form>    
-  </mat-accordion>
-  <mat-card-actions align="end">
-    <button mat-raised-button type="button" color="warn" (click)='loadDemoConfig()'>Load Demo Config</button>
-    <button mat-raised-button type="button" color="warn" (click)='resetSettings()'>Erase Config</button>
-  </mat-card-actions>
-</mat-card>
+  </mat-tab>
+
+  <mat-tab label="Demo/Erase">
+    <mat-card>
+      <mat-card-actions align="end">
+        <button mat-raised-button type="button" color="warn" (click)='loadDemoConfig()'>Load Demo Config</button>
+        <button mat-raised-button type="button" color="warn" (click)='resetSettings()'>Erase Config</button>
+      </mat-card-actions>
+    </mat-card>
+  </mat-tab>
+
+</mat-tab-group>
+
+
+ 
+ 

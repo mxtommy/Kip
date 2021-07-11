@@ -23,3 +23,17 @@
   margin-right: 16px;
   margin-left: 16px;
 }
+
+.config-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.config-column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+  margin: 10px;
+}
