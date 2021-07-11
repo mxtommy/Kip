@@ -237,13 +237,13 @@ export class SignalKService {
         // @ts-ignore
         case ZoneState.alarm:
           stateString = "alarm"
-          methods = [ 'visual' ];
+          methods = [ 'visual', 'sound' ];
           break;
 
         // @ts-ignore
         case ZoneState.warning:
             stateString = "warn"
-            methods = [ 'visual' ];
+            methods = [ 'visual','sound' ];
             break;
 
       }

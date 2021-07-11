@@ -5,6 +5,7 @@
 * Set Zones in settings!
 * New Data Browser feature!
 * Start of a Help section (still needs some more content)
+* Enable/Disable different notification sounds (normal/warning/alarm/etc)
 * Added choice between numeric and cardinal ticks on compass (0,90,180,270 vs N,E,S,W)
 * Allow paths that do not exist in path input.
 * Added percent unit

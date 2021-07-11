@@ -86,6 +86,11 @@ export class NotificationsService {
       if (this.notificationConfig.disableNotifications) {
         this.resetAlarms();
       }
+      if (this.notificationConfig.sound.disableSound) {
+        this.playAlarm(1000); // will stop any playing track if any
+      } else {
+        this.checkAlarms(); //see if any we need to start playing again
+      }
     });
 
     // init alarm player
@@ -225,27 +230,27 @@ export class NotificationsService {
       switch (alarm.notification['state']) {
         //case 'nominal':       // not sure yet... spec not clear. Maybe only relevant for Zones
         case 'normal':        // information only ie.: engine temperature normal. Not usually displayed
-          if (alarm.notification['method'].includes('sound')) { aSev = 0; }
+          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteNormal) { aSev = 0; }
           if (alarm.notification['method'].includes('visual')) { aSev = 0; }
           break;
 
         case 'alert':         // user informational event ie.: auto-pilot waypoint reached, Engine Started/stopped, ect.
-          if (alarm.notification['method'].includes('sound')) { aSev = 1; }
+          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteAlert) { aSev = 1; }
           if (alarm.notification['method'].includes('visual')) { vSev = 1; }
           break;
 
         case 'warn':          // user attention needed ie.: auto-pilot detected Wind Shift (go check if it's all fine), bilge pump activated (check if you have an issue).
-          if (alarm.notification['method'].includes('sound')) { aSev = 2; }
+          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteWarning) { aSev = 2; }
           if (alarm.notification['method'].includes('visual')) { vSev = 1; }
           break;
 
         case 'alarm':         // a problem that requires immediate user attention ie.: auto-pilot can't stay on course, engine temp above specs.
-          if (alarm.notification['method'].includes('sound')) { aSev = 3; }
+          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteAlarm) { aSev = 3; }
           if (alarm.notification['method'].includes('visual')) { vSev = 2; }
           break;
 
         case 'emergency':     // safety threatening event ie.: MOB, collision eminent (AIS related), ran aground (water depth lower than keel draft)
-          if (alarm.notification['method'].includes('sound')) { aSev = 4; }
+          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteEmergency) { aSev = 4; }
           if (alarm.notification['method'].includes('visual')) { vSev = 2; }
           break;
 
@@ -362,11 +367,14 @@ export class NotificationsService {
    * @param trackId track to play
    */
    playAlarm(trackId: number) {
+    console.log(this.notificationConfig);
     if (this.activeAlarmSoundtrack == trackId) {   // same track, do nothing
       return;
     }
     if (trackId == 1000) {   // Stop track
-      this.howlPlayer.stop();
+      if (this.howlPlayer) {
+        this.howlPlayer.stop();
+      }
       this.activeAlarmSoundtrack = 1000;
       return;
     }
