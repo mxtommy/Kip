@@ -1,11 +1,13 @@
 # V1.2.0
 ## Features
-* Radial / Linear Gauges support zones! Sets colors on gauge and red value on warn/alarm.
-* Numeric widget supports zones! Red text on warning, flashing red background on alarm.
-* Set Zones in settings!
+* Zones!!!
+  * Set zones in Settings, give range and state for that range.
+  * Warnings and alarms generated when in range.
+  * Radial / Linear Gauges show zones. Sets colors on gauge and red value on warn/alarm.
+  * Numeric widget alarming on Zones. Red text on warning, flashing red background on alarm.
 * New Data Browser feature!
-* Start of a Help section (still needs some more content)
-* Enable/Disable different notification sounds (normal/warning/alarm/etc)
+* Start of a Help section (still needs some more content, feel free to suggest ideas!)
+* Enable/Disable different notification sounds in settings (normal/warning/alarm/etc)
 * Added choice between numeric and cardinal ticks on compass (0,90,180,270 vs N,E,S,W)
 * Allow paths that do not exist in path input.
 * Added percent unit
