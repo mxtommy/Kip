@@ -222,6 +222,9 @@ export class AppSettingsService {
   public getThemeConfig(): IThemeConfig {
     return this.buildThemeStorageObject();
   }
+  public getZonesConfig(): IZonesConfig {
+    return this.buildZonesStorageObject()
+  }
 
   public getKipUUID() {
     return this.kipUUID;

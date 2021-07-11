@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FormControl, Validators }    from '@angular/forms';
 
-import { AppSettingsService, IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from '../app-settings.service';
+import { AppSettingsService, IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../app-settings.service';
 import { SignalKService } from '../signalk.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
 import { NotificationsService } from '../notifications.service';
@@ -23,6 +23,7 @@ export class SettingsConfigComponent implements OnInit {
   widgetJSONConfig: string = '';
   layoutJSONConfig: string = '';
   themeJSONConfig: string = '';
+  zonesJSONConfig: string = '';
 
   hasToken: boolean = false;
   supportApplicationData: boolean = false;
@@ -56,6 +57,8 @@ export class SettingsConfigComponent implements OnInit {
     this.widgetJSONConfig = JSON.stringify(this.AppSettingsService.getWidgetConfig(), null, 2);
     this.layoutJSONConfig = JSON.stringify(this.AppSettingsService.getLayoutConfig(), null, 2);
     this.themeJSONConfig = JSON.stringify(this.AppSettingsService.getThemeConfig(), null, 2);
+    this.zonesJSONConfig = JSON.stringify(this.AppSettingsService.getZonesConfig(), null, 2);
+
 
     this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
       if (token.token) {
@@ -87,6 +90,7 @@ export class SettingsConfigComponent implements OnInit {
     allConfig['widget'] = this.AppSettingsService.getWidgetConfig();
     allConfig['layout'] = this.AppSettingsService.getLayoutConfig();
     allConfig['theme'] = this.AppSettingsService.getThemeConfig();
+    allConfig['zones'] = this.AppSettingsService.getZonesConfig();
 
 
     this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, allConfig).subscribe(result => {
@@ -100,6 +104,7 @@ export class SettingsConfigComponent implements OnInit {
       let widget: IWidgetConfig = newConfig['widget'];
       let layout: ILayoutConfig = newConfig['layout'];
       let theme: IThemeConfig = newConfig['theme'];
+      let zones: IZonesConfig = newConfig['zones'] || [];
 
       // preserve kip uuid
       app.kipUUID = this.AppSettingsService.getKipUUID();
@@ -107,7 +112,9 @@ export class SettingsConfigComponent implements OnInit {
       this.AppSettingsService.replaceConfig("appConfig", JSON.stringify(app), false);
       this.AppSettingsService.replaceConfig("widgetConfig", JSON.stringify(widget), false);
       this.AppSettingsService.replaceConfig("layoutConfig", JSON.stringify(layout), false);
-      this.AppSettingsService.replaceConfig("themeConfig", JSON.stringify(theme), true);
+      this.AppSettingsService.replaceConfig("themeConfig", JSON.stringify(theme), false);
+      this.AppSettingsService.replaceConfig("zonesConfig", JSON.stringify(zones), true);
+
     });
 
 
@@ -133,6 +140,11 @@ export class SettingsConfigComponent implements OnInit {
 
       case "themeConfig":
         this.AppSettingsService.replaceConfig(configType, this.themeJSONConfig, true);
+        break;
+
+      case "zonesConfig":
+        console.log(this.zonesJSONConfig);
+        this.AppSettingsService.replaceConfig(configType, this.zonesJSONConfig, false);
         break;
     }
   }
