@@ -7,7 +7,7 @@ import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService, IZone, ZoneState } from '../app-settings.service';
 import { RadialGauge, RadialGaugeOptions } from '@biacsics/ng-canvas-gauges';
 
 const defaultConfig: IWidgetConfig = {
@@ -34,6 +34,12 @@ const defaultConfig: IWidgetConfig = {
   barColor: 'accent',     // theme palette to select
 };
 
+interface IDataHighlight extends Array<{
+    from : number;
+    to : number;
+    color: string;
+  }> {};
+  
 @Component({
   selector: 'app-widget-gauge-ng-radial',
   templateUrl: './widget-gauge-ng-radial.component.html',
@@ -71,6 +77,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   public colorStrokeTicks: string = "";
   public unitName: string = null;
 
+  zones: Array<IZone> = [];
+  zonesSub: Subscription;
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -95,11 +104,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     }
     this.subscribePath();
     this.subscribeTheme();
+    this.subscribeZones();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
     this.unsubscribeTheme();
+    this.unsubscribeZones();
   }
 
   ngAfterContentInit() {
@@ -117,7 +128,6 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
         this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value);
-
         // Limit gauge progressbar overflow
         if (this.dataValue >= this.config.maxValue) {
           this.dataValue = this.config.maxValue;
@@ -125,6 +135,20 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         if (this.dataValue <= this.config.minValue) {
           this.dataValue = this.config.minValue;
         };
+
+        // set colors for zone state
+        switch (newValue.state) {
+          case ZoneState.warning:
+            this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            break;
+          case ZoneState.alarm:
+            this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            break;
+          default:
+            this.gaugeOptions.colorValueText = getComputedStyle(this.textElement.nativeElement).color;
+
+        }
+
       }
     );
   }
@@ -154,6 +178,22 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     }
   }
 
+  // Subscribe to Zones
+  subscribeZones() {
+    this.zonesSub = this.AppSettingsService.getZonesAsO().subscribe(
+      zones => { 
+        this.zones = zones; 
+        this.updateGaugeConfig();
+      });
+  }
+
+  unsubscribeZones(){
+    if (this.zonesSub !== null) {
+      this.zonesSub.unsubscribe();
+      this.zonesSub = null;
+    }
+  }
+
   openWidgetSettings() {
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
@@ -178,7 +218,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
-    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = this.gaugeOptions.colorValueText = getComputedStyle(this.textElement.nativeElement).color;
+    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = getComputedStyle(this.textElement.nativeElement).color;
 
     this.gaugeOptions.colorPlate = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
     this.gaugeOptions.colorBar = getComputedStyle(this.backgroundElement.nativeElement).color;
@@ -219,6 +259,30 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         break;
     }
 
+    // highlights
+    let myZones: IDataHighlight = [];
+    this.zones.forEach(zone => {
+      // get zones for our path
+      if (zone.path == this.config.paths['gaugePath'].path) {
+        let lower = zone.lower || this.config.minValue;
+        let upper = zone.upper || this.config.maxValue;
+        let color: string; 
+        switch (zone.state) {
+          case 1:
+            color = getComputedStyle(this.warnElement.nativeElement).color;
+            break;
+          case ZoneState.alarm:
+            color = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            break;
+          default:
+            color = getComputedStyle(this.primaryElement.nativeElement).color;
+        }        
+        
+        myZones.push({from: lower, to: upper, color: color});
+      }
+    });
+    this.gaugeOptions.highlights = myZones;    
+
     // Config storage values
     this.gaugeOptions.valueInt = this.config.numInt;
     this.gaugeOptions.valueDec = this.config.numDecimal;
@@ -253,8 +317,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.minorTicks = 0;
         this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 0;
-        this.gaugeOptions.highlights = [];
-        this.gaugeOptions.highlightsWidth = 0;
+        this.gaugeOptions.highlightsWidth = 15;
 
         this.gaugeOptions.needle = true;
         this.gaugeOptions.needleType = "line";
@@ -303,8 +366,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.minorTicks = 2;
         this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;
-        this.gaugeOptions.highlights = [];
-        this.gaugeOptions.highlightsWidth = 0;
+        this.gaugeOptions.highlightsWidth = 15;
 
         this.gaugeOptions.needle = true;
         this.gaugeOptions.needleType = "line";
