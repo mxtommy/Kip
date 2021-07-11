@@ -25,7 +25,14 @@
               "src/styles.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "util",
+              "compare-versions",
+              "rx-dom-html",
+              "chart.js",
+              "css-element-queries"
+            ]
           },
           "configurations": {
             "production": {
