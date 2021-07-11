@@ -118,13 +118,6 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       newValue => {
         this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value);
 
-        // Limit gauge progressbar overflow
-        if (this.dataValue >= this.config.maxValue) {
-          this.dataValue = this.config.maxValue;
-        };
-        if (this.dataValue <= this.config.minValue) {
-          this.dataValue = this.config.minValue;
-        };
 
         // set colors for zone state
         switch (newValue.state) {

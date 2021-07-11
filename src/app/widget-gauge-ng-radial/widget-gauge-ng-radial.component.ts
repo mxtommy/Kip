@@ -128,13 +128,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
       newValue => {
         this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value);
-        // Limit gauge progressbar overflow
-        if (this.dataValue >= this.config.maxValue) {
-          this.dataValue = this.config.maxValue;
-        };
-        if (this.dataValue <= this.config.minValue) {
-          this.dataValue = this.config.minValue;
-        };
+
 
         // set colors for zone state
         switch (newValue.state) {
