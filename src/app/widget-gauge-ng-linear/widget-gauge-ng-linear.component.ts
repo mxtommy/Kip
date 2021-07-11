@@ -7,7 +7,7 @@ import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service' ;
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService, IZone, ZoneState } from '../app-settings.service';
 import { LinearGauge, LinearGaugeOptions } from '@biacsics/ng-canvas-gauges';
 
 
@@ -32,6 +32,12 @@ const defaultConfig: IWidgetConfig = {
   numDecimal: 0,
   barColor: 'accent',
 };
+
+interface IDataHighlight extends Array<{
+  from : number;
+  to : number;
+  color: string;
+}> {};
 
 @Component({
   selector: 'app-widget-gauge-ng-linear',
@@ -69,6 +75,9 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   public isGaugeVertical: Boolean = true;
 
+  zones: Array<IZone> = [];
+  zonesSub: Subscription;
+
   constructor(
     public dialog:MatDialog,
     private SignalKService: SignalKService,
@@ -88,11 +97,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     }
     this.subscribePath();
     this.subscribeTheme();
+    this.subscribeZones();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
     this.unsubscribeTheme();
+    this.unsubscribeZones();
   }
 
   ngAfterContentInit(){
@@ -114,6 +125,20 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         if (this.dataValue <= this.config.minValue) {
           this.dataValue = this.config.minValue;
         };
+
+        // set colors for zone state
+        switch (newValue.state) {
+          case ZoneState.warning:
+            this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            break;
+          case ZoneState.alarm:
+            this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            break;
+          default:
+            this.gaugeOptions.colorValueText = getComputedStyle(this.wrapper.nativeElement).color;
+
+        }
+
       }
     );
   }
@@ -140,6 +165,22 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     if (this.themeNameSub !== null) {
       this.themeNameSub.unsubscribe();
       this.themeNameSub = null;
+    }
+  }
+
+  // Subscribe to Zones
+  subscribeZones() {
+    this.zonesSub = this.AppSettingsService.getZonesAsO().subscribe(
+      zones => { 
+        this.zones = zones; 
+        this.updateGaugeConfig();
+      });
+  }
+
+  unsubscribeZones(){
+    if (this.zonesSub !== null) {
+      this.zonesSub.unsubscribe();
+      this.zonesSub = null;
     }
   }
 
@@ -220,6 +261,31 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         break;
     }
 
+    // highlights
+    let myZones: IDataHighlight = [];
+    this.zones.forEach(zone => {
+      // get zones for our path
+      if (zone.path == this.config.paths['gaugePath'].path) {
+        let lower = zone.lower || this.config.minValue;
+        let upper = zone.upper || this.config.maxValue;
+        let color: string; 
+        switch (zone.state) {
+          case 1:
+            color = getComputedStyle(this.warnElement.nativeElement).color;
+            break;
+          case ZoneState.alarm:
+            color = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            break;
+          default:
+            color = getComputedStyle(this.primaryElement.nativeElement).color;
+        }        
+        
+        myZones.push({from: lower, to: upper, color: color});
+      }
+    });
+    this.gaugeOptions.highlights = myZones;   
+    
+
     // Config storage values
     this.gaugeOptions.minValue = this.config.minValue;
     this.gaugeOptions.maxValue = this.config.maxValue;
@@ -273,8 +339,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.minorTicks = 10;
         this.gaugeOptions.ticksWidthMinor = 4;
 
-        this.gaugeOptions.highlights = [];
-        this.gaugeOptions.highlightsWidth = 3;
+        this.gaugeOptions.highlightsWidth = 15;
       }
       else {
         // Vertical No ticks
@@ -293,8 +358,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 0;
 
-        this.gaugeOptions.highlights = [];
-        this.gaugeOptions.highlightsWidth = 0;
+        this.gaugeOptions.highlightsWidth = 15;
       }
     }
     else {
@@ -328,8 +392,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
           this.gaugeOptions.minorTicks = 10;
           this.gaugeOptions.ticksWidthMinor = 5;
 
-          this.gaugeOptions.highlights = [];
-          this.gaugeOptions.highlightsWidth = 3;
+          this.gaugeOptions.highlightsWidth = 15;
       }
       else {
         // horizontal No ticks
@@ -348,8 +411,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 0;
 
-        this.gaugeOptions.highlights = [];
-        this.gaugeOptions.highlightsWidth = 0;
+        this.gaugeOptions.highlightsWidth = 15;
       }
     }
   }
