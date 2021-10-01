@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input, Inject } from '@angular/core';
-import * as Chart from 'chart.js';
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-moment';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
@@ -133,17 +134,6 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
         }
         );
       }
-      //setup Options
-      let yAxisTickOptions = {};
-      if (this.config.includeZero) {
-        yAxisTickOptions['beginAtZero'] = true;
-      }
-      if (this.config.minValue !== null) {
-        yAxisTickOptions['suggestedMin'] = this.config.minValue;
-      }
-      if (this.config.maxValue !== null) {
-        yAxisTickOptions['suggestedMax'] = this.config.maxValue;
-      }
 
       this.chart = new Chart(this.chartCtx,{
           type: 'line',
@@ -153,44 +143,42 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       options: {
           maintainAspectRatio: false,
           scales: {
-              yAxes: [{
-                  scaleLabel: {
-                      labelString: 'feet',
-                  },
-
+              y: {
                   position: 'right',
-                  ticks: yAxisTickOptions
-              }],
-              xAxes: [{
+                  ...(this.config.minValue !== null && {suggestedMin: this.config.minValue}),
+                  ...(this.config.maxValue !== null && {suggestedMax: this.config.maxValue}),
+                  ...(this.config.includeZero && { beginAtZero: true}),
+              },
+              x: {
                   type: 'time',
                   time: {
                       minUnit: 'second',
                       round: 'second',
-                      displayFormats: 'YY', //no mater what it seems to default to full time...
+                  //    displayFormats: 'YY', //no mater what it seems to default to full time...
                   },
 
                   ticks: {
   //                    minRotation: 15,
-                      callback: function(value) {  //TODO, left pad 0 for min/sec
-                          let tickTime = Date.parse(value);
-                          let nowTime = Date.now();
-                          let timeDiff = Math.floor((nowTime - tickTime)/1000);
-                          if (timeDiff < 60) {
-                              return timeDiff.toString() + " sec ago";
-                          } else if (timeDiff < 3600) {
-                              let minDiff = Math.floor(timeDiff / 60);
-                              let secDiff = timeDiff % 60;
-                              return (minDiff.toString() + ":" +secDiff.toString() + " mins ago");
-                          } else if (timeDiff < 86400) {
-                              let hourDiff = Math.floor(timeDiff / 3600);
-                              return (hourDiff.toString() + " hours ago");
-                          } else {
-                              let dayDiff = Math.floor(timeDiff / 86400);
-                              return (dayDiff.toString() + " days ago");
-                          }
+                    callback: function (value, index, values) {  //TODO, left pad 0 for min/sec
+                      let tickTime = values[index].value;
+                      let nowTime = Date.now();
+                      let timeDiff = Math.floor((nowTime - tickTime) / 1000);
+                      if (timeDiff < 60) {
+                        return timeDiff.toString() + " sec ago";
+                      } else if (timeDiff < 3600) {
+                        let minDiff = Math.floor(timeDiff / 60);
+                        let secDiff = timeDiff % 60;
+                        return (minDiff.toString() + ":" + secDiff.toString() + " mins ago");
+                      } else if (timeDiff < 86400) {
+                        let hourDiff = Math.floor(timeDiff / 3600);
+                        return (hourDiff.toString() + " hours ago");
+                      } else {
+                        let dayDiff = Math.floor(timeDiff / 86400);
+                        return (dayDiff.toString() + " days ago");
                       }
+                    }
                   }
-              }]
+              }
           }
       }
     });
@@ -213,11 +201,11 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
               this.chartDataAvg = [];
               for (let i=0;i<dataSet.length;i++){
                 if (dataSet[i].average === null) {
-                  this.chartDataAvg.push({t: dataSet[i].timestamp, y: null });
+                  this.chartDataAvg.push({x: dataSet[i].timestamp, y: null });
                   continue;
                 }
                 this.chartDataAvg.push({
-                  t: dataSet[i].timestamp,
+                  x: dataSet[i].timestamp,
                   y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].average) * invert).toFixed(2)
                 });
               }
@@ -230,15 +218,14 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 for (let i=0;i<dataSet.length;i++){
                   //process datapoint and add it to our chart.
                   if (dataSet[i].average === null) {
-                    this.chartDataMin.push({t: dataSet[i].timestamp, y: null });
-                    this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
+                    this.chartDataMin.push({x: dataSet[i].timestamp, y: null });
                   } else {
                     this.chartDataMin.push({
-                        t: dataSet[i].timestamp,
+                        x: dataSet[i].timestamp,
                         y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].minValue) * invert).toFixed(2)
                     });
                     this.chartDataMax.push({
-                        t: dataSet[i].timestamp,
+                        x: dataSet[i].timestamp,
                         y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].maxValue) * invert).toFixed(2)
                     });
                   }
