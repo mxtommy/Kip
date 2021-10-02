@@ -245,7 +245,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
         "displayMinMax": false,
         "includeZero": true,
         "minValue": null,
-        "maxValue": null
+        "maxValue": null,
+        "verticalGraph": false
       }
     },
     {
