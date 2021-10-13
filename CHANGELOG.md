@@ -1,3 +1,9 @@
+# V1.2.2
+* Option to make historical graphs vertical, thanks ahm4711!
+
+# V1.2.1
+* Fix bad base href in V1.2.0
+
 # V1.2.0
 ## Features
 * Zones!!!

@@ -250,7 +250,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
               this.chart.data.datasets[1].label = this.config.displayName + " [" + average(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
               this.chart.data.datasets[2].label = this.config.displayName + " [" + average(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
             }
-            this.chart.update(0);
+            this.chart.update('none');
               //}
           }
       );

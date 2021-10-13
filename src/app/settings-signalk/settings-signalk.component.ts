@@ -66,14 +66,14 @@ export class SettingsSignalkComponent implements OnInit {
       this.updatesSeconds = newSecondsData;
       if (this.chart !== null) {
         this.chart.config.data.datasets[0].data = newSecondsData;
-        this.chart.update(0);
+        this.chart.update('none');
       }
     });
     /* this.updatesMinutesSub = this.SignalKService.getupdateStatMinute().subscribe(newMinutesData => {
       this.updatesMinutes = newMinutesData;
       if (this.chart !== null) {
         this.chart.config.data.datasets[1].data = newMinutesData;
-        this.chart.update(0);
+        this.chart.update('none');
       }
     }); */
 

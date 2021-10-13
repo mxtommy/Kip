@@ -1,6 +1,9 @@
 KIP contributors (sorted alphabetically)
 ============================================
 
+* **[ahm4711](https://github.com/ahm4711)**
+  * Vertical historical graphs
+
 * **[David Godin](https://github.com/godind)**
 
   * Integration of Canvas-Gauges
