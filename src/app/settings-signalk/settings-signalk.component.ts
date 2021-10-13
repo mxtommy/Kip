@@ -1,7 +1,6 @@
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import * as Chart from 'chart.js';
-
+import Chart from 'chart.js/auto';
 
 import { AppSettingsService, SignalKToken, SignalKUrl } from '../app-settings.service';
 import { SignalKConnectionService, SignalKStatus } from '../signalk-connection.service';
@@ -121,14 +120,12 @@ export class SettingsSignalkComponent implements OnInit {
               label: "Updates Per Second",
               data: this.updatesSeconds,
               //fill: 'false',
-              yAxesID: 'sec',
               borderColor: this.textColor
             },
             // {
             //   label: "Per Minute",
             //   data: this.updatesMinutes,
             //   fill: 'false',
-            //   yAxesID: 'min',
             //   borderColor: this.textColor
             // }            
           ]
@@ -136,25 +133,17 @@ export class SettingsSignalkComponent implements OnInit {
       options: {
        
         scales: {
-          yAxes: [
+          y: 
             {
-              id: 'sec',
               type: 'linear',
               position: 'left',
-              ticks: {
-                beginAtZero: true
-              }
-            
+              beginAtZero: true,
             },
             // {
-            //   id: 'min',
             //   type: 'linear',
             //   position: 'right',
-            //   ticks: {
-            //     //beginAtZero: true
-            //   }
+            //     //beginAtZero: true,
             // }
-          ]
         }
       }
     });

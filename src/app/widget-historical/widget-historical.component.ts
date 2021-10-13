@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input, Inject } from '@angular/core';
-import * as Chart from 'chart.js';
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-moment';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
@@ -19,7 +20,8 @@ const defaultConfig: IWidgetConfig = {
   displayMinMax: false,
   includeZero: true,
   minValue: null,
-  maxValue: null
+  maxValue: null,
+  verticalGraph: true,
 };
 
 interface IDataSetOptions {
@@ -121,7 +123,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             fill: '+1',
             //borderWidth: 1
             borderColor: this.textColor,
-            borderDash: [ 5, 5 ]
+          borderDash: [10, 10]
         },
         {
             label: this.config.displayName + '-Max',
@@ -129,21 +131,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             fill: '-1',
             //borderWidth: 1
             borderColor: this.textColor,
-            borderDash: [ 5, 5 ]
+          borderDash: [5, 5]
         }
         );
       }
-      //setup Options
-      let yAxisTickOptions = {};
-      if (this.config.includeZero) {
-        yAxisTickOptions['beginAtZero'] = true;
-      }
-      if (this.config.minValue !== null) {
-        yAxisTickOptions['suggestedMin'] = this.config.minValue;
-      }
-      if (this.config.maxValue !== null) {
-        yAxisTickOptions['suggestedMax'] = this.config.maxValue;
-      }
+      let xAxis = this.config.verticalGraph ? 'y' : 'x';
+      let yAxis = this.config.verticalGraph ? 'x' : 'y';
 
       this.chart = new Chart(this.chartCtx,{
           type: 'line',
@@ -152,51 +145,52 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       },
       options: {
           maintainAspectRatio: false,
+          indexAxis: this.config.verticalGraph ? 'y' : 'x',
+          parsing: {
+            xAxisKey: xAxis,
+            yAxisKey: yAxis,
+        },
           scales: {
-              yAxes: [{
-                  scaleLabel: {
-                      labelString: 'feet',
-                  },
-
-                  position: 'right',
-                  ticks: yAxisTickOptions
-              }],
-              xAxes: [{
+              [yAxis]: {
+                  position: this.config.verticalGraph ? 'top' : 'right',
+                  ...(this.config.minValue !== null && {suggestedMin: this.config.minValue}),
+                  ...(this.config.maxValue !== null && {suggestedMax: this.config.maxValue}),
+                  ...(this.config.includeZero && { beginAtZero: true}),
+              },
+              [xAxis]: {
+                  position: this.config.verticalGraph ? 'right': 'bottom',
                   type: 'time',
                   time: {
                       minUnit: 'second',
                       round: 'second',
-                      displayFormats: 'YY', //no mater what it seems to default to full time...
                   },
-
                   ticks: {
-  //                    minRotation: 15,
-                      callback: function(value) {  //TODO, left pad 0 for min/sec
-                          let tickTime = Date.parse(value);
-                          let nowTime = Date.now();
-                          let timeDiff = Math.floor((nowTime - tickTime)/1000);
-                          if (timeDiff < 60) {
-                              return timeDiff.toString() + " sec ago";
-                          } else if (timeDiff < 3600) {
-                              let minDiff = Math.floor(timeDiff / 60);
-                              let secDiff = timeDiff % 60;
-                              return (minDiff.toString() + ":" +secDiff.toString() + " mins ago");
-                          } else if (timeDiff < 86400) {
-                              let hourDiff = Math.floor(timeDiff / 3600);
-                              return (hourDiff.toString() + " hours ago");
-                          } else {
-                              let dayDiff = Math.floor(timeDiff / 86400);
-                              return (dayDiff.toString() + " days ago");
-                          }
-                      }
+                    callback: timeDifferenceFromNow,
                   }
-              }]
+              }
           }
       }
     });
 
+    function timeDifferenceFromNow(_value, index, values) {
+      let tickTime = values[index].value;
+      let nowTime = Date.now();
+      let timeDiff = Math.floor((nowTime - tickTime) / 1000);
+      if (timeDiff < 60) {
+        return "0:" + timeDiff.toString().padStart(2, "0") + " secs ago";
+      } else if (timeDiff < 3600) {
+        let minDiff = Math.floor(timeDiff / 60);
+        let secDiff = timeDiff % 60;
+        return (minDiff.toString() + ":" + secDiff.toString().padStart(2, "0") + " mins ago");
+      } else if (timeDiff < 86400) {
+        let hourDiff = Math.floor(timeDiff / 3600);
+        return (hourDiff.toString() + " hours ago");
+      } else {
+        let dayDiff = Math.floor(timeDiff / 86400);
+        return (dayDiff.toString() + " days ago");
+      }
+    }
   }
-
 
   subscribeDataSet() {
       this.unsubscribeDataSet();
@@ -213,12 +207,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
               this.chartDataAvg = [];
               for (let i=0;i<dataSet.length;i++){
                 if (dataSet[i].average === null) {
-                  this.chartDataAvg.push({t: dataSet[i].timestamp, y: null });
+                  this.chartDataAvg.push({x: dataSet[i].timestamp, y: null });
                   continue;
                 }
                 this.chartDataAvg.push({
-                  t: dataSet[i].timestamp,
-                  y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].average) * invert).toFixed(2)
+                  x: dataSet[i].timestamp,
+            y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].average) * invert)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
@@ -230,16 +224,15 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 for (let i=0;i<dataSet.length;i++){
                   //process datapoint and add it to our chart.
                   if (dataSet[i].average === null) {
-                    this.chartDataMin.push({t: dataSet[i].timestamp, y: null });
-                    this.chartDataMax.push({t: dataSet[i].timestamp, y: null });
+                    this.chartDataMin.push({x: dataSet[i].timestamp, y: null });
                   } else {
                     this.chartDataMin.push({
-                        t: dataSet[i].timestamp,
-                        y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].minValue) * invert).toFixed(2)
+                        x: dataSet[i].timestamp,
+                y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].minValue) * invert)
                     });
                     this.chartDataMax.push({
-                        t: dataSet[i].timestamp,
-                        y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].maxValue) * invert).toFixed(2)
+                        x: dataSet[i].timestamp,
+                y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].maxValue) * invert)
                     });
                   }
                 }
@@ -247,11 +240,17 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 this.chart.config.data.datasets[2].data = this.chartDataMax;
               }
 
-
+            const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
               //if (this.widgetConfig.animateGraph) {
               //  this.chart.update();
               //} else {
-                this.chart.update(0);
+                // append the cumulated average to the label text
+            this.chart.data.datasets[0].label = this.config.displayName + " [" + average(this.chartDataAvg.map(e => e.y)).toFixed(2) + "]";
+            if (this.config.displayMinMax) {
+              this.chart.data.datasets[1].label = this.config.displayName + " [" + average(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
+              this.chart.data.datasets[2].label = this.config.displayName + " [" + average(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
+            }
+            this.chart.update(0);
               //}
           }
       );

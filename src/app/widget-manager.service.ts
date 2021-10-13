@@ -55,6 +55,7 @@ export interface IWidgetConfig {
   displayMinMax?: boolean;
   animateGraph?: boolean;
   includeZero?: boolean;
+  verticalGraph?: boolean;
 
   //Puts
   putEnable?: boolean;
