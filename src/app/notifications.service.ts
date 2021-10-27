@@ -227,6 +227,11 @@ export class NotificationsService {
       let aSev = 0;
       let vSev = 0;
 
+      //seems ISignalKNotification can sometimes not have method set. (Problem from server?)
+      if (!('method' in alarm.notification)) {
+        continue; // if there's no method, don't alarm...
+      }
+
       switch (alarm.notification['state']) {
         //case 'nominal':       // not sure yet... spec not clear. Maybe only relevant for Zones
         case 'normal':        // information only ie.: engine temperature normal. Not usually displayed

@@ -53,7 +53,21 @@
               </mat-expansion-panel-header>
               <iframe width="560" height="315" src="https://www.youtube.com/embed/S8FbtwBwW3w" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </mat-expansion-panel>
+
+            <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Setting up zones in KIP (by Boating with the Baileys)
+                </mat-panel-title>
+                <mat-panel-description>
+                  Warnings/Alarms
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <iframe width="560" height="315" src="https://www.youtube.com/embed/BJFjLzjlpuY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </mat-expansion-panel>
+            
           </mat-accordion>
+
         </mat-tab>
 
         <mat-tab label="Graphana">

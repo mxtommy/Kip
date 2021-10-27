@@ -1,3 +1,8 @@
+# V 1.2.3
+* Fix bug in ng-Gauges initialization
+* Don't error out on missing notification method
+* Add some more help videos
+
 # V1.2.2
 * Option to make historical graphs vertical, thanks ahm4711!
 

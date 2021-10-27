@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "license": "MIT",
   "keywords": [
     "signalk-webapp",
@@ -28,10 +28,7 @@
     "type": "git",
     "url": "https://github.com/mxtommy/Kip"
   },
-  "dependencies": {
-    "chartjs-adapter-moment": "^1.0.0",
-    "moment": "^2.29.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@angular/animations": "11.2.14",
     "@angular/cdk": "^11.2.13",
@@ -45,7 +42,6 @@
     "@angular/platform-browser-dynamic": "11.2.14",
     "@angular/platform-server": "11.2.14",
     "@angular/router": "11.2.14",
-    "@biacsics/ng-canvas-gauges": "^6.0.7",
     "angular-resize-event": "^2.1.0",
     "angular-split": "^3.0.3",
     "chart.js": "^3.5.1",
@@ -78,6 +74,11 @@
     "protractor": "~7.0.0",
     "ts-node": "^8.10.2",
     "tslint": "^6.1.3",
-    "typescript": "^4.1.5"
+    "typescript": "^4.1.5",
+    "chartjs-adapter-moment": "^1.0.0",
+    "moment": "^2.29.1",
+    "@types/canvas-gauges": "^2.1.2",
+    "canvas-gauges": "^2.1.7",
+    "rx-dom-html": "^7.0.3"
   }
 }

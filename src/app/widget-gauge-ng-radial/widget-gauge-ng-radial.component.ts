@@ -8,7 +8,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService, IZone, ZoneState } from '../app-settings.service';
-import { RadialGauge, RadialGaugeOptions } from '@biacsics/ng-canvas-gauges';
+import { RadialGauge, RadialGaugeOptions } from '../gauges-module/radial-gauge';
 
 const defaultConfig: IWidgetConfig = {
   displayName: null,
@@ -105,7 +105,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.subscribePath();
     this.subscribeTheme();
     this.subscribeZones();
-  }
+   }
 
   ngOnDestroy() {
     this.unsubscribePath();

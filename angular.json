@@ -31,7 +31,8 @@
               "compare-versions",
               "rx-dom-html",
               "chart.js",
-              "css-element-queries"
+              "css-element-queries",
+              "howler"
             ]
           },
           "configurations": {
