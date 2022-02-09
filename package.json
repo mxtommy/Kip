@@ -49,7 +49,7 @@
     "core-js": "^3.13.1",
     "howler": "^2.2.1",
     "js-quantities": "^1.7.6",
-    "node-sass": "^4.14.1",
+    "node-sass": "^7.0.0",
     "rxjs": "^6.6.7",
     "screenfull": "^5.1.0",
     "tslib": "^2.2.0",
