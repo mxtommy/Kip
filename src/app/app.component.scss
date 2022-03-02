@@ -1,4 +1,4 @@
-@import '~@angular/material/theming';
+@use '~@angular/material' as mat;
 
 @mixin app-theme($theme) {
   $primary: map-get($theme, primary);
@@ -8,16 +8,16 @@
   $foreground: map-get($theme, foreground);
 
   .app-defaults {
-    background-color: mat-color($background, background);
-    color: mat-color($foreground, text);
+    background-color: mat.get-color-from-palette($background, background);
+    color: mat.get-color-from-palette($foreground, text);
   }
 
   .theme-menu {
-    background-color: mat-color($accent, A200);
+    background-color: mat.get-color-from-palette($accent, A200);
   }
 
   .menuBarButtonGroup {
-    background-color: mat-color($foreground, divider);
+    background-color: mat.get-color-from-palette($foreground, divider);
   }
 
  }

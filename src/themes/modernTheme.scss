@@ -1,4 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
+@use '~@angular/material' as mat;
 $modern-primary: (
     50 : #ecf5fb,
     100 : #d0e7f5,
@@ -103,9 +104,9 @@ $modern-warn: (
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
-$modern-theme-primary: mat-palette($modern-primary);
-$modern-theme-accent:  mat-palette($modern-accent, A200, A100, A400);
-$modern-theme-warn:  mat-palette($modern-warn);
+$modern-theme-primary: mat.define-palette($modern-primary);
+$modern-theme-accent:  mat.define-palette($modern-accent, A200, A100, A400);
+$modern-theme-warn:  mat.define-palette($modern-warn);
 
 // widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
@@ -136,7 +137,7 @@ $mat-wind: (
 
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$modernTheme-temp: mat-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
+$modernTheme-temp: mat.define-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
 
 // Merge our mat-theme with component specific palettes
 $modernTheme-dark: map-merge($modernTheme-temp, (wind: $mat-wind, ngGauge: $mat-ngGauge));

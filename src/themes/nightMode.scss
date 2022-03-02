@@ -1,4 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
+@use '~@angular/material' as mat;
 $nightMode-primary: (
     50 : #ecf5fb,
     100 : #520000,
@@ -137,11 +138,11 @@ $nightMode-special: (
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
 
-$nightMode-theme-primary: mat-palette($nightMode-primary);
-$nightMode-theme-accent:  mat-palette($nightMode-accent, A200, A100, A400);
-$nightMode-theme-warn:  mat-palette($nightMode-warn);
+$nightMode-theme-primary: mat.define-palette($nightMode-primary);
+$nightMode-theme-accent:  mat.define-palette($nightMode-accent, A200, A100, A400);
+$nightMode-theme-warn:  mat.define-palette($nightMode-warn);
 
-$nightMode-theme-special:  mat-palette($nightMode-special); // Used to override MAterial Dark Theme colors and make it really black!
+$nightMode-theme-special:  mat.define-palette($nightMode-special); // Used to override MAterial Dark Theme colors and make it really black!
 
 // Palettes for custom Components
 
@@ -174,7 +175,7 @@ $mat-wind: (
 
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$nightMode-temp: mat-dark-theme($nightMode-theme-primary, $nightMode-theme-accent, $nightMode-theme-warn);
+$nightMode-temp: mat.define-dark-theme($nightMode-theme-primary, $nightMode-theme-accent, $nightMode-theme-warn);
 
 
 // Customer Material Dark-theme black background

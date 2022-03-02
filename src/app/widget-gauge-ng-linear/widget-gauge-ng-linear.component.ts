@@ -411,13 +411,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   onResized(event: ResizedEvent) {
 
-    this.gaugeOptions.height = event.newHeight;
+    this.gaugeOptions.height = event.newRect.height;
 
     if (this.isGaugeVertical == true) {
-      this.gaugeOptions.width = (event.newHeight * 0.30);
+      this.gaugeOptions.width = (event.newRect.height * 0.30);
     }
     else {
-      this.gaugeOptions.width = event.newWidth;
+      this.gaugeOptions.width = event.newRect.width;
     }
   }
 

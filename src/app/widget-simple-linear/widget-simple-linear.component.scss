@@ -1,4 +1,4 @@
-@import '~@angular/material/theming';
+@use '~@angular/material' as mat;
 
 @mixin widget-simple-linear-theme($theme) {
 
@@ -7,28 +7,28 @@
 
   app-widget-simple-linear {
       .primary {
-        color: mat-color($ngGauge, primary-gaugeFaceLight);
+        color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceLight);
       }
       .accent {
-        color: mat-color($ngGauge, accent-gaugeFaceLight);
+        color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceLight);
       }
       .warn {
-        color: mat-color($ngGauge, warn-gaugeFaceLight);
+        color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceLight);
       }
       .primaryDark {
-        color: mat-color($ngGauge, primary-gaugeFaceDark);
+        color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceDark);
       }
       .accentDark {
-        color: mat-color($ngGauge, accent-gaugeFaceDark);
+        color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceDark);
       }
       .warnDark {
-        color: mat-color($ngGauge, warn-gaugeFaceDark);
+        color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceDark);
       }
       .background {
-        color: mat-color($themeForeground, divider);
+        color: mat.get-color-from-palette($themeForeground, divider);
       }
       .text {
-        color: mat-color($themeForeground, text);
+        color: mat.get-color-from-palette($themeForeground, text);
       }
   }
 }

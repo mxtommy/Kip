@@ -1,4 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
+@use '~@angular/material' as mat;
 $mat-perry: (
     50 : #e3f2f2,
     100 : #badede,
@@ -37,19 +38,19 @@ $mat-perry: (
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
-$platypusTheme-primary: mat-palette($mat-teal);
-$platypusTheme-accent: mat-palette($mat-orange, A200, A100, A400);
-$platypusTheme-warn:    mat-palette($mat-red);
+$platypusTheme-primary: mat.define-palette(mat.$teal-palette);
+$platypusTheme-accent: mat.define-palette(mat.$orange-palette, A200, A100, A400);
+$platypusTheme-warn:    mat.define-palette(mat.$red-palette);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
 // Pull from mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: mat-color($platypusTheme-primary, 300),
-    primary-gaugeFaceDark: mat-color($platypusTheme-primary, 900),
-    accent-gaugeFaceLight: mat-color($platypusTheme-accent, 300),
-    accent-gaugeFaceDark: mat-color($platypusTheme-accent, 900),
-    warn-gaugeFaceLight: mat-color($platypusTheme-warn, 300),
-    warn-gaugeFaceDark: mat-color($platypusTheme-warn, 900),
+    primary-gaugeFaceLight: mat.get-color-from-palette($platypusTheme-primary, 300),
+    primary-gaugeFaceDark: mat.get-color-from-palette($platypusTheme-primary, 900),
+    accent-gaugeFaceLight: mat.get-color-from-palette($platypusTheme-accent, 300),
+    accent-gaugeFaceDark: mat.get-color-from-palette($platypusTheme-accent, 900),
+    warn-gaugeFaceLight: mat.get-color-from-palette($platypusTheme-warn, 300),
+    warn-gaugeFaceDark: mat.get-color-from-palette($platypusTheme-warn, 900),
 );
 
 // Palette for widget-wind - wind instrument Component
@@ -73,7 +74,7 @@ $platypusTheme-background: custom-theme-light-background($mat-perry, 500);
 
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$platypusTheme-temp-light: mat-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
+$platypusTheme-temp-light: mat.define-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
 
 // Merge our mat-theme with component specific palettes
 $platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));

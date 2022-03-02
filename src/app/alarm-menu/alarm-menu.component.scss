@@ -1,6 +1,3 @@
-@import '~@angular/material/theming';
-
-
 @mixin alarm-menu-theme($theme) {
 
   $primary: map-get($theme, primary);

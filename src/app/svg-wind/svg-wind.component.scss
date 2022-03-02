@@ -1,6 +1,6 @@
 // file used by various SVG components
+@use '~@angular/material' as mat;
 // do not delete
-@import '~@angular/material/theming';
 
 @mixin svg-wind-theme($theme) {
 
@@ -11,60 +11,60 @@
     $wind: map-get($theme, wind);
 
     .boatBackground {
-        fill: mat-color($wind, boat-background) !important; //400
+        fill: mat.get-color-from-palette($wind, boat-background) !important; //400
     }
 
     .heading-background {
-        fill: mat-color($wind, heading-background)
+        fill: mat.get-color-from-palette($wind, heading-background)
     }
 
     .wind-text {
-        fill: mat-color($foreground, text);
+        fill: mat.get-color-from-palette($foreground, text);
     }
 
     .laylines {
-      stroke:  mat-color($foreground, text);
+      stroke:  mat.get-color-from-palette($foreground, text);
     }
 
     .wind-sector-port {
-      fill: mat-color($wind, port);
+      fill: mat.get-color-from-palette($wind, port);
     }
 
     .wind-sector-stbd {
-      fill: mat-color($wind, starboard);
+      fill: mat.get-color-from-palette($wind, starboard);
     }
 
     .compass-outer-ring {
-        stroke: mat-color($wind, compass-dark);
+        stroke: mat.get-color-from-palette($wind, compass-dark);
     }
     .compass-inner-ring {
-        stroke: mat-color($wind, compass-light);
+        stroke: mat.get-color-from-palette($wind, compass-light);
     }
 
     .wind-rose-background {
-        stroke: mat-color($wind, wind-rose-background);
+        stroke: mat.get-color-from-palette($wind, wind-rose-background);
     }
 
     .port {
-        stroke: mat-color($wind, port);
+        stroke: mat.get-color-from-palette($wind, port);
     }
     .starboard  {
-        stroke: mat-color($wind, starboard);
+        stroke: mat.get-color-from-palette($wind, starboard);
     }
 
     .rudderPort {
-      fill: mat-color($wind, rudder-port);
+      fill: mat.get-color-from-palette($wind, rudder-port);
     }
     .rudderStarboard  {
-      fill: mat-color($wind, rudder-starboard);
+      fill: mat.get-color-from-palette($wind, rudder-starboard);
     }
 
     .true-wind {
-        fill: mat-color($wind, true-wind-background)
+        fill: mat.get-color-from-palette($wind, true-wind-background)
     }
 
     .app-wind {
-        fill: mat-color($wind, app-wind-background)
+        fill: mat.get-color-from-palette($wind, app-wind-background)
     }
 }
 

@@ -28,7 +28,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort'; 
 
 import { AngularSplitModule } from 'angular-split';
-import { AngularResizedEventModule } from 'angular-resize-event';
+import { AngularResizeEventModule } from 'angular-resize-event';
 
 import { AppComponent } from './app.component';
 import { AppHelpComponent } from './app-help/app-help.component';
@@ -155,7 +155,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */, relativeLinkResolution: 'legacy' } ),
     AngularSplitModule,
-    AngularResizedEventModule,
+    AngularResizeEventModule,
     BrowserAnimationsModule,
 
     MatMenuModule,
