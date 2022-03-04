@@ -87,7 +87,9 @@ import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-sim
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
-
+import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { far } from '@fortawesome/free-regular-svg-icons';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -157,6 +159,7 @@ const appRoutes: Routes = [
     AngularSplitModule,
     AngularResizeEventModule,
     BrowserAnimationsModule,
+    FontAwesomeModule,
 
     MatMenuModule,
     MatButtonModule,
@@ -197,4 +200,8 @@ const appRoutes: Routes = [
   bootstrap: [AppComponent]
 })
 
-export class AppModule { }
+export class AppModule { 
+  constructor(library: FaIconLibrary) {
+    library.addIconPacks(fas, far);
+  }
+}
