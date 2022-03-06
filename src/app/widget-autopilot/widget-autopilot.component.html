@@ -5,7 +5,7 @@
     </div>
     <div class="apPower">
       <button mat-flat-button color="warn" class="powerBtn" id="powerBtn" #powerBtn disabled="false" (click)="powerBtnClick($event)">
-        <i class="fa fa-power-off" aria-hidden="true"></i>
+        <i class="fa-solid fa-power-off" aria-hidden="true"></i>
       </button>
     </div>
   </div>
@@ -57,20 +57,20 @@
     </div>
     <div class="itemMute">
       <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="muteBtn" #muteBtn disabled="true" (click)="sendSilence()">
-        <i *ngIf="alarmsCount" class="fa fa-bell-slash" aria-hidden="true"></i>
-        <i *ngIf="!alarmsCount" class="fa fa-bell" aria-hidden="true"></i>
+        <i *ngIf="alarmsCount" class="fa-solid fa-bell-slash" aria-hidden="true"></i>
+        <i *ngIf="!alarmsCount" class="fa-solid fa-bell" aria-hidden="true"></i>
       </button>
     </div>
     <div class="itemMessage">
       <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="messageBtn" #messageBtn disabled="true" (click)="notificationScroll()">
-        <span class="fa fa-envelope" aria-hidden="true"></span>
+        <span class="fa-solid fa-envelope" aria-hidden="true"></span>
         <span *ngIf="alarmsCount" matBadge="{{alarmsCount}}" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
       </button>
     </div>
   </div>
   <div class="settingsButton" *ngIf="unlockStatus">
     <button type="button"  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
-        <span class="fa fa-cog"></span>
+        <span class="fa-solid fa-cog"></span>
     </button>
   </div>
   <div #primary class='primary' style="display: none;"></div>

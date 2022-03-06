@@ -10,17 +10,17 @@
         </div>
         <div class="menuBarButtonGroups">
           <button color="accent"mat-flat-button class="menuBarNavButtons" (click)="pageDown()">
-            <i class="fa fa-chevron-left fa-2x" aria-hidden="true"></i>
+            <i class="fa-solid fa-chevron-left fa-2x" aria-hidden="true"></i>
           </button>
         </div>
         <div class="menuBarButtonGroups">
           <button color="accent" mat-flat-button class="menuBarNavButtons" (click)="pageUp()">
-            <i class="fa fa-chevron-right fa-2x" aria-hidden="true"></i>
+            <i class="fa-solid fa-chevron-right fa-2x" aria-hidden="true"></i>
           </button>
         </div>
         <div class="menuBarButtonGroups">
             <button color="accent" mat-flat-button class="menuBarSettingsButton" [matMenuTriggerFor]="settingsMenu" >
-              <i class="fa fa-bars fa-2x" aria-hidden="true"></i>
+              <i class="fa-solid fa-bars fa-2x" aria-hidden="true"></i>
             </button>
         </div>
       </div>
@@ -30,64 +30,64 @@
 
 <mat-menu #settingsMenu="matMenu">
   <button mat-menu-item routerLink="/help">
-    <span><i class="fa fa-question-circle" aria-hidden="true"></i> Help</span>
+    <span><i class="fa-solid fa-question-circle" aria-hidden="true"></i> Help</span>
   </button>
   <button mat-menu-item [matMenuTriggerFor]="configMenu">
-    <span><i class="fa fa-cog" aria-hidden="true"></i> Configuration</span>
+    <span><i class="fa-solid fa-cog" aria-hidden="true"></i> Configuration</span>
   </button>
   <button mat-menu-item routerLink="/data">
-    <span><i class="fa fa-info" aria-hidden="true"></i> Data Browser</span>
-  </button>  
+    <span><i class="fa-solid fa-info" aria-hidden="true"></i> Data Browser</span>
+  </button>
   <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
-    <span *ngIf="!isNightMode"><i class="fa fa-moon-o" aria-hidden="true"></i> Night Mode</span>
-    <span *ngIf="isNightMode"><i class="fa fa-sun-o" aria-hidden="true"></i> Day Mode</span>
+    <span *ngIf="!isNightMode"><i class="fa-solid fa-moon-o" aria-hidden="true"></i> Night Mode</span>
+    <span *ngIf="isNightMode"><i class="fa-solid fa-sun-o" aria-hidden="true"></i> Day Mode</span>
   </button>
   <button mat-menu-item (click)="toggleFullScreen()">
-    <span *ngIf="!fullscreenStatus"><i class="fa fa-window-maximize" aria-hidden="true"></i> Fullscreen</span>
-    <span *ngIf="fullscreenStatus"><i class="fa fa-window-restore" aria-hidden="true"></i> Exit Fullscreen</span>
+    <span *ngIf="!fullscreenStatus"><i class="fa-solid fa-window-maximize" aria-hidden="true"></i> Fullscreen</span>
+    <span *ngIf="fullscreenStatus"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> Exit Fullscreen</span>
   </button>
 </mat-menu>
 
 <mat-menu #configMenu="matMenu">
   <button mat-menu-item routerLink="/settings">
-    <span><i class="fa fa-sliders" aria-hidden="true"></i> Settings</span>
+    <span><i class="fa-solid fa-sliders" aria-hidden="true"></i> Settings</span>
   </button>
   <button mat-menu-item [disabled]="isNightMode" [matMenuTriggerFor]="themesMenu">
-    <span><i class="fa fa-paint-brush"></i> Themes</span>
+    <span><i class="fa-solid fa-paint-brush"></i> Themes</span>
   </button>
   <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
-    <span><i class="fa fa-plus-square" aria-hidden="true"></i> Add Page</span>
+    <span><i class="fa-solid fa-plus-square" aria-hidden="true"></i> Add Page</span>
   </button>
   <button mat-menu-item (click)="unlockPage()">
-    <span *ngIf="!unlockStatus"><i class="fa fa-columns" aria-hidden="true"></i> Edit Layout</span>
-    <span *ngIf="unlockStatus"><i class="fa fa-lock" aria-hidden="true"></i> Lock Layout</span>
+    <span *ngIf="!unlockStatus"><i class="fa-solid fa-columns" aria-hidden="true"></i> Edit Layout</span>
+    <span *ngIf="unlockStatus"><i class="fa-solid fa-lock" aria-hidden="true"></i> Lock Layout</span>
   </button>
 </mat-menu>
 
 
 <mat-menu #themesMenu="matMenu" xPosition="before">
   <button mat-menu-item (click)="setTheme('default-light')">
-    <span><i *ngIf="themeName == 'default-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Light Blue</span>
-      <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+    <span><i *ngIf="themeName == 'default-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i> Light Blue</span>
+      <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
   <button mat-menu-item (click)="setTheme('signalk-light')">
-    <span><i *ngIf="themeName == 'signalk-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Signal K</span>
-      <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+    <span><i *ngIf="themeName == 'signalk-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i> Signal K</span>
+      <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
   <button mat-menu-item (click)="setTheme('high-contrast-light')">
-    <span><i *ngIf="themeName == 'high-contrast-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> High Contrast</span>
-      <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+    <span><i *ngIf="themeName == 'high-contrast-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i> High Contrast</span>
+      <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
   <button mat-menu-item (click)="setTheme('platypus-light')">
-    <span><i *ngIf="themeName == 'platypus-light' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Platypus</span>
-    <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+    <span><i *ngIf="themeName == 'platypus-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i> Platypus</span>
+    <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
   <button mat-menu-item (click)="setTheme('darkBlue-dark')">
-    <span><i *ngIf="themeName == 'darkBlue-dark' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Dark Blue</span>
-    <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+    <span><i *ngIf="themeName == 'darkBlue-dark' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i> Dark Blue</span>
+    <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
   <button mat-menu-item (click)="setTheme('modern-dark')">
-    <span><i *ngIf="themeName == 'modern-dark' else elseBlock" class="fa fa-circle" aria-hidden="true"></i> Modern Dark</span>
-    <ng-template #elseBlock><i class="fa fa-circle-o" aria-hidden="true"></i></ng-template>
+    <span><i *ngIf="themeName == 'modern-dark' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i> Modern Dark</span>
+    <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
 </mat-menu>

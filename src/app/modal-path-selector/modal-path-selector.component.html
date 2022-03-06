@@ -10,7 +10,7 @@
           required
           [matAutocomplete]="pathAutoComplete">
         <button mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].patchValue('')">
-          <span class="fa fa-close"></span>
+          <span class="fa-solid fa-close"></span>
         </button>
         <mat-autocomplete #pathAutoComplete="matAutocomplete">
           <mat-option *ngFor="let pathAndMeta of filteredPaths | async" [value]="pathAndMeta.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">

@@ -29,8 +29,8 @@
           Status:
         </td>
         <td>
-          <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
-          <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
+          <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
+          <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
           {{ signalKConnectionsStatus.endpoint.message }}
         </td>
       </tr>
@@ -39,8 +39,8 @@
           Websocket:
         </td>
         <td>
-          <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
-          <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
+          <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
+          <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
           {{ signalKConnectionsStatus.websocket.message }}
         </td>
       </tr>
@@ -49,8 +49,8 @@
           REST:
         </td>
         <td>
-          <i class="fa fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
-          <i class="fa fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
+          <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
+          <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
           {{ signalKConnectionsStatus.rest.message }}
         </td>
       </tr>
@@ -60,11 +60,11 @@
         </td>
         <td>
           <div *ngIf="formAuthToken">
-            <i class="fa fa-check" style="color:green;" aria-hidden="true" ></i>
+            <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" ></i>
             {{ formAuthToken | slice : 0 : 20}}...
           </div>
           <div *ngIf="!formAuthToken">
-            <i class="fa fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
+            <i class="fa-solid fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
           </div>
         </td>
       </tr>

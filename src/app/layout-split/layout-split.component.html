@@ -15,10 +15,10 @@
                 <button mat-menu-item (click)="splitArea(area.uuid, 'vertical')">Split Horz.</button>
                 <button mat-menu-item (click)="splitArea(area.uuid, 'horizontal')">Split Vert.</button>
               </mat-menu>
-              <button color="accent" mat-mini-fab [matMenuTriggerFor]="splitMenu"><span class="fa fa-columns"></span></button>
+              <button color="accent" mat-mini-fab [matMenuTriggerFor]="splitMenu"><span class="fa-solid fa-columns"></span></button>
           </div>
           <div *ngIf="unlockStatus" class="splitdelete">
-            <button color="warn" mat-mini-fab (click)="deleteArea(area.uuid)"><span class="fa fa-times" ></span></button>
+            <button color="warn" mat-mini-fab (click)="deleteArea(area.uuid)"><span class="fa-solid fa-times" ></span></button>
           </div>
         </div>
         <layout-split *ngSwitchCase="'splitSet'"
