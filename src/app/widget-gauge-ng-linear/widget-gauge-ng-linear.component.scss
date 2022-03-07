@@ -1,4 +1,5 @@
 @use '~@angular/material' as mat;
+@use "sass:math";
 
 @mixin widget-ngGauge-linear-theme($theme) {
 
@@ -60,7 +61,7 @@
     display:block;
     content: "";
     width: 100%;
-    padding-top: (1 / 4) * 97%;
+    padding-top: math.div(1, 4) * 97%;
     margin-top: 3%;
   }
   > .linearGauge {
