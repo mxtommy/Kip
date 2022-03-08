@@ -22,10 +22,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
-import { MatAutocompleteModule } from '@angular/material/autocomplete'; 
-import { MatTableModule } from '@angular/material/table'; 
-import { MatPaginatorModule } from '@angular/material/paginator'; 
-import { MatSortModule } from '@angular/material/sort'; 
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
 
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizeEventModule } from 'angular-resize-event';
@@ -87,9 +87,6 @@ import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-sim
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
-import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { far } from '@fortawesome/free-regular-svg-icons';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -159,7 +156,6 @@ const appRoutes: Routes = [
     AngularSplitModule,
     AngularResizeEventModule,
     BrowserAnimationsModule,
-    FontAwesomeModule,
 
     MatMenuModule,
     MatButtonModule,
@@ -200,8 +196,5 @@ const appRoutes: Routes = [
   bootstrap: [AppComponent]
 })
 
-export class AppModule { 
-  constructor(library: FaIconLibrary) {
-    library.addIconPacks(fas, far);
-  }
+export class AppModule {
 }
