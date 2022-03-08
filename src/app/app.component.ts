@@ -10,7 +10,6 @@ import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
-import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome'
 
 declare var NoSleep: any; //3rd party
 
