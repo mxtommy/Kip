@@ -57,6 +57,10 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ]
+            },
+            "dev": {
+              "optimization": false,
+              "sourceMap": true
             }
           }
         },
@@ -68,6 +72,9 @@
           "configurations": {
             "production": {
               "browserTarget": "kip:build:production"
+            },
+            "dev": {
+              "browserTarget": "kip:build:dev"
             }
           }
         },

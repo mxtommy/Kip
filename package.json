@@ -17,7 +17,7 @@
   "author": "Thomas St.Pierre <thomas@samoht.ca>",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --configuration=dev",
     "build": "ng build",
     "build-npm": "ng build --prod --base-href=/@mxtommy/kip/",
     "test": "ng test",

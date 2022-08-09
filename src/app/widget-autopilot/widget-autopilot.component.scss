@@ -119,10 +119,10 @@ div.autopilotWidget {
   grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
   grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row-end];
   grid-template-areas:
-    "windmode mute message trackmode"
-    ". . . nxtWp"
-    "starboard plus1 minus1 port"
-    "standby plus10 minus10 auto1";
+    ". mute message ."
+    "port minus1  plus1 starboard"
+    "windmode minus10 plus10 trackmode"
+    "standby . . auto1";
   row-gap: 0px;
   column-gap: 2px;
   justify-items: center;
