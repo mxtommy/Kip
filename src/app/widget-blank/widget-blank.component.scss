@@ -1,3 +1,5 @@
+@use '~@angular/material' as mat;
+
 @mixin widget-blank-theme($theme) {
 
     $primary: map-get($theme, primary);
