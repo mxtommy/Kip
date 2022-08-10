@@ -1,4 +1,4 @@
-@import '~@angular/material/theming';
+@use '~@angular/material' as mat;
 
 @mixin widget-numeric-theme($theme) {
   $primary: map-get($theme, primary);
@@ -8,11 +8,11 @@
   $wind: map-get($theme, wind);
 
   .warn {
-    color: mat-color($warn, 500);
+    color: mat.get-color-from-palette($warn, 500);
   }
 
   .warn-contrast {
-    color: mat-contrast($warn, 500);
+    color: mat.get-contrast-color-from-palette($warn, 500);
   }
 
 }

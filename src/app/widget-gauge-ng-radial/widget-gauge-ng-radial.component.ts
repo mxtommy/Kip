@@ -494,8 +494,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   onResized(event: ResizedEvent) {
-    this.gaugeOptions.height = Math.floor(event.newHeight * 0.88);
-    this.gaugeOptions.width = Math.floor(event.newWidth * 0.88);
+    this.gaugeOptions.height = Math.floor(event.newRect.height * 0.88);
+    this.gaugeOptions.width = Math.floor(event.newRect.width * 0.88);
   }
 
   // Method to calculate nice values for min, max and range for the gaugeOptions.majorTicks

@@ -1,18 +1,18 @@
 // Custom Theming for Angular Material
+@use '~@angular/material' as mat;
 // For more information: https://material.angular.io/guide/theming
-@import '~@angular/material/theming';
 
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
 // **Be sure that you only ever include this mixin once!**
-@include mat-core();
+@include mat.core();
 
 // custom foreground/background functions // takes rgba color
 @function custom-theme-light-foreground($color) {
     @return (
         base:              $color,
-        divider:           $black-12-opacity,
-        dividers:          $black-12-opacity,
+        divider:           rgba(black, 0.12),
+        dividers:          rgba(black, 0.12),
         disabled:          rgba($color, 0.38),
         disabled-button:   rgba($color, 0.38),
         disabled-text:     rgba($color, 0.38),
@@ -29,8 +29,8 @@
 @function custom-theme-dark-foreground($color) {
     @return (
         base:              $color,
-        divider:           $white-12-opacity,
-        dividers:          $white-12-opacity,
+        divider:           rgba(white, 0.12),
+        dividers:          rgba(white, 0.12),
         disabled:          rgba($color, 0.3),
         disabled-button:   rgba($color, 0.3),
         disabled-text:     rgba($color, 0.3),
@@ -54,9 +54,9 @@
       hover:      rgba(black, 0.04), // TODO(kara): check style with Material Design UX
       card:       map_get($pallet, 200),
       dialog:     map_get($pallet, 200),
-      disabled-button: $black-12-opacity,
+      disabled-button: rgba(black, 0.12),
       raised-button: map_get($pallet, 200),
-      focused-button: $black-6-opacity,
+      focused-button: rgba(black, 0.06),
       selected-button: map_get($pallet, 300),
       selected-disabled-button: map_get($pallet, 400),
       disabled-button-toggle: map_get($pallet, 200),
@@ -73,9 +73,9 @@
       hover:      rgba(white, 0.04), // TODO(kara): check style with Material Design UX
       card:       map_get($pallet, 800),
       dialog:     map_get($pallet, 800),
-      disabled-button: $white-12-opacity,
+      disabled-button: rgba(white, 0.12),
       raised-button: map-get($pallet, 800),
-      focused-button: $white-6-opacity,
+      focused-button: rgba(white, 0.06),
       selected-button: map_get($pallet, 900),
       selected-disabled-button: map_get($pallet, 800),
       disabled-button-toggle: black,
@@ -113,7 +113,7 @@
 
 
 @mixin theme-components($theme) {
-  @include angular-material-theme($theme);
+  @include mat.all-component-themes($theme);
   @include app-theme($theme);
   @include layout-split-theme($theme);
   @include modal-path-selector-theme($theme);

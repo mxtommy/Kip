@@ -22,13 +22,13 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
-import { MatAutocompleteModule } from '@angular/material/autocomplete'; 
-import { MatTableModule } from '@angular/material/table'; 
-import { MatPaginatorModule } from '@angular/material/paginator'; 
-import { MatSortModule } from '@angular/material/sort'; 
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
 
 import { AngularSplitModule } from 'angular-split';
-import { AngularResizedEventModule } from 'angular-resize-event';
+import { AngularResizeEventModule } from 'angular-resize-event';
 
 import { AppComponent } from './app.component';
 import { AppHelpComponent } from './app-help/app-help.component';
@@ -87,7 +87,6 @@ import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-sim
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
-
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -155,7 +154,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */, relativeLinkResolution: 'legacy' } ),
     AngularSplitModule,
-    AngularResizedEventModule,
+    AngularResizeEventModule,
     BrowserAnimationsModule,
 
     MatMenuModule,
@@ -197,4 +196,5 @@ const appRoutes: Routes = [
   bootstrap: [AppComponent]
 })
 
-export class AppModule { }
+export class AppModule {
+}

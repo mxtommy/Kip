@@ -197,10 +197,10 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   onResized(event: ResizedEvent) {
-    if (event.newHeight < 50) {
+    if (event.newRect.height < 50) {
       return;
     }
-    if (event.newWidth < 50) {
+    if (event.newRect.width < 50) {
       return;
     }
     if (!this.isInResizeWindow) {

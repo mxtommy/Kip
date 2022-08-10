@@ -11,7 +11,6 @@ import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
 
-
 declare var NoSleep: any; //3rd party
 
 @Component({

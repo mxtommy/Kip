@@ -1,4 +1,4 @@
-@import '~@angular/material/theming';
+@use '~@angular/material' as mat;
 
 @mixin modal-path-selector-theme($theme) {
 
@@ -6,7 +6,7 @@
 
     .pathMetaDescription {
       font: small-caption;
-      color: mat-color($themeForeground, disabled-text);
+      color: mat.get-color-from-palette($themeForeground, disabled-text);
   }
 
 }

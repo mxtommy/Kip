@@ -1,4 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
+@use '~@angular/material' as mat;
 $mat-signalk: (
   50 : #e0e7f3,
   100 : #b3c2e0,
@@ -70,19 +71,19 @@ $mat-signalk-secondary: (
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
-$signalKTheme-primary: mat-palette($mat-signalk);
-$signalKTheme-accent:  mat-palette($mat-signalk-secondary);
-$signalKTheme-warn:    mat-palette($mat-red);
+$signalKTheme-primary: mat.define-palette($mat-signalk);
+$signalKTheme-accent:  mat.define-palette($mat-signalk-secondary);
+$signalKTheme-warn:    mat.define-palette(mat.$red-palette);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
 // Pull from mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: mat-color($signalKTheme-primary, 300),
-    primary-gaugeFaceDark: mat-color($signalKTheme-primary, 900),
-    accent-gaugeFaceLight: mat-color($signalKTheme-accent, 300),
-    accent-gaugeFaceDark: mat-color($signalKTheme-accent, 900),
-    warn-gaugeFaceLight: mat-color($signalKTheme-warn, 300),
-    warn-gaugeFaceDark: mat-color($signalKTheme-warn, 900),
+    primary-gaugeFaceLight: mat.get-color-from-palette($signalKTheme-primary, 300),
+    primary-gaugeFaceDark: mat.get-color-from-palette($signalKTheme-primary, 900),
+    accent-gaugeFaceLight: mat.get-color-from-palette($signalKTheme-accent, 300),
+    accent-gaugeFaceDark: mat.get-color-from-palette($signalKTheme-accent, 900),
+    warn-gaugeFaceLight: mat.get-color-from-palette($signalKTheme-warn, 300),
+    warn-gaugeFaceDark: mat.get-color-from-palette($signalKTheme-warn, 900),
 );
 
 // Palette for widget-wind - wind instrument Component
@@ -105,7 +106,7 @@ $signalKTheme-background: custom-theme-light-background($signalKTheme-primary, 5
 
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$signalKTheme-temp-light: mat-light-theme($signalKTheme-primary, $signalKTheme-accent, $signalKTheme-warn);
+$signalKTheme-temp-light: mat.define-light-theme($signalKTheme-primary, $signalKTheme-accent, $signalKTheme-warn);
 
 // Merge our mat-theme with component specific palettes
 $signalKTheme-light: map-merge($signalKTheme-temp-light, (background: $signalKTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));

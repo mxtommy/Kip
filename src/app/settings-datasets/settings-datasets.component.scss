@@ -1,4 +1,4 @@
-@import '~@angular/material/theming';
+@use '~@angular/material' as mat;
 
 @mixin theme-settings-data($theme) {
   $primary: map-get($theme, primary);
@@ -8,14 +8,14 @@
   $foreground: map-get($theme, foreground);
 
   table, th, td {
-    border-bottom: 1px solid mat-color($foreground, divider);
+    border-bottom: 1px solid mat.get-color-from-palette($foreground, divider);
   }
 
   th {
     padding: 10px;
     text-align: left;
-    background-color: mat-color($accent, 300);
-    color: mat-color($foreground, text);
+    background-color: mat.get-color-from-palette($accent, 300);
+    color: mat.get-color-from-palette($foreground, text);
   }
 
   td {
@@ -25,7 +25,7 @@
   }
 
   tr:nth-child(even) {
-    background-color: mat-color($background, hover);
+    background-color: mat.get-color-from-palette($background, hover);
   }
 
 }

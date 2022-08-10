@@ -164,8 +164,8 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   // Subscribe to Zones
   subscribeZones() {
     this.zonesSub = this.AppSettingsService.getZonesAsO().subscribe(
-      zones => { 
-        this.zones = zones; 
+      zones => {
+        this.zones = zones;
         this.updateGaugeConfig();
       });
   }
@@ -242,7 +242,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
       case "nobar":
           themePaletteColor = getComputedStyle(this.backgroundElement.nativeElement).color;
-          themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;    
+          themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
           this.gaugeOptions.colorBar = themePaletteColor;
           this.gaugeOptions.colorBarProgress = themePaletteColor;
           this.gaugeOptions.colorBarProgressEnd = themePaletteColor;
@@ -261,7 +261,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
       if (zone.path == this.config.paths['gaugePath'].path) {
         let lower = zone.lower || this.config.minValue;
         let upper = zone.upper || this.config.maxValue;
-        let color: string; 
+        let color: string;
         switch (zone.state) {
           case 1:
             color = getComputedStyle(this.warnElement.nativeElement).color;
@@ -271,13 +271,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
             break;
           default:
             color = getComputedStyle(this.primaryElement.nativeElement).color;
-        }        
-        
+        }
+
         myZones.push({from: lower, to: upper, color: color});
       }
     });
-    this.gaugeOptions.highlights = myZones;   
-    
+    this.gaugeOptions.highlights = myZones;
+
 
     // Config storage values
     this.gaugeOptions.minValue = this.config.minValue;
@@ -411,13 +411,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   onResized(event: ResizedEvent) {
 
-    this.gaugeOptions.height = event.newHeight;
+    this.gaugeOptions.height = event.newRect.height;
 
     if (this.isGaugeVertical == true) {
-      this.gaugeOptions.width = (event.newHeight * 0.30);
+      this.gaugeOptions.width = (event.newRect.height * 0.30);
     }
     else {
-      this.gaugeOptions.width = event.newWidth;
+      this.gaugeOptions.width = event.newRect.width;
     }
   }
 

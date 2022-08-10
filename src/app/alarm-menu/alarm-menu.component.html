@@ -8,18 +8,18 @@
         matBadgePosition="after"
         matBadgeOverlap="false"
         matBadgeColor="warn"
-        class="fa fa-envelope fa-2x matBadge">
+        class="fa-solid fa-envelope fa-2x matBadge">
   </span>
   <span *ngIf="notificationConfig.disableNotifications" class="fa-stack fa-lg">
-    <i class="fa fa-bell fa-1x" aria-hidden="true"></i>
-    <i class="fa fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
+    <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
+    <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
   </span>
 </button>
 <mat-menu #alarmMenu="matMenu" focusFirstItem>
   <div *ngFor="let alarm of alarms | keyvalue; index as i; trackBy:trackAlarmPath">
     <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.notification.message">
-      <span *ngIf="alarm.value.isAck" class="fa fa-lg fa-check"></span>
-      <span *ngIf="!alarm.value.isAck" class="fa fa-lg fa-exclamation"></span>
+      <span *ngIf="alarm.value.isAck" class="fa-solid fa-lg fa-check"></span>
+      <span *ngIf="!alarm.value.isAck" class="fa-solid fa-lg fa-exclamation"></span>
       {{ alarm.value.notification.message.replace("self.", "") }}
     </button>
     <mat-menu #actions="matMenu">
@@ -45,10 +45,10 @@
     <mat-divider></mat-divider>
     <button mat-list-item class="muteSoundButton" matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">
       <span *ngIf="!isMuted">
-        <i class="fa fa-bell" aria-hidden="true"></i> Mute Alarm Audio
+        <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Alarm Audio
       </span>
       <span *ngIf="isMuted">
-        <i class="fa fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
+        <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
       </span>
     </button>
   </mat-action-list>

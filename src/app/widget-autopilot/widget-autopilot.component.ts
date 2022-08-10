@@ -151,7 +151,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   @ViewChild('autoBtn') autoBtn: MatButton;
   @ViewChild('windModeBtn') windModeBtn: MatButton;
   @ViewChild('trackModeBtn') trackModeBtn: MatButton;
-  @ViewChild('nxtWpBtn') nxtWpBtn: MatButton;
   @ViewChild('muteBtn') muteBtn: MatButton;
   @ViewChild('messageBtn') messageBtn: MatButton;
 
@@ -473,7 +472,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.messageBtn.disabled = true;
     this.windModeBtn.disabled = true;
     this.trackModeBtn.disabled = true;
-    this.nxtWpBtn.disabled = true;
     this.autoBtn.disabled = true;
     this.standbyBtn.disabled = true;
     this.plus1Btn.disabled = true;
@@ -494,8 +492,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   SetKeyboardMode(apMode: string) {
     switch (apMode) {
       case "standby":
-        this.trackModeBtn.disabled = false;
-        this.nxtWpBtn.disabled = true;
+        this.trackModeBtn.disabled = true;
         this.autoBtn.disabled = false;
         this.standbyBtn.disabled = false;
 
@@ -510,7 +507,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
       case "auto":
         this.trackModeBtn.disabled = false;
-        this.nxtWpBtn.disabled = true;
         this.autoBtn.disabled = false;
         this.standbyBtn.disabled = false;
 
@@ -525,7 +521,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
       case "wind":
         this.trackModeBtn.disabled = true;
-        this.nxtWpBtn.disabled = true;
         this.autoBtn.disabled = false;
         this.standbyBtn.disabled = false;
 
@@ -539,8 +534,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
         break;
 
       case "route":
-        this.trackModeBtn.disabled = true;
-        this.nxtWpBtn.disabled = false;
+        this.trackModeBtn.disabled = false;
         this.autoBtn.disabled = false;
         this.standbyBtn.disabled = false;
 
@@ -564,7 +558,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       alert('Unknown Autopilot command: ' + cmd);
       return null;
     }
-    if ((this.actionToBeConfirmed !== '')&&(this.actionToBeConfirmed !== cmd)) {
+    if ((this.actionToBeConfirmed !== '') && (this.actionToBeConfirmed !== cmd)) {
       this.clearConfirmCmd();
     }
     if (((cmd === 'tackToPort')||(cmd === 'tackToStarboard'))&&(this.actionToBeConfirmed === '')) {
@@ -578,7 +572,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.actionToBeConfirmed === cmd) {
       this.clearConfirmCmd();
       if ((cmd === 'tackToPort')||(cmd === 'tackToStarboard')) {
-        this.sendCommand(commands['auto']); // force mode 'auto' to take a tack
         this.sendCommand(cmdAction);
       }
       if ((cmd === 'route')&&(this.currentAPState === 'route')) {

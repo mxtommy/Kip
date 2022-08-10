@@ -1,5 +1,4 @@
-@import '~@angular/material/theming';
-
+@use '~@angular/material' as mat;
 
 @mixin alarm-menu-theme($theme) {
 

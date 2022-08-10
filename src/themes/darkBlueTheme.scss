@@ -1,4 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
+@use '~@angular/material' as mat;
 $mat-darkBlue-primary: (
     50 : #e0e2ec,
     100 : #b3b7cf,
@@ -70,19 +71,19 @@ $mat-darkBlue-accent: (
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
-$darkBlueTheme-primary: mat-palette($mat-darkBlue-primary);
-$darkBlueTheme-accent:  mat-palette($mat-darkBlue-accent);
-$darkBlueTheme-warn:    mat-palette($mat-red);
+$darkBlueTheme-primary: mat.define-palette($mat-darkBlue-primary);
+$darkBlueTheme-accent:  mat.define-palette($mat-darkBlue-accent);
+$darkBlueTheme-warn:    mat.define-palette(mat.$red-palette);
 
 // Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
 // Pull from mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: mat-color($darkBlueTheme-primary, 300),
-    primary-gaugeFaceDark: mat-color($darkBlueTheme-primary, 900),
-    accent-gaugeFaceLight: mat-color($darkBlueTheme-accent, 300),
-    accent-gaugeFaceDark: mat-color($darkBlueTheme-accent, 900),
-    warn-gaugeFaceLight: mat-color($darkBlueTheme-warn, 300),
-    warn-gaugeFaceDark: mat-color($darkBlueTheme-warn, 900),
+    primary-gaugeFaceLight: mat.get-color-from-palette($darkBlueTheme-primary, 300),
+    primary-gaugeFaceDark: mat.get-color-from-palette($darkBlueTheme-primary, 900),
+    accent-gaugeFaceLight: mat.get-color-from-palette($darkBlueTheme-accent, 300),
+    accent-gaugeFaceDark: mat.get-color-from-palette($darkBlueTheme-accent, 900),
+    warn-gaugeFaceLight: mat.get-color-from-palette($darkBlueTheme-warn, 300),
+    warn-gaugeFaceDark: mat.get-color-from-palette($darkBlueTheme-warn, 900),
 );
 
 // Palette for widget-wind - wind instrument Component
@@ -109,7 +110,7 @@ $darkBlueTheme-background: custom-theme-dark-background($mat-darkBlue-primary, 5
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 
-$darkBlueTheme-temp-dark: mat-dark-theme($darkBlueTheme-primary, $darkBlueTheme-accent, $darkBlueTheme-warn);
+$darkBlueTheme-temp-dark: mat.define-dark-theme($darkBlueTheme-primary, $darkBlueTheme-accent, $darkBlueTheme-warn);
 
 // Merge our mat-theme with component specific palettes
 $darkBlueTheme-dark: map-merge($darkBlueTheme-temp-dark, (background: $darkBlueTheme-background, foreground: $darkBlueTheme-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
