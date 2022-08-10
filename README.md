@@ -75,7 +75,7 @@ Linux, Macs, Pi or Windows dev platform supported
 5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will read local Kip project configuration (see Tools - steps 4) and build everything.
 
 **Work**
-1. Fire up your local dev instance with CLI using `ng serve`.
+1. Fire up your local dev instance with CLI using `ng serve --configuration=dev`.
 2. Point your favorite browser to `http://localhost:4200/` and voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
