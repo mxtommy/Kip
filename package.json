@@ -29,7 +29,7 @@
     "url": "https://github.com/mxtommy/Kip"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~12.2.16",
+    "@angular-devkit/build-angular": "~14.1.2",
     "@angular/animations": "12.2.16",
     "@angular/cdk": "^12.2.13",
     "@angular/cli": "^12.2.16",
