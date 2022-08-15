@@ -112,7 +112,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
           data: this.chartDataAvg,
           fill: 'false',
           //borderWidth: 1
-          borderColor: this.textColor
+          borderColor: this.textColor,
         }
       ];
       if (this.config.displayMinMax) {
@@ -149,13 +149,16 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
           parsing: {
             xAxisKey: xAxis,
             yAxisKey: yAxis,
-        },
+          },
           scales: {
               [yAxis]: {
                   position: this.config.verticalGraph ? 'top' : 'right',
                   ...(this.config.minValue !== null && {suggestedMin: this.config.minValue}),
                   ...(this.config.maxValue !== null && {suggestedMax: this.config.maxValue}),
                   ...(this.config.includeZero && { beginAtZero: true}),
+                  ticks: {
+                    color: this.textColor,
+                  }
               },
               [xAxis]: {
                   position: this.config.verticalGraph ? 'right': 'bottom',
@@ -165,10 +168,18 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                       round: 'second',
                   },
                   ticks: {
+                    color: this.textColor,
                     callback: timeDifferenceFromNow,
                   }
               }
-          }
+          },
+          plugins:{
+            legend: {
+              labels: {
+                color: this.textColor,
+              }
+            }
+          },
       }
     });
 
