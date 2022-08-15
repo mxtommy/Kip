@@ -1,12 +1,12 @@
 # V 1.3.0
 * Platform update to Node 14, Angular and Angular Material 12
-* Updated Awesomefont 6 and updated to new icon style classes
+* Upgrade to Awesomefont6 with new icon style classes update
 * Retired old node-sass in favor of new Sass module
 * Dependecies updated to latest
-* App manifest added
+* App manifest added, thanks VibroAxe
 * Added new ng server dev configuration with map files enabling debugger breakpoints. Use: ng server --configuration=dev to enable VS Code debugger map file and inline break points.
 * Fixed issue: Latest Master doesn't build #111 - NG-Canvas-Gauge package dependecy
-* Fix Kip N2K Autopilot gauge buttons layout and modes feature. AP Gauge should work with the latest n2k-signalk and signalk-autopitot plugin updates that supports SmartPilots connected to Seatalk-STNG-Converter device as well as Raymarine Seatalk and N2K APs.
+* Fix Kip N2K Autopilot gauge buttons layout and modes feature. AP Gauge should work with Raymarine Seatalk, N2K APs and SmartPilots connected to Seatalk-STNG-Converter device. Latest n2k-signalk (2.5.2+) and signalk-autopitot (v1.2.5+) plugin are required.
 
 # V 1.2.3
 * Fix bug in ng-Gauges initialization
