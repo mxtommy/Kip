@@ -1,3 +1,5 @@
+# V 1.3.1
+* Angular production build script update
 # V 1.3.0
 * Platform update to Node 14, Angular and Angular Material 12
 * Upgrade to Awesomefont6 with new icon style classes update
