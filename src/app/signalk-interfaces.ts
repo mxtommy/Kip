@@ -49,7 +49,21 @@ export interface IDeltaMessage {
   message?: string;
   accessRequest?: {
     permission?: string;
-    token?: string
+    token: string;
+    expirationTime?: number;
+    timeToLive?: number;
+    expiresIn?: number;
+    expires?: number;
+  };
+  login?: {
+    token: string;
+    expirationTime: number;
+    timeToLive: number;
+    ttl: number;
+    TTL: number;
+  };
+  validate?: {
+    token?: string;
   }
 }
 

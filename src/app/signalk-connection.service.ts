@@ -33,7 +33,7 @@ interface SignalKEndpointResponse {
    * `1 = Connecting to server`,
    * `2 = Active connection being reset` (issues on client, server killing client connection or network issue),
    * `3 = App URL Changed` - reconnecting,
-   * `4 = adding R/W authorization token to WebSock`
+   * `4 = adding authorization token to WebSock`
    */
 export interface SignalKStatus {
     server: {
@@ -50,6 +50,7 @@ export interface SignalKStatus {
     websocket: {
         status: boolean;
         message: string;
+        hasToken: boolean;
     },
   operation: number;
 }
@@ -81,7 +82,8 @@ export class SignalKConnectionService {
       },
       websocket: {
           status: false,
-          message: 'Not yet connected'
+          message: 'Not yet connected',
+          hasToken: false
       },
       operation: 0
     };
@@ -105,6 +107,9 @@ export class SignalKConnectionService {
 
             if (this.signalKURL.new) {
               this.currentSkStatus.operation = 3; // URL Changed
+              if (this.signalKToken.isSessionToken) {
+                this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: false});
+              }
               this.resetSignalK();
             } else {
               this.currentSkStatus.operation = 1; // Startup connection
@@ -116,13 +121,26 @@ export class SignalKConnectionService {
           newToken => {
             this.signalKToken = newToken;
 
-            if (this.signalKToken.new) {
-              this.currentSkStatus.operation = 4; // Token update
-              this.resetSignalK();
+            if (this.currentSkStatus.websocket.hasToken) {
+              if (this.signalKToken.isNew) {
+                this.currentSkStatus.operation = 4; // Token update
+                this.resetSignalK();
+              } else {
+                this.currentSkStatus.operation = 1; // Startup connection
+                //this.resetSignalK();
+              }
             } else {
-              this.currentSkStatus.operation = 1; // Token update
-              this.resetSignalK();
+              if (this.signalKToken.token == null || this.signalKToken.token == "" ) {
+                this.currentSkStatus.operation = 1; // Startup connection
+                this.resetSignalK();
+              } else {
+                this.currentSkStatus.operation = 4; // Startup connection
+                this.resetSignalK();
+              }
             }
+
+
+
           }
         );
     }
@@ -227,9 +245,11 @@ export class SignalKConnectionService {
       }
 
       let endpointArgs = "?subscribe=all";
+      this.currentSkStatus.websocket.hasToken = false;
 
       if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
         endpointArgs += "&token="+this.signalKToken.token;
+        this.currentSkStatus.websocket.hasToken = true;
       }
 
       this.webSocket = new WebSocket(this.endpointWS+endpointArgs);

@@ -11,8 +11,8 @@ const deltaStatusCodes = {
   200: "The request was successfully.",
   202: "The request is awaiting authorization.",
   400: "Bad Client request format.",
-  401: "The request has not been applied because it lacks valid authentication credentials.",
-  403: "You must be authenticated to send command. Request a Client Authorization Token from Kip configuration. The request must be approved by a SignalK admin in Security > Access Requests.",
+  401: "Login failed. Your username or password is incorrect.",
+  403: "You must be authenticated to send commands. Configure user authentication or request and approve a device Authorization Token.",
   405: "The server does not support the request.",
   500: "The request failed.",
   502: "Something went wrong carrying out the request on the server side.",
@@ -58,16 +58,17 @@ export class SignalkRequestsService {
     }
 
   /**
-   * Submit a SignalK server Read/Write authorization request - only required if you need to
-   * submit data to SignalK.
+   * Submit a SignalK server Read/Write Device authorization token request - only required
+   * if you need to submit data to SignalK (PUT or storage requests).
    *
-   * Once approved, an authorization Token will be sent and automatically saved in the Kip
-   * Config. The authorization is a manual process done on the
-   * server.
+   * Once approved, a Devices authorization Token will be saved in the Kip
+   * Config and sent with every requests.
+   *
+   * The Device authorization is a manual process done on the server.
    */
-  public requestAuth() {
+  public requestDeviceAccessToken() {
     let requestId = this.newUuid();
-    let accessRequest = {
+    let accessTokenRequest = {
       requestId: requestId,
       accessRequest: {
         clientId: this.AppSettingsService.getKipUUID(),
@@ -76,23 +77,57 @@ export class SignalkRequestsService {
       }
     }
 
-    this.SignalKConnectionService.publishDelta(JSON.stringify(accessRequest));
+    this.SignalKConnectionService.publishDelta(JSON.stringify(accessTokenRequest));
     let request = {
       requestId: requestId,
       state: null,
       statusCode: null
     }
+
     this.requests.push(request);
   }
 
+   /**
+   * Submit a SignalK server User login request - user needs to exist in SignalK Server.
+   * Required to use the SignalK User Storage feature (ie. to store Config by users)
+   * and if you need to submit data to SignalK.
+   *
+   * An alternative is to use requestDeviceAccessToken method removing the need for usr/pwd but
+   * this will limit Kip's automatic Config sharing feature.
+   *
+   * Once approved, the user authorization Token will be saved in the Config and sent with every
+   * requests.
+   *
+   * @param userId The login User ID
+   * @param userPassword The user Password
+   */
+    public requestUserLogin(userID: string, userPassword: string) {
+      let requestId = this.newUuid();
+      let loginRequest = {
+        requestId: requestId,
+        login: {
+          username: userID,
+          password: userPassword
+        }
+      }
+
+      this.SignalKConnectionService.publishDelta(JSON.stringify(loginRequest));
+      let request = {
+        requestId: requestId,
+        state: null,
+        statusCode: null
+      }
+      this.requests.push(request);
+    }
+
   /**
-     * Sends request to SignalK server and returns requestId.
-     * @param path SignalK full path. Automatically removes "self" if included in path.
-     * @param value Value to be sent.
-     * @param widgetUUID Optional - Subscriber's Widget UUID to be included as part of
-     * the subscribeRequest Subject response. Enables Widget specific filtering.
-     * @return requestId Identifier for this specific request. Enables Request specific filtering.
-     */
+  * Sends request to SignalK server and returns requestId.
+  * @param path SignalK full path. Automatically removes "self" if included in path.
+  * @param value Value to be sent.
+  * @param widgetUUID Optional - Subscriber's Widget UUID to be included as part of
+  * the subscribeRequest Subject response. Enables Widget specific filtering.
+  * @return requestId Identifier for this specific request. Enables Request specific filtering.
+  */
   public putRequest(path: string, value: any, widgetUUID: string): string {
     let requestId = this.newUuid();
     let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
@@ -132,17 +167,28 @@ export class SignalkRequestsService {
 
       const currentStatusCode = deltaStatusCodes[delta.statusCode];
 
-      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202)) {
+      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401)) {
         this.requests[index].statusCodeDescription = currentStatusCode;
 
         if (this.requests[index].statusCode == 202) {
           this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
           return;
         }
+        if (this.requests[index].statusCode == 401) {
+          this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCode + " - " +this.requests[index].statusCodeDescription);
+        }
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.AppSettingsService.setSignalKToken({token: delta.accessRequest.token, new: true});
+          this.AppSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false});
           this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Read/Write Token request response received from server.");
           console.log(delta.accessRequest.permission + ": New R/W token response received");
+          return;
+        }
+
+        if ((delta.login !== undefined) && (delta.login.token !== undefined)) {
+          this.AppSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true});
+          this.NotificationsService.sendSnackbarNotification("User authentication successful. TTL: " + delta.login.timeToLive);
+          console.log("server login successful");
+          return;
         }
       } else {
         this.NotificationsService.sendSnackbarNotification("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);

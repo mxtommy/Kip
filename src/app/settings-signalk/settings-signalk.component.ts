@@ -19,6 +19,9 @@ export class SettingsSignalkComponent implements OnInit {
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   formSignalKURL: string;
+  formDeviceAuth: boolean;
+  formSignalKUserId: string;
+  formSignalKUserPwd: string;
   formAuthToken: string;
 
   signalKConnectionsStatus: SignalKStatus;
@@ -47,8 +50,11 @@ export class SettingsSignalkComponent implements OnInit {
     private SignalkRequestsService: SignalkRequestsService) { }
 
   ngOnInit() {
-    // get SignalKurl
+    // get SignalK connection details
     this.formSignalKURL = this.AppSettingsService.getSignalKURL().url;
+    this.formDeviceAuth = this.AppSettingsService.useDeviceToken;
+    this.formSignalKUserId = this.AppSettingsService.loginName;
+    this.formSignalKUserPwd = this.AppSettingsService.loginPassword;
 
     // sub for R/W Token
     this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
@@ -93,24 +99,44 @@ export class SettingsSignalkComponent implements OnInit {
     this.updatesSecondSub.unsubscribe();
   }
 
-  updateSignalKURL() {
-    this.AppSettingsService.setSignalKURL({url: this.formSignalKURL, new: true});
+  conectToServer() {
+    // create connection Observable - need to wait for connection success before continuing
+    this.AppSettingsService.setSignalKLoginCredential(this.formSignalKUserId, this.formSignalKUserPwd, this.formDeviceAuth)
+    if (this.formDeviceAuth) {
+      this.AppSettingsService.setSignalKURL({url: this.formSignalKURL, new: true});
+    } else {
+      if (this.formSignalKURL != this.AppSettingsService.getSignalKURL().url) {
+        this.AppSettingsService.setSignalKURL({url: this.formSignalKURL, new: true});
+
+        //this.signalKConnectionsStatus.websocket.status
+
+        this.SignalkRequestsService.requestUserLogin(this.formSignalKUserId, this.formSignalKUserPwd);
+      } else {
+        this.SignalkRequestsService.requestUserLogin(this.formSignalKUserId, this.formSignalKUserPwd);
+      }
+    }
+    //this.appSettingsService.setDefaultUnits(this.formUnitMaster.value);
+    //this.notificationsService.sendSnackbarNotification("Default units configuration saved", 5000);
   }
 
-  requestAuth() {
-    this.SignalkRequestsService.requestAuth();
+  requestDeviceAccessToken() {
+    this.SignalkRequestsService.requestDeviceAccessToken();
   }
 
-  clearAuth() {
-    this.AppSettingsService.setSignalKToken({token: null, new: true});
+  requestUserLogin() {
+    this.SignalkRequestsService.requestUserLogin(this.formSignalKUserId, this.formSignalKUserPwd);
   }
 
-  
+  deleteToken() {
+    this.AppSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: false});
+  }
+
+
   startChart() {
     if (this.chart !== null) {
         this.chart.destroy();
     }
-  
+
     this.chart = new Chart(this.chartCtx,{
       type: 'line',
       data: {
@@ -127,13 +153,13 @@ export class SettingsSignalkComponent implements OnInit {
             //   data: this.updatesMinutes,
             //   fill: 'false',
             //   borderColor: this.textColor
-            // }            
+            // }
           ]
       },
       options: {
-       
+
         scales: {
-          y: 
+          y:
             {
               type: 'linear',
               position: 'left',
@@ -148,10 +174,7 @@ export class SettingsSignalkComponent implements OnInit {
       }
     });
   }
-  
-  
-  
-  
+
   // Subscribe to theme event
   subscribeTheme() {
     this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(

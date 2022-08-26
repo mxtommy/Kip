@@ -3,9 +3,12 @@ import { IAppConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationCo
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 6,
+  "configVersion": 7,
   "kipUUID": newUuid(),
   "signalKUrl": "http://demo.signalk.org",
+  "useDeviceToken": false,
+  "loginName": null,
+  "loginPassword": null,
   "signalKToken": null,
   "dataSets": [
     {

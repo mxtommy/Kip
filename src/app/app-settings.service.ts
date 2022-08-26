@@ -15,12 +15,15 @@ import { isNumber } from 'util';
 
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'modern-dark';
-const configVersion = 6; // used to invalidate old configs.
+const configVersion = 7; // used to invalidate old configs.
 
 export interface IAppConfig {
   configVersion: number;
-  kipUUID: string; 
+  kipUUID: string;
   signalKUrl: string;
+  useDeviceToken: boolean;
+  loginName: string;
+  loginPassword: string;
   signalKToken: string;
   dataSets: IDataSet[];
   unitDefaults: IUnitDefaults;
@@ -84,7 +87,9 @@ export interface SignalKUrl {
 
 export interface SignalKToken {
   token: string;
-  new: boolean;
+  timeToLive?: number;
+  isNew: boolean;
+  isSessionToken: boolean;
 }
 
 
@@ -94,6 +99,9 @@ export class AppSettingsService {
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
+  useDeviceToken: boolean = true;
+  loginName: string;
+  loginPassword: string;
   signalKToken: BehaviorSubject<SignalKToken>;
   kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
   kipUUID: string;
@@ -118,7 +126,7 @@ export class AppSettingsService {
       appConfig = JSON.parse(localStorage.getItem("appConfig"));
 
       if (appConfig == null) {
-        console.log("Error loading App config. resetting and loading all default.");
+        console.log("Error loading App config, resetting and loading all default.");
         localStorage.clear();
         appConfig = this.getDefaultAppConfig();
         widgetConfig = this.getDefaultWidgetConfig();
@@ -144,7 +152,7 @@ export class AppSettingsService {
 
       this.pushSettings(appConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
     } else {
-      console.log("***** LocalStorage NOT SUPPORTED by browser *****\nThis is required by Kip...");
+      console.log("***** LocalStorage NOT SUPPORTED by browser *****\nThis is required by Kip without user authentication configuration enabled...");
     }
   }
 
@@ -169,8 +177,8 @@ export class AppSettingsService {
           break;
 
         case "zonesConfig":
-            config = { zones: [] };
-            break;
+          config = { zones: [] };
+          break;
       }
     }
     return config;
@@ -180,8 +188,11 @@ export class AppSettingsService {
     this.themeName.next(themeConfig['themeName']);
 
     let skUrl: SignalKUrl = {url: appConfig.signalKUrl, new: false};
-    let skToken: SignalKToken = {token: appConfig.signalKToken, new: false};
+    let skToken: SignalKToken = {token: appConfig.signalKToken, isNew: false, isSessionToken: false};
     this.signalKUrl.next(skUrl);
+    this.useDeviceToken = appConfig.useDeviceToken;
+    this.loginName = appConfig.loginName;
+    this.loginPassword = appConfig.loginPassword;
     this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
     this.dataSets = appConfig.dataSets;
     this.unitDefaults.next(appConfig.unitDefaults);
@@ -242,6 +253,14 @@ export class AppSettingsService {
     this.saveAppConfigToLocalStorage();
   }
 
+  // SignalK User Login
+  public setSignalKLoginCredential(username: string, password: string, useDeviceToken: boolean) {
+    this.loginName = username;
+    this.loginPassword = password;
+    this.useDeviceToken = useDeviceToken;
+    this.saveAppConfigToLocalStorage();
+  }
+
   // SignalKToken
   public getSignalKTokenAsO() {
     return this.signalKToken.asObservable();
@@ -251,7 +270,9 @@ export class AppSettingsService {
   }
   public setSignalKToken(value: SignalKToken) {
     this.signalKToken.next(value);
-    this.saveAppConfigToLocalStorage();
+    if (!value.isSessionToken) {
+      this.saveAppConfigToLocalStorage();
+    }
   }
 
   // UnlockStatus
@@ -370,11 +391,20 @@ export class AppSettingsService {
   //// Storage Objects
   // building from running data
   private buildAppStorageObject() {
+    let deviceToken = null;
+
+    if (!this.useDeviceToken) { // We only save the token if it's a device token. Login tokens expire after 24h. No use saving them.
+      deviceToken = this.signalKToken.getValue().token;
+    }
+
     let storageObject: IAppConfig = {
       configVersion: configVersion,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalKUrl.getValue().url,
-      signalKToken: this.signalKToken.getValue().token,
+      useDeviceToken: this.useDeviceToken,
+      loginName: this.loginName,
+      loginPassword: this.loginPassword,
+      signalKToken: deviceToken,
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
