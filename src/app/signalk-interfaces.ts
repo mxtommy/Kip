@@ -1,3 +1,4 @@
+import { startWith } from 'rxjs/operators';
 import { ZoneState } from './app-settings.service';
 
 
@@ -39,32 +40,29 @@ export interface IUpdateMessage {
  * SignalK Delta low level raw message interface.
  */
 export interface IDeltaMessage {
-  updates?: IUpdateMessage[];
-  requestId?: string;
-  state?: string;
-  statusCode?: number;
-  context: string;
-  self?: string;
-  version?: string;
-  message?: string;
   accessRequest?: {
     permission?: string;
     token: string;
-    expirationTime?: number;
-    timeToLive?: number;
-    expiresIn?: number;
-    expires?: number;
+    timeToLive?: number; //not yet implemented on server
   };
+  context: string;
   login?: {
     token: string;
-    expirationTime: number;
-    timeToLive: number;
-    ttl: number;
-    TTL: number;
+    timeToLive?: number; //not yet implemented on server
   };
+  message?: string;
+  name?: string;
+  requestId?: string;
+  self?: string;
+  state?: string;
+  statusCode?: number;
+  timestamp?:string;
+  updates?: IUpdateMessage[];
   validate?: {
     token?: string;
+    timeToLive?: number; //not yet implemented on server
   }
+  version?: string;
 }
 
 /**

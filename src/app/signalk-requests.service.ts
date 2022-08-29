@@ -38,7 +38,7 @@ export class SignalkRequestsService {
   constructor(
     private SignalKConnectionService: SignalKConnectionService,
     private SignalKDeltaService: SignalKDeltaService,
-    private AppSettingsService: AppSettingsService,
+    private appSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
     ) {
       let requestsSub: Subscription; // used to get all the requests from signalk-delta while avoiding circular dependencies in services...
@@ -47,11 +47,18 @@ export class SignalkRequestsService {
         requestMessage => { this.updateRequest(requestMessage); }
       );
 
-      let endPointStatus: Subscription; // Monitor if Endpoints are reset and clean up
+      let endPointStatus: Subscription; // Monitor if Endpoints status
       endPointStatus = this.SignalKConnectionService.getSignalKConnectionsStatus().subscribe(
         signalKConnections => {
           if (!signalKConnections.rest.status) {
             this.requests = []; // flush array to clean values that will become stale post error or server reconnect
+
+
+            // See if we are in Device or User mode and login
+            //if (signalKConnections.websocket.status && !appSettingsService.useDeviceToken) {
+            //  this.requestUserLogin(this.appSettingsService.loginName, this.appSettingsService.loginName);
+            //}
+
           }
         }
       );
@@ -71,7 +78,7 @@ export class SignalkRequestsService {
     let accessTokenRequest = {
       requestId: requestId,
       accessRequest: {
-        clientId: this.AppSettingsService.getKipUUID(),
+        clientId: this.appSettingsService.getKipUUID(),
         description: "Kip web app",
         permissions: "admin"
       }
@@ -178,15 +185,15 @@ export class SignalkRequestsService {
           this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCode + " - " +this.requests[index].statusCodeDescription);
         }
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.AppSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false});
+          this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false});
           this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Read/Write Token request response received from server.");
           console.log(delta.accessRequest.permission + ": New R/W token response received");
           return;
         }
 
         if ((delta.login !== undefined) && (delta.login.token !== undefined)) {
-          this.AppSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true});
-          this.NotificationsService.sendSnackbarNotification("User authentication successful. TTL: " + delta.login.timeToLive);
+          this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true});
+          this.NotificationsService.sendSnackbarNotification("User authentication successful");
           console.log("server login successful");
           return;
         }

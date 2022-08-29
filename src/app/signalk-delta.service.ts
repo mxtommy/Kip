@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject, Subscription } from 'rxjs';
+import { Observable ,  Subject } from 'rxjs';
 import { SignalKService } from './signalk.service';
 import { IDeltaMessage } from './signalk-interfaces';
 import { NotificationsService } from './notifications.service';
-import { AppSettingsService } from "./app-settings.service";
-
 
 @Injectable()
 export class SignalKDeltaService {
@@ -27,12 +25,10 @@ export class SignalKDeltaService {
 
     if (typeof(message.updates) != 'undefined') {
       this.processUpdateDelta(message); // is Data Update process further
-    }
-
-    if (typeof(message.requestId) != 'undefined') {
+    } else if (typeof(message.requestId) != 'undefined') {
       this.signalKRequests.next(message); // is a Request, send to signalk-request service.
-    }
-
+    } else
+      console.log(message);
   }
 
   public processUpdateDelta(message:IDeltaMessage) {

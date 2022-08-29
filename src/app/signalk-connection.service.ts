@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
 import { of , Observable , BehaviorSubject } from 'rxjs';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-
 import { AppSettingsService, SignalKToken, SignalKUrl } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 import { NotificationsService } from './notifications.service';
-
 
 interface SignalKEndpointResponse {
     endpoints: {
@@ -93,12 +92,12 @@ export class SignalKConnectionService {
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //// constructor, mostly sub to stuff for changes.
     constructor(
-        private signalKService: SignalKService,
-        private signalKDeltaService: SignalKDeltaService,
-        private SignalKFullService: SignalKFullService,
-        private appSettingsService: AppSettingsService,
-        private notificationsService: NotificationsService,
-        private http: HttpClient)
+      private signalKService: SignalKService,
+      private signalKDeltaService: SignalKDeltaService,
+      private signalKFullService: SignalKFullService,
+      private appSettingsService: AppSettingsService,
+      private notificationsService: NotificationsService,
+      private http: HttpClient)
     {
         // when signalKUrl changes, do stuff
         this.appSettingsService.getSignalKURLAsO().subscribe(
@@ -138,9 +137,6 @@ export class SignalKConnectionService {
                 this.resetSignalK();
               }
             }
-
-
-
           }
         );
     }
@@ -176,7 +172,7 @@ export class SignalKConnectionService {
       this.endpointWS = null;
 
       this.http.get<SignalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
-        // when we go ok, this runs
+        // http endpoint connection
         response => {
           this.endpointREST = response.body.endpoints.v1["signalk-http"];
           this.endpointWS = response.body.endpoints.v1["signalk-ws"];
@@ -185,8 +181,10 @@ export class SignalKConnectionService {
           this.currentSkStatus.endpoint.message = response.status.toString();
           this.currentSkStatus.server.version = response.body.server.id + " " + response.body.server.version;
 
-          this.callREST();
+          // Start REST and webSocket connections
           this.connectEndpointWS();
+          this.callREST();
+
 
           this.signalKStatus.next(this.currentSkStatus);
         },
@@ -213,7 +211,7 @@ export class SignalKConnectionService {
             response => {
               this.currentSkStatus.rest.status = true;
               this.currentSkStatus.rest.message = response.status.toString();
-              this.SignalKFullService.processFullUpdate(response.body);
+              this.signalKFullService.processFullUpdate(response.body);
             },
             // When not ok, this runs...
             (err: HttpErrorResponse) => {
@@ -253,6 +251,7 @@ export class SignalKConnectionService {
       }
 
       this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
+
       this.webSocket.onopen = function (event){
         this.currentSkStatus.websocket.message = "Connected";
         this.currentSkStatus.websocket.status = true;
@@ -275,18 +274,17 @@ export class SignalKConnectionService {
       }.bind(this);
     }
 
-    publishDelta(message: string) {
-
+    publishDelta(message: any) {
+      //TODO: see if we ned to validate Token here
       if (!this.currentSkStatus.websocket.status) {
         console.log("Tried to publish delta while not connected to Websocket");
         return;
       }
-      console.log(message);
+      //console.log(message);
       this.webSocket.send(message);
     }
 
     postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
-
 
       let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
       url += "applicationData/" + scope +"/kip/1.0/"+ configName;

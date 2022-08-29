@@ -393,7 +393,7 @@ export class AppSettingsService {
   private buildAppStorageObject() {
     let deviceToken = null;
 
-    if (!this.useDeviceToken) { // We only save the token if it's a device token. Login tokens expire after 24h. No use saving them.
+    if (this.useDeviceToken) { // We only save the token if it's a device token. Login tokens expire after 24h. No use saving them.
       deviceToken = this.signalKToken.getValue().token;
     }
 
