@@ -270,7 +270,12 @@ export class SignalKConnectionService {
       }.bind(this);
 
       this.webSocket.onmessage = function(message) {
-          this.signalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
+        let packet = JSON.parse(message.data);
+        if ((typeof(packet.self) == 'undefined') && (typeof(packet.requestId) == 'undefined') && (typeof(packet.updates) == 'undefined')) {
+          console.log(message.data)
+        }
+
+        this.signalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
       }.bind(this);
     }
 

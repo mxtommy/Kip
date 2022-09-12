@@ -27,8 +27,13 @@ export class SignalKDeltaService {
       this.processUpdateDelta(message); // is Data Update process further
     } else if (typeof(message.requestId) != 'undefined') {
       this.signalKRequests.next(message); // is a Request, send to signalk-request service.
-    } else
-      console.log(message);
+    } else {
+      let unknownMessageContent = JSON.stringify(message);
+      if (unknownMessageContent == '"{message: \\"Connection disconnected by security constraint\\"}"') {
+        this.processSecurityConstaintError(unknownMessageContent);
+      } else
+      console.log("[Delta Service] Unknown message type. Message content:" + unknownMessageContent);
+    }
   }
 
   public processUpdateDelta(message:IDeltaMessage) {
@@ -84,6 +89,18 @@ export class SignalKDeltaService {
         }
       }
     }
+  }
+  /**
+  * Handles WebSocket security error received from Signalk server. The source of the security
+  * error is caused when signalK issued token has been deleted or has exrired. This is true
+  * for both Device and User tokens
+  *
+  * @param securityMessage - stringified IDeltaMessage message received fom the server
+  * @return result - optional value to return as the observable result
+  */
+  private processSecurityConstaintError(securityMessage: string){
+    // TODO(David): update to RxJS socket
+    console.log("[Delta Service] Security Token expired. Message content: " + securityMessage);
   }
 
   public subscribeRequest(): Observable<IDeltaMessage> {
