@@ -29,7 +29,9 @@ export interface updateStatistics {
 
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class SignalKService {
 
   degToRad = Qty.swiftConverter('deg', 'rad');
@@ -64,10 +66,10 @@ export class SignalKService {
   constructor(
     private appSettingsService: AppSettingsService,
     private UnitService: UnitsService,
-    private NotificationsService: NotificationsService) { 
+    private NotificationsService: NotificationsService) {
     //every second update the stats for seconds array
     setInterval(() => {
-      
+
       // if seconds is more than 60 long, remove item
       if (this.updateStatistics.secondsUpdates.length >= 60) {
         this.updateStatistics.secondsUpdates.shift() //removes first item
@@ -79,7 +81,7 @@ export class SignalKService {
 
     // every minute update status for minute array
     setInterval(() => {
-      
+
       // if seconds is more than 60 long, remove item
       if (this.updateStatistics.minutesUpdates.length >= 60) {
         this.updateStatistics.minutesUpdates.shift() //removes first item
@@ -158,8 +160,10 @@ export class SignalKService {
   }
 
   setSelf(value: string) {
-    console.debug('Setting self to: ' + value);
-    this.selfurn = value;
+    if ((value != "" || value != null) && value != this.selfurn) {
+      console.debug('[SignalK Service] Setting self to: ' + value);
+      this.selfurn = value;
+    }
   }
 
   setServerVersion(version: string) {
@@ -279,9 +283,9 @@ export class SignalKService {
           //we're looking for a source we don't know of... do nothing I guess?
         }
         if (source !== null) {
-          pathRegister.observable.next({ 
-            value: this.paths[pathIndex].sources[source].value, 
-            state: this.paths[pathIndex].state 
+          pathRegister.observable.next({
+            value: this.paths[pathIndex].sources[source].value,
+            state: this.paths[pathIndex].state
           });
         }
 
@@ -301,7 +305,7 @@ export class SignalKService {
     }
   }
 
-  setMeta(path: string, meta) { //TODO(David): Look at Meta and maybe build Zones
+  setMeta(path: string, meta) {
     let pathSelf: string = path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {

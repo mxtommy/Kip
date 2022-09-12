@@ -13,9 +13,6 @@ export class SignalKFullService {
     //set self urn
     this.SignalKService.setSelf(data.self)
 
-    // set Sources
-    //this.SignalKService.setDataFull(data);
-
     // so we will walk the array recusively
     this.findKeys(data);
   }
@@ -27,14 +24,14 @@ export class SignalKFullService {
       return;
     }
     if (path == 'sources') { return; } // ignore the sources tree
-    
+
     if ( (typeof(data) == 'string') || (typeof(data) == 'number') || (typeof(data) == 'boolean')) {  // is it a simple value?
       let timestamp = Date.now();
       let source = 'noSource'
       this.SignalKService.updatePathData(path, source, timestamp, data);
       this.SignalKService.setDefaultSource(path, source);
       return;
-    }     
+    }
     else if ('timestamp' in data) { // is it a timestamped value?
 
       // try and get source
@@ -46,7 +43,7 @@ export class SignalKFullService {
       } else {
         source = 'noSource';
       }
-      
+
       let timestamp = Date.parse(data.timestamp);
 
 
@@ -57,7 +54,7 @@ export class SignalKFullService {
           Object.keys(data['value']).forEach(key => {
             let compoundPath = path+"."+key;
             this.SignalKService.updatePathData(compoundPath, source, timestamp, data.value[key]);
-            this.SignalKService.setDefaultSource(compoundPath, source);       
+            this.SignalKService.setDefaultSource(compoundPath, source);
             // try and get metadata.
             if (typeof(data['meta']) == 'object') {
               //does meta have one with properties for each one?
@@ -75,13 +72,13 @@ export class SignalKFullService {
           // try and get metadata.
           if (typeof(data['meta']) == 'object') {
             this.SignalKService.setMeta(path, data['meta']);
-          } 
+          }
         }
       }
 
       return;
     }
-    
+
     // it's not a value, dig deaper
     else {
       // process children
@@ -94,6 +91,6 @@ export class SignalKFullService {
       }
     }
   }
- 
+
 
 }

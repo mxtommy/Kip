@@ -195,7 +195,7 @@ export class NotificationsService {
   public acknowledgeAlarm(path: string, timeout: number = 0): boolean {
     if (path in this.alarms) {
       this.alarms[path].isAck = true;
-      this.activeAlarmsSubject.next(this.alarms);      
+      this.activeAlarmsSubject.next(this.alarms);
       if (timeout > 0) {
         setTimeout(()=>{
           console.log("unack: "+ path);
@@ -213,7 +213,7 @@ export class NotificationsService {
 
   /**
    * Checks all alarms for worst state, and sets any visualSev/AudioSev
-   * @returns 
+   * @returns
    */
   public checkAlarms() {
     // find worse alarm state
@@ -268,7 +268,7 @@ export class NotificationsService {
       audioSev = Math.max(audioSev, aSev);
       visualSev = Math.max(visualSev, vSev);
     }
-    
+
     if (!this.notificationConfig.sound.disableSound) {
       this.playAlarm(1000 + audioSev);
     }
@@ -372,7 +372,6 @@ export class NotificationsService {
    * @param trackId track to play
    */
    playAlarm(trackId: number) {
-    console.log(this.notificationConfig);
     if (this.activeAlarmSoundtrack == trackId) {   // same track, do nothing
       return;
     }

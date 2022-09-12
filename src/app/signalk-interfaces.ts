@@ -43,7 +43,7 @@ export interface IDeltaMessage {
   requestId?: string;
   state?: string;
   statusCode?: number;
-  context: string;
+  context?: string;
   self?: string;
   version?: string;
   message?: string;
@@ -51,6 +51,9 @@ export interface IDeltaMessage {
     permission?: string;
     token?: string
   }
+  role?: [];
+  name?: string;
+  timestamp?: string;
 }
 
 /**
