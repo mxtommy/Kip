@@ -1,20 +1,51 @@
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject, Subscription } from 'rxjs';
+import { Observable , Subject, Subscription, timer } from 'rxjs';
+import { tap, retryWhen, delayWhen } from 'rxjs/operators';
+
+import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service'
 import { SignalKService } from './signalk.service';
 import { IDeltaMessage } from './signalk-interfaces';
 import { NotificationsService } from './notifications.service';
-import { AppSettingsService } from "./app-settings.service";
 
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+  })
 export class SignalKDeltaService {
 
-  signalKRequests = new Subject<IDeltaMessage>();      // requests service subs to this (avoids circular dependency in services)
+  signalKConnectionsStatusSub: Subscription;        // Monitor if Endpoints are reset
+  signalKConnectionsStatus: SignalKStatus;
+  signalKRequests = new Subject<IDeltaMessage>();   // requests service subs to this (avoids circular dependency in services)
 
   constructor(
     private SignalKService: SignalKService,
     private notificationsService: NotificationsService,
-    ) { }
+    private signalKConnectionService: SignalKConnectionService,)
+    {
+      this.signalKConnectionsStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(
+        signalKConnections => {
+          this.signalKConnectionsStatus = signalKConnections;
+
+          //connect WebSocket Service
+          if (signalKConnections.endpoint.status && !signalKConnections.websocket.status) {
+            this.signalKConnectionService.connectWS();
+          } else if (!signalKConnections.endpoint.status && signalKConnections.websocket.status) {
+              this.signalKConnectionService.closeWS();
+            }
+        }
+      );
+
+      // Subscribe to inbound WebSocket messages
+      this.signalKConnectionService.messagesWS$.subscribe({
+        next: msg => this.processWebsocketMessage(msg), // Called whenever there is a message from the server.
+        error: err => console.log("[Delta Service] Message subscription error: " + JSON.stringify(err)), // Called if at any point WebSocket API signals some kind of error.
+        complete: () => console.log('[Delta Service] Message subscription closed') // Called when connection is closed (for whatever reason).
+      });
+    }
+
+  public publishDelta(message: any) {
+    this.signalKConnectionService.sendMessageWS(message);
+  }
 
   processWebsocketMessage(message: IDeltaMessage) {
     // Read raw message and route to appropriate sub
