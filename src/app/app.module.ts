@@ -199,8 +199,8 @@ const appRoutes: Routes = [
 export class AppModule {
   constructor(
     /**
-     * Below provides Services instanciation only - there is no calls to Services
-     * in this class. It provides/forces early instanciation of services if needed.
+     * Below provides Services instanciation only - there is no calls to Service.
+     * It provides/forces early instanciation of services if needed.
      * This fixes instanciation issues on loossely couple services (where some services
      * use Observers but are only instaciated by component later in the app, causing
      * them to miss some events until instanciated.
@@ -212,7 +212,7 @@ export class AppModule {
      * a component, SignalKDeltaService will miss connection status and not connect WebSockets.
      *
      * Below should be Singletons Services ie. "providedIn: root" and/or part of prodivers
-     * listed above.
+     * section listed above.
     */
     signalKDeltaService: SignalKDeltaService,
   ) {
