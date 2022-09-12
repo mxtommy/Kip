@@ -443,27 +443,27 @@ export class AppSettingsService {
 
   //Saving to Storage
   private saveAppConfigToLocalStorage() {
-    console.log("Saving App config to LocalStorage");
+    console.log("[AppSettings Service] Saving Application config to LocalStorage");
     localStorage.setItem('appConfig', JSON.stringify(this.buildAppStorageObject()));
   }
 
   private saveWidgetConfigToLocalStorage() {
-    console.log("Saving Widgets config to LocalStorage");
+    console.log("[AppSettings Service] Saving Widgets config to LocalStorage");
     localStorage.setItem('widgetConfig', JSON.stringify(this.buildWidgetStorageObject()));
   }
 
   private saveLayoutConfigToLocalStorage() {
-    console.log("Saving Layouts config to LocalStorage");
+    console.log("[AppSettings Service] Saving Layouts config to LocalStorage");
     localStorage.setItem('layoutConfig', JSON.stringify(this.buildLayoutStorageObject()));
   }
 
   private saveThemeConfigToLocalStorage() {
-    console.log("Saving Theme config to LocalStorage");
+    console.log("S[AppSettings Service] aving Theme config to LocalStorage");
     localStorage.setItem('themeConfig', JSON.stringify(this.buildThemeStorageObject()));
   }
 
   private saveZonesConfigToLocalStorage() {
-    console.log("Saving Zones config to LocalStorage");
+    console.log("[AppSettings Service] Saving Zones config to LocalStorage");
     localStorage.setItem('zonesConfig', JSON.stringify(this.buildZonesStorageObject()));
   }
 

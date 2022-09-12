@@ -1,11 +1,10 @@
-import { Injectable } from '@angular/core';
-import { of , Observable , BehaviorSubject } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { of , Observable , BehaviorSubject, Subject, EMPTY, timer } from 'rxjs';
+import { catchError, tap, switchAll, retryWhen, delayWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AppSettingsService, SignalKToken, SignalKUrl } from './app-settings.service';
 import { SignalKService } from './signalk.service';
-import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 import { NotificationsService } from './notifications.service';
 
@@ -54,18 +53,10 @@ export interface SignalKStatus {
   operation: number;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class SignalKConnectionService {
-
-    // Main URL Variables
-    signalKURL: SignalKUrl;
-    signalKToken: SignalKToken;
-    endpointREST: string;
-    endpointWS: string;
-
-    // Websocket
-    webSocket: WebSocket = null;
-
     // SignalK connections current status initialization
     currentSkStatus: SignalKStatus = {
       server: {
@@ -89,17 +80,30 @@ export class SignalKConnectionService {
 
     signalKStatus: BehaviorSubject<SignalKStatus> = new BehaviorSubject<SignalKStatus>(this.currentSkStatus);
 
+    // Main URL Variables
+    signalKURL: SignalKUrl;
+    signalKToken: SignalKToken;
+    endpointREST: string;
+    endpointWS: string;
+
+    // Websocket
+    private WS_RECONNECT_INTERVAL = 1000;                 // connection error retry interval
+    private WS_CONNECTION_ARGUMENT = "?subscribe=all"; // default but we could use none + specific paths in the future
+    private socketWS$: WebSocketSubject<any>;
+    private socketWSCloseSubject = new Subject<CloseEvent>();
+    private messagesSubjectWS$ = new Subject();
+    public messagesWS$ = this.messagesSubjectWS$.pipe(switchAll(), catchError(e => { throw e }));
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //// constructor, mostly sub to stuff for changes.
     constructor(
-      private signalKService: SignalKService,
-      private signalKDeltaService: SignalKDeltaService,
-      private signalKFullService: SignalKFullService,
-      private appSettingsService: AppSettingsService,
-      private notificationsService: NotificationsService,
-      private http: HttpClient)
+        private signalKService: SignalKService,
+        private SignalKFullService: SignalKFullService,
+        private appSettingsService: AppSettingsService,
+        private notificationsService: NotificationsService,
+        private http: HttpClient,
+        )
     {
-        // when signalKUrl changes, do stuff
+      // when signalKUrl changes, do stuff
         this.appSettingsService.getSignalKURLAsO().subscribe(
           newURL => {
             this.signalKURL = newURL;
@@ -139,24 +143,35 @@ export class SignalKConnectionService {
             }
           }
         );
+
+        // WebSocket closure handling
+        this.socketWSCloseSubject.subscribe( event => {
+          if(event.wasClean) {
+            this.currentSkStatus.websocket.message = "WebSocket closed";
+            this.currentSkStatus.websocket.status = false;
+            console.log('[Connection Service] WebSocket closed');
+            this.signalKStatus.next(this.currentSkStatus);
+          } else {
+            console.log('[Connection Service] WebSocket terminated due to socket error');
+            this.currentSkStatus.websocket.message = "WebSocket terminated";
+            this.currentSkStatus.websocket.status = false;
+            this.currentSkStatus.endpoint.status = false;
+            this.currentSkStatus.rest.status = false;
+            this.currentSkStatus.operation = 0;
+            this.closeWS();
+            console.log('[Connection Service] WebSocket closed');
+            this.signalKStatus.next(this.currentSkStatus);
+          }
+        });
     }
 
     resetSignalK() {
-      // TODO close current connections/reset data, check api version... assuming v1
-      console.debug("Resetting URL: " + this.signalKURL.url);
-
-      // clean close if open
-      if (this.webSocket != null && this.webSocket.readyState < 2) { // 0 = connecting, 1 = open, 2 = closing, 3 = closed
-        console.debug("Closing existing WS Connection")
-        this.webSocket.close();
-      }
-
+      // TODO check api version... assuming v1
       this.currentSkStatus.endpoint.message = "Connecting...";
       this.currentSkStatus.endpoint.status = false;
       this.currentSkStatus.rest.message = "Connecting...";
       this.currentSkStatus.rest.status = false;
-      this.currentSkStatus.websocket.message = "Connecting...";
-      this.currentSkStatus.websocket.status = false;
+      // WebSocket status handled by SignalkDelta service
       this.signalKStatus.next(this.currentSkStatus);
 
       this.notificationsService.resetAlarms();
@@ -167,13 +182,13 @@ export class SignalKConnectionService {
           fullURL = fullURL + "/signalk/";
       }
 
-      // this.signalKDeltaService.resetSignalKData(); // can't find this in our code.
       this.endpointREST = null;
       this.endpointWS = null;
-
+      console.debug("[Connection Service] Connecting to: " + this.signalKURL.url);
       this.http.get<SignalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
         // http endpoint connection
         response => {
+          console.debug("[Connection Service] Connection successful");
           this.endpointREST = response.body.endpoints.v1["signalk-http"];
           this.endpointWS = response.body.endpoints.v1["signalk-ws"];
 
@@ -181,18 +196,16 @@ export class SignalKConnectionService {
           this.currentSkStatus.endpoint.message = response.status.toString();
           this.currentSkStatus.server.version = response.body.server.id + " " + response.body.server.version;
 
-          // Start REST and webSocket connections
-          this.connectEndpointWS();
           this.callREST();
-
-
+          // WebSocket handled by SignalkDelta service
           this.signalKStatus.next(this.currentSkStatus);
         },
         // When not ok, this runs...
         (err: HttpErrorResponse) => {
+          console.debug("[Connection Service] Connection failed");
           if (err.error instanceof Error) {
               // A client-side or network error occurred. Handle it accordingly.
-              console.log('An HTTP connection error occurred:', err.error.message);
+              console.log('[Connection Service] HTTP connection error occurred:', err.error.message);
             } else {
               // The backend returned an unsuccessful response code.
               // The response body may contain clues as to what went wrong,
@@ -200,6 +213,8 @@ export class SignalKConnectionService {
             }
           this.currentSkStatus.endpoint.status = false;
           this.currentSkStatus.endpoint.message = err.message;
+          this.currentSkStatus.rest.message = "Connection failed";
+          this.currentSkStatus.server.version = "";
           this.signalKStatus.next(this.currentSkStatus);
         }
       );
@@ -215,78 +230,83 @@ export class SignalKConnectionService {
             },
             // When not ok, this runs...
             (err: HttpErrorResponse) => {
-                if (err.error instanceof Error) {
-                  // A client-side or network error occurred. Handle it accordingly.
-                  this.currentSkStatus.rest.message = err.error.message;
-                  console.log('A REST error occurred:', err.error.message);
-                } else {
-                    // The backend returned an unsuccessful response code.
-                    // The response body may contain clues as to what went wrong,
-                    this.currentSkStatus.rest.message = "Unspecified REST error";
-                    console.log(err);
-                }
-                this.currentSkStatus.rest.status = false;
+              this.currentSkStatus.rest.status = false;
+              this.currentSkStatus.rest.message = "Connection failed"
+              if (err.error instanceof Error) {
+                // A client-side or network error occurred. Handle it accordingly.
+                this.currentSkStatus.rest.message = err.error.message;
+                console.log('A REST error occurred:', err.error.message);
+              } else {
+                  // The backend returned an unsuccessful response code.
+                  // The response body may contain clues as to what went wrong,
+                  this.currentSkStatus.rest.message = "Unspecified REST error";
+                  console.log(err);
+              }
             }
         );
     }
 
-    connectEndpointWS() {
-      if (this.endpointWS === null) {
-        //no endpoint, try again later....
-        setTimeout(()=>{ this.connectEndpointWS();}, 3000);
-        return;
-      }
-
-      // don't reopen an existing connection
-      if (this.webSocket != null && this.webSocket.readyState < 2) { // 0 = connecting, 1 = open, 2 = closing, 3 = closed
-        return;
-      }
-
-      let endpointArgs = "?subscribe=all";
-      this.currentSkStatus.websocket.hasToken = false;
-
-      if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
-        endpointArgs += "&token="+this.signalKToken.token;
-        this.currentSkStatus.websocket.hasToken = true;
-      }
-
-      this.webSocket = new WebSocket(this.endpointWS+endpointArgs);
-
-      this.webSocket.onopen = function (event){
-        this.currentSkStatus.websocket.message = "Connected";
-        this.currentSkStatus.websocket.status = true;
-      }.bind(this);
-
-      this.webSocket.onerror = function (event) {
-        this.currentSkStatus.websocket.message = "Unspecified WebSocket error";
-        this.currentSkStatus.websocket.status = false;
-        setTimeout(()=>{ this.connectEndpointWS();}, 3000);
-      }.bind(this);
-
-      this.webSocket.onclose = function (event) {
-        this.currentSkStatus.websocket.message = "WebSocket closed";
-        this.currentSkStatus.websocket.status = false;
-        setTimeout(()=>{ this.connectEndpointWS();}, 3000);
-      }.bind(this);
-
-      this.webSocket.onmessage = function(message) {
-        let packet = JSON.parse(message.data);
-        if ((typeof(packet.self) == 'undefined') && (typeof(packet.requestId) == 'undefined') && (typeof(packet.updates) == 'undefined')) {
-          console.log(message.data)
-        }
-
-        this.signalKDeltaService.processWebsocketMessage(JSON.parse(message.data));
-      }.bind(this);
+    /**
+     * Connect WebSocket to server. Endpoint URL end authentification token is
+     * taken from configuration
+     */
+    public connectWS(): void {
+        this.socketWS$ = this.getNewWebSocket();
+        const messagesWS$ = this.socketWS$.pipe(
+          tap({
+            error: error => console.log("[Connection Service] WebSocket error: " + JSON.stringify(error, ["code", "message", "type"]))
+          }),
+            //catchError(_ => EMPTY),
+            retryWhen(
+              (errors) => errors.pipe(
+                delayWhen(
+                  (val) => timer(val * this.WS_RECONNECT_INTERVAL)))
+              )
+          );
+        this.messagesSubjectWS$.next(messagesWS$);
     }
+    /**
+     * Handles connection arguments, token and creates socket Open/Close Observers
+     */
+    private getNewWebSocket() {
+      let args: string;
+      if (this.signalKToken.token != null && this.signalKToken.token != "") {
+        args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.signalKToken.token;
+      } else args = this.WS_CONNECTION_ARGUMENT;
 
-    publishDelta(message: any) {
-      //TODO: see if we ned to validate Token here
-      if (!this.currentSkStatus.websocket.status) {
-        console.log("Tried to publish delta while not connected to Websocket");
-        return;
+      return webSocket({
+        url: this.endpointWS + args,
+        closeObserver: this.socketWSCloseSubject,
+        openObserver: { next: () => {
+          this.currentSkStatus.websocket.message = "Connected";
+          this.currentSkStatus.websocket.status = true;
+          this.currentSkStatus.rest.status = true;
+          this.currentSkStatus.endpoint.status = true;
+          this.signalKStatus.next(this.currentSkStatus);
+          console.log("[Connection Service] WebSocket Connected")
+          }
+        }
+      })
+    }
+    /**
+    * Send message to WebSocket recipient
+    * @param msg JSON formated message to be sent. The socket parser will automatically
+    * stringify the message (no need to manually JSON.stringify)
+    */
+    public sendMessageWS(msg: any) {
+      if (this.socketWS$) {
+        //console.log("[Connection Service] WebSocket sending message: " + msg);
+        this.socketWS$.next(msg);
+      } else console.log("[Connection Service] No Websocket connection present to send messsage")
+    }
+    /**
+    * Close WebSocket
+    */
+    public closeWS() {
+      if (this.socketWS$) {
+        console.log("[Connection Service] WebSocket closing...");
+        this.socketWS$.complete();
       }
-      //console.log(message);
-      this.webSocket.send(message);
     }
 
     postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
@@ -362,6 +382,10 @@ export class SignalKConnectionService {
     // SignalK Connections Status observable
     getSignalKConnectionsStatus() {
       return this.signalKStatus.asObservable();
+    }
+
+    OnDestroy() {
+      this.closeWS();
     }
 
 }

@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
-import { SignalKConnectionService } from './signalk-connection.service';
 import { IDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
@@ -41,26 +40,11 @@ export class SignalkRequestsService {
     private appSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
     ) {
+
       let requestsSub: Subscription; // used to get all the requests from signalk-delta while avoiding circular dependencies in services...
 
-      requestsSub = this.SignalKDeltaService.subscribeRequest().subscribe(
+      requestsSub = this.signalKDeltaService.subscribeRequest().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
-      );
-
-      let endPointStatus: Subscription; // Monitor if Endpoints status
-      endPointStatus = this.SignalKConnectionService.getSignalKConnectionsStatus().subscribe(
-        signalKConnections => {
-          if (!signalKConnections.rest.status) {
-            this.requests = []; // flush array to clean values that will become stale post error or server reconnect
-
-
-            // See if we are in Device or User mode and login
-            //if (signalKConnections.websocket.status && !appSettingsService.useDeviceToken) {
-            //  this.requestUserLogin(this.appSettingsService.loginName, this.appSettingsService.loginName);
-            //}
-
-          }
-        }
       );
     }
 
@@ -84,7 +68,7 @@ export class SignalkRequestsService {
       }
     }
 
-    this.SignalKConnectionService.publishDelta(JSON.stringify(accessTokenRequest));
+    this.signalKDeltaService.publishDelta(accessRequest);
     let request = {
       requestId: requestId,
       state: null,
@@ -147,7 +131,7 @@ export class SignalkRequestsService {
         "value": value
       }
     }
-    this.SignalKConnectionService.publishDelta(JSON.stringify(message)); //send request
+    this.signalKDeltaService.publishDelta(message); //send request
 
     let request: skRequest = {
       requestId: requestId,
@@ -216,7 +200,9 @@ export class SignalkRequestsService {
   }
 
   /**
-   * Subscribe to SignalK request response. This allows you to inspect server response information such as State, Status Codes and such for further processing logic. Subscription object should be used for the Return :)
+   * Subscribe to SignalK request response. This allows you to inspect server
+   * response information such as State, Status Codes and such for further processing
+   * logic. Subscription object should be used for the Return :)
    *
    * @return Observable if type skRequest.
    */
