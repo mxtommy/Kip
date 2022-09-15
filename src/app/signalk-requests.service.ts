@@ -35,16 +35,21 @@ export class SignalkRequestsService {
   private requests: skRequest[] = []; // Private array of all requests.
 
   constructor(
-    private SignalKConnectionService: SignalKConnectionService,
-    private SignalKDeltaService: SignalKDeltaService,
+    private signalKDeltaService: SignalKDeltaService,
     private appSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
     ) {
-
-      let requestsSub: Subscription; // used to get all the requests from signalk-delta while avoiding circular dependencies in services...
-
-      requestsSub = this.signalKDeltaService.subscribeRequest().subscribe(
+      // Observer to get all signalk-delta messages of type request type.
+      const requestsSub: Subscription = this.signalKDeltaService.subscribeRequest().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
+      );
+      // Observer of SignalK Tokens to automate login
+      const tokenSub: Subscription = this.appSettingsService.getSignalKTokenAsO().subscribe(
+        token => {
+          if (token.isExpired && token.isSessionToken) {
+            this.requestUserLogin(this.appSettingsService.loginName, this.appSettingsService.loginPassword);
+          }
+        }
       );
     }
 
@@ -59,7 +64,7 @@ export class SignalkRequestsService {
    */
   public requestDeviceAccessToken() {
     let requestId = this.newUuid();
-    let accessTokenRequest = {
+    let deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
         clientId: this.appSettingsService.getKipUUID(),
@@ -68,7 +73,9 @@ export class SignalkRequestsService {
       }
     }
 
-    this.signalKDeltaService.publishDelta(accessRequest);
+    console.log("[Request Service] Requesting Device Token");
+    this.signalKDeltaService.publishDelta(deviceTokenRequest);
+
     let request = {
       requestId: requestId,
       state: null,
@@ -78,7 +85,7 @@ export class SignalkRequestsService {
     this.requests.push(request);
   }
 
-   /**
+  /**
    * Submit a SignalK server User login request - user needs to exist in SignalK Server.
    * Required to use the SignalK User Storage feature (ie. to store Config by users)
    * and if you need to submit data to SignalK.
@@ -92,24 +99,26 @@ export class SignalkRequestsService {
    * @param userId The login User ID
    * @param userPassword The user Password
    */
-    public requestUserLogin(userID: string, userPassword: string) {
-      let requestId = this.newUuid();
-      let loginRequest = {
-        requestId: requestId,
-        login: {
-          username: userID,
-          password: userPassword
-        }
+  public requestUserLogin(userID: string, userPassword: string) {
+    let requestId = this.newUuid();
+    let loginRequest = {
+      requestId: requestId,
+      login: {
+        username: userID,
+        password: userPassword
       }
-
-      this.SignalKConnectionService.publishDelta(JSON.stringify(loginRequest));
-      let request = {
-        requestId: requestId,
-        state: null,
-        statusCode: null
-      }
-      this.requests.push(request);
     }
+
+    console.log("[Request Service] Requesting User Login");
+    this.signalKDeltaService.publishDelta(loginRequest);
+
+    let request = {
+      requestId: requestId,
+      state: null,
+      statusCode: null
+    }
+    this.requests.push(request);
+  }
 
   /**
   * Sends request to SignalK server and returns requestId.
@@ -169,33 +178,32 @@ export class SignalkRequestsService {
           this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCode + " - " +this.requests[index].statusCodeDescription);
         }
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false});
-          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Read/Write Token request response received from server.");
-          console.log(delta.accessRequest.permission + ": New R/W token response received");
+          this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false, isExpired: false});
+          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Token received from server.");
+          console.log("[Request Service] " + delta.accessRequest.permission + ": Device Token received");
           return;
         }
-
         if ((delta.login !== undefined) && (delta.login.token !== undefined)) {
-          this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true});
-          this.NotificationsService.sendSnackbarNotification("User authentication successful");
-          console.log("server login successful");
+          this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true, isExpired: false});
+          this.NotificationsService.sendSnackbarNotification("User authentication successful", 2000);
+          console.log("[Request Service] User Token received");
           return;
         }
       } else {
         this.NotificationsService.sendSnackbarNotification("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
-        console.log("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        console.log("[Request Service] Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
         this.requestStatus.next(this.requests[index]);    // Broadcast results
         this.requests.splice(index, 1);                 // result dispatched, cleanup array
       } catch (err) {
         this.requestStatus.error(err);
-        console.log(err);
+        console.error("[Request Service] " + err);
         this.requests = []; // flush array to clean values that will become stale post error
       }
     } else {
       this.NotificationsService.sendSnackbarNotification("Received unknown Request delta:\n" + JSON.stringify(delta));
-      console.log("Received unknown Request delta:\n" + JSON.stringify(delta))
+      console.error("[Request Service] Received unknown Request delta:\n" + JSON.stringify(delta))
     }
   }
 
@@ -204,7 +212,7 @@ export class SignalkRequestsService {
    * response information such as State, Status Codes and such for further processing
    * logic. Subscription object should be used for the Return :)
    *
-   * @return Observable if type skRequest.
+   * @return Observable of type skRequest.
    */
   public subscribeRequest(): Observable<skRequest> {
     return this.requestStatus.asObservable();

@@ -58,16 +58,6 @@ export class SettingsConfigComponent implements OnInit {
     this.layoutJSONConfig = JSON.stringify(this.AppSettingsService.getLayoutConfig(), null, 2);
     this.themeJSONConfig = JSON.stringify(this.AppSettingsService.getThemeConfig(), null, 2);
     this.zonesJSONConfig = JSON.stringify(this.AppSettingsService.getZonesConfig(), null, 2);
-
-
-    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
-      if (token.token) {
-        this.hasToken = true;
-      } else {
-        this.hasToken = false;
-      }
-    });
-
   }
 
   private getPossibleConfigs() {
@@ -154,7 +144,6 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.authTokenSub.unsubscribe();
     this.serverSupportSaveSub.unsubscribe();
   }
 

@@ -45,7 +45,7 @@ export interface IDeltaMessage {
     token: string;
     timeToLive?: number; //not yet implemented on server
   };
-  context: string;
+  context?: string;
   login?: {
     token: string;
     timeToLive?: number; //not yet implemented on server

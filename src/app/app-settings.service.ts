@@ -87,7 +87,8 @@ export interface SignalKUrl {
 
 export interface SignalKToken {
   token: string;
-  timeToLive?: number;
+  timeToLive?: number; // not yet implemented by sk but part of the specs
+  isExpired: boolean;
   isNew: boolean;
   isSessionToken: boolean;
 }
@@ -188,21 +189,21 @@ export class AppSettingsService {
     this.themeName.next(themeConfig['themeName']);
 
     let skUrl: SignalKUrl = {url: appConfig.signalKUrl, new: false};
-    let skToken: SignalKToken = {token: appConfig.signalKToken, isNew: false, isSessionToken: false};
+    let skToken: SignalKToken;
+    skToken = {token: appConfig.signalKToken, isNew: false, isSessionToken: false, isExpired: false};
     this.signalKUrl.next(skUrl);
     this.useDeviceToken = appConfig.useDeviceToken;
     this.loginName = appConfig.loginName;
     this.loginPassword = appConfig.loginPassword;
-    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
     this.dataSets = appConfig.dataSets;
     this.unitDefaults.next(appConfig.unitDefaults);
     this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
     this.kipUUID = appConfig.kipUUID;
     this.widgets = widgetConfig.widgets;
     this.zones.next(zonesConfig.zones);
-
     this.splitSets = layoutConfig.splitSets;
     this.rootSplits = layoutConfig.rootSplits;
+    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
   }
 
   //UnitDefaults
@@ -268,9 +269,9 @@ export class AppSettingsService {
   public getSignalKToken() {
     return this.signalKToken.getValue();
   }
-  public setSignalKToken(value: SignalKToken) {
-    this.signalKToken.next(value);
-    if (!value.isSessionToken) {
+  public setSignalKToken(token: SignalKToken) {
+    this.signalKToken.next(token);
+    if (!token.isSessionToken) {
       this.saveAppConfigToLocalStorage();
     }
   }
@@ -393,7 +394,7 @@ export class AppSettingsService {
   private buildAppStorageObject() {
     let deviceToken = null;
 
-    if (this.useDeviceToken) { // We only save the token if it's a device token. Login tokens expire after 24h. No use saving them.
+    if (this.useDeviceToken) { // We only save the token if it's a device token. User token have expiration by default.
       deviceToken = this.signalKToken.getValue().token;
     }
 

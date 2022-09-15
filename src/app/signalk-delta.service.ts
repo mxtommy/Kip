@@ -1,32 +1,36 @@
 import { Injectable } from '@angular/core';
 import { Observable , Subject, Subscription, timer } from 'rxjs';
-import { tap, retryWhen, delayWhen } from 'rxjs/operators';
 
 import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service'
 import { SignalKService } from './signalk.service';
 import { IDeltaMessage } from './signalk-interfaces';
 import { NotificationsService } from './notifications.service';
-
+import { AppSettingsService } from './app-settings.service';
 
 @Injectable({
     providedIn: 'root'
   })
 export class SignalKDeltaService {
 
-  signalKConnectionsStatusSub: Subscription;        // Monitor if Endpoints are reset
-  signalKConnectionsStatus: SignalKStatus;
-  signalKRequests = new Subject<IDeltaMessage>();   // requests service subs to this (avoids circular dependency in services)
+  private signalKConnectionsStatusSub: Subscription;        // Monitor if Endpoints are reset
+  private signalKConnectionsStatus: SignalKStatus;
+  private signalKRequests = new Subject<IDeltaMessage>();   // requests service subs to this (avoids circular dependency in services)
+  private socketCloseSubject: Subscription;                 // WebSocket Close Event Observable
+  private socketOpenSubject: Subscription;
 
   constructor(
     private SignalKService: SignalKService,
     private notificationsService: NotificationsService,
-    private signalKConnectionService: SignalKConnectionService,)
+    private signalKConnectionService: SignalKConnectionService,
+    private appSettingsService: AppSettingsService
+    )
     {
+      // Server HTTP connection status monitoring
       this.signalKConnectionsStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(
         signalKConnections => {
           this.signalKConnectionsStatus = signalKConnections;
 
-          //connect WebSocket Service
+          //Handle WebSocket connection operations
           if (signalKConnections.endpoint.status && !signalKConnections.websocket.status) {
             this.signalKConnectionService.connectWS();
           } else if (!signalKConnections.endpoint.status && signalKConnections.websocket.status) {
@@ -35,10 +39,28 @@ export class SignalKDeltaService {
         }
       );
 
+      // WebSocket open/close event handling
+      this.socketOpenSubject = this.signalKConnectionService.socketWSOpenEvent.subscribe(
+        event => {
+          if (!this.signalKConnectionsStatus.websocket.hasToken && !this.appSettingsService.useDeviceToken) {
+            this.appSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: true, isExpired: true});
+          }
+        }
+      );
+      /* this.socketCloseSubject = this.signalKConnectionService.socketWSCloseEvent.subscribe(
+        event => {
+          if(event.wasClean) {
+            console.log('[Delta Service] **** closed');
+          } else {
+            console.log('[Delta Service] **** error');
+          }
+        }
+      ); */
+
       // Subscribe to inbound WebSocket messages
       this.signalKConnectionService.messagesWS$.subscribe({
         next: msg => this.processWebsocketMessage(msg), // Called whenever there is a message from the server.
-        error: err => console.log("[Delta Service] Message subscription error: " + JSON.stringify(err)), // Called if at any point WebSocket API signals some kind of error.
+        error: err => console.error("[Delta Service] Message subscription error: " + JSON.stringify(err, ["code", "message", "type"])), // Called if at any point WebSocket API signals some kind of error.
         complete: () => console.log('[Delta Service] Message subscription closed') // Called when connection is closed (for whatever reason).
       });
     }
@@ -50,8 +72,14 @@ export class SignalKDeltaService {
   processWebsocketMessage(message: IDeltaMessage) {
     // Read raw message and route to appropriate sub
     if (typeof(message.self) != 'undefined') {  // is Hello message
+      let tokenType: string;
+
+      this.SignalKService.setServerInfo(message.version, message.name);
+      if (this.signalKConnectionService.signalKToken.isSessionToken){
+        tokenType = "User";
+      } else tokenType = "Device"
+      console.log("[Delta Service] Connection details - Token : " + this.signalKConnectionService.currentSkStatus.websocket.hasToken + ", Token Type: " + tokenType);
       this.SignalKService.setSelf(message.self);
-      this.SignalKService.setServerVersion(message.version);
       return;
     }
 
@@ -63,7 +91,14 @@ export class SignalKDeltaService {
     } else {
       let unknownMessageContent = JSON.stringify(message);
       if (unknownMessageContent == '"{message: \\"Connection disconnected by security constraint\\"}"') {
-        this.processSecurityConstaintError(unknownMessageContent);
+        if (this.signalKConnectionService.signalKToken.isSessionToken) {
+          console.log("[Delta Service] User Security Token expired. Server message: " + unknownMessageContent);
+          this.appSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: true, isExpired: false});
+        } else {
+          console.log("[Delta Service] Device Security Token expired. Switching to tokenless connnection. Manual Device Token request is required to re-establish a secure connection. Server message: " + unknownMessageContent);
+          this.appSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: false, isExpired: true});
+        }
+
       } else
       console.log("[Delta Service] Unknown message type. Message content:" + unknownMessageContent);
     }
@@ -122,18 +157,6 @@ export class SignalKDeltaService {
         }
       }
     }
-  }
-  /**
-  * Handles WebSocket security error received from Signalk server. The source of the security
-  * error is caused when signalK issued token has been deleted or has exrired. This is true
-  * for both Device and User tokens
-  *
-  * @param securityMessage - stringified IDeltaMessage message received fom the server
-  * @return result - optional value to return as the observable result
-  */
-  private processSecurityConstaintError(securityMessage: string){
-    // TODO(David): update to RxJS socket
-    console.log("[Delta Service] Security Token expired. Message content: " + securityMessage);
   }
 
   public subscribeRequest(): Observable<IDeltaMessage> {

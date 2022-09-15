@@ -1,3 +1,4 @@
+import { SignalkRequestsService } from './signalk-requests.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
@@ -215,6 +216,7 @@ export class AppModule {
      * section listed above.
     */
     signalKDeltaService: SignalKDeltaService,
+    SignalkRequestsService: SignalkRequestsService
   ) {
 }
 }

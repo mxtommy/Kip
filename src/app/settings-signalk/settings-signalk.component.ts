@@ -126,7 +126,7 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   deleteToken() {
-    this.AppSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: false});
+    this.AppSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: false, isExpired: false});
   }
 
 
