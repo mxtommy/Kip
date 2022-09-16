@@ -2,7 +2,7 @@ import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
 
-import { AppSettingsService, SignalKToken, SignalKUrl } from '../app-settings.service';
+import { AppSettingsService, IConnectionConfig, SignalKToken} from '../app-settings.service';
 import { SignalKConnectionService, SignalKStatus } from '../signalk-connection.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 import { SignalKService } from '../signalk.service';
@@ -18,11 +18,8 @@ export class SettingsSignalkComponent implements OnInit {
 
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
-  formSignalKURL: string;
-  formDeviceAuth: boolean;
-  formSignalKUserId: string;
-  formSignalKUserPwd: string;
-  formAuthToken: string;
+  connectionConfig: IConnectionConfig;
+  connectionAuthToken: SignalKToken;
 
   signalKConnectionsStatus: SignalKStatus;
   signalKConnectionsStatusSub: Subscription;
@@ -30,11 +27,9 @@ export class SettingsSignalkComponent implements OnInit {
   authTokenSub: Subscription;
 
   updatesSecondSub: Subscription;
-  // updatesMinutesSub: Subscription;
 
   lastSecondsUpdate: number; //number of updates from server in last second
   updatesSeconds: number[]  = [];
-  // updatesMinutes: number[]  = [];
 
   chartCtx;
   chart = null;
@@ -50,15 +45,12 @@ export class SettingsSignalkComponent implements OnInit {
     private SignalkRequestsService: SignalkRequestsService) { }
 
   ngOnInit() {
-    // get SignalK connection details
-    this.formSignalKURL = this.AppSettingsService.getSignalKURL().url;
-    this.formDeviceAuth = this.AppSettingsService.useDeviceToken;
-    this.formSignalKUserId = this.AppSettingsService.loginName;
-    this.formSignalKUserPwd = this.AppSettingsService.loginPassword;
+    // get SignalK connection configuration
+    this.connectionConfig = this.AppSettingsService.getConnectionConfig();
 
     // sub for R/W Token
     this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
-      this.formAuthToken = token.token;
+      this.connectionAuthToken = token;
     });
 
     // sub for signalk connection status
@@ -75,20 +67,11 @@ export class SettingsSignalkComponent implements OnInit {
         this.chart.update('none');
       }
     });
-    /* this.updatesMinutesSub = this.SignalKService.getupdateStatMinute().subscribe(newMinutesData => {
-      this.updatesMinutes = newMinutesData;
-      if (this.chart !== null) {
-        this.chart.config.data.datasets[1].data = newMinutesData;
-        this.chart.update('none');
-      }
-    }); */
 
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
     this.startChart();
     this.subscribeTheme();
-
-
   }
 
 
@@ -100,29 +83,21 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   conectToServer() {
-    // create connection Observable - need to wait for connection success before continuing
-    this.AppSettingsService.setSignalKLoginCredential(this.formSignalKUserId, this.formSignalKUserPwd, this.formDeviceAuth)
-    if (this.formDeviceAuth) {
-      this.AppSettingsService.setSignalKURL({url: this.formSignalKURL, new: true});
+    if (this.connectionConfig.useDeviceToken) {
+      this.AppSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
     } else {
-      if (this.formSignalKURL != this.AppSettingsService.getSignalKURL().url) {
-        this.AppSettingsService.setSignalKURL({url: this.formSignalKURL, new: true});
-
-        //this.signalKConnectionsStatus.websocket.status
-
-        this.SignalkRequestsService.requestUserLogin(this.formSignalKUserId, this.formSignalKUserPwd);
+      if (this.connectionConfig.signalKUrl != this.AppSettingsService.getSignalKURL().url) {
+        this.AppSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
+        this.SignalkRequestsService.requestUserLogin(this.connectionConfig.loginName, this.connectionConfig.loginPassword);
       } else {
-        this.SignalkRequestsService.requestUserLogin(this.formSignalKUserId, this.formSignalKUserPwd);
+        this.SignalkRequestsService.requestUserLogin(this.connectionConfig.loginName, this.connectionConfig.loginPassword);
       }
     }
+    this.AppSettingsService.setConnectionConfig(this.connectionConfig);
   }
 
   requestDeviceAccessToken() {
     this.SignalkRequestsService.requestDeviceAccessToken();
-  }
-
-  requestUserLogin() {
-    this.SignalkRequestsService.requestUserLogin(this.formSignalKUserId, this.formSignalKUserPwd);
   }
 
   deleteToken() {

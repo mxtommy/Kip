@@ -11,7 +11,7 @@ const deltaStatusCodes = {
   202: "The request is awaiting authorization.",
   400: "Bad Client request format.",
   401: "Login failed. Your username or password is incorrect.",
-  403: "You must be authenticated to send commands. Configure user authentication or request and approve a device Authorization Token.",
+  403: "DENIED: You must be authenticated to send commands. Configure/validate connection Login credentials or, requets a Device Authorization token.",
   405: "The server does not support the request.",
   500: "The request failed.",
   502: "Something went wrong carrying out the request on the server side.",
