@@ -64,6 +64,10 @@ export interface IWidgetConfig {
 
   //iFrame
   widgetUrl?: string;
+
+
+  // Race Timer
+  timerLength?: number;
 }
 
 interface IWidgetPaths {
