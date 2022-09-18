@@ -1,0 +1,74 @@
+@use '~@angular/material' as mat;
+
+@mixin widget-racetimer-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+  $wind: map-get($theme, wind);
+
+  .warn {
+    color: mat.get-color-from-palette($warn, 500);
+  }
+
+  .warn-contrast {
+    color: mat.get-contrast-color-from-palette($warn, 500);
+  }
+
+}
+
+.textGenericWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+.canvas-size {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+
+.settingsButton {
+    position: absolute;
+    bottom: 5%;
+    left: 75%;
+    transform: translate(-75%);
+}
+
+.timerBar {
+    flex: 1;
+  }
+
+.timerBarContainer {
+    position: absolute;
+    bottom: 5%;
+    height: 10%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+.timerBarContainer .timerButtonGroups {
+    flex-grow: 1;
+    text-align: center;
+    width: 33%;
+}
+
+.timerBarContainer .timerButtons {
+    width: 75%;
+    height: 100%;
+
+}
+
+.timerBarContainer .timerButtonsSmall {
+    width: 25%;
+    height: 100%;
+    margin-left: 5px;
+}
+
