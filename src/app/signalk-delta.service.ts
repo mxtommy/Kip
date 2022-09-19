@@ -19,7 +19,7 @@ export class SignalKDeltaService {
   private socketOpenSubject: Subscription;
 
   constructor(
-    private SignalKService: SignalKService,
+    private signalKService: SignalKService,
     private notificationsService: NotificationsService,
     private signalKConnectionService: SignalKConnectionService,
     private appSettingsService: AppSettingsService
@@ -47,7 +47,8 @@ export class SignalKDeltaService {
           }
         }
       );
-      /* this.socketCloseSubject = this.signalKConnectionService.socketWSCloseEvent.subscribe(
+
+/*       this.socketCloseSubject = this.signalKConnectionService.socketWSCloseEvent.subscribe(
         event => {
           if(event.wasClean) {
             console.log('[Delta Service] **** closed');
@@ -74,12 +75,15 @@ export class SignalKDeltaService {
     if (typeof(message.self) != 'undefined') {  // is Hello message
       let tokenType: string;
 
-      this.SignalKService.setServerInfo(message.version, message.name);
+      this.signalKService.setServerInfo(message.version, message.name);
       if (this.signalKConnectionService.signalKToken.isSessionToken){
         tokenType = "User";
-      } else tokenType = "Device"
+      } else {
+        tokenType = "Device";
+      }
+
       console.log("[Delta Service] Connection details - Token : " + this.signalKConnectionService.currentSkStatus.websocket.hasToken + ", Token Type: " + tokenType);
-      this.SignalKService.setSelf(message.self);
+      this.signalKService.setSelf(message.self);
       return;
     }
 
@@ -148,11 +152,11 @@ export class SignalKDeltaService {
             // compound data
             let keys = Object.keys(value.value);
             for (let i = 0; i < keys.length; i++) {
-              this.SignalKService.updatePathData(fullPath + '.' + keys[i], source, timestamp, value.value[keys[i]]);
+              this.signalKService.updatePathData(fullPath + '.' + keys[i], source, timestamp, value.value[keys[i]]);
             }
           } else {
             // simple data
-            this.SignalKService.updatePathData(fullPath, source, timestamp, value.value);
+            this.signalKService.updatePathData(fullPath, source, timestamp, value.value);
           }
         }
       }

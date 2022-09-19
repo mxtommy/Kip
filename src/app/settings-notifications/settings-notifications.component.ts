@@ -23,7 +23,7 @@ export class SettingsNotificationsComponent implements OnInit {
 
   saveNotificationsSettings() {
     this.appSettingsService.setNotificationConfig(this.notificationConfig);
-    this.notificationsService.sendSnackbarNotification("Notification configuration saved", 5000);
+    this.notificationsService.sendSnackbarNotification("Notification configuration saved", 5000, false);
   }
 
 }

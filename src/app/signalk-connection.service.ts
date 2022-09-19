@@ -119,7 +119,10 @@ export class SignalKConnectionService {
           if (this.signalKToken.isSessionToken) {
             //had a previous user token but have new URL. Flush with forced Expired token and relogin required
             this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: true});
+          } else {
+            this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: false, isExpired: false});
           }
+
           this.resetSignalK();
         } else {
           this.currentSkStatus.operation = 1; // Startup connection
@@ -298,7 +301,7 @@ export class SignalKConnectionService {
    */
   private getNewWebSocket() {
     let args: string;
-    if (this.signalKToken.token != null && this.signalKToken.token != "") {
+    if (this.signalKToken.token != null) {
       args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.signalKToken.token;
       this.currentSkStatus.websocket.hasToken = true;
     } else {

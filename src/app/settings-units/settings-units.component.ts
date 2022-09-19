@@ -56,7 +56,7 @@ export class SettingsUnitsComponent implements OnInit {
 
   submitConfig() {
     this.appSettingsService.setDefaultUnits(this.formUnitMaster.value);
-    this.notificationsService.sendSnackbarNotification("Default units configuration saved", 5000);
+    this.notificationsService.sendSnackbarNotification("Default units configuration saved", 5000, false);
   }
 
 }

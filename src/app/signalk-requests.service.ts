@@ -185,7 +185,7 @@ export class SignalkRequestsService {
         }
         if ((delta.login !== undefined) && (delta.login.token !== undefined)) {
           this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true, isExpired: false});
-          this.NotificationsService.sendSnackbarNotification("User authentication successful", 2000);
+          this.NotificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
           console.log("[Request Service] User Token received");
           return;
         }

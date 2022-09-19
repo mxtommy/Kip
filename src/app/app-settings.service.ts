@@ -404,7 +404,6 @@ export class AppSettingsService {
     this.router.navigate(['/']);
     setTimeout(()=>{ location.reload() }, 200);
   }
-
   //// Storage Objects
   // building from running data
   private buildAppStorageObject() {
