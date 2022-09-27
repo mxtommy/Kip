@@ -48,6 +48,7 @@ import { WidgetManagerService } from './widget-manager.service';
 import { WidgetListService } from './widget-list.service';
 import { UnitsService } from './units.service';
 import { NotificationsService } from './notifications.service';
+import { TimersService } from './timers.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
@@ -89,6 +90,7 @@ import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simpl
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
 import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
+import { WidgetRaceTimerComponent } from './widget-race-timer/widget-race-timer.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -149,6 +151,7 @@ const appRoutes: Routes = [
     DialogUnitSelect,
     DialogNewZone,
     ModalUserCredentialComponent,
+    WidgetRaceTimerComponent,
   ],
   imports: [
     BrowserModule,
@@ -194,7 +197,8 @@ const appRoutes: Routes = [
     WidgetManagerService,
     UnitsService,
     AppSettingsService,
-    NotificationsService
+    NotificationsService,
+    TimersService
   ],
   bootstrap: [AppComponent]
 })

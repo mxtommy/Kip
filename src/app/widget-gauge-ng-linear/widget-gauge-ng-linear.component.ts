@@ -8,7 +8,7 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service' ;
 import { AppSettingsService, IZone, ZoneState } from '../app-settings.service';
-import { LinearGauge, LinearGaugeOptions } from '@biacsics/ng-canvas-gauges';
+import { LinearGauge, LinearGaugeOptions } from '../gauges-module/linear-gauge';;
 
 
 const defaultConfig: IWidgetConfig = {

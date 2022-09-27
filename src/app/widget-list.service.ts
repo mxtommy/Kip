@@ -15,6 +15,7 @@ import { WidgetGaugeNgLinearComponent} from './widget-gauge-ng-linear/widget-gau
 import { WidgetGaugeNgRadialComponent} from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { WidgetAutopilotComponent } from "./widget-autopilot/widget-autopilot.component";
 import { WidgetSimpleLinearComponent } from "./widget-simple-linear/widget-simple-linear.component";
+import { WidgetRaceTimerComponent } from './widget-race-timer/widget-race-timer.component';
 
 class widgetInfo {
   name: string;
@@ -93,6 +94,11 @@ export class WidgetListService {
         name: 'WidgetAutopilotComponent',
         componentName: WidgetAutopilotComponent,
         description: 'N2k Autopilot',
+      },
+      {
+          name: 'WidgetRaceTimerComponent',
+          componentName: WidgetRaceTimerComponent,
+          description: "Race Timer"
       },
       {
         name: 'WidgetIframeComponent',

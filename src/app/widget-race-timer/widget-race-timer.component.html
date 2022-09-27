@@ -1,0 +1,44 @@
+
+<div #wrapperDiv class="textGenericWrapper">
+    <canvas id="canvasValue" class="canvas-size" #canvasEl></canvas>
+    <canvas id="canvasBG" class="canvas-size numeric-labels" #canvasBG></canvas>
+
+
+    <!-- following two divs to grab colors from theme-->
+    <div #warn class='warn' style="display: none;"></div>
+    <div #warncontrast class='warn-contrast' style="display: none;"></div>
+
+
+
+    <div class="timerBar">
+        <div class="timerBarContainer">
+            <div class="timerButtonGroups">
+                <button color="accent" mat-flat-button class="timerButtonsSmall" (click)="remOneMin()">
+                -1
+                </button>
+                <button color="accent" mat-flat-button class="timerButtonsSmall" (click)="roundToMin()">
+                0
+                </button>
+                <button color="accent" mat-flat-button class="timerButtonsSmall" (click)="addOneMin()">
+                +1
+                </button>
+            </div>
+
+            <div class="timerButtonGroups">
+                <button color="accent" *ngIf="!timerRunning" mat-flat-button class="timerButtons" (click)="startTimer()">
+                    Start
+                </button>
+                <button color="accent" *ngIf="timerRunning" mat-flat-button class="timerButtons" (click)="pauseTimer()">
+                    Pause
+                </button>
+            </div>
+
+            <div class="timerButtonGroups">
+                <button color="accent" mat-flat-button class="timerButtons" (click)="resetTimer()">
+                    Reset
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
