@@ -103,7 +103,7 @@ export class AppSettingsService {
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
-  //TODO: Cleanup in favor of connectionConfig usage
+  
   useDeviceToken: boolean = true;
   loginName: string;
   loginPassword: string;
