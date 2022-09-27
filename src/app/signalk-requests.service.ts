@@ -10,8 +10,8 @@ const deltaStatusCodes = {
   200: "The request was successfully.",
   202: "The request is awaiting authorization.",
   400: "Bad Client request format.",
-  401: "Login failed. Your username or password is incorrect.",
-  403: "DENIED: You must be authenticated to send commands. Configure/validate connection Login credentials or, requets a Device Authorization token.",
+  401: "Login failed. Your User ID or Password is incorrect.",
+  403: "DENIED: You must be authenticated to send commands. Configure server connection authentication or requets a Device Authorization token.",
   405: "The server does not support the request.",
   500: "The request failed.",
   502: "Something went wrong carrying out the request on the server side.",
@@ -86,25 +86,27 @@ export class SignalkRequestsService {
   }
 
   /**
-   * Submit a SignalK server User login request - user needs to exist in SignalK Server.
-   * Required to use the SignalK User Storage feature (ie. to store Config by users)
-   * and if you need to submit data to SignalK.
-   *
-   * An alternative is to use requestDeviceAccessToken method removing the need for usr/pwd but
-   * this will limit Kip's automatic Config sharing feature.
-   *
-   * Once approved, the user authorization Token will be saved in the Config and sent with every
-   * requests.
-   *
-   * @param userId The login User ID
-   * @param userPassword The user Password
-   */
-  public requestUserLogin(userID: string, userPassword: string) {
+  * Submit a SignalK server User login request - user needs to exist in SignalK Server.
+  * Required to use the SignalK User Storage feature (ie. to store Config by users)
+  * and if you need to submit data to SignalK.
+  *
+  * An alternative to user authentification is to use requestDeviceAccessToken method
+  * removing the need for usr/pwd but this will limit Kip's automatic Config sharing feature.
+  *
+  * Once approved, the user authorization Token will be saved in the Config and sent with every
+  * requests.
+  *
+  * @param {string} userId The SignalK server User ID
+  * @param {string} userPassword The SignalK server user Password
+  * @return {*} {string} requestId Identifier for this specific request. Enables Request result monitoring.
+  * @memberof SignalkRequestsService
+  */
+  public requestUserLogin(userId: string, userPassword: string): string {
     let requestId = this.newUuid();
     let loginRequest = {
       requestId: requestId,
       login: {
-        username: userID,
+        username: userId,
         password: userPassword
       }
     }
@@ -118,6 +120,7 @@ export class SignalkRequestsService {
       statusCode: null
     }
     this.requests.push(request);
+    return requestId;
   }
 
   /**
@@ -174,24 +177,28 @@ export class SignalkRequestsService {
           this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
           return;
         }
-        if (this.requests[index].statusCode == 401) {
-          this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCode + " - " +this.requests[index].statusCodeDescription);
-        }
+
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
           this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false, isExpired: false});
           this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Token received from server.");
           console.log("[Request Service] " + delta.accessRequest.permission + ": Device Token received");
-          return;
+
+        } else if (delta.login !== undefined) {
+
+          if (delta.login.token !== undefined) {
+            this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true, isExpired: false});
+            console.log("[Request Service] User Token received");
+          } else {
+            // Delta is a login response but token is empty, meaning it's a 401 - login failed. Must set to null in case we have an old token.
+            console.log("[Request Service] User Login failed");
+            this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: false});
+          }
+
         }
-        if ((delta.login !== undefined) && (delta.login.token !== undefined)) {
-          this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true, isExpired: false});
-          this.NotificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
-          console.log("[Request Service] User Token received");
-          return;
-        }
+
       } else {
-        this.NotificationsService.sendSnackbarNotification("Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
-        console.log("[Request Service] Request Error received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        this.NotificationsService.sendSnackbarNotification("ERROR: Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
         this.requestStatus.next(this.requests[index]);    // Broadcast results
@@ -202,8 +209,8 @@ export class SignalkRequestsService {
         this.requests = []; // flush array to clean values that will become stale post error
       }
     } else {
-      this.NotificationsService.sendSnackbarNotification("Received unknown Request delta:\n" + JSON.stringify(delta));
-      console.error("[Request Service] Received unknown Request delta:\n" + JSON.stringify(delta))
+      this.NotificationsService.sendSnackbarNotification("ERROR: A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta));
+      console.error("[Request Service] A Request message that contains an unknown Request ID was received. from delta:\n" + JSON.stringify(delta))
     }
   }
 

@@ -1,12 +1,14 @@
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
+import { MatDialog } from '@angular/material/dialog';
 
 import { AppSettingsService, IConnectionConfig, SignalKToken} from '../app-settings.service';
 import { SignalKConnectionService, SignalKStatus } from '../signalk-connection.service';
-import { SignalkRequestsService } from '../signalk-requests.service';
+import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
+import { NotificationsService } from '../notifications.service';
 import { SignalKService } from '../signalk.service';
-
+import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
 
 
 @Component({
@@ -19,6 +21,8 @@ export class SettingsSignalkComponent implements OnInit {
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   connectionConfig: IConnectionConfig;
+  loginRequestId: string;
+  loginRequestSub: Subscription;
   connectionAuthToken: SignalKToken;
 
   signalKConnectionsStatus: SignalKStatus;
@@ -39,27 +43,43 @@ export class SettingsSignalkComponent implements OnInit {
   themeNameSub: Subscription = null;
 
   constructor(
-    private AppSettingsService: AppSettingsService,
-    private SignalKService: SignalKService,
-    private SignalKConnectionService: SignalKConnectionService,
-    private SignalkRequestsService: SignalkRequestsService) { }
+    public dialog: MatDialog,
+    private appSettingsService: AppSettingsService,
+    private notificationsService: NotificationsService,
+    private signalKService: SignalKService,
+    private signalKConnectionService: SignalKConnectionService,
+    private signalkRequestsService: SignalkRequestsService) { }
 
   ngOnInit() {
     // get SignalK connection configuration
-    this.connectionConfig = this.AppSettingsService.getConnectionConfig();
+    this.connectionConfig = this.appSettingsService.getConnectionConfig();
+
+    // Request service sub to monitor login request responses
+    this.loginRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(request => {
+        if (request.requestId == this.loginRequestId) {
+          if (request.statusCode == 401){
+            this.openUserCredentialModal();
+            this.notificationsService.sendSnackbarNotification(request.statusCode + " - " + request.statusCodeDescription);
+          } else if (request.statusCode == 200) {
+            this.notificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
+          } else {
+            this.notificationsService.sendSnackbarNotification("Unknown login request status code received", 2000, false);
+          }
+        }
+    });
 
     // sub for R/W Token
-    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
+    this.authTokenSub = this.appSettingsService.getSignalKTokenAsO().subscribe(token => {
       this.connectionAuthToken = token;
     });
 
     // sub for signalk connection status
-    this.signalKConnectionsStatusSub = this.SignalKConnectionService.getSignalKConnectionsStatus().subscribe(status => {
+    this.signalKConnectionsStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(status => {
       this.signalKConnectionsStatus = status;
     });
 
     //get update performances
-    this.updatesSecondSub = this.SignalKService.getupdateStatsSecond().subscribe(newSecondsData => {
+    this.updatesSecondSub = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
       this.lastSecondsUpdate = newSecondsData[newSecondsData.length-1];
       this.updatesSeconds = newSecondsData;
       if (this.chart !== null) {
@@ -76,32 +96,49 @@ export class SettingsSignalkComponent implements OnInit {
 
 
   ngOnDestroy() {
+    this.loginRequestSub.unsubscribe();
     this.signalKConnectionsStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();
     // this.updatesMinutesSub.unsubscribe();
     this.updatesSecondSub.unsubscribe();
   }
 
-  conectToServer() {
+  openUserCredentialModal() {
+
+    let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
+      width: '50%',
+      data: this.connectionConfig
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        //console.log(result);
+        this.connectToServer();
+      }
+    });
+  }
+
+  connectToServer() {
+
     if (this.connectionConfig.useDeviceToken) {
-      this.AppSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
+      this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
     } else {
-      if (this.connectionConfig.signalKUrl != this.AppSettingsService.getSignalKURL().url) {
-        this.AppSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
-        this.SignalkRequestsService.requestUserLogin(this.connectionConfig.loginName, this.connectionConfig.loginPassword);
+      if (this.connectionConfig.signalKUrl != this.appSettingsService.getSignalKURL().url) {
+        this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
+        this.loginRequestId = this.signalkRequestsService.requestUserLogin(this.connectionConfig.loginName, this.connectionConfig.loginPassword);
       } else {
-        this.SignalkRequestsService.requestUserLogin(this.connectionConfig.loginName, this.connectionConfig.loginPassword);
+        this.loginRequestId = this.signalkRequestsService.requestUserLogin(this.connectionConfig.loginName, this.connectionConfig.loginPassword);
       }
     }
-    this.AppSettingsService.setConnectionConfig(this.connectionConfig);
+    this.appSettingsService.setConnectionConfig(this.connectionConfig);
   }
 
   requestDeviceAccessToken() {
-    this.SignalkRequestsService.requestDeviceAccessToken();
+    this.signalkRequestsService.requestDeviceAccessToken();
   }
 
   deleteToken() {
-    this.AppSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: false, isExpired: false});
+    this.appSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: false, isExpired: false});
   }
 
 
@@ -150,7 +187,7 @@ export class SettingsSignalkComponent implements OnInit {
 
   // Subscribe to theme event
   subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
       themeChange => {
       setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
         this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;

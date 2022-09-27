@@ -203,7 +203,11 @@ export class AppSettingsService {
 
     let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
     let skToken: SignalKToken;
-    skToken = {token: appConfig.signalKToken, isNew: false, isSessionToken: false, isExpired: false};
+    if (!connectionConfig.useDeviceToken) {
+      skToken = {token: null, isNew: false, isSessionToken: false, isExpired: false};
+    } else {
+      skToken = {token: appConfig.signalKToken, isNew: false, isSessionToken: false, isExpired: false};
+    }
     this.signalKUrl.next(skUrl);
     this.useDeviceToken = connectionConfig.useDeviceToken;
     this.loginName = connectionConfig.loginName;
@@ -281,12 +285,20 @@ export class AppSettingsService {
   public getSignalKTokenAsO() {
     return this.signalKToken.asObservable();
   }
-  public getSignalKToken() {
+  public getSignalKToken(): SignalKToken {
     return this.signalKToken.getValue();
   }
   public setSignalKToken(token: SignalKToken) {
-    this.signalKToken.next(token);
-    if (!token.isSessionToken) {
+    let oldToken = this.getSignalKToken();
+
+    if (token.isSessionToken) {
+      if (!oldToken.isSessionToken) {
+        this.saveAppConfigToLocalStorage();
+      }
+      this.signalKToken.next(token);
+
+    } else {
+      this.signalKToken.next(token);
       this.saveAppConfigToLocalStorage();
     }
   }
@@ -409,7 +421,7 @@ export class AppSettingsService {
   private buildAppStorageObject() {
     let deviceToken = null;
 
-    if (this.useDeviceToken) { // We only save the token if it's a device token. User token have expiration by default.
+    if (this.useDeviceToken) { // We only save the token if it's a device token. User token are session specific and expire.
       deviceToken = this.signalKToken.getValue().token;
     }
 

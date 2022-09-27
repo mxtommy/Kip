@@ -88,6 +88,7 @@ import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-sim
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
+import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
@@ -147,6 +148,7 @@ const appRoutes: Routes = [
     DataBrowserRowComponent,
     DialogUnitSelect,
     DialogNewZone,
+    ModalUserCredentialComponent,
   ],
   imports: [
     BrowserModule,

@@ -117,8 +117,10 @@ export class SignalKConnectionService {
         if (this.signalKURL.new) {
           this.currentSkStatus.operation = 3; // URL Changed
           if (this.signalKToken.isSessionToken) {
-            //had a previous user token but have new URL. Flush with forced Expired token and relogin required
-            this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: true});
+            if (this.signalKToken.token != null) {
+              //have a previous user token but have new URL. Force Expired token to relogin
+              this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: true});
+            }
           } else {
             this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: false, isExpired: false});
           }
