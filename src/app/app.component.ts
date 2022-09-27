@@ -76,7 +76,7 @@ export class AppComponent implements OnInit, OnDestroy {
           verticalPosition: 'top'
         });
 
-        if (!this.AppSettingsService.getNotificationConfig().sound.disableSound) {
+        if (!this.AppSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
           let sound = new Howl({
             src: ['assets/notification.mp3'],
             autoUnlock: true,
@@ -111,6 +111,7 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
 
+    // add user login page here
   }
 
   ngOnDestroy() {
@@ -123,13 +124,13 @@ export class AppComponent implements OnInit, OnDestroy {
   displayConnectionsStatusNotification(connectionsStatus: SignalKStatus) {
     if (connectionsStatus.operation == 1) { // starting server
       if (!connectionsStatus.endpoint.status) {
-        this.notificationsService.sendSnackbarNotification(connectionsStatus.endpoint.message, 5000);
-      } else {
-        this.notificationsService.sendSnackbarNotification("Connected to SignalK Server.", 5000);
+        this.notificationsService.sendSnackbarNotification(connectionsStatus.endpoint.message, 5000, true);
+      } else if (!connectionsStatus.rest.status) {
+        this.notificationsService.sendSnackbarNotification("Connected to SignalK Server.", 5000, false);
       }
     }
     if (connectionsStatus.operation == 3) { // URL changed/reset
-      this.notificationsService.sendSnackbarNotification("Connection Update/Reset successful.", 5000);
+      this.notificationsService.sendSnackbarNotification("Connection Update/Reset successful.", 5000, false);
     }
   }
 

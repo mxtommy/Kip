@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FormControl, Validators }    from '@angular/forms';
 
-import { AppSettingsService, IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../app-settings.service';
+import { AppSettingsService, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../app-settings.service';
 import { SignalKService } from '../signalk.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
 import { NotificationsService } from '../notifications.service';
@@ -20,6 +20,7 @@ interface possibleConfig {
 export class SettingsConfigComponent implements OnInit {
 
   appJSONConfig: string = '';
+  connectionJSONConfig: string = '';
   widgetJSONConfig: string = '';
   layoutJSONConfig: string = '';
   themeJSONConfig: string = '';
@@ -54,20 +55,11 @@ export class SettingsConfigComponent implements OnInit {
     });
 
     this.appJSONConfig = JSON.stringify(this.AppSettingsService.getAppConfig(), null, 2);
+    this.connectionJSONConfig = JSON.stringify(this.AppSettingsService.getConnectionConfig(), null, 2);
     this.widgetJSONConfig = JSON.stringify(this.AppSettingsService.getWidgetConfig(), null, 2);
     this.layoutJSONConfig = JSON.stringify(this.AppSettingsService.getLayoutConfig(), null, 2);
     this.themeJSONConfig = JSON.stringify(this.AppSettingsService.getThemeConfig(), null, 2);
     this.zonesJSONConfig = JSON.stringify(this.AppSettingsService.getZonesConfig(), null, 2);
-
-
-    this.authTokenSub = this.AppSettingsService.getSignalKTokenAsO().subscribe(token => {
-      if (token.token) {
-        this.hasToken = true;
-      } else {
-        this.hasToken = false;
-      }
-    });
-
   }
 
   private getPossibleConfigs() {
@@ -87,6 +79,7 @@ export class SettingsConfigComponent implements OnInit {
   saveServerSettings() {
     let allConfig = {};
     allConfig['app'] = this.AppSettingsService.getAppConfig();
+    allConfig['connection'] = this.AppSettingsService.getAppConfig();
     allConfig['widget'] = this.AppSettingsService.getWidgetConfig();
     allConfig['layout'] = this.AppSettingsService.getLayoutConfig();
     allConfig['theme'] = this.AppSettingsService.getThemeConfig();
@@ -94,13 +87,14 @@ export class SettingsConfigComponent implements OnInit {
 
 
     this.SignalKConnectionService.postApplicationData(this.configScope.value, this.configName.value, allConfig).subscribe(result => {
-      this.NotificationsService.sendSnackbarNotification("Configuration saved to SignalK server", 3000);
+      this.NotificationsService.sendSnackbarNotification("Configuration saved to SignalK server", 3000, false);
     });
   }
 
   loadServerSettings() {
     this.SignalKConnectionService.getApplicationData(this.configLoad.value.scope, this.configLoad.value.name).subscribe(newConfig => {
       let app: IAppConfig = newConfig['app'];
+      let connection: IConnectionConfig = newConfig['connection'];
       let widget: IWidgetConfig = newConfig['widget'];
       let layout: ILayoutConfig = newConfig['layout'];
       let theme: IThemeConfig = newConfig['theme'];
@@ -110,6 +104,7 @@ export class SettingsConfigComponent implements OnInit {
       app.kipUUID = this.AppSettingsService.getKipUUID();
 
       this.AppSettingsService.replaceConfig("appConfig", JSON.stringify(app), false);
+      this.AppSettingsService.replaceConfig("connectionConfig", JSON.stringify(connection), false);
       this.AppSettingsService.replaceConfig("widgetConfig", JSON.stringify(widget), false);
       this.AppSettingsService.replaceConfig("layoutConfig", JSON.stringify(layout), false);
       this.AppSettingsService.replaceConfig("themeConfig", JSON.stringify(theme), false);
@@ -128,6 +123,10 @@ export class SettingsConfigComponent implements OnInit {
     switch (configType) {
       case "appConfig":
         this.AppSettingsService.replaceConfig(configType, this.appJSONConfig, true);
+        break;
+
+      case "connectionConfig":
+        this.AppSettingsService.replaceConfig(configType, this.connectionJSONConfig, true);
         break;
 
       case "widgetConfig":
@@ -154,7 +153,6 @@ export class SettingsConfigComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.authTokenSub.unsubscribe();
     this.serverSupportSaveSub.unsubscribe();
   }
 

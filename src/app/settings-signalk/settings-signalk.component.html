@@ -1,89 +1,95 @@
-<form name="signalKForm" (ngSubmit)="updateSignalKURL()" #signalKForm="ngForm">
+<form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
   <mat-card>
     <mat-card-header>
       <mat-card-title>Connection Details</mat-card-title>
-      <mat-card-subtitle>Enter the URL and port to your server (ie http://my.server.com:3000), or Request and Clear a server Token.<br>Token is only required to submit commands, such as sending Autopilot direction or mode commands. Token requests must be approved from the server, by a server administrator.</mat-card-subtitle>
+      <mat-card-subtitle>Set server connection properties: URL and port of the server (ie. http://my.server.com:3000), login credential and manage Device Authorisation token.</mat-card-subtitle>
     </mat-card-header>
-    <mat-form-field class="connectUrlInput">
-      <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="formSignalKURL" required pattern="https?://.+">
-      <mat-error>
-        Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com"
-      </mat-error>
-    </mat-form-field>
-    <table style="margin-left: 30px;font-size: 12px;">
-      <tr>
-        <td>
-          Version:
-        </td>
-        <td>
-          {{ signalKConnectionsStatus.server.version }}
-        </td>
-        <td rowspan="5">
-          <div class="" >
-            <canvas width="400" height="200" #lineGraph id="chart"></canvas>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Status:
-        </td>
-        <td>
-          <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
-          <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
-          {{ signalKConnectionsStatus.endpoint.message }}
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Websocket:
-        </td>
-        <td>
-          <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
-          <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
-          {{ signalKConnectionsStatus.websocket.message }}
-        </td>
-      </tr>
-      <tr>
-        <td>
-          REST:
-        </td>
-        <td>
-          <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
-          <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
-          {{ signalKConnectionsStatus.rest.message }}
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Token:
-        </td>
-        <td>
-          <div *ngIf="formAuthToken">
-            <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" ></i>
-            {{ formAuthToken | slice : 0 : 20}}...
-          </div>
-          <div *ngIf="!formAuthToken">
-            <i class="fa-solid fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
-          </div>
-        </td>
-      </tr>
-    </table>
-    <br/>
-    <mat-card-actions align="end">
-      <span *ngIf="formAuthToken">
-        <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="clearAuth()">
-          Delete Token
-        </button>
-      </span>
-      <span *ngIf="!formAuthToken">
-        <button mat-raised-button type="button" color="primary" matTooltip="Only needed to send data to server (for inputs) If only displaying data it is not needed" (click)="requestAuth()" [disabled]="formSignalKURL.match('demo')">
-          Request Token
-        </button>
-      </span>
-      <button mat-raised-button type="submit" color="accent" style="margin-left: 10px;" [disabled]="!signalKForm.form.valid">
-        Connect
+      <mat-form-field class="connectUrlInput">
+        <input type=url matInput placeholder="SignalK API Url" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
+        <mat-error>
+          Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com"
+        </mat-error>
+      </mat-form-field>
+      <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="connectionConfig.useDeviceToken" (click)="openUserCredentialModal()">
+        Set User Credential
       </button>
-    </mat-card-actions>
-  </mat-card>
+      <br/><br/>
+      <mat-slide-toggle name="useDeviceAuth"[(ngModel)]="connectionConfig.useDeviceToken" [ngModelOptions]="{standalone: true}">Disable User Authentication and enable Device Token authorisation mode</mat-slide-toggle>
+      <br/>
+      <mat-card-actions align="end">
+        <span *ngIf="(connectionConfig.useDeviceToken && (connectionAuthToken.token && !connectionAuthToken.isSessionToken))">
+          <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="deleteToken()" [disabled]="!connectionConfig.useDeviceToken">
+            Delete Token
+          </button>
+        </span>
+        <span *ngIf="(connectionConfig.useDeviceToken && (!connectionAuthToken.token))">
+          <button mat-raised-button type="button" color="primary" matTooltip="Send a Device Authorization token request to SignalK server. EXPLANNATION: Device Authorization token is only needed when Kip is configured with Widgets that sends data to the server or when saving configuration remotly (ie. Using Widgets: State, Switch, Autopilot, etc.) . A token is not needed  If Kip is used only to display data, a token is not nedded. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server, by a server administrator. See: SignalK Server -> Security -> Access Requests. Once approved, it will notify Kip and the process will be completed." (click)="requestDeviceAccessToken()">
+            Request Token
+          </button>
+        </span>
+        <button mat-raised-button type="submit" color="accent" style="margin-left: 10px;" [disabled]="!connectionForm.form.valid">
+          Connect
+        </button>
+      </mat-card-actions>
+    </mat-card>
 </form>
+<table style="margin-left: 30px;font-size: 12px;">
+  <tr>
+    <td>
+      Version:
+    </td>
+    <td>
+      {{ signalKConnectionsStatus.server.version }}
+    </td>
+    <td rowspan="5">
+      <div class="" >
+        <canvas width="400" height="200" #lineGraph id="chart"></canvas>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      Status:
+    </td>
+    <td>
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
+      {{ signalKConnectionsStatus.endpoint.message }}
+    </td>
+  </tr>
+  <tr>
+    <td>
+      Websocket:
+    </td>
+    <td>
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
+      {{ signalKConnectionsStatus.websocket.message }}
+    </td>
+  </tr>
+  <tr>
+    <td>
+      REST:
+    </td>
+    <td>
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
+      {{ signalKConnectionsStatus.rest.message }}
+    </td>
+  </tr>
+  <tr>
+    <td>
+      Token:
+    </td>
+    <td>
+      <div *ngIf="connectionAuthToken.token">
+        <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" ></i>
+          User Token: {{connectionAuthToken.isSessionToken}}
+          <br/>Token: {{connectionAuthToken.token | slice : 0 : 20}}...
+      </div>
+      <div *ngIf="!connectionAuthToken.token">
+        <i class="fa-solid fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
+      </div>
+    </td>
+  </tr>
+</table>

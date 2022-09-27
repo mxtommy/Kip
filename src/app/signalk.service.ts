@@ -166,8 +166,8 @@ export class SignalKService {
     }
   }
 
-  setServerVersion(version: string) {
-    console.log("Server version:" + version);
+  setServerInfo(version: string, name: string) {
+    console.log("[SignalK Service] Server Name: " + name + ", Version: " + version);
     if (version) {
       this.serverSupportApplicationData.next(compareVersions.compare(version, '1.27.0', ">="));
     } else {

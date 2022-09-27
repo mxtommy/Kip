@@ -1,3 +1,4 @@
+import { SignalkRequestsService } from './signalk-requests.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
@@ -88,6 +89,7 @@ import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-sim
 import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
+import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
 import { WidgetRaceTimerComponent } from './widget-race-timer/widget-race-timer.component';
 
 const appRoutes: Routes = [
@@ -148,6 +150,7 @@ const appRoutes: Routes = [
     DataBrowserRowComponent,
     DialogUnitSelect,
     DialogNewZone,
+    ModalUserCredentialComponent,
     WidgetRaceTimerComponent,
   ],
   imports: [
@@ -219,6 +222,7 @@ export class AppModule {
      * section listed above.
     */
     signalKDeltaService: SignalKDeltaService,
+    SignalkRequestsService: SignalkRequestsService
   ) {
 }
 }

@@ -1,34 +1,57 @@
-<h1>
-  Welcome to KIP!
-</h1>
-
-<p>NOTES: For complete functionality, certain SignalK plugin should be installed on the server you are connecting to.</p>
-<ul>
-  <li>@signalk-alarm-silencer: To silence Notifications on the server. This enables Kip to instruct the SignalK server to silence said alarm for on all devices supporting SignalK Notifications, else Kip will be silenced.</li>
-  <li>@signalk/signalk-autopilot: required for the N2k Autopilot to function.<br/><b>Use the Kip N2k autopilot at your own risk. Use with caution and constant supervision.</b></li>
-</ul>
-
-<p>If you want to dive right in to see what KIP can do, you can use this button to load demo configuration:</p>
-<button mat-raised-button routerLink="/demo">Load Demo</button>
-
 <div *ngIf="!unlockStatus">
-  <h2>Unlocking</h2>
-  <p>
-    KIP is "Locked" by default. This is to prevent accidental interaction from touch screens from changing anything.
-    You can unlock KIP using the hamburger icon in the lower right corner and selecting "Configuration -> Edit Layout". Go Ahead try it now!
+  <h1>Kip Installation Notes</h1>
+  <p>For complete functionality, certain SignalK plugin should be installed on the server
+    you are connecting to:
   </p>
+  <ul>
+    <li>@signalk-alarm-silencer: To silence Notifications on the server. This enables Kip
+      to instruct the SignalK server to silence said alarm for on all devices supporting
+      SignalK Notifications, else Kip will be silenced.</li>
+    <li>@signalk/signalk-autopilot: required for the N2k Autopilot to function.
+      <br/><b>Use the Kip N2k autopilot at your own risk. Use with caution and constant
+        supervision.</b></li>
+  </ul>
+</div>
+<div *ngIf="!unlockStatus">
+  <h1>Initial Configuration</h1>
+  <h2>Two options are available:</h2>
+  <ol>
+    <li>Load Demo Configuration
+      <p>If you want to dive right in to see what KIP can do, you can use this button to
+        load demo configuration with simulation data from demo.signalk.org. Note that an
+        internet connection is required to receive simulation data:</p>
+      <button mat-raised-button routerLink="/demo">Load Demo</button>
+      <br/><br/>
+    </li>
+    <li>Editing Page Layout
+      <p>
+        Page layouts are "Locked" by default. This is to prevent accidental touch
+        screens interaction from changing anything.
+        A page layout is a screen where you can add, configure and remove the various
+        avalable widgets such as gauges and components.
+        Multiple pages can be added to facilitate organization.
+        You can unlock page layout using the hamburger icon in the lower right corner
+        and selecting "Configuration -> Edit Layout". Go Ahead try it now!
+      </p>
+    </li>
+  </ol>
 </div>
 <div *ngIf="unlockStatus">
-  <h2>Configuring</h2>
+  <h1>Next Steps...</h1>
+  <h2>Configuring Page Layout</h2>
   <p>
-    Now that KIP is unlocked, you can do a few actions.
+    Now that the page layout is unlocked, you can do a few actions:
   </p>
   <ul>
     <li>The icon in the lower right can be used to select the Widget you would like to display</li>
-    <li>The icon in the lower left can be used to "split" the existing area. You can use this to display multiple items on one page</li>
+    <li>The icon in the lower left can be used to "split" the pages into various areas.
+      You can use area to display different widgets on one page. Areas can be resized
+      to better fit designs</li>
     <li>The "X" in the upper right can be used to delete an area (basically undoing a split)</li>
-    <li>Once a widget is selected, there will be a gear in the lower middle. Clicking it will allow you to setup the widget parameters</li>
+    <li>Once a widget is selected, there will be a gear in the lower middle. Clicking
+      it will allow you to setup the widget parameters</li>
   </ul>
-
-
+  <h2>Getting Data from SignalK</h2>
+  <p>The next steps is to configure your connection to a SignalK server using the hamburger icon in the lower right corner
+    and selecting "Configuration -> Settings".</p>
 </div>

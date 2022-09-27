@@ -56,6 +56,19 @@
         </mat-action-row>
       </mat-expansion-panel>
     </form>
+
+    <form name="connectionSettingsForm" (ngSubmit)="submitConfig('connectionConfig')">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>Server Connection</mat-expansion-panel-header>
+        <mat-form-field class="config-size">
+            <textarea name="jsonConf" class="textheight" matInput placeholder="Raw Application JSON configuration" wrap="off" [(ngModel)]="connectionJSONConfig"></textarea>
+        </mat-form-field>
+        <mat-action-row>
+          <button mat-raised-button type="submit" color="accent">Save Edits</button>
+        </mat-action-row>
+      </mat-expansion-panel>
+    </form>
+
     <form name="widgetSettingsForm" (ngSubmit)="submitConfig('widgetConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Widgets</mat-expansion-panel-header>
@@ -99,7 +112,7 @@
           <button mat-raised-button type="submit" color="accent">Save Edits</button>
         </mat-action-row>
       </mat-expansion-panel>
-    </form>    
+    </form>
   </mat-tab>
 
   <mat-tab label="Demo/Erase">
@@ -114,5 +127,5 @@
 </mat-tab-group>
 
 
- 
- 
+
+

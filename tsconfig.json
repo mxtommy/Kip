@@ -20,5 +20,7 @@
   },
   "angularCompilerOptions": {
     "preserveWhitespaces": false
+    //TODO: enable and fix strictTemplate compilation issues to clean up code
+    //"strictTemplates": true
   }
 }

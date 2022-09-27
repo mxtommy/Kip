@@ -1,12 +1,11 @@
-import { IAppConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig } from './app-settings.service';
+import { IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig } from './app-settings.service';
 
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 6,
-  "kipUUID": newUuid(),
-  "signalKUrl": "http://demo.signalk.org",
+  "configVersion": 8,
   "signalKToken": null,
+  "kipUUID": newUuid(),
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
@@ -55,6 +54,13 @@ export const DemoAppConfig: IAppConfig = {
       "muteEmergency": false,
     },
   }
+}
+
+export const DemoConnectionConfig: IConnectionConfig = {
+  "signalKUrl": "http://demo.signalk.org",
+  "useDeviceToken": true,
+  "loginName": null,
+  "loginPassword": null,
 }
 
 export const DemoThemeConfig: IThemeConfig = {

@@ -24,6 +24,7 @@ const alarmTrack = {
 export interface AppNotification {
   message: string;
   duration: number;
+  silent: boolean;
 }
 
 /**
@@ -104,9 +105,11 @@ export class NotificationsService {
    * @param duration Display duration in milliseconds before automatic dismissal.
    * Duration value of 0 is indefinite or until use clicks Dismiss button. Defaults
    *  to 10000 of no value is provided.
+   * @param silent A boolean that defines if the notification should make no sound.
+   * Defaults false.
    */
-  sendSnackbarNotification(message: string, duration: number = 10000) {
-    this.snackbarAppNotifications.next({ message: message, duration: duration});
+  public sendSnackbarNotification(message: string, duration: number = 10000, silent: boolean = false) {
+    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
   }
 
   public subscribeAlarms() {}
@@ -190,7 +193,7 @@ export class NotificationsService {
    * Set Acknowledgement and send to other observers so they can react accordingly
    * @param path alarm to acknowledge
    * @param timeout if set will unacknowledge in this time
-   * @return true of alarms found, else false
+   * @return true if alarms found, else false
    */
   public acknowledgeAlarm(path: string, timeout: number = 0): boolean {
     if (path in this.alarms) {
@@ -262,7 +265,7 @@ export class NotificationsService {
         default: // we don;t know this one. Tell the user.
           aSev = 0;
           vSev = 0;
-          this.sendSnackbarNotification("Unknown Notification State received from SignalK", 0);
+          this.sendSnackbarNotification("Unknown Notification State received from SignalK", 0, false);
           console.log("Unknown Notification State received from SignalK\n" + JSON.stringify(alarm));
       }
       audioSev = Math.max(audioSev, aSev);
