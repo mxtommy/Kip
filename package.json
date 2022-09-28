@@ -81,6 +81,5 @@
     "zone.js": "~0.11.4"
   },
   "dependencies": {
-    "util": "^0.12.4"
   }
 }

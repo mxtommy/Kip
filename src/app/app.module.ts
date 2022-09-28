@@ -213,16 +213,17 @@ export class AppModule {
      * them to miss some events until instanciated.
      *
      * Example: SignalKDeltaService needs to be instaciated to receive connection status
-     * from SignalKConnectionService in order to connect WebSocket immediatly upon
+     * from SignalKConnectionService in order to open WebSocket immediatly upon
      * connection to listen and process deltas. Both services are not interdependant
      * and only communicated using Obervable. If not instaciated before it is called by
      * a component, SignalKDeltaService will miss connection status and not connect WebSockets.
      *
-     * Below should be Singletons Services ie. "providedIn: root" and/or part of prodivers
+     * Below should be Singleton Services ie. "providedIn: root" and/or part of prodivers
      * section listed above.
     */
     signalKDeltaService: SignalKDeltaService,
-    SignalkRequestsService: SignalkRequestsService
+    signalkRequestsService: SignalkRequestsService,
+    signalKFullService: SignalKFullService
   ) {
 }
 }

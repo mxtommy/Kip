@@ -1,14 +1,22 @@
 import { Injectable } from '@angular/core';
 
 import { SignalKService } from './signalk.service';
-
+import { SignalKConnectionService } from "./signalk-connection.service";
 @Injectable()
 export class SignalKFullService {
 
-  constructor(private SignalKService: SignalKService,) { }
+  constructor(
+    private SignalKService: SignalKService,
+    private signalKConnectionService: SignalKConnectionService,
+  ) {
+    this.signalKConnectionService.messageREST$.subscribe({
+      next: msg => this.processFullUpdate(msg), // Called whenever there is a message from the server.
+      error: err => console.error("[REST Full Service] Message subscription error: " + JSON.stringify(err, ["code", "message", "type"])), // Called if at any point Subject has some kind of error.
+      complete: () => console.log('[REST Full Service] Message subscription closed') // Called when Subject is closed (for whatever reason).
+    });
+  }
 
-
-  processFullUpdate(data) {
+  private processFullUpdate(data): void {
 
     //set self urn
     this.SignalKService.setSelf(data.self)
@@ -17,7 +25,7 @@ export class SignalKFullService {
     this.findKeys(data);
   }
 
-  findKeys(data, currentPath: string[] = []) {
+  private findKeys(data, currentPath: string[] = []): void {
     let path = currentPath.join('.');
 
     if (data === null) { //notifications don't have timestamp... hmmm TODO get notif into tree...
@@ -91,6 +99,5 @@ export class SignalKFullService {
       }
     }
   }
-
 
 }

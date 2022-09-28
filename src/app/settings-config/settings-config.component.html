@@ -23,11 +23,14 @@
       </div>
       <div class="config-column">
         <mat-card>
-          <form>
+          <form name="saveConfigForm" (ngSubmit)="saveServerSettings()" #saveConfigForm="ngForm">
             Save Config to Server<div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div>
               <mat-form-field class="almost-full-width">
-                <mat-label>Server Config Name</mat-label>
-                <input matInput name="serverConfigName" placeholder="Config Name" [formControl]="configName">
+                <mat-label>Configuration Name</mat-label>
+                <input matInput name="serverConfigName" placeholder="Enter a name for the configuration" [(ngModel)]="configName" [ngModelOptions]="{standalone: false}" required>
+                <mat-error>
+                  You must provide a name for the configuration to save it
+                </mat-error>
               </mat-form-field>
               <mat-card-actions align="end">
                 <div *ngIf="!hasToken">R/W token required for SignalK Server</div>
@@ -37,7 +40,7 @@
                     <mat-radio-button value="user">User</mat-radio-button>
                   </mat-radio-group>
                 </div>
-                <button mat-raised-button type="button" [disabled]="!hasToken" color="accent"(click)='saveServerSettings()'>Save</button>
+                <button mat-raised-button type="submit" [disabled]="!hasToken || !saveConfigForm.valid" color="accent">Save</button>
               </mat-card-actions>
           </form>
         </mat-card>

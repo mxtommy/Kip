@@ -3,10 +3,9 @@
  */
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
+
 import { ISignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService, INotificationConfig } from "./app-settings.service";
-import { isNull } from 'util';
-
 import { Howl } from 'howler';
 
 const alarmTrack = {
@@ -80,6 +79,7 @@ export class NotificationsService {
 
   constructor(
     private appSettingsService: AppSettingsService,
+
     ) {
     // Observe Notification configuration
     this.notificationServiceSettings = this.appSettingsService.getNotificationConfigService().subscribe(config => {
@@ -216,7 +216,6 @@ export class NotificationsService {
 
   /**
    * Checks all alarms for worst state, and sets any visualSev/AudioSev
-   * @returns
    */
   public checkAlarms() {
     // find worse alarm state
@@ -299,20 +298,20 @@ export class NotificationsService {
     return this.snackbarAppNotifications.asObservable();
   }
 
-/**
- * Processes SignalK Delta metadata containing Notifications information and
- * routes to Kip Notification system as Alarms and Notifications.
- *
- * @param path path of message ie. the subject of the message
- * @param notificationValue Content of the message. Must conform to ISignalKNotification interface.
- * @usageNotes This function is internal and should not be used.
- */
+  /**
+   * Processes SignalK Delta metadata containing Notifications information and
+   * routes to Kip Notification system as Alarms and Notifications.
+   *
+   * @param path path of message ie. the subject of the message
+   * @param notificationValue Content of the message. Must conform to ISignalKNotification interface.
+   * @usageNotes This function is internal and should not be used.
+   */
   public processNotificationDelta(path: string, notificationValue: ISignalKNotification) {
     if (this.notificationConfig.disableNotifications) {
       return;
     }
 
-    if (isNull(notificationValue)) {
+    if (notificationValue === null) {
       // Alarm removed/cleared on server.
       if (this.deleteAlarm(path)) {};
     } else {
@@ -359,16 +358,16 @@ export class NotificationsService {
     return player;
   }
 
-    /**
-   * mute Howl Player active track ei.: howlId. Note Howl howlId is not the
-   * same as Player Soundtrack TrackId which represents the selected sound file.
-   * @param state sound muted boolean state
-   */
-    mutePlayer(state) {
-      this.howlPlayer.mute(state, this.activeHowlId);
-      this.isHowlIdMuted = state;
-      this.checkAlarms(); //make sure to push updated info tro alarm menu
-    }
+  /**
+  * mute Howl Player active track ei.: howlId. Note Howl howlId is not the
+  * same as Player Soundtrack TrackId which represents the selected sound file.
+  * @param state sound muted boolean state
+  */
+  mutePlayer(state) {
+    this.howlPlayer.mute(state, this.activeHowlId);
+    this.isHowlIdMuted = state;
+    this.checkAlarms(); //make sure to push updated info tro alarm menu
+  }
 
    /**
    * play audio notification sound

@@ -11,9 +11,11 @@ export const DefaultAppConfig: IAppConfig = {
 
 export const DefaultConectionConfig: IConnectionConfig = {
   "signalKUrl": "", // get's overwritten with host at getDefaultConnectionConfig()
-  "useDeviceToken": true,
+  "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,
+  "useSharedConfig": true,
+  "sharedConfigName": "default"
 }
 
 export const DefaultWidgetConfig: IWidgetConfig = {

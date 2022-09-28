@@ -45,6 +45,11 @@ export class SignalKDeltaService {
           if (!this.signalKConnectionsStatus.websocket.hasToken && !this.appSettingsService.useDeviceToken) {
             this.appSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: true, isExpired: true});
           }
+
+          // See if on WebSocket open have a token of type session (ie. we have loged in successfully) and appSetting flag to load shared config
+          if (this.signalKConnectionsStatus.websocket.hasToken && this.appSettingsService.getSignalKToken().isSessionToken && this.appSettingsService.useSharedConfig) {
+            this.signalKService.getSharedConfig();
+          }
         }
       );
 

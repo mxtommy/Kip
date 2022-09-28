@@ -5,8 +5,6 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 import { AppSettingsService, SignalKToken, SignalKUrl } from './app-settings.service';
-import { SignalKService } from './signalk.service';
-import { SignalKFullService } from './signalk-full.service';
 import { NotificationsService } from './notifications.service';
 
 interface SignalKEndpointResponse {
@@ -29,10 +27,10 @@ interface SignalKEndpointResponse {
    * @usageNotes `operation` field describes the type of operation being
    * performed on the connections.
    * `0 = Never Stated` (app just started),
-   * `1 = Connecting to server`,
+   * `1 = Connecting to server using Local Config Storage`,
    * `2 = Active connection being reset` (issues on client, server killing client connection or network issue),
    * `3 = App URL Changed` - reconnecting,
-   * `4 = adding authorization token to WebSock`
+   * `4 = adding authorization token to WebSocket`
    */
 export interface SignalKStatus {
     server: {
@@ -89,6 +87,9 @@ export class SignalKConnectionService {
   endpointREST: string;
   endpointWS: string;
 
+  // REST
+  public messageREST$ = new Subject(); //REST Responses
+
   // Websocket
   private WS_RECONNECT_INTERVAL = 5000;                 // connection error retry interval
   private WS_CONNECTION_ARGUMENT = "?subscribe=all"; // default but we could use none + specific paths in the future
@@ -100,15 +101,12 @@ export class SignalKConnectionService {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //// constructor, mostly sub to stuff for changes.
   constructor(
-    //delete
-      private signalKService: SignalKService,
-      private signalKFullService: SignalKFullService,
       private appSettingsService: AppSettingsService,
       private notificationsService: NotificationsService,
-      private http: HttpClient,
+      private http: HttpClient
     )
   {
-
+    console.log("Connection service constructor called");
     // when signalKUrl changes, do stuff
     this.appSettingsService.getSignalKURLAsO().subscribe(
       newURL => {
@@ -130,6 +128,7 @@ export class SignalKConnectionService {
           this.currentSkStatus.operation = 1; // Startup connection
           this.resetSignalK();
         }
+
       }
     );
 
@@ -260,7 +259,7 @@ export class SignalKConnectionService {
           response => {
             this.currentSkStatus.rest.status = true;
             this.currentSkStatus.rest.message = response.status.toString();
-            this.signalKFullService.processFullUpdate(response.body);
+            this.messageREST$.next(response.body);
           },
           // When not ok, this runs...
           (err: HttpErrorResponse) => {
@@ -347,7 +346,6 @@ export class SignalKConnectionService {
   }
 
   postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
-
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
     url += "applicationData/" + scope +"/kip/1.0/"+ configName;
 
@@ -396,6 +394,7 @@ export class SignalKConnectionService {
       catchError(this.handleError<any>('getApplicationData'))
     );
   }
+
   /**
    * Handle Http operation that failed.
    * Let the app continue.

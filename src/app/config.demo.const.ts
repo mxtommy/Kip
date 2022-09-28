@@ -61,6 +61,8 @@ export const DemoConnectionConfig: IConnectionConfig = {
   "useDeviceToken": true,
   "loginName": null,
   "loginPassword": null,
+  "useSharedConfig": false,
+  "sharedConfigName": "default"
 }
 
 export const DemoThemeConfig: IThemeConfig = {

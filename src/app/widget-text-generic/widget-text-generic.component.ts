@@ -6,7 +6,6 @@ import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { AppSettingsService } from '../app-settings.service';
 import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
-import { isNull } from 'util';
 
 
 const defaultConfig: IWidgetConfig = {
@@ -203,11 +202,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
-      // start with large font, no sense in going bigger than the size of the canvas :) 
+      // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
       this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       let measure = this.canvasCtx.measureText(valueText).width;
-      
+
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;

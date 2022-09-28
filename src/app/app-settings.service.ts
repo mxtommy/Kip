@@ -11,7 +11,6 @@ import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultL
 import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig } from './config.demo.const';
-import { isNumber } from 'util';
 
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'modern-dark';
@@ -31,6 +30,8 @@ export interface IConnectionConfig {
   useDeviceToken: boolean;
   loginName: string;
   loginPassword: string;
+  useSharedConfig: boolean;
+  sharedConfigName: string;
 }
 
 export interface IThemeConfig {
@@ -103,10 +104,13 @@ export class AppSettingsService {
   unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
-  
+
   useDeviceToken: boolean = true;
   loginName: string;
   loginPassword: string;
+  useSharedConfig: boolean;
+  sharedConfigName: string;
+
 
   signalKToken: BehaviorSubject<SignalKToken>;
   kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
@@ -129,50 +133,62 @@ export class AppSettingsService {
 
     if (window.localStorage) {
       // localStorage supported
+      connectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
 
-      appConfig = JSON.parse(localStorage.getItem("appConfig"));
-
-      if (appConfig == null) {
-        console.log("Error loading App config, resetting and loading all default.");
-        localStorage.clear();
-        appConfig = this.getDefaultAppConfig();
+      if (connectionConfig === null) {
+        console.log("[AppSettings Service] No connectionConfig present in local storage. Loading default.");
         connectionConfig = this.getDefaultConnectionConfig();
-        widgetConfig = this.getDefaultWidgetConfig();
-        layoutConfig = this.getDefaultLayoutConfig();
-        themeConfig = this.getDefaultThemeConfig();
-        zonesConfig = { zones: [] };
       }
 
-      if (!isNumber(appConfig.configVersion) || (appConfig.configVersion != configVersion)) {
-        console.error("Invalid config version, resetting and loading all default.");
-        localStorage.clear();
-        appConfig = this.getDefaultAppConfig();
-        connectionConfig = this.getDefaultConnectionConfig();
-        widgetConfig = this.getDefaultWidgetConfig();
-        layoutConfig = this.getDefaultLayoutConfig();
-        themeConfig = this.getDefaultThemeConfig();
-        zonesConfig = { zones: [] };
+      if (connectionConfig.useSharedConfig && !connectionConfig.useDeviceToken) {
+        console.log("[AppSettings Service] Shared User Config enabled");
+        this.pushBasicConnection(connectionConfig);
+
       } else {
-        connectionConfig = this.loadLocalStorageConfig("connectionConfig")
-        widgetConfig = this.loadLocalStorageConfig("widgetConfig");
-        layoutConfig = this.loadLocalStorageConfig("layoutConfig");
-        themeConfig = this.loadLocalStorageConfig("themeConfig");
-        zonesConfig = this.loadLocalStorageConfig("zonesConfig");
-      }
+        console.log("[AppSettings Service] LocalStorage configuration enabled");
+        appConfig = JSON.parse(localStorage.getItem("appConfig"));
 
-      this.pushSettings(appConfig, connectionConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
+        if (appConfig === null) {
+          console.log("[AppSettings Service] Error loading App config, resetting and loading all default.");
+          localStorage.clear();
+          appConfig = this.getDefaultAppConfig();
+          connectionConfig = this.getDefaultConnectionConfig();
+          widgetConfig = this.getDefaultWidgetConfig();
+          layoutConfig = this.getDefaultLayoutConfig();
+          themeConfig = this.getDefaultThemeConfig();
+          zonesConfig = { zones: [] };
+        }
+
+        if ((typeof appConfig.configVersion !== 'number') || (appConfig.configVersion != configVersion)) {
+          console.error("[AppSettings Service] Invalid config version, resetting and loading all default.");
+          localStorage.clear();
+          appConfig = this.getDefaultAppConfig();
+          connectionConfig = this.getDefaultConnectionConfig();
+          widgetConfig = this.getDefaultWidgetConfig();
+          layoutConfig = this.getDefaultLayoutConfig();
+          themeConfig = this.getDefaultThemeConfig();
+          zonesConfig = { zones: [] };
+        } else {
+          widgetConfig = this.loadConfigFromLocalStorage("widgetConfig");
+          layoutConfig = this.loadConfigFromLocalStorage("layoutConfig");
+          themeConfig = this.loadConfigFromLocalStorage("themeConfig");
+          zonesConfig = this.loadConfigFromLocalStorage("zonesConfig");
+        }
+
+        this.pushSettings(appConfig, connectionConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
+      }
     } else {
-      console.log("***** LocalStorage NOT SUPPORTED by browser *****\nThis is required by Kip without user authentication configuration enabled...");
+      console.error("[AppSettings Service] LocalStorage NOT SUPPORTED by browser\nThis is a requirement to run Kip. See browser documentation to enable this feature.");
     }
   }
 
-  loadLocalStorageConfig(type: string) {
+  private loadConfigFromLocalStorage(type: string) {
     // we don't support AppConfig here. It needs a version check and full config invalidation.
     let config;
     config = JSON.parse(localStorage.getItem(type));
 
     if (config == null) {
-      console.log("Error loading " + type +  " config. Force loading " + type + " defaults.");
+      console.log("[AppSettings Service] Error loading " + type +  " config. Force loading " + type + " defaults.");
       switch (type) {
         case "connectionConfig":
           config = this.getDefaultConnectionConfig();
@@ -198,7 +214,7 @@ export class AppSettingsService {
     return config;
   }
 
-  private pushSettings(appConfig: IAppConfig, connectionConfig: IConnectionConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig, zonesConfig: IZonesConfig) {
+  private pushSettings(appConfig: IAppConfig, connectionConfig: IConnectionConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig, zonesConfig: IZonesConfig): void {
     this.themeName.next(themeConfig['themeName']);
 
     let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
@@ -212,6 +228,8 @@ export class AppSettingsService {
     this.useDeviceToken = connectionConfig.useDeviceToken;
     this.loginName = connectionConfig.loginName;
     this.loginPassword = connectionConfig.loginPassword;
+    this.useSharedConfig = connectionConfig.useSharedConfig;
+    this.sharedConfigName = connectionConfig.sharedConfigName;
     this.dataSets = appConfig.dataSets;
     this.unitDefaults.next(appConfig.unitDefaults);
     this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
@@ -220,6 +238,56 @@ export class AppSettingsService {
     this.zones.next(zonesConfig.zones);
     this.splitSets = layoutConfig.splitSets;
     this.rootSplits = layoutConfig.rootSplits;
+    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
+  }
+
+  private pushBasicConnection(connectionConfig: IConnectionConfig): void {
+    let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
+    let skToken: SignalKToken = {token: null, isNew: false, isSessionToken: false, isExpired: false};
+    let notificationConfig: INotificationConfig = {
+      disableNotifications: true,
+      menuGrouping: true,
+      security: {
+        disableSecurity:true
+      },
+      devices: {
+        showNormalState: false,
+        disableDevices: true
+      },
+      sound: {
+        disableSound: true,
+        muteNormal: true,
+        muteWarning: true,
+        muteAlert: true,
+        muteAlarm: true,
+        muteEmergency: true
+      },
+    }
+    let layoutConfig: ILayoutConfig = DefaultLayoutConfig;
+    let widgetConfig:IWidgetConfig = {
+      "widgets": [
+        {
+          "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
+          "type": "WidgetBlank",
+          "config": null
+        }
+      ]
+    };
+    //let themeConfig = this.getDefaultThemeConfig();
+    //let zonesConfig = { zones: [] };
+
+    this.signalKUrl.next(skUrl);
+    this.useDeviceToken = connectionConfig.useDeviceToken;
+    this.loginName = connectionConfig.loginName;
+    this.loginPassword = connectionConfig.loginPassword;
+    this.useSharedConfig = connectionConfig.useSharedConfig;
+    this.sharedConfigName = connectionConfig.sharedConfigName;
+    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(notificationConfig);
+    this.widgets = widgetConfig.widgets;
+    this.splitSets = layoutConfig.splitSets;
+    this.rootSplits = layoutConfig.rootSplits;
+    //TODO: need to find a way to keep this
+    //this.kipUUID = appConfig.kipUUID;
     this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
   }
 
@@ -442,6 +510,8 @@ export class AppSettingsService {
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
       loginPassword: this.loginPassword,
+      useSharedConfig: this.useSharedConfig,
+      sharedConfigName: this.sharedConfigName
     }
     return storageObject;
   }
@@ -497,7 +567,7 @@ export class AppSettingsService {
   }
 
   private saveThemeConfigToLocalStorage() {
-    console.log("S[AppSettings Service] aving Theme config to LocalStorage");
+    console.log("[AppSettings Service] Saving Theme config to LocalStorage");
     localStorage.setItem('themeConfig', JSON.stringify(this.buildThemeStorageObject()));
   }
 

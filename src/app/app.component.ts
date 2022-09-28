@@ -39,7 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
   connectionStatusSub: Subscription;
 
   constructor(
-    private AppSettingsService: AppSettingsService,
+    private appSettingsService: AppSettingsService,
     private DataSetService: DataSetService,
     private notificationsService: NotificationsService,
     private _snackBar: MatSnackBar,
@@ -50,11 +50,15 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
   ngOnInit() {
-    this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(
+    console.log("app.component OnInit called");
+
+    // Page layout area operations sub
+    this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }
     );
 
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    // Theme operations sub
+    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
       newTheme => {
         this.themeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
         if (this.themeName) {
@@ -63,11 +67,9 @@ export class AppComponent implements OnInit, OnDestroy {
         this.overlayContainer.getContainerElement().classList.add(newTheme);
         this.themeName = newTheme;
       }
-    )
-    this.DataSetService.startAllDataSets();
+    );
 
-
-    // Snackbar Notification Code
+    // Snackbar Notifications sub
     this.appNotificationSub = this.notificationsService.getSnackbarAppNotifications().subscribe(
 
       appNotification => {
@@ -76,7 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
           verticalPosition: 'top'
         });
 
-        if (!this.AppSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
+        if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
           let sound = new Howl({
             src: ['assets/notification.mp3'],
             autoUnlock: true,
@@ -101,7 +103,7 @@ export class AppComponent implements OnInit, OnDestroy {
           sound.play();
         }
       }
-    )
+    );
 
     // Connection Status Notification sub
     this.connectionStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(
@@ -110,8 +112,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     );
 
-
-    // add user login page here
+    this.DataSetService.startAllDataSets();
   }
 
   ngOnDestroy() {
@@ -135,15 +136,15 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   setTheme(theme: string) {
-    this.AppSettingsService.setThemName(theme);
+    this.appSettingsService.setThemName(theme);
   }
 
   setNightMode(nightMode: boolean) {
     this.isNightMode = nightMode;
     if (this.isNightMode) {
-      this.AppSettingsService.setThemName("nightMode");
+      this.appSettingsService.setThemName("nightMode");
     } else {
-      this.AppSettingsService.setThemName(this.AppSettingsService.getThemeName());
+      this.appSettingsService.setThemName(this.appSettingsService.getThemeName());
     }
   }
 
@@ -155,9 +156,8 @@ export class AppComponent implements OnInit, OnDestroy {
       console.log("Unlocking");
       this.unlockStatus = true;
     }
-    this.AppSettingsService.setUnlockStatus(this.unlockStatus);
+    this.appSettingsService.setUnlockStatus(this.unlockStatus);
   }
-
 
   newPage() {
     this.LayoutSplitsService.newRootSplit();

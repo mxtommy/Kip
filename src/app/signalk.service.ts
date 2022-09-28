@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject ,  BehaviorSubject, Subscription } from 'rxjs';
+import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import * as compareVersions from 'compare-versions';
 
-import { AppSettingsService, IZone, ZoneState } from './app-settings.service';
+import { AppSettingsService, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig, IZone, ZoneState } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
+import { SignalKConnectionService } from './signalk-connection.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 
 import * as Qty from 'js-quantities';
@@ -65,8 +66,11 @@ export class SignalKService {
 
   constructor(
     private appSettingsService: AppSettingsService,
-    private UnitService: UnitsService,
-    private NotificationsService: NotificationsService) {
+    private notificationsService: NotificationsService,
+    private signalKConnectionService: SignalKConnectionService,
+    private unitService: UnitsService,
+  )
+  {
     //every second update the stats for seconds array
     setInterval(() => {
 
@@ -96,7 +100,9 @@ export class SignalKService {
         this.defaultUnits = newDefaults;
       }
     );
-    this.conversionList = this.UnitService.getConversions();
+
+    this.conversionList = this.unitService.getConversions();
+
     this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
       this.zones = zones;
     });
@@ -180,8 +186,35 @@ export class SignalKService {
     return this.serverVersion.asObservable();
   }
 
-  getServerSupportApplicationDataAsO() {
+  public getServerSupportApplicationDataAsO() {
     return this.serverSupportApplicationData.asObservable();
+  }
+
+  public getPossibleConfigs(): any[] {
+    let possibleConfigs = [];
+
+    this.signalKConnectionService.getApplicationDataKeys('global').subscribe(configNames => {
+      for(let cname of configNames) {
+        possibleConfigs.push({ scope: 'global', name: cname });
+      }
+    });
+    this.signalKConnectionService.getApplicationDataKeys('user').subscribe(configNames => {
+      for(let cname of configNames) {
+        possibleConfigs.push({ scope: 'user', name: cname });
+      }
+    });
+    return possibleConfigs;
+  }
+
+  public getSharedConfig() {
+    console.log("[SignalK Service] Loading server configuration");
+    let appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
+    let connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
+    let widgetJSONConfig = JSON.stringify(this.appSettingsService.getWidgetConfig(), null, 2);
+    let layoutJSONConfig = JSON.stringify(this.appSettingsService.getLayoutConfig(), null, 2);
+    let themeJSONConfig = JSON.stringify(this.appSettingsService.getThemeConfig(), null, 2);
+    let zonesJSONConfig = JSON.stringify(this.appSettingsService.getZonesConfig(), null, 2);
+
   }
 
   updatePathData(path: string, source: string, timestamp: number, value: any) {
@@ -226,7 +259,7 @@ export class SignalKService {
       if (zone.path != pathSelf) { return; }
       let lower = zone.lower || -Infinity;
       let upper = zone.upper || Infinity;
-      let convertedValue = this.UnitService.convertUnit(zone.unit, value);
+      let convertedValue = this.unitService.convertUnit(zone.unit, value);
       if (convertedValue >= lower && convertedValue <= upper) {
         //in zone
         state = Math.max(state, zone.state);
@@ -254,7 +287,7 @@ export class SignalKService {
 
 
       //start
-      this.NotificationsService.addAlarm(pathSelf, {
+      this.notificationsService.addAlarm(pathSelf, {
         method: methods,
         state: stateString,
         message: pathSelf + ' value in ' + stateString,
@@ -265,7 +298,7 @@ export class SignalKService {
     // if we're in alarm, and new state is not alarm, stop the alarm
     // @ts-ignore
     if (this.paths[pathIndex].state != ZoneState.normal && state == ZoneState.normal) {
-      this.NotificationsService.deleteAlarm(pathSelf);
+      this.notificationsService.deleteAlarm(pathSelf);
     }
 
     this.paths[pathIndex].state = state;
