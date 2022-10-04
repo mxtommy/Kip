@@ -84,12 +84,18 @@ export class UnitsService {
       { measure: 'V', description: "Volts"},
       { measure: 'mV', description: "Millivolts"} 
     ] },
-    { group: 'Charge', units: [ { measure: 'C', description: "Current"} ] },
+    { group: 'Charge', units: [ 
+      { measure: 'C', description: "Coulomb"},
+      { measure: 'Ah', description: "Ampere*Hours"},
+    ] },
     { group: 'Power', units: [ 
       { measure: 'W', description: "Watts"},
       { measure: 'mW', description: "Milliwatts"},
     ] },
-    { group: 'Energy', units: [ { measure: 'J', description: "Joules"} ] },
+    { group: 'Energy', units: [ 
+      { measure: 'J', description: "Joules"},
+      { measure: 'kWh', description: "Kilo-Watt*Hours"},
+    ] },
     { group: 'Pressure', units: [
       { measure: 'Pa', description: "Pascal (default)" },
       { measure: 'bar', description: "Bars" },
@@ -194,11 +200,13 @@ this.conversionList[group].push(unit);
     "mA": function(v) { return v*1000; },
 // charge
     "C": function(v) { return v; },
+    "Ah": Qty.swiftConverter('C', 'Ah'),
 // Power
     "W": function(v) { return v; },
     "mW": function(v) { return v*1000; },
 // Energy
     "J": function(v) { return v; },
+    "kWh": Qty.swiftConverter('J', 'kWh'),
 //  pressure
     "Pa": function(v) { return v; },
     "bar": Qty.swiftConverter('Pa', 'bar'),
