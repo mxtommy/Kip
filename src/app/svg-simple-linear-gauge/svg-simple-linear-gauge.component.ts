@@ -40,7 +40,7 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges {
         let scaleSliceValue = 195 / scaleRange;
 
         this.oldGaugeValue = this.newGaugeValue;
-        this.newGaugeValue = changes.gaugeValue.currentValue * scaleSliceValue;
+        this.newGaugeValue = (changes.gaugeValue.currentValue - this.gaugeMinValue) * scaleSliceValue;
 
         this.gaugeBarAnimate.nativeElement.beginElement();
       }
