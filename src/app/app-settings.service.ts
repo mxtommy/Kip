@@ -21,13 +21,7 @@ export interface SignalKUrl {
   url: string;
   new: boolean;
 }
-/* export interface SignalKToken {
-  token: string;
-  timeToLive?: number; // not yet implemented by sk but part of the specs
-  isExpired: boolean;
-  isNew: boolean;
-  isSessionToken: boolean;
-} */
+
 @Injectable()
 export class AppSettingsService {
   signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
@@ -35,7 +29,7 @@ export class AppSettingsService {
   unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
 
-  useDeviceToken: boolean = true;
+  useDeviceToken: boolean = false;
   loginName: string;
   loginPassword: string;
   useSharedConfig: boolean;
@@ -105,10 +99,10 @@ export class AppSettingsService {
       } else {
         if (serverConfig) {
           //TODO: Make use of Config parent object everywhere
-          widgetConfig = serverConfig.widgetConfig;
-          layoutConfig = serverConfig.layoutConfig;
-          themeConfig = serverConfig.themeConfig;
-          zonesConfig = serverConfig.zonesConfig;
+          widgetConfig = serverConfig.widget;
+          layoutConfig = serverConfig.layout;
+          themeConfig = serverConfig.theme;
+          zonesConfig = serverConfig.zones;
         } else {
           widgetConfig = this.loadConfigFromLocalStorage("widgetConfig");
           layoutConfig = this.loadConfigFromLocalStorage("layoutConfig");

@@ -5,11 +5,11 @@ import { IUnitDefaults } from './units.service';
 
 export interface IConfig {
   app: IAppConfig;
-  widgetConfig: IWidgetConfig;
-  layoutConfig: ILayoutConfig;
-  themeConfig: IThemeConfig;
-  zonesConfig: IZonesConfig;
-  connectionConfig: IConnectionConfig;
+  widget: IWidgetConfig;
+  layout: ILayoutConfig;
+  theme: IThemeConfig;
+  zones: IZonesConfig;
+  connection: IConnectionConfig;
 }
 
 export interface IAppConfig {
