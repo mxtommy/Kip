@@ -49,7 +49,27 @@
   </tr>
   <tr>
     <td>
-      Status:
+      Authorization:
+    </td>
+    <td>
+      <div *ngIf="authToken">
+
+        <div *ngIf="!authToken.isDeviceAccessToken">
+          Type: Session
+        </div>
+        <div *ngIf="authToken.isDeviceAccessToken">
+          Type: Device Access
+        </div>
+        Token: {{authToken.token| slice : 0 : 20}}...
+      </div>
+      <div *ngIf="!authToken">
+        No Authorization Token
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      API Endpoint:
     </td>
     <td>
       <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
@@ -59,17 +79,7 @@
   </tr>
   <tr>
     <td>
-      Websocket:
-    </td>
-    <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
-      {{ signalKConnectionsStatus.websocket.message }}
-    </td>
-  </tr>
-  <tr>
-    <td>
-      REST:
+      Full Document:
     </td>
     <td>
       <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
@@ -79,23 +89,12 @@
   </tr>
   <tr>
     <td>
-      Token:
+      Data Stream:
     </td>
     <td>
-      <div *ngIf="authToken">
-        <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" ></i>
-        <div *ngIf="!authToken.isDeviceAccessToken">
-          Token Type: Login
-        </div>
-        <div *ngIf="authToken.isDeviceAccessToken">
-          Token Type: Device Access
-        </div>
-        <br/>Token: {{authToken.token| slice : 0 : 20}}...
-      </div>
-      <div *ngIf="!authToken">
-        <i class="fa-solid fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
-        No Authorization Token
-      </div>
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
+      {{ signalKConnectionsStatus.websocket.message }}
     </td>
   </tr>
 </table>
