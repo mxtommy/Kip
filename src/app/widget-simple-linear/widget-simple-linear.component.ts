@@ -4,11 +4,11 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: "Display Name",
   filterSelfPaths: true,
   paths: {
@@ -48,7 +48,7 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   public unitsLabel:string = "";
   public dataValue: string = "0";

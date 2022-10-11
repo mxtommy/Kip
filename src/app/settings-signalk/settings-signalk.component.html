@@ -84,13 +84,13 @@
     <td>
       <div *ngIf="authToken">
         <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" ></i>
-        <div *ngIf="isLoggedIn">
+        <div *ngIf="!authToken.isDeviceAccessToken">
           Token Type: Login
         </div>
-        <div *ngIf="!isLoggedIn">
+        <div *ngIf="authToken.isDeviceAccessToken">
           Token Type: Device Access
         </div>
-        <br/>Token: {{authToken | slice : 0 : 20}}...
+        <br/>Token: {{authToken.token| slice : 0 : 20}}...
       </div>
       <div *ngIf="!authToken">
         <i class="fa-solid fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>

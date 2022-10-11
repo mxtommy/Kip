@@ -115,7 +115,8 @@ const appRoutes: Routes = [
  * @return {*} Promise once AppInitService is done
  */
 const appInitializerFn = (appInitService: AppInitService) => {
-  return () => appInitService.initAppConfig().then(res => {
+  return () => appInitService.initAppConfig()
+  .then(res => {
     console.log("return response value: " + JSON.stringify(res));
   })
   .catch(error => {

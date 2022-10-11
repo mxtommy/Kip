@@ -1,5 +1,4 @@
-import { IAppConfig, IThemeConfig, IWidgetConfig, ILayoutConfig } from './app-settings.service';
-import { IConnectionConfig } from "./app-init.interfaces";
+import { IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig } from "./app-settings.interfaces"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {

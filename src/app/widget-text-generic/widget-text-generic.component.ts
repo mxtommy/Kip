@@ -5,10 +5,10 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { AppSettingsService } from '../app-settings.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -36,7 +36,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   activeWidget: IWidget;
-    config: IWidgetConfig;
+    config: IWidgetSvcConfig;
 
   dataValue: any = null;
 

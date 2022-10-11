@@ -1,5 +1,6 @@
 import { startWith } from 'rxjs/operators';
-import { ZoneState } from './app-settings.service';
+import { ZoneState } from './app-settings.interfaces';
+
 
 
 // Metadata, Notification and Stream Subscription type restrictions.

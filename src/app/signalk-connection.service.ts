@@ -6,7 +6,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 
 import { AppSettingsService, SignalKUrl } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
-import { AuththeticationService , AuthorizationToken } from './auththetication.service';
+import { AuththeticationService , IAuthorizationToken } from './auththetication.service';
 
 interface SignalKEndpointResponse {
     endpoints: {
@@ -84,7 +84,7 @@ export class SignalKConnectionService {
 
   // Main URL Variables
   signalKURL: SignalKUrl;
-  authToken: AuthorizationToken = null;
+  authToken: IAuthorizationToken = null;
   endpointREST: string;
   endpointWS: string;
 
@@ -129,12 +129,14 @@ export class SignalKConnectionService {
     );
 
     // When token changes, reconnect WebSocket with new token
-    this.auththeticationService.authToken$.subscribe((token: AuthorizationToken) => {
+    this.auththeticationService.authToken$.subscribe((token: IAuthorizationToken) => {
       if (this.authToken != token) {
         this.authToken = token;
-        console.log("[Connection Service] Reloading WebSockets with Authorization...");
-        this.closeWS();
-        this.connectWS();
+        /* console.log("[Connection Service] Loading WebSockets with Authorization...");
+        if (this.socketWS$) {
+          this.closeWS();
+        }
+        this.connectWS();*/
       }
     });
 
@@ -205,6 +207,9 @@ export class SignalKConnectionService {
         this.currentSkStatus.server.version = response.body.server.id + " " + response.body.server.version;
 
         this.callREST();
+        if (this.socketWS$) {
+          this.closeWS();
+        }
         this.connectWS();
         this.signalKStatus.next(this.currentSkStatus);
       },

@@ -5,6 +5,7 @@ import { AppSettingsService } from './app-settings.service';
 import { IDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
+import { AuththeticationService } from './auththetication.service';
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
@@ -38,6 +39,7 @@ export class SignalkRequestsService {
     private signalKDeltaService: SignalKDeltaService,
     private appSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
+    private auth: AuththeticationService,
     ) {
       // Observer to get all signalk-delta messages of type request type.
       const requestsSub: Subscription = this.signalKDeltaService.subscribeRequest().subscribe(
@@ -171,10 +173,9 @@ export class SignalkRequestsService {
         }
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false, isExpired: false});
-          this.appSettingsService.setUseDeviceToken(true);
-          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Token received from server.");
-          console.log("[Request Service] " + delta.accessRequest.permission + ": Device Token received");
+          this.auth.setDeviceAccessToken(delta.accessRequest.token);
+          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
+          console.log("[Request Service] " + delta.accessRequest.permission + ": Device Access Token received");
 
         } else if (delta.login !== undefined) {
 

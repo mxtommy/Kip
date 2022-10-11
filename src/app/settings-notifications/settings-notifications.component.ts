@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { AppSettingsService, INotificationConfig } from '../app-settings.service';
+import { INotificationConfig } from '../app-settings.interfaces';
+import { AppSettingsService } from '../app-settings.service';
 import { NotificationsService } from '../notifications.service';
 
 

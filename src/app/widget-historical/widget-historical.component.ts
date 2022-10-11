@@ -7,11 +7,11 @@ import { Subscription } from 'rxjs';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 
 import { dataPoint, DataSetService } from '../data-set.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   convertUnitTo: "unitless",
@@ -46,7 +46,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   chartCtx;
   chart = null;

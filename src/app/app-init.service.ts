@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 */
 import { Injectable, Injector } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { IConnectionConfig } from "./app-init.interfaces";
+import { IConnectionConfig, IConfig } from "./app-settings.interfaces";
 import { AuththeticationService } from './auththetication.service';
 
 
@@ -28,7 +28,7 @@ const serverAppDataPath = '/kip/1.0/';
 export class AppInitService {
   private localStorageConnectionConfig: IConnectionConfig = null;
   private isLoggedIn;
-  private appConfig = null;
+  private appConfig: IConfig = null;
   private http = this.injector.get(HttpClient);
 
   constructor (
@@ -42,12 +42,12 @@ export class AppInitService {
   }
 
   initAppConfig() {
-    let config = this.loadLocalStorageConfig();
-    return config;
+    let cfg = this.loadLocalStorageConfig();
+    return cfg;
 
 }
 
-  private loadLocalStorageConfig(): Promise<any> {
+  private loadLocalStorageConfig(): Promise<IConfig> {
     this.localStorageConnectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
 
     if (!this.localStorageConnectionConfig) {
@@ -72,16 +72,21 @@ export class AppInitService {
           && this.localStorageConnectionConfig.loginPassword) {
 
         if (!this.isLoggedIn) {
-          this.auth
+
+          let test = this.auth.login2(this.localStorageConnectionConfig.loginName, this.localStorageConnectionConfig.loginPassword);
+          /* this.auth
           .login(this.localStorageConnectionConfig.loginName, this.localStorageConnectionConfig.loginPassword)
           .subscribe((loginResponse) => {
 
             console.log(loginResponse);
+            return this.getApplicationConfig();
             //TODO: route to appropriate page and handle error
 
-          });
+          }); */
+
+        } else {
+          return this.getApplicationConfig();
         }
-        return this.getApplicationConfig();
 
       } else {
         return Promise.reject("[AppInit Service] Required settings for user shared configuration missing in LocalStorage Config. Configure 'User Credentials' settings in: Configuration -> Settings -> SignalK tab");

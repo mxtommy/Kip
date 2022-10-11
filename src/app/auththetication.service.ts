@@ -1,11 +1,12 @@
 import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, timer, Observable, throwError } from 'rxjs';
+import { Injectable, Pipe } from '@angular/core';
+import { BehaviorSubject, timer, throwError, Observable } from 'rxjs';
 import { filter, map, shareReplay, switchMap, tap } from "rxjs/operators";
 
-export interface AuthorizationToken {
+export interface IAuthorizationToken {
   expiry: number;
   token: string;
+  isDeviceAccessToken: boolean;
 }
 
 const serverLoginPath = '/signalk/v1/auth/login';
@@ -26,7 +27,7 @@ const httpOptions = {
 export class AuththeticationService {
   private _IsLoggedIn$ = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
-  private _authToken$ = new BehaviorSubject<AuthorizationToken>(null);
+  private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
   public authToken$ = this._authToken$.asObservable();
   private serverUrl: string = null;
 
@@ -35,52 +36,72 @@ export class AuththeticationService {
     )
   {
     // load local storage token
-    const token: AuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
+    const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
     if (token) {
       if (this.isTokenExpired(token.expiry)) {
-        console.warn('[Authentication Service] User session Token expired. Flushing storage token');
+        console.warn('[Authentication Service] User session Token expired. Deleting token');
         localStorage.removeItem('authorization_token');
       } else {
         this._IsLoggedIn$.next(!!token);
         this._authToken$.next(token);
-        console.log('[Authentication Service] Storage Authorization Token enabled');
+        if (token.isDeviceAccessToken)
+          console.log('[Authentication Service] Device Access Token found in Local Storage');
+          else
+          console.log('[Authentication Service] User Authorization Token found in Local Storage');
       }
     }
 
     // Subcribe to token Subject to handle token expiration and renewal
     this._authToken$.pipe(
-      filter((token: AuthorizationToken) => !!token),
-        map((token: AuthorizationToken) => token.expiry),
+      filter((token: IAuthorizationToken) => !!token),
+        map((token: IAuthorizationToken) => token.expiry),
         switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry-1))),
       )
       .subscribe(() => {
-        let token: AuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
+        let token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
 
-        if (this.isTokenExpired(token.expiry)) {
-          console.warn('[Authentication Service] User session Token expired');
-
+        if (token.isDeviceAccessToken) {
+          console.error('[Authentication Service] Device Access Token expired. Manually renew token using SignalK Connection Tab');
         } else {
-          console.log('[Authentication Service] User session Token expires soon. Renewing token.');
-          console.log("[Authentication Service] \nToken Expiry" + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry - 1)); // renew 1 min before expiration
 
-          this.renewToken()
-            .subscribe((validateTokenResponse) => {
-              const keys = validateTokenResponse.headers.keys();
-              let headers = keys.map(key =>
-                `${key}: ${validateTokenResponse.headers.get(key)}`);
+          if (this.isTokenExpired(token.expiry)) {
+            console.warn('[Authentication Service] User session Token expired');
 
-                //TODO: test and fix renewToken!
+          } else {
+            console.log('[Authentication Service] User session Token expires soon. Renewing token.');
+            console.log("[Authentication Service] \nToken Expiry" + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry - 1)); // renew 1 min before expiration
 
-              console.log({ ...validateTokenResponse.body! });
-              console.log(validateTokenResponse.headers.get('authorization'));
-              this.setSession(validateTokenResponse.headers.get('authorization'));
-            });
+            this.renewToken()
+              .subscribe((validateTokenResponse) => {
+                const keys = validateTokenResponse.headers.keys();
+                let headers = keys.map(key =>
+                  `${key}: ${validateTokenResponse.headers.get(key)}`);
+
+                  //TODO: test and fix renewToken!
+
+                console.log({ ...validateTokenResponse.body! });
+                console.log(validateTokenResponse.headers.get('authorization'));
+                this.setSession(validateTokenResponse.headers.get('authorization'));
+              });
+          }
         }
       }
     );
   }
 
-  public login(usr:string, pwd:string, newUrl?: string) {
+  public login2(usr:string, pwd:string, newUrl?: string)  {
+    let result;
+
+    return this.http.post<HttpResponse<any>>(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'})
+      .subscribe((loginResponse: HttpResponse<any>) => {
+        this.setSession(loginResponse.body.token);
+        result = loginResponse.status;
+
+      });
+
+  }
+
+  public login(usr:string, pwd:string, newUrl?: string): Observable<HttpResponse<any>> {
     if (newUrl) {
       if ((this.serverUrl != newUrl) && this.serverUrl) {
         this.deleteToken();
@@ -128,17 +149,17 @@ export class AuththeticationService {
   private setSession(token: string): void {
     if (!!token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-      let authorizationToken: AuthorizationToken = {
-        'token' : null, 'expiry' : null
+      let authorizationToken: IAuthorizationToken = {
+        'token' : null, 'expiry' : null, 'isDeviceAccessToken' : false
       };
 
       if (this.isTokenExpired(expiry)) {
-        console.log("[Authentication Service] Received expired Token from server");
+        console.log("[Authentication Service] Received expired Session Token from server");
 
       } else {
         authorizationToken.token = token;
         authorizationToken.expiry = expiry;
-        console.log("[Authentication Service] Authorization Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
+        console.log("[Authentication Service] Session Authorization Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
         this._IsLoggedIn$.next(true);
         this._authToken$.next(authorizationToken);
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
@@ -192,11 +213,32 @@ export class AuththeticationService {
     this._authToken$.next(null);
   }
 
-  private deleteToken() {
-    console.log('[Authentication Service] Deleting both in-memory and storage token');
+  public deleteToken() {
+    console.log('[Authentication Service] Deleting Authorization token');
     localStorage.removeItem('authorization_token');
     this._IsLoggedIn$.next(false);
     this._authToken$.next(null);
+  }
+
+  public setDeviceAccessToken(token: string): void {
+    if (token) {
+      const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
+      let authorizationToken: IAuthorizationToken = {
+        'token' : null, 'expiry' : null, 'isDeviceAccessToken' : true
+      };
+
+      if (this.isTokenExpired(expiry)) {
+        console.log("[Authentication Service] Received expired Device Access Token from server");
+
+      } else {
+        authorizationToken.token = token;
+        authorizationToken.expiry = expiry;
+        console.log("[Authentication Service] Device Access Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
+        this._IsLoggedIn$.next(false);
+        this._authToken$.next(authorizationToken);
+        localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
+      }
+    }
   }
 
   /**

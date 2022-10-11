@@ -1,18 +1,17 @@
-import { AuththeticationService } from './../auththetication.service';
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
 import { MatDialog } from '@angular/material/dialog';
 
-import { AppSettingsService, SignalKToken} from '../app-settings.service';
-import { IConnectionConfig } from "../app-init.interfaces";
+import { AppSettingsService } from '../app-settings.service';
+import { IConnectionConfig } from "../app-settings.interfaces";
 import { SignalKConnectionService, SignalKStatus } from '../signalk-connection.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 import { NotificationsService } from '../notifications.service';
 import { SignalKService } from '../signalk.service';
+import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NG_VALIDATORS } from '@angular/forms';
 
 
 @Component({
@@ -28,7 +27,7 @@ export class SettingsSignalkComponent implements OnInit {
   connectionConfig: IConnectionConfig;
 
   authToken$: Subscription;
-  authToken: string;
+  authToken: IAuthorizationToken;
   isLoggedIn$: Subscription;
   isLoggedIn: boolean;
 
@@ -62,10 +61,9 @@ export class SettingsSignalkComponent implements OnInit {
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
 
     // Token Sub
-    this.authToken$ = this.auth.authToken$.subscribe(authToken => {
-      if (authToken) {
-        let token = authToken;
-        this.authToken = token.token;
+    this.authToken$ = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
+      if (token) {
+        this.authToken = token;
       } else this.authToken = null;
     });
 
@@ -122,12 +120,20 @@ export class SettingsSignalkComponent implements OnInit {
       this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
       if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
+      } else if (this.authToken.isDeviceAccessToken) {
+        this.auth.deleteToken();
       }
 
     } else {
       this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: false});
-      if (this.connectionConfig.useSharedConfig) {
-        this.serverLogin();
+
+      if ((this.authToken && this.authToken.isDeviceAccessToken) && this.connectionConfig.useSharedConfig) {
+        this.auth.deleteToken();
+        this.serverLogin(this.connectionConfig.signalKUrl);
+      } else if (this.connectionConfig.useSharedConfig) {
+        this.serverLogin(this.connectionConfig.signalKUrl);
+      } else if (this.authToken) {
+        this.auth.deleteToken();
       }
 
     }
@@ -140,9 +146,7 @@ export class SettingsSignalkComponent implements OnInit {
       .login(this.connectionConfig.loginName, this.connectionConfig.loginPassword, newUrl)
       .subscribe(
         loginResponse => {
-        //TODO: route to appropriate page
-        //this.router.navigate(['/page', 0]);
-
+        //add logic as needed
       },
       error => {
         let errResponse:HttpErrorResponse = error;

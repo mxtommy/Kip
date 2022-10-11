@@ -5,10 +5,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -39,7 +39,7 @@ export class WidgetStateComponent implements OnInit, OnDestroy {
 
   valueSub: Subscription = null;
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   state: boolean = null;
   pressed = false;

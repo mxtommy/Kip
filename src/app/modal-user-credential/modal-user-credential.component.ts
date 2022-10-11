@@ -1,8 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-
-import { IConnectionConfig } from '../app-init.interfaces';
+import { IConnectionConfig } from '../app-settings.interfaces';
 
 @Component({
   selector: 'app-modal-user-credential',

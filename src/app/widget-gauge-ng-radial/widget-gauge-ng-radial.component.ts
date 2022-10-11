@@ -5,12 +5,13 @@ import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalKService } from '../signalk.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-import { AppSettingsService, IZone, ZoneState } from '../app-settings.service';
+import { AppSettingsService } from '../app-settings.service';
 import { RadialGauge, RadialGaugeOptions } from '../gauges-module/radial-gauge';
+import { IZone, ZoneState } from '../app-settings.interfaces';
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -39,7 +40,7 @@ interface IDataHighlight extends Array<{
     to : number;
     color: string;
   }> {};
-  
+
 @Component({
   selector: 'app-widget-gauge-ng-radial',
   templateUrl: './widget-gauge-ng-radial.component.html',
@@ -64,7 +65,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   public dataValue = 0;
   valueSub: Subscription = null;
@@ -175,8 +176,8 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   // Subscribe to Zones
   subscribeZones() {
     this.zonesSub = this.AppSettingsService.getZonesAsO().subscribe(
-      zones => { 
-        this.zones = zones; 
+      zones => {
+        this.zones = zones;
         this.updateGaugeConfig();
       });
   }
@@ -260,7 +261,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
       if (zone.path == this.config.paths['gaugePath'].path) {
         let lower = zone.lower || this.config.minValue;
         let upper = zone.upper || this.config.maxValue;
-        let color: string; 
+        let color: string;
         switch (zone.state) {
           case 1:
             color = getComputedStyle(this.warnElement.nativeElement).color;
@@ -270,12 +271,12 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
             break;
           default:
             color = getComputedStyle(this.primaryElement.nativeElement).color;
-        }        
-        
+        }
+
         myZones.push({from: lower, to: upper, color: color});
       }
     });
-    this.gaugeOptions.highlights = myZones;    
+    this.gaugeOptions.highlights = myZones;
 
     // Config storage values
     this.gaugeOptions.valueInt = this.config.numInt;
@@ -408,7 +409,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.startAngle = 180;
         this.gaugeOptions.exactTicks = false;
         this.gaugeOptions.strokeTicks = false;
-         
+
         this.gaugeOptions.majorTicks = this.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
         this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;

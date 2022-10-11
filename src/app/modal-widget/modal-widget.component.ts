@@ -5,7 +5,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { IUnitGroup } from '../units.service';
 import { SignalKService } from '../signalk.service';
 import { DataSetService, IDataSet } from '../data-set.service';
-import { IWidgetConfig } from '../widget-manager.service';
+import { IWidgetSvcConfig } from '../widget-manager.service';
 
 
 @Component({
@@ -25,7 +25,7 @@ export class ModalWidgetComponent implements OnInit {
     public dialogRef:MatDialogRef<ModalWidgetComponent>,
     private DataSetService: DataSetService,
     private signalKService: SignalKService,
-    @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetConfig
+    @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
   ) { }
 
   ngOnInit() {

@@ -1,5 +1,4 @@
-import { IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from "./app-settings.service";
-import { IConnectionConfig } from "./app-init.interfaces";
+import { IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig } from "./app-settings.interfaces"
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 8,

@@ -4,12 +4,13 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-import { AppSettingsService, ZoneState } from '../app-settings.service';
+import { AppSettingsService } from '../app-settings.service';
+import { ZoneState } from "../app-settings.interfaces";
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -44,7 +45,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   dataValue: number = null;
   zoneState: ZoneState = null;
@@ -134,7 +135,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
         this.zoneState = newValue.state;
         //start flashing if alarm
         if (this.zoneState == ZoneState.alarm && !this.flashInterval) {
-          this.flashInterval = setInterval(() => { 
+          this.flashInterval = setInterval(() => {
             this.flashOn = !this.flashOn;
             this.updateCanvas();
           }, 350); // used to flash stuff in alarm
@@ -253,11 +254,11 @@ unsubscribeTheme(){
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
-      // start with large font, no sense in going bigger than the size of the canvas :) 
+      // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
       this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       let measure = this.canvasCtx.measureText(valueText).width;
-      
+
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
@@ -309,11 +310,11 @@ unsubscribeTheme(){
     // set font small and make bigger until we hit a max.
     if (this.config.displayName === null) { return; }
 
-    // start with large font, no sense in going bigger than the size of the canvas :) 
+    // start with large font, no sense in going bigger than the size of the canvas :)
     var fontSize = maxTextHeight;
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     let measure = this.canvasBGCtx.measureText(this.config.displayName).width;
-    
+
     // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
     if (measure > maxTextWidth) {
       let estimateRatio = maxTextWidth / measure;
@@ -341,11 +342,11 @@ unsubscribeTheme(){
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
 
-    // start with large font, no sense in going bigger than the size of the canvas :) 
+    // start with large font, no sense in going bigger than the size of the canvas :)
     var fontSize = maxTextHeight;
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     let measure = this.canvasBGCtx.measureText(this.config.paths['numericPath'].convertUnitTo).width;
-    
+
     // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
     if (measure > maxTextWidth) {
       let estimateRatio = maxTextWidth / measure;
@@ -402,11 +403,11 @@ unsubscribeTheme(){
       var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.6));
       var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.85));
 
-      // start with large font, no sense in going bigger than the size of the canvas :) 
+      // start with large font, no sense in going bigger than the size of the canvas :)
       this.minMaxFontSize = maxTextHeight;
       this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
       let measure = this.canvasBGCtx.measureText(valueText).width;
-      
+
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;

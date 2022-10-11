@@ -5,10 +5,10 @@ import { Format, Policy } from "./signalk-interfaces";
 export interface IWidget {
   uuid: string;
   type: string;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 }
 
-export interface IWidgetConfig {
+export interface IWidgetSvcConfig {
   displayName?: string;
   filterSelfPaths?: boolean; //widget filter self paths only?
   paths?: {

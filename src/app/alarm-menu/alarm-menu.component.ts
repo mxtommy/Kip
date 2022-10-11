@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NotificationsService, Alarm, IAlarmInfo } from '../notifications.service';
-import { AppSettingsService, INotificationConfig } from '../app-settings.service';
+import { AppSettingsService } from '../app-settings.service';
 import { Subscription } from 'rxjs';
+import { INotificationConfig } from '../app-settings.interfaces';
 
 
 

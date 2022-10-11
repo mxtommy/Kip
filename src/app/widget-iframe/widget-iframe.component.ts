@@ -5,9 +5,9 @@ import { MatDialog } from '@angular/material/dialog';
 
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   widgetUrl: null
 };
 
@@ -21,7 +21,7 @@ export class WidgetIframeComponent implements OnInit {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
 
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   widgetUrl: string = null;
   activeWidget: IWidget;

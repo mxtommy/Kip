@@ -44,21 +44,24 @@ export class AppComponent implements OnInit, OnDestroy {
   connectionStatusSub: Subscription;
 
   constructor(
-    //we only init the following service so they don't loose messages from SignalKConnectionService
-    private signalKDeltaService: SignalKDeltaService,
-    private signalkRequestsService: SignalkRequestsService,
-    private signalKFullService: SignalKFullService,
-    // do not remove above
+
 
     public appSettingsService: AppSettingsService,
+    private router: Router,
+
     private DataSetService: DataSetService,
     private notificationsService: NotificationsService,
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService,
-    private signalKConnectionService: SignalKConnectionService,
-    private router: Router,
+
     public auththeticationService: AuththeticationService,
+      //we only init the following service so they don't loose messages from SignalKConnectionService
+      private signalKDeltaService: SignalKDeltaService,
+      private signalkRequestsService: SignalkRequestsService,
+      private signalKFullService: SignalKFullService,
+      // do not remove above
+    private signalKConnectionService: SignalKConnectionService,
     ) { }
 
 
@@ -126,9 +129,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.DataSetService.startAllDataSets();
 
     // Subscribe to logged in status and route on conditions
+    //TODO: see if needed in some cases
     this.auththeticationService.isLoggedIn$.subscribe( (loggedIn) => {
       if (!loggedIn && this.appSettingsService.useSharedConfig) {
-        this.router.navigate(['/login']);
+        //this.router.navigate(['/login']);
       }
     });
   }

@@ -5,8 +5,10 @@ import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { ISignalKNotification } from "./signalk-interfaces";
-import { AppSettingsService, INotificationConfig } from "./app-settings.service";
+import { AppSettingsService } from "./app-settings.service";
+import { INotificationConfig } from './app-settings.interfaces';
 import { Howl } from 'howler';
+
 
 const alarmTrack = {
   1000 : 'notification', //filler

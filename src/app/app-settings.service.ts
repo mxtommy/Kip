@@ -8,7 +8,7 @@ import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
-import { IConnectionConfig } from "./app-init.interfaces";
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone } from "./app-settings.interfaces";
 import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from './config.blank.const';
 import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
@@ -17,71 +17,10 @@ import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'modern-dark';
 const configVersion = 8; // used to invalidate old configs.
-
-export interface IAppConfig {
-  configVersion: number;
-  signalKToken: string;
-  kipUUID: string;
-  dataSets: IDataSet[];
-  unitDefaults: IUnitDefaults;
-  notificationConfig: INotificationConfig;
-}
-
-export interface IThemeConfig {
-  themeName: string;
-}
-
-export interface IWidgetConfig {
-  widgets: Array<IWidget>;
-}
-
-export interface ILayoutConfig {
-  splitSets: ISplitSet[];
-  rootSplits: string[];
-}
-
-export interface INotificationConfig {
-  disableNotifications: boolean;
-  menuGrouping: boolean;
-  security: {
-    disableSecurity: boolean;
-  },
-  devices: {
-    disableDevices: boolean;
-    showNormalState: boolean;
-  },
-  sound: {
-    disableSound: boolean;
-    muteNormal: boolean;
-    muteWarning: boolean;
-    muteAlert: boolean;
-    muteAlarm: boolean;
-    muteEmergency: boolean;
-  },
-}
-
-export enum ZoneState {
-  normal = 0,
-  warning = 1,
-  alarm = 2,
-}
-export interface IZone {
-  uuid: string;
-  path: string;
-  unit: string;
-  upper: number;
-  lower: number;
-  state: ZoneState;
-}
-export interface IZonesConfig {
-  zones: Array<IZone>;
-}
-
 export interface SignalKUrl {
   url: string;
   new: boolean;
 }
-
 export interface SignalKToken {
   token: string;
   timeToLive?: number; // not yet implemented by sk but part of the specs
@@ -89,8 +28,6 @@ export interface SignalKToken {
   isNew: boolean;
   isSessionToken: boolean;
 }
-
-
 @Injectable()
 export class AppSettingsService {
   signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
@@ -121,8 +58,9 @@ export class AppSettingsService {
     private appInitService: AppInitService
     )
   {
-    let serverConfig = this.appInitService.serverConfig;
+    let serverConfig: IConfig = this.appInitService.serverConfig;
     let appConfig: IAppConfig;
+    //TODO: remove sonnectionConfig from remote storage. Should only be local
     let connectionConfig: IConnectionConfig;
     let widgetConfig: IWidgetConfig;
     let layoutConfig: ILayoutConfig;
@@ -168,10 +106,11 @@ export class AppSettingsService {
         zonesConfig = { zones: [] };
       } else {
         if (serverConfig) {
-          widgetConfig = serverConfig.widget;
-          layoutConfig = serverConfig.layout;
-          themeConfig = serverConfig.theme;
-          zonesConfig = serverConfig.zones;
+          //TODO: Make use of Config parent object everywhere
+          widgetConfig = serverConfig.widgetConfig;
+          layoutConfig = serverConfig.layoutConfig;
+          themeConfig = serverConfig.themeConfig;
+          zonesConfig = serverConfig.zonesConfig;
         } else {
           widgetConfig = this.loadConfigFromLocalStorage("widgetConfig");
           layoutConfig = this.loadConfigFromLocalStorage("layoutConfig");
