@@ -4,8 +4,9 @@ import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
-import { AppSettingsService, SignalKToken, SignalKUrl } from './app-settings.service';
+import { AppSettingsService, SignalKUrl } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
+import { AuththeticationService , AuthorizationToken } from './auththetication.service';
 
 interface SignalKEndpointResponse {
     endpoints: {
@@ -83,7 +84,7 @@ export class SignalKConnectionService {
 
   // Main URL Variables
   signalKURL: SignalKUrl;
-  signalKToken: SignalKToken;
+  authToken: AuthorizationToken = null;
   endpointREST: string;
   endpointWS: string;
 
@@ -103,26 +104,21 @@ export class SignalKConnectionService {
   constructor(
       private appSettingsService: AppSettingsService,
       private notificationsService: NotificationsService,
+      private auththeticationService: AuththeticationService,
       private http: HttpClient
     )
   {
-    console.log("Connection service constructor called");
     // when signalKUrl changes, do stuff
     this.appSettingsService.getSignalKURLAsO().subscribe(
       newURL => {
+        if (!newURL.url) {
+          return
+        }
+
         this.signalKURL = newURL;
 
         if (this.signalKURL.new) {
           this.currentSkStatus.operation = 3; // URL Changed
-          if (this.signalKToken.isSessionToken) {
-            if (this.signalKToken.token != null) {
-              //have a previous user token but have new URL. Force Expired token to relogin
-              this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: true});
-            }
-          } else {
-            this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: false, isExpired: false});
-          }
-
           this.resetSignalK();
         } else {
           this.currentSkStatus.operation = 1; // Startup connection
@@ -132,52 +128,32 @@ export class SignalKConnectionService {
       }
     );
 
-    // when token changes, do stuff
-    this.appSettingsService.getSignalKTokenAsO().subscribe(
-      newToken => {
-        this.signalKToken = newToken;
-
-        if (this.currentSkStatus.websocket.hasToken == true) {
-          if (this.signalKToken.isNew) {
-            this.currentSkStatus.operation = 4; // Token update
-            console.log("[Connection Service] Replacing WebSocket Security Token");
-            this.closeWS();
-          } else if (this.signalKToken.isExpired && this.signalKToken.isSessionToken) {
-              console.log("[Connection Service] User Security Token expired. Renewing WebSocket");
-              this.closeWS();
-            } else {
-              this.currentSkStatus.operation = 1; // Startup connection
-              console.log("[Connection Service] Deleting WebSocket Security Token");
-              this.closeWS();
-          }
-        } else { //no prior token present on WebSocket
-          if (this.signalKToken.token == null ) {
-            this.currentSkStatus.operation = 1; // Startup connection
-          } else {
-            if (this.signalKToken.isNew) {
-              this.currentSkStatus.operation = 4; // Token update
-              console.log("[Connection Service] Adding Security Token to WebSocket");
-              this.closeWS();
-            } else {
-              this.currentSkStatus.operation = 1; // Startup connection
-              console.log("[Connection Service] Loading Config Security Token to WebSocket");
-            }
-          }
-        }
+    // When token changes, reconnect WebSocket with new token
+    this.auththeticationService.authToken$.subscribe((token: AuthorizationToken) => {
+      if (this.authToken != token) {
+        this.authToken = token;
+        console.log("[Connection Service] Reloading WebSockets with Authorization...");
+        this.closeWS();
+        this.connectWS();
       }
-    );
+    });
 
+    // WebSocket Open Event Handling
     this.socketWSOpenEvent.subscribe( event => {
         this.currentSkStatus.websocket.message = "Connected";
         this.currentSkStatus.websocket.status = true;
         this.currentSkStatus.rest.status = true;
         this.currentSkStatus.endpoint.status = true;
         this.signalKStatus.next(this.currentSkStatus);
-        console.log("[Connection Service] WebSocket Connected")
+        if (this.authToken) {
+          console.log("[Connection Service] WebSocket connected with Authorization Token")
+        } else {
+          console.log("[Connection Service] WebSocket connected without Authorization Token");
+        }
       }
     );
 
-    // WebSocket closure handling
+    // WebSocket closed Event Handling
     this.socketWSCloseEvent.subscribe( event => {
       if(event.wasClean) {
         this.currentSkStatus.websocket.message = "WebSocket closed";
@@ -204,7 +180,6 @@ export class SignalKConnectionService {
     this.currentSkStatus.endpoint.status = false;
     this.currentSkStatus.rest.message = "Connecting...";
     this.currentSkStatus.rest.status = false;
-    // WebSocket status handled by SignalkDelta service
     this.signalKStatus.next(this.currentSkStatus);
 
     this.notificationsService.resetAlarms();
@@ -221,7 +196,7 @@ export class SignalKConnectionService {
     this.http.get<SignalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
       // http endpoint connection
       response => {
-        console.debug("[Connection Service] HTTP Connection successful");
+        console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
         this.endpointREST = response.body.endpoints.v1["signalk-http"];
         this.endpointWS = response.body.endpoints.v1["signalk-ws"];
 
@@ -230,12 +205,12 @@ export class SignalKConnectionService {
         this.currentSkStatus.server.version = response.body.server.id + " " + response.body.server.version;
 
         this.callREST();
-        // WebSocket handled by SignalkDelta service
+        this.connectWS();
         this.signalKStatus.next(this.currentSkStatus);
       },
       // When not ok, this runs...
       (err: HttpErrorResponse) => {
-        console.debug("[Connection Service] Connection failed");
+        console.debug("[Connection Service] HTTP Endpoints request failed");
         if (err.error instanceof Error) {
             // A client-side or network error occurred. Handle it accordingly.
             console.error('[Connection Service] HTTP connection error occurred:', err.error.message);
@@ -260,6 +235,7 @@ export class SignalKConnectionService {
             this.currentSkStatus.rest.status = true;
             this.currentSkStatus.rest.message = response.status.toString();
             this.messageREST$.next(response.body);
+            console.log("[Connection Service] SignalK full document retreived");
           },
           // When not ok, this runs...
           (err: HttpErrorResponse) => {
@@ -302,12 +278,10 @@ export class SignalKConnectionService {
    */
   private getNewWebSocket() {
     let args: string;
-    if (this.signalKToken.token != null) {
-      args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.signalKToken.token;
-      this.currentSkStatus.websocket.hasToken = true;
+    if (this.authToken != null) {
+      args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.authToken.token;
     } else {
       args = this.WS_CONNECTION_ARGUMENT;
-      this.currentSkStatus.websocket.hasToken = false;
     }
     return webSocket({
       url: this.endpointWS + args,
@@ -349,12 +323,7 @@ export class SignalKConnectionService {
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
     url += "applicationData/" + scope +"/kip/1.0/"+ configName;
 
-    let options = {};
-
-    if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
-      options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
-    }
-    return this.http.post<any>(url, data, options).pipe(
+    return this.http.post<any>(url, data).pipe(
       catchError(this.handleError<string[]>('postApplicationData', []))
     );
 
@@ -364,13 +333,7 @@ export class SignalKConnectionService {
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
     url += "applicationData/" + scope +"/kip/1.0/?keys=true";
 
-    let options = {};
-
-    if ((this.signalKToken.token !== null)&&(this.signalKToken.token != "")) {
-      options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
-    }
-
-    return this.http.get<string[]>(url, options).pipe(
+    return this.http.get<string[]>(url).pipe(
       tap(_ => {
         console.log("Server Stored Configs for "+ scope +": "); console.log(_)
       }),
@@ -382,14 +345,10 @@ export class SignalKConnectionService {
   getApplicationData(scope: string, configName: string): Observable<any>{
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
     url += "applicationData/" + scope +"/kip/1.0/" + configName;
-    let options = {};
 
-    if ((this.signalKToken.token !== null) && (this.signalKToken.token != "")) {
-      options['headers'] = new HttpHeaders().set("authorization", "JWT "+this.signalKToken.token);
-    }
-    return this.http.get<any>(url, options).pipe(
+    return this.http.get<any>(url).pipe(
       tap(_ => {
-        console.log("Fetched Stored Configs for "+ scope +" / "+ configName);
+        console.log("[Connection Service] Fetched Stored Configs for "+ scope +" / "+ configName);
       }),
       catchError(this.handleError<any>('getApplicationData'))
     );
@@ -405,10 +364,10 @@ export class SignalKConnectionService {
     return (error: any): Observable<T> => {
 
       // TODO: send the error to remote logging infrastructure
-      console.error(error); // log to console instead
+      console.error("[Connection Service] " + error); // log to console instead
 
       // TODO: better job of transforming error for user consumption
-      console.log(`${operation} failed: ${error.message}`);
+      console.log(`[Conection Service] ${operation} failed: ${error.message}`);
 
       // Let the app keep running by returning an empty result.
       return of(result as T);

@@ -55,7 +55,7 @@ export class WidgetListService {
         name: 'WidgetStateComponent',
         componentName: WidgetStateComponent,
         description: 'State (boolean) Value',
-      },      
+      },
     ],
     "Gauge": [
       {
@@ -111,9 +111,7 @@ export class WidgetListService {
         description: 'Tutorial'
       }
     ]
-
   };
-  
 
 /*
     {
@@ -121,10 +119,6 @@ export class WidgetListService {
       componentName: WidgetSwitchComponent,
       description: 'Switch Input',
     },  */
-
-
-
-  
 
   getComponentName(typeName: string) {
     for (let [group, widgetList] of Object.entries(this.widgetList)) {

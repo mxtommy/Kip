@@ -1,10 +1,10 @@
 import { SignalkRequestsService } from './signalk-requests.service';
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
 import { FormsModule }   from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,10 +33,12 @@ import { AngularResizeEventModule } from 'angular-resize-event';
 
 import { AppComponent } from './app.component';
 import { AppHelpComponent } from './app-help/app-help.component';
+import { AppInitService } from "./app-init.service";
+import { AuththeticationService } from "./auththetication.service";
+import { AuthenticationInterceptor } from "./authentication-interceptor";
 
 import { FitTextDirective } from './fit-text.directive';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
-
 import { SignalKService } from './signalk.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -91,17 +93,36 @@ import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
 import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
 import { WidgetRaceTimerComponent } from './widget-race-timer/widget-race-timer.component';
+import { LoginComponent } from './login/login.component';
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
-  { path: 'settings',  component: SettingsComponent },
+  { path: 'settings', component: SettingsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data',  component: DataBrowserComponent },
   { path: 'reset', component: ResetConfigComponent },
+  { path: 'login', component: LoginComponent },
   { path: 'demo', component: ResetConfigComponent }
 ];
 
+/**
+ * Bootstrap function used by AppInitService provider at app initialyzation
+ * that login the user and load config from server or fallback to local
+ * storage config.
+ *
+ * @param {AppInitService} appInitService
+ * @return {*} Promise once AppInitService is done
+ */
+const appInitializerFn = (appInitService: AppInitService) => {
+  return () => appInitService.initAppConfig().then(res => {
+    console.log("return response value: " + JSON.stringify(res));
+  })
+  .catch(error => {
+    console.error(error)
+  })
+
+};
 @NgModule({
   declarations: [
     AppComponent,
@@ -152,6 +173,7 @@ const appRoutes: Routes = [
     DialogNewZone,
     ModalUserCredentialComponent,
     WidgetRaceTimerComponent,
+    LoginComponent,
   ],
   imports: [
     BrowserModule,
@@ -187,6 +209,25 @@ const appRoutes: Routes = [
     MatSortModule,
   ],
   providers: [
+    // Imports Interceptor to capture http requests and incert authorization
+    // Token automatically in every httpClient outbound calls.
+    // NOTE: it does not work for WebSockets. Only http/REST calls
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthenticationInterceptor,
+      multi: true
+    },
+    // Imports AppInitService which executes function appInitializerFn()
+    // during the application initialisation process (bootstrapping) to
+    // get app config from server storage before starting AppSettings service.
+    AppInitService,
+      {
+        provide: APP_INITIALIZER,
+        useFactory: appInitializerFn,
+        deps: [AppInitService],
+        multi: true,
+      },
+    AuththeticationService,
     SignalKService,
     SignalKConnectionService,
     SignalKDeltaService,
@@ -203,27 +244,7 @@ const appRoutes: Routes = [
   bootstrap: [AppComponent]
 })
 
+
 export class AppModule {
-  constructor(
-    /**
-     * Below provides Services instanciation only - there is no calls to Service.
-     * It provides/forces early instanciation of services if needed.
-     * This fixes instanciation issues on loossely couple services (where some services
-     * use Observers but are only instaciated by component later in the app, causing
-     * them to miss some events until instanciated.
-     *
-     * Example: SignalKDeltaService needs to be instaciated to receive connection status
-     * from SignalKConnectionService in order to open WebSocket immediatly upon
-     * connection to listen and process deltas. Both services are not interdependant
-     * and only communicated using Obervable. If not instaciated before it is called by
-     * a component, SignalKDeltaService will miss connection status and not connect WebSockets.
-     *
-     * Below should be Singleton Services ie. "providedIn: root" and/or part of prodivers
-     * section listed above.
-    */
-    signalKDeltaService: SignalKDeltaService,
-    signalkRequestsService: SignalkRequestsService,
-    signalKFullService: SignalKFullService
-  ) {
-}
+  constructor( ) { }
 }

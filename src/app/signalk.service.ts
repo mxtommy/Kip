@@ -3,7 +3,7 @@ import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import * as compareVersions from 'compare-versions';
 
-import { AppSettingsService, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig, IZone, ZoneState } from './app-settings.service';
+import { AppSettingsService, IZone, ZoneState } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';

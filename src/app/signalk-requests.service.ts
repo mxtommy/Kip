@@ -43,14 +43,6 @@ export class SignalkRequestsService {
       const requestsSub: Subscription = this.signalKDeltaService.subscribeRequest().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
       );
-      // Observer of SignalK Tokens to automate login
-      const tokenSub: Subscription = this.appSettingsService.getSignalKTokenAsO().subscribe(
-        token => {
-          if (token.isExpired && token.isSessionToken) {
-            this.requestUserLogin(this.appSettingsService.loginName, this.appSettingsService.loginPassword);
-          }
-        }
-      );
     }
 
   /**
@@ -86,7 +78,7 @@ export class SignalkRequestsService {
   }
 
   /**
-  * Submit a SignalK server User login request - user needs to exist in SignalK Server.
+  * Submit a SignalK WebSocket User login request - user needs to exist in SignalK Server.
   * Required to use the SignalK User Storage feature (ie. to store Config by users)
   * and if you need to submit data to SignalK.
   *
@@ -180,6 +172,7 @@ export class SignalkRequestsService {
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
           this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false, isExpired: false});
+          this.appSettingsService.setUseDeviceToken(true);
           this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Token received from server.");
           console.log("[Request Service] " + delta.accessRequest.permission + ": Device Token received");
 

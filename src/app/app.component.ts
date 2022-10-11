@@ -1,7 +1,9 @@
+import { AuththeticationService } from './auththetication.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from "@angular/router";
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './layout-splits.service';
 import * as screenfull from 'screenfull';
@@ -10,6 +12,9 @@ import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { SignalkRequestsService } from './signalk-requests.service';
+import { SignalKFullService } from './signalk-full.service';
 
 declare var NoSleep: any; //3rd party
 
@@ -39,19 +44,25 @@ export class AppComponent implements OnInit, OnDestroy {
   connectionStatusSub: Subscription;
 
   constructor(
-    private appSettingsService: AppSettingsService,
+    //we only init the following service so they don't loose messages from SignalKConnectionService
+    private signalKDeltaService: SignalKDeltaService,
+    private signalkRequestsService: SignalkRequestsService,
+    private signalKFullService: SignalKFullService,
+    // do not remove above
+
+    public appSettingsService: AppSettingsService,
     private DataSetService: DataSetService,
     private notificationsService: NotificationsService,
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService,
     private signalKConnectionService: SignalKConnectionService,
+    private router: Router,
+    public auththeticationService: AuththeticationService,
     ) { }
 
 
   ngOnInit() {
-    console.log("app.component OnInit called");
-
     // Page layout area operations sub
     this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }
@@ -113,6 +124,13 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     this.DataSetService.startAllDataSets();
+
+    // Subscribe to logged in status and route on conditions
+    this.auththeticationService.isLoggedIn$.subscribe( (loggedIn) => {
+      if (!loggedIn && this.appSettingsService.useSharedConfig) {
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   ngOnDestroy() {

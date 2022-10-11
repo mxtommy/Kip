@@ -10,7 +10,7 @@ export class SignalKFullService {
     private signalKConnectionService: SignalKConnectionService,
   ) {
     this.signalKConnectionService.messageREST$.subscribe({
-      next: msg => this.processFullUpdate(msg), // Called whenever there is a message from the server.
+      next: msg => this.processFullUpdate(msg), // Called whenever there is a REST response message from the server.
       error: err => console.error("[REST Full Service] Message subscription error: " + JSON.stringify(err, ["code", "message", "type"])), // Called if at any point Subject has some kind of error.
       complete: () => console.log('[REST Full Service] Message subscription closed') // Called when Subject is closed (for whatever reason).
     });

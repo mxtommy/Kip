@@ -143,7 +143,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     }
   }
 
-  openWidgetSettings(content) {
+  openWidgetSettings() {
 
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',

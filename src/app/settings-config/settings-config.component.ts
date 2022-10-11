@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FormControl, Validators }    from '@angular/forms';
 
-import { AppSettingsService, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../app-settings.service';
+import { AppSettingsService, IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../app-settings.service';
+import { IConnectionConfig } from '../app-init.interfaces';
 import { SignalKService } from '../signalk.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
 import { NotificationsService } from '../notifications.service';

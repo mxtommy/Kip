@@ -3,7 +3,7 @@
     <div class="mainWindow">
         <router-outlet></router-outlet>
     </div>
-    <div class="menuBar">
+    <div class="menuBar" *ngIf="(auththeticationService.isLoggedIn$ | async) || !appSettingsService.useSharedConfig">
       <div class="menuBarContainer theme-menu">
         <div class="menuBarButtonGroups">
           <app-alarm-menu></app-alarm-menu>

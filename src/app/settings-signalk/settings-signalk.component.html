@@ -10,19 +10,19 @@
           Please enter valid signalK endpoint URL. ex: "http://demo.signalK.com"
         </mat-error>
       </mat-form-field>
-      <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="connectionConfig.useDeviceToken" (click)="openUserCredentialModal()">
+      <br/>
+      <mat-slide-toggle name="useSharedConfig"[(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}">Enable User Authentication</mat-slide-toggle>
+      <br/><br/>
+      <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal()">
         Set User Credential
       </button>
-      <br/><br/>
-      <mat-slide-toggle name="useDeviceAuth"[(ngModel)]="connectionConfig.useDeviceToken" [ngModelOptions]="{standalone: true}">Disable User Authentication and enable Device Token authorisation mode</mat-slide-toggle>
-      <br/>
       <mat-card-actions align="end">
-        <span *ngIf="(connectionConfig.useDeviceToken && (connectionAuthToken.token && !connectionAuthToken.isSessionToken))">
+        <span *ngIf="(connectionConfig.useDeviceToken && (authToken && !isLoggedIn))">
           <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="deleteToken()" [disabled]="!connectionConfig.useDeviceToken">
             Delete Token
           </button>
         </span>
-        <span *ngIf="(connectionConfig.useDeviceToken && (!connectionAuthToken.token))">
+        <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
           <button mat-raised-button type="button" color="primary" matTooltip="Send a Device Authorization token request to SignalK server. EXPLANNATION: Device Authorization token is only needed when Kip is configured with Widgets that sends data to the server or when saving configuration remotly (ie. Using Widgets: State, Switch, Autopilot, etc.) . A token is not needed  If Kip is used only to display data, a token is not nedded. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server, by a server administrator. See: SignalK Server -> Security -> Access Requests. Once approved, it will notify Kip and the process will be completed." (click)="requestDeviceAccessToken()">
             Request Token
           </button>
@@ -82,13 +82,19 @@
       Token:
     </td>
     <td>
-      <div *ngIf="connectionAuthToken.token">
+      <div *ngIf="authToken">
         <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" ></i>
-          User Token: {{connectionAuthToken.isSessionToken}}
-          <br/>Token: {{connectionAuthToken.token | slice : 0 : 20}}...
+        <div *ngIf="isLoggedIn">
+          Token Type: Login
+        </div>
+        <div *ngIf="!isLoggedIn">
+          Token Type: Device Access
+        </div>
+        <br/>Token: {{authToken | slice : 0 : 20}}...
       </div>
-      <div *ngIf="!connectionAuthToken.token">
+      <div *ngIf="!authToken">
         <i class="fa-solid fa-times" style="color:rgb(145, 145, 64);" aria-hidden="true" ></i>
+        No Authorization Token
       </div>
     </td>
   </tr>

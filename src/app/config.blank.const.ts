@@ -1,4 +1,5 @@
-import { IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from "./app-settings.service";
+import { IAppConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from "./app-settings.service";
+import { IConnectionConfig } from "./app-init.interfaces";
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 8,
@@ -10,11 +11,11 @@ export const DefaultAppConfig: IAppConfig = {
 }
 
 export const DefaultConectionConfig: IConnectionConfig = {
-  "signalKUrl": "", // get's overwritten with host at getDefaultConnectionConfig()
+  "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,
-  "useSharedConfig": true,
+  "useSharedConfig": false,
   "sharedConfigName": "default"
 }
 

@@ -1,3 +1,4 @@
+import { AppInitService } from './app-init.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
@@ -7,6 +8,7 @@ import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
+import { IConnectionConfig } from "./app-init.interfaces";
 import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from './config.blank.const';
 import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
@@ -23,15 +25,6 @@ export interface IAppConfig {
   dataSets: IDataSet[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;
-}
-
-export interface IConnectionConfig {
-  signalKUrl: string;
-  useDeviceToken: boolean;
-  loginName: string;
-  loginPassword: string;
-  useSharedConfig: boolean;
-  sharedConfigName: string;
 }
 
 export interface IThemeConfig {
@@ -123,7 +116,12 @@ export class AppSettingsService {
   zones: BehaviorSubject<Array<IZone>> = new BehaviorSubject<Array<IZone>>([]);
   root
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private appInitService: AppInitService
+    )
+  {
+    let serverConfig = this.appInitService.serverConfig;
     let appConfig: IAppConfig;
     let connectionConfig: IConnectionConfig;
     let widgetConfig: IWidgetConfig;
@@ -140,43 +138,50 @@ export class AppSettingsService {
         connectionConfig = this.getDefaultConnectionConfig();
       }
 
-      if (connectionConfig.useSharedConfig && !connectionConfig.useDeviceToken) {
-        console.log("[AppSettings Service] Shared User Config enabled");
-        this.pushBasicConnection(connectionConfig);
-
+      if (serverConfig) {
+        console.log("[AppSettings Service] Loading remote server config");
+        appConfig = serverConfig.app;
       } else {
-        console.log("[AppSettings Service] LocalStorage configuration enabled");
+        console.log("[AppSettings Service] Loading LocalStorage config");
         appConfig = JSON.parse(localStorage.getItem("appConfig"));
+      }
 
-        if (appConfig === null) {
-          console.log("[AppSettings Service] Error loading App config, resetting and loading all default.");
-          localStorage.clear();
-          appConfig = this.getDefaultAppConfig();
-          connectionConfig = this.getDefaultConnectionConfig();
-          widgetConfig = this.getDefaultWidgetConfig();
-          layoutConfig = this.getDefaultLayoutConfig();
-          themeConfig = this.getDefaultThemeConfig();
-          zonesConfig = { zones: [] };
-        }
+      if (appConfig === null) {
+        console.log("[AppSettings Service] Error loading App config, resetting and loading all default.");
+        localStorage.clear();
+        appConfig = this.getDefaultAppConfig();
+        connectionConfig = this.getDefaultConnectionConfig();
+        widgetConfig = this.getDefaultWidgetConfig();
+        layoutConfig = this.getDefaultLayoutConfig();
+        themeConfig = this.getDefaultThemeConfig();
+        zonesConfig = { zones: [] };
+      }
 
-        if ((typeof appConfig.configVersion !== 'number') || (appConfig.configVersion != configVersion)) {
-          console.error("[AppSettings Service] Invalid config version, resetting and loading all default.");
-          localStorage.clear();
-          appConfig = this.getDefaultAppConfig();
-          connectionConfig = this.getDefaultConnectionConfig();
-          widgetConfig = this.getDefaultWidgetConfig();
-          layoutConfig = this.getDefaultLayoutConfig();
-          themeConfig = this.getDefaultThemeConfig();
-          zonesConfig = { zones: [] };
+      if ((typeof appConfig.configVersion !== 'number') || (appConfig.configVersion != configVersion)) {
+        console.error("[AppSettings Service] Invalid config version, resetting and loading all default.");
+        localStorage.clear();
+        appConfig = this.getDefaultAppConfig();
+        connectionConfig = this.getDefaultConnectionConfig();
+        widgetConfig = this.getDefaultWidgetConfig();
+        layoutConfig = this.getDefaultLayoutConfig();
+        themeConfig = this.getDefaultThemeConfig();
+        zonesConfig = { zones: [] };
+      } else {
+        if (serverConfig) {
+          widgetConfig = serverConfig.widget;
+          layoutConfig = serverConfig.layout;
+          themeConfig = serverConfig.theme;
+          zonesConfig = serverConfig.zones;
         } else {
           widgetConfig = this.loadConfigFromLocalStorage("widgetConfig");
           layoutConfig = this.loadConfigFromLocalStorage("layoutConfig");
           themeConfig = this.loadConfigFromLocalStorage("themeConfig");
           zonesConfig = this.loadConfigFromLocalStorage("zonesConfig");
         }
-
-        this.pushSettings(appConfig, connectionConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
       }
+
+      this.pushSettings(appConfig, connectionConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
+
     } else {
       console.error("[AppSettings Service] LocalStorage NOT SUPPORTED by browser\nThis is a requirement to run Kip. See browser documentation to enable this feature.");
     }
@@ -315,7 +320,12 @@ export class AppSettingsService {
   public setConnectionConfig(value: IConnectionConfig) {
     this.loginName = value.loginName;
     this.loginPassword = value.loginPassword;
-    this.useDeviceToken = value.useDeviceToken;
+    this.useSharedConfig = value.useSharedConfig;
+    this.saveConnectionConfigToLocalStorage();
+  }
+
+  public setUseDeviceToken(useDeviceToken: boolean) {
+    this.useDeviceToken = useDeviceToken;
     this.saveConnectionConfigToLocalStorage();
   }
 
@@ -589,7 +599,6 @@ export class AppSettingsService {
 
   private getDefaultConnectionConfig(): IConnectionConfig {
     let config: IConnectionConfig = DefaultConectionConfig;
-    config.signalKUrl = window.location.origin;
     localStorage.setItem('connectionConfig', JSON.stringify(config));
     return config;
   }

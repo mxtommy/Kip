@@ -43,8 +43,8 @@ export class WidgetIframeComponent implements OnInit {
     this.widgetUrl = this.config.widgetUrl;
   }
 
-  openWidgetSettings(content) {
-      
+  openWidgetSettings() {
+
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
       data: this.config

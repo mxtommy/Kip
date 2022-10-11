@@ -136,7 +136,7 @@
         </ng-template>
         <modal-path-selector class="full-width"
           *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
-          [formGroup]="formMaster.controls.paths.controls[pathForm]"
+          [formGroup]="formMaster.controls.paths.get(pathForm)"
           [filterSelfPaths]="formMaster.value.filterSelfPaths">
         </modal-path-selector>
         <mat-checkbox name="filterSelfPaths" formControlName="filterSelfPaths">Restrict to own vessel</mat-checkbox>
@@ -161,7 +161,7 @@
       <!-- ng-canvas Radial gauges -->
       <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'ngRadial'">
         <div class="tab-content">
-          
+
             <p>
               <label id="radial-type-label">Radial Gauge type:</label>
               <mat-radio-group class="radio-group" aria-labelledby="radial-type-label" name="radialSize" formControlName="radialSize">
