@@ -14,7 +14,6 @@ export interface IConfig {
 
 export interface IAppConfig {
   configVersion: number;
-  signalKToken: string;
   kipUUID: string;
   dataSets: IDataSet[];
   unitDefaults: IUnitDefaults;

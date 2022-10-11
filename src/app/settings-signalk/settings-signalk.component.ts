@@ -172,7 +172,7 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   public deleteToken() {
-    this.appSettingsService.setSignalKToken({token: null, isNew: false, isSessionToken: false, isExpired: false});
+    this.auth.deleteToken();
   }
 
   private startChart() {

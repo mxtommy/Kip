@@ -178,14 +178,9 @@ export class SignalkRequestsService {
           console.log("[Request Service] " + delta.accessRequest.permission + ": Device Access Token received");
 
         } else if (delta.login !== undefined) {
-
+          // Delta login not implemented. Use REST login from Authetification service
           if (delta.login.token !== undefined) {
-            this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true, isExpired: false});
-            console.log("[Request Service] User Token received");
-          } else {
-            // Delta is a login response but token is empty, meaning it's a 401 - login failed. Must set to null in case we have an old token.
-            console.log("[Request Service] User Login failed");
-            this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: false});
+            // Do logic
           }
 
         }

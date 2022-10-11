@@ -2,7 +2,6 @@ import { IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConf
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 8,
-  "signalKToken": null,
   "kipUUID": newUuid(),
   "dataSets": [],
   "unitDefaults": null,

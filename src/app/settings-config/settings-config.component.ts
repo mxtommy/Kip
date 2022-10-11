@@ -56,14 +56,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       }
     });
 
-    this.authTokenSub = this.appSettingsService.getSignalKTokenAsO().subscribe(token => {
-      if (token.token) {
-        this.hasToken = true;
-      } else {
-        this.hasToken = false;
-      }
-    });
-
     this.appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
     this.connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
     this.widgetJSONConfig = JSON.stringify(this.appSettingsService.getWidgetConfig(), null, 2);

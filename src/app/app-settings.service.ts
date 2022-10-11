@@ -21,13 +21,13 @@ export interface SignalKUrl {
   url: string;
   new: boolean;
 }
-export interface SignalKToken {
+/* export interface SignalKToken {
   token: string;
   timeToLive?: number; // not yet implemented by sk but part of the specs
   isExpired: boolean;
   isNew: boolean;
   isSessionToken: boolean;
-}
+} */
 @Injectable()
 export class AppSettingsService {
   signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
@@ -41,8 +41,6 @@ export class AppSettingsService {
   useSharedConfig: boolean;
   sharedConfigName: string;
 
-
-  signalKToken: BehaviorSubject<SignalKToken>;
   kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
   kipUUID: string;
 
@@ -162,12 +160,6 @@ export class AppSettingsService {
     this.themeName.next(themeConfig['themeName']);
 
     let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
-    let skToken: SignalKToken;
-    if (!connectionConfig.useDeviceToken) {
-      skToken = {token: null, isNew: false, isSessionToken: false, isExpired: false};
-    } else {
-      skToken = {token: appConfig.signalKToken, isNew: false, isSessionToken: false, isExpired: false};
-    }
     this.signalKUrl.next(skUrl);
     this.useDeviceToken = connectionConfig.useDeviceToken;
     this.loginName = connectionConfig.loginName;
@@ -182,12 +174,10 @@ export class AppSettingsService {
     this.zones.next(zonesConfig.zones);
     this.splitSets = layoutConfig.splitSets;
     this.rootSplits = layoutConfig.rootSplits;
-    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
   }
 
   private pushBasicConnection(connectionConfig: IConnectionConfig): void {
     let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
-    let skToken: SignalKToken = {token: null, isNew: false, isSessionToken: false, isExpired: false};
     let notificationConfig: INotificationConfig = {
       disableNotifications: true,
       menuGrouping: true,
@@ -232,7 +222,6 @@ export class AppSettingsService {
     this.rootSplits = layoutConfig.rootSplits;
     //TODO: need to find a way to keep this
     //this.kipUUID = appConfig.kipUUID;
-    this.signalKToken = new BehaviorSubject<SignalKToken>(skToken);
   }
 
   //UnitDefaults
@@ -288,37 +277,15 @@ export class AppSettingsService {
   }
 
   // SignalKURL
-  public getSignalKURLAsO() {
-    return this.signalKUrl.asObservable();
-  }
-  public getSignalKURL() {
-    return this.signalKUrl.getValue();
-  }
-  public setSignalKURL(value: SignalKUrl) {
-    this.signalKUrl.next(value);
-  }
-
-  // SignalKToken
-  public getSignalKTokenAsO() {
-    return this.signalKToken.asObservable();
-  }
-  public getSignalKToken(): SignalKToken {
-    return this.signalKToken.getValue();
-  }
-  public setSignalKToken(token: SignalKToken) {
-    let oldToken = this.getSignalKToken();
-
-    if (token.isSessionToken) {
-      if (!oldToken.isSessionToken) {
-        this.saveAppConfigToLocalStorage();
-      }
-      this.signalKToken.next(token);
-
-    } else {
-      this.signalKToken.next(token);
-      this.saveAppConfigToLocalStorage();
-    }
-  }
+public getSignalKURLAsO() {
+  return this.signalKUrl.asObservable();
+}
+public getSignalKURL() {
+  return this.signalKUrl.getValue();
+}
+public setSignalKURL(value: SignalKUrl) {
+  this.signalKUrl.next(value);
+}
 
   // UnlockStatus
   public getUnlockStatusAsO() {
@@ -436,16 +403,10 @@ export class AppSettingsService {
   //// Storage Objects
   // building from running data
   private buildAppStorageObject() {
-    let deviceToken = null;
-
-    if (this.useDeviceToken) { // We only save the token if it's a device token. User token are session specific and expire.
-      deviceToken = this.signalKToken.getValue().token;
-    }
 
     let storageObject: IAppConfig = {
       configVersion: configVersion,
       kipUUID: this.kipUUID,
-      signalKToken: deviceToken,
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
