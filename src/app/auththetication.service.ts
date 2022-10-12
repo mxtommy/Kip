@@ -31,6 +31,9 @@ export class AuththeticationService {
   public authToken$ = this._authToken$.asObservable();
   private serverUrl: string = null;
 
+  private InitSvcUsr: string = null;
+  private InitSvcPwd: string = null;
+
   constructor(
     private http: HttpClient
     )
@@ -87,17 +90,7 @@ export class AuththeticationService {
         }
       }
     );
-  }
 
-  public login2(usr:string, pwd:string, newUrl?: string)  {
-    let result;
-
-    return this.http.post<HttpResponse<any>>(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'})
-      .subscribe((loginResponse: HttpResponse<any>) => {
-        this.setSession(loginResponse.body.token);
-        result = loginResponse.status;
-
-      });
 
   }
 
@@ -247,8 +240,7 @@ export class AuththeticationService {
    *
    * @memberof AuththeticationService
    */
-  public set signalkUrl(v : string) {
-    this.serverUrl = v;
+  public set signalkUrl(u : string) {
+    this.serverUrl = u;
   }
-
 }

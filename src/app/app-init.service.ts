@@ -1,5 +1,3 @@
-import { tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
 /*
 * This Service uses the APP_INITIALIZER feature to dynamically load
 * environment variables (ie. remote app config) when the app is initiaziled,
@@ -9,9 +7,12 @@ import { Observable } from 'rxjs';
 * and return the default config. If remote config cant be loaded we return NULL.
 */
 import { Injectable, Injector } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IConnectionConfig, IConfig } from "./app-settings.interfaces";
 import { AuththeticationService } from './auththetication.service';
+import { tap } from 'rxjs/internal/operators/tap';
+import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 
 
 const httpOptions = {
@@ -28,24 +29,57 @@ const serverAppDataPath = '/kip/1.0/';
 export class AppInitService {
   private localStorageConnectionConfig: IConnectionConfig = null;
   private isLoggedIn;
+  private promise = new Promise<any>(null);
+  private promise2 = new Promise<any>(null);
   private appConfig: IConfig = null;
   private http = this.injector.get(HttpClient);
+  private serverLogin$: Observable<HttpResponse<any>>;
 
   constructor (
     private injector: Injector,
-    private auth: AuththeticationService
+    private auth: AuththeticationService,
   )
   {
+    this.promise = this.loadLocalStorageConfig();
+
+    this.serverLogin$ = this.auth.login(this.localStorageConnectionConfig.loginName, this.localStorageConnectionConfig.loginPassword).pipe(shareReplay());
+    console.log("[AppInit Service] Login attempt *************"),
+    this.serverLogin$.subscribe((LoginResponse: HttpResponse<any>) => {
+      console.log("[AppInit Service] Login response: \n" + LoginResponse),
+      console.error
+    } );
+
     this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
       this.isLoggedIn = isLoggedIn;
+      if (isLoggedIn) {
+        //this.promise = this.getApplicationConfig();
+      } else {
+
+      }
     })
   }
 
-  initAppConfig() {
-    let cfg = this.loadLocalStorageConfig();
-    return cfg;
+  initAppConfig(): Observable<any> {
+    let url = this.localStorageConnectionConfig.signalKUrl;
+    url += serverDataStoragePath + "user" + serverAppDataPath;
+    url += this.localStorageConnectionConfig.sharedConfigName;
 
-}
+    console.log("[AppInit Service] Retreiving server config: " + this.localStorageConnectionConfig.sharedConfigName);
+
+    return new Observable((subscriber) => {
+      this.http.get<IConfig>(url).subscribe(
+        response => {
+          this.appConfig = response;
+          console.log("this.localStorageConnectionConfig.loginName Server config retreived");
+          subscriber.complete();
+        },
+        (error: HttpErrorResponse) => {
+          console.error("[AppInit Service] Error retreiving server config: " + error.message);
+          subscriber.error(error);
+        }
+      )
+    });
+  }
 
   private loadLocalStorageConfig(): Promise<IConfig> {
     this.localStorageConnectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
@@ -71,10 +105,13 @@ export class AppInitService {
       if (this.localStorageConnectionConfig.loginName
           && this.localStorageConnectionConfig.loginPassword) {
 
-        if (!this.isLoggedIn) {
 
-          let test = this.auth.login2(this.localStorageConnectionConfig.loginName, this.localStorageConnectionConfig.loginPassword);
-          /* this.auth
+
+       /* if (!this.isLoggedIn) {
+
+          this.auth.initUser = this.localStorageConnectionConfig.loginName;
+          this.auth.initPwd = this.localStorageConnectionConfig.loginPassword;
+          this.auth
           .login(this.localStorageConnectionConfig.loginName, this.localStorageConnectionConfig.loginPassword)
           .subscribe((loginResponse) => {
 
@@ -82,11 +119,9 @@ export class AppInitService {
             return this.getApplicationConfig();
             //TODO: route to appropriate page and handle error
 
-          }); */
+          });
 
-        } else {
-          return this.getApplicationConfig();
-        }
+        } */
 
       } else {
         return Promise.reject("[AppInit Service] Required settings for user shared configuration missing in LocalStorage Config. Configure 'User Credentials' settings in: Configuration -> Settings -> SignalK tab");
@@ -100,10 +135,11 @@ export class AppInitService {
     url += serverDataStoragePath + "user" + serverAppDataPath;
     url += this.localStorageConnectionConfig.sharedConfigName;
 
-    console.log("[AppInit Service] Retreiving server Shared config: "+ this.localStorageConnectionConfig.sharedConfigName)
+    console.log("[AppInit Service] Retreiving server Shared config: " + this.localStorageConnectionConfig.sharedConfigName);
     return this.http.get<any>(url).pipe(
       tap(response =>{
         this.appConfig = response;
+        console.log("[AppInit Service] Shared config retreived");
       })
     )
     .toPromise();

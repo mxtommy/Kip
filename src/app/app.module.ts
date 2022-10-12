@@ -1,3 +1,4 @@
+import { catchError } from 'rxjs/operators';
 import { SignalkRequestsService } from './signalk-requests.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
@@ -116,13 +117,6 @@ const appRoutes: Routes = [
  */
 const appInitializerFn = (appInitService: AppInitService) => {
   return () => appInitService.initAppConfig()
-  .then(res => {
-    console.log("return response value: " + JSON.stringify(res));
-  })
-  .catch(error => {
-    console.error(error)
-  })
-
 };
 @NgModule({
   declarations: [
