@@ -211,7 +211,7 @@ export class SignalKConnectionService {
 
       })
       .catch((err: HttpErrorResponse) => {
-        console.debug("[Connection Service] HTTP Endpoints request failed");
+        console.error("[Connection Service] HTTP Endpoints request failed");
         if (err.error instanceof Error) {
             // A client-side or network error occurred. Handle it accordingly.
             console.error('[Connection Service] HTTP connection error occurred:', err.error.message);
@@ -227,13 +227,17 @@ export class SignalKConnectionService {
         this.signalKStatus.next(this.currentSkStatus);
       });
 
-      await this.callREST();
+      if (this.endpointREST) {
+        await this.callREST();
 
-      if (this.socketWS$) {
+        if (this.socketWS$) {
+          this.closeWS();
+        }
+        this.connectWS();
+        this.signalKStatus.next(this.currentSkStatus);
+      } else if (this.socketWS$) {
         this.closeWS();
       }
-      this.connectWS();
-      this.signalKStatus.next(this.currentSkStatus);
   }
 
   /**
@@ -253,16 +257,8 @@ export class SignalKConnectionService {
       .catch((err: HttpErrorResponse) => {
         this.currentSkStatus.rest.status = false;
         this.currentSkStatus.rest.message = "Connection failed"
-        if (err.error instanceof Error) {
-          // A client-side or network error occurred. Handle it accordingly.
-          this.currentSkStatus.rest.message = err.error.message;
-          console.error('[Connection Service] A REST error occurred:', err.error.message);
-        } else {
-            // The backend returned an unsuccessful response code.
-            // The response body may contain clues as to what went wrong,
-            this.currentSkStatus.rest.message = "Unspecified REST error";
-            console.error(err);
-        }
+        this.currentSkStatus.rest.message = err.message;
+        console.error('[Connection Service] A REST error occurred:', err.message);
       });
   }
 

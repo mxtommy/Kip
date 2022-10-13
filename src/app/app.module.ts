@@ -116,7 +116,7 @@ const appRoutes: Routes = [
  * @return {*} Promise once AppInitService is done
  */
 const appInitializerFn = (appInitService: AppInitService) => {
-  return () => appInitService.initAppConfig()
+  return () => appInitService.initAppConfig().catch(res => {})
 };
 @NgModule({
   declarations: [

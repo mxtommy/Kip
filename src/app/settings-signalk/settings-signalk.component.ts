@@ -135,36 +135,29 @@ export class SettingsSignalkComponent implements OnInit {
       } else if (this.authToken) {
         this.auth.deleteToken();
       }
-
     }
 
     this.appSettingsService.setConnectionConfig(this.connectionConfig);
   }
 
   private serverLogin(newUrl?: string) {
-    /* this.auth
-      .login(this.connectionConfig.loginName, this.connectionConfig.loginPassword, newUrl)
-      .subscribe(
-        loginResponse => {
-        //add logic as needed
-      },
-      error => {
-        let errResponse:HttpErrorResponse = error;
-        if (errResponse.status == 401) {
-          this.notificationsService.sendSnackbarNotification("User authentication failed", 2000, false);
-          console.log("[Login Component] Login failure: " + errResponse.statusText);
-        } else if (errResponse.status == 404) {
-          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach login API", 2000, false);
-          console.log("[Login Component] Login failure: " + errResponse.message);
-        } else if (errResponse.status == 0) {
-          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server", 2000, false);
-          console.log("[Login Component] " + errResponse.message);
+      this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
+      .catch((error: HttpErrorResponse) => {
+        if (error.status == 401) {
+          this.openUserCredentialModal();
+          this.notificationsService.sendSnackbarNotification("Authentication failed. Invalide user/password", 2000, false);
+          console.log("[Login Component] Login failure: " + error.statusText);
+        } else if (error.status == 404) {
+          this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 2000, false);
+          console.log("[Login Component] Login failure: " + error.message);
+        } else if (error.status == 0) {
+          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
+          console.log("[Login Component] " + error.message);
         } else {
           this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 2000, false);
           console.log("[Login Component] Unknown login error response: " + JSON.stringify(error));
         }
-      }
-    ); */
+      });
   }
 
   public requestDeviceAccessToken() {

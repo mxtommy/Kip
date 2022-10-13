@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 /*
 * This Service uses the APP_INITIALIZER feature to dynamically load
 * environment variables (ie. remote app config) when the app is initiaziled,
@@ -39,7 +40,10 @@ export class AppInitService {
     if (remoteConfigEnabled) {
       console.log("[AppInit Service] Shared Config configuration enabled");
       if (!this.isLoggedIn) {
-        await this.auth.login({ usr: this.localStorageConnectionConfig.loginName, pwd: this.localStorageConnectionConfig.loginPassword });
+        await this.auth.login({ usr: this.localStorageConnectionConfig.loginName, pwd: this.localStorageConnectionConfig.loginPassword })
+        .catch( (error: HttpErrorResponse) => {
+          console.error("[AppInit Service] Server returned: " + JSON.stringify(error.error));
+        });
       }
 
       let url = this.localStorageConnectionConfig.signalKUrl;
@@ -51,7 +55,7 @@ export class AppInitService {
       return await lastValueFrom(this.http.get<IConfig>(url)).then(config =>{
           this.appConfig = config;
           console.log("[AppInit Service] Server config: " + this.localStorageConnectionConfig.sharedConfigName + " retreived");
-      }).catch(error => {
+      }).catch((error: HttpErrorResponse) => {
         console.error("[AppInit Service] Error retreiving server config: " + error.message);
       });
     } else {
