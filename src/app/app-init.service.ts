@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 /*
 * This Service uses the APP_INITIALIZER feature to dynamically load
 * environment variables (ie. remote app config) when the app is initiaziled,
@@ -9,13 +8,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 */
 import { Injectable, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { IConnectionConfig, IConfig } from "./app-settings.interfaces";
 import { AuththeticationService } from './auththetication.service';
-import { lastValueFrom } from 'rxjs';
 
 const serverDataStoragePath = '/signalk/v1/applicationData/';
 const serverAppDataPath = '/kip/1.0/';
-
 
 @Injectable()
 export class AppInitService {
@@ -26,6 +26,7 @@ export class AppInitService {
 
   constructor (
     private injector: Injector,
+    private router: Router,
     private auth: AuththeticationService,
   )
   {
@@ -42,6 +43,11 @@ export class AppInitService {
       if (!this.isLoggedIn) {
         await this.auth.login({ usr: this.localStorageConnectionConfig.loginName, pwd: this.localStorageConnectionConfig.loginPassword })
         .catch( (error: HttpErrorResponse) => {
+          if (error.status === 0) {
+            this.router.navigate(['/settings']);
+          } else if (error.status === 401) {
+            this.router.navigate(['/login']);
+          }
           console.error("[AppInit Service] Server returned: " + JSON.stringify(error.error));
         });
       }

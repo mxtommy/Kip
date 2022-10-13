@@ -1,8 +1,10 @@
-import { Observable } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from "@angular/router";
 import { AuththeticationService } from "../auththetication.service";
+import { AppSettingsService } from './../app-settings.service';
+import { NotificationsService } from './../notifications.service';
+import { IConnectionConfig } from "./../app-settings.interfaces";
 
 @Component({
   selector: 'app-login',
@@ -10,41 +12,42 @@ import { AuththeticationService } from "../auththetication.service";
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit, OnDestroy {
-
-  username: string = null;
-  password: string = null;
   private loginSub = null;
+  public connectionConfig: IConnectionConfig = null;
 
   constructor(
     private router: Router,
-    private auth: AuththeticationService
+    private auth: AuththeticationService,
+    private notificationsService: NotificationsService,
+    private appSettingsService: AppSettingsService,
   ) { }
 
   ngOnInit(): void {
+    this.connectionConfig = this.appSettingsService.getConnectionConfig();
   }
 
   submitForm() {
-    /* this.loginSub = this.auth
-      .login(this.username, this.password)
-      .subscribe(
-        loginResponse => {
-        //TODO: route to appropriate page
+    this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword })
+      .then( () => {
+        this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: false});
+        this.appSettingsService.setConnectionConfig(this.connectionConfig);
         this.router.navigate(['/page', 0]);
-
-      },
-      error => {
-        let errResponse:HttpErrorResponse = error;
-        if (errResponse.status == 401) {
-          console.log("[Login Component] Login failure: " + errResponse.statusText);
-        } else if (errResponse.status == 404) {
-          console.log("[Login Component] Login failure: " + errResponse.message);
-        } else if (errResponse.status == 0) {
-          console.log("[Login Component] " + errResponse.message);
+      })
+      .catch((error: HttpErrorResponse) => {
+        if (error.status == 401) {
+          this.notificationsService.sendSnackbarNotification("Authentication failed. Invalide user/password", 2000, false);
+          console.log("[Login Component] Login failure: " + error.statusText);
+        } else if (error.status == 404) {
+          this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 2000, false);
+          console.log("[Login Component] Login failure: " + error.message);
+        } else if (error.status == 0) {
+          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
+          console.log("[Login Component] " + error.message);
         } else {
+          this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 2000, false);
           console.log("[Login Component] Unknown login error response: " + JSON.stringify(error));
         }
-      }
-    ); */
+      });
   }
 
   ngOnDestroy(): void {

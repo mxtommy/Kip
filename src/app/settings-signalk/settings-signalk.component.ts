@@ -146,16 +146,16 @@ export class SettingsSignalkComponent implements OnInit {
         if (error.status == 401) {
           this.openUserCredentialModal();
           this.notificationsService.sendSnackbarNotification("Authentication failed. Invalide user/password", 2000, false);
-          console.log("[Login Component] Login failure: " + error.statusText);
+          console.log("[Setting-SignalK Component] Login failure: " + error.statusText);
         } else if (error.status == 404) {
           this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 2000, false);
-          console.log("[Login Component] Login failure: " + error.message);
+          console.log("[Setting-SignalK Component] Login failure: " + error.message);
         } else if (error.status == 0) {
           this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
-          console.log("[Login Component] " + error.message);
+          console.log("[Setting-SignalK Component] " + error.message);
         } else {
           this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 2000, false);
-          console.log("[Login Component] Unknown login error response: " + JSON.stringify(error));
+          console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
         }
       });
   }
