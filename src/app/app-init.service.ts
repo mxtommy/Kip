@@ -39,7 +39,7 @@ export class AppInitService {
     if (remoteConfigEnabled) {
       console.log("[AppInit Service] Shared Config configuration enabled");
       if (!this.isLoggedIn) {
-        await this.auth.login(this.localStorageConnectionConfig.loginName, this.localStorageConnectionConfig.loginPassword);
+        await this.auth.login({ usr: this.localStorageConnectionConfig.loginName, pwd: this.localStorageConnectionConfig.loginPassword });
       }
 
       let url = this.localStorageConnectionConfig.signalKUrl;

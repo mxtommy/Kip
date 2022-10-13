@@ -31,7 +31,7 @@ export class AuththeticationService {
     const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
     if (token) {
       if (this.isTokenExpired(token.expiry)) {
-        console.warn('[Authentication Service] User session Token expired. Deleting token');
+        console.warn('[Authentication Service] Session Token expired. Deleting token');
         localStorage.removeItem('authorization_token');
       } else {
         this._IsLoggedIn$.next(!!token);
@@ -39,7 +39,7 @@ export class AuththeticationService {
         if (token.isDeviceAccessToken)
           console.log('[Authentication Service] Device Access Token found in Local Storage');
           else
-          console.log('[Authentication Service] User Authorization Token found in Local Storage');
+          console.log('[Authentication Service] Session Authorization Token found in Local Storage');
       }
     }
 
@@ -81,8 +81,15 @@ export class AuththeticationService {
     );
   }
 
-  public async login(usr:string, pwd:string, newUrl?: string) {
-   if (newUrl) {
+  /**
+   * ASync server login API function. Handles logout, token and logged in status
+   *
+   * @param {{ usr: string; pwd: string; newUrl?: string; }} { usr, pwd, newUrl }
+   * @return {*}  {Promise<void>}
+   * @memberof AuththeticationService
+   */
+  public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
+    if (newUrl) {
       if ((this.serverUrl != newUrl) && this.serverUrl) {
         this.deleteToken();
       }
@@ -93,8 +100,7 @@ export class AuththeticationService {
       this.logout();
     }
 
-    const post = this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'});
-    const data =  await lastValueFrom(post)
+    await lastValueFrom(this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'}))
       .then((loginResponse: HttpResponse<any>) => {
         if (loginResponse.status === 200) {
           console.log("[Authentication Service] User " + usr + " login successful");
@@ -183,10 +189,13 @@ export class AuththeticationService {
   }
 
   /**
-   * Calls server logout API to killl the session token, deletes the
-   * App token from local storage and sets isLoggedIn$ to false
+   * Async function to server logout API to killl the session token, deletes the
+   * token from local storage and sets isLoggedIn$ to false
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof AuththeticationService
    */
-  public async logout() {
+  public async logout(): Promise<void> {
     localStorage.removeItem('authorization_token');
     await lastValueFrom(this.http.put(this.serverUrl + serverLogoutPath, null))
       .then((response) => {

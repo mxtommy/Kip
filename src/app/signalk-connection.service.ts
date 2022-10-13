@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { of , Observable , BehaviorSubject, Subject } from 'rxjs';
+import { of, Observable, BehaviorSubject, Subject, lastValueFrom } from 'rxjs';
 import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 import { AppSettingsService, SignalKUrl } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
@@ -132,11 +132,6 @@ export class SignalKConnectionService {
     this.auththeticationService.authToken$.subscribe((token: IAuthorizationToken) => {
       if (this.authToken != token) {
         this.authToken = token;
-        /* console.log("[Connection Service] Loading WebSockets with Authorization...");
-        if (this.socketWS$) {
-          this.closeWS();
-        }
-        this.connectWS();*/
       }
     });
 
@@ -176,7 +171,14 @@ export class SignalKConnectionService {
     });
   }
 
-  resetSignalK() {
+  /**
+   * ASync server API function to retreive server endpoints. Required before
+   * making any HTTP calls.
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof SignalKConnectionService
+   */
+  async resetSignalK(): Promise<void> {
     // TODO check api version... assuming v1
     this.currentSkStatus.endpoint.message = "Connecting...";
     this.currentSkStatus.endpoint.status = false;
@@ -195,9 +197,9 @@ export class SignalKConnectionService {
     this.endpointREST = null;
     this.endpointWS = null;
     console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
-    this.http.get<SignalKEndpointResponse>(fullURL, {observe: 'response'}).subscribe(
-      // http endpoint connection
-      response => {
+
+    await lastValueFrom(this.http.get<SignalKEndpointResponse>(fullURL, {observe: 'response'}))
+      .then(response => {
         console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
         this.endpointREST = response.body.endpoints.v1["signalk-http"];
         this.endpointWS = response.body.endpoints.v1["signalk-ws"];
@@ -206,15 +208,9 @@ export class SignalKConnectionService {
         this.currentSkStatus.endpoint.message = response.status.toString();
         this.currentSkStatus.server.version = response.body.server.id + " " + response.body.server.version;
 
-        this.callREST();
-        if (this.socketWS$) {
-          this.closeWS();
-        }
-        this.connectWS();
-        this.signalKStatus.next(this.currentSkStatus);
-      },
-      // When not ok, this runs...
-      (err: HttpErrorResponse) => {
+
+      })
+      .catch((err: HttpErrorResponse) => {
         console.debug("[Connection Service] HTTP Endpoints request failed");
         if (err.error instanceof Error) {
             // A client-side or network error occurred. Handle it accordingly.
@@ -229,35 +225,45 @@ export class SignalKConnectionService {
         this.currentSkStatus.rest.message = "Connection failed";
         this.currentSkStatus.server.version = "";
         this.signalKStatus.next(this.currentSkStatus);
+      });
+
+      await this.callREST();
+
+      if (this.socketWS$) {
+        this.closeWS();
       }
-    );
+      this.connectWS();
+      this.signalKStatus.next(this.currentSkStatus);
   }
 
-  callREST() {
-      this.http.get(this.endpointREST, {observe: 'response'}).subscribe(
-          // when we go ok, this runs
-          response => {
-            this.currentSkStatus.rest.status = true;
-            this.currentSkStatus.rest.message = response.status.toString();
-            this.messageREST$.next(response.body);
-            console.log("[Connection Service] SignalK full document retreived");
-          },
-          // When not ok, this runs...
-          (err: HttpErrorResponse) => {
-            this.currentSkStatus.rest.status = false;
-            this.currentSkStatus.rest.message = "Connection failed"
-            if (err.error instanceof Error) {
-              // A client-side or network error occurred. Handle it accordingly.
-              this.currentSkStatus.rest.message = err.error.message;
-              console.error('[Connection Service] A REST error occurred:', err.error.message);
-            } else {
-                // The backend returned an unsuccessful response code.
-                // The response body may contain clues as to what went wrong,
-                this.currentSkStatus.rest.message = "Unspecified REST error";
-                console.error(err);
-            }
-          }
-      );
+  /**
+   * ASync server API function to retreive Full Document
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof SignalKConnectionService
+   */
+  async callREST(): Promise<void> {
+   await lastValueFrom(this.http.get(this.endpointREST, {observe: 'response'}))
+      .then( response => {
+        this.currentSkStatus.rest.status = true;
+        this.currentSkStatus.rest.message = response.status.toString();
+        this.messageREST$.next(response.body);
+        console.log("[Connection Service] SignalK full document retreived");
+      })
+      .catch((err: HttpErrorResponse) => {
+        this.currentSkStatus.rest.status = false;
+        this.currentSkStatus.rest.message = "Connection failed"
+        if (err.error instanceof Error) {
+          // A client-side or network error occurred. Handle it accordingly.
+          this.currentSkStatus.rest.message = err.error.message;
+          console.error('[Connection Service] A REST error occurred:', err.error.message);
+        } else {
+            // The backend returned an unsuccessful response code.
+            // The response body may contain clues as to what went wrong,
+            this.currentSkStatus.rest.message = "Unspecified REST error";
+            console.error(err);
+        }
+      });
   }
 
   /**
