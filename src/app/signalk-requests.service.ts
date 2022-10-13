@@ -67,7 +67,7 @@ export class SignalkRequestsService {
       }
     }
 
-    console.log("[Request Service] Requesting Device Token");
+    console.log("[Request Service] Requesting Device Authorization Token");
     this.signalKDeltaService.publishDelta(deviceTokenRequest);
 
     let request = {
@@ -173,12 +173,13 @@ export class SignalkRequestsService {
         }
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.auth.setDeviceAccessToken(delta.accessRequest.token);
           this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
           console.log("[Request Service] " + delta.accessRequest.permission + ": Device Access Token received");
+          this.auth.setDeviceAccessToken(delta.accessRequest.token);
 
         } else if (delta.login !== undefined) {
-          // Delta login not implemented. Use REST login from Authetification service
+          // Delta (WebSocket) login not implemented. Use REST login from
+          //Authetification service to obtain Session token
           if (delta.login.token !== undefined) {
             // Do logic
           }

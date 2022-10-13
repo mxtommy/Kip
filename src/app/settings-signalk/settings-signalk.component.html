@@ -17,8 +17,8 @@
         Set User Credential
       </button>
       <mat-card-actions align="end">
-        <span *ngIf="(connectionConfig.useDeviceToken && (authToken && !isLoggedIn))">
-          <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="deleteToken()" [disabled]="!connectionConfig.useDeviceToken">
+        <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">
+          <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
             Delete Token
           </button>
         </span>
@@ -94,7 +94,7 @@
     <td>
       <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
       <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
-      {{ signalKConnectionsStatus.websocket.message }}
+      {{ signalKConnectionsStatus.websocket.message }} - Token: {{ signalKConnectionsStatus.websocket.hasToken }}
     </td>
   </tr>
 </table>

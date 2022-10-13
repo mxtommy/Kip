@@ -132,7 +132,14 @@ export class SignalKConnectionService {
     this.auththeticationService.authToken$.subscribe((token: IAuthorizationToken) => {
       if (this.authToken != token) {
         this.authToken = token;
+
+        // Only if the socket is all ready up ie. resetSignalk() ran at least once.
+        if (this.socketWS$ && this.endpointWS && this.currentSkStatus.websocket.status) {
+          this.closeWS();
+          this.connectWS();
+        }
       }
+
     });
 
     // WebSocket Open Event Handling
@@ -234,7 +241,7 @@ export class SignalKConnectionService {
           this.closeWS();
         }
         this.connectWS();
-        this.signalKStatus.next(this.currentSkStatus);
+
       } else if (this.socketWS$) {
         this.closeWS();
       }
@@ -252,12 +259,14 @@ export class SignalKConnectionService {
         this.currentSkStatus.rest.status = true;
         this.currentSkStatus.rest.message = response.status.toString();
         this.messageREST$.next(response.body);
+        this.signalKStatus.next(this.currentSkStatus);
         console.log("[Connection Service] SignalK full document retreived");
       })
       .catch((err: HttpErrorResponse) => {
         this.currentSkStatus.rest.status = false;
         this.currentSkStatus.rest.message = "Connection failed"
         this.currentSkStatus.rest.message = err.message;
+        this.signalKStatus.next(this.currentSkStatus);
         console.error('[Connection Service] A REST error occurred:', err.message);
       });
   }
@@ -280,6 +289,7 @@ export class SignalKConnectionService {
       );
       this.messagesSubjectWS$.next(messagesWS$);
   }
+
   /**
    * Handles connection arguments, token and creates socket Open/Close Observers
    */
@@ -287,8 +297,10 @@ export class SignalKConnectionService {
     let args: string;
     if (this.authToken != null) {
       args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.authToken.token;
+      this.currentSkStatus.websocket.hasToken = true;
     } else {
       args = this.WS_CONNECTION_ARGUMENT;
+      this.currentSkStatus.websocket.hasToken = false;
     }
     return webSocket({
       url: this.endpointWS + args,

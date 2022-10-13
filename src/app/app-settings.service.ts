@@ -170,54 +170,6 @@ export class AppSettingsService {
     this.rootSplits = layoutConfig.rootSplits;
   }
 
-  private pushBasicConnection(connectionConfig: IConnectionConfig): void {
-    let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
-    let notificationConfig: INotificationConfig = {
-      disableNotifications: true,
-      menuGrouping: true,
-      security: {
-        disableSecurity:true
-      },
-      devices: {
-        showNormalState: false,
-        disableDevices: true
-      },
-      sound: {
-        disableSound: true,
-        muteNormal: true,
-        muteWarning: true,
-        muteAlert: true,
-        muteAlarm: true,
-        muteEmergency: true
-      },
-    }
-    let layoutConfig: ILayoutConfig = DefaultLayoutConfig;
-    let widgetConfig:IWidgetConfig = {
-      "widgets": [
-        {
-          "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
-          "type": "WidgetBlank",
-          "config": null
-        }
-      ]
-    };
-    //let themeConfig = this.getDefaultThemeConfig();
-    //let zonesConfig = { zones: [] };
-
-    this.signalKUrl.next(skUrl);
-    this.useDeviceToken = connectionConfig.useDeviceToken;
-    this.loginName = connectionConfig.loginName;
-    this.loginPassword = connectionConfig.loginPassword;
-    this.useSharedConfig = connectionConfig.useSharedConfig;
-    this.sharedConfigName = connectionConfig.sharedConfigName;
-    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(notificationConfig);
-    this.widgets = widgetConfig.widgets;
-    this.splitSets = layoutConfig.splitSets;
-    this.rootSplits = layoutConfig.rootSplits;
-    //TODO: need to find a way to keep this
-    //this.kipUUID = appConfig.kipUUID;
-  }
-
   //UnitDefaults
   public getDefaultUnitsAsO() {
     return this.unitDefaults.asObservable();
@@ -243,6 +195,9 @@ export class AppSettingsService {
     this.loginName = value.loginName;
     this.loginPassword = value.loginPassword;
     this.useSharedConfig = value.useSharedConfig;
+    if (!value.useSharedConfig) {
+      this.useDeviceToken = true;
+    } else this.useDeviceToken = false;
     this.saveConnectionConfigToLocalStorage();
   }
 

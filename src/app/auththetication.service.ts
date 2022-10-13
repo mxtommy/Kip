@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, timer, throwError, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, timer, lastValueFrom } from 'rxjs';
 import { filter, map, switchMap } from "rxjs/operators";
 
 export interface IAuthorizationToken {
@@ -30,22 +30,33 @@ export class AuththeticationService {
     // load local storage token
     const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
     if (token) {
-      if (this.isTokenExpired(token.expiry)) {
-        console.warn('[Authentication Service] Session Token expired. Deleting token');
-        localStorage.removeItem('authorization_token');
-      } else {
-        this._IsLoggedIn$.next(!!token);
-        this._authToken$.next(token);
-        if (token.isDeviceAccessToken)
+      if (token.isDeviceAccessToken) {
+        if (token.expiry === null) {
+          console.log('[Authentication Service] Device Access Token found with expiry: NEVER');
+          this._authToken$.next(token);
+        } else if (this.isTokenExpired(token.expiry)) {
+          console.warn("[Authentication Service] Device Access Token expired. Deleting token");
+          localStorage.removeItem('authorization_token');
+        } else {
+          // We don't set logged . This is not a Session token.
           console.log('[Authentication Service] Device Access Token found in Local Storage');
-          else
-          console.log('[Authentication Service] Session Authorization Token found in Local Storage');
+          this._authToken$.next(token);
+        }
+      } else {
+        console.log('[Authentication Service] Session Authorization Token found in Local Storage');
+        if (this.isTokenExpired(token.expiry)) {
+          console.warn('[Authentication Service] Session Token expired. Deleting token');
+          localStorage.removeItem('authorization_token');
+        } else {
+          this._IsLoggedIn$.next(true);
+          this._authToken$.next(token);
       }
     }
+  }
 
     // Token SUbject subcription to handle token expiration and renewal
     this._authToken$.pipe(
-      filter((token: IAuthorizationToken) => !!token),
+      filter((token: IAuthorizationToken) => !!token && token.expiry !== null),
         map((token: IAuthorizationToken) => token.expiry),
         switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry-1))),
       )
@@ -97,7 +108,7 @@ export class AuththeticationService {
     }
 
     if (this._IsLoggedIn$.getValue()) {
-      this.logout();
+      await this.logout();
     }
 
     await lastValueFrom(this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'}))
@@ -220,7 +231,13 @@ export class AuththeticationService {
         'token' : null, 'expiry' : null, 'isDeviceAccessToken' : true
       };
 
-      if (this.isTokenExpired(expiry)) {
+      if(expiry === undefined) {
+        authorizationToken.token = token;
+        console.log("[Authentication Service] Device Access Token received. Token Expiration: NEVER");
+        this._IsLoggedIn$.next(false);
+        this._authToken$.next(authorizationToken);
+        localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
+      } else if (this.isTokenExpired(expiry)) {
         console.log("[Authentication Service] Received expired Device Access Token from server");
 
       } else {

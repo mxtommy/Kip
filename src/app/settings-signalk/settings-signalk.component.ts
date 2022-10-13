@@ -125,15 +125,14 @@ export class SettingsSignalkComponent implements OnInit {
       }
 
     } else {
-      this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: false});
-
+      // Same URL - no need to resetSignalK(). Just login, new token reset will reload WebSockets
+      //and HTTP_INTERCEPTOR will incert the new token automatically on ahh HTTP calls (not WebSocket).
       if ((this.authToken && this.authToken.isDeviceAccessToken) && this.connectionConfig.useSharedConfig) {
-        this.auth.deleteToken();
         this.serverLogin(this.connectionConfig.signalKUrl);
       } else if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if (this.authToken) {
-        this.auth.deleteToken();
+      } else if ((this.authToken && !this.authToken.isDeviceAccessToken) && !this.connectionConfig.useSharedConfig) {
+        this.deleteToken();
       }
     }
 
@@ -152,7 +151,7 @@ export class SettingsSignalkComponent implements OnInit {
           console.log("[Setting-SignalK Component] Login failure: " + error.message);
         } else if (error.status == 0) {
           this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
-          console.log("[Setting-SignalK Component] " + error.message);
+          console.log("[Setting-SignalK Component] User authentication failed. Cannot reach server at SignalK URL:" + error.message);
         } else {
           this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 2000, false);
           console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
