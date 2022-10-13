@@ -24,7 +24,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   submitForm() {
-    this.loginSub = this.auth
+    /* this.loginSub = this.auth
       .login(this.username, this.password)
       .subscribe(
         loginResponse => {
@@ -44,7 +44,7 @@ export class LoginComponent implements OnInit, OnDestroy {
           console.log("[Login Component] Unknown login error response: " + JSON.stringify(error));
         }
       }
-    );
+    ); */
   }
 
   ngOnDestroy(): void {

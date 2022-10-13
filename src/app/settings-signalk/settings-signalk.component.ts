@@ -142,7 +142,7 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   private serverLogin(newUrl?: string) {
-    this.auth
+    /* this.auth
       .login(this.connectionConfig.loginName, this.connectionConfig.loginPassword, newUrl)
       .subscribe(
         loginResponse => {
@@ -164,7 +164,7 @@ export class SettingsSignalkComponent implements OnInit {
           console.log("[Login Component] Unknown login error response: " + JSON.stringify(error));
         }
       }
-    );
+    ); */
   }
 
   public requestDeviceAccessToken() {

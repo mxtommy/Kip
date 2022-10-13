@@ -1,7 +1,7 @@
-import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, Pipe } from '@angular/core';
-import { BehaviorSubject, timer, throwError, Observable } from 'rxjs';
-import { filter, map, shareReplay, switchMap, tap } from "rxjs/operators";
+import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, timer, throwError, lastValueFrom } from 'rxjs';
+import { filter, map, switchMap } from "rxjs/operators";
 
 export interface IAuthorizationToken {
   expiry: number;
@@ -13,14 +13,6 @@ const serverLoginPath = '/signalk/v1/auth/login';
 const serverLogoutPath = '/signalk/v1/auth/logout';
 const serverValidateTokenPath = '/signalk/v1/auth/validate';
 
-const httpOptions = {
-  headers: new HttpHeaders({
-    'Content-Type': 'application/json',
-    'observe': 'response'
-  })
-
-};
-
 @Injectable({
   providedIn: 'root'
 })
@@ -30,9 +22,6 @@ export class AuththeticationService {
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
   public authToken$ = this._authToken$.asObservable();
   private serverUrl: string = null;
-
-  private InitSvcUsr: string = null;
-  private InitSvcPwd: string = null;
 
   constructor(
     private http: HttpClient
@@ -54,7 +43,7 @@ export class AuththeticationService {
       }
     }
 
-    // Subcribe to token Subject to handle token expiration and renewal
+    // Token SUbject subcription to handle token expiration and renewal
     this._authToken$.pipe(
       filter((token: IAuthorizationToken) => !!token),
         map((token: IAuthorizationToken) => token.expiry),
@@ -90,12 +79,10 @@ export class AuththeticationService {
         }
       }
     );
-
-
   }
 
-  public login(usr:string, pwd:string, newUrl?: string): Observable<HttpResponse<any>> {
-    if (newUrl) {
+  public async login(usr:string, pwd:string, newUrl?: string) {
+   if (newUrl) {
       if ((this.serverUrl != newUrl) && this.serverUrl) {
         this.deleteToken();
       }
@@ -106,14 +93,19 @@ export class AuththeticationService {
       this.logout();
     }
 
-    return this.http.post<HttpResponse<any>>(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'})
-      .pipe(
-        tap((loginResponse: HttpResponse<any>) => {
+    const post = this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'});
+    const data =  await lastValueFrom(post)
+      .then((loginResponse: HttpResponse<any>) => {
+        if (loginResponse.status === 200) {
+          console.log("[Authentication Service] User " + usr + " login successful");
           this.setSession(loginResponse.body.token);
-        }),
-        //catchError(this.handleError),
-        shareReplay()
-      );
+        } else {
+          console.warn("[[Authentication Service] User " + usr + " login failed");
+        }
+      })
+      .catch(error => {
+        console.error(error)
+      });
   }
 
   private handleError(error: HttpErrorResponse) {
@@ -129,7 +121,6 @@ export class AuththeticationService {
     // Return an observable with a user-facing error message.
     return throwError(() => new Error('Something bad happened; please try again later.'));
   }
-
 
   /**
    * Sets the in-memory session token details (token and extracted expiration date)
@@ -195,11 +186,16 @@ export class AuththeticationService {
    * Calls server logout API to killl the session token, deletes the
    * App token from local storage and sets isLoggedIn$ to false
    */
-  public logout(): void {
+  public async logout() {
     localStorage.removeItem('authorization_token');
-    this.http.put(this.serverUrl + serverLogoutPath, null).subscribe((response) => {
-      this._IsLoggedIn$.next(false);
-      this._authToken$.next(null);
+    await lastValueFrom(this.http.put(this.serverUrl + serverLogoutPath, null))
+      .then((response) => {
+        this._IsLoggedIn$.next(false);
+        this._authToken$.next(null);
+        console.log("[Authentication Service] User logged out");
+    })
+    .catch(error => {
+      console.error(error)
     });
     //TODO: below should be removed once the sk bug is fixed
     this._IsLoggedIn$.next(false);
