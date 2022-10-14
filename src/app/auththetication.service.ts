@@ -12,6 +12,7 @@ export interface IAuthorizationToken {
 const serverLoginPath = '/signalk/v1/auth/login';
 const serverLogoutPath = '/signalk/v1/auth/logout';
 const serverValidateTokenPath = '/signalk/v1/auth/validate';
+const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
 
 @Injectable({
   providedIn: 'root'
@@ -54,38 +55,27 @@ export class AuththeticationService {
     }
   }
 
-    // Token SUbject subcription to handle token expiration and renewal
+    // Token Subject subcription to handle token expiration and renewal
     this._authToken$.pipe(
-      filter((token: IAuthorizationToken) => !!token && token.expiry !== null),
+      filter((token: IAuthorizationToken) => (!!token && token.expiry !== null)),
         map((token: IAuthorizationToken) => token.expiry),
-        switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry-1))),
+        switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry, tokenRenewalBuffer))),
       )
       .subscribe(() => {
         let token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
-
         if (token.isDeviceAccessToken) {
           console.error('[Authentication Service] Device Access Token expired. Manually renew token using SignalK Connection Tab');
         } else {
-
           if (this.isTokenExpired(token.expiry)) {
             console.warn('[Authentication Service] User session Token expired');
-
           } else {
+            let connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
             console.log('[Authentication Service] User session Token expires soon. Renewing token.');
-            console.log("[Authentication Service] \nToken Expiry" + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry - 1)); // renew 1 min before expiration
-
-            this.renewToken()
-              .subscribe((validateTokenResponse) => {
-                const keys = validateTokenResponse.headers.keys();
-                let headers = keys.map(key =>
-                  `${key}: ${validateTokenResponse.headers.get(key)}`);
-
-                  //TODO: test and fix renewToken!
-
-                console.log({ ...validateTokenResponse.body! });
-                console.log(validateTokenResponse.headers.get('authorization'));
-                this.setSession(validateTokenResponse.headers.get('authorization'));
-              });
+            console.log("[Authentication Service] \nToken Expiry: " + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer));
+            this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
+            .catch( (error: HttpErrorResponse) => {
+              console.warn("[AppInit Service] Server returned: " + JSON.stringify(error.error));
+            });
           }
         }
       }
@@ -93,7 +83,12 @@ export class AuththeticationService {
   }
 
   /**
-   * ASync server login API function. Handles logout, token and logged in status
+   * ASync server login API function. Handles logout, token and logged in status. Use
+   * newUrl param to indicate against what server the login should take place, if it's
+   * not the current server (if we are changing the sk URL). This param must be used
+   * as the AuththeticationService has no dependency on AppSettings Service and once
+   * AuththeticationService is intanciated, newUrl is the only way to change it's
+   * tartget endpoint.
    *
    * @param {{ usr: string; pwd: string; newUrl?: string; }} { usr, pwd, newUrl }
    * @return {*}  {Promise<void>}
@@ -106,11 +101,9 @@ export class AuththeticationService {
       }
       this.serverUrl = newUrl;
     }
-
     if (this._IsLoggedIn$.getValue()) {
       await this.logout();
     }
-
     await lastValueFrom(this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'}))
       .then((loginResponse: HttpResponse<any>) => {
           console.log("[Authentication Service] User " + usr + " login successful");
@@ -176,22 +169,32 @@ export class AuththeticationService {
   }
 
   /**
-   * Provided you pass the expiration value of a token, this fonction will returns
-   * the expiration date as a date object
+   * Returns a Date() object based on a expiry value of a token. If you
+   * include optionnal param buffer, it will return a date, minus this value.
+   * Use buffer as a time window to renew a token.
    *
    * @private
-   * @param {number} expiry Expiration date value defined in milliseconds
+   * @param {number} dateAsSeconds Expiration date value in seconds (starting from 1970...)
+   * @param {number} buffer Optionnal value in seconds. will deduct the returned Date by the buffer value
    * @return {*}  {Date} UTC expiration date
    * @memberof AuththeticationService
    */
-  private getTokenExpirationDate(expiry: number): Date {
-    const date = new Date(0);
-    date.setUTCSeconds(expiry);
+  private getTokenExpirationDate(dateAsSeconds: number, buffer?: number): Date {
+    let date = new Date(0);
+
+    if(buffer) {
+      let bufferedDate = new Date(0);
+      bufferedDate.setUTCSeconds(dateAsSeconds - buffer);
+      date = bufferedDate;
+    } else {
+      date.setUTCSeconds(dateAsSeconds);
+    }
     return date;
   }
 
+  // not yet implemented by SignalK but part of the specs
   private renewToken() {
-    return this.http.post<any>(this.serverUrl + serverValidateTokenPath, null, {observe: 'response'});
+    return this.http.post<HttpResponse<Response>>(this.serverUrl + serverValidateTokenPath, null, {observe: 'response'});
   }
 
   /**
