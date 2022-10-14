@@ -1,3 +1,4 @@
+import { StorageService } from './storage.service';
 import { AppInitService } from './app-init.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
@@ -9,14 +10,16 @@ import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone } from "./app-settings.interfaces";
-import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from './config.blank.const';
+import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from './config.blank.const';
 import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
-import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig } from './config.demo.const';
+import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
 const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'modern-dark';
-const configVersion = 8; // used to invalidate old configs.
+const configVersion = 9; // used to invalidate old configs.
+const connectionConfigVersion = 1; // used to invalidate old configs.
+
 export interface SignalKUrl {
   url: string;
   new: boolean;
@@ -47,6 +50,7 @@ export class AppSettingsService {
 
   constructor(
     private router: Router,
+    private storageService: StorageService,
     private appInitService: AppInitService
     )
   {
@@ -77,25 +81,32 @@ export class AppSettingsService {
       }
 
       if (appConfig === null) {
-        console.log("[AppSettings Service] Error loading App config, resetting and loading all default.");
+        console.log("[AppSettings Service] Empty or incorrect App config. Resetting and loading defaults");
         localStorage.clear();
         appConfig = this.getDefaultAppConfig();
         connectionConfig = this.getDefaultConnectionConfig();
         widgetConfig = this.getDefaultWidgetConfig();
         layoutConfig = this.getDefaultLayoutConfig();
         themeConfig = this.getDefaultThemeConfig();
-        zonesConfig = { zones: [] };
+        zonesConfig = this.getDefaultZonesConfig();
       }
 
       if ((typeof appConfig.configVersion !== 'number') || (appConfig.configVersion != configVersion)) {
         console.error("[AppSettings Service] Invalid config version, resetting and loading all default.");
-        localStorage.clear();
+        // we don't remove connectionConfig. It only hold: url, use, pwd, kipUUID, etc. Those
+        // values can and should stay local and persist over time
+        localStorage.removeItem("appConfig");
+        localStorage.removeItem("widgetConfig");
+        localStorage.removeItem("layoutConfig");
+        localStorage.removeItem("themeConfig");
+        localStorage.removeItem("zonesConfig");
+        // get defaults
         appConfig = this.getDefaultAppConfig();
         connectionConfig = this.getDefaultConnectionConfig();
         widgetConfig = this.getDefaultWidgetConfig();
         layoutConfig = this.getDefaultLayoutConfig();
         themeConfig = this.getDefaultThemeConfig();
-        zonesConfig = { zones: [] };
+        zonesConfig = this.getDefaultZonesConfig();
       } else {
         if (serverConfig) {
           //TODO: Make use of Config parent object everywhere
@@ -163,7 +174,7 @@ export class AppSettingsService {
     this.dataSets = appConfig.dataSets;
     this.unitDefaults.next(appConfig.unitDefaults);
     this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
-    this.kipUUID = appConfig.kipUUID;
+    this.kipUUID = connectionConfig.kipUUID;
     this.widgets = widgetConfig.widgets;
     this.zones.next(zonesConfig.zones);
     this.splitSets = layoutConfig.splitSets;
@@ -319,7 +330,11 @@ public setSignalKURL(value: SignalKUrl) {
 
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
-    localStorage.clear();
+    localStorage.removeItem("appConfig");
+    localStorage.removeItem("widgetConfig");
+    localStorage.removeItem("layoutConfig");
+    localStorage.removeItem("themeConfig");
+    localStorage.removeItem("zonesConfig");
     this.reloadApp();
   }
 
@@ -355,7 +370,6 @@ public setSignalKURL(value: SignalKUrl) {
 
     let storageObject: IAppConfig = {
       configVersion: configVersion,
-      kipUUID: this.kipUUID,
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
@@ -365,6 +379,8 @@ public setSignalKURL(value: SignalKUrl) {
 
   private buildConnectionStorageObject() {
     let storageObject: IConnectionConfig = {
+      connectionConfigVersion: configVersion,
+      kipUUID: this.kipUUID,
       signalKUrl: this.signalKUrl.getValue().url,
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
@@ -441,13 +457,13 @@ public setSignalKURL(value: SignalKUrl) {
     config.notificationConfig = DefaultNotificationConfig;
     config.unitDefaults = DefaultUnitsConfig;
     config['configVersion'] = configVersion;
-    config.kipUUID = this.newUuid();
     localStorage.setItem('appConfig', JSON.stringify(config));
     return config;
   }
 
   private getDefaultConnectionConfig(): IConnectionConfig {
     let config: IConnectionConfig = DefaultConectionConfig;
+    config.kipUUID = this.newUuid();
     localStorage.setItem('connectionConfig', JSON.stringify(config));
     return config;
   }
@@ -470,6 +486,11 @@ public setSignalKURL(value: SignalKUrl) {
     return config;
   }
 
+  private getDefaultZonesConfig(): IZonesConfig {
+    let config: IZonesConfig = DefaultZonesConfig;
+    localStorage.setItem("zonesConfig", JSON.stringify(config));
+    return config;
+  }
 
   private newUuid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

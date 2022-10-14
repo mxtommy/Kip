@@ -3,30 +3,29 @@ import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
-export interface IConfig {
-  app: IAppConfig;
-  widget: IWidgetConfig;
-  layout: ILayoutConfig;
-  theme: IThemeConfig;
-  zones: IZonesConfig;
-  connection: IConnectionConfig;
-}
-
-export interface IAppConfig {
-  configVersion: number;
-  kipUUID: string;
-  dataSets: IDataSet[];
-  unitDefaults: IUnitDefaults;
-  notificationConfig: INotificationConfig;
-}
-
 export interface IConnectionConfig {
+  connectionConfigVersion: number;
+  kipUUID: string;
   signalKUrl: string;
   useDeviceToken: boolean;
   loginName: string;
   loginPassword: string;
   useSharedConfig: boolean;
   sharedConfigName: string;
+}
+export interface IConfig {
+  app: IAppConfig;
+  widget: IWidgetConfig;
+  layout: ILayoutConfig;
+  theme: IThemeConfig;
+  zones: IZonesConfig;
+}
+
+export interface IAppConfig {
+  configVersion: number;
+  dataSets: IDataSet[];
+  unitDefaults: IUnitDefaults;
+  notificationConfig: INotificationConfig;
 }
 
 export interface IThemeConfig {
@@ -65,7 +64,6 @@ export interface INotificationConfig {
     muteEmergency: boolean;
   },
 }
-
 export interface IZone {
   uuid: string;
   path: string;

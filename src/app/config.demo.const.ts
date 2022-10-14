@@ -1,9 +1,8 @@
-import { IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig } from "./app-settings.interfaces"
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig, IZonesConfig } from "./app-settings.interfaces"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 8,
-  "kipUUID": newUuid(),
+  "configVersion": 9,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
@@ -53,19 +52,6 @@ export const DemoAppConfig: IAppConfig = {
     },
   }
 }
-
-export const DemoConnectionConfig: IConnectionConfig = {
-  "signalKUrl": "http://demo.signalk.org",
-  "useDeviceToken": false,
-  "loginName": null,
-  "loginPassword": null,
-  "useSharedConfig": false,
-  "sharedConfigName": "default"
-}
-
-export const DemoThemeConfig: IThemeConfig = {
-  "themeName": "modern-dark"
-  }
 
 export const DemoWidgetConfig: IWidgetConfig = {
   "widgets": [
@@ -381,6 +367,32 @@ export const DemoLayoutConfig: ILayoutConfig = {
   ]
 }
 
+export const DemoThemeConfig: IThemeConfig = {
+  "themeName": "modern-dark"
+}
+
+export const DemoZonesConfig: IZonesConfig = {
+  "zones": [],
+}
+
+export const DemoConfig: IConfig = {
+  "app": DemoAppConfig,
+  "widget": DemoWidgetConfig,
+  "layout": DemoLayoutConfig,
+  "theme": DemoThemeConfig,
+  "zones": DemoZonesConfig,
+}
+
+export const DemoConnectionConfig: IConnectionConfig = {
+  "connectionConfigVersion": 9,
+  "kipUUID": newUuid(),
+  "signalKUrl": "https://demo.signalk.org",
+  "useDeviceToken": false,
+  "loginName": null,
+  "loginPassword": null,
+  "useSharedConfig": false,
+  "sharedConfigName": "default"
+}
 
 function newUuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

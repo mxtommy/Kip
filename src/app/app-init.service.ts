@@ -73,7 +73,7 @@ export class AppInitService {
     this.localStorageConnectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
 
     if (!this.localStorageConnectionConfig) {
-      console.log("[AppInit Service] No Config found in LocalStorage. Possible first time the app is started");
+      console.log("[AppInit Service] No Connection Config found in LocalStorage. Possible first time the app is started");
       return false;
     } else {
 

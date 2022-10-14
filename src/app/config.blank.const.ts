@@ -1,20 +1,10 @@
-import { IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig } from "./app-settings.interfaces"
+import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, IZonesConfig } from "./app-settings.interfaces"
 
 export const DefaultAppConfig: IAppConfig = {
-  "configVersion": 8,
-  "kipUUID": newUuid(),
+  "configVersion": 9,
   "dataSets": [],
   "unitDefaults": null,
   "notificationConfig": null,
-}
-
-export const DefaultConectionConfig: IConnectionConfig = {
-  "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
-  "useDeviceToken": false,
-  "loginName": null,
-  "loginPassword": null,
-  "useSharedConfig": false,
-  "sharedConfigName": "default"
 }
 
 export const DefaultWidgetConfig: IWidgetConfig = {
@@ -50,6 +40,28 @@ export const DefaultThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
 }
 
+export const DefaultZonesConfig: IZonesConfig = {
+  "zones": [],
+}
+
+export const defaultConfig: IConfig = {
+  "app": DefaultAppConfig,
+  "widget": DefaultWidgetConfig,
+  "layout": DefaultLayoutConfig,
+  "theme": DefaultThemeConfig,
+  "zones": DefaultZonesConfig,
+}
+
+export const DefaultConectionConfig: IConnectionConfig = {
+  "connectionConfigVersion": 1,
+  "kipUUID": newUuid(),
+  "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
+  "useDeviceToken": false,
+  "loginName": null,
+  "loginPassword": null,
+  "useSharedConfig": false,
+  "sharedConfigName": "default"
+}
 
 function newUuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

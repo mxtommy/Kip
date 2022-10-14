@@ -36,8 +36,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   configScope = new FormControl("global", Validators.required);
   configLoad = new FormControl(Validators.required);
 
-
-  authTokenSub: Subscription;
   serverSupportSaveSub: Subscription;
 
   constructor(
@@ -103,7 +101,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       let zones: IZonesConfig = newConfig['zones'] || [];
 
       // preserve kip uuid
-      app.kipUUID = this.appSettingsService.getKipUUID();
+      connection.kipUUID = this.appSettingsService.getKipUUID();
 
       this.appSettingsService.replaceConfig("appConfig", JSON.stringify(app), false);
       this.appSettingsService.replaceConfig("connectionConfig", JSON.stringify(connection), false);
@@ -156,7 +154,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   ngOnDestroy() {
     this.serverSupportSaveSub.unsubscribe();
-    this.authTokenSub.unsubscribe();
   }
 
 }

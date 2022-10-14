@@ -120,7 +120,7 @@ export class SettingsSignalkComponent implements OnInit {
       this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
       if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if (this.authToken.isDeviceAccessToken) {
+      } else if (this.authToken && this.authToken.isDeviceAccessToken) {
         this.auth.deleteToken();
       }
 
