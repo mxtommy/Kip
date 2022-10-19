@@ -16,8 +16,7 @@ import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
 const defaultTheme = 'modern-dark';
-const configVersion = 9; // used to invalidate old configs.
-const connectionConfigVersion = configVersion; // used to invalidate old configs.
+const configVersion = 9; // used to invalidate old configs. connectionConfig and appConfig use this same version.
 
 export interface SignalKUrl {
   url: string;
@@ -39,6 +38,7 @@ export class AppSettingsService {
   public useSharedConfig: boolean;
   private sharedConfigName: string;
 
+  private useServerStorage: boolean = false;
   private kipUUID: string;
   public signalkUrl: SignalKUrl;
   widgets: Array<IWidget>;
@@ -55,44 +55,63 @@ export class AppSettingsService {
     )
   {
     this.storageService.activeConfigVersion = configVersion;
+    let activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
     let serverConfig: IConfig = this.appInitService.serverConfig;
-    let appConfig: IAppConfig;
-    let connectionConfig: IConnectionConfig;
-    let widgetConfig: IWidgetConfig;
-    let layoutConfig: ILayoutConfig;
-    let themeConfig: IThemeConfig;
-    let zonesConfig: IZonesConfig;
 
-    if (window.localStorage) {
-      // localStorage supported
-      connectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
+    if (!window.localStorage) {
+      // REQUIRED BY APP - localStorage support
+      console.error("[AppSettings Service] LocalStorage NOT SUPPORTED by browser\nThis is a requirement to run Kip. See browser documentation to enable this feature.");
 
-      if (connectionConfig === null) {
-        console.log("[AppSettings Service] No connectionConfig present in local storage. Loading default.");
-        connectionConfig = this.getDefaultConnectionConfig();
-      }
+    } else {
+      this.loadConnectionConfig();
 
       if (serverConfig) {
-        console.log("[AppSettings Service] Loading remote server config");
-        appConfig = serverConfig.app;
+        console.log("[AppSettings Service] Enabling Server Storage");
+        this.useServerStorage = true;
+        activeConfig = serverConfig;
       } else {
-        console.log("[AppSettings Service] Loading LocalStorage config");
-        appConfig = JSON.parse(localStorage.getItem("appConfig"));
+        console.log("[AppSettings Service] Enabling Local Storage");
+        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+        localStorageConfig.app = JSON.parse(localStorage.getItem("appConfig"));
+        localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
+        localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
+        localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
+        localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
+
+        this.useServerStorage = false;
+        activeConfig = localStorageConfig;
       }
 
-      if (appConfig === null) {
-        console.log("[AppSettings Service] Empty or incorrect App config. Resetting and loading defaults");
-        localStorage.clear();
-        appConfig = this.getDefaultAppConfig();
-        connectionConfig = this.getDefaultConnectionConfig();
-        widgetConfig = this.getDefaultWidgetConfig();
-        layoutConfig = this.getDefaultLayoutConfig();
-        themeConfig = this.getDefaultThemeConfig();
-        zonesConfig = this.getDefaultZonesConfig();
-      }
+      activeConfig = this.validateAppConfig(activeConfig);
 
-      if ((typeof appConfig.configVersion !== 'number') || (appConfig.configVersion != configVersion)) {
-        console.error("[AppSettings Service] Invalid config version, resetting and loading all default.");
+      this.pushSettings(activeConfig);
+    }
+  }
+
+  private loadConnectionConfig() {
+    let config: IConnectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
+
+    if (config === null || config.configVersion !== configVersion) {
+      console.log("[AppSettings Service] No connectionConfig present in local storage. Loading default.");
+      config = this.getDefaultConnectionConfig();
+    }
+
+    this.signalkUrl = {url: config.signalKUrl, new: false};
+    this.useDeviceToken = config.useDeviceToken;
+    this.loginName = config.loginName;
+    this.loginPassword = config.loginPassword;
+    this.useSharedConfig = config.useSharedConfig;
+    this.sharedConfigName = config.sharedConfigName;
+    this.kipUUID = config.kipUUID;
+  }
+
+  private validateAppConfig(config: IConfig): IConfig {
+    if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion != configVersion)) {
+      if (this.useServerStorage) {
+        //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
+        console.error("[AppSettings Service] Invalid Server config version. Resetting and loading all default.");
+      } else {
+        console.error("[AppSettings Service] Invalid localStorage config version. Resetting and loading all default.");
         // we don't remove connectionConfig. It only hold: url, use, pwd, kipUUID, etc. Those
         // values can and should stay local and persist over time
         localStorage.removeItem("appConfig");
@@ -100,47 +119,30 @@ export class AppSettingsService {
         localStorage.removeItem("layoutConfig");
         localStorage.removeItem("themeConfig");
         localStorage.removeItem("zonesConfig");
-        // get defaults
-        appConfig = this.getDefaultAppConfig();
-        connectionConfig = this.getDefaultConnectionConfig();
-        widgetConfig = this.getDefaultWidgetConfig();
-        layoutConfig = this.getDefaultLayoutConfig();
-        themeConfig = this.getDefaultThemeConfig();
-        zonesConfig = this.getDefaultZonesConfig();
-      } else {
-        if (serverConfig) {
-          //TODO: Make use of Config parent object everywhere
-          widgetConfig = serverConfig.widget;
-          layoutConfig = serverConfig.layout;
-          themeConfig = serverConfig.theme;
-          zonesConfig = serverConfig.zones;
-        } else {
-          widgetConfig = this.loadConfigFromLocalStorage("widgetConfig");
-          layoutConfig = this.loadConfigFromLocalStorage("layoutConfig");
-          themeConfig = this.loadConfigFromLocalStorage("themeConfig");
-          zonesConfig = this.loadConfigFromLocalStorage("zonesConfig");
-        }
       }
 
-      this.pushSettings(appConfig, connectionConfig, widgetConfig, layoutConfig, themeConfig, zonesConfig);
+      let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+      newDefaultConfig.app = this.getDefaultAppConfig();
+      newDefaultConfig.widget = this.getDefaultWidgetConfig();
+      newDefaultConfig.layout = this.getDefaultLayoutConfig();
+      newDefaultConfig.theme = this.getDefaultThemeConfig();
+      newDefaultConfig.zones = this.getDefaultZonesConfig();
 
-    } else {
-      console.error("[AppSettings Service] LocalStorage NOT SUPPORTED by browser\nThis is a requirement to run Kip. See browser documentation to enable this feature.");
+      if (this.useServerStorage) {
+        this.storageService.setConfig('user', this.sharedConfigName, newDefaultConfig)
+        .then()
+        .catch();
+      }
     }
-
-    function test() {
-      let connectionConfig: IConnectionConfig;
-      return connectionConfig;
-    }
+    return config;
   }
 
   private loadConfigFromLocalStorage(type: string) {
     // we don't support AppConfig here. It needs a version check and full config invalidation.
-    let config;
-    config = JSON.parse(localStorage.getItem(type));
+    let config = JSON.parse(localStorage.getItem(type));
 
     if (config == null) {
-      console.log("[AppSettings Service] Error loading " + type +  " config. Force loading " + type + " defaults.");
+      console.log(`[AppSettings Service] Error loading ${type} config. Force loading ${type} defaults`);
       switch (type) {
         case "connectionConfig":
           config = this.getDefaultConnectionConfig();
@@ -159,30 +161,39 @@ export class AppSettingsService {
           break;
 
         case "zonesConfig":
-          config = { zones: [] };
+          config = this.getDefaultZonesConfig();
           break;
       }
     }
+
+    if(type === 'connectionConfig' || type === 'appConfig') {
+      if (config.configVersion !== configVersion) {
+        console.log(`[AppSettings Service] Invalide ${type} version. Force loading defaults`);
+
+        switch (type) {
+          case "appConfig":
+            config = this.getDefaultAppConfig();
+            break;
+
+          case "connectionConfig":
+            config = this.getDefaultConnectionConfig();
+            break;
+        }
+      }
+    }
+
     return config;
   }
 
-  private pushSettings(appConfig: IAppConfig, connectionConfig: IConnectionConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig, zonesConfig: IZonesConfig): void {
-    this.themeName.next(themeConfig['themeName']);
-
-    this.signalkUrl = {url: connectionConfig.signalKUrl, new: false};
-    this.useDeviceToken = connectionConfig.useDeviceToken;
-    this.loginName = connectionConfig.loginName;
-    this.loginPassword = connectionConfig.loginPassword;
-    this.useSharedConfig = connectionConfig.useSharedConfig;
-    this.sharedConfigName = connectionConfig.sharedConfigName;
-    this.dataSets = appConfig.dataSets;
-    this.unitDefaults.next(appConfig.unitDefaults);
-    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(appConfig.notificationConfig);
-    this.kipUUID = connectionConfig.kipUUID;
-    this.widgets = widgetConfig.widgets;
-    this.zones.next(zonesConfig.zones);
-    this.splitSets = layoutConfig.splitSets;
-    this.rootSplits = layoutConfig.rootSplits;
+  private pushSettings(config: IConfig): void {
+    this.themeName.next(config.theme.themeName);
+    this.dataSets = config.app.dataSets;
+    this.unitDefaults.next(config.app.unitDefaults);
+    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(config.app.notificationConfig);
+    this.widgets = config.widget.widgets;
+    this.zones.next(config.zones.zones);
+    this.splitSets = config.layout.splitSets;
+    this.rootSplits = config.layout.rootSplits;
   }
 
   //UnitDefaults
@@ -372,7 +383,7 @@ export class AppSettingsService {
 
   private buildConnectionStorageObject() {
     let storageObject: IConnectionConfig = {
-      connectionConfigVersion: configVersion,
+      configVersion: configVersion,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl.url,
       useDeviceToken: this.useDeviceToken,

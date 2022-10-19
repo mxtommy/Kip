@@ -55,7 +55,7 @@ export class AppInitService {
       if (this.isLoggedIn) {
         let url = this.localStorageConnectionConfig.signalKUrl;
         url += serverDataStoragePath + "user" + serverAppDataPath;
-        url += this.localStorageConnectionConfig.connectionConfigVersion + "/"
+        url += this.localStorageConnectionConfig.configVersion + "/"
         url += this.localStorageConnectionConfig.sharedConfigName;
 
         console.log("[AppInit Service] Retreiving server config: " + this.localStorageConnectionConfig.sharedConfigName);

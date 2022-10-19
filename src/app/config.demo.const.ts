@@ -384,7 +384,7 @@ export const DemoConfig: IConfig = {
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "connectionConfigVersion": 9,
+  "configVersion": 9,
   "kipUUID": newUuid(),
   "signalKUrl": "https://demo.signalk.org",
   "useDeviceToken": false,

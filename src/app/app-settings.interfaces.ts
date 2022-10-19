@@ -4,7 +4,7 @@ import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
 export interface IConnectionConfig {
-  connectionConfigVersion: number;
+  configVersion: number;
   kipUUID: string;
   signalKUrl: string;
   useDeviceToken: boolean;
