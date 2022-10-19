@@ -1,14 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { FormControl, Validators }    from '@angular/forms';
 
 import { AppSettingsService } from '../app-settings.service';
-import { SignalKService } from '../signalk.service';
 import { SignalKConnectionService } from '../signalk-connection.service';
 import { NotificationsService } from '../notifications.service';
-import { IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IZonesConfig, IWidgetConfig } from '../app-settings.interfaces';
+import { StorageService } from './../storage.service';
+import { IConfig } from '../app-settings.interfaces';
 
-interface possibleConfig {
+interface Config {
   name: string
   scope: string
 }
@@ -29,31 +28,30 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   hasToken: boolean = false;
   supportApplicationData: boolean = false;
-  possibleConfigs: possibleConfig[] = [];
+  serverConfigs: Config[] = [];
 
   configName: string = null;
-  //configName = new FormControl("default", [ Validators.required, Validators.pattern("^[a-zA-Z0-9\-_]+$") ]);
   configScope = new FormControl("global", Validators.required);
   configLoad = new FormControl(Validators.required);
 
-  serverSupportSaveSub: Subscription;
-
   constructor(
     private appSettingsService: AppSettingsService,
-    private signalKService: SignalKService,
+    private storageSvc: StorageService,
     private signalKConnectionService: SignalKConnectionService,
     private notificationsService: NotificationsService,
   ) { }
 
   //TODO: fix successful snackbar msg on save error (see console log when not admin user and save to Global scope)
   ngOnInit() {
-    this.serverSupportSaveSub = this.signalKService.getServerSupportApplicationDataAsO().subscribe(supported => {
-      this.supportApplicationData = supported;
-      if (supported) {
-        this.getPossibleConfigs();
-      }
-    });
 
+    this.hasToken = this.signalKConnectionService.currentSkStatus.websocket.hasToken;
+    this.storageSvc.listConfigs()
+      .then(configs => {
+        this.serverConfigs = configs;
+      })
+      .catch(error => this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false));
+
+    this.supportApplicationData = this.storageSvc.isAppDataSupported;
     this.appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
     this.connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
     this.widgetJSONConfig = JSON.stringify(this.appSettingsService.getWidgetConfig(), null, 2);
@@ -62,64 +60,49 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     this.zonesJSONConfig = JSON.stringify(this.appSettingsService.getZonesConfig(), null, 2);
   }
 
-  private getPossibleConfigs() {
-    this.possibleConfigs = [];
-    this.signalKConnectionService.getApplicationDataKeys('global').subscribe(configNames => {
-      for(let cname of configNames) {
-        this.possibleConfigs.push({ scope: 'global', name: cname });
-      }
-    });
-    this.signalKConnectionService.getApplicationDataKeys('user').subscribe(configNames => {
-      for(let cname of configNames) {
-        this.possibleConfigs.push({ scope: 'user', name: cname });
-      }
+  public saveLocalConfigToserver() {
+    let localConfig: IConfig = {
+      "app": null,
+      "widget": null,
+      "layout": null,
+      "theme": null,
+      "zones": null,
+    };
+
+    localConfig.app = this.appSettingsService.getAppConfig();
+    localConfig.widget = this.appSettingsService.getWidgetConfig();
+    localConfig.layout = this.appSettingsService.getLayoutConfig();
+    localConfig.theme = this.appSettingsService.getThemeConfig();
+    localConfig.zones = this.appSettingsService.getZonesConfig();
+
+    if (this.storageSvc.setConfig(this.configScope.value, this.configName, localConfig)) {
+      this.notificationsService.sendSnackbarNotification("Configuration " + this.configName + " saved to server", 3000, false);
+    } else {
+      this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 3000, false);
+    }
+  }
+
+  public restoreRemoteServerConfig() {
+   this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name)
+    .then(remoteConfiguration => {
+      let conf: IConfig = remoteConfiguration;
+
+      this.appSettingsService.replaceConfig("appConfig", JSON.stringify(conf.app), false);
+      this.appSettingsService.replaceConfig("widgetConfig", JSON.stringify(conf.widget), false);
+      this.appSettingsService.replaceConfig("layoutConfig", JSON.stringify(conf.layout), false);
+      this.appSettingsService.replaceConfig("themeConfig", JSON.stringify(conf.theme), false);
+      this.appSettingsService.replaceConfig("zonesConfig", JSON.stringify(conf.zones), true);
+    })
+    .catch(error => {
+      this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
     });
   }
 
-  public saveServerSettings() {
-    let allConfig = {};
-    allConfig['app'] = this.appSettingsService.getAppConfig();
-    allConfig['connection'] = this.appSettingsService.getConnectionConfig();
-    allConfig['widget'] = this.appSettingsService.getWidgetConfig();
-    allConfig['layout'] = this.appSettingsService.getLayoutConfig();
-    allConfig['theme'] = this.appSettingsService.getThemeConfig();
-    allConfig['zones'] = this.appSettingsService.getZonesConfig();
-
-
-    this.signalKConnectionService.postApplicationData(this.configScope.value, this.configName, allConfig).subscribe(result => {
-      this.notificationsService.sendSnackbarNotification("Configuration saved to SignalK server", 3000, false);
-    });
-  }
-
-  public loadServerSettings() {
-    this.signalKConnectionService.getApplicationData(this.configLoad.value.scope, this.configLoad.value.name).subscribe(newConfig => {
-      let app: IAppConfig = newConfig['app'];
-      let connection: IConnectionConfig = newConfig['connection'];
-      let widget: IWidgetConfig = newConfig['widget'];
-      let layout: ILayoutConfig = newConfig['layout'];
-      let theme: IThemeConfig = newConfig['theme'];
-      let zones: IZonesConfig = newConfig['zones'] || [];
-
-      // preserve kip uuid
-      connection.kipUUID = this.appSettingsService.getKipUUID();
-
-      this.appSettingsService.replaceConfig("appConfig", JSON.stringify(app), false);
-      this.appSettingsService.replaceConfig("connectionConfig", JSON.stringify(connection), false);
-      this.appSettingsService.replaceConfig("widgetConfig", JSON.stringify(widget), false);
-      this.appSettingsService.replaceConfig("layoutConfig", JSON.stringify(layout), false);
-      this.appSettingsService.replaceConfig("themeConfig", JSON.stringify(theme), false);
-      this.appSettingsService.replaceConfig("zonesConfig", JSON.stringify(zones), true);
-
-    });
-
-
-  }
-
-  public resetSettings() {
+  public resetConfigToDefault() {
     this.appSettingsService.resetSettings();
   }
 
-  public submitConfig(configType: string) {
+  public saveToLocalConfig(configType: string) {
     switch (configType) {
       case "appConfig":
         this.appSettingsService.replaceConfig(configType, this.appJSONConfig, true);
@@ -153,7 +136,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   }
 
   ngOnDestroy() {
-    this.serverSupportSaveSub.unsubscribe();
   }
 
 }

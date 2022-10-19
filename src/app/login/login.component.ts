@@ -1,3 +1,4 @@
+import { SignalKConnectionService } from './../signalk-connection.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from "@angular/router";
@@ -20,6 +21,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private auth: AuththeticationService,
     private notificationsService: NotificationsService,
     private appSettingsService: AppSettingsService,
+    private skConnectionService: SignalKConnectionService,
   ) { }
 
   ngOnInit(): void {
@@ -29,7 +31,9 @@ export class LoginComponent implements OnInit, OnDestroy {
   submitForm() {
     this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword })
       .then( () => {
-        this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: false});
+        let connection = {url: this.connectionConfig.signalKUrl, new: false};
+        this.skConnectionService.resetSignalK(connection);
+        this.appSettingsService.signalkUrl = connection;
         this.appSettingsService.setConnectionConfig(this.connectionConfig);
         this.router.navigate(['/page', 0]);
       })

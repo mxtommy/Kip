@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-
 import { SignalKService } from './signalk.service';
 import { SignalKConnectionService } from "./signalk-connection.service";
 @Injectable()

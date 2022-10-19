@@ -9,21 +9,20 @@
             <mat-form-field class="almost-full-width">
               <mat-label>Config Name</mat-label>
               <mat-select required [formControl]="configLoad">
-                <mat-option *ngFor="let config of possibleConfigs" [value]="config">
+                <mat-option *ngFor="let config of serverConfigs" [value]="config">
                   {{config.scope}} / {{config.name}}
                 </mat-option>
               </mat-select>
             </mat-form-field>
             <mat-card-actions align="end">
-              <button mat-raised-button type="button" color="warn" [disabled]="!(configLoad.valid && configLoad.dirty)" (click)='loadServerSettings()'>Load</button>
+              <button mat-raised-button type="button" color="warn" [disabled]="!(configLoad.valid && configLoad.dirty) && supportApplicationData" (click)='restoreRemoteServerConfig()'>Load</button>
             </mat-card-actions>
-
           </form>
         </mat-card>
       </div>
       <div class="config-column">
         <mat-card>
-          <form name="saveConfigForm" (ngSubmit)="saveServerSettings()" #saveConfigForm="ngForm">
+          <form name="saveConfigForm" (ngSubmit)="saveLocalConfigToserver()" #saveConfigForm="ngForm">
             Save Config to Server<div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div>
               <mat-form-field class="almost-full-width">
                 <mat-label>Configuration Name</mat-label>
@@ -48,7 +47,7 @@
     </div>
   </mat-tab>
   <mat-tab label="Browser Config">
-    <form name="appSettingsForm" (ngSubmit)="submitConfig('appConfig')">
+    <form name="appSettingsForm" (ngSubmit)="saveToLocalConfig('appConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Application</mat-expansion-panel-header>
         <mat-form-field class="config-size">
@@ -60,7 +59,7 @@
       </mat-expansion-panel>
     </form>
 
-    <form name="connectionSettingsForm" (ngSubmit)="submitConfig('connectionConfig')">
+    <form name="connectionSettingsForm" (ngSubmit)="saveToLocalConfig('connectionConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Server Connection</mat-expansion-panel-header>
         <mat-form-field class="config-size">
@@ -72,7 +71,7 @@
       </mat-expansion-panel>
     </form>
 
-    <form name="widgetSettingsForm" (ngSubmit)="submitConfig('widgetConfig')">
+    <form name="widgetSettingsForm" (ngSubmit)="saveToLocalConfig('widgetConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Widgets</mat-expansion-panel-header>
         <mat-form-field class="config-size">
@@ -83,7 +82,7 @@
         </mat-action-row>
       </mat-expansion-panel>
     </form>
-    <form name="layoutSettingsForm" (ngSubmit)="submitConfig('layoutConfig')">
+    <form name="layoutSettingsForm" (ngSubmit)="saveToLocalConfig('layoutConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Layouts</mat-expansion-panel-header>
         <mat-form-field class="config-size">
@@ -94,7 +93,7 @@
         </mat-action-row>
       </mat-expansion-panel>
     </form>
-    <form name="themeSettingsForm" (ngSubmit)="submitConfig('themeConfig')">
+    <form name="themeSettingsForm" (ngSubmit)="saveToLocalConfig('themeConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Theme</mat-expansion-panel-header>
         <mat-form-field class="config-size">
@@ -105,7 +104,7 @@
         </mat-action-row>
       </mat-expansion-panel>
     </form>
-    <form name="zoneSettingsForm" (ngSubmit)="submitConfig('zonesConfig')">
+    <form name="zoneSettingsForm" (ngSubmit)="saveToLocalConfig('zonesConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Zones</mat-expansion-panel-header>
         <mat-form-field class="config-size">
@@ -122,7 +121,7 @@
     <mat-card>
       <mat-card-actions align="end">
         <button mat-raised-button type="button" color="warn" (click)='loadDemoConfig()'>Load Demo Config</button>
-        <button mat-raised-button type="button" color="warn" (click)='resetSettings()'>Erase Config</button>
+        <button mat-raised-button type="button" color="warn" (click)='resetConfigToDefault()'>Erase Config</button>
       </mat-card-actions>
     </mat-card>
   </mat-tab>

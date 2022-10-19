@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
-import * as compareVersions from 'compare-versions';
-
 import { AppSettingsService } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService } from './signalk-connection.service';
@@ -23,7 +21,6 @@ interface pathRegistration {
   observable: BehaviorSubject<pathRegistrationValue>;
 }
 
-
 export interface updateStatistics {
   currentSecond: number; // number up updates in the last second
   secondsUpdates: number[]; // number of updates receieved for each of the last 60 seconds
@@ -37,9 +34,6 @@ export interface updateStatistics {
 export class SignalKService {
 
   degToRad = Qty.swiftConverter('deg', 'rad');
-
-  serverSupportApplicationData: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
-  serverVersion: BehaviorSubject<string> = new BehaviorSubject<string>(null) // version of the signalk server
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received SignalK Data and used to source Observers
@@ -171,51 +165,6 @@ export class SignalKService {
       console.debug('[SignalK Service] Setting self to: ' + value);
       this.selfurn = value;
     }
-  }
-
-  setServerInfo(version: string, name: string) {
-    console.log("[SignalK Service] Server Name: " + name + ", Version: " + version);
-    if (version) {
-      this.serverSupportApplicationData.next(compareVersions.compare(version, '1.27.0', ">="));
-    } else {
-      this.serverSupportApplicationData.next(false);
-    }
-    this.serverVersion.next(version);
-  }
-
-  getServerVersionAsO() {
-    return this.serverVersion.asObservable();
-  }
-
-  public getServerSupportApplicationDataAsO() {
-    return this.serverSupportApplicationData.asObservable();
-  }
-
-  public getPossibleConfigs(): any[] {
-    let possibleConfigs = [];
-
-    this.signalKConnectionService.getApplicationDataKeys('global').subscribe(configNames => {
-      for(let cname of configNames) {
-        possibleConfigs.push({ scope: 'global', name: cname });
-      }
-    });
-    this.signalKConnectionService.getApplicationDataKeys('user').subscribe(configNames => {
-      for(let cname of configNames) {
-        possibleConfigs.push({ scope: 'user', name: cname });
-      }
-    });
-    return possibleConfigs;
-  }
-
-  public getSharedConfig() {
-    console.log("[SignalK Service] Loading server configuration");
-    let appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
-    let connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
-    let widgetJSONConfig = JSON.stringify(this.appSettingsService.getWidgetConfig(), null, 2);
-    let layoutJSONConfig = JSON.stringify(this.appSettingsService.getLayoutConfig(), null, 2);
-    let themeJSONConfig = JSON.stringify(this.appSettingsService.getThemeConfig(), null, 2);
-    let zonesJSONConfig = JSON.stringify(this.appSettingsService.getZonesConfig(), null, 2);
-
   }
 
   updatePathData(path: string, source: string, timestamp: number, value: any) {

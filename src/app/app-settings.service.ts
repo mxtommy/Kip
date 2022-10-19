@@ -15,32 +15,32 @@ import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
-const defaultSignalKUrl: SignalKUrl = { url: 'http://demo.signalk.org/signalk', new: true };
 const defaultTheme = 'modern-dark';
 const configVersion = 9; // used to invalidate old configs.
-const connectionConfigVersion = 1; // used to invalidate old configs.
+const connectionConfigVersion = configVersion; // used to invalidate old configs.
 
 export interface SignalKUrl {
   url: string;
   new: boolean;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class AppSettingsService {
-  signalKUrl: BehaviorSubject<SignalKUrl> = new BehaviorSubject<SignalKUrl>(defaultSignalKUrl); // this should be overwritten right away when loading settings, but you need to give something...
-  unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
-  themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
+  public unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  public unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
+  public themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
+  public kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
 
-  useDeviceToken: boolean = false;
-  loginName: string;
-  loginPassword: string;
-  useSharedConfig: boolean;
-  sharedConfigName: string;
+  private useDeviceToken: boolean = false;
+  private loginName: string;
+  private loginPassword: string;
+  public useSharedConfig: boolean;
+  private sharedConfigName: string;
 
-  kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
-  kipUUID: string;
-
+  private kipUUID: string;
+  public signalkUrl: SignalKUrl;
   widgets: Array<IWidget>;
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
@@ -54,9 +54,9 @@ export class AppSettingsService {
     private appInitService: AppInitService
     )
   {
+    this.storageService.activeConfigVersion = configVersion;
     let serverConfig: IConfig = this.appInitService.serverConfig;
     let appConfig: IAppConfig;
-    //TODO: remove sonnectionConfig from remote storage. Should only be local
     let connectionConfig: IConnectionConfig;
     let widgetConfig: IWidgetConfig;
     let layoutConfig: ILayoutConfig;
@@ -127,6 +127,11 @@ export class AppSettingsService {
     } else {
       console.error("[AppSettings Service] LocalStorage NOT SUPPORTED by browser\nThis is a requirement to run Kip. See browser documentation to enable this feature.");
     }
+
+    function test() {
+      let connectionConfig: IConnectionConfig;
+      return connectionConfig;
+    }
   }
 
   private loadConfigFromLocalStorage(type: string) {
@@ -164,8 +169,7 @@ export class AppSettingsService {
   private pushSettings(appConfig: IAppConfig, connectionConfig: IConnectionConfig, widgetConfig: IWidgetConfig, layoutConfig: ILayoutConfig, themeConfig: IThemeConfig, zonesConfig: IZonesConfig): void {
     this.themeName.next(themeConfig['themeName']);
 
-    let skUrl: SignalKUrl = {url: connectionConfig.signalKUrl, new: false};
-    this.signalKUrl.next(skUrl);
+    this.signalkUrl = {url: connectionConfig.signalKUrl, new: false};
     this.useDeviceToken = connectionConfig.useDeviceToken;
     this.loginName = connectionConfig.loginName;
     this.loginPassword = connectionConfig.loginPassword;
@@ -232,20 +236,9 @@ export class AppSettingsService {
     return this.buildZonesStorageObject()
   }
 
-  public getKipUUID() {
+  public get KipUUID(): string {
     return this.kipUUID;
   }
-
-  // SignalKURL
-public getSignalKURLAsO() {
-  return this.signalKUrl.asObservable();
-}
-public getSignalKURL() {
-  return this.signalKUrl.getValue();
-}
-public setSignalKURL(value: SignalKUrl) {
-  this.signalKUrl.next(value);
-}
 
   // UnlockStatus
   public getUnlockStatusAsO() {
@@ -381,7 +374,7 @@ public setSignalKURL(value: SignalKUrl) {
     let storageObject: IConnectionConfig = {
       connectionConfigVersion: configVersion,
       kipUUID: this.kipUUID,
-      signalKUrl: this.signalKUrl.getValue().url,
+      signalKUrl: this.signalkUrl.url,
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
       loginPassword: this.loginPassword,

@@ -44,28 +44,25 @@ export class AppComponent implements OnInit, OnDestroy {
   connectionStatusSub: Subscription;
 
   constructor(
-
-
-    public appSettingsService: AppSettingsService,
-    private router: Router,
-
-    private DataSetService: DataSetService,
-    private notificationsService: NotificationsService,
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService,
-
+    public appSettingsService: AppSettingsService,
+    private DataSetService: DataSetService,
+    private notificationsService: NotificationsService,
     public auththeticationService: AuththeticationService,
-      //we only init the following service so they don't loose messages from SignalKConnectionService
-      private signalKDeltaService: SignalKDeltaService,
-      private signalkRequestsService: SignalkRequestsService,
-      private signalKFullService: SignalKFullService,
-      // do not remove above
     private signalKConnectionService: SignalKConnectionService,
+    // below services are needed: first service instanciation after Init Service
+    private signalKFullService: SignalKFullService,
+    private signalKDeltaService: SignalKDeltaService,
     ) { }
 
 
   ngOnInit() {
+    let connectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
+    let skUrl = {url: connectionConfig.signalKUrl, new: false};
+    this.signalKConnectionService.resetSignalK(skUrl);
+
     // Page layout area operations sub
     this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }

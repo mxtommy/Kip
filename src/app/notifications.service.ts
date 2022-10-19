@@ -6,9 +6,9 @@ import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { ISignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService } from "./app-settings.service";
+import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
 import { INotificationConfig } from './app-settings.interfaces';
 import { Howl } from 'howler';
-
 
 const alarmTrack = {
   1000 : 'notification', //filler
@@ -17,7 +17,6 @@ const alarmTrack = {
   1003 : 'alarm',
   1004 : 'emergency',
 };
-
 
 /**
  * Snack-bar notification message interface.
@@ -81,7 +80,7 @@ export class NotificationsService {
 
   constructor(
     private appSettingsService: AppSettingsService,
-
+    private SignalKConnectionService: SignalKConnectionService,
     ) {
     // Observe Notification configuration
     this.notificationServiceSettings = this.appSettingsService.getNotificationConfigService().subscribe(config => {
@@ -93,6 +92,13 @@ export class NotificationsService {
         this.playAlarm(1000); // will stop any playing track if any
       } else {
         this.checkAlarms(); //see if any we need to start playing again
+      }
+    });
+
+    //Observable of server connection status
+    this.SignalKConnectionService.reset.subscribe((connectionReset: boolean) => {
+      if (connectionReset === true) {
+        this.resetAlarms();
       }
     });
 

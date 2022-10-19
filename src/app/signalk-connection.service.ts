@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
-import { of, Observable, BehaviorSubject, Subject, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, Subject, lastValueFrom } from 'rxjs';
 import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { AppSettingsService, SignalKUrl } from './app-settings.service';
-import { NotificationsService } from './notifications.service';
+import { SignalKUrl } from './app-settings.service';
 import { AuththeticationService , IAuthorizationToken } from './auththetication.service';
 
 interface SignalKEndpointResponse {
@@ -79,14 +78,17 @@ export class SignalKConnectionService {
     },
     operation: 0
   };
+  public reset = new Subject<boolean>(); // connection reset
+  public signalKStatus: BehaviorSubject<SignalKStatus> = new BehaviorSubject<SignalKStatus>(this.currentSkStatus);
 
-  signalKStatus: BehaviorSubject<SignalKStatus> = new BehaviorSubject<SignalKStatus>(this.currentSkStatus);
-
-  // Main URL Variables
-  signalKURL: SignalKUrl;
-  authToken: IAuthorizationToken = null;
-  endpointREST: string;
-  endpointWS: string;
+  // Connection information
+  public signalKURL: SignalKUrl;
+  private authToken: IAuthorizationToken = null;
+  private endpointREST: string;
+  private endpointWS: string;
+  private serverName: string;
+  public serverVersion$ = new BehaviorSubject<string>(null);
+  private serverRoles: Array<string> = [];
 
   // REST
   public messageREST$ = new Subject(); //REST Responses
@@ -102,32 +104,10 @@ export class SignalKConnectionService {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //// constructor, mostly sub to stuff for changes.
   constructor(
-      private appSettingsService: AppSettingsService,
-      private notificationsService: NotificationsService,
       private auththeticationService: AuththeticationService,
       private http: HttpClient
     )
   {
-    // when signalKUrl changes, do stuff
-    this.appSettingsService.getSignalKURLAsO().subscribe(
-      newURL => {
-        if (!newURL.url) {
-          return
-        }
-
-        this.signalKURL = newURL;
-
-        if (this.signalKURL.new) {
-          this.currentSkStatus.operation = 3; // URL Changed
-          this.resetSignalK();
-        } else {
-          this.currentSkStatus.operation = 1; // Startup connection
-          this.resetSignalK();
-        }
-
-      }
-    );
-
     // When token changes, reconnect WebSocket with new token
     this.auththeticationService.authToken$.subscribe((token: IAuthorizationToken) => {
       if (this.authToken != token) {
@@ -185,15 +165,25 @@ export class SignalKConnectionService {
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
    */
-  async resetSignalK(): Promise<void> {
+  async resetSignalK(skUrl: SignalKUrl): Promise<void> {
+    if (skUrl.url === null) {
+      return;
+    }
+    this.signalKURL = skUrl;
+
     // TODO check api version... assuming v1
+    if (this.signalKURL.new) {
+      this.currentSkStatus.operation = 3; // URL Changed
+      this.reset.next(true); // emit reset signal (URL changing)
+
+    } else {
+      this.currentSkStatus.operation = 1; // Startup connection
+    }
     this.currentSkStatus.endpoint.message = "Connecting...";
     this.currentSkStatus.endpoint.status = false;
     this.currentSkStatus.rest.message = "Connecting...";
     this.currentSkStatus.rest.status = false;
     this.signalKStatus.next(this.currentSkStatus);
-
-    this.notificationsService.resetAlarms();
 
     let fullURL = this.signalKURL.url;
     let re = new RegExp("signalk/?$");
@@ -338,64 +328,71 @@ export class SignalKConnectionService {
     }
   }
 
-  postApplicationData(scope: string, configName: string, data: Object): Observable<string[]> {
+  public postApplicationData(scope: string, version: number, name: string, data: Object): Promise<any> {
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/1.0/"+ configName;
+    url += "applicationData/" + scope +"/kip/" + version + "/"+ name;
 
-    return this.http.post<any>(url, data).pipe(
-      catchError(this.handleError<string[]>('postApplicationData', []))
-    );
-
+    return lastValueFrom(this.http.post<any>(url, data))
+      .catch(error => {
+        this.handleError(error);
+      });
   }
 
-  getApplicationDataKeys(scope: string): Observable<string[]> {
+  public getApplicationDataKeys(scope: string, version: number): Promise<void | string[]> {
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/1.0/?keys=true";
+    url += "applicationData/" + scope +"/kip/" + version + "/?keys=true";
 
-    return this.http.get<string[]>(url).pipe(
-      tap(_ => {
-        console.log("Server Stored Configs for "+ scope +": "); console.log(_)
-      }),
-      catchError(this.handleError<string[]>('getApplicationDataKeys', []))
-    );
-
+    return lastValueFrom(this.http.get<string[]>(url))
+      .catch(error => {
+        this.handleError(error);
+      });
   }
 
-  getApplicationData(scope: string, configName: string): Observable<any>{
+  public getApplicationData(scope: string, version: number, name: string): Promise<any> {
     let url = this.endpointREST.substring(0,this.endpointREST.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/1.0/" + configName;
+    url += "applicationData/" + scope +"/kip/" + version + "/" + name;
 
-    return this.http.get<any>(url).pipe(
-      tap(_ => {
-        console.log("[Connection Service] Fetched Stored Configs for "+ scope +" / "+ configName);
-      }),
-      catchError(this.handleError<any>('getApplicationData'))
-    );
+    return lastValueFrom(this.http.get<any>(url))
+      .catch(error => {
+        this.handleError(error);
+      });
   }
 
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-
-      // TODO: send the error to remote logging infrastructure
-      console.error("[Connection Service] " + error); // log to console instead
-
-      // TODO: better job of transforming error for user consumption
-      console.log(`[Conection Service] ${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result.
-      return of(result as T);
-    };
+  private handleError(error: HttpErrorResponse) {
+    if (error.status === 0) {
+      // A client-side or network error occurred. Handle it accordingly.
+      console.error('[Connection Service] An error occurred:', error.error);
+    } else {
+      // The backend returned an unsuccessful response code.
+      // The response body may contain clues as to what went wrong.
+      console.error(`[Connection Service] Backend returned code ${error.status}, body was: `, error.error);
+    }
+    // Return an observable with a user-facing error message.
+    throw error;
   }
 
   // SignalK Connections Status observable
   getSignalKConnectionsStatus() {
     return this.signalKStatus.asObservable();
+  }
+
+  public setServerInfo(name : string, version: string, roles: Array<string>) {
+    this.serverName = name;
+    this.serverVersion$.next(version);
+    this.serverRoles = roles;
+    console.log("[Connection Service] Server Name: " + name + ", Version: " + version + ", Roles: " + JSON.stringify(roles));
+  }
+
+  public get skServerName() : string {
+    return this.serverName;
+  }
+
+  public get skServerVersion() : string {
+    return this.serverVersion$.getValue();
+  }
+
+  public get skServerRoles() : Array<string> {
+    return this.serverRoles;
   }
 
   OnDestroy() {

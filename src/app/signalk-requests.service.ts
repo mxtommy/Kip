@@ -61,7 +61,7 @@ export class SignalkRequestsService {
     let deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
-        clientId: this.appSettingsService.getKipUUID(),
+        clientId: this.appSettingsService.KipUUID,
         description: "Kip web app",
         permissions: "admin"
       }

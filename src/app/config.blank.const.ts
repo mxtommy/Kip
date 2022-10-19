@@ -53,7 +53,7 @@ export const defaultConfig: IConfig = {
 }
 
 export const DefaultConectionConfig: IConnectionConfig = {
-  "connectionConfigVersion": 1,
+  "connectionConfigVersion": 9,
   "kipUUID": newUuid(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "useDeviceToken": false,

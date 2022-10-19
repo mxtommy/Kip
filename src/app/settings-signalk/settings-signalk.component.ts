@@ -116,8 +116,10 @@ export class SettingsSignalkComponent implements OnInit {
       return
     }
 
-    if (this.connectionConfig.signalKUrl != this.appSettingsService.getSignalKURL().url) {
-      this.appSettingsService.setSignalKURL({url: this.connectionConfig.signalKUrl, new: true});
+    if (this.connectionConfig.signalKUrl != this.appSettingsService.signalkUrl.url) {
+      let connection = {url: this.connectionConfig.signalKUrl, new: true};
+      this.appSettingsService.signalkUrl = connection;
+      this.signalKConnectionService.resetSignalK(connection);
       if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
       } else if (this.authToken && this.authToken.isDeviceAccessToken) {
@@ -145,10 +147,10 @@ export class SettingsSignalkComponent implements OnInit {
         if (error.status == 401) {
           this.openUserCredentialModal();
           this.notificationsService.sendSnackbarNotification("Authentication failed. Invalide user/password", 2000, false);
-          console.log("[Setting-SignalK Component] Login failure: " + error.statusText);
+          console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
         } else if (error.status == 404) {
           this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 2000, false);
-          console.log("[Setting-SignalK Component] Login failure: " + error.message);
+          console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
         } else if (error.status == 0) {
           this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
           console.log("[Setting-SignalK Component] User authentication failed. Cannot reach server at SignalK URL:" + error.message);

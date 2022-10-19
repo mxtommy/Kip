@@ -99,7 +99,6 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
       this.config = this.activeWidget.config;
       //new config option, might not be set.
       if (!('compassUseNumbers' in this.config)) {
-        console.log("compassUseNumbers not set");
         this.config.compassUseNumbers = false;
       }
     }

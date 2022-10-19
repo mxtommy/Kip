@@ -15,7 +15,7 @@ import { IConnectionConfig, IConfig } from "./app-settings.interfaces";
 import { AuththeticationService } from './auththetication.service';
 
 const serverDataStoragePath = '/signalk/v1/applicationData/';
-const serverAppDataPath = '/kip/1.0/';
+const serverAppDataPath = '/kip/';
 
 @Injectable()
 export class AppInitService {
@@ -52,20 +52,25 @@ export class AppInitService {
         });
       }
 
-      let url = this.localStorageConnectionConfig.signalKUrl;
-      url += serverDataStoragePath + "user" + serverAppDataPath;
-      url += this.localStorageConnectionConfig.sharedConfigName;
+      if (this.isLoggedIn) {
+        let url = this.localStorageConnectionConfig.signalKUrl;
+        url += serverDataStoragePath + "user" + serverAppDataPath;
+        url += this.localStorageConnectionConfig.connectionConfigVersion + "/"
+        url += this.localStorageConnectionConfig.sharedConfigName;
 
-      console.log("[AppInit Service] Retreiving server config: " + this.localStorageConnectionConfig.sharedConfigName);
+        console.log("[AppInit Service] Retreiving server config: " + this.localStorageConnectionConfig.sharedConfigName);
 
-      return await lastValueFrom(this.http.get<IConfig>(url)).then(config =>{
-          this.appConfig = config;
-          console.log("[AppInit Service] Server config: " + this.localStorageConnectionConfig.sharedConfigName + " retreived");
-      }).catch((error: HttpErrorResponse) => {
-        console.error("[AppInit Service] Error retreiving server config: " + error.message);
-      });
-    } else {
-      return Promise.reject("[AppInit Service] Shared Config configuration disabled");
+        return await lastValueFrom(this.http.get<IConfig>(url))
+          .then(config =>{
+            this.appConfig = config;
+            console.log("[AppInit Service] Server config: " + this.localStorageConnectionConfig.sharedConfigName + " retreived");
+          })
+          .catch((error: HttpErrorResponse) => {
+            console.error("[AppInit Service] Error retreiving server config: " + error.message);
+          });
+      } else {
+        return Promise.reject("[AppInit Service] Shared Config configuration disabled");
+      }
     }
   }
 

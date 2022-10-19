@@ -55,6 +55,7 @@ export interface IDeltaMessage {
   name?: string;
   requestId?: string;
   self?: string;
+  roles?: Array<string>;
   state?: string;
   statusCode?: number;
   timestamp?:string;

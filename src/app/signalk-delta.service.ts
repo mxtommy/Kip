@@ -46,7 +46,7 @@ export class SignalKDeltaService {
   private processWebsocketMessage(message: IDeltaMessage) {
     // Read raw message and route to appropriate sub
     if (typeof(message.self) != 'undefined') {  // is Hello message
-      this.signalKService.setServerInfo(message.version, message.name);
+      this.signalKConnectionService.setServerInfo(message.name, message.version, message.roles);
       this.signalKService.setSelf(message.self);
       return;
     }
