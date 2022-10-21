@@ -21,7 +21,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private auth: AuththeticationService,
     private notificationsService: NotificationsService,
     private appSettingsService: AppSettingsService,
-    private skConnectionService: SignalKConnectionService,
+    private server: SignalKConnectionService,
   ) { }
 
   ngOnInit(): void {
@@ -32,7 +32,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword })
       .then( () => {
         let connection = {url: this.connectionConfig.signalKUrl, new: false};
-        this.skConnectionService.resetSignalK(connection);
+        this.server.resetSignalK(connection);
         this.appSettingsService.signalkUrl = connection;
         this.appSettingsService.setConnectionConfig(this.connectionConfig);
         this.router.navigate(['/page', 0]);
