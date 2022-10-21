@@ -18,9 +18,9 @@ export class StorageService {
   private configVersion: number = null;
 
   constructor(
-    private skConnectionService: SignalKConnectionService,
+    private server: SignalKConnectionService,
     ) {
-    skConnectionService.serverVersion$.subscribe(version => {
+      server.serverVersion$.subscribe(version => {
       if (version) {
         this.isAppDataSupported = compareVersions.compare(version, '1.27.0', ">=");
       }
@@ -29,7 +29,7 @@ export class StorageService {
 
   public async listConfigs() {
     let serverConfigs: Config[] = [];
-    await this.skConnectionService.getApplicationDataKeys('global', this.configVersion)
+    await this.server.getApplicationDataKeys('global', this.configVersion)
       .then((configNames: string[]) => {
         for(let cname of configNames) {
           serverConfigs.push({ scope: 'global', name: cname });
@@ -40,7 +40,7 @@ export class StorageService {
         this.handleError(error);
       });
 
-    await this.skConnectionService.getApplicationDataKeys('user', this.configVersion)
+    await this.server.getApplicationDataKeys('user', this.configVersion)
       .then((configNames: string[]) => {
         for(let cname of configNames) {
           serverConfigs.push({ scope: 'user', name: cname });
@@ -56,7 +56,7 @@ export class StorageService {
 
   public async getConfig(scope: string, configName: string): Promise<IConfig> {
     let conf: IConfig = null;
-    await this.skConnectionService.getApplicationData(scope, this.configVersion, configName)
+    await this.server.getApplicationData(scope, this.configVersion, configName)
       .then(remoteConfig => {
         conf = remoteConfig;
         console.log(`[Storage Service] Retreived ${scope} config ${configName}`);
@@ -70,7 +70,7 @@ export class StorageService {
 
   public async setConfig(scope: string, configName: string, config: IConfig): Promise<boolean> {
     let result: boolean = false;
-    await this.skConnectionService.postApplicationData(scope, this.configVersion, configName, config)
+    await this.server.postApplicationData(scope, this.configVersion, configName, config)
       .then( _ => {
         result = true;
         console.log(`[Storage Service] Saved config ${configName} to server`);

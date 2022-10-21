@@ -11,17 +11,17 @@ import { NotificationsService } from './notifications.service';
   })
 export class SignalKDeltaService {
   private signalKRequests = new Subject<IDeltaMessage>();   // requests service subs to this (avoids circular dependency in services)
-  private socketCloseSubject: Subscription;                 // WebSocket Close Event Observable
-  private socketOpenSubject: Subscription;
+  //private socketCloseSubject$: Subscription;                 // WebSocket Event Observable - keep as a template
+  //private socketOpenSubject$: Subscription;
 
   constructor(
     private signalKService: SignalKService,
     private notificationsService: NotificationsService,
-    private signalKConnectionService: SignalKConnectionService,
+    private server: SignalKConnectionService,
     )
     {
       // Subscribe to inbound WebSocket messages
-      this.signalKConnectionService.messagesWS$.subscribe({
+      this.server.messagesWS$.subscribe({
         next: msg => this.processWebsocketMessage(msg), // Called whenever there is a message from the server.
         error: err => console.error("[Delta Service] Message subscription error: " + JSON.stringify(err, ["code", "message", "type"])), // Called if at any point WebSocket API signals some kind of error.
         complete: () => console.log('[Delta Service] Message subscription closed') // Called when connection is closed (for whatever reason).
@@ -40,13 +40,13 @@ export class SignalKDeltaService {
     }
 
   public publishDelta(message: any) {
-    this.signalKConnectionService.sendMessageWS(message);
+    this.server.sendMessageWS(message);
   }
 
   private processWebsocketMessage(message: IDeltaMessage) {
     // Read raw message and route to appropriate sub
     if (typeof(message.self) != 'undefined') {  // is Hello message
-      this.signalKConnectionService.setServerInfo(message.name, message.version, message.roles);
+      this.server.setServerInfo(message.name, message.version, message.roles);
       this.signalKService.setSelf(message.self);
       return;
     }

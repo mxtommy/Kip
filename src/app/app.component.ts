@@ -13,7 +13,6 @@ import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
-import { SignalkRequestsService } from './signalk-requests.service';
 import { SignalKFullService } from './signalk-full.service';
 
 declare var NoSleep: any; //3rd party

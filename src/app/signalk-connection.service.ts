@@ -79,7 +79,7 @@ export class SignalKConnectionService {
     operation: 0
   };
   public reset = new Subject<boolean>(); // connection reset
-  public signalKStatus: BehaviorSubject<SignalKStatus> = new BehaviorSubject<SignalKStatus>(this.currentSkStatus);
+  public signalKStatus$: BehaviorSubject<SignalKStatus> = new BehaviorSubject<SignalKStatus>(this.currentSkStatus);
 
   // Connection information
   public signalKURL: SignalKUrl;
@@ -97,8 +97,8 @@ export class SignalKConnectionService {
   private WS_RECONNECT_INTERVAL = 5000;                 // connection error retry interval
   private WS_CONNECTION_ARGUMENT = "?subscribe=all"; // default but we could use none + specific paths in the future
   private socketWS$: WebSocketSubject<any>;
-  public socketWSCloseEvent = new Subject<CloseEvent>();
-  public socketWSOpenEvent = new Subject<Event>();
+  public socketWSCloseEvent$ = new Subject<CloseEvent>();
+  public socketWSOpenEvent$ = new Subject<Event>();
   private messagesSubjectWS$ = new Subject();
   public messagesWS$ = this.messagesSubjectWS$.pipe(switchAll(), catchError(e => { throw e }));
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,12 +123,12 @@ export class SignalKConnectionService {
     });
 
     // WebSocket Open Event Handling
-    this.socketWSOpenEvent.subscribe( event => {
+    this.socketWSOpenEvent$.subscribe( event => {
         this.currentSkStatus.websocket.message = "Connected";
         this.currentSkStatus.websocket.status = true;
         this.currentSkStatus.rest.status = true;
         this.currentSkStatus.endpoint.status = true;
-        this.signalKStatus.next(this.currentSkStatus);
+        this.signalKStatus$.next(this.currentSkStatus);
         if (this.authToken) {
           console.log("[Connection Service] WebSocket connected with Authorization Token")
         } else {
@@ -138,12 +138,12 @@ export class SignalKConnectionService {
     );
 
     // WebSocket closed Event Handling
-    this.socketWSCloseEvent.subscribe( event => {
+    this.socketWSCloseEvent$.subscribe( event => {
       if(event.wasClean) {
         this.currentSkStatus.websocket.message = "WebSocket closed";
         this.currentSkStatus.websocket.status = false;
         console.log('[Connection Service] WebSocket closed');
-        this.signalKStatus.next(this.currentSkStatus);
+        this.signalKStatus$.next(this.currentSkStatus);
       } else {
         console.log('[Connection Service] WebSocket terminated due to socket error');
         this.currentSkStatus.websocket.message = "WebSocket terminated";
@@ -153,7 +153,7 @@ export class SignalKConnectionService {
         this.currentSkStatus.operation = 0;
         //this.closeWS();
         console.log('[Connection Service] WebSocket closed');
-        this.signalKStatus.next(this.currentSkStatus);
+        this.signalKStatus$.next(this.currentSkStatus);
       }
     });
   }
@@ -183,7 +183,7 @@ export class SignalKConnectionService {
     this.currentSkStatus.endpoint.status = false;
     this.currentSkStatus.rest.message = "Connecting...";
     this.currentSkStatus.rest.status = false;
-    this.signalKStatus.next(this.currentSkStatus);
+    this.signalKStatus$.next(this.currentSkStatus);
 
     let fullURL = this.signalKURL.url;
     let re = new RegExp("signalk/?$");
@@ -221,7 +221,7 @@ export class SignalKConnectionService {
         this.currentSkStatus.endpoint.message = err.message;
         this.currentSkStatus.rest.message = "Connection failed";
         this.currentSkStatus.server.version = "";
-        this.signalKStatus.next(this.currentSkStatus);
+        this.signalKStatus$.next(this.currentSkStatus);
       });
 
       if (this.endpointREST) {
@@ -249,14 +249,14 @@ export class SignalKConnectionService {
         this.currentSkStatus.rest.status = true;
         this.currentSkStatus.rest.message = response.status.toString();
         this.messageREST$.next(response.body);
-        this.signalKStatus.next(this.currentSkStatus);
+        this.signalKStatus$.next(this.currentSkStatus);
         console.log("[Connection Service] SignalK full document retreived");
       })
       .catch((err: HttpErrorResponse) => {
         this.currentSkStatus.rest.status = false;
         this.currentSkStatus.rest.message = "Connection failed"
         this.currentSkStatus.rest.message = err.message;
-        this.signalKStatus.next(this.currentSkStatus);
+        this.signalKStatus$.next(this.currentSkStatus);
         console.error('[Connection Service] A REST error occurred:', err.message);
       });
   }
@@ -294,8 +294,8 @@ export class SignalKConnectionService {
     }
     return webSocket({
       url: this.endpointWS + args,
-      closeObserver: this.socketWSCloseEvent,
-      openObserver: this.socketWSOpenEvent
+      closeObserver: this.socketWSCloseEvent$,
+      openObserver: this.socketWSOpenEvent$
     })
   }
   /**
@@ -373,7 +373,7 @@ export class SignalKConnectionService {
 
   // SignalK Connections Status observable
   getSignalKConnectionsStatus() {
-    return this.signalKStatus.asObservable();
+    return this.signalKStatus$.asObservable();
   }
 
   public setServerInfo(name : string, version: string, roles: Array<string>) {

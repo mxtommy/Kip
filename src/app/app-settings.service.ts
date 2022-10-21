@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { StorageService } from './storage.service';
 import { AppInitService } from './app-init.service';
 import { Injectable } from '@angular/core';
@@ -27,16 +28,17 @@ export interface SignalKUrl {
   providedIn: 'root'
 })
 export class AppSettingsService {
-  public unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  public unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
-  public themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
-  public kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
+  private unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
+  private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
+  private kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
 
   private useDeviceToken: boolean = false;
   private loginName: string;
   private loginPassword: string;
   public useSharedConfig: boolean;
   private sharedConfigName: string;
+  private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
 
   private useServerStorage: boolean = false;
   private kipUUID: string;
@@ -50,11 +52,11 @@ export class AppSettingsService {
 
   constructor(
     private router: Router,
-    private storageService: StorageService,
+    private storage: StorageService,
     private appInitService: AppInitService
     )
   {
-    this.storageService.activeConfigVersion = configVersion;
+    this.storage.activeConfigVersion = configVersion;
     let activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
     let serverConfig: IConfig = this.appInitService.serverConfig;
 
@@ -68,33 +70,31 @@ export class AppSettingsService {
       if (serverConfig) {
         console.log("[AppSettings Service] Enabling Server Storage");
         this.useServerStorage = true;
-        activeConfig = serverConfig;
+        this.activeConfig = serverConfig;
       } else {
         console.log("[AppSettings Service] Enabling Local Storage");
         let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
-        localStorageConfig.app = JSON.parse(localStorage.getItem("appConfig"));
+        localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
         localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
         localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
         localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
 
         this.useServerStorage = false;
-        activeConfig = localStorageConfig;
+        this.activeConfig = localStorageConfig;
       }
 
-      activeConfig = this.validateAppConfig(activeConfig);
+      this.activeConfig = this.validateAppConfig(this.activeConfig);
+      if (!activeConfig) {
+        return;
+      }
 
-      this.pushSettings(activeConfig);
+      this.pushSettings();
     }
   }
 
   private loadConnectionConfig() {
-    let config: IConnectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
-
-    if (config === null || config.configVersion !== configVersion) {
-      console.log("[AppSettings Service] No connectionConfig present in local storage. Loading default.");
-      config = this.getDefaultConnectionConfig();
-    }
+    let config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
     this.signalkUrl = {url: config.signalKUrl, new: false};
     this.useDeviceToken = config.useDeviceToken;
@@ -106,12 +106,12 @@ export class AppSettingsService {
   }
 
   private validateAppConfig(config: IConfig): IConfig {
-    if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion != configVersion)) {
+    if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
       if (this.useServerStorage) {
         //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
-        console.error("[AppSettings Service] Invalid Server config version. Resetting and loading all default.");
+        console.error("[AppSettings Service] Invalid Server config version. Resetting and loading configuration default");
       } else {
-        console.error("[AppSettings Service] Invalid localStorage config version. Resetting and loading all default.");
+        console.error("[AppSettings Service] Invalid localStorage config version. Replacing with Defaults");
         // we don't remove connectionConfig. It only hold: url, use, pwd, kipUUID, etc. Those
         // values can and should stay local and persist over time
         localStorage.removeItem("appConfig");
@@ -129,9 +129,15 @@ export class AppSettingsService {
       newDefaultConfig.zones = this.getDefaultZonesConfig();
 
       if (this.useServerStorage) {
-        this.storageService.setConfig('user', this.sharedConfigName, newDefaultConfig)
-        .then()
-        .catch();
+        if(this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)) {
+          console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
+          this.reloadApp();
+        } else {
+          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName);
+          config = null;
+        }
+      } else {
+        this.reloadApp();
       }
     }
     return config;
@@ -141,9 +147,13 @@ export class AppSettingsService {
     // we don't support AppConfig here. It needs a version check and full config invalidation.
     let config = JSON.parse(localStorage.getItem(type));
 
-    if (config == null) {
+    if (config === null) {
       console.log(`[AppSettings Service] Error loading ${type} config. Force loading ${type} defaults`);
       switch (type) {
+        case "appConfig":
+          config = this.getDefaultAppConfig();
+          break;
+
         case "connectionConfig":
           config = this.getDefaultConnectionConfig();
           break;
@@ -166,15 +176,11 @@ export class AppSettingsService {
       }
     }
 
-    if(type === 'connectionConfig' || type === 'appConfig') {
+    if(type === 'connectionConfig') {
       if (config.configVersion !== configVersion) {
         console.log(`[AppSettings Service] Invalide ${type} version. Force loading defaults`);
 
         switch (type) {
-          case "appConfig":
-            config = this.getDefaultAppConfig();
-            break;
-
           case "connectionConfig":
             config = this.getDefaultConnectionConfig();
             break;
@@ -185,15 +191,16 @@ export class AppSettingsService {
     return config;
   }
 
-  private pushSettings(config: IConfig): void {
-    this.themeName.next(config.theme.themeName);
-    this.dataSets = config.app.dataSets;
-    this.unitDefaults.next(config.app.unitDefaults);
-    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(config.app.notificationConfig);
-    this.widgets = config.widget.widgets;
-    this.zones.next(config.zones.zones);
-    this.splitSets = config.layout.splitSets;
-    this.rootSplits = config.layout.rootSplits;
+  private pushSettings(): void {
+
+    this.themeName.next(this.activeConfig.theme.themeName);
+    this.dataSets = this.activeConfig.app.dataSets;
+    this.unitDefaults.next(this.activeConfig.app.unitDefaults);
+    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(this.activeConfig.app.notificationConfig);
+    this.widgets = this.activeConfig.widget.widgets;
+    this.zones.next(this.activeConfig.zones.zones);
+    this.splitSets = this.activeConfig.layout.splitSets;
+    this.rootSplits = this.activeConfig.layout.rootSplits;
   }
 
   //UnitDefaults
@@ -270,8 +277,7 @@ export class AppSettingsService {
     }
   }
   public getThemeName(): string {
-    let config: IThemeConfig = JSON.parse(localStorage.getItem('themeConfig'));;
-    return config.themeName;
+    return this.themeName.getValue();;
   }
 
   // Widgets
