@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { AppSettingsService } from '../app-settings.service';
 import { IConnectionConfig } from "../app-settings.interfaces";
-import { SignalKConnectionService, SignalKStatus } from '../signalk-connection.service';
+import { SignalKConnectionService, IStreamStatus, IEndpointStatus, IFullDocumentStatus } from '../signalk-connection.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 import { NotificationsService } from '../notifications.service';
 import { SignalKService } from '../signalk.service';
@@ -31,10 +31,15 @@ export class SettingsSignalkComponent implements OnInit {
   isLoggedIn$: Subscription;
   isLoggedIn: boolean;
 
-  signalKConnectionsStatus: SignalKStatus;
-  signalKConnectionsStatusSub: Subscription;
+  endpointServiceStatus: IEndpointStatus;
+  skEndpointServiceStatus$: Subscription;
+  fullDocumentStatus: IFullDocumentStatus;
+  skFullDocumentStatus$: Subscription;
+  streamStatus: IStreamStatus;
+  skStreamStatus$: Subscription;
 
-  updatesSecondSub: Subscription;
+
+  updatesSecond$: Subscription;
 
   lastSecondsUpdate: number; //number of updates from server in last second
   updatesSeconds: number[]  = [];
@@ -76,12 +81,33 @@ export class SettingsSignalkComponent implements OnInit {
     });
 
     // sub for signalk connection status
-    this.signalKConnectionsStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(status => {
-      this.signalKConnectionsStatus = status;
+
+    // init status value for component display pre observer stream update (display the current status only)
+    this.endpointServiceStatus = this.signalKConnectionService.serverServiceEndpoints;
+
+    this.skEndpointServiceStatus$ = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus): void => {
+      this.endpointServiceStatus = status; // push on stream update
+      if (status.operation === 2) { // if we have connected to new endpoint services handle authorization
+        if (this.connectionConfig.useSharedConfig) {
+          this.serverLogin(this.connectionConfig.signalKUrl);
+        } else if (this.authToken && this.authToken.isDeviceAccessToken) {
+          this.auth.deleteToken();
+        }
+      }
     });
 
+    this.skFullDocumentStatus$ = this.signalKConnectionService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
+      this.fullDocumentStatus = status;
+    });
+
+    this.skStreamStatus$ = this.signalKConnectionService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
+      this.streamStatus = status;
+    });
+
+
+
     //get update performances
-    this.updatesSecondSub = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
+    this.updatesSecond$ = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
       this.lastSecondsUpdate = newSecondsData[newSecondsData.length-1];
       this.updatesSeconds = newSecondsData;
       if (this.chart !== null) {
@@ -120,11 +146,7 @@ export class SettingsSignalkComponent implements OnInit {
       let connection = {url: this.connectionConfig.signalKUrl, new: true};
       this.appSettingsService.signalkUrl = connection;
       this.signalKConnectionService.resetSignalK(connection);
-      if (this.connectionConfig.useSharedConfig) {
-        this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if (this.authToken && this.authToken.isDeviceAccessToken) {
-        this.auth.deleteToken();
-      }
+      // login is done by skEndpointServiceStatus$ Observable's connection status
 
     } else {
       // Same URL - no need to resetSignalK(). Just login, new token reset will reload WebSockets
@@ -231,10 +253,12 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.signalKConnectionsStatusSub.unsubscribe();
+    this.skEndpointServiceStatus$.unsubscribe();
+    this.skFullDocumentStatus$.unsubscribe();
+    this.skStreamStatus$.unsubscribe();
     this.authToken$.unsubscribe();
     this.isLoggedIn$.unsubscribe();
     // this.updatesMinutesSub.unsubscribe();
-    this.updatesSecondSub.unsubscribe();
+    this.updatesSecond$.unsubscribe();
   }
 }

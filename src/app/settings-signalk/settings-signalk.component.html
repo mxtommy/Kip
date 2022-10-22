@@ -39,7 +39,7 @@
       Version:
     </td>
     <td>
-      {{ signalKConnectionsStatus.server.version }}
+      {{ endpointServiceStatus.serverDescrption }}
     </td>
     <td rowspan="5">
       <div class="" >
@@ -72,9 +72,9 @@
       API Endpoint:
     </td>
     <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.endpoint.status"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.endpoint.status"></i>
-      {{ signalKConnectionsStatus.endpoint.message }}
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointServiceStatus.operation === 2"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="endpointServiceStatus.operation !== 2"></i>
+      {{ endpointServiceStatus.message }}
     </td>
   </tr>
   <tr>
@@ -82,9 +82,9 @@
       Full Document:
     </td>
     <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.rest.status"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.rest.status"></i>
-      {{ signalKConnectionsStatus.rest.message }}
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="fullDocumentStatus.operation === 2"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="fullDocumentStatus.operation !== 2"></i>
+      {{ fullDocumentStatus.message }}
     </td>
   </tr>
   <tr>
@@ -92,9 +92,9 @@
       Data Stream:
     </td>
     <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="signalKConnectionsStatus.websocket.status"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="!signalKConnectionsStatus.websocket.status"></i>
-      {{ signalKConnectionsStatus.websocket.message }} - Token: {{ signalKConnectionsStatus.websocket.hasToken }}
+      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="streamStatus.operation === 2"></i>
+      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="streamStatus.operation !== 2"></i>
+      {{ streamStatus.message }} - Token: {{ streamStatus.hasToken }}
     </td>
   </tr>
 </table>

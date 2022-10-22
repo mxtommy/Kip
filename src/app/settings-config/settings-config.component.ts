@@ -44,7 +44,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   //TODO: fix successful snackbar msg on save error (see console log when not admin user and save to Global scope)
   ngOnInit() {
 
-    this.hasToken = this.signalKConnectionService.currentSkStatus.websocket.hasToken;
+    this.hasToken = this.signalKConnectionService.streamEndpoint.hasToken;
     this.storageSvc.listConfigs()
       .then(configs => {
         this.serverConfigs = configs;

@@ -3,7 +3,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from "@angular/router";
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './layout-splits.service';
 import * as screenfull from 'screenfull';
@@ -11,7 +10,7 @@ import * as screenfull from 'screenfull';
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
-import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
+import { SignalKConnectionService, IStreamStatus } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 
@@ -50,7 +49,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private DataSetService: DataSetService,
     private notificationsService: NotificationsService,
     public auththeticationService: AuththeticationService,
-    private signalKConnectionService: SignalKConnectionService,
+    private server: SignalKConnectionService,
     // below services are needed: first service instanciation after Init Service
     private signalKFullService: SignalKFullService,
     private signalKDeltaService: SignalKDeltaService,
@@ -60,7 +59,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit() {
     let connectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
     let skUrl = {url: connectionConfig.signalKUrl, new: false};
-    this.signalKConnectionService.resetSignalK(skUrl);
+    this.server.resetSignalK(skUrl);
 
     // Page layout area operations sub
     this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
@@ -116,8 +115,7 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     // Connection Status Notification sub
-    this.connectionStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(
-      status => {
+    this.connectionStatusSub = this.server.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
         this.displayConnectionsStatusNotification(status);
       }
     );
@@ -133,23 +131,28 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {
-    this.unlockStatusSub.unsubscribe();
-    this.themeNameSub.unsubscribe();
-    this.appNotificationSub.unsubscribe();
-    this.connectionStatusSub.unsubscribe();
-  }
+  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
 
-  displayConnectionsStatusNotification(connectionsStatus: SignalKStatus) {
-    if (connectionsStatus.operation == 1) { // starting server
-      if (!connectionsStatus.endpoint.status) {
-        this.notificationsService.sendSnackbarNotification(connectionsStatus.endpoint.message, 5000, true);
-      } else if (!connectionsStatus.rest.status) {
-        this.notificationsService.sendSnackbarNotification("Connected to SignalK Server.", 5000, false);
-      }
-    }
-    if (connectionsStatus.operation == 3) { // URL changed/reset
-      this.notificationsService.sendSnackbarNotification("Connection Update/Reset successful.", 5000, false);
+    switch (streamStatus.operation) {
+      case 0: // not connected
+        this.notificationsService.sendSnackbarNotification("Not connected to server.", 5000, true);
+        break;
+
+      case 1: // connecting
+        this.notificationsService.sendSnackbarNotification("Connecting to server.", 5000, true);
+       break;
+
+      case 2: // connected
+        this.notificationsService.sendSnackbarNotification("Connection successful.", 5000, false);
+        break;
+
+      case 3: // connection error
+        this.notificationsService.sendSnackbarNotification("Error connecting to server.", 5000, false);
+        break;
+
+      default:
+        this.notificationsService.sendSnackbarNotification("Unknown stream connection status.", 0, false);
+        break;
     }
   }
 
@@ -205,6 +208,13 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     this.fullscreenStatus = !this.fullscreenStatus;
+  }
+
+  ngOnDestroy() {
+    this.unlockStatusSub.unsubscribe();
+    this.themeNameSub.unsubscribe();
+    this.appNotificationSub.unsubscribe();
+    this.connectionStatusSub.unsubscribe();
   }
 
 }

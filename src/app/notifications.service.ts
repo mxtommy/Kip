@@ -6,7 +6,7 @@ import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { ISignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService } from "./app-settings.service";
-import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
+import { SignalKConnectionService } from './signalk-connection.service';
 import { INotificationConfig } from './app-settings.interfaces';
 import { Howl } from 'howler';
 
