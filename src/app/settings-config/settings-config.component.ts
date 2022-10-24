@@ -3,7 +3,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, Validators }    from '@angular/forms';
 
 import { AppSettingsService } from '../app-settings.service';
-import { SignalKConnectionService } from '../signalk-connection.service';
 import { NotificationsService } from '../notifications.service';
 import { StorageService } from './../storage.service';
 import { IConfig } from '../app-settings.interfaces';
@@ -46,11 +45,14 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   ngOnInit() {
 
     this.hasToken = this.deltaService.streamEndpoint.hasToken;
+
     this.storageSvc.listConfigs()
-      .then(configs => {
-        this.serverConfigs = configs;
-      })
-      .catch(error => this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false));
+    .then((configs) => {
+      this.serverConfigs = configs;
+    })
+    .catch(error => {
+      this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+    });
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     this.appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
@@ -84,19 +86,19 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   }
 
   public restoreRemoteServerConfig() {
-   this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name)
-    .then(remoteConfiguration => {
-      let conf: IConfig = remoteConfiguration;
-
+    let conf: IConfig = null;
+    try {
+      conf = this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name);
+    } catch (error) {
+      this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
+    }
+    if (conf) {
       this.appSettingsService.replaceConfig("appConfig", JSON.stringify(conf.app), false);
       this.appSettingsService.replaceConfig("widgetConfig", JSON.stringify(conf.widget), false);
       this.appSettingsService.replaceConfig("layoutConfig", JSON.stringify(conf.layout), false);
       this.appSettingsService.replaceConfig("themeConfig", JSON.stringify(conf.theme), false);
       this.appSettingsService.replaceConfig("zonesConfig", JSON.stringify(conf.zones), true);
-    })
-    .catch(error => {
-      this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
-    });
+    }
   }
 
   public resetConfigToDefault() {

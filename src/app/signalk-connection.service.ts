@@ -126,36 +126,6 @@ export class SignalKConnectionService {
       });
   }
 
-  public postApplicationData(scope: string, version: number, name: string, data: Object): Promise<any> {
-    let url = this.serverServiceEndpoints.httpServiceUrl.substring(0,this.serverServiceEndpoints.httpServiceUrl.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/" + version + "/"+ name;
-
-    return lastValueFrom(this.http.post<any>(url, data))
-      .catch(error => {
-        this.handleError(error);
-      });
-  }
-
-  public getApplicationDataKeys(scope: string, version: number): Promise<void | string[]> {
-    let url = this.serverServiceEndpoints.httpServiceUrl.substring(0,this.serverServiceEndpoints.httpServiceUrl.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/" + version + "/?keys=true";
-
-    return lastValueFrom(this.http.get<string[]>(url))
-      .catch(error => {
-        this.handleError(error);
-      });
-  }
-
-  public getApplicationData(scope: string, version: number, name: string): Promise<any> {
-    let url = this.serverServiceEndpoints.httpServiceUrl.substring(0,this.serverServiceEndpoints.httpServiceUrl.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/" + version + "/" + name;
-
-    return lastValueFrom(this.http.get<any>(url))
-      .catch(error => {
-        this.handleError(error);
-      });
-  }
-
   private handleError(error: HttpErrorResponse) {
     if (error.status === 0) {
       // A client-side or network error occurred. Handle it accordingly.
