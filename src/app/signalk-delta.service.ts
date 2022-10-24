@@ -208,8 +208,10 @@ export class SignalKDeltaService {
       this.processUpdateDelta(message); // is Data Update process further
     } else if (typeof(message.requestId) != 'undefined') {
       this.signalKRequests$.next(message); // is a Request, send to signalk-request service.
+    } else if (typeof(message.errorMessage) != 'undefined') {
+      console.warn("[Delta Service] Service sent stream error message: " + message.errorMessage);
     } else {
-      console.log("[Delta Service] Unknown message type. Message content:" + message);
+      console.warn("[Delta Service] Unknown message type. Message content:" + message);
     }
   }
 

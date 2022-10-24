@@ -63,7 +63,7 @@ export class StorageService {
         for(let cname of configNames) {
           serverConfigs.push({ scope: 'global', name: cname });
         }
-        console.log(`[Storage Service] Retreive Global config list`);
+        console.log(`[Storage Service] Retreived Global config list`);
       })
       .catch(
         error => {
@@ -75,7 +75,7 @@ export class StorageService {
         for(let cname of configNames) {
           serverConfigs.push({ scope: 'user', name: cname });
         }
-        console.log(`[Storage Service] Retreive User config list`);
+        console.log(`[Storage Service] Retreived User config list`);
       })
       .catch(
         error => {
