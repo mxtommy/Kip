@@ -77,11 +77,19 @@ export class SettingsSignalkComponent implements OnInit {
     });
 
     // Login Sub
+
+    // get current value first
+    if (this.auth.isLoggedIn$) {
+      this.isLoggedIn = true;
+    } else {
+      this.isLoggedIn = false;
+    }
+
     this.isLoggedIn$ = this.auth.isLoggedIn$.subscribe(isLoggedIn => {
-      this.isLoggedIn = isLoggedIn;
-      if (isLoggedIn) {
+      if ((this.isLoggedIn !== isLoggedIn) && (isLoggedIn === true)) {
         this.notificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
       }
+      this.isLoggedIn = isLoggedIn;
     });
 
     // sub for signalk connection status
@@ -90,25 +98,23 @@ export class SettingsSignalkComponent implements OnInit {
     this.endpointServiceStatus = this.signalKConnectionService.serverServiceEndpoints;
 
     this.skEndpointServiceStatus$ = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus): void => {
-      this.endpointServiceStatus = status; // push on stream update
+      this.endpointServiceStatus = status;
       if (status.operation === 2) { // if we have connected to new endpoint services handle authorization
         if (this.connectionConfig.useSharedConfig) {
           this.serverLogin(this.connectionConfig.signalKUrl);
-        } else if (this.authToken && this.authToken.isDeviceAccessToken) {
-          this.auth.deleteToken();
         }
       }
     });
 
+    // get FullDocument Service status updates
     this.skFullDocumentStatus$ = this.fullDocumentService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
       this.fullDocumentStatus = status;
     });
 
+    // get Delta Service status updates
     this.skStreamStatus$ = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
     });
-
-
 
     //get update performances
     this.updatesSecond$ = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
@@ -150,6 +156,7 @@ export class SettingsSignalkComponent implements OnInit {
       let connection = {url: this.connectionConfig.signalKUrl, new: true};
       this.appSettingsService.signalkUrl = connection;
       this.signalKConnectionService.resetSignalK(connection);
+      this.auth.deleteToken(); // need to delete whatever token as this is a new server
       // login is done by skEndpointServiceStatus$ Observable's connection status
 
     } else {
@@ -157,10 +164,10 @@ export class SettingsSignalkComponent implements OnInit {
       //and HTTP_INTERCEPTOR will incert the new token automatically on ahh HTTP calls (not WebSocket).
       if ((this.authToken && this.authToken.isDeviceAccessToken) && this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if (this.connectionConfig.useSharedConfig) {
-        this.serverLogin(this.connectionConfig.signalKUrl);
       } else if ((this.authToken && !this.authToken.isDeviceAccessToken) && !this.connectionConfig.useSharedConfig) {
         this.deleteToken();
+      } else if (this.connectionConfig.useSharedConfig) {
+        this.serverLogin(this.connectionConfig.signalKUrl);
       }
     }
 

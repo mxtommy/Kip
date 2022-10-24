@@ -263,6 +263,5 @@ export class AppModule {
      //signalKDeltaService: SignalKDeltaService,
      //signalkRequestsService: SignalkRequestsService,
      //signalKFullService: SignalKFullService,
-     SignalKConnectionService: SignalKConnectionService
   ) { }
 }
