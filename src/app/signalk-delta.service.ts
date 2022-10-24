@@ -44,8 +44,6 @@ export class SignalKDeltaService {
   private socketWS$: WebSocketSubject<any>;
   public socketWSCloseEvent$ = new Subject<CloseEvent>();
   public socketWSOpenEvent$ = new Subject<Event>();
-  private messagesSubjectWS$ = new Subject();
-  public messagesWS$ = this.messagesSubjectWS$.pipe(switchAll(), catchError(e => { throw e }));
 
   // Token
   private authToken: IAuthorizationToken = null;
@@ -57,20 +55,27 @@ export class SignalKDeltaService {
     {
       // Monitor Connection Service Endpoint Status
       this.server.serverServiceEndpoint$.subscribe((endpoitStatus: IEndpointStatus) => {
+        let reason: string = null;
+        if (endpoitStatus.operation === 2) {
+          reason = "New endpoint";
+        } else {
+          reason = "Connection stopped";
+        }
+
         if (endpoitStatus.operation === 2) {
           this.endpointWS = endpoitStatus.WsServiceUrl;
 
-          if (this.socketWS$) {
-            this.closeWS();
+          if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
+            this.closeWS(reason);
           }
 
           setTimeout(() => {   // need a delay so WebSocket Close Observer has time to complete before connecting again.
-            this.connectWS();
+            this.connectWS(reason);
           }, 250);
 
         } else {
-          if (this.socketWS$ && endpoitStatus.operation !== 1) {
-            this.closeWS();
+          if (this.socketWS$ && endpoitStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
+            this.closeWS(reason);
           }
         }
       });
@@ -80,16 +85,22 @@ export class SignalKDeltaService {
         if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
           this.authToken = token;
 
-          // Only if the socket is all ready up ie. resetSignalk() ran at least once.
-          if (this.socketWS$ && (this.streamEndpoint.operation === 2)) {
-            this.closeWS();
+          let reason: string = null;
+          if (token) {
+            reason = "New token";
+          } else {
+            reason = "Deleted Token";
+          }
+
+          // Only if the socket is in Connected or Connecting state.
+          if (this.socketWS$ && (this.streamEndpoint.operation === 2 || this.streamEndpoint.operation === 1) ) {
+            this.closeWS(reason);
 
             setTimeout(() => {   // need a delay so WebSocket Close Observer has time to complete before connecting again.
-              this.connectWS();
+              this.connectWS(reason);
             }, 250);
           }
         }
-
       });
 
       // WebSocket Open Event Handling
@@ -125,13 +136,14 @@ export class SignalKDeltaService {
    * Connect WebSocket to server. Endpoint URL taken from Connection Sercice and
    * authentification token is taken from Authentication
    */
-   public connectWS(): void {
+   public connectWS(reason: string): void {
     this.streamEndpoint.message = "Connecting";
     this.streamEndpoint.operation = 1;
+    console.log("[Delta Service] " + reason + ": WebSocket openning...");
     this.streamEndpoint$.next(this.streamEndpoint);
 
     this.socketWS$ = this.getNewWebSocket();
-    const messagesWS$ = this.socketWS$.pipe(
+    this.socketWS$.pipe(
       retryWhen(errors =>
         errors.pipe(
           tap(err => {
@@ -167,9 +179,10 @@ export class SignalKDeltaService {
   /**
   * Close SignalK server data stream WebSocket
   */
-  public closeWS() {
+  public closeWS(reason: string) {
     if (this.socketWS$) {
-      console.log("[Delta Service] WebSocket closing...");
+      this.streamEndpoint.operation = 4; // closing status. Internal - no need to push to Observers
+      console.log("[Delta Service] " + reason + ": WebSocket closing...");
       this.socketWS$.complete();
     }
   }
@@ -307,7 +320,7 @@ export class SignalKDeltaService {
   // a clean disconnect. Else the server keeps buffering the messages and it creates an
   // overflow that that will eventually have the server kill the connection.
   OnDestroy() {
-    this.closeWS();
+    this.closeWS("App terminated");
   }
 
  }

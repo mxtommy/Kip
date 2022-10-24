@@ -28,20 +28,20 @@ export class SettingsSignalkComponent implements OnInit {
 
   connectionConfig: IConnectionConfig;
 
-  authToken$: Subscription;
+  authTokenSub: Subscription;
   authToken: IAuthorizationToken;
-  isLoggedIn$: Subscription;
+  isLoggedInSub: Subscription;
   isLoggedIn: boolean;
 
   endpointServiceStatus: IEndpointStatus;
-  skEndpointServiceStatus$: Subscription;
+  skEndpointServiceStatusSub: Subscription;
   fullDocumentStatus: IFullDocumentStatus;
-  skFullDocumentStatus$: Subscription;
+  skFullDocumentStatusSub: Subscription;
   streamStatus: IStreamStatus;
-  skStreamStatus$: Subscription;
+  skStreamStatusSub: Subscription;
 
 
-  updatesSecond$: Subscription;
+  updatesSecondSub: Subscription;
 
   lastSecondsUpdate: number; //number of updates from server in last second
   updatesSeconds: number[]  = [];
@@ -70,22 +70,24 @@ export class SettingsSignalkComponent implements OnInit {
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
 
     // Token Sub
-    this.authToken$ = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
+    this.authTokenSub = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
       if (token) {
         this.authToken = token;
-      } else this.authToken = null;
+      } else {
+        this.authToken = null;
+      }
     });
 
     // Login Sub
 
-    // get current value first
+    // get current value first because BehaviorSubject will send last value and component will triggger notifications
     if (this.auth.isLoggedIn$) {
       this.isLoggedIn = true;
     } else {
       this.isLoggedIn = false;
     }
 
-    this.isLoggedIn$ = this.auth.isLoggedIn$.subscribe(isLoggedIn => {
+    this.isLoggedInSub = this.auth.isLoggedIn$.subscribe(isLoggedIn => {
       if ((this.isLoggedIn !== isLoggedIn) && (isLoggedIn === true)) {
         this.notificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
       }
@@ -93,31 +95,22 @@ export class SettingsSignalkComponent implements OnInit {
     });
 
     // sub for signalk connection status
-
-    // init status value for component display pre observer stream update (display the current status only)
-    this.endpointServiceStatus = this.signalKConnectionService.serverServiceEndpoints;
-
-    this.skEndpointServiceStatus$ = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus): void => {
-      this.endpointServiceStatus = status;
-      if (status.operation === 2) { // if we have connected to new endpoint services handle authorization
-        if (this.connectionConfig.useSharedConfig) {
-          this.serverLogin(this.connectionConfig.signalKUrl);
-        }
-      }
+    this.skEndpointServiceStatusSub = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus) => {
+          this.endpointServiceStatus = status;
     });
 
     // get FullDocument Service status updates
-    this.skFullDocumentStatus$ = this.fullDocumentService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
+    this.skFullDocumentStatusSub = this.fullDocumentService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
       this.fullDocumentStatus = status;
     });
 
     // get Delta Service status updates
-    this.skStreamStatus$ = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
+    this.skStreamStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
     });
 
     //get update performances
-    this.updatesSecond$ = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
+    this.updatesSecondSub = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
       this.lastSecondsUpdate = newSecondsData[newSecondsData.length-1];
       this.updatesSeconds = newSecondsData;
       if (this.chart !== null) {
@@ -152,11 +145,17 @@ export class SettingsSignalkComponent implements OnInit {
       return
     }
 
+    let connection = {url: this.connectionConfig.signalKUrl, new: true};
     if (this.connectionConfig.signalKUrl != this.appSettingsService.signalkUrl.url) {
-      let connection = {url: this.connectionConfig.signalKUrl, new: true};
       this.appSettingsService.signalkUrl = connection;
       this.signalKConnectionService.resetSignalK(connection);
-      this.auth.deleteToken(); // need to delete whatever token as this is a new server
+
+      if (this.connectionConfig.useSharedConfig) {
+        this.serverLogin(this.connectionConfig.signalKUrl);
+      } else if ( this.authToken && this.authToken.isDeviceAccessToken) {
+        this.auth.deleteToken();
+      }
+
       // login is done by skEndpointServiceStatus$ Observable's connection status
 
     } else {
@@ -168,6 +167,8 @@ export class SettingsSignalkComponent implements OnInit {
         this.deleteToken();
       } else if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
+      } else {
+        this.signalKConnectionService.resetSignalK(connection);
       }
     }
 
@@ -264,12 +265,12 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.skEndpointServiceStatus$.unsubscribe();
-    this.skFullDocumentStatus$.unsubscribe();
-    this.skStreamStatus$.unsubscribe();
-    this.authToken$.unsubscribe();
-    this.isLoggedIn$.unsubscribe();
+    this.skEndpointServiceStatusSub.unsubscribe();
+    this.skFullDocumentStatusSub.unsubscribe();
+    this.skStreamStatusSub.unsubscribe();
+    this.authTokenSub.unsubscribe();
+    this.isLoggedInSub.unsubscribe();
     // this.updatesMinutesSub.unsubscribe();
-    this.updatesSecond$.unsubscribe();
+    this.updatesSecondSub.unsubscribe();
   }
 }

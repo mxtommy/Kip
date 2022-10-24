@@ -49,7 +49,7 @@ export class SignalKConnectionService {
     httpServiceUrl: null,
     WsServiceUrl: null,
   };
-  public serverServiceEndpoint$: Subject<IEndpointStatus> = new Subject<IEndpointStatus>();
+  public serverServiceEndpoint$: BehaviorSubject<IEndpointStatus> = new BehaviorSubject<IEndpointStatus>(this.serverServiceEndpoints);
 
   // Connection information
   public signalKURL: ISignalKUrl;

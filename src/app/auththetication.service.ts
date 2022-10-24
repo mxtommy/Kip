@@ -1,5 +1,6 @@
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Console } from 'console';
 import { BehaviorSubject, timer, lastValueFrom } from 'rxjs';
 import { filter, map, switchMap } from "rxjs/operators";
 
@@ -96,13 +97,10 @@ export class AuththeticationService {
    */
   public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
     if (newUrl) {
-      if ((this.serverUrl != newUrl) && this.serverUrl) {
-        this.deleteToken();
-      }
       this.serverUrl = newUrl;
     }
     if (this._IsLoggedIn$.getValue()) {
-      await this.logout();
+      await this.logout(true);
     }
     await lastValueFrom(this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'}))
       .then((loginResponse: HttpResponse<any>) => {
@@ -110,6 +108,7 @@ export class AuththeticationService {
           this.setSession(loginResponse.body.token);
       })
       .catch(error => {
+        this.deleteToken();
         this.handleError(error);
       });
   }
@@ -205,12 +204,14 @@ export class AuththeticationService {
    * @return {*}  {Promise<void>}
    * @memberof AuththeticationService
    */
-  public async logout(): Promise<void> {
+  public async logout(isLoginAction: boolean): Promise<void> {
     localStorage.removeItem('authorization_token');
     await lastValueFrom(this.http.put(this.serverUrl + serverLogoutPath, null))
       .then((response) => {
         this._IsLoggedIn$.next(false);
-        this._authToken$.next(null);
+        if (!isLoginAction) {
+          this._authToken$.next(null);
+        }
         console.log("[Authentication Service] User logged out");
     })
     .catch(error => {
@@ -218,7 +219,10 @@ export class AuththeticationService {
     });
     //TODO: below should be removed once the sk bug is fixed
     this._IsLoggedIn$.next(false);
-    this._authToken$.next(null);
+    if (!isLoginAction) {
+      this._authToken$.next(null);
+    }
+    console.log("[Authentication Service] User logged out");
   }
 
   public deleteToken() {
