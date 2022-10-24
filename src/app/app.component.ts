@@ -10,8 +10,8 @@ import * as screenfull from 'screenfull';
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
-import { SignalKConnectionService, IStreamStatus } from './signalk-connection.service';
-import { SignalKDeltaService } from './signalk-delta.service';
+import { SignalKConnectionService } from './signalk-connection.service';
+import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
 import { SignalKFullService } from './signalk-full.service';
 
 declare var NoSleep: any; //3rd party
@@ -49,6 +49,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private DataSetService: DataSetService, // needs AppSettingsService & SignalKService
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
     public auththeticationService: AuththeticationService,
+    private deltaService: SignalKDeltaService,
     private server: SignalKConnectionService, // needs AuththeticationService
     // below services are needed: first service instanciation after Init Service
     private signalKFullService: SignalKFullService, //needs SignalKService & SignalKConnectionService
@@ -111,7 +112,7 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     // Connection Status Notification sub
-    this.connectionStatusSub = this.server.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
+    this.connectionStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
         this.displayConnectionsStatusNotification(status);
       }
     );

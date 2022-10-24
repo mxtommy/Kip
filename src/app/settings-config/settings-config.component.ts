@@ -1,3 +1,4 @@
+import { SignalKDeltaService } from './../signalk-delta.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, Validators }    from '@angular/forms';
 
@@ -37,14 +38,14 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   constructor(
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
-    private signalKConnectionService: SignalKConnectionService,
+    private deltaService: SignalKDeltaService,
     private notificationsService: NotificationsService,
   ) { }
 
   //TODO: fix successful snackbar msg on save error (see console log when not admin user and save to Global scope)
   ngOnInit() {
 
-    this.hasToken = this.signalKConnectionService.streamEndpoint.hasToken;
+    this.hasToken = this.deltaService.streamEndpoint.hasToken;
     this.storageSvc.listConfigs()
       .then(configs => {
         this.serverConfigs = configs;

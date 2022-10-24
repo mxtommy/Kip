@@ -1,3 +1,4 @@
+import { SignalKDeltaService, IStreamStatus } from './../signalk-delta.service';
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
@@ -5,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { AppSettingsService } from '../app-settings.service';
 import { IConnectionConfig } from "../app-settings.interfaces";
-import { SignalKConnectionService, IStreamStatus, IEndpointStatus, IFullDocumentStatus } from '../signalk-connection.service';
+import { SignalKConnectionService, IEndpointStatus, IFullDocumentStatus } from '../signalk-connection.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 import { NotificationsService } from '../notifications.service';
 import { SignalKService } from '../signalk.service';
@@ -58,6 +59,7 @@ export class SettingsSignalkComponent implements OnInit {
     private signalKService: SignalKService,
     private signalKConnectionService: SignalKConnectionService,
     private signalkRequestsService: SignalkRequestsService,
+    private deltaService: SignalKDeltaService,
     public auth: AuththeticationService)
   { }
 
@@ -100,7 +102,7 @@ export class SettingsSignalkComponent implements OnInit {
       this.fullDocumentStatus = status;
     });
 
-    this.skStreamStatus$ = this.signalKConnectionService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
+    this.skStreamStatus$ = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
     });
 

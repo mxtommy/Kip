@@ -44,13 +44,6 @@ export interface IFullDocumentStatus {
   message: string;
 }
 
-export interface IStreamStatus {
-  operation: number;
-  message: string;
-  hasToken: boolean;
-}
-
-
 @Injectable({
   providedIn: 'root'
 })
@@ -70,20 +63,13 @@ export class SignalKConnectionService {
     message: "Not connected",
   }
 
-  public streamEndpoint: IStreamStatus = {
-    operation: 0,
-    message: "Not connected",
-    hasToken: false,
-  }
-
   public reset = new Subject<boolean>(); // connection reset
   public serverServiceEndpoint$: Subject<IEndpointStatus> = new Subject<IEndpointStatus>();
   public fullDocumentEndpoint$: BehaviorSubject<IFullDocumentStatus> = new BehaviorSubject<IFullDocumentStatus>(this.fullDocEndpoint);
-  public streamEndpoint$: BehaviorSubject<IStreamStatus> = new BehaviorSubject<IStreamStatus>(this.streamEndpoint);
+
 
   // Connection information
   public signalKURL: ISignalKUrl;
-  private authToken: IAuthorizationToken = null;
   private serverName: string;
   public serverVersion$ = new BehaviorSubject<string>(null);
   private serverRoles: Array<string> = [];
@@ -91,65 +77,13 @@ export class SignalKConnectionService {
   // REST
   public messageREST$ = new Subject(); //REST Responses stream
 
-  // Websocket
-  private WS_RECONNECT_INTERVAL = 5000;                 // connection error retry interval
-  private WS_CONNECTION_ARGUMENT = "?subscribe=all"; // default but we could use none + specific paths in the future
-  private socketWS$: WebSocketSubject<any>;
-  public socketWSCloseEvent$ = new Subject<CloseEvent>();
-  public socketWSOpenEvent$ = new Subject<Event>();
-  private messagesSubjectWS$ = new Subject();
-  public messagesWS$ = this.messagesSubjectWS$.pipe(switchAll(), catchError(e => { throw e }));
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //// constructor, mostly sub to stuff for changes.
   constructor(
-      private auth: AuththeticationService,
       private http: HttpClient
     )
   {
-    this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
-      if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
-        this.authToken = token;
-
-        // Only if the socket is all ready up ie. resetSignalk() ran at least once.
-        if (this.socketWS$ && (this.streamEndpoint.operation === 2)) {
-          this.closeWS();
-
-          setTimeout(() => {   // need a delay so WebSocket Close Observer has time to complete before connecting again.
-            this.connectWS();
-          }, 250);
-        }
-      }
-
-    });
-
-    // WebSocket Open Event Handling
-    this.socketWSOpenEvent$.subscribe( event => {
-        this.streamEndpoint.message = "Connected";
-        this.streamEndpoint.operation = 2;
-        if (this.authToken) {
-          console.log("[Connection Service] WebSocket connected with Authorization Token")
-        } else {
-          console.log("[Connection Service] WebSocket connected without Authorization Token");
-        }
-        this.streamEndpoint$.next(this.streamEndpoint);
-      }
-    );
-
-    // WebSocket closed Event Handling
-    this.socketWSCloseEvent$.subscribe( event => {
-      if(event.wasClean) {
-        this.streamEndpoint.message = "WebSocket closed";
-        this.streamEndpoint.operation = 0;
-        console.log('[Connection Service] WebSocket closed');
-      } else {
-        console.log('[Connection Service] WebSocket terminated due to socket error');
-        this.streamEndpoint.message = "WebSocket error";
-        this.streamEndpoint.operation = 3;
-        console.log('[Connection Service] WebSocket closed');
-      }
-      this.streamEndpoint$.next(this.streamEndpoint);
-    });
-
     let config :IConnectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
     if (config.signalKUrl) {
       let url: ISignalKUrl = {url: config.signalKUrl, new: false};
@@ -171,7 +105,7 @@ export class SignalKConnectionService {
     this.signalKURL = skUrl;
 
     if (this.signalKURL.new) {
-      this.reset.next(true); // emit reset signal (URL changing)
+      this.reset.next(true); // emit reset signal (URL changing). Used by Notification service
     }
     this.serverServiceEndpoints.message = "Connecting..."
     this.serverServiceEndpoints.operation = 1;
@@ -201,6 +135,7 @@ export class SignalKConnectionService {
         this.serverServiceEndpoints.message = response.status.toString();
         this.serverServiceEndpoints.serverDescrption = response.body.server.id + " " + response.body.server.version;
         this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
+        this.callREST();
       })
       .catch((err: HttpErrorResponse) => {
         console.error("[Connection Service] HTTP Endpoints request failed");
@@ -217,29 +152,6 @@ export class SignalKConnectionService {
         this.serverServiceEndpoints.serverDescrption = null;
         this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
       });
-
-      if (this.serverServiceEndpoints.operation === 2) {
-        await this.callREST();
-
-        if (this.socketWS$) {
-          this.closeWS();
-        }
-
-        setTimeout(() => {   // need a delay so WebSocket Close Observer has time to complete before connecting again.
-          this.connectWS();
-        }, 250);
-
-
-      } else {
-        this.fullDocEndpoint.operation = 0;
-        this.fullDocEndpoint.message = "No connected";
-        this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
-        console.log('[Connection Service] Full Document endpoint not retreived do to server service endpoint request failure');
-
-        if (this.socketWS$) {
-          this.closeWS();
-        }
-      }
   }
 
   /**
@@ -265,77 +177,6 @@ export class SignalKConnectionService {
         console.error('[Connection Service] A Full Document endpoint error occurred:', err.message);
       });
 }
-
-  /**
-   * Connect WebSocket to server. Endpoint URL end authentification token is
-   * taken from configuration
-   */
-  public connectWS(): void {
-    this.streamEndpoint.message = "Connecting";
-    this.streamEndpoint.operation = 1;
-    this.streamEndpoint$.next(this.streamEndpoint);
-
-    this.socketWS$ = this.getNewWebSocket();
-    const messagesWS$ = this.socketWS$.pipe(
-      retryWhen(errors =>
-        errors.pipe(
-          tap(err => {
-            console.error("[Connection Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
-          }),
-          delay(this.WS_RECONNECT_INTERVAL)
-        )
-      )
-    );
-    this.messagesSubjectWS$.next(messagesWS$);
-  }
-
-  /**
-   * Handles connection arguments, token and creates socket Open/Close Observers
-   */
-  private getNewWebSocket() {
-    let args: string;
-    if (this.authToken != null) {
-      args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.authToken.token;
-      this.streamEndpoint.hasToken = true;
-    } else {
-      args = this.WS_CONNECTION_ARGUMENT;
-      this.streamEndpoint.hasToken = false;
-    }
-    return webSocket({
-      url: this.serverServiceEndpoints.WsServiceUrl + args,
-      closeObserver: this.socketWSCloseEvent$,
-      openObserver: this.socketWSOpenEvent$
-    })
-  }
-  /**
-  * Send message to WebSocket recipient
-  * @param msg JSON formated message to be sent. If the WebSocket is not
-  * available, one retry after 1 sec will be made. The socket parser will automatically
-  * stringify the message.
-  *
-  * `*** Do not pre-stringify the msg param ***`
-  */
-  public sendMessageWS(msg: any) {
-    if (this.socketWS$) {
-      console.log("[Connection Service] WebSocket sending message");
-      this.socketWS$.next(msg);
-    } else {
-      setTimeout((): void => {
-        console.log("[Connection Service] WebSocket retry sending message");
-        this.socketWS$.next(msg);
-      }, 1000);
-      console.log("[Connection Service] No WebSocket present to send messsage");
-    }
-  }
-  /**
-  * Close WebSocket
-  */
-  public closeWS() {
-    if (this.socketWS$) {
-      console.log("[Connection Service] WebSocket closing...");
-      this.socketWS$.complete();
-    }
-  }
 
   public postApplicationData(scope: string, version: number, name: string, data: Object): Promise<any> {
     let url = this.serverServiceEndpoints.httpServiceUrl.substring(0,this.serverServiceEndpoints.httpServiceUrl.length - 4); // this removes 'api/' from the end
@@ -390,11 +231,6 @@ export class SignalKConnectionService {
     return this.fullDocumentEndpoint$.asObservable();
   }
 
-  // SignalK Connections Status observable
-  getDataStreamStatusAsO() {
-    return this.streamEndpoint$.asObservable();
-  }
-
   public setServerInfo(name : string, version: string, roles: Array<string>) {
     this.serverName = name;
     this.serverVersion$.next(version);
@@ -412,10 +248,6 @@ export class SignalKConnectionService {
 
   public get skServerRoles() : Array<string> {
     return this.serverRoles;
-  }
-
-  OnDestroy() {
-    this.closeWS();
   }
 
 }
