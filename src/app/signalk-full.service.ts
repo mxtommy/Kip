@@ -61,8 +61,8 @@ export class SignalKFullService {
       this.fullDocEndpoint.operation = 2;
       this.fullDocEndpoint.message = response.status.toString();
       this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
-      this.processFullUpdate(response.body);
       console.log("[Full Document Service] Document retreived");
+      this.processFullUpdate(response.body);
     })
     .catch((err: HttpErrorResponse) => {
       this.fullDocEndpoint.operation = 3;

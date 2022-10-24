@@ -125,6 +125,10 @@ export class SignalKService {
       this.setMeta(meta);
     });
 
+    this.fullDocument.subscribeSelfUpdates().subscribe(self => {
+      this.setSelf(self);
+    });
+
   }
 
   getupdateStatsSecond() {
