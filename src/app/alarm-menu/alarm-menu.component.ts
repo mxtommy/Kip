@@ -44,9 +44,8 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   constructor(
     private notificationsService: NotificationsService,
-    private appSettingsService: AppSettingsService,
   ) {
-    this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+    this.notificationServiceSettings = this.notificationsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
     });
   }

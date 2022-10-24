@@ -1,3 +1,4 @@
+import { StorageService } from './storage.service';
 import { catchError } from 'rxjs/operators';
 import { SignalkRequestsService } from './signalk-requests.service';
 import { BrowserModule } from '@angular/platform-browser';
@@ -234,7 +235,8 @@ const appInitializerFn = (appInitService: AppInitService) => {
     UnitsService,
     AppSettingsService,
     NotificationsService,
-    TimersService
+    TimersService,
+    StorageService
   ],
   bootstrap: [AppComponent]
 })
@@ -261,5 +263,6 @@ export class AppModule {
      //signalKDeltaService: SignalKDeltaService,
      //signalkRequestsService: SignalkRequestsService,
      //signalKFullService: SignalKFullService,
+     SignalKConnectionService: SignalKConnectionService
   ) { }
 }

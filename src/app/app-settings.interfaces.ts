@@ -78,3 +78,8 @@ export enum ZoneState {
   warning = 1,
   alarm = 2,
 }
+
+export interface ISignalKUrl {
+  url: string;
+  new: boolean;
+}

@@ -3,7 +3,6 @@ import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import { AppSettingsService } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
-import { SignalKConnectionService } from './signalk-connection.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 
 import * as Qty from 'js-quantities';
@@ -62,7 +61,6 @@ export class SignalKService {
   constructor(
     private appSettingsService: AppSettingsService,
     private notificationsService: NotificationsService,
-    private signalKConnectionService: SignalKConnectionService,
     private unitService: UnitsService,
   )
   {

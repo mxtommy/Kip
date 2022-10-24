@@ -1,3 +1,4 @@
+import { DefaultNotificationConfig } from './config.blank.notification.const';
 /**
  * This class handles both App notifications Snackbar and SignalK Notifications
  */
@@ -59,6 +60,7 @@ export interface IAlarmInfo {
 export class NotificationsService {
   private notificationServiceSettings: Subscription;
   private notificationConfig: INotificationConfig;
+  public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
   private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
   private activeAlarmsSubject = new BehaviorSubject<any>({});
@@ -83,8 +85,9 @@ export class NotificationsService {
     private SignalKConnectionService: SignalKConnectionService,
     ) {
     // Observe Notification configuration
-    this.notificationServiceSettings = this.appSettingsService.getNotificationConfigService().subscribe(config => {
+    this.notificationServiceSettings = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
+      this.notificationConfig$.next(config); // push to alrm menu
       if (this.notificationConfig.disableNotifications) {
         this.resetAlarms();
       }
@@ -397,5 +400,7 @@ export class NotificationsService {
     this.activeHowlId = this.howlPlayer.play();
   }
 
-
+  public getNotificationServiceConfigAsO(): Observable<INotificationConfig> {
+    return this.notificationConfig$.asObservable();
+  }
 }

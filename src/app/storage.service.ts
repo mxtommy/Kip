@@ -1,8 +1,9 @@
-import { SignalKConnectionService } from './signalk-connection.service';
+import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { Injectable } from '@angular/core';
 import { IConfig, IAppConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from "./app-settings.interfaces";
 import * as compareVersions from 'compare-versions';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Subject } from 'rxjs/internal/Subject';
 
 interface Config {
   name: string,
@@ -13,13 +14,29 @@ interface Config {
   providedIn: 'root'
 })
 export class StorageService {
+  private serverEndpoint: String = null;
   public isAppDataSupported: boolean = false;
   private serverConfigs: Config[] = [];
   private configVersion: number = null;
+  public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
+
 
   constructor(
     private server: SignalKConnectionService,
-    ) {
+  ) {
+      server.fullDocumentEndpoint$.subscribe((status: IEndpointStatus) => {
+        console.log("*************************** " + status.httpServiceUrl);
+        if (status.httpServiceUrl !== null) {
+
+        }
+
+        if (status.operation === 2) {
+          this.storageServiceReady$.next(true);
+        } else {
+          this.storageServiceReady$.next(false);
+        }
+      });
+
       server.serverVersion$.subscribe(version => {
       if (version) {
         this.isAppDataSupported = compareVersions.compare(version, '1.27.0', ">=");

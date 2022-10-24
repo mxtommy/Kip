@@ -1,8 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { StorageService } from './storage.service';
-import { AppInitService } from './app-init.service';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { IDataSet } from './data-set.service';
@@ -10,19 +7,17 @@ import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widget-manager.service';
 import { IUnitDefaults } from './units.service';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone } from "./app-settings.interfaces";
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "./app-settings.interfaces";
 import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from './config.blank.const';
 import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
+import { StorageService } from './storage.service';
+import { AppInitService } from './app-init.service';
+
 const defaultTheme = 'modern-dark';
 const configVersion = 9; // used to invalidate old configs. connectionConfig and appConfig use this same version.
-
-export interface SignalKUrl {
-  url: string;
-  new: boolean;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +26,7 @@ export class AppSettingsService {
   private unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
-  private kipKNotificationConfig: BehaviorSubject<INotificationConfig>;
+  private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
   private useDeviceToken: boolean = false;
   private loginName: string;
@@ -42,7 +37,7 @@ export class AppSettingsService {
 
   private useServerStorage: boolean = false;
   private kipUUID: string;
-  public signalkUrl: SignalKUrl;
+  public signalkUrl: ISignalKUrl;
   widgets: Array<IWidget>;
   splitSets: ISplitSet[] = [];
   rootSplits: string[] = [];
@@ -52,8 +47,8 @@ export class AppSettingsService {
 
   constructor(
     private router: Router,
+    private appInitService: AppInitService,
     private storage: StorageService,
-    private appInitService: AppInitService
     )
   {
     this.storage.activeConfigVersion = configVersion;
@@ -66,34 +61,31 @@ export class AppSettingsService {
 
     } else {
       this.loadConnectionConfig();
+      // init sk connection if Storage service is not used and we have a URL configured (not a blank app config)
 
-      if (serverConfig) {
-        console.log("[AppSettings Service] Enabling Server Storage");
-        this.useServerStorage = true;
-        this.activeConfig = serverConfig;
-      } else {
-        console.log("[AppSettings Service] Enabling Local Storage");
-        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
-        localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
-        localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
-        localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
-        localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
-        localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
+        if (serverConfig) {
+          console.log("[AppSettings Service] Enabling Server Storage");
+          this.useServerStorage = true;
+          this.activeConfig = this.validateAppConfig(serverConfig);
+          this.pushSettings();
+        } else {
+          this.useServerStorage = false;
+          console.log("[AppSettings Service] Enabling Local Storage");
 
-        this.useServerStorage = false;
-        this.activeConfig = localStorageConfig;
-      }
+          let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+          localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
+          localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
+          localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
+          localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
+          localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
 
-      this.activeConfig = this.validateAppConfig(this.activeConfig);
-      if (!activeConfig) {
-        return;
-      }
-
-      this.pushSettings();
+          this.activeConfig = this.validateAppConfig(localStorageConfig);
+          this.pushSettings();
+        }
     }
   }
 
-  private loadConnectionConfig() {
+  private loadConnectionConfig(): void {
     let config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
     this.signalkUrl = {url: config.signalKUrl, new: false};
@@ -196,7 +188,7 @@ export class AppSettingsService {
     this.themeName.next(this.activeConfig.theme.themeName);
     this.dataSets = this.activeConfig.app.dataSets;
     this.unitDefaults.next(this.activeConfig.app.unitDefaults);
-    this.kipKNotificationConfig = new BehaviorSubject<INotificationConfig>(this.activeConfig.app.notificationConfig);
+    this.kipKNotificationConfig.next(this.activeConfig.app.notificationConfig);
     this.widgets = this.activeConfig.widget.widgets;
     this.zones.next(this.activeConfig.zones.zones);
     this.splitSets = this.activeConfig.layout.splitSets;
@@ -327,7 +319,7 @@ export class AppSettingsService {
   }
 
   // Notification Service Setting
-  public getNotificationConfigService() {
+  public getNotificationServiceConfigAsO(): Observable<INotificationConfig> {
     return this.kipKNotificationConfig.asObservable();
   }
   public getNotificationConfig(): INotificationConfig {

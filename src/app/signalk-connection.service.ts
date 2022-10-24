@@ -4,7 +4,7 @@ import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { SignalKUrl } from './app-settings.service';
+import { ISignalKUrl, IConnectionConfig} from './app-settings.interfaces';
 import { AuththeticationService , IAuthorizationToken } from './auththetication.service';
 
 interface SignalKEndpointResponse {
@@ -76,14 +76,13 @@ export class SignalKConnectionService {
     hasToken: false,
   }
 
-
   public reset = new Subject<boolean>(); // connection reset
   public serverServiceEndpoint$: Subject<IEndpointStatus> = new Subject<IEndpointStatus>();
   public fullDocumentEndpoint$: BehaviorSubject<IFullDocumentStatus> = new BehaviorSubject<IFullDocumentStatus>(this.fullDocEndpoint);
   public streamEndpoint$: BehaviorSubject<IStreamStatus> = new BehaviorSubject<IStreamStatus>(this.streamEndpoint);
 
   // Connection information
-  public signalKURL: SignalKUrl;
+  public signalKURL: ISignalKUrl;
   private authToken: IAuthorizationToken = null;
   private serverName: string;
   public serverVersion$ = new BehaviorSubject<string>(null);
@@ -107,7 +106,6 @@ export class SignalKConnectionService {
       private http: HttpClient
     )
   {
-
     this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
       if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
         this.authToken = token;
@@ -151,6 +149,12 @@ export class SignalKConnectionService {
       }
       this.streamEndpoint$.next(this.streamEndpoint);
     });
+
+    let config :IConnectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
+    if (config.signalKUrl) {
+      let url: ISignalKUrl = {url: config.signalKUrl, new: false};
+      this.resetSignalK(url);
+    }
   }
 
   /**
@@ -160,7 +164,7 @@ export class SignalKConnectionService {
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
    */
-  async resetSignalK(skUrl: SignalKUrl): Promise<void> {
+  async resetSignalK(skUrl: ISignalKUrl): Promise<void> {
     if (skUrl.url === null) {
       return;
     }

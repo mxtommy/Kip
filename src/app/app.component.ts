@@ -44,23 +44,19 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
-    private LayoutSplitsService: LayoutSplitsService,
-    public appSettingsService: AppSettingsService,
-    private DataSetService: DataSetService,
-    private notificationsService: NotificationsService,
+    private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
+    public appSettingsService: AppSettingsService, // needs storage & AppInit
+    private DataSetService: DataSetService, // needs AppSettingsService & SignalKService
+    private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
     public auththeticationService: AuththeticationService,
-    private server: SignalKConnectionService,
+    private server: SignalKConnectionService, // needs AuththeticationService
     // below services are needed: first service instanciation after Init Service
-    private signalKFullService: SignalKFullService,
-    private signalKDeltaService: SignalKDeltaService,
+    private signalKFullService: SignalKFullService, //needs SignalKService & SignalKConnectionService
+    private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
     ) { }
 
 
   ngOnInit() {
-    let connectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
-    let skUrl = {url: connectionConfig.signalKUrl, new: false};
-    this.server.resetSignalK(skUrl);
-
     // Page layout area operations sub
     this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }

@@ -1,10 +1,12 @@
 import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, IZonesConfig } from "./app-settings.interfaces"
+import { DefaultNotificationConfig } from './config.blank.notification.const';
+import { DefaultUnitsConfig } from "./config.blank.units.const";
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 9,
   "dataSets": [],
-  "unitDefaults": null,
-  "notificationConfig": null,
+  "unitDefaults": DefaultUnitsConfig,
+  "notificationConfig": DefaultNotificationConfig,
 }
 
 export const DefaultWidgetConfig: IWidgetConfig = {
