@@ -1,14 +1,14 @@
-import { DefaultNotificationConfig } from './config.blank.notification.const';
 /**
  * This class handles both App notifications Snackbar and SignalK Notifications
  */
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 
-import { ISignalKNotification } from "./signalk-interfaces";
 import { AppSettingsService } from "./app-settings.service";
-import { SignalKConnectionService } from './signalk-connection.service';
 import { INotificationConfig } from './app-settings.interfaces';
+import { DefaultNotificationConfig } from './config.blank.notification.const';
+import { SignalKDeltaService, INotificationDelta, IStreamStatus } from './signalk-delta.service';
+import { ISignalKNotification } from "./signalk-interfaces";
 import { Howl } from 'howler';
 
 const alarmTrack = {
@@ -82,9 +82,9 @@ export class NotificationsService {
 
   constructor(
     private appSettingsService: AppSettingsService,
-    private SignalKConnectionService: SignalKConnectionService,
+    private deltaService: SignalKDeltaService,
     ) {
-    // Observe Notification configuration
+    // Observer of Notification Servicer configuration
     this.notificationServiceSettings = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
       this.notificationConfig$.next(config); // push to alrm menu
@@ -98,11 +98,16 @@ export class NotificationsService {
       }
     });
 
-    //Observable of server connection status
-    this.SignalKConnectionService.reset.subscribe((connectionReset: boolean) => {
-      if (connectionReset === true) {
+    //Observer of server connection status
+    this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
+      if (streamStatus.operation === 2) {
         this.resetAlarms();
       }
+    });
+
+    // Observer of Delta Service Notification message
+    this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotificationDelta) => {
+      this.processNotificationDelta(notification);
     });
 
     // init alarm player
@@ -317,25 +322,25 @@ export class NotificationsService {
    * @param notificationValue Content of the message. Must conform to ISignalKNotification interface.
    * @usageNotes This function is internal and should not be used.
    */
-  public processNotificationDelta(path: string, notificationValue: ISignalKNotification) {
+  public processNotificationDelta(notificationDelta: INotificationDelta) {
     if (this.notificationConfig.disableNotifications) {
       return;
     }
 
-    if (notificationValue === null) {
+    if (notificationDelta.notification === null) {
       // Alarm removed/cleared on server.
-      if (this.deleteAlarm(path)) {};
+      if (this.deleteAlarm(notificationDelta.path)) {};
     } else {
-      if (path in this.alarms) {
+      if (notificationDelta.path in this.alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.alarms[path].notification['state'] != notificationValue['state'])
-              ||(this.alarms[path].notification['message'] != notificationValue['message'])
-              ||(JSON.stringify(this.alarms[path].notification['method']) != JSON.stringify(notificationValue['method'])) ) { // no easy way to compare arrays??? ok...
-          this.updateAlarm(path, notificationValue);
+        if (    (this.alarms[notificationDelta.path].notification['state'] != notificationDelta.notification['state'])
+              ||(this.alarms[notificationDelta.path].notification['message'] != notificationDelta.notification['message'])
+              ||(JSON.stringify(this.alarms[notificationDelta.path].notification['method']) != JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
+          this.updateAlarm(notificationDelta.path, notificationDelta.notification);
         }
       } else {
         // New Alarm, send it
-        this.addAlarm(path, notificationValue);
+        this.addAlarm(notificationDelta.path, notificationDelta.notification);
       }
     }
   }

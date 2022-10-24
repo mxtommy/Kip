@@ -2,11 +2,9 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, delay, Observable , retryWhen, Subject, switchAll, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { IDeltaMessage } from './signalk-interfaces';
+import { IDeltaMessage, ISignalKNotification, ISignalKDataPath } from './signalk-interfaces';
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
-import { SignalKService } from './signalk.service';
 import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
-import { NotificationsService } from './notifications.service';
 
 export interface IStreamStatus {
   operation: number;
@@ -14,14 +12,24 @@ export interface IStreamStatus {
   hasToken: boolean;
 }
 
+export interface INotificationDelta {
+  path: string;
+  notification: ISignalKNotification;
+}
+
 @Injectable({
     providedIn: 'root'
   })
 export class SignalKDeltaService {
 
-  private signalKRequests = new Subject<IDeltaMessage>();   // requests service subs to this (avoids circular dependency in services)
+  // SignalK Requests message stream Observable
+  private signalKRequests$ = new Subject<IDeltaMessage>();
+  // SignalK Notifications message stream Observable
+  private signalKNotifications$ = new Subject<INotificationDelta>();
+  // SignalK data path message stream Observable
+  private signalKDatapath$ = new Subject<ISignalKDataPath>();
 
-  // Delsta Service Endpoint status publishing
+  // Delta Service Endpoint status publishing
   public streamEndpoint: IStreamStatus = {
     operation: 0,
     message: "Not connected",
@@ -43,8 +51,6 @@ export class SignalKDeltaService {
   private authToken: IAuthorizationToken = null;
 
   constructor(
-    private signalK: SignalKService,
-    private notifications: NotificationsService,
     private server: SignalKConnectionService,
     private auth: AuththeticationService,
     )
@@ -91,9 +97,9 @@ export class SignalKDeltaService {
           this.streamEndpoint.message = "Connected";
           this.streamEndpoint.operation = 2;
           if (this.authToken) {
-            console.log("[Connection Service] WebSocket connected with Authorization Token")
+            console.log("[Delta Service] WebSocket connected with Authorization Token")
           } else {
-            console.log("[Connection Service] WebSocket connected without Authorization Token");
+            console.log("[Delta Service] WebSocket connected without Authorization Token");
           }
           this.streamEndpoint$.next(this.streamEndpoint);
         }
@@ -104,12 +110,12 @@ export class SignalKDeltaService {
         if(event.wasClean) {
           this.streamEndpoint.message = "WebSocket closed";
           this.streamEndpoint.operation = 0;
-          console.log('[Connection Service] WebSocket closed');
+          console.log('[Delta Service] WebSocket closed');
         } else {
-          console.log('[Connection Service] WebSocket terminated due to socket error');
+          console.log('[Delta Service] WebSocket terminated due to socket error');
           this.streamEndpoint.message = "WebSocket error";
           this.streamEndpoint.operation = 3;
-          console.log('[Connection Service] WebSocket closed');
+          console.log('[Delta Service] WebSocket closed');
         }
         this.streamEndpoint$.next(this.streamEndpoint);
       });
@@ -129,7 +135,7 @@ export class SignalKDeltaService {
       retryWhen(errors =>
         errors.pipe(
           tap(err => {
-            console.error("[Connection Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
+            console.error("[Delta Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
           }),
           delay(this.WS_RECONNECT_INTERVAL)
         )
@@ -137,8 +143,6 @@ export class SignalKDeltaService {
     ).subscribe(msgWS => {
       this.processWebsocketMessage(msgWS);
     });
-    //this.messagesSubjectWS$.next(messagesWS$);
-
   }
 
   /**
@@ -165,7 +169,7 @@ export class SignalKDeltaService {
   */
   public closeWS() {
     if (this.socketWS$) {
-      console.log("[Connection Service] WebSocket closing...");
+      console.log("[Delta Service] WebSocket closing...");
       this.socketWS$.complete();
     }
   }
@@ -180,14 +184,14 @@ export class SignalKDeltaService {
   */
   public publishDelta(msg: any) {
     if (this.socketWS$) {
-      console.log("[Connection Service] WebSocket sending message");
+      console.log("[Delta Service] WebSocket sending message");
       this.socketWS$.next(msg);
     } else {
       setTimeout((): void => {
-        console.log("[Connection Service] WebSocket retry sending message");
+        console.log("[Delta Service] WebSocket retry sending message");
         this.socketWS$.next(msg);
       }, 1000);
-      console.log("[Connection Service] No WebSocket present to send messsage");
+      console.log("[Delta Service] No WebSocket present to send messsage");
     }
   }
 
@@ -195,7 +199,7 @@ export class SignalKDeltaService {
     // Read raw message and route to appropriate sub
     if (typeof(message.self) != 'undefined') {  // is Hello message
       this.server.setServerInfo(message.name, message.version, message.roles);
-      this.signalK.setSelf(message.self);
+      //TODO: Check if needed... also provided from full ducoment service this.signalK.setSelf(message.self);
       return;
     }
 
@@ -203,7 +207,7 @@ export class SignalKDeltaService {
     if (typeof(message.updates) != 'undefined') {
       this.processUpdateDelta(message); // is Data Update process further
     } else if (typeof(message.requestId) != 'undefined') {
-      this.signalKRequests.next(message); // is a Request, send to signalk-request service.
+      this.signalKRequests$.next(message); // is a Request, send to signalk-request service.
     } else {
       console.log("[Delta Service] Unknown message type. Message content:" + message);
     }
@@ -244,7 +248,11 @@ export class SignalKDeltaService {
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
       for (let value of update.values) {
         if (/^notifications./.test(value.path)) {   // is a notification message, pass to notification service
-          this.notifications.processNotificationDelta(value.path, value.value);
+          let notification: INotificationDelta = {
+            path: value.path,
+            notification: value.value,
+          };
+          this.signalKNotifications$.next(notification);
         } else {
           // it's a data update. Update local tree
           let fullPath = context + '.' + value.path;
@@ -253,11 +261,23 @@ export class SignalKDeltaService {
             // compound data
             let keys = Object.keys(value.value);
             for (let i = 0; i < keys.length; i++) {
-              this.signalK.updatePathData(fullPath + '.' + keys[i], source, timestamp, value.value[keys[i]]);
+              let dataPath: ISignalKDataPath = {
+                path: fullPath + `.` + keys[i],
+                source: source,
+                timestamp: timestamp,
+                value: value.value[keys[i]],
+              }
+              this.signalKDatapath$.next(dataPath);
             }
           } else {
             // simple data
-            this.signalK.updatePathData(fullPath, source, timestamp, value.value);
+            let dataPath: ISignalKDataPath = {
+              path: fullPath,
+              source: source,
+              timestamp: timestamp,
+              value: value.value,
+            }
+            this.signalKDatapath$.next(dataPath);
           }
         }
       }
@@ -269,8 +289,16 @@ export class SignalKDeltaService {
     return this.streamEndpoint$.asObservable();
   }
 
-  public subscribeRequest(): Observable<IDeltaMessage> {
-    return this.signalKRequests.asObservable();
+  public subscribeRequestUpdates(): Observable<IDeltaMessage> {
+    return this.signalKRequests$.asObservable();
+  }
+
+  public subscribeNotificationsUpdates(): Observable<INotificationDelta> {
+    return this.signalKNotifications$.asObservable();
+  }
+
+  public subscribeDataPathsUpdates() : Observable<ISignalKDataPath> {
+    return this.signalKDatapath$.asObservable();
   }
 
   // Close the WebSocket on app termination. This send a Close to the server for

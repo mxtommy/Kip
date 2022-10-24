@@ -1,7 +1,4 @@
-import { startWith } from 'rxjs/operators';
 import { ZoneState } from './app-settings.interfaces';
-
-
 
 // Metadata, Notification and Stream Subscription type restrictions.
 const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
@@ -35,6 +32,13 @@ export interface IUpdateMessage {
     path: string;
     value: any;
   }[]
+}
+
+export interface ISignalKDataPath {
+  path: string;
+  source: string;
+  timestamp: number;
+  value: any;
 }
 
 /**

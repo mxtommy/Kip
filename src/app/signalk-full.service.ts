@@ -1,25 +1,80 @@
 import { Injectable } from '@angular/core';
-import { SignalKService } from './signalk.service';
-import { SignalKConnectionService } from "./signalk-connection.service";
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Subject, Observable, lastValueFrom } from 'rxjs';
+import { ISignalKDataPath } from "./signalk-interfaces";
+import { IEndpointStatus, SignalKConnectionService } from "./signalk-connection.service";
+
+export interface IFullDocumentStatus {
+  operation: number;
+  message: string;
+}
+
+export interface IDefaultSource {
+  path: string;
+  source: string;
+}
+
+export interface IMeta {
+  path: string;
+  meta: any;
+}
+
 @Injectable()
 export class SignalKFullService {
 
+
+  // SignalK data path full document Observable
+  private signalKFullDocument$ = new Subject<ISignalKDataPath>();
+  // SignalK default source Observable
+  private signalKdefaultSource$ = new Subject<IDefaultSource>();
+  // SignalK default source Observable
+  private signalKMeta$ = new Subject<IMeta>();
+  // SignalK default source Observable
+  private signalKSelf$ = new Subject<string>();
+
+  public fullDocEndpoint: IFullDocumentStatus = {
+    operation: 0,
+    message: "Not connected",
+  }
+  public fullDocumentEndpoint$: BehaviorSubject<IFullDocumentStatus> = new BehaviorSubject<IFullDocumentStatus>(this.fullDocEndpoint);
+  private endpointHTTP: string = null;
+
   constructor(
-    private SignalKService: SignalKService,
-    private signalKConnectionService: SignalKConnectionService,
+    private http: HttpClient,
+    private server: SignalKConnectionService,
   ) {
-    this.signalKConnectionService.messageREST$.subscribe({
-      next: msg => this.processFullUpdate(msg), // Called whenever there is a REST response message from the server.
-      error: err => console.error("[REST Full Service] Message subscription error: " + JSON.stringify(err, ["code", "message", "type"])), // Called if at any point Subject has some kind of error.
-      complete: () => console.log('[REST Full Service] Message subscription closed') // Called when Subject is closed (for whatever reason).
+
+    this.fullDocEndpoint.message = "Connecting...";
+    this.fullDocEndpoint.operation = 1;
+    this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
+    this.server.serverServiceEndpoint$.subscribe((endpointStatus: IEndpointStatus) => {
+      if (endpointStatus.operation === 2 ) {
+        this.endpointHTTP = endpointStatus.httpServiceUrl;
+        this.getFullDocument();
+      }
+    });
+  }
+
+  private getFullDocument() {
+    lastValueFrom(this.http.get(this.endpointHTTP, {observe: 'response'}))
+    .then( response => {
+      this.fullDocEndpoint.operation = 2;
+      this.fullDocEndpoint.message = response.status.toString();
+      this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
+      this.processFullUpdate(response.body);
+      console.log("[Full Document Service] Document retreived");
+    })
+    .catch((err: HttpErrorResponse) => {
+      this.fullDocEndpoint.operation = 3;
+      this.fullDocEndpoint.message = err.message;
+      this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
+      console.error('[Full Document Service] Endpoint error retreiving document:', err.message);
     });
   }
 
   private processFullUpdate(data): void {
-
     //set self urn
-    this.SignalKService.setSelf(data.self)
-
+    this.signalKSelf$.next(data.self);
     // so we will walk the array recusively
     this.findKeys(data);
   }
@@ -35,8 +90,20 @@ export class SignalKFullService {
     if ( (typeof(data) == 'string') || (typeof(data) == 'number') || (typeof(data) == 'boolean')) {  // is it a simple value?
       let timestamp = Date.now();
       let source = 'noSource'
-      this.SignalKService.updatePathData(path, source, timestamp, data);
-      this.SignalKService.setDefaultSource(path, source);
+
+      let dataPath: ISignalKDataPath = {
+        path: path,
+        source: source,
+        timestamp: timestamp,
+        value: data,
+      };
+      this.signalKFullDocument$.next(dataPath);
+
+      let defaultSource: IDefaultSource = {
+        path: path,
+        source: source,
+      }
+      this.signalKdefaultSource$.next(defaultSource);
       return;
     }
     else if ('timestamp' in data) { // is it a timestamped value?
@@ -60,25 +127,62 @@ export class SignalKFullService {
           // compound
           Object.keys(data['value']).forEach(key => {
             let compoundPath = path+"."+key;
-            this.SignalKService.updatePathData(compoundPath, source, timestamp, data.value[key]);
-            this.SignalKService.setDefaultSource(compoundPath, source);
+
+            let dataPath: ISignalKDataPath = {
+              path: compoundPath,
+              source: source,
+              timestamp: timestamp,
+              value: data.value[key],
+            };
+            this.signalKFullDocument$.next(dataPath);
+
+            let defaultSource: IDefaultSource = {
+              path: compoundPath,
+              source: source,
+            };
+            this.signalKdefaultSource$.next(defaultSource);
+
             // try and get metadata.
             if (typeof(data['meta']) == 'object') {
               //does meta have one with properties for each one?
               if (typeof(data.meta['properties']) == 'object' && typeof(data.meta.properties[key]) == 'object') {
-                this.SignalKService.setMeta(compoundPath, data.meta.properties[key]);
+                let meta: IMeta = {
+                  path: compoundPath,
+                  meta: data.meta.properties[key],
+                };
+                this.signalKMeta$.next(meta);
               } else {
-                this.SignalKService.setMeta(compoundPath, data['meta']);
+                let meta: IMeta = {
+                  path: compoundPath,
+                  meta: data['meta'],
+                };
+                this.signalKMeta$.next(meta);
               }
             }
           });
         } else {
           //simple
-          this.SignalKService.updatePathData(path, source, timestamp, data.value);
-          this.SignalKService.setDefaultSource(path, source);
+          let dataPath: ISignalKDataPath = {
+            path: path,
+            source: source,
+            timestamp: timestamp,
+            value: data.value,
+          };
+          this.signalKFullDocument$.next(dataPath);
+
+          let defaultSource: IDefaultSource = {
+            path: path,
+            source: source,
+          };
+          this.signalKdefaultSource$.next(defaultSource);
+
           // try and get metadata.
           if (typeof(data['meta']) == 'object') {
-            this.SignalKService.setMeta(path, data['meta']);
+            let meta: IMeta = {
+              path: path,
+              meta: data['meta'],
+            };
+            this.signalKMeta$.next(meta);
           }
         }
       }
@@ -97,6 +201,27 @@ export class SignalKFullService {
         this.findKeys(data[keys[i]], newPath);
       }
     }
+  }
+
+  // FullDocument Connections Status observable
+  public getFullDocumentStatusAsO(): Observable<IFullDocumentStatus> {
+    return this.fullDocumentEndpoint$.asObservable();
+  }
+
+  public subscribeFullDocumentDataPathsUpdates(): Observable<ISignalKDataPath> {
+    return this.signalKFullDocument$.asObservable();
+  }
+
+  public subscribeDefaultSourceUpdates(): Observable<IDefaultSource> {
+    return this.signalKdefaultSource$.asObservable();
+  }
+
+  public subscribeMetaUpdates(): Observable<IMeta> {
+    return this.signalKMeta$.asObservable();
+  }
+
+  public subscribeSelfUpdates(): Observable<string> {
+    return this.signalKSelf$.asObservable();
   }
 
 }

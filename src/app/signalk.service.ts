@@ -1,8 +1,11 @@
+import { SignalKFullService, IDefaultSource, IMeta } from './signalk-full.service';
 import { Injectable } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
 import { AppSettingsService } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { ISignalKDataPath } from "./signalk-interfaces";
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 
 import * as Qty from 'js-quantities';
@@ -60,6 +63,8 @@ export class SignalKService {
 
   constructor(
     private appSettingsService: AppSettingsService,
+    private fullDocument: SignalKFullService,
+    private deltaService: SignalKDeltaService,
     private notificationsService: NotificationsService,
     private unitService: UnitsService,
   )
@@ -98,6 +103,26 @@ export class SignalKService {
 
     this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
       this.zones = zones;
+    });
+
+    // Observer of delta data path updates
+    this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: ISignalKDataPath) => {
+      this.updatePathData(dataPath);
+    });
+
+    // Observer of Full Document Service data path updates
+    this.fullDocument.subscribeFullDocumentDataPathsUpdates().subscribe((dataPath: ISignalKDataPath) => {
+      this.updatePathData(dataPath);
+    });
+
+    // Observer of Full Document Service default source updates
+    this.fullDocument.subscribeDefaultSourceUpdates().subscribe((source: IDefaultSource) => {
+      this.setDefaultSource(source);
+    });
+
+    // Observer of Full Document Service default source updates
+    this.fullDocument.subscribeMetaUpdates().subscribe((meta: IMeta) => {
+      this.setMeta(meta);
     });
 
   }
@@ -165,14 +190,14 @@ export class SignalKService {
     }
   }
 
-  updatePathData(path: string, source: string, timestamp: number, value: any) {
+  updatePathData(dataPath: ISignalKDataPath) {
     this.updateStatistics.currentSecond++;
     // convert the selfURN to "self"
-    let pathSelf: string = path.replace(this.selfurn, 'self');
+    let pathSelf: string = dataPath.path.replace(this.selfurn, 'self');
 
     // position data is sent as degrees. KIP expects everything to be in SI, so rad.
     if (pathSelf.includes('position.latitude') || pathSelf.includes('position.longitude')) {
-      value = this.degToRad(value);
+      dataPath.value = this.degToRad(dataPath.value);
     }
 
     // update existing if exists.
@@ -180,22 +205,22 @@ export class SignalKService {
     if (pathIndex >= 0) { // exists
 
       // update data
-      this.paths[pathIndex].sources[source] = {
-        timestamp: timestamp,
-        value: value
+      this.paths[pathIndex].sources[dataPath.source] = {
+        timestamp: dataPath.timestamp,
+        value: dataPath.value
       };
 
     } else { // doesn't exist. update...
       this.paths.push({
         path: pathSelf,
-        defaultSource: source, // default source
+        defaultSource: dataPath.source, // default source
         sources: {
-          [source]: {
-            timestamp: timestamp,
-            value: value
+          [dataPath.source]: {
+            timestamp: dataPath.timestamp,
+            value: dataPath.value
           }
         },
-        type: typeof(value),
+        type: typeof(dataPath.value),
         state: ZoneState.normal
       });
       pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
@@ -207,7 +232,7 @@ export class SignalKService {
       if (zone.path != pathSelf) { return; }
       let lower = zone.lower || -Infinity;
       let upper = zone.upper || Infinity;
-      let convertedValue = this.unitService.convertUnit(zone.unit, value);
+      let convertedValue = this.unitService.convertUnit(zone.unit, dataPath.value);
       if (convertedValue >= lower && convertedValue <= upper) {
         //in zone
         state = Math.max(state, zone.state);
@@ -278,19 +303,19 @@ export class SignalKService {
 
   }
 
-  setDefaultSource(path: string, source: string) {
-    let pathSelf: string = path.replace(this.selfurn, 'self');
+  setDefaultSource(source: IDefaultSource): void {
+    let pathSelf: string = source.path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
-      this.paths[pathIndex].defaultSource = source;
+      this.paths[pathIndex].defaultSource = source.source;
     }
   }
 
-  setMeta(path: string, meta) {
-    let pathSelf: string = path.replace(this.selfurn, 'self');
+  setMeta(meta:IMeta): void {
+    let pathSelf: string = meta.path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
-      this.paths[pathIndex].meta = meta;
+      this.paths[pathIndex].meta = meta.meta;
     }
   }
 

@@ -32,7 +32,7 @@ export interface skRequest {
 })
 export class SignalkRequestsService {
 
-  private requestStatus = new Subject<skRequest>(); // public Observable passing message post processing
+  private requestStatus$ = new Subject<skRequest>(); // public Observable passing message post processing
   private requests: skRequest[] = []; // Private array of all requests.
 
   constructor(
@@ -42,7 +42,7 @@ export class SignalkRequestsService {
     private auth: AuththeticationService,
     ) {
       // Observer to get all signalk-delta messages of type request type.
-      const requestsSub: Subscription = this.signalKDeltaService.subscribeRequest().subscribe(
+      const requestsSub: Subscription = this.signalKDeltaService.subscribeRequestUpdates().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
       );
     }
@@ -191,10 +191,10 @@ export class SignalkRequestsService {
         console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
-        this.requestStatus.next(this.requests[index]);    // Broadcast results
+        this.requestStatus$.next(this.requests[index]);    // Broadcast results
         this.requests.splice(index, 1);                 // result dispatched, cleanup array
       } catch (err) {
-        this.requestStatus.error(err);
+        this.requestStatus$.error(err);
         console.error("[Request Service] " + err);
         this.requests = []; // flush array to clean values that will become stale post error
       }
@@ -212,7 +212,7 @@ export class SignalkRequestsService {
    * @return Observable of type skRequest.
    */
   public subscribeRequest(): Observable<skRequest> {
-    return this.requestStatus.asObservable();
+    return this.requestStatus$.asObservable();
   }
 
   private newUuid() {

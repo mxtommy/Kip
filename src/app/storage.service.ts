@@ -24,7 +24,7 @@ export class StorageService {
   constructor(
     private server: SignalKConnectionService,
   ) {
-      server.fullDocumentEndpoint$.subscribe((status: IEndpointStatus) => {
+      server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
         console.log("*************************** " + status.httpServiceUrl);
         if (status.httpServiceUrl !== null) {
 

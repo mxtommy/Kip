@@ -1,4 +1,3 @@
-import { SignalKDeltaService, IStreamStatus } from './../signalk-delta.service';
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
@@ -6,11 +5,13 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { AppSettingsService } from '../app-settings.service';
 import { IConnectionConfig } from "../app-settings.interfaces";
-import { SignalKConnectionService, IEndpointStatus, IFullDocumentStatus } from '../signalk-connection.service';
+import { SignalKConnectionService, IEndpointStatus } from '../signalk-connection.service';
+import { SignalKService } from '../signalk.service';
+import { SignalKFullService, IFullDocumentStatus } from './../signalk-full.service';
+import { SignalKDeltaService, IStreamStatus } from './../signalk-delta.service';
+import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 import { NotificationsService } from '../notifications.service';
-import { SignalKService } from '../signalk.service';
-import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -60,6 +61,7 @@ export class SettingsSignalkComponent implements OnInit {
     private signalKConnectionService: SignalKConnectionService,
     private signalkRequestsService: SignalkRequestsService,
     private deltaService: SignalKDeltaService,
+    private fullDocumentService: SignalKFullService,
     public auth: AuththeticationService)
   { }
 
@@ -98,7 +100,7 @@ export class SettingsSignalkComponent implements OnInit {
       }
     });
 
-    this.skFullDocumentStatus$ = this.signalKConnectionService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
+    this.skFullDocumentStatus$ = this.fullDocumentService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
       this.fullDocumentStatus = status;
     });
 

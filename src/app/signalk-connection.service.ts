@@ -1,13 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject, lastValueFrom } from 'rxjs';
-import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { ISignalKUrl, IConnectionConfig} from './app-settings.interfaces';
-import { AuththeticationService , IAuthorizationToken } from './auththetication.service';
 
-interface SignalKEndpointResponse {
+interface ISignalKEndpointResponse {
     endpoints: {
         v1: {
             version: string;
@@ -32,16 +29,11 @@ interface SignalKEndpointResponse {
  * `3 = Error connecting
  */
 export interface IEndpointStatus {
-  operation: number;
+  operation: Number;
   message: string;
   serverDescrption: string;
   httpServiceUrl: string;
   WsServiceUrl: string;
-}
-
-export interface IFullDocumentStatus {
-  operation: number;
-  message: string;
 }
 
 @Injectable({
@@ -57,16 +49,7 @@ export class SignalKConnectionService {
     httpServiceUrl: null,
     WsServiceUrl: null,
   };
-
-  public fullDocEndpoint: IFullDocumentStatus = {
-    operation: 0,
-    message: "Not connected",
-  }
-
-  public reset = new Subject<boolean>(); // connection reset
   public serverServiceEndpoint$: Subject<IEndpointStatus> = new Subject<IEndpointStatus>();
-  public fullDocumentEndpoint$: BehaviorSubject<IFullDocumentStatus> = new BehaviorSubject<IFullDocumentStatus>(this.fullDocEndpoint);
-
 
   // Connection information
   public signalKURL: ISignalKUrl;
@@ -74,16 +57,13 @@ export class SignalKConnectionService {
   public serverVersion$ = new BehaviorSubject<string>(null);
   private serverRoles: Array<string> = [];
 
-  // REST
-  public messageREST$ = new Subject(); //REST Responses stream
-
-
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //// constructor, mostly sub to stuff for changes.
   constructor(
       private http: HttpClient
     )
   {
+    // load connectionConfig pre AppSettings service instanciation
     let config :IConnectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
     if (config.signalKUrl) {
       let url: ISignalKUrl = {url: config.signalKUrl, new: false};
@@ -92,30 +72,23 @@ export class SignalKConnectionService {
   }
 
   /**
-   * ASync server API function to retreive server endpoints. Required before
+   * Server API function to retreive server endpoints. Required before
    * making any HTTP calls.
    *
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
    */
-  async resetSignalK(skUrl: ISignalKUrl): Promise<void> {
+  resetSignalK(skUrl: ISignalKUrl): Promise<void> {
     if (skUrl.url === null) {
       return;
     }
     this.signalKURL = skUrl;
 
-    if (this.signalKURL.new) {
-      this.reset.next(true); // emit reset signal (URL changing). Used by Notification service
-    }
     this.serverServiceEndpoints.message = "Connecting..."
     this.serverServiceEndpoints.operation = 1;
     this.serverServiceEndpoints.httpServiceUrl = null;
     this.serverServiceEndpoints.WsServiceUrl = null;
     this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
-
-    this.fullDocEndpoint.message = "Connecting...";
-    this.fullDocEndpoint.operation = 1;
-    this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
 
     let fullURL = this.signalKURL.url;
     let re = new RegExp("signalk/?$");
@@ -125,8 +98,8 @@ export class SignalKConnectionService {
 
     console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
 
-    await lastValueFrom(this.http.get<any>(fullURL, {observe: 'response'}))
-      .then(response => {
+    lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}))
+      .then((response: HttpResponse<ISignalKEndpointResponse>) => {
         console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
         this.serverServiceEndpoints.httpServiceUrl = response.body.endpoints.v1["signalk-http"];
         this.serverServiceEndpoints.WsServiceUrl = response.body.endpoints.v1["signalk-ws"];
@@ -135,7 +108,6 @@ export class SignalKConnectionService {
         this.serverServiceEndpoints.message = response.status.toString();
         this.serverServiceEndpoints.serverDescrption = response.body.server.id + " " + response.body.server.version;
         this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
-        this.callREST();
       })
       .catch((err: HttpErrorResponse) => {
         console.error("[Connection Service] HTTP Endpoints request failed");
@@ -153,30 +125,6 @@ export class SignalKConnectionService {
         this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
       });
   }
-
-  /**
-   * ASync server API function to retreive Full Document
-   *
-   * @return {*}  {Promise<void>}
-   * @memberof SignalKConnectionService
-   */
-  async callREST(): Promise<void> {
-
-    await lastValueFrom(this.http.get(this.serverServiceEndpoints.httpServiceUrl, {observe: 'response'}))
-      .then( response => {
-        this.fullDocEndpoint.operation = 2;
-        this.fullDocEndpoint.message = response.status.toString();
-        this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
-        this.messageREST$.next(response.body);
-        console.log("[Connection Service] SignalK full document retreived");
-      })
-      .catch((err: HttpErrorResponse) => {
-        this.fullDocEndpoint.operation = 3;
-        this.fullDocEndpoint.message = err.message;
-        this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
-        console.error('[Connection Service] A Full Document endpoint error occurred:', err.message);
-      });
-}
 
   public postApplicationData(scope: string, version: number, name: string, data: Object): Promise<any> {
     let url = this.serverServiceEndpoints.httpServiceUrl.substring(0,this.serverServiceEndpoints.httpServiceUrl.length - 4); // this removes 'api/' from the end
@@ -224,11 +172,6 @@ export class SignalKConnectionService {
   // SignalK Connections Status observable
   getServiceEndpointStatusAsO() {
     return this.serverServiceEndpoint$.asObservable();
-  }
-
-  // SignalK Connections Status observable
-  getFullDocumentStatusAsO() {
-    return this.fullDocumentEndpoint$.asObservable();
   }
 
   public setServerInfo(name : string, version: string, roles: Array<string>) {
