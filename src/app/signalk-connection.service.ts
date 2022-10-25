@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
 import { ISignalKUrl, IConnectionConfig} from './app-settings.interfaces';
 
 interface ISignalKEndpointResponse {
@@ -27,6 +26,7 @@ interface ISignalKEndpointResponse {
  * `1 = Connecting (connection being set up/under execution)
  * `2 = Connected
  * `3 = Error connecting
+ * `4 = Resetting
  */
 export interface IEndpointStatus {
   operation: Number;
@@ -41,7 +41,7 @@ export interface IEndpointStatus {
 })
 export class SignalKConnectionService {
 
-  // SignalK connections status initialization
+  // Connections status initialization values for behavior Observer
   public serverServiceEndpoints: IEndpointStatus = {
     operation: 0,
     message: "Not connected",
@@ -51,7 +51,7 @@ export class SignalKConnectionService {
   };
   public serverServiceEndpoint$: BehaviorSubject<IEndpointStatus> = new BehaviorSubject<IEndpointStatus>(this.serverServiceEndpoints);
 
-  // Connection information
+  // Server information
   public signalKURL: ISignalKUrl;
   private serverName: string;
   public serverVersion$ = new BehaviorSubject<string>(null);
@@ -72,13 +72,16 @@ export class SignalKConnectionService {
   }
 
   /**
-   * Server API function to retreive server endpoints. Required before
-   * making any HTTP calls.
+   * Retreives and publishes target server information and supported service
+   * endpoint addresses.
+   *
+   * @UsageNote Resetting connection is an action trigger for many
+   * services & components (Delta, Full, Signalk-Settings, etc.).
    *
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
    */
-  resetSignalK(skUrl: ISignalKUrl): Promise<void> {
+  public resetSignalK(skUrl: ISignalKUrl): Promise<void> {
     if (skUrl.url === null) {
       return;
     }
@@ -139,7 +142,7 @@ export class SignalKConnectionService {
     throw error;
   }
 
-  // SignalK Connections Status observable
+  // Endpoint status and adrdresses observable
   getServiceEndpointStatusAsO() {
     return this.serverServiceEndpoint$.asObservable();
   }

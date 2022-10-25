@@ -6,6 +6,17 @@ import { IDeltaMessage, ISignalKNotification, ISignalKDataPath } from './signalk
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
 
+
+/**
+ * Operation value represent connection statuses.
+ * @usageNotes `operation` field describes the type of operation being
+ * performed on the connections.
+ * `0 = Stopped
+ * `1 = Connecting (connection being set up/under execution)
+ * `2 = Connected
+ * `3 = Error connecting
+ * `4 = Resetting
+ */
 export interface IStreamStatus {
   operation: number;
   message: string;

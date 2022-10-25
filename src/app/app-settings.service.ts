@@ -52,7 +52,6 @@ export class AppSettingsService {
     )
   {
     this.storage.activeConfigVersion = configVersion;
-    let activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
     let serverConfig: IConfig = this.appInitService.serverConfig;
 
     if (!window.localStorage) {
