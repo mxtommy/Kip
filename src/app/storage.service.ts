@@ -19,6 +19,7 @@ export class StorageService {
   public isAppDataSupported: boolean = false;
   private serverConfigs: Config[] = [];
   private configVersion: number = null;
+  private InitConfig: IConfig = null;
   public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
 
 
@@ -28,7 +29,8 @@ export class StorageService {
   ) {
       server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
         if (status.httpServiceUrl !== null) {
-          this.serverEndpoint = status.httpServiceUrl;
+          this.serverEndpoint = status.httpServiceUrl.substring(0,status.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
+          console.log("[Storage Service] Service stratup. AppData API set to: " + this.serverEndpoint);
         }
 
         if (status.operation === 2) {
@@ -54,9 +56,9 @@ export class StorageService {
    */
   public async listConfigs(): Promise<Config[]> {
     let serverConfigs: Config[] = [];
-    const url = this.serverEndpoint.substring(0,this.serverEndpoint.length - 4); // this removes 'api/' from the end
-    let globalUrl = url + "applicationData/global/kip/" + this.configVersion + "/?keys=true";
-    let userUrl = url + "applicationData/user/kip/" + this.configVersion + "/?keys=true";
+    const url = this.serverEndpoint;
+    let globalUrl = url + "global/kip/" + this.configVersion + "/?keys=true";
+    let userUrl = url + "user/kip/" + this.configVersion + "/?keys=true";
 
     await lastValueFrom(this.http.get<string[]>(globalUrl))
       .then((configNames: string[]) => {
@@ -91,23 +93,25 @@ export class StorageService {
    *
    * @param {string} scope String value of either 'global' or 'user'
    * @param {string} configName String value of the config name
+   * @param {boolean} isInitLoad User for AppSettings Init. If True, config will be keept
    * @return {*}  {IConfig}
    * @memberof StorageService
    */
-  public getConfig(scope: string, configName: string): IConfig {
+  public async getConfig(scope: string, configName: string, isInitLoad?: boolean): Promise<IConfig> {
     let conf: IConfig = null;
-    let url = this.serverEndpoint.substring(0,this.serverEndpoint.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/" + this.configVersion + "/" + configName;
+    let url = this.serverEndpoint + scope +"/kip/" + this.configVersion + "/" + configName;
 
-    lastValueFrom(this.http.get<any>(url))
+    await lastValueFrom(this.http.get<any>(url))
       .then(remoteConfig => {
         conf = remoteConfig;
         console.log(`[Storage Service] Retreived ${scope} config ${configName}`);
+        if (isInitLoad) {
+          this.InitConfig = remoteConfig;
+        }
       })
       .catch(error => {
           this.handleError(error);
       });
-
     return conf;
   }
 
@@ -125,12 +129,11 @@ export class StorageService {
    * @return {*}  {boolean} returns True if operation is successful
    * @memberof StorageService
    */
-  public setConfig(scope: string, configName: string, config: IConfig): boolean {
+  public setConfig(scope: string, configName: string, config: IConfig): Promise<void> {
     let result: boolean = false;
-    let url = this.serverEndpoint.substring(0,this.serverEndpoint.length - 4); // this removes 'api/' from the end
-    url += "applicationData/" + scope +"/kip/" + this.configVersion + "/"+ configName;
+    let url = this.serverEndpoint + scope +"/kip/" + this.configVersion + "/"+ configName;
 
-    lastValueFrom(this.http.post<any>(url, config))
+    return lastValueFrom(this.http.post<any>(url, config))
       .then( _ => {
         result = true;
         console.log(`[Storage Service] Saved config ${configName} to server`);
@@ -138,8 +141,6 @@ export class StorageService {
       .catch(error => {
         this.handleError(error);
       });
-
-    return result;
   }
 
   /**
@@ -171,6 +172,10 @@ export class StorageService {
     }
     // Return an observable with a user-facing error message.
     throw error;
+  }
+
+  public get defaultRemoteConfig() : IConfig {
+    return this.InitConfig;
   }
 
 }

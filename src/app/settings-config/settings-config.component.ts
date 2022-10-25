@@ -88,7 +88,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public restoreRemoteServerConfig() {
     let conf: IConfig = null;
     try {
-      conf = this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name);
+      this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name)
+      .then(config => {
+        conf = config
+      });
     } catch (error) {
       this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
     }

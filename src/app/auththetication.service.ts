@@ -1,6 +1,6 @@
+import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Console } from 'console';
 import { BehaviorSubject, timer, lastValueFrom } from 'rxjs';
 import { filter, map, switchMap } from "rxjs/operators";
 
@@ -10,9 +10,10 @@ export interface IAuthorizationToken {
   isDeviceAccessToken: boolean;
 }
 
-const serverLoginPath = '/signalk/v1/auth/login';
-const serverLogoutPath = '/signalk/v1/auth/logout';
-const serverValidateTokenPath = '/signalk/v1/auth/validate';
+const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL chages. We do a Login before ConnectionService has time to send the new endpoitn url
+const loginEndpoint = 'auth/login';
+const logoutEndpoint = 'auth/logout';
+const validateTokenEndpoint = 'auth/validate';
 const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
 
 @Injectable({
@@ -23,10 +24,15 @@ export class AuththeticationService {
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
   public authToken$ = this._authToken$.asObservable();
-  private serverUrl: string = null;
+
+  // Network connection
+  private loginUrl = null;
+  private logoutUrl = null;
+  private validateTokenUrl = null;
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private conn: SignalKConnectionService,
     )
   {
     // load local storage token
@@ -75,12 +81,22 @@ export class AuththeticationService {
             console.log("[Authentication Service] \nToken Expiry: " + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer));
             this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
             .catch( (error: HttpErrorResponse) => {
-              console.warn("[AppInit Service] Server returned: " + JSON.stringify(error.error));
+              console.warn("[AppInit Service] Token renewal failure. Server returned: " + JSON.stringify(error.error));
             });
           }
         }
       }
     );
+
+    // Endpoint connection observer
+    this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
+      if (endpoint.operation === 2) {
+        let httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
+        this.loginUrl = httpApiUrl + loginEndpoint;
+        this.logoutUrl = httpApiUrl + logoutEndpoint;
+        this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
+      }
+    });
   }
 
   /**
@@ -96,13 +112,18 @@ export class AuththeticationService {
    * @memberof AuththeticationService
    */
   public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
+    let serverLoginFullUrl: string;
     if (newUrl) {
-      this.serverUrl = newUrl;
+      serverLoginFullUrl = newUrl + defaultApiPath + loginEndpoint;
+    } else {
+      serverLoginFullUrl = this.loginUrl;
     }
+
+
     if (this._IsLoggedIn$.getValue()) {
       await this.logout(true);
     }
-    await lastValueFrom(this.http.post(this.serverUrl + serverLoginPath, {"username" : usr, "password" : pwd}, {observe: 'response'}))
+    await lastValueFrom(this.http.post(serverLoginFullUrl, {"username" : usr, "password" : pwd}, {observe: 'response'}))
       .then((loginResponse: HttpResponse<any>) => {
           console.log("[Authentication Service] User " + usr + " login successful");
           this.setSession(loginResponse.body.token);
@@ -192,9 +213,9 @@ export class AuththeticationService {
     return date;
   }
 
-  // not yet implemented by SignalK but part of the specs
+  // not yet implemented by SignalK but part of the specs. Using contained token string expiration value instead for now
   private renewToken() {
-    return this.http.post<HttpResponse<Response>>(this.serverUrl + serverValidateTokenPath, null, {observe: 'response'});
+    return this.http.post<HttpResponse<Response>>(this.validateTokenUrl, null, {observe: 'response'});
   }
 
   /**
@@ -206,7 +227,7 @@ export class AuththeticationService {
    */
   public async logout(isLoginAction: boolean): Promise<void> {
     localStorage.removeItem('authorization_token');
-    await lastValueFrom(this.http.put(this.serverUrl + serverLogoutPath, null))
+    await lastValueFrom(this.http.put(this.logoutUrl, null))
       .then((response) => {
         this._IsLoggedIn$.next(false);
         if (!isLoginAction) {
@@ -257,15 +278,5 @@ export class AuththeticationService {
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
       }
     }
-  }
-
-  /**
-   * Sets the destination URL the authentification service should use to and handle
-   * user login requests and session tokens.
-   *
-   * @memberof AuththeticationService
-   */
-  public set signalkUrl(u : string) {
-    this.serverUrl = u;
   }
 }

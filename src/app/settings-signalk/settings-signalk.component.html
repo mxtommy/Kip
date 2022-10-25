@@ -23,7 +23,7 @@
           </button>
         </span>
         <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
-          <button mat-raised-button type="button" color="primary" matTooltip="Send a Device Authorization token request to SignalK server. EXPLANNATION: Device Authorization token is only needed when Kip is configured with Widgets that sends data to the server or when saving configuration remotly (ie. Using Widgets: State, Switch, Autopilot, etc.) . A token is not needed  If Kip is used only to display data, a token is not nedded. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server, by a server administrator. See: SignalK Server -> Security -> Access Requests. Once approved, it will notify Kip and the process will be completed." (click)="requestDeviceAccessToken()">
+          <button mat-raised-button type="button" color="primary" matTooltip="Send a Device Authorization token request to SignalK server. EXPLANNATION: Device Authorization token is only needed when Kip is configured with Widgets that sends data to the server or when saving configuration remotly (ie. Using Widgets: State, Switch, Autopilot, etc.) . A token is not needed  If Kip is used only to display data, a token is not nedded. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server, by a server administrator. See: SignalK Server -> Security -> Access Requests. Once approved, it will notify Kip and the process will be completed." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
             Request Token
           </button>
         </span>

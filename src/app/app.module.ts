@@ -1,6 +1,4 @@
-import { StorageService } from './storage.service';
-import { catchError } from 'rxjs/operators';
-import { SignalkRequestsService } from './signalk-requests.service';
+// Modules
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { RouterModule, Routes }   from '@angular/router';
@@ -29,18 +27,16 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
-
+import { GaugesModule } from './gauges-module/gauges.module';
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizeEventModule } from 'angular-resize-event';
-
-import { AppComponent } from './app.component';
-import { AppHelpComponent } from './app-help/app-help.component';
-import { AppInitService } from "./app-init.service";
-import { AuththeticationService } from "./auththetication.service";
-import { AuthenticationInterceptor } from "./authentication-interceptor";
-
+// Modules Pipes & Directives
+import { FilterSelfPipe } from './filter-self.pipe';
+import { ObjectKeysPipe } from './object-keys.pipe';
+import { SafePipe } from './safe.pipe';
 import { FitTextDirective } from './fit-text.directive';
 import { DynamicWidgetDirective } from './dynamic-widget.directive';
+// Services
 import { SignalKService } from './signalk.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -53,14 +49,19 @@ import { WidgetListService } from './widget-list.service';
 import { UnitsService } from './units.service';
 import { NotificationsService } from './notifications.service';
 import { TimersService } from './timers.service';
+import { StorageService } from './storage.service';
+import { AppNetworkInitService } from "./app-initNetwork.service";
+import { AuththeticationService } from "./auththetication.service";
+import { AuthenticationInterceptor } from "./authentication-interceptor";
+//Components
+import { AppComponent } from './app.component';
+import { AppHelpComponent } from './app-help/app-help.component';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
-import { FilterSelfPipe } from './filter-self.pipe';
-import { SafePipe } from './safe.pipe';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
 import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
@@ -76,13 +77,10 @@ import { WidgetStateComponent } from './widget-state/widget-state.component';
 import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
 import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
-import { ObjectKeysPipe } from './object-keys.pipe';
 import { SettingsUnitsComponent } from './settings-units/settings-units.component';
 import { SettingsZonesComponent, DialogNewZone } from './settings-zones/settings-zones.component';
 import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
-
-import { GaugesModule } from './gauges-module/gauges.module';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
@@ -110,15 +108,18 @@ const appRoutes: Routes = [
 
 /**
  * Bootstrap function used by AppInitService provider at app initialyzation
- * that login the user and load config from server or fallback to local
- * storage config.
+ * that start network, authetification and storage service pre-app.compoment
+ * start. app.component start all other services.
  *
- * @param {AppInitService} appInitService
- * @return {*} Promise once AppInitService is done
+ * @param {AppNetworkInitService} AppNetworkInitService instance
+ * @return {*} Promise once AppNetworkInitService is done
  */
-const appInitializerFn = (appInitService: AppInitService) => {
-  return () => appInitService.initAppConfig().catch(res => {})
+const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
+  return () => appNetInitSvc.initNetworkServices()
+  .then(res => {})
+  .catch(res => {})
 };
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -216,11 +217,11 @@ const appInitializerFn = (appInitService: AppInitService) => {
     // Imports AppInitService which executes function appInitializerFn()
     // during the application initialisation process (bootstrapping) to
     // get app config from server storage before starting AppSettings service.
-    AppInitService,
+    AppNetworkInitService,
       {
         provide: APP_INITIALIZER,
-        useFactory: appInitializerFn,
-        deps: [AppInitService],
+        useFactory: appNetworkInitializerFn,
+        deps: [AppNetworkInitService],
         multi: true,
       },
     AuththeticationService,

@@ -63,12 +63,6 @@ export class SignalKConnectionService {
       private http: HttpClient
     )
   {
-    // load connectionConfig pre AppSettings service instanciation
-    let config :IConnectionConfig = JSON.parse(localStorage.getItem("connectionConfig"));
-    if (config.signalKUrl) {
-      let url: ISignalKUrl = {url: config.signalKUrl, new: false};
-      this.resetSignalK(url);
-    }
   }
 
   /**
@@ -81,8 +75,9 @@ export class SignalKConnectionService {
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
    */
-  public resetSignalK(skUrl: ISignalKUrl): Promise<void> {
+  public async resetSignalK(skUrl: ISignalKUrl): Promise<void> {
     if (skUrl.url === null) {
+      console.log("[Connection Service] Connection reset called with null or empty URL value");
       return;
     }
     this.signalKURL = skUrl;
@@ -99,39 +94,51 @@ export class SignalKConnectionService {
         fullURL = fullURL + "/signalk/";
     }
 
-    console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
+    try {
+      console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
+      const endpointResponse = await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}));
 
-    lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}))
-      .then((response: HttpResponse<ISignalKEndpointResponse>) => {
-        console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
-        this.serverServiceEndpoints.httpServiceUrl = response.body.endpoints.v1["signalk-http"];
-        this.serverServiceEndpoints.WsServiceUrl = response.body.endpoints.v1["signalk-ws"];
+      console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
+      this.serverVersion$.next(endpointResponse.body.server.version);
 
-        this.serverServiceEndpoints.operation = 2;
-        this.serverServiceEndpoints.message = response.status.toString();
-        this.serverServiceEndpoints.serverDescrption = response.body.server.id + " " + response.body.server.version;
-        this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
-      })
-      .catch((err: HttpErrorResponse) => {
-        console.error("[Connection Service] HTTP Endpoints request failed");
-        if (err.error instanceof Error) {
-            // A client-side or network error occurred. Handle it accordingly.
-            console.error('[Connection Service] HTTP Endpoint connection error occurred:', err.error.message);
-          } else {
-            // The backend returned an unsuccessful response code.
-            // The response body may contain clues as to what went wrong,
-            console.error(err);
-          }
-        this.serverServiceEndpoints.operation = 3;
-        this.serverServiceEndpoints.message = err.message;
-        this.serverServiceEndpoints.serverDescrption = null;
-        this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
-      });
+      this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
+      this.serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+      this.serverServiceEndpoints.operation = 2;
+      this.serverServiceEndpoints.message = endpointResponse.status.toString();
+      this.serverServiceEndpoints.serverDescrption = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;
+    } catch (error) {
+      this.serverServiceEndpoints.operation = 3;
+      this.serverServiceEndpoints.message = error.message;
+      this.serverServiceEndpoints.serverDescrption = null;
+      this.handleError(error);
+    } finally {
+      this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
+    }
+
+    // await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}))
+    //   .then((response: HttpResponse<ISignalKEndpointResponse>) => {
+    //     console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
+    //     this.serverServiceEndpoints.httpServiceUrl = response.body.endpoints.v1["signalk-http"];
+    //     this.serverServiceEndpoints.WsServiceUrl = response.body.endpoints.v1["signalk-ws"];
+
+    //     this.serverServiceEndpoints.operation = 2;
+    //     this.serverServiceEndpoints.message = response.status.toString();
+    //     this.serverServiceEndpoints.serverDescrption = response.body.server.id + " " + response.body.server.version;
+    //     this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
+    //   })
+    //   .catch((error: HttpErrorResponse) => {
+    //     this.serverServiceEndpoints.operation = 3;
+    //     this.serverServiceEndpoints.message = error.message;
+    //     this.serverServiceEndpoints.serverDescrption = null;
+    //     this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
+    //     this.handleError(error);
+    //   });
   }
 
   private handleError(error: HttpErrorResponse) {
     if (error.status === 0) {
-      // A client-side or network error occurred. Handle it accordingly.
+      // A client-side or network error occurred. Handle it accordingly
+      console.error('[Connection Service] HTTP Endpoint connection error occurred:', error.error.message);
       console.error('[Connection Service] An error occurred:', error.error);
     } else {
       // The backend returned an unsuccessful response code.
@@ -149,7 +156,6 @@ export class SignalKConnectionService {
 
   public setServerInfo(name : string, version: string, roles: Array<string>) {
     this.serverName = name;
-    this.serverVersion$.next(version);
     this.serverRoles = roles;
     console.log("[Connection Service] Server Name: " + name + ", Version: " + version + ", Roles: " + JSON.stringify(roles));
   }

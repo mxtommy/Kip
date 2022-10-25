@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { AppInitService } from './app-init.service';
+import { AppNetworkInitService } from './app-initNetwork.service';
 
 describe('AppConfigService', () => {
-  let service: AppInitService;
+  let service: AppNetworkInitService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(AppInitService);
+    service = TestBed.inject(AppNetworkInitService);
   });
 
   it('should be created', () => {

@@ -14,7 +14,6 @@ import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
 import { StorageService } from './storage.service';
-import { AppInitService } from './app-init.service';
 
 const defaultTheme = 'modern-dark';
 const configVersion = 9; // used to invalidate old configs. connectionConfig and appConfig use this same version.
@@ -47,12 +46,13 @@ export class AppSettingsService {
 
   constructor(
     private router: Router,
-    private appInitService: AppInitService,
     private storage: StorageService,
     )
   {
+    console.log("[AppSettings Service] Service startup..");
     this.storage.activeConfigVersion = configVersion;
-    let serverConfig: IConfig = this.appInitService.serverConfig;
+
+    let serverConfig: IConfig = this.storage.defaultRemoteConfig;
 
     if (!window.localStorage) {
       // REQUIRED BY APP - localStorage support
@@ -60,7 +60,6 @@ export class AppSettingsService {
 
     } else {
       this.loadConnectionConfig();
-      // init sk connection if Storage service is not used and we have a URL configured (not a blank app config)
 
         if (serverConfig) {
           console.log("[AppSettings Service] Enabling Server Storage");
@@ -87,13 +86,20 @@ export class AppSettingsService {
   private loadConnectionConfig(): void {
     let config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
-    this.signalkUrl = {url: config.signalKUrl, new: false};
-    this.useDeviceToken = config.useDeviceToken;
-    this.loginName = config.loginName;
-    this.loginPassword = config.loginPassword;
-    this.useSharedConfig = config.useSharedConfig;
-    this.sharedConfigName = config.sharedConfigName;
-    this.kipUUID = config.kipUUID;
+    if ((typeof config.configVersion !== 'number') || (config.configVersion !== configVersion)) {
+      //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
+      console.error("[AppSettings Service] Invalid onnectionConfig version. Resetting and loading configuration default");
+      localStorage.setItem("connectionConfig", JSON.stringify(this.getDefaultConnectionConfig()));
+      window.location.reload();
+    } else {
+      this.signalkUrl = {url: config.signalKUrl, new: false};
+      this.useDeviceToken = config.useDeviceToken;
+      this.loginName = config.loginName;
+      this.loginPassword = config.loginPassword;
+      this.useSharedConfig = config.useSharedConfig;
+      this.sharedConfigName = config.sharedConfigName;
+      this.kipUUID = config.kipUUID;
+    }
   }
 
   private validateAppConfig(config: IConfig): IConfig {
@@ -120,13 +126,15 @@ export class AppSettingsService {
       newDefaultConfig.zones = this.getDefaultZonesConfig();
 
       if (this.useServerStorage) {
-        if(this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)) {
+        this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
+        .then( _ => {
           console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
           this.reloadApp();
-        } else {
+        })
+        .catch(error => {
           console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName);
           config = null;
-        }
+        });
       } else {
         this.reloadApp();
       }
@@ -366,7 +374,7 @@ export class AppSettingsService {
     setTimeout(()=>{ location.reload() }, 200);
   }
   //// Storage Objects
-  // building from running data
+  // builds config data oject from running data
   private buildAppStorageObject() {
 
     let storageObject: IAppConfig = {
@@ -421,7 +429,7 @@ export class AppSettingsService {
     return storageObject;
   }
 
-  //Saving to Storage
+  // Calls build methodes and save to LocalStorage
   private saveAppConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Application config to LocalStorage");
     localStorage.setItem('appConfig', JSON.stringify(this.buildAppStorageObject()));
@@ -452,7 +460,7 @@ export class AppSettingsService {
     localStorage.setItem('zonesConfig', JSON.stringify(this.buildZonesStorageObject()));
   }
 
-  // Private Defaults Loading functions
+  // Creates config from defaults and saves to LocalStorage
   private getDefaultAppConfig(): IAppConfig {
     let config: IAppConfig = DefaultAppConfig;
     config.notificationConfig = DefaultNotificationConfig;
