@@ -114,25 +114,6 @@ export class SignalKConnectionService {
     } finally {
       this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
     }
-
-    // await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}))
-    //   .then((response: HttpResponse<ISignalKEndpointResponse>) => {
-    //     console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
-    //     this.serverServiceEndpoints.httpServiceUrl = response.body.endpoints.v1["signalk-http"];
-    //     this.serverServiceEndpoints.WsServiceUrl = response.body.endpoints.v1["signalk-ws"];
-
-    //     this.serverServiceEndpoints.operation = 2;
-    //     this.serverServiceEndpoints.message = response.status.toString();
-    //     this.serverServiceEndpoints.serverDescrption = response.body.server.id + " " + response.body.server.version;
-    //     this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
-    //   })
-    //   .catch((error: HttpErrorResponse) => {
-    //     this.serverServiceEndpoints.operation = 3;
-    //     this.serverServiceEndpoints.message = error.message;
-    //     this.serverServiceEndpoints.serverDescrption = null;
-    //     this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
-    //     this.handleError(error);
-    //   });
   }
 
   private handleError(error: HttpErrorResponse) {

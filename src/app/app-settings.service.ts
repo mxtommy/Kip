@@ -187,18 +187,18 @@ export class AppSettingsService {
     return config;
   }
 
-  public loadDefaultRemoteUserConfig() {
-    try {
-      this.storage.getConfig("user", this.sharedConfigName)
-      .then(config => {
-        console.log(`[AppSettings Service] Loading remote user configuration: ${this.sharedConfigName}`);
-        this.activeConfig = this.validateAppConfig(config);
-        this.pushSettings();
-      });
-    } catch (error) {
-      console.warn("[AppSettings Service] Error loading remote user configuration");
-    }
-  }
+  // public loadDefaultRemoteUserConfig() {
+  //   try {
+  //     this.storage.getConfig("user", this.sharedConfigName)
+  //     .then(config => {
+  //       console.log(`[AppSettings Service] Loading remote user configuration: ${this.sharedConfigName}`);
+  //       this.activeConfig = this.validateAppConfig(config);
+  //       this.pushSettings();
+  //     });
+  //   } catch (error) {
+  //     console.warn("[AppSettings Service] Error loading remote user configuration");
+  //   }
+  // }
 
   private pushSettings(): void {
 
@@ -242,6 +242,7 @@ export class AppSettingsService {
     this.loginName = value.loginName;
     this.loginPassword = value.loginPassword;
     this.useSharedConfig = value.useSharedConfig;
+    this.signalkUrl.url = value.signalKUrl;
     if (!value.useSharedConfig) {
       this.useDeviceToken = true;
     } else this.useDeviceToken = false;

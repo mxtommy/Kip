@@ -66,10 +66,17 @@ export class SettingsSignalkComponent implements OnInit {
   { }
 
   ngOnInit() {
+    // init current value. IsLoggedInSub BehaviorSubject will send last value and component will triggger last notifications even if old
+    if (this.auth.isLoggedIn$) {
+      this.isLoggedIn = true;
+    } else {
+      this.isLoggedIn = false;
+    }
+
     // get SignalK connection configuration
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
 
-    // Token Sub
+    // get token status
     this.authTokenSub = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
       if (token) {
         this.authToken = token;
@@ -78,15 +85,7 @@ export class SettingsSignalkComponent implements OnInit {
       }
     });
 
-    // Login Sub
-
-    // get current value first because BehaviorSubject will send last value and component will triggger notifications
-    if (this.auth.isLoggedIn$) {
-      this.isLoggedIn = true;
-    } else {
-      this.isLoggedIn = false;
-    }
-
+    // get logged in status
     this.isLoggedInSub = this.auth.isLoggedIn$.subscribe(isLoggedIn => {
       if ((this.isLoggedIn !== isLoggedIn) && (isLoggedIn === true)) {
         this.notificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
@@ -94,22 +93,22 @@ export class SettingsSignalkComponent implements OnInit {
       this.isLoggedIn = isLoggedIn;
     });
 
-    // sub for signalk connection status
+    // get for signalk connection status
     this.skEndpointServiceStatusSub = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus) => {
           this.endpointServiceStatus = status;
     });
 
-    // get FullDocument Service status updates
+    // get FullDocument Service status
     this.skFullDocumentStatusSub = this.fullDocumentService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
       this.fullDocumentStatus = status;
     });
 
-    // get Delta Service status updates
+    // get Delta Service status
     this.skStreamStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
     });
 
-    //get update performances
+    //get WebSocket Stream performance update
     this.updatesSecondSub = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
       this.lastSecondsUpdate = newSecondsData[newSecondsData.length-1];
       this.updatesSeconds = newSecondsData;
@@ -138,41 +137,47 @@ export class SettingsSignalkComponent implements OnInit {
   public connectToServer() {
     if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
       this.openUserCredentialModal();
-      return
+      return;
     }
 
     let connection = {url: this.connectionConfig.signalKUrl, new: true};
+
     if (this.connectionConfig.signalKUrl != this.appSettingsService.signalkUrl.url) {
-      this.appSettingsService.signalkUrl = connection;
-      this.signalKConnectionService.resetSignalK(connection);
+      this.appSettingsService.setConnectionConfig(this.connectionConfig);
 
       if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if ( this.authToken && this.authToken.isDeviceAccessToken) {
+      } else if ( this.authToken) {
         this.auth.deleteToken();
+        location.reload();
+      } else {
+        location.reload();
       }
 
-      // login is done by skEndpointServiceStatus$ Observable's connection status
-
     } else {
+      this.appSettingsService.setConnectionConfig(this.connectionConfig);
       // Same URL - no need to resetSignalK(). Just login, new token reset will reload WebSockets
-      //and HTTP_INTERCEPTOR will incert the new token automatically on ahh HTTP calls (not WebSocket).
+      // and HTTP_INTERCEPTOR will incert the new token automatically on all HTTP calls (exdcept for WebSocket).
       if ((this.authToken && this.authToken.isDeviceAccessToken) && this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
       } else if ((this.authToken && !this.authToken.isDeviceAccessToken) && !this.connectionConfig.useSharedConfig) {
         this.deleteToken();
+        location.reload();
       } else if (this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
       } else {
-        this.signalKConnectionService.resetSignalK(connection);
+        location.reload();
       }
     }
-
-    this.appSettingsService.setConnectionConfig(this.connectionConfig);
   }
 
   private serverLogin(newUrl?: string) {
       this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
+      .then( _ => {
+        location.reload();
+        //setTimeout(()=>{ location.reload() }, 200);
+        //this.appSettingsService.loadDefaultRemoteUserConfig();
+      })
       .catch((error: HttpErrorResponse) => {
         if (error.status == 401) {
           this.openUserCredentialModal();

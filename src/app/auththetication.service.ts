@@ -247,6 +247,10 @@ export class AuththeticationService {
   }
 
   public deleteToken() {
+    if (!this._authToken$) {
+      return;
+    }
+
     console.log('[Authentication Service] Deleting Authorization token');
     localStorage.removeItem('authorization_token');
     this._IsLoggedIn$.next(false);
