@@ -1,16 +1,19 @@
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { Injectable } from '@angular/core';
-import { IConfig, IAppConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from "./app-settings.interfaces";
+import { IConfig } from "./app-settings.interfaces";
 import * as compareVersions from 'compare-versions';
-import { HttpClient, HttpErrorResponse, HttpHandler } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
-import { lastValueFrom } from 'rxjs';
-import { IDataSet } from './data-set.service';
-import { ChildActivationStart } from '@angular/router';
+import { tap, concatMap, catchError, lastValueFrom } from 'rxjs';
 
 interface Config {
   name: string,
   scope: string
+}
+
+interface IPatchAction {
+  url: string,
+  document: any
 }
 
 @Injectable({
@@ -25,6 +28,15 @@ export class StorageService {
   private InitConfig: IConfig = null;
   public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
 
+  private patchQueue$ = new Subject();  // REST call queue to force sequential calls
+  private patch = function(arg: IPatchAction){ // http JSON Patch function
+    //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
+    return this.http.post(arg.url, arg.document)
+      .pipe(
+        //tap((_) => console.log("[Storage Service] Patch request completed successfuly")),
+        catchError((error) => this.handleError(error))
+      );
+  }
 
   constructor(
     private server: SignalKConnectionService,
@@ -48,6 +60,15 @@ export class StorageService {
         this.isAppDataSupported = compareVersions.compare(version, '1.27.0', ">=");
       }
     });
+
+    // Patch request queue to insure JSON Patch requests to SK server don't run into collisions/conflicts. SK does not handle concurrent data access call
+    this.patchQueue$
+      .pipe(
+          concatMap((arg: IPatchAction) => this.patch(arg)) // insures call senquencing
+        )
+      .subscribe(_ => {
+        //console.log("[Storage Service] Subscription results received")
+      });
   }
 
   /**
@@ -146,13 +167,14 @@ export class StorageService {
       });
   }
 
-  public async patchConfig(ObjType: string, value: any) {
+  public patchConfig(ObjType: string, value: any) {
+
     let url = this.serverEndpoint + "user/kip/" + this.configVersion;
-    let config;
+    let document;
 
     switch (ObjType) {
       case "IThemeConfig":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/theme/themeName`,
@@ -161,7 +183,7 @@ export class StorageService {
         break;
 
       case "IWidgetConfig":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/widget`,
@@ -170,7 +192,7 @@ export class StorageService {
         break;
 
       case "ILayoutConfig":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/layout`,
@@ -179,7 +201,7 @@ export class StorageService {
         break;
 
       case "Array<IUnitDefaults>":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/app/unitDefaults`,
@@ -188,7 +210,7 @@ export class StorageService {
         break;
 
       case "Array<IDataSet>":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/app/dataSets`,
@@ -197,7 +219,7 @@ export class StorageService {
         break;
 
       case "Array<IZone>":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/zones/zones`,
@@ -206,7 +228,7 @@ export class StorageService {
         break;
 
       case "INotificationConfig":
-        config =
+        document =
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/app/notificationConfig`,
@@ -214,19 +236,12 @@ export class StorageService {
           }]
         break;
 
-      default:
+      default: console.warn("[Storage Service] JSON Patch request type unknown");
         break;
     }
 
-    try {
-      await lastValueFrom(this.http.post<any>(url, config));
-      console.log(`[Storage Service] Section [${ObjType}] of remote config [${this.sharedConfigName}] updated`);
-      //console.log(`[Storage Service] Section [${ObjType}] content:\n${JSON.stringify(value)}`);
-
-    } catch (error) {
-      console.error(JSON.stringify(config));
-      this.handleError(error);
-    }
+    let patch: IPatchAction = {url, document};
+    this.patchQueue$.next(patch);
   }
 
   /**

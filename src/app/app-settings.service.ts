@@ -189,7 +189,7 @@ export class AppSettingsService {
 
   public loadDefaultRemoteUserConfig() {
     try {
-      this.storage.getConfig("global", this.sharedConfigName)
+      this.storage.getConfig("user", this.sharedConfigName)
       .then(config => {
         console.log(`[AppSettings Service] Loading remote user configuration: ${this.sharedConfigName}`);
         this.activeConfig = this.validateAppConfig(config);
@@ -306,14 +306,14 @@ export class AppSettingsService {
   public getWidgets() {
     return this.widgets;
   }
-  public async saveWidgets(widgets: Array<IWidget>) {
+  public saveWidgets(widgets: Array<IWidget>) {
     this.widgets = widgets;
     if (this.useSharedConfig) {
       let widgetConfig: IWidgetConfig = {
         widgets: this.widgets,
         };
 
-      await this.storage.patchConfig('IWidgetConfig', widgetConfig);
+      this.storage.patchConfig('IWidgetConfig', widgetConfig);
     }
     else {
       this.saveWidgetConfigToLocalStorage();
@@ -327,7 +327,7 @@ export class AppSettingsService {
   public getRootSplits() {
     return this.rootSplits;
   }
-  public async saveSplitSets(splitSets) {
+  public saveSplitSets(splitSets) {
     this.splitSets = splitSets;
     if (this.useSharedConfig) {
       let layoutConfig: ILayoutConfig = {
@@ -335,7 +335,7 @@ export class AppSettingsService {
         rootSplits: this.rootSplits,
         };
 
-      await this.storage.patchConfig('ILayoutConfig', layoutConfig);
+      this.storage.patchConfig('ILayoutConfig', layoutConfig);
     } else {
       this.saveLayoutConfigToLocalStorage();
     }
