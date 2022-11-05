@@ -1,3 +1,4 @@
+import { NotificationsService } from './notifications.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
@@ -34,7 +35,6 @@ export class AppSettingsService {
   private sharedConfigName: string;
   private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
 
-  private useServerStorage: boolean = false;
   private kipUUID: string;
   public signalkUrl: ISignalKUrl;
   widgets: Array<IWidget>;
@@ -62,13 +62,11 @@ export class AppSettingsService {
       this.loadConnectionConfig();
 
         if (serverConfig) {
-          console.log("[AppSettings Service] Enabling Server Storage");
-          this.useServerStorage = true;
+          console.log("[AppSettings Service] Remote configuration storage enabled");
           this.activeConfig = this.validateAppConfig(serverConfig);
           this.pushSettings();
         } else {
-          this.useServerStorage = false;
-          console.log("[AppSettings Service] Enabling Local Storage");
+          console.log("[AppSettings Service] LocalStorage enabled");
 
           let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
           localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
@@ -104,7 +102,7 @@ export class AppSettingsService {
 
   private validateAppConfig(config: IConfig): IConfig {
     if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
-      if (this.useServerStorage) {
+      if (this.useSharedConfig) {
         //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
         console.error("[AppSettings Service] Invalid Server config version. Resetting and loading configuration default");
       } else {
@@ -125,7 +123,7 @@ export class AppSettingsService {
       newDefaultConfig.theme = this.getDefaultThemeConfig();
       newDefaultConfig.zones = this.getDefaultZonesConfig();
 
-      if (this.useServerStorage) {
+      if (this.useSharedConfig) {
         this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
         .then( _ => {
           console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
@@ -143,7 +141,6 @@ export class AppSettingsService {
   }
 
   private loadConfigFromLocalStorage(type: string) {
-    // we don't support AppConfig here. It needs a version check and full config invalidation.
     let config = JSON.parse(localStorage.getItem(type));
 
     if (config === null) {
@@ -190,6 +187,19 @@ export class AppSettingsService {
     return config;
   }
 
+  public loadDefaultRemoteUserConfig() {
+    try {
+      this.storage.getConfig("global", this.sharedConfigName)
+      .then(config => {
+        console.log(`[AppSettings Service] Loading remote user configuration: ${this.sharedConfigName}`);
+        this.activeConfig = this.validateAppConfig(config);
+        this.pushSettings();
+      });
+    } catch (error) {
+      console.warn("[AppSettings Service] Error loading remote user configuration");
+    }
+  }
+
   private pushSettings(): void {
 
     this.themeName.next(this.activeConfig.theme.themeName);
@@ -211,7 +221,12 @@ export class AppSettingsService {
   }
   public setDefaultUnits(newDefaults: IUnitDefaults) {
     this.unitDefaults.next(newDefaults);
-    this.saveAppConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('Array<IUnitDefaults>', newDefaults);
+
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
   }
 
   // App config - use by Settings Config Component
@@ -272,7 +287,15 @@ export class AppSettingsService {
   public setThemName(newTheme: string) {
     this.themeName.next(newTheme);
     if (newTheme != "nightMode") { // don't save NightMode, only temporary
-      this.saveThemeConfigToLocalStorage();
+      if (this.useSharedConfig) {
+        let theme: IThemeConfig = {
+          themeName: newTheme
+        }
+        this.storage.patchConfig('IThemeConfig', theme)
+      } else {
+        this.saveThemeConfigToLocalStorage();
+      }
+
     }
   }
   public getThemeName(): string {
@@ -283,9 +306,18 @@ export class AppSettingsService {
   public getWidgets() {
     return this.widgets;
   }
-  public saveWidgets(widgets: Array<IWidget>) {
+  public async saveWidgets(widgets: Array<IWidget>) {
     this.widgets = widgets;
-    this.saveWidgetConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      let widgetConfig: IWidgetConfig = {
+        widgets: this.widgets,
+        };
+
+      await this.storage.patchConfig('IWidgetConfig', widgetConfig);
+    }
+    else {
+      this.saveWidgetConfigToLocalStorage();
+    }
   }
 
   // Layout SplitSets
@@ -295,19 +327,41 @@ export class AppSettingsService {
   public getRootSplits() {
     return this.rootSplits;
   }
-  public saveSplitSets(splitSets) {
+  public async saveSplitSets(splitSets) {
     this.splitSets = splitSets;
-    this.saveLayoutConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      let layoutConfig: ILayoutConfig = {
+        splitSets: this.splitSets,
+        rootSplits: this.rootSplits,
+        };
+
+      await this.storage.patchConfig('ILayoutConfig', layoutConfig);
+    } else {
+      this.saveLayoutConfigToLocalStorage();
+    }
   }
   public saveRootUUIDs(rootUUIDs) {
     this.rootSplits = rootUUIDs;
-    this.saveLayoutConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      let layoutConfig: ILayoutConfig = {
+        splitSets: this.splitSets,
+        rootSplits: this.rootSplits,
+        };
+
+      this.storage.patchConfig('ILayoutConfig', layoutConfig);
+    } else {
+      this.saveLayoutConfigToLocalStorage();
+    }
   }
 
   // DataSets
-  public saveDataSets(dataSets) {
+  public saveDataSets(dataSets: Array<IDataSet>) {
     this.dataSets = dataSets;
-    this.saveAppConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('Array<IDataSet>', dataSets);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
   }
   public getDataSets() {
     return this.dataSets;
@@ -316,7 +370,11 @@ export class AppSettingsService {
   // Zones
   public saveZones(zones: Array<IZone>) {
     this.zones.next(zones);
-    this.saveZonesConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('Array<IZone>', zones);
+    } else {
+      this.saveZonesConfigToLocalStorage();
+    }
   }
   public getZonesAsO() {
     return this.zones.asObservable();
@@ -334,17 +392,35 @@ export class AppSettingsService {
   }
   public setNotificationConfig(notificationConfig: INotificationConfig) {
     this.kipKNotificationConfig.next(notificationConfig);
-    this.saveAppConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('INotificationConfig', notificationConfig);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
   }
 
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
-    localStorage.removeItem("appConfig");
-    localStorage.removeItem("widgetConfig");
-    localStorage.removeItem("layoutConfig");
-    localStorage.removeItem("themeConfig");
-    localStorage.removeItem("zonesConfig");
-    this.reloadApp();
+
+    let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+    newDefaultConfig.app = this.getDefaultAppConfig();
+    newDefaultConfig.widget = this.getDefaultWidgetConfig();
+    newDefaultConfig.layout = this.getDefaultLayoutConfig();
+    newDefaultConfig.theme = this.getDefaultThemeConfig();
+    newDefaultConfig.zones = this.getDefaultZonesConfig();
+
+      if (this.useSharedConfig) {
+        this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
+        .then( _ => {
+          console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
+          this.reloadApp();
+        })
+        .catch(error => {
+          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName);
+        });
+      } else {
+        this.reloadApp();
+      }
   }
 
   /**
@@ -429,7 +505,7 @@ export class AppSettingsService {
     return storageObject;
   }
 
-  // Calls build methodes and save to LocalStorage
+  // Calls build methodes and saves to LocalStorage
   private saveAppConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Application config to LocalStorage");
     localStorage.setItem('appConfig', JSON.stringify(this.buildAppStorageObject()));

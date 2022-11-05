@@ -2,9 +2,11 @@ import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.
 import { Injectable } from '@angular/core';
 import { IConfig, IAppConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from "./app-settings.interfaces";
 import * as compareVersions from 'compare-versions';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHandler } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
 import { lastValueFrom } from 'rxjs';
+import { IDataSet } from './data-set.service';
+import { ChildActivationStart } from '@angular/router';
 
 interface Config {
   name: string,
@@ -19,6 +21,7 @@ export class StorageService {
   public isAppDataSupported: boolean = false;
   private serverConfigs: Config[] = [];
   private configVersion: number = null;
+  public sharedConfigName: string;
   private InitConfig: IConfig = null;
   public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
 
@@ -143,6 +146,89 @@ export class StorageService {
       });
   }
 
+  public async patchConfig(ObjType: string, value: any) {
+    let url = this.serverEndpoint + "user/kip/" + this.configVersion;
+    let config;
+
+    switch (ObjType) {
+      case "IThemeConfig":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/theme/themeName`,
+            "value": value.themeName
+          }]
+        break;
+
+      case "IWidgetConfig":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/widget`,
+            "value": value
+          }]
+        break;
+
+      case "ILayoutConfig":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/layout`,
+            "value": value
+          }]
+        break;
+
+      case "Array<IUnitDefaults>":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/app/unitDefaults`,
+            "value": value
+          }]
+        break;
+
+      case "Array<IDataSet>":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/app/dataSets`,
+            "value": value
+          }]
+        break;
+
+      case "Array<IZone>":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/zones/zones`,
+            "value": value
+          }]
+        break;
+
+      case "INotificationConfig":
+        config =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/app/notificationConfig`,
+            "value": value
+          }]
+        break;
+
+      default:
+        break;
+    }
+
+    try {
+      await lastValueFrom(this.http.post<any>(url, config));
+      console.log(`[Storage Service] Section [${ObjType}] of remote config [${this.sharedConfigName}] updated`);
+      //console.log(`[Storage Service] Section [${ObjType}] content:\n${JSON.stringify(value)}`);
+
+    } catch (error) {
+      console.error(JSON.stringify(config));
+      this.handleError(error);
+    }
+  }
+
   /**
    * removeItem
    */
@@ -168,13 +254,13 @@ export class StorageService {
     } else {
       // The backend returned an unsuccessful response code.
       // The response body may contain clues as to what went wrong.
-      console.error(`[Storage Service] Backend returned: `, error.message);
+      console.error(`[Storage Service] Backend returned error: `, error.message);
     }
     // Return an observable with a user-facing error message.
     throw error;
   }
 
-  public get defaultRemoteConfig() : IConfig {
+  public get defaultRemoteConfig(): IConfig {
     return this.InitConfig;
   }
 

@@ -45,6 +45,7 @@ export class AppNetworkInitService {
 
       if (this.isLoggedIn && this.config.useSharedConfig) {
         this.storage.activeConfigVersion = this.config.configVersion;
+        this.storage.sharedConfigName = this.config.sharedConfigName;
         await this.storage.getConfig("user", this.config.sharedConfigName, true);
       }
 

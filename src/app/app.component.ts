@@ -52,11 +52,10 @@ export class AppComponent implements OnInit, OnDestroy {
     // below services are needed: first service instanciation after Init Service
     private signalKFullService: SignalKFullService, //needs SignalKService & SignalKConnectionService
     private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
-    ) {console.warn("*********************** app.component constructor"); }
+    ) { }
 
 
   ngOnInit() {
-    console.warn("*********************** app.component OnInit");
     // Page layout area operations sub
     this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }

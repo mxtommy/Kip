@@ -219,7 +219,7 @@ export class LayoutSplitsService {
 
       if (this.isRootSplit(splitSetUUID)) {
         // We're the rootsplit, bye bye page
-        console.log('Deleting last split in root');
+        console.log('[LayoutSplit Service] Deleting last split in root');
 
         //delete this splitset...
         this.splitSets.splice(splitIndex, 1);
@@ -231,7 +231,7 @@ export class LayoutSplitsService {
 
         if (this.rootUUIDs.length <= 0) {
           // no more roots, we need at least one
-          console.log("deleted last page");
+          console.log("[LayoutSplit Service] Deleted last page");
           this.newRootSplit();
           this.setActiveRootIndex(0);
         }
