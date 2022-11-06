@@ -1,3 +1,5 @@
+import { Subscription } from 'rxjs';
+import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { SignalKDeltaService } from './../signalk-delta.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, Validators }    from '@angular/forms';
@@ -19,34 +21,51 @@ interface Config {
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy{
 
-  appJSONConfig: string = '';
-  connectionJSONConfig: string = '';
-  widgetJSONConfig: string = '';
-  layoutJSONConfig: string = '';
-  themeJSONConfig: string = '';
-  zonesJSONConfig: string = '';
+  public appJSONConfig: string = '';
+  public connectionJSONConfig: string = '';
+  public widgetJSONConfig: string = '';
+  public layoutJSONConfig: string = '';
+  public themeJSONConfig: string = '';
+  public zonesJSONConfig: string = '';
 
-  hasToken: boolean = false;
-  supportApplicationData: boolean = false;
-  serverConfigs: Config[] = [];
+  public hasToken: boolean = false;
+  public isTokenTypeDevice: boolean = false;
+  private tokenSub: Subscription;
 
-  configName: string = null;
-  configScope = new FormControl("global", Validators.required);
-  configLoad = new FormControl(Validators.required);
+  public supportApplicationData: boolean = false;
+  public serverConfigList: Config[] = [];
+
+  public configName: string = null;
+  public configScope = new FormControl('global',Validators.required);
+  public configLoad = new FormControl(Validators.required);
 
   constructor(
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
     private deltaService: SignalKDeltaService,
     private notificationsService: NotificationsService,
+    private auth: AuththeticationService,
   ) { }
 
   //TODO: fix successful snackbar msg on save error (see console log when not admin user and save to Global scope)
   ngOnInit() {
+    // Token observer
+    this.tokenSub = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
+      if (token && token.token) {
+        this.hasToken = true;
+        this.isTokenTypeDevice = token.isDeviceAccessToken;
+        if (!token.isDeviceAccessToken) {
+          this.configScope.setValue('user');
+        }
 
-    this.hasToken = this.deltaService.streamEndpoint.hasToken;
+      } else {
+        this.hasToken = false;
+
+      }
+    });
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
+
     this.appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
     this.connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
     this.widgetJSONConfig = JSON.stringify(this.appSettingsService.getWidgetConfig(), null, 2);
@@ -60,7 +79,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public getServerConfigList() {
     this.storageSvc.listConfigs()
     .then((configs) => {
-      this.serverConfigs = configs;
+      this.serverConfigList = configs;
     })
     .catch(error => {
       this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
@@ -147,6 +166,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   }
 
   ngOnDestroy() {
+    this.tokenSub.unsubscribe();
   }
 
 }

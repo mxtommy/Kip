@@ -186,8 +186,8 @@ export class SettingsSignalkComponent implements OnInit {
           this.notificationsService.sendSnackbarNotification("Sign in failed: Login API not found", 5000, false);
           console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
         } else if (error.status == 0) {
-          this.notificationsService.sendSnackbarNotification("Sign in failed: Cannot reach server at SignalK URL", 5000, false);
-          console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at SignalK URL:" + error.message);
+          this.notificationsService.sendSnackbarNotification("Sign in failed: Cannot reach server at Signal K URL", 5000, false);
+          console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at Signal K URL:" + error.message);
         } else {
           this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
           console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));

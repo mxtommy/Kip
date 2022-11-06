@@ -10,7 +10,7 @@
             <mat-form-field class="almost-full-width">
               <mat-label>Select Configuration Name</mat-label>
               <mat-select required [formControl]="configLoad">
-                <mat-option *ngFor="let config of serverConfigs" [value]="config">
+                <mat-option *ngFor="let config of serverConfigList" [value]="config">
                   {{config.scope}} / {{config.name}}
                 </mat-option>
               </mat-select>
@@ -32,14 +32,24 @@
                   You must provide a name for the configuration to save it
                 </mat-error>
               </mat-form-field>
+              <div *ngIf="!hasToken">Writing to the server requires user Sign in or a Device token</div>
+              <div *ngIf="hasToken">
+                Select save scope:
+                <div *ngIf="isTokenTypeDevice; then thenBlock else elseBlock"></div>
+                  <ng-template #thenBlock>
+                    <mat-radio-group aria-label="Scope" [formControl]="configScope">
+                      <mat-radio-button value="global" disabled="false">Global</mat-radio-button>
+                    </mat-radio-group>
+                  </ng-template>
+                  <ng-template #elseBlock>
+                    <mat-radio-group aria-label="Scope" [formControl]="configScope">
+                      <mat-radio-button value="user" disabled="false">User</mat-radio-button>
+                      <mat-radio-button value="global" disabled="false">Global (needs Admin rights)</mat-radio-button>
+                    </mat-radio-group>
+                  </ng-template>
+              </div>
               <mat-card-actions align="end">
-                <div *ngIf="!hasToken">R/W token required for SignalK Server</div>
-                <div *ngIf="hasToken">
-                  <mat-radio-group aria-label="Scope" [formControl]="configScope">
-                    <mat-radio-button value="global">Global (needs Admin priv)</mat-radio-button>
-                    <mat-radio-button value="user">User</mat-radio-button>
-                  </mat-radio-group>
-                </div>
+
                 <button mat-raised-button type="submit" [disabled]="!hasToken || !saveConfigForm.valid" color="accent">Save</button>
               </mat-card-actions>
           </form>
