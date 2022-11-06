@@ -1,61 +1,73 @@
-import { SignalKConnectionService } from './../signalk-connection.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from "@angular/router";
+import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { AuththeticationService } from "../auththetication.service";
 import { AppSettingsService } from './../app-settings.service';
 import { NotificationsService } from './../notifications.service';
+import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
 import { IConnectionConfig } from "./../app-settings.interfaces";
+import { HttpErrorResponse } from '@angular/common/http';
+
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit, OnDestroy {
-  private loginSub = null;
+export class LoginComponent implements OnInit {
   public connectionConfig: IConnectionConfig = null;
 
   constructor(
-    private router: Router,
+    public dialog: MatDialog,
     private auth: AuththeticationService,
     private notificationsService: NotificationsService,
     private appSettingsService: AppSettingsService,
-    private server: SignalKConnectionService,
   ) { }
 
   ngOnInit(): void {
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
+    this.openUserCredentialModal("Authentication failed. Invalide user/password");
   }
 
-  submitForm() {
-    this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword })
-      .then( () => {
-        let connection = {url: this.connectionConfig.signalKUrl, new: false};
-        this.server.resetSignalK(connection);
-        this.appSettingsService.signalkUrl = connection;
-        this.appSettingsService.setConnectionConfig(this.connectionConfig);
-        this.router.navigate(['/page', 0]);
-      })
-      .catch((error: HttpErrorResponse) => {
-        if (error.status == 401) {
-          this.notificationsService.sendSnackbarNotification("Authentication failed. Invalide user/password", 2000, false);
-          console.log("[Login Component] Login failure: " + error.statusText);
-        } else if (error.status == 404) {
-          this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 2000, false);
-          console.log("[Login Component] Login failure: " + error.message);
-        } else if (error.status == 0) {
-          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
-          console.log("[Login Component] " + error.message);
-        } else {
-          this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 2000, false);
-          console.log("[Login Component] Unknown login error response: " + JSON.stringify(error));
-        }
-      });
+  public openUserCredentialModal(errorMsg: string) {
+    let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
+      disableClose: true,
+      data: {
+        user: this.connectionConfig.loginName,
+        password: this.connectionConfig.loginPassword,
+        error: errorMsg
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(data => {
+      if (!data) {
+        this.appSettingsService.reloadApp(); //clicked cancel
+      } else {
+        this.connectionConfig.loginName = data.user;
+        this.connectionConfig.loginPassword = data.password;
+        this.serverLogin();
+      }
+    });
   }
 
-  ngOnDestroy(): void {
-    if (this.loginSub)
-    this.loginSub.unsubscribe();
+  private serverLogin(newUrl?: string) {
+    this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
+    .then( _ => {
+      this.appSettingsService.reloadApp();
+    })
+    .catch((error: HttpErrorResponse) => {
+      if (error.status == 401) {
+        this.openUserCredentialModal("Authentication failed. Invalide user/password");
+        console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
+      } else if (error.status == 404) {
+        this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 5000, false);
+        console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
+      } else if (error.status == 0) {
+        this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 5000, false);
+        console.log("[Setting-SignalK Component] User authentication failed. Cannot reach server at SignalK URL:" + error.message);
+      } else {
+        this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
+        console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
+      }
+    });
   }
 }

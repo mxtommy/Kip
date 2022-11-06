@@ -447,8 +447,7 @@ export class AppSettingsService {
   }
 
   public reloadApp() {
-    this.router.navigate(['/']);
-    setTimeout(()=>{ location.reload() }, 200);
+    location.replace("/");
   }
   //// Storage Objects
   // builds config data oject from running data

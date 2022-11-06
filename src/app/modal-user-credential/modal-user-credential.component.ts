@@ -1,6 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { IConnectionConfig } from '../app-settings.interfaces';
 
 @Component({
   selector: 'app-modal-user-credential',
@@ -8,11 +7,11 @@ import { IConnectionConfig } from '../app-settings.interfaces';
   styleUrls: ['./modal-user-credential.component.css']
 })
 export class ModalUserCredentialComponent implements OnInit {
-  titleDialog: string = "User Credential";
+  titleDialog: string = "Sign in to Signal K";
 
   constructor(
     public dialogRef: MatDialogRef<ModalUserCredentialComponent>,
-    @Inject(MAT_DIALOG_DATA) public connectionConfig: IConnectionConfig
+    @Inject(MAT_DIALOG_DATA) public data: {user: string, password: string, error: string}
   ) { }
 
 
@@ -20,7 +19,8 @@ export class ModalUserCredentialComponent implements OnInit {
   }
 
   SaveCredential() {
-    this.dialogRef.close(this.connectionConfig);
+    this.data.error = null;
+    this.dialogRef.close(this.data);
   }
 
 }

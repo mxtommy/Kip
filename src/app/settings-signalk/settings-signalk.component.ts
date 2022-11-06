@@ -87,9 +87,6 @@ export class SettingsSignalkComponent implements OnInit {
 
     // get logged in status
     this.isLoggedInSub = this.auth.isLoggedIn$.subscribe(isLoggedIn => {
-      if ((this.isLoggedIn !== isLoggedIn) && (isLoggedIn === true)) {
-        this.notificationsService.sendSnackbarNotification("User authentication successful", 2000, false);
-      }
       this.isLoggedIn = isLoggedIn;
     });
 
@@ -124,19 +121,26 @@ export class SettingsSignalkComponent implements OnInit {
     this.subscribeTheme();
   }
 
-  public openUserCredentialModal() {
+  public openUserCredentialModal(errorMsg: string) {
     let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
-      width: '50%',
-      data: this.connectionConfig
+      data: {
+        user: this.connectionConfig.loginName,
+        password: this.connectionConfig.loginPassword,
+        error: errorMsg
+      }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(data => {
+      if (!data) {return} //clicked cancel
+      this.connectionConfig.loginName = data.user;
+      this.connectionConfig.loginPassword = data.password;
+      this.connectToServer();
     });
   }
 
   public connectToServer() {
     if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
-      this.openUserCredentialModal();
+      this.openUserCredentialModal("Credentials required");
       return;
     }
 
@@ -175,22 +179,19 @@ export class SettingsSignalkComponent implements OnInit {
       this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
       .then( _ => {
         location.reload();
-        //setTimeout(()=>{ location.reload() }, 200);
-        //this.appSettingsService.loadDefaultRemoteUserConfig();
       })
       .catch((error: HttpErrorResponse) => {
         if (error.status == 401) {
-          this.openUserCredentialModal();
-          this.notificationsService.sendSnackbarNotification("Authentication failed. Invalide user/password", 2000, false);
+          this.openUserCredentialModal("Authentication failed. Invalide user/password");
           console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
         } else if (error.status == 404) {
-          this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 2000, false);
+          this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 5000, false);
           console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
         } else if (error.status == 0) {
-          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 2000, false);
+          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 5000, false);
           console.log("[Setting-SignalK Component] User authentication failed. Cannot reach server at SignalK URL:" + error.message);
         } else {
-          this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 2000, false);
+          this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
           console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
         }
       });
