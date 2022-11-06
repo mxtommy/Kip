@@ -1,13 +1,14 @@
 <mat-tab-group>
-  <mat-tab label="Server">
-    <p>Kip configuration can be stored and retrieved from the SignalK server. This enables configuration sharing (Kip Widgets and Kip general settings) with multiple devices. Note you require a token on the server in order to save config.</p>
+  <mat-tab label="Remote Storage">
+    <p>Recommended Reading: To understand configuration management and storage options, consult the Configuration Management Help section.</p>
+    <a href="/#/help">Go to Kip Help</a>
     <div class="config-row">
       <div class="config-column">
         <mat-card>
           <form>
             Load Config from Server <div *ngIf="!supportApplicationData" class="warningText">Node Server version greater than 1.27.0 required</div>
             <mat-form-field class="almost-full-width">
-              <mat-label>Config Name</mat-label>
+              <mat-label>Select Configuration Name</mat-label>
               <mat-select required [formControl]="configLoad">
                 <mat-option *ngFor="let config of serverConfigs" [value]="config">
                   {{config.scope}} / {{config.name}}
@@ -46,7 +47,8 @@
       </div>
     </div>
   </mat-tab>
-  <mat-tab label="Browser Config">
+  <mat-tab label="Live Configuration">
+    <p>The Live Configuration is the active in-memory configuration. It represent the current state of the application. You can edit those values by configuration areas and save them to persist your changes to the browser's Local Storage. If you save your changes, the app will reload with your changes, else your changes will not be applied.</p>
     <form name="appSettingsForm" (ngSubmit)="saveToLocalConfig('appConfig')">
       <mat-expansion-panel>
         <mat-expansion-panel-header>Application</mat-expansion-panel-header>

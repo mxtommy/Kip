@@ -46,14 +46,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
     this.hasToken = this.deltaService.streamEndpoint.hasToken;
 
-    this.storageSvc.listConfigs()
-    .then((configs) => {
-      this.serverConfigs = configs;
-    })
-    .catch(error => {
-      this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
-    });
-
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     this.appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
     this.connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
@@ -61,6 +53,18 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     this.layoutJSONConfig = JSON.stringify(this.appSettingsService.getLayoutConfig(), null, 2);
     this.themeJSONConfig = JSON.stringify(this.appSettingsService.getThemeConfig(), null, 2);
     this.zonesJSONConfig = JSON.stringify(this.appSettingsService.getZonesConfig(), null, 2);
+
+    this.getServerConfigList();
+  }
+
+  public getServerConfigList() {
+    this.storageSvc.listConfigs()
+    .then((configs) => {
+      this.serverConfigs = configs;
+    })
+    .catch(error => {
+      this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+    });
   }
 
   public saveLocalConfigToserver() {
@@ -80,16 +84,17 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
     if (this.storageSvc.setConfig(this.configScope.value, this.configName, localConfig)) {
       this.notificationsService.sendSnackbarNotification("Configuration " + this.configName + " saved to server", 3000, false);
+      this.getServerConfigList();
     } else {
       this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 3000, false);
     }
   }
 
-  public restoreRemoteServerConfig() {
+  public async restoreRemoteServerConfig() {
     let conf: IConfig = null;
     try {
-      this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name)
-      .then(config => {
+      await this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name)
+      .then((config: IConfig) => {
         conf = config
       });
     } catch (error) {

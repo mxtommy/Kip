@@ -187,19 +187,6 @@ export class AppSettingsService {
     return config;
   }
 
-  // public loadDefaultRemoteUserConfig() {
-  //   try {
-  //     this.storage.getConfig("user", this.sharedConfigName)
-  //     .then(config => {
-  //       console.log(`[AppSettings Service] Loading remote user configuration: ${this.sharedConfigName}`);
-  //       this.activeConfig = this.validateAppConfig(config);
-  //       this.pushSettings();
-  //     });
-  //   } catch (error) {
-  //     console.warn("[AppSettings Service] Error loading remote user configuration");
-  //   }
-  // }
-
   private pushSettings(): void {
 
     this.themeName.next(this.activeConfig.theme.themeName);
@@ -428,7 +415,7 @@ export class AppSettingsService {
    * Updates keys of localStorage config and reloads apps if required to apply new config. IMPORTANT NOTE: Kip does not apply config unless app is reloaded
    * @param configType String of either appConfig, widgetConfig, layoutConfig or themeConfig.
    * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
-   * @param reloadApp Optional Boolean. If True reloads the app, else does nothing. Defaults to False.
+   * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
   public replaceConfig(configType: string, newConfig: string, reloadApp?: boolean) {
     localStorage.setItem(configType, newConfig);
