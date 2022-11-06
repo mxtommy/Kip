@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 @Component({
   selector: 'app-modal-user-credential',
   templateUrl: './modal-user-credential.component.html',
-  styleUrls: ['./modal-user-credential.component.css']
+  styleUrls: ['./modal-user-credential.component.scss']
 })
 export class ModalUserCredentialComponent implements OnInit {
   titleDialog: string = "Sign in to Signal K";

@@ -25,7 +25,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
-    this.openUserCredentialModal("Authentication failed. Invalide user/password");
+    this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valide credentials or access the Confifuration/Settings menu, validate the server URL or/and disable the user Sign in option");
   }
 
   public openUserCredentialModal(errorMsg: string) {
@@ -39,11 +39,12 @@ export class LoginComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(data => {
-      if (!data) {
-        this.appSettingsService.reloadApp(); //clicked cancel
+      if (data === undefined || !data) {
+        return; //clicked Cancel or navigated await from page using url bar.
       } else {
         this.connectionConfig.loginName = data.user;
         this.connectionConfig.loginPassword = data.password;
+        this.appSettingsService.setConnectionConfig(this.connectionConfig);
         this.serverLogin();
       }
     });
@@ -56,14 +57,14 @@ export class LoginComponent implements OnInit {
     })
     .catch((error: HttpErrorResponse) => {
       if (error.status == 401) {
-        this.openUserCredentialModal("Authentication failed. Invalide user/password");
-        console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
+        this.openUserCredentialModal("Sign in failed: Invalide user/password. Enter valide credentials");
+        console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
       } else if (error.status == 404) {
-        this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 5000, false);
-        console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
+        this.notificationsService.sendSnackbarNotification("Sign in failed: Login API not found at URL. See connection detail status in Configuration/Settings", 5000, false);
+        console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
       } else if (error.status == 0) {
-        this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 5000, false);
-        console.log("[Setting-SignalK Component] User authentication failed. Cannot reach server at SignalK URL:" + error.message);
+        this.notificationsService.sendSnackbarNotification("Sign in failed: Cannot reach server at SignalK URL. See connection detail status in Configuration/Settings", 5000, false);
+        console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at SignalK URL:" + error.message);
       } else {
         this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
         console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));

@@ -144,8 +144,6 @@ export class SettingsSignalkComponent implements OnInit {
       return;
     }
 
-    let connection = {url: this.connectionConfig.signalKUrl, new: true};
-
     if (this.connectionConfig.signalKUrl != this.appSettingsService.signalkUrl.url) {
       this.appSettingsService.setConnectionConfig(this.connectionConfig);
 
@@ -182,14 +180,14 @@ export class SettingsSignalkComponent implements OnInit {
       })
       .catch((error: HttpErrorResponse) => {
         if (error.status == 401) {
-          this.openUserCredentialModal("Authentication failed. Invalide user/password");
-          console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
+          this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valide credentials");
+          console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
         } else if (error.status == 404) {
-          this.notificationsService.sendSnackbarNotification("Authentication failed. Login API not found", 5000, false);
-          console.log("[Setting-SignalK Component] Login failure: " + error.error.message);
+          this.notificationsService.sendSnackbarNotification("Sign in failed: Login API not found", 5000, false);
+          console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
         } else if (error.status == 0) {
-          this.notificationsService.sendSnackbarNotification("User authentication failed. Cannot reach server at SignalK URL", 5000, false);
-          console.log("[Setting-SignalK Component] User authentication failed. Cannot reach server at SignalK URL:" + error.message);
+          this.notificationsService.sendSnackbarNotification("Sign in failed: Cannot reach server at SignalK URL", 5000, false);
+          console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at SignalK URL:" + error.message);
         } else {
           this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
           console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));

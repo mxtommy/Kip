@@ -39,7 +39,7 @@ export class AppNetworkInitService {
         await this.connection.resetSignalK({url: this.config.signalKUrl, new: false});
       }
 
-      if (!this.isLoggedIn && this.config.useSharedConfig && this.config.loginName && this.config.loginPassword) {
+      if (!this.isLoggedIn && this.config.signalKUrl && this.config.useSharedConfig && this.config.loginName && this.config.loginPassword) {
         await this.login();
       }
 
@@ -47,6 +47,10 @@ export class AppNetworkInitService {
         this.storage.activeConfigVersion = this.config.configVersion;
         this.storage.sharedConfigName = this.config.sharedConfigName;
         await this.storage.getConfig("user", this.config.sharedConfigName, true);
+      }
+
+      if (!this.isLoggedIn && this.config.signalKUrl && this.config.useSharedConfig) {
+        this.router.navigate(['/login']); // need to set credentials
       }
 
     } catch (error) {

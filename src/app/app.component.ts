@@ -116,14 +116,6 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     this.DataSetService.startAllDataSets();
-
-    // Subscribe to logged in status and route on conditions
-    //TODO: see if needed in some cases
-    this.auththeticationService.isLoggedIn$.subscribe( (loggedIn) => {
-      if (!loggedIn && this.appSettingsService.useSharedConfig) {
-        //this.router.navigate(['/login']);
-      }
-    });
   }
 
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
