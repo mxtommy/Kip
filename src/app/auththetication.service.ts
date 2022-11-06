@@ -51,16 +51,11 @@ export class AuththeticationService {
           this._authToken$.next(token);
         }
       } else {
-        console.log('[Authentication Service] Session Authorization Token found in Local Storage');
-        if (this.isTokenExpired(token.expiry)) {
-          console.warn('[Authentication Service] Session Token expired. Deleting token');
-          localStorage.removeItem('authorization_token');
-        } else {
-          this._IsLoggedIn$.next(true);
-          this._authToken$.next(token);
+        console.log('[Authentication Service] User session token found in Local Storage');
+        console.warn('[Authentication Service] Deleting user session token');
+        localStorage.removeItem('authorization_token');
       }
-    }
-  }
+   }
 
     // Token Subject subcription to handle token expiration and renewal
     this._authToken$.pipe(
