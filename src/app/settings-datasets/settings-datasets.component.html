@@ -1,41 +1,46 @@
 <form name="existingDataSet" #existingDataSet="ngForm">
   <mat-card>
-    <mat-card-header>
-      <mat-card-title>Datasets Configuration</mat-card-title>
-      <mat-card-subtitle>Create recording datasets to be used with the Historical DataSet Widget.</mat-card-subtitle>
-    </mat-card-header>
-    <div style="overflow-x:auto;">
-      <table style="width: 100%;">
-          <tr>
-              <th>
-                  Path
-              </th>
-              <th>
-                  Interval
-              </th>
-              <th>
-                  Data Points
-              </th>
-              <th>
+    <mat-card-title>
+      Datasets Configuration
+    </mat-card-title>
+    <mat-card-subtitle>
+      Create historical datasets to record data values over time and display them on a histogram chart with the Historical DataSet widget.
+    </mat-card-subtitle>
+    <mat-card-content>
+      <div style="overflow-x:auto;">
+        <table style="width: 100%;">
+            <tr>
+                <th>
+                    Path
+                </th>
+                <th>
+                    Interval
+                </th>
+                <th>
+                    Data Points
+                </th>
+                <th>
 
-              </th>
-          </tr>
-          <tr *ngFor="let ds of dataSets">
-              <td>
-                  {{ ds.path }}
-              </td>
-              <td>
-                  {{ ds.updateTimer }} Sec
-              </td>
-              <td>
-                  {{ ds.dataPoints }}
-              </td>
-              <td>
-                  <button mat-raised-button color="accent" (click)="deleteDataSet(ds.uuid)">Delete</button>
-              </td>
-          </tr>
-      </table>
-    </div>
+                </th>
+            </tr>
+            <tr *ngFor="let ds of dataSets">
+                <td>
+                    {{ ds.path }}
+                </td>
+                <td>
+                    {{ ds.updateTimer }} Sec
+                </td>
+                <td>
+                    {{ ds.dataPoints }}
+                </td>
+                <td>
+                    <button mat-raised-button color="accent" (click)="deleteDataSet(ds.uuid)">Delete</button>
+                </td>
+            </tr>
+        </table>
+      </div>
+    </mat-card-content>
+    <mat-divider inset></mat-divider>
     <mat-card-actions align="end">
       <button mat-raised-button color="accent" (click)='openNewDataSetModal()'>Add New Dataset</button>
     </mat-card-actions>

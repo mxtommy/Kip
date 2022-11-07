@@ -1,9 +1,8 @@
-import { Subscription } from 'rxjs';
-import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
-import { SignalKDeltaService } from './../signalk-delta.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { FormControl, Validators }    from '@angular/forms';
 
+import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { AppSettingsService } from '../app-settings.service';
 import { NotificationsService } from '../notifications.service';
 import { StorageService } from './../storage.service';
@@ -17,7 +16,7 @@ interface Config {
 @Component({
   selector: 'app-settings-config',
   templateUrl: './settings-config.component.html',
-  styleUrls: ['./settings-config.component.css']
+  styleUrls: ['./settings-config.component.scss']
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy{
 
@@ -42,7 +41,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   constructor(
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
-    private deltaService: SignalKDeltaService,
     private notificationsService: NotificationsService,
     private auth: AuththeticationService,
   ) { }
@@ -77,35 +75,39 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   }
 
   public getServerConfigList() {
-    this.storageSvc.listConfigs()
-    .then((configs) => {
-      this.serverConfigList = configs;
-    })
-    .catch(error => {
-      this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
-    });
+    if (this.supportApplicationData) {
+      this.storageSvc.listConfigs()
+      .then((configs) => {
+        this.serverConfigList = configs;
+      })
+      .catch(error => {
+        this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+      });
+    }
   }
 
   public saveLocalConfigToserver() {
-    let localConfig: IConfig = {
-      "app": null,
-      "widget": null,
-      "layout": null,
-      "theme": null,
-      "zones": null,
-    };
+    if (this.supportApplicationData) {
+      let localConfig: IConfig = {
+        "app": null,
+        "widget": null,
+        "layout": null,
+        "theme": null,
+        "zones": null,
+      };
 
-    localConfig.app = this.appSettingsService.getAppConfig();
-    localConfig.widget = this.appSettingsService.getWidgetConfig();
-    localConfig.layout = this.appSettingsService.getLayoutConfig();
-    localConfig.theme = this.appSettingsService.getThemeConfig();
-    localConfig.zones = this.appSettingsService.getZonesConfig();
+      localConfig.app = this.appSettingsService.getAppConfig();
+      localConfig.widget = this.appSettingsService.getWidgetConfig();
+      localConfig.layout = this.appSettingsService.getLayoutConfig();
+      localConfig.theme = this.appSettingsService.getThemeConfig();
+      localConfig.zones = this.appSettingsService.getZonesConfig();
 
-    if (this.storageSvc.setConfig(this.configScope.value, this.configName, localConfig)) {
-      this.notificationsService.sendSnackbarNotification("Configuration " + this.configName + " saved to server", 3000, false);
-      this.getServerConfigList();
-    } else {
-      this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 3000, false);
+      if (this.storageSvc.setConfig(this.configScope.value, this.configName, localConfig)) {
+        this.notificationsService.sendSnackbarNotification("Configuration " + this.configName + " saved to server", 3000, false);
+        this.getServerConfigList();
+      } else {
+        this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 3000, false);
+      }
     }
   }
 
@@ -130,6 +132,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   public resetConfigToDefault() {
     this.appSettingsService.resetSettings();
+  }
+
+  public resetConnectionToDefault() {
+    this.appSettingsService.resetConnection();
   }
 
   public saveToLocalConfig(configType: string) {

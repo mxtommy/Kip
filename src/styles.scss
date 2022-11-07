@@ -84,7 +84,6 @@
     );
 };
 
-
 //Import themes
 @import 'themes/defaultTheme.scss';
 @import 'themes/signalkTheme.scss';
@@ -109,9 +108,7 @@
 @import 'app/widget-autopilot/widget-autopilot.component.scss';
 @import 'app/widget-simple-linear/widget-simple-linear.component.scss';
 @import 'app/settings-datasets/settings-datasets.component.scss';
-
-
-
+@import 'app/settings-config/settings-config.component.scss';
 
 @mixin theme-components($theme) {
   @include mat.all-component-themes($theme);
@@ -128,7 +125,8 @@
   @include alarm-menu-theme($theme);
   @include widget-autopilot-theme($theme);
   @include widget-simple-linear-theme($theme);
-  @include theme-settings-data($theme)
+  @include theme-settings-data($theme);
+  @include theme-settings-config($theme);
 }
 
 @include theme-components($defaultTheme-light);

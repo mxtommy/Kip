@@ -1,22 +1,27 @@
 <form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
   <mat-card>
-    <mat-card-header>
-      <mat-card-title>Connection Details</mat-card-title>
-      <mat-card-subtitle>Set server connection properties, login credential and manage Device Authorisation token.</mat-card-subtitle>
-    </mat-card-header>
-      <mat-form-field class="connectUrlInput">
-        <mat-label>Signal K URL</mat-label>
-        <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
-        <mat-error>
-          Valid URL is required. Ex. "https://demo.signalK.com" or "http://my.server.com:3000"
-        </mat-error>
-      </mat-form-field>
-      <br/>
-      <mat-slide-toggle name="useSharedConfig"[(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}">Enable user Sign in and configuration sharing</mat-slide-toggle>
-      <br/><br/>
-      <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
-        Set Sign in credentials
-      </button>
+      <mat-card-title>
+        Connection Details
+      </mat-card-title>
+      <mat-card-subtitle>
+        Set server connection properties, Sign in credential and manage Device Authorisation token.
+      </mat-card-subtitle>
+      <mat-card-content>
+        <mat-form-field class="connectUrlInput">
+          <mat-label>Signal K URL</mat-label>
+          <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
+          <mat-error>
+            Valid URL is required. Ex. "https://demo.signalK.com" or "http://my.server.com:3000"
+          </mat-error>
+        </mat-form-field>
+        <br/>
+        <mat-slide-toggle name="useSharedConfig"[(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}">Enable user Sign in and configuration sharing</mat-slide-toggle>
+        <br/><br/>
+        <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
+          Set Sign in credentials
+        </button>
+      </mat-card-content>
+      <mat-divider inset></mat-divider>
       <mat-card-actions align="end">
         <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">
           <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="deleteToken()" [disabled]="!authToken">

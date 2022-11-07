@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
+import {MatGridListModule} from '@angular/material/grid-list';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatRadioModule } from '@angular/material/radio';
@@ -189,6 +190,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     MatSelectModule,
     MatToolbarModule,
     MatCheckboxModule,
+    MatGridListModule,
     MatRadioModule,
     MatTabsModule,
     MatCardModule,

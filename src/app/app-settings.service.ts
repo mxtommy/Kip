@@ -87,8 +87,7 @@ export class AppSettingsService {
     if ((typeof config.configVersion !== 'number') || (config.configVersion !== configVersion)) {
       //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
       console.error("[AppSettings Service] Invalid onnectionConfig version. Resetting and loading configuration default");
-      localStorage.setItem("connectionConfig", JSON.stringify(this.getDefaultConnectionConfig()));
-      window.location.reload();
+      this.resetConnection();
     } else {
       this.signalkUrl = {url: config.signalKUrl, new: false};
       this.useDeviceToken = config.useDeviceToken;
@@ -98,6 +97,11 @@ export class AppSettingsService {
       this.sharedConfigName = config.sharedConfigName;
       this.kipUUID = config.kipUUID;
     }
+  }
+
+  public resetConnection() {
+    localStorage.setItem("connectionConfig", JSON.stringify(this.getDefaultConnectionConfig()));
+    this.reloadApp();
   }
 
   private validateAppConfig(config: IConfig): IConfig {
@@ -116,26 +120,7 @@ export class AppSettingsService {
         localStorage.removeItem("zonesConfig");
       }
 
-      let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
-      newDefaultConfig.app = this.getDefaultAppConfig();
-      newDefaultConfig.widget = this.getDefaultWidgetConfig();
-      newDefaultConfig.layout = this.getDefaultLayoutConfig();
-      newDefaultConfig.theme = this.getDefaultThemeConfig();
-      newDefaultConfig.zones = this.getDefaultZonesConfig();
-
-      if (this.useSharedConfig) {
-        this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
-        .then( _ => {
-          console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
-          this.reloadApp();
-        })
-        .catch(error => {
-          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName);
-          config = null;
-        });
-      } else {
-        this.reloadApp();
-      }
+      this.resetSettings();
     }
     return config;
   }
@@ -407,6 +392,7 @@ export class AppSettingsService {
           console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName);
         });
       } else {
+
         this.reloadApp();
       }
   }
