@@ -264,6 +264,12 @@ export class SettingsSignalkComponent implements OnInit {
     }
   }
 
+  public useSharedConfigToggleClick(value: boolean) {
+    if(!value) {
+      this.openUserCredentialModal(null);
+    }
+  }
+
   ngOnDestroy() {
     this.skEndpointServiceStatusSub.unsubscribe();
     this.skFullDocumentStatusSub.unsubscribe();
