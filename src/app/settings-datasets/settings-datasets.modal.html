@@ -2,7 +2,7 @@
 <mat-dialog-content>
     <form name="newDataSetForm" (ngSubmit)="addNewDataSet()" #newDataSetForm="ngForm">
         <mat-horizontal-stepper>
-            <mat-step label="Source">
+            <mat-step label="Source Data">
                 <div class="tab-content">
                     <mat-form-field class="full-width">
                         <mat-select
@@ -36,7 +36,7 @@
                 </div>
                 <button type="button" mat-raised-button color="accent" matStepperNext [disabled]="!settingsForm.selectedPath">Next</button>
             </mat-step>
-            <mat-step label="Data Set">
+            <mat-step label="Data Points">
                 <div class="tab-content">
                     <mat-form-field class="full-width">
                         <input matInput placeholder="Interval(seconds)" type=number name="interval" [(ngModel)]="settingsForm.interval">

@@ -23,6 +23,10 @@ a:link, a:visited {
   text-decoration: none;
 }
 
+.confirmTextarea {
+  resize: none;
+}
+
 .config-size {
   width: 100%;
 }
@@ -62,6 +66,21 @@ flex-direction: column;
 flex-basis: 100%;
 flex: 1;
 margin: 10px;
+}
+
+.sources-radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 15px 0;
+}
+
+.sources-radio-button {
+  margin: 5px;
+  margin-left: 0px !important;
+}
+
+.select-config {
+  margin-left: 28px;
 }
 
 .config-reset-container {

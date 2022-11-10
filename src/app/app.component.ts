@@ -126,15 +126,15 @@ export class AppComponent implements OnInit, OnDestroy {
         break;
 
       case 1: // connecting
-        this.notificationsService.sendSnackbarNotification("Connecting to server.", 5000, true);
+        this.notificationsService.sendSnackbarNotification("Connecting to server.", 2000, true);
        break;
 
       case 2: // connected
-        this.notificationsService.sendSnackbarNotification("Connection successful.", 5000, false);
+        this.notificationsService.sendSnackbarNotification("Connection successful.", 2000, false);
         break;
 
       case 3: // connection error
-        this.notificationsService.sendSnackbarNotification("Error connecting to server.", 5000, false);
+        this.notificationsService.sendSnackbarNotification("Error connecting to server.", 0, false);
         break;
 
       default:

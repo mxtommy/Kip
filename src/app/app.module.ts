@@ -12,7 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
-import {MatGridListModule} from '@angular/material/grid-list';
+import { MatGridListModule } from '@angular/material/grid-list';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatRadioModule } from '@angular/material/radio';
@@ -123,23 +123,28 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
 
 @NgModule({
   declarations: [
+    RootDisplayComponent,
     AppComponent,
     AppHelpComponent,
     SettingsComponent,
     UnitWindowComponent,
     UnitWindowModalComponent,
-    WidgetBlankComponent,
+    DialogUnitSelect,
     DynamicWidgetDirective,
     WidgetUnknownComponent,
+    WidgetBlankComponent,
     WidgetTextGenericComponent,
     FitTextDirective,
-    RootDisplayComponent,
     FilterSelfPipe,
     SafePipe,
     WidgetNumericComponent,
     SettingsDatasetsComponent,
     SettingsDatasetsModalComponent,
     SettingsSignalkComponent,
+    SettingsConfigComponent,
+    SettingsUnitsComponent,
+    SettingsZonesComponent,
+    DialogNewZone,
     WidgetHistoricalComponent,
     LayoutSplitComponent,
     WidgetWindComponent,
@@ -148,7 +153,6 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     GaugeSteelComponent,
     WidgetGaugeNgLinearComponent,
     WidgetGaugeNgRadialComponent,
-    SettingsConfigComponent,
     WidgetTutorialComponent,
     ResetConfigComponent,
     WidgetStateComponent,
@@ -156,8 +160,6 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     WidgetSwitchComponent,
     ModalPathSelectorComponent,
     ObjectKeysPipe,
-    SettingsUnitsComponent,
-    SettingsZonesComponent,
     WidgetIframeComponent,
     AlarmMenuComponent,
     WidgetAutopilotComponent,
@@ -167,10 +169,8 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     WidgetSimpleLinearComponent,
     DataBrowserComponent,
     DataBrowserRowComponent,
-    DialogUnitSelect,
-    DialogNewZone,
-    ModalUserCredentialComponent,
     WidgetRaceTimerComponent,
+    ModalUserCredentialComponent,
     LoginComponent,
   ],
   imports: [

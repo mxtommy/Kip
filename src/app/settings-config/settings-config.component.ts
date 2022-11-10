@@ -1,16 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { FormControl, Validators }    from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, Validators, NgForm }    from '@angular/forms';
 
 import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { AppSettingsService } from '../app-settings.service';
+import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from './../app-settings.interfaces';
 import { NotificationsService } from '../notifications.service';
 import { StorageService } from './../storage.service';
-import { IConfig } from '../app-settings.interfaces';
 
-interface Config {
+interface IRemoteConfig {
+  scope: string,
   name: string
-  scope: string
 }
 
 @Component({
@@ -20,29 +20,36 @@ interface Config {
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy{
 
-  public appJSONConfig: string = '';
-  public connectionJSONConfig: string = '';
-  public widgetJSONConfig: string = '';
-  public layoutJSONConfig: string = '';
-  public themeJSONConfig: string = '';
-  public zonesJSONConfig: string = '';
-
   public hasToken: boolean = false;
   public isTokenTypeDevice: boolean = false;
   private tokenSub: Subscription;
 
   public supportApplicationData: boolean = false;
-  public serverConfigList: Config[] = [];
+  public serverConfigList: IRemoteConfig[] = [];
+
+  public copyConfigForm: FormGroup;
+  public storageLocation: string = null;
+  public locations: string[] = ["Local Storage", "Remote Storage"];
 
   public configName: string = null;
   public configScope = new FormControl('global',Validators.required);
   public configLoad = new FormControl(Validators.required);
+
+  // Raw Editor
+  public liveAppConfig: IAppConfig;
+  public liveConnectionConfig: IConnectionConfig;
+  public liveWidgetConfig: IWidgetConfig;
+  public liveLayoutConfig: ILayoutConfig;
+  public liveThemeConfig: IThemeConfig;
+  public liveZonesConfig: IZonesConfig;
+
 
   constructor(
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
     private notificationsService: NotificationsService,
     private auth: AuththeticationService,
+    private fb: FormBuilder,
   ) { }
 
   //TODO: fix successful snackbar msg on save error (see console log when not admin user and save to Global scope)
@@ -62,15 +69,15 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       }
     });
 
+    this.copyConfigForm = this.fb.group({
+      copySource: ['', Validators.required],
+      sourceTarget: [{value: '', disabled: true}, Validators.required],
+      copyDestination: ['', Validators.required],
+      destinationTarget: [{value: '', disabled: true}, Validators.required],
+    });
+
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
-
-    this.appJSONConfig = JSON.stringify(this.appSettingsService.getAppConfig(), null, 2);
-    this.connectionJSONConfig = JSON.stringify(this.appSettingsService.getConnectionConfig(), null, 2);
-    this.widgetJSONConfig = JSON.stringify(this.appSettingsService.getWidgetConfig(), null, 2);
-    this.layoutJSONConfig = JSON.stringify(this.appSettingsService.getLayoutConfig(), null, 2);
-    this.themeJSONConfig = JSON.stringify(this.appSettingsService.getThemeConfig(), null, 2);
-    this.zonesJSONConfig = JSON.stringify(this.appSettingsService.getZonesConfig(), null, 2);
-
+    this.getLiveConfig();
     this.getServerConfigList();
   }
 
@@ -86,47 +93,92 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
   }
 
-  public saveLocalConfigToserver() {
-    if (this.supportApplicationData) {
-      let localConfig: IConfig = {
-        "app": null,
-        "widget": null,
-        "layout": null,
-        "theme": null,
-        "zones": null,
-      };
-
-      localConfig.app = this.appSettingsService.getAppConfig();
-      localConfig.widget = this.appSettingsService.getWidgetConfig();
-      localConfig.layout = this.appSettingsService.getLayoutConfig();
-      localConfig.theme = this.appSettingsService.getThemeConfig();
-      localConfig.zones = this.appSettingsService.getZonesConfig();
-
-      if (this.storageSvc.setConfig(this.configScope.value, this.configName, localConfig)) {
-        this.notificationsService.sendSnackbarNotification("Configuration " + this.configName + " saved to server", 3000, false);
+  public saveConfig(conf: IConfig, scope: string, name: string) {
+    if (this.supportApplicationData) { // TOD: add to form to block display
+      if (this.storageSvc.setConfig(scope, name, conf)) {
+        this.notificationsService.sendSnackbarNotification(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
         this.getServerConfigList();
       } else {
-        this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 3000, false);
+        this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 0, false);
       }
     }
   }
 
-  public async restoreRemoteServerConfig() {
-    let conf: IConfig = null;
-    try {
-      await this.storageSvc.getConfig(this.configLoad.value.scope, this.configLoad.value.name)
-      .then((config: IConfig) => {
-        conf = config
-      });
-    } catch (error) {
-      this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
+  public async copyConfig() {
+    if (this.copyConfigForm.value.copySource === 'Local Storage') {
+      if (this.copyConfigForm.value.copyDestination === 'Remote Storage') {
+        // local to remote
+        if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
+          this.notificationsService.sendSnackbarNotification("Local Storage cannot be copied to [user / default] when Sign in option is enabled. Use another copy source", 0, false);
+        } else {
+          this.saveConfig(this.getLocalConfig(), this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
+        }
+
+      } else if(this.copyConfigForm.value.copyDestination === 'Local Storage') {
+        // local to local
+        this.notificationsService.sendSnackbarNotification("Local Storage cannot be copies to Local Storage ", 0, false);
+      }
+
+    } else {
+      let conf: IConfig = null;
+      try {
+        await this.storageSvc.getConfig(this.copyConfigForm.value.sourceTarget.scope, this.copyConfigForm.value.sourceTarget.name)
+        .then((config: IConfig) => {
+          conf = config
+        });
+      } catch (error) {
+        this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
+        return;
+      }
+
+      if (this.copyConfigForm.value.copyDestination === 'Remote Storage') {
+        //remote to remote
+        this.saveConfig(conf, this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
+        if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
+          this.appSettingsService.reloadApp();
+        }
+      } else {
+        // remote to local
+        this.appSettingsService.replaceConfig("appConfig", conf.app, false);
+        this.appSettingsService.replaceConfig("widgetConfig", conf.widget, false);
+        this.appSettingsService.replaceConfig("layoutConfig", conf.layout, false);
+        this.appSettingsService.replaceConfig("themeConfig", conf.theme, false);
+        this.appSettingsService.replaceConfig("zonesConfig", conf.zones, true);
+      }
     }
-    if (conf) {
-      this.appSettingsService.replaceConfig("appConfig", JSON.stringify(conf.app), false);
-      this.appSettingsService.replaceConfig("widgetConfig", JSON.stringify(conf.widget), false);
-      this.appSettingsService.replaceConfig("layoutConfig", JSON.stringify(conf.layout), false);
-      this.appSettingsService.replaceConfig("themeConfig", JSON.stringify(conf.theme), false);
-      this.appSettingsService.replaceConfig("zonesConfig", JSON.stringify(conf.zones), true);
+  }
+
+  public deleteConfig () {
+    //TODO:
+  }
+
+  public rawConfigSave(configType: string) {
+    //TODO: push to remote server in Shared Config mode
+    //TODO: convert form to reactive and display property setter error in formControl for better UI
+    switch (configType) {
+      case "connectionConfig":
+        this.appSettingsService.replaceConfig(configType, this.liveConnectionConfig, true);
+        break;
+
+      case "appConfig":
+        this.appSettingsService.replaceConfig(configType, this.liveAppConfig, true);
+        break;
+
+      case "widgetConfig":
+        this.appSettingsService.replaceConfig(configType, this.liveWidgetConfig, true);
+        break;
+
+      case "layoutConfig":
+        this.appSettingsService.replaceConfig(configType, this.liveLayoutConfig, true);
+        break;
+
+      case "themeConfig":
+        this.appSettingsService.replaceConfig(configType, this.liveThemeConfig, true);
+        break;
+
+      case "zonesConfig":
+        this.appSettingsService.replaceConfig(configType, this.liveZonesConfig, true);
+        break;
     }
   }
 
@@ -138,41 +190,119 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     this.appSettingsService.resetConnection();
   }
 
-  public saveToLocalConfig(configType: string) {
-    switch (configType) {
-      case "appConfig":
-        this.appSettingsService.replaceConfig(configType, this.appJSONConfig, true);
-        break;
+  public loadDemoConfig() {
+    this.appSettingsService.loadDemoConfig();
+  }
 
-      case "connectionConfig":
-        this.appSettingsService.replaceConfig(configType, this.connectionJSONConfig, true);
-        break;
+  private getLiveConfig(): void {
+    this.liveAppConfig = this.appSettingsService.getAppConfig();
+    this.liveConnectionConfig = this.appSettingsService.getConnectionConfig();
+    this.liveWidgetConfig = this.appSettingsService.getWidgetConfig();
+    this.liveLayoutConfig = this.appSettingsService.getLayoutConfig();
+    this.liveThemeConfig = this.appSettingsService.getThemeConfig();
+    this.liveZonesConfig = this.appSettingsService.getZonesConfig();
+  }
 
-      case "widgetConfig":
-        this.appSettingsService.replaceConfig(configType, this.widgetJSONConfig, true);
-        break;
+  get jsonZonesConfig() {
+    return JSON.stringify(this.liveZonesConfig, null, 2);
+  }
 
-      case "layoutConfig":
-        this.appSettingsService.replaceConfig(configType, this.layoutJSONConfig, true);
-        break;
+  set jsonZonesConfig(v) {
+    try{
+      this.liveZonesConfig = JSON.parse(v);}
+    catch(error) {
+      console.log(`JSON syntax error: ${error}`);
+    };
+  }
 
-      case "themeConfig":
-        this.appSettingsService.replaceConfig(configType, this.themeJSONConfig, true);
-        break;
+  get jsonThemeConfig() {
+    return JSON.stringify(this.liveThemeConfig, null, 2);
+  }
 
-      case "zonesConfig":
-        console.log(this.zonesJSONConfig);
-        this.appSettingsService.replaceConfig(configType, this.zonesJSONConfig, true);
-        break;
+  set jsonThemeConfig(v) {
+    try{
+      this.liveThemeConfig = JSON.parse(v);}
+    catch(error) {
+      console.log(`JSON syntax error: ${error}`);
+    };
+  }
+
+  get jsonLayoutConfig() {
+    return JSON.stringify(this.liveLayoutConfig, null, 2);
+  }
+
+  set jsonLayoutConfig(v) {
+    try{
+      this.liveLayoutConfig = JSON.parse(v);}
+    catch(error) {
+      console.log(`JSON syntax error: ${error}`);
+    };
+  }
+
+  get jsonWidgetConfig() {
+    return JSON.stringify(this.liveWidgetConfig, null, 2);
+  }
+
+  set jsonWidgetConfig(v) {
+    try{
+      this.liveWidgetConfig = JSON.parse(v);}
+    catch(error) {
+      console.log(`JSON syntax error: ${error}`);
+    };
+  }
+
+  get jsonAppConfig() {
+    return JSON.stringify(this.liveAppConfig, null, 2);
+  }
+
+  set jsonAppConfig(v) {
+    try{
+      this.liveAppConfig = JSON.parse(v);}
+    catch(error) {
+      console.log(`JSON syntax error: ${error}`);
+    };
+  }
+
+  get jsonConnectionConfig() {
+    return JSON.stringify(this.liveConnectionConfig, null, 2);
+  }
+
+  set jsonConnectionConfig(v) {
+    try{
+      this.liveConnectionConfig = JSON.parse(v);}
+    catch(error) {
+      console.log(`JSON syntax error: ${error}`);
+    };
+  }
+
+  public getLocalConfig(): IConfig {
+    let localConfig: IConfig = {
+      "app": this.appSettingsService.getAppConfig(),
+      "widget": this.appSettingsService.getWidgetConfig(),
+      "layout": this.appSettingsService.getLayoutConfig(),
+      "theme": this.appSettingsService.getThemeConfig(),
+      "zones": this.appSettingsService.getZonesConfig(),
+    };
+    return localConfig;
+  }
+
+  public onSourceSelectChange(event): void {
+    if (event.value === 'Local Storage') {
+      this.copyConfigForm.get('sourceTarget').disable();
+    } else {
+      this.copyConfigForm.get('sourceTarget').enable();
     }
   }
 
-  public loadDemoConfig() {
-    this.appSettingsService.loadDemoConfig();
+  public onDestinationSelectChange(event): void {
+    if (event.value === 'Local Storage') {
+      this.copyConfigForm.get('destinationTarget').disable();
+    } else {
+      this.copyConfigForm.get('destinationTarget').enable();
+    }
   }
 
   ngOnDestroy() {
     this.tokenSub.unsubscribe();
   }
-
 }

@@ -403,8 +403,9 @@ export class AppSettingsService {
    * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
    * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
-  public replaceConfig(configType: string, newConfig: string, reloadApp?: boolean) {
-    localStorage.setItem(configType, newConfig);
+  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IWidgetConfig | ILayoutConfig | IThemeConfig | IZonesConfig, reloadApp?: boolean) {
+    let jsonConfig = JSON.stringify(newConfig);
+    localStorage.setItem(configType, jsonConfig);
     if (reloadApp) {
       this.reloadApp();
     }
@@ -412,11 +413,11 @@ export class AppSettingsService {
 
   public loadDemoConfig() {
     localStorage.clear();
-    this.replaceConfig("appConfig", JSON.stringify(DemoAppConfig));
-    this.replaceConfig("connectionConfig", JSON.stringify(DemoConnectionConfig));
-    this.replaceConfig("widgetConfig", JSON.stringify(DemoWidgetConfig));
-    this.replaceConfig("layoutConfig", JSON.stringify(DemoLayoutConfig));
-    this.replaceConfig("themeConfig", JSON.stringify(DemoThemeConfig), true);
+    this.replaceConfig("appConfig", DemoAppConfig);
+    this.replaceConfig("connectionConfig", DemoConnectionConfig);
+    this.replaceConfig("widgetConfig", DemoWidgetConfig);
+    this.replaceConfig("layoutConfig", DemoLayoutConfig);
+    this.replaceConfig("themeConfig", DemoThemeConfig, true);
   }
 
   public reloadApp() {

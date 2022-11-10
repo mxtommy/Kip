@@ -128,7 +128,7 @@ export class StorageService {
     await lastValueFrom(this.http.get<any>(url))
       .then(remoteConfig => {
         conf = remoteConfig;
-        console.log(`[Storage Service] Retreived ${scope} config ${configName}`);
+        console.log(`[Storage Service] Retreived config [${configName}] from [${scope}] scope`);
         if (isInitLoad) {
           this.InitConfig = remoteConfig;
         }
@@ -154,13 +154,11 @@ export class StorageService {
    * @memberof StorageService
    */
   public setConfig(scope: string, configName: string, config: IConfig): Promise<void> {
-    let result: boolean = false;
     let url = this.serverEndpoint + scope +"/kip/" + this.configVersion + "/"+ configName;
 
     return lastValueFrom(this.http.post<any>(url, config))
       .then( _ => {
-        result = true;
-        console.log(`[Storage Service] Saved config ${configName} to server`);
+        console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
       })
       .catch(error => {
         this.handleError(error);
