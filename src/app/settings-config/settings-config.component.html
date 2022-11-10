@@ -1,6 +1,5 @@
-<mat-tab-group>
-  <mat-tab label="Storage Operations">
-    <p class="descriptiveTexts" style="padding-left: 12px">
+    <h3 class="mat-card-title" style="padding-left: 12px; margin-top: 16px;">Configuration Management</h3>
+    <p class="mat-card-subtitle" style="padding-left: 12px">
       Recommended Reading: To understand configuration management and storage
       options, consult the
       <a href="/#/help">Configuration Management Help</a> section.
@@ -9,67 +8,68 @@
       <div class="config-column">
         <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
           <mat-card>
-            <h3>Copy Configuration</h3>
+            <h3>Copy</h3>
             <mat-card-subtitle>
               Create, duplicate and overwrite configurations.
             </mat-card-subtitle>
             <mat-card-content>
-              <div class="tab-content">
-                <label id="sources-radio-group-label">Source</label>
-                <mat-radio-group
-                  formControlName="copySource"
-                  aria-labelledby="sources-radio-group-label"
-                  class="sources-radio-group"
-                  (change)="onSourceSelectChange($event)"
-                >
-                  <mat-radio-button
-                    class="sources-radio-button"
-                    *ngFor="let location of locations"
-                    [value]="location"
+              <div class="config-row">
+                <div class="config-column">
+                  <label id="sources-radio-group-label">Source</label>
+                  <mat-radio-group
+                    formControlName="copySource"
+                    aria-labelledby="sources-radio-group-label"
+                    class="sources-radio-group"
+                    (change)="onSourceSelectChange($event)"
                   >
-                    {{ location }}
-                  </mat-radio-button>
-                </mat-radio-group>
-                <mat-form-field class="select-config">
-                  <mat-label>Configuration</mat-label>
-                  <mat-select formControlName="sourceTarget">
-                    <mat-option
-                      *ngFor="let config of serverConfigList"
-                      [value]="config"
+                    <mat-radio-button
+                      class="sources-radio-button"
+                      *ngFor="let location of locations"
+                      [value]="location"
                     >
-                      {{ config.scope }} / {{ config.name }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-
-              <div class="tab-content">
-                <label id="sources-radio-group-label">Destination</label>
-                <mat-radio-group
-                  formControlName="copyDestination"
-                  aria-labelledby="sources-radio-group-label"
-                  class="sources-radio-group"
-                  (change)="onDestinationSelectChange($event)"
-                >
-                  <mat-radio-button
-                    class="sources-radio-button"
-                    *ngFor="let location of locations"
-                    [value]="location"
+                      {{ location }}
+                    </mat-radio-button>
+                  </mat-radio-group>
+                  <mat-form-field class="select-config">
+                    <mat-label>Configuration</mat-label>
+                    <mat-select formControlName="sourceTarget">
+                      <mat-option
+                        *ngFor="let config of serverConfigList"
+                        [value]="config"
+                      >
+                        {{ config.scope }} / {{ config.name }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="config-column">
+                  <label id="sources-radio-group-label">Destination</label>
+                  <mat-radio-group
+                    formControlName="copyDestination"
+                    aria-labelledby="sources-radio-group-label"
+                    class="sources-radio-group"
+                    (change)="onDestinationSelectChange($event)"
                   >
-                    {{ location }}
-                  </mat-radio-button>
-                </mat-radio-group>
-                <mat-form-field class="select-config">
-                  <mat-label>Configuration</mat-label>
-                  <mat-select formControlName="destinationTarget">
-                    <mat-option
-                      *ngFor="let config of serverConfigList"
-                      [value]="config"
+                    <mat-radio-button
+                      class="sources-radio-button"
+                      *ngFor="let location of locations"
+                      [value]="location"
                     >
-                      {{ config.scope }} / {{ config.name }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
+                      {{ location }}
+                    </mat-radio-button>
+                  </mat-radio-group>
+                  <mat-form-field class="select-config">
+                    <mat-label>Configuration</mat-label>
+                    <mat-select formControlName="destinationTarget">
+                      <mat-option
+                        *ngFor="let config of serverConfigList"
+                        [value]="config"
+                      >
+                        {{ config.scope }} / {{ config.name }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
               </div>
             </mat-card-content>
             <mat-divider inset></mat-divider>
@@ -89,11 +89,11 @@
       <div class="config-column">
         <form
           name="saveConfigForm"
-          (ngSubmit)="saveConfig(this.getLocalConfig(), configScope.value, configName)"
+          (ngSubmit)="saveConfig(this.getLocalConfig(), saveConfigScope.value, saveConfigName)"
           #saveConfigForm="ngForm"
         >
           <mat-card>
-            <h3>Save Configuration</h3>
+            <h3>Save</h3>
             <mat-card-subtitle>
               Save current configuration to server storage
             </mat-card-subtitle>
@@ -104,7 +104,7 @@
                   matInput
                   name="serverConfigName"
                   placeholder="Enter a name for the configuration"
-                  [(ngModel)]="configName"
+                  [(ngModel)]="saveConfigName"
                   [ngModelOptions]="{ standalone: false }"
                   required
                 />
@@ -123,7 +123,7 @@
                 <ng-template #thenBlock>
                   <mat-radio-group
                     aria-label="Scope"
-                    [formControl]="configScope"
+                    [formControl]="saveConfigScope"
                   >
                     <mat-radio-button value="global" disabled="false"
                       >Global</mat-radio-button
@@ -133,7 +133,7 @@
                 <ng-template #elseBlock>
                   <mat-radio-group
                     aria-label="Scope"
-                    [formControl]="configScope"
+                    [formControl]="saveConfigScope"
                   >
                     <mat-radio-button value="user" disabled="false"
                       >User</mat-radio-button
@@ -158,11 +158,56 @@
             </mat-card-actions>
           </mat-card>
         </form>
+
+        <form
+        name="deleteConfigForm"
+        (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name )"
+        #deleteConfigForm="ngForm"
+      >
+        <mat-card>
+          <h3>Delete</h3>
+          <mat-card-subtitle>
+            Delete a configuration from the server
+          </mat-card-subtitle>
+          <mat-card-content>
+            <mat-form-field class="select-config">
+              <mat-label>Configuration</mat-label>
+              <mat-select name="selectedDeleteItem" [(ngModel)]="deleteConfigItem" required>
+                <mat-option
+                  *ngFor="let config of serverConfigList" [value]="config"
+                >
+                  {{ config.scope }} / {{ config.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </mat-card-content>
+          <mat-divider inset></mat-divider>
+          <mat-card-actions align="end">
+            <button
+              mat-raised-button
+              type="submit"
+              [disabled]="!deleteConfigForm.valid"
+              color="accent"
+            >
+              Delete
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </form>
+
+
       </div>
     </div>
+
+
+
     <div class="config-row">
       <div class="config-column">
         <mat-card>
+          <h3>Operations</h3>
+            <mat-card-subtitle>
+              Load predefined configuration or reset configurations to defaults.
+            </mat-card-subtitle>
           <div class="config-reset-container">
             <div class="demo-txt">
               <span class="descriptiveTexts"
@@ -171,7 +216,7 @@
                 settings and local layout configuration.
               </span>
             </div>
-            <div class="demo-btn">
+            <div class="demo-btn btn-div">
               <button
                 mat-raised-button
                 type="button"
@@ -189,7 +234,7 @@
                 The server connections settingd will be kept.
               </span>
             </div>
-            <div class="reset-btn">
+            <div class="reset-btn btn-div">
               <button
                 mat-raised-button
                 type="button"
@@ -207,7 +252,7 @@
                 (Layouts, widgets, etc.).
               </span>
             </div>
-            <div class="config-btn">
+            <div class="config-btn btn-div">
               <button
                 mat-raised-button
                 type="button"
@@ -217,146 +262,179 @@
                 Reset connection
               </button>
             </div>
+            <div class="editor-txt">
+              <span class="descriptiveTexts"
+                >Enable the live configuration editor. The editor modifies is the active in-memory configuration. This
+                configuration represent the current state of the application. You can edit
+                those values by configuration areas and save them to persist your changes to
+                the browser's Local Storage.
+              </span>
+            </div>
+            <div class="editor-bnt btn-div">
+              <mat-checkbox class="example-margin" [(ngModel)]="showRawEditor">Show Editor</mat-checkbox>
+            </div>
           </div>
         </mat-card>
       </div>
     </div>
-  </mat-tab>
-  <mat-tab label="Configuration Editor">
-    <p>
-      The Live Configuration is the active in-memory configuration. It represent
-      the current state of the application. You can edit those values by
-      configuration areas and save them to persist your changes to the browser's
-      Local Storage. If you save your changes, the app will reload with your
-      changes, else your changes will not be applied.
-    </p>
-    <div style="margin-left: 10px; margin-right: 10px">
-      <form (ngSubmit)="rawConfigSave('connectionConfig')">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>Connection</mat-expansion-panel-header>
-          <mat-form-field class="config-size">
-            <textarea
-              class="textheight"
-              matInput
-              placeholder="Raw Application JSON configuration"
-              wrap="off"
-              [(ngModel)]="jsonConnectionConfig"
-              [ngModelOptions]="{name: 'connectionConfig', updateOn: 'submit'}"
-            ></textarea>
-          </mat-form-field>
-          <mat-action-row>
-            <button mat-raised-button type="submit" color="accent">
-              Save Edits
-            </button>
-          </mat-action-row>
-        </mat-expansion-panel>
-      </form>
-      <br />
-      <form (ngSubmit)="rawConfigSave('appConfig')">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>General</mat-expansion-panel-header>
-          <mat-form-field class="config-size">
-            <textarea
-              class="textheight"
-              matInput
-              placeholder="Raw Application JSON configuration"
-              wrap="off"
-              [(ngModel)]="jsonAppConfig"
-              [ngModelOptions]="{name: 'appConfig', updateOn: 'submit'}"
-            >
-            </textarea>
-          </mat-form-field>
-          <mat-action-row>
-            <button mat-raised-button type="submit" color="accent">
-              Save Edits
-            </button>
-          </mat-action-row>
-        </mat-expansion-panel>
-      </form>
-      <br />
-      <form (ngSubmit)="rawConfigSave('widgetConfig')">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>Widgets</mat-expansion-panel-header>
-          <mat-form-field class="config-size">
-            <textarea
-              class="textheight"
-              matInput
-              placeholder="Raw Widget JSON configuration"
-              wrap="off"
-              [(ngModel)]="jsonWidgetConfig"
-              [ngModelOptions]="{name: 'widgetConfig', updateOn: 'submit'}"
-            ></textarea>
-          </mat-form-field>
-          <mat-action-row>
-            <button mat-raised-button type="submit" color="accent">
-              Save Edits
-            </button>
-          </mat-action-row>
-        </mat-expansion-panel>
-      </form>
-      <br />
-      <form (ngSubmit)="rawConfigSave('layoutConfig')">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>Layouts</mat-expansion-panel-header>
-          <mat-form-field class="config-size">
-            <textarea
-              class="textheight"
-              matInput
-              placeholder="Raw Layout JSON configuration"
-              wrap="off"
-              [(ngModel)]="jsonLayoutConfig"
-              [ngModelOptions]="{name: 'layoutConfig', updateOn: 'submit'}"
-            ></textarea>
-          </mat-form-field>
-          <mat-action-row>
-            <button mat-raised-button type="submit" color="accent">
-              Save Edits
-            </button>
-          </mat-action-row>
-        </mat-expansion-panel>
-      </form>
-      <br />
-      <form (ngSubmit)="rawConfigSave('themeConfig')">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>Theme</mat-expansion-panel-header>
-          <mat-form-field class="config-size">
-            <textarea
-              class="textheight"
-              matInput
-              placeholder="Raw Theme JSON configuration"
-              wrap="off"
-              [(ngModel)]="jsonThemeConfig"
-              [ngModelOptions]="{name: 'themeConfig', updateOn: 'submit'}"
-            ></textarea>
-          </mat-form-field>
-          <mat-action-row>
-            <button mat-raised-button type="submit" color="accent">
-              Save Edits
-            </button>
-          </mat-action-row>
-        </mat-expansion-panel>
-      </form>
-      <br />
-      <form (ngSubmit)="rawConfigSave('zonesConfig')">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>Zones</mat-expansion-panel-header>
-          <mat-form-field class="config-size">
-            <textarea
-              class="textheight"
-              matInput
-              placeholder="Raw Layout JSON configuration"
-              wrap="off"
-              [(ngModel)]="jsonZonesConfig"
-              [ngModelOptions]="{name: 'zonesConfig', updateOn: 'submit'}"
-            ></textarea>
-          </mat-form-field>
-          <mat-action-row>
-            <button mat-raised-button type="submit" color="accent">
-              Save Edits
-            </button>
-          </mat-action-row>
-        </mat-expansion-panel>
-      </form>
+    <div class="config-row" *ngIf="showRawEditor">
+      <div class="config-column">
+        <mat-card>
+          <h3>Live Editor</h3>
+          <mat-card-subtitle>
+            The live configuration editor edits is the active in-memory configuration. This
+            configuration represent the current state of the application. You can edit
+            those values by configuration areas and save them to persist your changes to
+            the browser's Local Storage.
+          </mat-card-subtitle>
+          <mat-card-content>
+          <div style="margin-left: 10px; margin-right: 10px">
+            <form (ngSubmit)="rawConfigSave('connectionConfig')">
+              <mat-expansion-panel color="accent">
+                <mat-expansion-panel-header>Connection</mat-expansion-panel-header>
+                <mat-form-field class="config-size">
+                  <textarea
+                    class="textheight"
+                    matInput
+                    placeholder="Raw Application JSON configuration"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    [(ngModel)]="jsonConnectionConfig"
+                    [ngModelOptions]="{name: 'connectionConfig', updateOn: 'submit'}"
+                  ></textarea>
+                </mat-form-field>
+                <mat-action-row>
+                  <button mat-raised-button type="submit" color="accent">
+                    Save Edits
+                  </button>
+                </mat-action-row>
+              </mat-expansion-panel>
+            </form>
+            <br />
+            <form (ngSubmit)="rawConfigSave('appConfig')">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>General</mat-expansion-panel-header>
+                <mat-form-field class="config-size">
+                  <textarea
+                    class="textheight"
+                    matInput
+                    placeholder="Raw Application JSON configuration"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    [(ngModel)]="jsonAppConfig"
+                    [ngModelOptions]="{name: 'appConfig', updateOn: 'submit'}"
+                  >
+                  </textarea>
+                </mat-form-field>
+                <mat-action-row>
+                  <button mat-raised-button type="submit" color="accent">
+                    Save Edits
+                  </button>
+                </mat-action-row>
+              </mat-expansion-panel>
+            </form>
+            <br />
+            <form (ngSubmit)="rawConfigSave('widgetConfig')">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>Widgets</mat-expansion-panel-header>
+                <mat-form-field class="config-size">
+                  <textarea
+                    class="textheight"
+                    matInput
+                    placeholder="Raw Widget JSON configuration"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    [(ngModel)]="jsonWidgetConfig"
+                    [ngModelOptions]="{name: 'widgetConfig', updateOn: 'submit'}"
+                  ></textarea>
+                </mat-form-field>
+                <mat-action-row>
+                  <button mat-raised-button type="submit" color="accent">
+                    Save Edits
+                  </button>
+                </mat-action-row>
+              </mat-expansion-panel>
+            </form>
+            <br />
+            <form (ngSubmit)="rawConfigSave('layoutConfig')">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>Layouts</mat-expansion-panel-header>
+                <mat-form-field class="config-size">
+                  <textarea
+                    class="textheight"
+                    matInput
+                    placeholder="Raw Layout JSON configuration"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    [(ngModel)]="jsonLayoutConfig"
+                    [ngModelOptions]="{name: 'layoutConfig', updateOn: 'submit'}"
+                  ></textarea>
+                </mat-form-field>
+                <mat-action-row>
+                  <button mat-raised-button type="submit" color="accent">
+                    Save Edits
+                  </button>
+                </mat-action-row>
+              </mat-expansion-panel>
+            </form>
+            <br />
+            <form (ngSubmit)="rawConfigSave('themeConfig')">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>Theme</mat-expansion-panel-header>
+                <mat-form-field class="config-size">
+                  <textarea
+                    class="textheight"
+                    matInput
+                    placeholder="Raw Theme JSON configuration"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    [(ngModel)]="jsonThemeConfig"
+                    [ngModelOptions]="{name: 'themeConfig', updateOn: 'submit'}"
+                  ></textarea>
+                </mat-form-field>
+                <mat-action-row>
+                  <button mat-raised-button type="submit" color="accent">
+                    Save Edits
+                  </button>
+                </mat-action-row>
+              </mat-expansion-panel>
+            </form>
+            <br />
+            <form (ngSubmit)="rawConfigSave('zonesConfig')">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>Zones</mat-expansion-panel-header>
+                <mat-form-field class="config-size">
+                  <textarea
+                    class="textheight"
+                    matInput
+                    placeholder="Raw Layout JSON configuration"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    [(ngModel)]="jsonZonesConfig"
+                    [ngModelOptions]="{name: 'zonesConfig', updateOn: 'submit'}"
+                  ></textarea>
+                </mat-form-field>
+                <mat-action-row>
+                  <button mat-raised-button type="submit" color="accent">
+                    Save Edits
+                  </button>
+                </mat-action-row>
+              </mat-expansion-panel>
+            </form>
+          </div>
+         </mat-card-content>
+        </mat-card>
+      </div>
     </div>
-  </mat-tab>
-</mat-tab-group>
