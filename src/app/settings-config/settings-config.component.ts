@@ -31,9 +31,9 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public storageLocation: string = null;
   public locations: string[] = ["Local Storage", "Remote Storage"];
 
-  public configName: string = null;
-  public configScope = new FormControl('global',Validators.required);
-  public configLoad = new FormControl(Validators.required);
+  public saveConfigName: string = null;
+  public saveConfigScope = new FormControl('global',Validators.required);
+  public deleteConfigItem: IRemoteConfig;
 
   // Raw Editor
   public liveAppConfig: IAppConfig;
@@ -42,7 +42,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public liveLayoutConfig: ILayoutConfig;
   public liveThemeConfig: IThemeConfig;
   public liveZonesConfig: IZonesConfig;
-
+  public showRawEditor = false;
 
   constructor(
     private appSettingsService: AppSettingsService,
@@ -60,7 +60,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         this.hasToken = true;
         this.isTokenTypeDevice = token.isDeviceAccessToken;
         if (!token.isDeviceAccessToken) {
-          this.configScope.setValue('user');
+          this.saveConfigScope.setValue('user');
         }
 
       } else {
@@ -148,8 +148,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
   }
 
-  public deleteConfig () {
-    //TODO:
+  public deleteConfig (scope: string, name: string) {
+    this.storageSvc.removeItem(scope, name);
+    this.getServerConfigList();
+    this.notificationsService.sendSnackbarNotification(`Configuration [${name}] deleted from [${scope}] storage scope`, 5000, false);
   }
 
   public rawConfigSave(configType: string) {

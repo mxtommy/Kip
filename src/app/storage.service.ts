@@ -29,11 +29,11 @@ export class StorageService {
   public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
-  private patch = function(arg: IPatchAction){ // http JSON Patch function
+  private patch = function(arg: IPatchAction) { // http JSON Patch function
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
-        //tap((_) => console.log("[Storage Service] Patch request completed successfuly")),
+        tap((_) => console.log("[Storage Service] Remote config patch request completed successfuly")),
         catchError((error) => this.handleError(error))
       );
   }
@@ -61,10 +61,10 @@ export class StorageService {
       }
     });
 
-    // Patch request queue to insure JSON Patch requests to SK server don't run into collisions/conflicts. SK does not handle concurrent data access call
+    // Patch request queue to insure JSON Patch requests to SK server don't run over each other and cause collisions/conflicts. SK does not handle multiple async applicationData access calls
     this.patchQueue$
       .pipe(
-          concatMap((arg: IPatchAction) => this.patch(arg)) // insures call senquencing
+          concatMap((arg: IPatchAction) => this.patch(arg)) // insures orderly call senquencing
         )
       .subscribe(_ => {
         //console.log("[Storage Service] Subscription results received")
@@ -245,8 +245,17 @@ export class StorageService {
   /**
    * removeItem
    */
-  public removeItem() {
-
+  public removeItem(scope: string, name: string) {
+    let url = this.serverEndpoint + scope + "/kip/" + this.configVersion;
+    let document =
+    [
+      {
+          "op": "remove",
+          "path": `/${name}`
+      }
+    ]
+    let patch: IPatchAction = {url, document};
+    this.patchQueue$.next(patch);
   }
 
   /**

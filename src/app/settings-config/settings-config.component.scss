@@ -33,6 +33,7 @@ a:link, a:visited {
 
 .textheight {
   height: 120px;
+  background-color: black;
 }
 
 .almost-full-width {
@@ -83,6 +84,14 @@ margin: 10px;
   margin-left: 28px;
 }
 
+.btn-div {
+  align-self: center;
+}
+
+.btn-div button {
+  width: -webkit-fill-available;
+}
+
 .config-reset-container {
   display: grid;
   grid-template-columns: [col-start] auto [col1-end] min-content [col2-end];
@@ -90,7 +99,8 @@ margin: 10px;
   grid-template-areas:
     "demo-txt demo-btn"
     "reset-txt reset-btn"
-    "config-txt config-btn";
+    "config-txt config-btn"
+    "editor-txt editor-btn";
   row-gap: 20px;
   column-gap: 10px;
 }
@@ -103,20 +113,12 @@ margin: 10px;
   grid-area: demo-btn;
 }
 
-.demo-btn button {
-  width: -webkit-fill-available;
-}
-
 .reset-txt {
   grid-area: reset-txt;
 }
 
 .reset-btn {
   grid-area: reset-btn;
-}
-
-.reset-btn button {
-  width: -webkit-fill-available;
 }
 
 .config-txt {
@@ -127,6 +129,10 @@ margin: 10px;
   grid-area: config-btn;
 }
 
-.config-btn button {
-  width: -webkit-fill-available;
+.editor-txt {
+  grid-area: editor-txt;
+}
+
+.editor-btn {
+  grid-area: editor-btn;
 }
