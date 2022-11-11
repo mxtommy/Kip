@@ -166,8 +166,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   }
 
   public rawConfigSave(configType: string) {
-    //TODO: this only works for local config. Push to remote server in Shared Config mode
-    //TODO: convert form to reactive and display property setter error in formControl for better UI
     switch (configType) {
       case "IConnectionConfig":
           this.appSettingsService.replaceConfig('connectionConfig', this.liveConnectionConfig, true);
