@@ -32,7 +32,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public locations: string[] = ["Local Storage", "Remote Storage"];
 
   public saveConfigName: string = null;
-  public saveConfigScope = new FormControl('global',Validators.required);
+  public saveConfigScope: string = null;
   public deleteConfigItem: IRemoteConfig;
 
   // Raw Editor
@@ -60,12 +60,12 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         this.hasToken = true;
         this.isTokenTypeDevice = token.isDeviceAccessToken;
         if (!token.isDeviceAccessToken) {
-          this.saveConfigScope.setValue('user');
+          this.saveConfigScope ='user';
+        } else {
+          this.saveConfigScope ='glodal';
         }
-
       } else {
         this.hasToken = false;
-
       }
     });
 
@@ -75,6 +75,18 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       copyDestination: ['', Validators.required],
       destinationTarget: [{value: '', disabled: true}, Validators.required],
     });
+
+    // set control form options
+    if (!this.hasToken) {
+      let src = this.copyConfigForm.get('copySource');
+      src.setValue('Remote Storage');
+      src.disable();
+      this.copyConfigForm.get('sourceTarget').enable();
+
+      let dest = this.copyConfigForm.get('copyDestination');
+      dest.setValue('Local Storage');
+      dest.disable();
+    }
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     this.getLiveConfig();
