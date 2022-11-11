@@ -165,12 +165,28 @@ export class StorageService {
       });
   }
 
+  /**
+   * Udpates JSON configuration entry section in the server application storage. This uses the JSON Patch standard.
+   *
+   * @param {string} ObjType string describing the type of configuration object. Value can be: IAppConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, Array\<IUnitDefaults\>, Array\<IDataSet\>, Array\<IZone\>, IZonesConfig, INotificationConfig
+   * @param {*} value unstrignified update object. The resulting outgoing POST request will automatically strignify.
+   * @memberof StorageService
+   */
   public patchConfig(ObjType: string, value: any) {
 
     let url = this.serverEndpoint + "user/kip/" + this.configVersion;
     let document;
 
     switch (ObjType) {
+      case "IAppConfig":
+        document =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/app`,
+            "value": value
+          }]
+        break;
+
       case "IThemeConfig":
         document =
           [{
@@ -225,6 +241,15 @@ export class StorageService {
           }]
         break;
 
+      case "IZonesConfig":
+        document =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/zones`,
+            "value": value
+          }]
+        break;
+
       case "INotificationConfig":
         document =
           [{
@@ -243,7 +268,11 @@ export class StorageService {
   }
 
   /**
-   * removeItem
+   * Deletes/removes a full configuration entry from the server ApplicationStorage using JSON Patch standard.
+   *
+   * @param {string} scope destination storage scope of either global or user value
+   * @param {string} name configuration name to delete
+   * @memberof StorageService
    */
   public removeItem(scope: string, name: string) {
     let url = this.serverEndpoint + scope + "/kip/" + this.configVersion;
@@ -259,7 +288,7 @@ export class StorageService {
   }
 
   /**
-   * name
+   * *** Not implemented
    */
   public clear() {
 

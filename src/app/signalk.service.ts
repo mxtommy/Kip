@@ -381,7 +381,7 @@ export class SignalKService {
 
   }
 
-  getPathUnitType(path: string): string { //TODO(David): Look at Unit Path Type
+  getPathUnitType(path: string): string {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {

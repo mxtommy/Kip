@@ -52,7 +52,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     private fb: FormBuilder,
   ) { }
 
-  //TODO: fix successful snackbar msg on save error (see console log when not admin user and save to Global scope)
   ngOnInit() {
     // Token observer
     this.tokenSub = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
@@ -167,31 +166,51 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   }
 
   public rawConfigSave(configType: string) {
-    //TODO: push to remote server in Shared Config mode
+    //TODO: this only works for local config. Push to remote server in Shared Config mode
     //TODO: convert form to reactive and display property setter error in formControl for better UI
     switch (configType) {
-      case "connectionConfig":
-        this.appSettingsService.replaceConfig(configType, this.liveConnectionConfig, true);
+      case "IConnectionConfig":
+          this.appSettingsService.replaceConfig('connectionConfig', this.liveConnectionConfig, true);
         break;
 
-      case "appConfig":
-        this.appSettingsService.replaceConfig(configType, this.liveAppConfig, true);
+      case "IAppConfig":
+        if (this.hasToken && !this.isTokenTypeDevice) {
+          this.storageSvc.patchConfig(configType, this.liveAppConfig);
+        } else {
+        this.appSettingsService.replaceConfig('appConfig', this.liveAppConfig, true);
+        }
         break;
 
-      case "widgetConfig":
-        this.appSettingsService.replaceConfig(configType, this.liveWidgetConfig, true);
+      case "IWidgetConfig":
+        if (this.hasToken && !this.isTokenTypeDevice) {
+          this.storageSvc.patchConfig(configType, this.liveWidgetConfig);
+        } else {
+        this.appSettingsService.replaceConfig('widgetConfig', this.liveWidgetConfig, true);
+        }
         break;
 
-      case "layoutConfig":
-        this.appSettingsService.replaceConfig(configType, this.liveLayoutConfig, true);
+      case "ILayoutConfig":
+        if (this.hasToken && !this.isTokenTypeDevice) {
+          this.storageSvc.patchConfig(configType, this.liveLayoutConfig);
+        } else {
+        this.appSettingsService.replaceConfig('layoutConfig', this.liveLayoutConfig, true);
+        }
         break;
 
-      case "themeConfig":
-        this.appSettingsService.replaceConfig(configType, this.liveThemeConfig, true);
+      case "IThemeConfig":
+        if (this.hasToken && !this.isTokenTypeDevice) {
+          this.storageSvc.patchConfig(configType, this.liveThemeConfig);
+        } else {
+        this.appSettingsService.replaceConfig('themeConfig', this.liveThemeConfig, true);
+        }
         break;
 
-      case "zonesConfig":
-        this.appSettingsService.replaceConfig(configType, this.liveZonesConfig, true);
+      case "IZonesConfig":
+        if (this.hasToken && !this.isTokenTypeDevice) {
+          this.storageSvc.patchConfig(configType, this.liveZonesConfig);
+        } else {
+        this.appSettingsService.replaceConfig("zonesConfig", this.liveZonesConfig, true);
+        }
         break;
     }
   }

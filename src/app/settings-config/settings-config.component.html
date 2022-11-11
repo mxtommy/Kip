@@ -255,10 +255,9 @@
           </div>
           <div class="editor-txt">
             <span class="descriptiveTexts"
-              >Enable the Local configuration editor. The editor modifies is the active in-memory configuration. This
+              >Enable the configuration editor. The editor modifies is the active in-memory configuration. This
               configuration represent the current state of the application. You can edit
-              those values by configuration areas and save them to persist your changes to
-              the browser's Local Storage.
+              those values by configuration areas and save them to persist your changes.
             </span>
           </div>
           <div class="editor-bnt btn-div">
@@ -273,14 +272,14 @@
         <mat-card-subtitle>
           This editor displays the active in-memory configuration. This
           configuration represent the current state of the application. You can edit
-          those values by configuration areas and save them to persist your changes to
-          the browser's Local Storage.
-          <i>If you are in Sign in mode, you can still read the configuration but,
-            saving your changes will have no effect.</i>
+          those values by configuration areas and save them to persist your changes.
+          <i>Config is in raw json and no validation on save. Make sure you double
+            check your changes, else you lose your configuration. A good choice is
+            to back up first using Save config above!</i>
         </mat-card-subtitle>
         <mat-card-content>
         <div style="margin-left: 10px; margin-right: 10px">
-          <form (ngSubmit)="rawConfigSave('connectionConfig')">
+          <form (ngSubmit)="rawConfigSave('IConnectionConfig')">
             <mat-expansion-panel color="accent">
               <mat-expansion-panel-header>Connection</mat-expansion-panel-header>
               <mat-form-field class="config-size">
@@ -304,7 +303,7 @@
             </mat-expansion-panel>
           </form>
           <br />
-          <form (ngSubmit)="rawConfigSave('appConfig')">
+          <form (ngSubmit)="rawConfigSave('IAppConfig')">
             <mat-expansion-panel>
               <mat-expansion-panel-header>General</mat-expansion-panel-header>
               <mat-form-field class="config-size">
@@ -329,7 +328,7 @@
             </mat-expansion-panel>
           </form>
           <br />
-          <form (ngSubmit)="rawConfigSave('widgetConfig')">
+          <form (ngSubmit)="rawConfigSave('IWidgetConfig')">
             <mat-expansion-panel>
               <mat-expansion-panel-header>Widgets</mat-expansion-panel-header>
               <mat-form-field class="config-size">
@@ -353,7 +352,7 @@
             </mat-expansion-panel>
           </form>
           <br />
-          <form (ngSubmit)="rawConfigSave('layoutConfig')">
+          <form (ngSubmit)="rawConfigSave('ILayoutConfig')">
             <mat-expansion-panel>
               <mat-expansion-panel-header>Layouts</mat-expansion-panel-header>
               <mat-form-field class="config-size">
@@ -377,7 +376,7 @@
             </mat-expansion-panel>
           </form>
           <br />
-          <form (ngSubmit)="rawConfigSave('themeConfig')">
+          <form (ngSubmit)="rawConfigSave('IThemeConfig')">
             <mat-expansion-panel>
               <mat-expansion-panel-header>Theme</mat-expansion-panel-header>
               <mat-form-field class="config-size">
@@ -401,7 +400,7 @@
             </mat-expansion-panel>
           </form>
           <br />
-          <form (ngSubmit)="rawConfigSave('zonesConfig')">
+          <form (ngSubmit)="rawConfigSave('IZonesConfig')">
             <mat-expansion-panel>
               <mat-expansion-panel-header>Zones</mat-expansion-panel-header>
               <mat-form-field class="config-size">

@@ -223,7 +223,6 @@ export class SignalKDeltaService {
     // Read raw message and route to appropriate sub
     if (typeof(message.self) != 'undefined') {  // is Hello message
       this.server.setServerInfo(message.name, message.version, message.roles);
-      //TODO: Check if needed... also provided from full ducoment service this.signalK.setSelf(message.self);
       return;
     }
 
