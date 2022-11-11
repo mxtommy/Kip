@@ -257,13 +257,6 @@ export class SettingsSignalkComponent implements OnInit {
     })
   }
 
-  private unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
-    }
-  }
-
   public useSharedConfigToggleClick(value: boolean) {
     if(!value) {
       this.openUserCredentialModal(null);
@@ -278,5 +271,6 @@ export class SettingsSignalkComponent implements OnInit {
     this.isLoggedInSub.unsubscribe();
     // this.updatesMinutesSub.unsubscribe();
     this.updatesSecondSub.unsubscribe();
+    this.themeNameSub.unsubscribe();
   }
 }
