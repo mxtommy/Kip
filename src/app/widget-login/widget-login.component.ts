@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AuththeticationService } from "../auththetication.service";
-import { AppSettingsService } from './../app-settings.service';
-import { NotificationsService } from './../notifications.service';
+import { AppSettingsService } from '../app-settings.service';
+import { NotificationsService } from '../notifications.service';
 import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
-import { IConnectionConfig } from "./../app-settings.interfaces";
+import { IConnectionConfig } from "../app-settings.interfaces";
 import { HttpErrorResponse } from '@angular/common/http';
 
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  selector: 'app-widget-login',
+  templateUrl: './widget-login.component.html',
+  styleUrls: ['./widget-login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class WidgetLoginComponent implements OnInit {
   public connectionConfig: IConnectionConfig = null;
 
   constructor(
