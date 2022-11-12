@@ -99,7 +99,7 @@
 @import 'app/modal-path-selector/modal-path-selector.component.scss';
 @import 'app/widget-blank/widget-blank.component.scss';
 @import 'app/svg-wind/svg-wind.component.scss'; // for most svg Widget components
-@import 'app/widget-state/widget-state.component.scss';
+@import 'app/widget-button/widget-button.component.scss';
 @import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
 @import 'app/widget-numeric/widget-numeric.component.scss';
 @import 'app/widget-race-timer/widget-race-timer.component.scss';
@@ -117,7 +117,7 @@
   @include modal-path-selector-theme($theme);
   @include widget-blank-theme($theme);
   @include svg-wind-theme($theme); // for both svg-wind and svg-autopilot
-  @include widget-state-theme($theme);
+  @include widget-button-theme($theme);
   @include widget-numeric-theme($theme);
   @include widget-racetimer-theme($theme);
   @include widget-ngGauge-linear-theme($theme);
