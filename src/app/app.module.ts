@@ -74,7 +74,7 @@ import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
 import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
 import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
-import { WidgetStateComponent } from './widget-state/widget-state.component';
+import { WidgetButtonComponent } from './widget-button/widget-button.component';
 import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
 import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
@@ -155,7 +155,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     WidgetGaugeNgRadialComponent,
     WidgetTutorialComponent,
     ResetConfigComponent,
-    WidgetStateComponent,
+    WidgetButtonComponent,
     ModalWidgetComponent,
     WidgetSwitchComponent,
     ModalPathSelectorComponent,

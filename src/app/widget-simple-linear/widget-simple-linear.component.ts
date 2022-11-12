@@ -46,6 +46,7 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
   @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDarkElement: ElementRef;
   @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
+  @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
 
   activeWidget: IWidget;
   config: IWidgetSvcConfig;

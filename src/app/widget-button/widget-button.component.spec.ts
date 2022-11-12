@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { WidgetStateComponent } from './widget-state.component';
+import { WidgetButtonComponent } from './widget-button.component';
 
-describe('WidgetStateComponent', () => {
-  let component: WidgetStateComponent;
-  let fixture: ComponentFixture<WidgetStateComponent>;
+describe('WidgetButtonComponent', () => {
+  let component: WidgetButtonComponent;
+  let fixture: ComponentFixture<WidgetButtonComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetStateComponent ]
+      declarations: [ WidgetButtonComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(WidgetStateComponent);
+    fixture = TestBed.createComponent(WidgetButtonComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

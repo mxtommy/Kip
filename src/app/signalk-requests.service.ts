@@ -164,7 +164,7 @@ export class SignalkRequestsService {
 
       const currentStatusCode = deltaStatusCodes[delta.statusCode];
 
-      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401)) {
+      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401 || this.requests[index].statusCode == 405)) {
         this.requests[index].statusCodeDescription = currentStatusCode;
 
         if (this.requests[index].statusCode == 202) {
@@ -172,14 +172,18 @@ export class SignalkRequestsService {
           return;
         }
 
+        if (this.requests[index].statusCode == 405) {
+          console.log("[Request Service] Status Code: " + this.requests[index].statusCode + " - " + this.requests[index].message);
+        }
+
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
           this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
-          console.log("[Request Service] " + delta.accessRequest.permission + ": Device Access Token received");
+          console.log(`[Request Service] ${delta.accessRequest.permission}: Device Access Token received`);
           this.auth.setDeviceAccessToken(delta.accessRequest.token);
 
         } else if (delta.login !== undefined) {
           // Delta (WebSocket) login not implemented. Use REST login from
-          //Authetification service to obtain Session token
+          // Authetification service to obtain Session token
           if (delta.login.token !== undefined) {
             // Do logic
           }
@@ -191,8 +195,8 @@ export class SignalkRequestsService {
         console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
-        this.requestStatus$.next(this.requests[index]);    // Broadcast results
-        this.requests.splice(index, 1);                 // result dispatched, cleanup array
+        this.requestStatus$.next(this.requests[index]);    // dispatched results
+        this.requests.splice(index, 1);                 // cleanup array
       } catch (err) {
         this.requestStatus$.error(err);
         console.error("[Request Service] " + err);

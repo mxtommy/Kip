@@ -1,11 +1,12 @@
 @use '~@angular/material' as mat;
 
-@mixin widget-simple-linear-theme($theme) {
+@mixin widget-button-theme($theme) {
 
   $ngGauge: map-get($theme, ngGauge);
   $themeForeground: map-get($theme, foreground);
+  $themeBackground: map-get($theme, background);
 
-  app-widget-simple-linear {
+  app-widget-button {
     .primary {
       color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceLight);
     }
@@ -33,14 +34,22 @@
   }
 }
 
-.simpleLinearGauge {
-  display:block;
+.wrapper {
   position: relative;
-  border:none;
-  margin: 0px;
-  padding:  5px 0px;
   width: 100%;
   height: 100%;
+}
+
+.indicatorBorder {
+margin-left: 5%;
+margin-right: 5%;
+top: 5%;
+position: relative;
+width: 90%;
+height: 90%;
+box-sizing: border-box;
+border: solid 0.2em;
+border-radius: 1em / 1em;
 }
 
 .settingsButton {
@@ -48,17 +57,4 @@
   bottom: 5%;
   left: 50%;
   transform: translate(-50%);
-}
-
-
-.tab-group {
-  border: 1px solid #e8e8e8;
-}
-
-.tab-content {
-  padding: 16px;
-}
-
-.full-width {
-  width: 100%;
 }
