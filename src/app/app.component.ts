@@ -32,7 +32,8 @@ export class AppComponent implements OnInit, OnDestroy {
   fullscreenStatus = false;
 
   themeName: string;
-  themeClass: string = 'modern-dark fullheight';
+  activeThemeClass: string = 'modern-dark fullheight';
+  activeTheme: string;
   themeNameSub: Subscription;
 
   isNightMode: boolean = false;
@@ -62,14 +63,26 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     // Theme operations sub
-    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
-      newTheme => {
-        this.themeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
-        if (this.themeName) {
-          this.overlayContainer.getContainerElement().classList.remove(this.themeName);
+    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
+        this.activeThemeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
+
+        if (!this.themeName) { // first run
+          this.themeName = newTheme;
+        } else  {
+          this.overlayContainer.getContainerElement().classList.remove(this.activeTheme);
         }
-        this.overlayContainer.getContainerElement().classList.add(newTheme);
-        this.themeName = newTheme;
+
+        if (!this.isNightMode) {
+          if (newTheme !== this.themeName) {
+            this.overlayContainer.getContainerElement().classList.add(newTheme);
+            this.themeName = newTheme;
+          } else {
+            this.overlayContainer.getContainerElement().classList.add(this.themeName);
+          }
+        } else {
+          this.overlayContainer.getContainerElement().classList.add(newTheme);
+        }
+        this.activeTheme = newTheme;
       }
     );
 
@@ -152,7 +165,7 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.isNightMode) {
       this.appSettingsService.setThemName("nightMode");
     } else {
-      this.appSettingsService.setThemName(this.appSettingsService.getThemeName());
+      this.appSettingsService.setThemName(this.themeName);
     }
   }
 

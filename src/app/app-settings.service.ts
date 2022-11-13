@@ -1,4 +1,3 @@
-import { NotificationsService } from './notifications.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
@@ -173,7 +172,6 @@ export class AppSettingsService {
   }
 
   private pushSettings(): void {
-
     this.themeName.next(this.activeConfig.theme.themeName);
     this.dataSets = this.activeConfig.app.dataSets;
     this.unitDefaults.next(this.activeConfig.app.unitDefaults);
