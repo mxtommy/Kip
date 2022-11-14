@@ -108,21 +108,21 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
     this.buttonColorOn = window.getComputedStyle(this.backgroundElement.nativeElement).color;
     switch (this.config.barColor) {
       case "primary":
-        this.buttonLabelColorOff = 'black';//window.getComputedStyle(this.backgroundElement.nativeElement).color;
+        this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
         this.buttonLabelColorOn = window.getComputedStyle(this.primaryElement.nativeElement).color;
         this.buttonBorberColorOff = window.getComputedStyle(this.primaryElement.nativeElement).color;
         this.buttonBorberColorOn = window.getComputedStyle(this.primaryDarkElement.nativeElement).color;
         break;
 
       case "accent":
-        this.buttonLabelColorOff = 'black'; //window.getComputedStyle(this.accentElement.nativeElement).color;
+        this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
         this.buttonLabelColorOn = window.getComputedStyle(this.accentElement.nativeElement).color;
         this.buttonBorberColorOff = window.getComputedStyle(this.accentElement.nativeElement).color;
         this.buttonBorberColorOn = window.getComputedStyle(this.accentDarkElement.nativeElement).color;
         break;
 
       case "warn":
-        this.buttonLabelColorOff = 'black'; //window.getComputedStyle(this.warnElement.nativeElement).color;
+        this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
         this.buttonLabelColorOn = window.getComputedStyle(this.warnElement.nativeElement).color;
         this.buttonBorberColorOff = window.getComputedStyle(this.warnElement.nativeElement).color;
         this.buttonBorberColorOn = window.getComputedStyle(this.warnDarkElement.nativeElement).color;
@@ -155,6 +155,7 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['boolPath'].path, this.config.paths['boolPath'].source).subscribe(
       newValue => {
         this.state = newValue.value;
+        this.updateBtnCanvas();
       }
     );
   }
@@ -193,6 +194,7 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
       themeChange => {
         setTimeout(() => {   // delay so browser getComputedStyles has time to complete theme style change.
           this.updateGaugeSettings();
+          this.updateBtnCanvas();
         },50);
       })
   }
