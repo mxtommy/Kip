@@ -102,6 +102,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       this.currentValueLength = 0; //will force resetting the font size
       this.updateCanvas();
       this.updateCanvasBG();
+    } else {
+      this.updateCanvasBG();
     }
 
   }
