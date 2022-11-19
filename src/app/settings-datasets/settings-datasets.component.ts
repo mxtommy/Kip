@@ -1,5 +1,8 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
 
 import { SignalKService } from '../signalk.service';
 import { IPathObject } from "../signalk-interfaces";
@@ -17,23 +20,38 @@ interface settingsForm {
   templateUrl: './settings-datasets.component.html',
   styleUrls: ['./settings-datasets.component.scss']
 })
-export class SettingsDatasetsComponent implements OnInit {
+export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
+
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
 
   selectedDataSet: string;
   dataSets: IDataSet[];
+  tableData = new MatTableDataSource([]);
+  displayedColumns: string[] = ['path', 'updateTimer', 'dataPoints', 'actions'];
 
   constructor(
     public dialog: MatDialog,
+    private cdRef: ChangeDetectorRef,
     private SignalKService: SignalKService,
     private DataSetService: DataSetService
     ) { }
 
   ngOnInit() {
+
     this.loadDataSets();
   }
 
   loadDataSets() {
     this.dataSets = this.DataSetService.getDataSets();
+    this.tableData.data = this.DataSetService.getDataSets();
+  }
+
+  ngAfterViewInit() {
+    this.tableData.paginator = this.paginator;
+    this.tableData.sort = this.sort;
+    this.tableData.filter = "";
+    this.cdRef.detectChanges();
   }
 
   openNewDataSetModal() {
@@ -44,9 +62,22 @@ export class SettingsDatasetsComponent implements OnInit {
   }
 
 
-  deleteDataSet(uuid:string) {
+  deleteDataSet(uuid: string) {
     this.DataSetService.deleteDataSet(uuid); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
     this.loadDataSets();
+  }
+
+  trackByUuid(index: number, item: IDataSet): string {
+    return `${item.uuid}`;
+  }
+
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.tableData.filter = filterValue.trim().toLowerCase();
+
+    if (this.tableData.paginator) {
+      this.tableData.paginator.firstPage();
+    }
   }
 
 }

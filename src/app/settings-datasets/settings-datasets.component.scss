@@ -7,33 +7,27 @@
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
 
-  table, th, td {
-    border-bottom: 1px solid mat.get-color-from-palette($foreground, divider);
-  }
+}
 
-  th {
-    padding: 10px;
-    text-align: left;
-    background-color: mat.get-color-from-palette($accent, 300);
-    color: mat.get-color-from-palette($foreground, text);
-  }
-
-  td {
-    padding: 5px 5px 5px 10px;
-    text-align: left;
-    font-size: 14px;
-  }
-
-  tr:nth-child(even) {
-    background-color: mat.get-color-from-palette($background, hover);
-  }
-
+.full-display {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 500;
 }
 
 .full-width {
-    width: 100%;
+  width: 100%;
 }
 
-table {
-  border-collapse: collapse;
+
+.small-button {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  min-height: 20px;
+  vertical-align: top;
+  font-size: 14px;
+  padding: 0 0;
+  margin: 0;
 }
