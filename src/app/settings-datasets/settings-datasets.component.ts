@@ -38,12 +38,10 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     ) { }
 
   ngOnInit() {
-
     this.loadDataSets();
   }
 
-  loadDataSets() {
-    this.dataSets = this.DataSetService.getDataSets();
+  private loadDataSets() {
     this.tableData.data = this.DataSetService.getDataSets();
   }
 
@@ -54,24 +52,57 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     this.cdRef.detectChanges();
   }
 
-  openNewDataSetModal() {
-    let dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
-      width: '600px'
-    });
-    dialogRef.afterClosed().subscribe(result => { this.loadDataSets() });
+  public openDatasetModal(uuid?: string) {
+    let dialogRef;
+
+    if (uuid) {
+      const thisDataset: IDataSet = this.tableData.data.find((dataset: IDataSet) => {
+        return dataset.uuid === uuid;
+        });
+
+      if (thisDataset) {
+        dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
+          data: thisDataset
+        });
+      }
+    } else {
+        dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
+        });
+    }
+
+    dialogRef.afterClosed().subscribe((dataset: IDataSet) => {
+      if (dataset === undefined || !dataset) {
+        return; //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
+      } else {
+        if (dataset.uuid) {
+          this.editDataset(dataset);
+        } else {
+          this.addDataset(dataset);
+        }
+
+        this.loadDataSets();
+      }
+      });
   }
 
+  private addDataset(dataset: IDataSet) {
+    this.DataSetService.addDataSet(dataset.path, dataset.signalKSource, dataset.updateTimer, dataset.dataPoints);
+  }
 
-  deleteDataSet(uuid: string) {
+  private editDataset(dataset: IDataSet) {
+    this.DataSetService.updateDataset(dataset);
+  }
+
+  public deleteDataset(uuid: string) {
     this.DataSetService.deleteDataSet(uuid); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
     this.loadDataSets();
   }
 
-  trackByUuid(index: number, item: IDataSet): string {
+  public trackByUuid(index: number, item: IDataSet): string {
     return `${item.uuid}`;
   }
 
-  applyFilter(event: Event) {
+  public applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.tableData.filter = filterValue.trim().toLowerCase();
 
@@ -88,42 +119,55 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   styleUrls: ['./settings-datasets.component.scss']
 })
 export class SettingsDatasetsModalComponent implements OnInit {
+  public titleDialog: string = null;
+  public newDataset: IDataSet = {
+    uuid: null,
+    path: null,
+    signalKSource: null,
+    updateTimer: 1,
+    dataPoints: 30,
+    name: null,
+  }
 
-  settingsForm: settingsForm = {
-    selectedPath: null,
-    selectedSource: null,
-    interval: 1,
-    dataPoints: 30
-  };
+  public formDataset: IDataSet = null;
 
-  availablePaths: string[] = [];
-  availableSources: string[] = [];
-  filterSelfPaths:boolean = true;
+  public availablePaths: string[] = [];
+  public availableSources: string[] = [];
+  public filterSelfPaths:boolean = true;
 
   constructor(
     private SignalKService: SignalKService,
     private DataSetService: DataSetService,
     public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public dataset: IDataSet
     ) { }
 
   ngOnInit() {
+    if (this.dataset) {
+      this.titleDialog = "Edit Dataset";
+      this.formDataset = this.dataset;
+
+      let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
+      if (pathObject !== null) {
+        this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+      }
+
+    } else {
+      this.titleDialog = "Add Dataset";
+      this.formDataset = this.newDataset;
+    }
+
     this.availablePaths = this.SignalKService.getPathsByType('number').sort();
   }
 
-  settingsFormUpdatePath() { // called when we choose a new path. resets the rest with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.settingsForm.selectedPath);
+  public changePath() { // called when we choose a new path. Resets the form old value with default info of this path
+    let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.settingsForm.selectedSource = 'default';
+    this.formDataset.signalKSource = 'default';
   }
 
-  addNewDataSet() {
-    this.DataSetService.addDataSet(
-      this.settingsForm.selectedPath,
-      this.settingsForm.selectedSource,
-      this.settingsForm.interval,
-      this.settingsForm.dataPoints);
-    this.dialogRef.close();
+  public closeForm() {
+    this.dialogRef.close(this.formDataset);
   }
 }
