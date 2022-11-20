@@ -78,14 +78,14 @@ export class UnitsService {
      ] },
     { group: 'Current', units: [
       { measure: 'A', description: "Amperes"},
-      { measure: 'mA', description: "Milliamperes"} 
+      { measure: 'mA', description: "Milliamperes"}
     ] },
-    { group: 'Potential', units: [ 
+    { group: 'Potential', units: [
       { measure: 'V', description: "Volts"},
-      { measure: 'mV', description: "Millivolts"} 
+      { measure: 'mV', description: "Millivolts"}
     ] },
     { group: 'Charge', units: [ { measure: 'C', description: "Current"} ] },
-    { group: 'Power', units: [ 
+    { group: 'Power', units: [
       { measure: 'W', description: "Watts"},
       { measure: 'mW', description: "Milliwatts"},
     ] },
@@ -124,10 +124,10 @@ export class UnitsService {
       { measure: 'MHz', description: "MHz - MegaHertz" },
       { measure: 'GHz', description: "GHz - GigaHertz" },
     ] },
-    { group: 'Ratio', units: [ 
-      { measure: 'percent', description: "% - Percentage value (value multiplied by 100)" },
-      { measure: 'percentraw', description: "% - Percentage value (value unchanged)" },
-      { measure: 'ratio', description: "Ratio 0-1 (value multiplied by 100)" }
+    { group: 'Ratio', units: [
+      { measure: 'percent', description: "As percentage value" },
+      { measure: 'percentraw', description: "As ratio 0-1 with % sign" },
+      { measure: 'ratio', description: "Ratio 0-1 (default)" }
     ] },
     { group: 'Position', units: [
       { measure: 'latitudeMin', description: "Latitude in minutes" },
@@ -145,16 +145,6 @@ export class UnitsService {
           this.defaultUnits = newDefaults;
         }
       );
-//    console.log(Qty.getKinds());
-//    console.log(Qty.getUnits());
-//    console.log(Qty.getAliases('naut-mile'));
-//build list for others.
-/* Object.keys(this.conversions).forEach(group => {
-this.conversionList[group] = [];
-Object.keys(this.conversions[group]).forEach(unit => {
-this.conversionList[group].push(unit);
-});
-}); */
   }
 
 
@@ -238,9 +228,9 @@ this.conversionList[group].push(unit);
     "deg": Qty.swiftConverter('rad', 'deg'),
     "grad": Qty.swiftConverter('rad', 'grad'),
 //   ratio
-    'percent': function(v) { return (v * 100) + '%' },
-    'percentraw': function(v) { return v + '%' },
-    'ratio': function(v) { return v * 100 },
+    'percent': function(v) { return v * 100 },
+    'percentraw': function(v) { return v },
+    'ratio': function(v) { return v },
 // lat/lon
     'latitudeMin': function(v) {
         v = Qty(v, 'rad').to('deg').scalar ;

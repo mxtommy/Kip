@@ -107,7 +107,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.resizeWidget();
   }
 
-  resizeWidget() {
+  private resizeWidget() {
     let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
 
     if (rect.height < 50) { return; }
@@ -125,7 +125,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   }
 
-  subscribePath() {
+  private subscribePath() {
     this.unsubscribePath();
     if (typeof(this.config.paths['numericPath'].path) != 'string') { return } // nothing to sub to...
 
@@ -156,7 +156,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     );
   }
 
-  unsubscribePath() {
+  private unsubscribePath() {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
@@ -165,25 +165,25 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     }
   }
 
-// Subscribe to theme event
-subscribeTheme() {
-  this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-    themeChange => {
-     setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-      this.updateCanvas();
-      this.updateCanvasBG();
-     }, 100);
-  })
-}
-
-unsubscribeTheme(){
-  if (this.themeNameSub !== null) {
-    this.themeNameSub.unsubscribe();
-    this.themeNameSub = null;
+  // Subscribe to theme event
+  private subscribeTheme() {
+    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+      themeChange => {
+      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
+        this.updateCanvas();
+        this.updateCanvasBG();
+      }, 100);
+    })
   }
-}
 
-  openWidgetSettings() {
+  private unsubscribeTheme(){
+    if (this.themeNameSub !== null) {
+      this.themeNameSub.unsubscribe();
+      this.themeNameSub = null;
+    }
+  }
+
+  public openWidgetSettings() {
 
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
@@ -212,7 +212,7 @@ unsubscribeTheme(){
 /* ******************************************************************************************* */
 /* ******************************************************************************************* */
 
-  updateCanvas() {
+  private updateCanvas() {
     if (this.canvasCtx) {
       this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
       this.drawValue();
@@ -222,7 +222,7 @@ unsubscribeTheme(){
     }
   }
 
-  updateCanvasBG() {
+  private updateCanvasBG() {
     if (this.canvasBGCtx) {
       this.canvasBGCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
       this.drawTitle();
@@ -230,22 +230,13 @@ unsubscribeTheme(){
     }
   }
 
-
-
-  drawValue() {
+  private drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
     let valueText: any;
 
-    if (this.dataValue != null) {
-      let converted: number = Number(this.dataValue);
-      converted = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.dataValue);
-      if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
-        valueText = this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
-      } else {
-        valueText = converted;
-      }
-
+    if (this.dataValue !== null) {
+      valueText = this.formatValue(Number(this.dataValue));
     } else {
       valueText = "--";
     }
@@ -274,9 +265,7 @@ unsubscribeTheme(){
 
     // get color based on zone
     switch (this.zoneState) {
-
       case ZoneState.alarm:
-
         if (this.flashOn) {
           this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
         } else {
@@ -286,8 +275,6 @@ unsubscribeTheme(){
           // text color
           this.canvasCtx.fillStyle = window.getComputedStyle(this.warnContrastElement.nativeElement).color;
         }
-
-
         break;
 
       case ZoneState.warning:
@@ -296,6 +283,7 @@ unsubscribeTheme(){
 
       default:
         this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+        break;
     }
 
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
@@ -304,7 +292,7 @@ unsubscribeTheme(){
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
-  drawTitle() {
+  private drawTitle() {
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
@@ -333,7 +321,7 @@ unsubscribeTheme(){
     this.canvasBGCtx.fillText(this.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
-  drawUnit() {
+  private drawUnit() {
     if (this.config.paths['numericPath'].convertUnitTo == 'unitless') { return; }
     if (this.config.paths['numericPath'].convertUnitTo.startsWith('percent')) { return; }
     if (this.config.paths['numericPath'].convertUnitTo == 'ratio') { return; }
@@ -365,35 +353,23 @@ unsubscribeTheme(){
     this.canvasBGCtx.fillText(this.config.paths['numericPath'].convertUnitTo,this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
-  drawMinMax() {
-
+  private drawMinMax() {
     if (!this.config.showMin && !this.config.showMax) { return; } //no need to do anything if we're not showing min/max
 
     let valueText: string = '';
 
     if (this.config.showMin) {
       if (this.minValue != null) {
-        let converted: number = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.minValue);
-        if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
-          valueText = valueText + " Min: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
-        } else {
-          valueText = valueText + " Min: " + converted;
-        }
-
+        valueText = " Min: " + this.formatValue(Number(this.minValue));
       } else {
-        valueText = valueText + " Min: --";
+        valueText = " Min: --";
       }
     }
     if (this.config.showMax) {
       if (this.maxValue != null) {
-        let converted = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, this.maxValue);
-        if (!isNaN(converted)) { // retest as convert stuff might have returned a text string
-          valueText = valueText + " Max: " + this.padValue(converted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
-        } else {
-          valueText = valueText + " Max: " + converted;
-        }
+        valueText += " Max: " + this.formatValue(Number(this.maxValue));
       } else {
-        valueText = valueText + " Max: --";
+        valueText += valueText + " Max: --";
       }
     }
     valueText = valueText.trim();
@@ -429,7 +405,50 @@ unsubscribeTheme(){
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
-  padValue(val, int, dec): string {
+  /**
+   * Transforms a value to be ready for presentation based on Widget configuration settings. Handles
+   * data conversions, format masking and decorations.
+   *
+   * Ex: for Ratio value set to display as percentage with 2 integers and 1 decimals.
+   * The conversion will multiply ratio by 100, apply format masking 99.9 and append a % sign. Returned
+   * value for a ration of 0.095345 would be: 09.5%
+   *
+   * @private
+   * @param {number} val the numeric value to the formated
+   * @return {*}  {string} formated value ready for display
+   * @memberof WidgetNumericComponent
+   */
+  private formatValue(val: number): string {
+    let valConverted: any = null;
+    let valText: string = null;
+
+    // apply converstion
+    valConverted = this.UnitsService.convertUnit(this.config.paths['numericPath'].convertUnitTo, val);
+
+    if (!isNaN(valConverted)) { // retest as convert stuff might have returned a text string
+      // apply mask
+      valText = this.padValue(valConverted.toFixed(this.config.numDecimal), this.config.numInt, this.config.numDecimal);
+    } else {
+      valText = valConverted;
+    }
+    // apply decoration
+    switch (this.config.paths['numericPath'].convertUnitTo) {
+      case 'percent':
+        valText += '%';
+        break;
+
+      case 'percentraw':
+        valText += '%';
+      break;
+
+      default:
+        break;
+    }
+
+    return valText;
+  }
+
+  private padValue(val, int, dec): string {
     let i = 0;
     let s, n, foo;
     let strVal: string
