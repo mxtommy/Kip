@@ -1,7 +1,7 @@
 <form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
   <mat-card>
       <mat-card-title>
-        Connection Details
+        Settings
       </mat-card-title>
       <mat-card-subtitle>
         Set server connection properties, Sign in credential and manage Device Authorisation token.
@@ -39,68 +39,80 @@
       </mat-card-actions>
     </mat-card>
 </form>
-<table style="margin-left: 30px;font-size: 12px;">
-  <tr>
-    <td>
-      Version:
-    </td>
-    <td>
-      {{ endpointServiceStatus.serverDescrption }}
-    </td>
-    <td rowspan="5">
-      <div class="" >
-        <canvas width="400" height="200" #lineGraph id="chart"></canvas>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      Authorization:
-    </td>
-    <td>
-      <div *ngIf="authToken">
+<br/>
+<mat-card>
+  <h3>
+    Status
+  </h3>
+  <mat-card-content>
+    <div class="flex-container">
+      <div class="flex-item-detail">
+        <table>
+          <tr>
+            <td class="mat-card-subtitle tableCellLabel">
+              Version:
+            </td>
+            <td class="mat-card-subtitle tableCellData">
+              {{ endpointServiceStatus.serverDescrption }}
+            </td>
+          </tr>
+          <tr>
+            <td class="mat-card-subtitle tableCellLabel">
+              Authorization:
+            </td>
+            <td class="mat-card-subtitle tableCellData">
+              <div *ngIf="authToken">
 
-        <div *ngIf="!authToken.isDeviceAccessToken">
-          Type: Session
-        </div>
-        <div *ngIf="authToken.isDeviceAccessToken">
-          Type: Device Access
-        </div>
-        Token: {{authToken.token| slice : 0 : 20}}...
+                <div *ngIf="!authToken.isDeviceAccessToken">
+                  Type: Session
+                </div>
+                <div *ngIf="authToken.isDeviceAccessToken">
+                  Type: Device Access
+                </div>
+                Token: {{authToken.token| slice : 0 : 20}}...
+              </div>
+              <div *ngIf="!authToken">
+                No Authorization Token
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="mat-card-subtitle tableCellLabel">
+              API Endpoint:
+            </td>
+            <td class="mat-card-subtitle tableCellData">
+              <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointServiceStatus.operation === 2"></i>
+              <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="endpointServiceStatus.operation !== 2"></i>
+              {{ endpointServiceStatus.message }}
+            </td>
+          </tr>
+          <tr>
+            <td class="mat-card-subtitle tableCellLabel">
+              Full Document:
+            </td>
+            <td class="mat-card-subtitle tableCellData">
+              <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="fullDocumentStatus.operation === 2"></i>
+              <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="fullDocumentStatus.operation !== 2"></i>
+              {{ fullDocumentStatus.message }}
+            </td>
+          </tr>
+          <tr>
+            <td class="mat-card-subtitle tableCellLabel">
+              Data Stream:
+            </td>
+            <td class="mat-card-subtitle tableCellData">
+              <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="streamStatus.operation === 2"></i>
+              <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="streamStatus.operation !== 2"></i>
+              {{ streamStatus.message }} - Token: {{ streamStatus.hasToken }}
+            </td>
+          </tr>
+        </table>
       </div>
-      <div *ngIf="!authToken">
-        No Authorization Token
+      <div class="flex-item-chart">
+        <canvas #lineGraph id="chart"></canvas>
       </div>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      API Endpoint:
-    </td>
-    <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointServiceStatus.operation === 2"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="endpointServiceStatus.operation !== 2"></i>
-      {{ endpointServiceStatus.message }}
-    </td>
-  </tr>
-  <tr>
-    <td>
-      Full Document:
-    </td>
-    <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="fullDocumentStatus.operation === 2"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="fullDocumentStatus.operation !== 2"></i>
-      {{ fullDocumentStatus.message }}
-    </td>
-  </tr>
-  <tr>
-    <td>
-      Data Stream:
-    </td>
-    <td>
-      <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="streamStatus.operation === 2"></i>
-      <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="streamStatus.operation !== 2"></i>
-      {{ streamStatus.message }} - Token: {{ streamStatus.hasToken }}
-    </td>
-  </tr>
-</table>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<div #background class="background" style="display: none"></div>

@@ -120,7 +120,7 @@ export class SignalKService {
       this.setDefaultSource(source);
     });
 
-    // Observer of Full Document Service default source updates
+    // Observer of Full Document Service Meta updates
     this.fullDocument.subscribeMetaUpdates().subscribe((meta: IMeta) => {
       this.setMeta(meta);
     });

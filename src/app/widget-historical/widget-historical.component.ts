@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input, Inject } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input } from '@angular/core';
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-moment';
 import { MatDialog } from '@angular/material/dialog';
@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 
-import { dataPoint, DataSetService } from '../data-set.service';
+import { DataSetService } from '../data-set.service';
 import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';

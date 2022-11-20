@@ -219,28 +219,31 @@ export class SettingsSignalkComponent implements OnInit {
               //fill: 'false',
               borderColor: this.textColor
             },
-            // {
-            //   label: "Per Minute",
-            //   data: this.updatesMinutes,
-            //   fill: 'false',
-            //   borderColor: this.textColor
-            // }
           ]
       },
       options: {
-
+        maintainAspectRatio: false,
         scales: {
-          y:
-            {
-              type: 'linear',
-              position: 'left',
-              beginAtZero: true,
-            },
-            // {
-            //   type: 'linear',
-            //   position: 'right',
-            //     //beginAtZero: true,
-            // }
+          x: {
+            beginAtZero: true,
+            position: 'bottom',
+            ticks: {
+              autoSkip: true,
+              autoSkipPadding: 30
+            }
+          },
+          y: {
+            beginAtZero: true,
+            type: 'linear',
+            position: 'left',
+          },
+        },
+        plugins:{
+          legend: {
+            labels: {
+              color: this.textColor,
+            }
+          }
         }
       }
     });
