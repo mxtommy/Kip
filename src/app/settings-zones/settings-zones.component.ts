@@ -143,7 +143,6 @@ export class DialogNewZone {
     state: new FormControl('0', Validators.required),
     filterSelfPaths: new FormControl(true),
     path: new FormGroup({
-      description: new FormControl("Numeric Data"),
       path: new FormControl(null),
       isPathConfigurable: new FormControl(true),
       convertUnitTo: new FormControl("unitless"),

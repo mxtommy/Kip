@@ -2,13 +2,12 @@
   width: 100%;
 }
 
-.leftThirdField {
-  display: inline-block;
-  width: calc(30% - 15px);
-  padding-right: 30px;
-}
-
-.rightThirdField {
-  display: inline-block;
-  width: calc(30% - 15px);
+.flex-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: stretch;
+  align-content: flex-start;
+  gap: 10px 10px;
 }
