@@ -16,14 +16,93 @@
 }
 .mat-table {
   overflow: auto;
-  max-height: 270px;
 }
 
 .table-container{
-  max-height: 70vh;
+  /* max-height: 74vh; */
   overflow: auto;
+  height: auto;
 }
+
 .paginator{
   width: 100%;
   position: sticky;
+}
+
+.filter-field {
+  padding-left: 10px;
+  padding-top: 10px;
+}
+
+.flex-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.pathCell {
+  flex: 1 1 50%;
+}
+
+.pathHeader {
+  flex: 1 1 50%;
+}
+
+.dataHeader {
+  flex: 1 1 50%;
+}
+
+.dataCell {
+  flex: 1 1 50%;
+  flex-flow: column;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+@media screen and (max-width: 750px) {
+  .pathHeader {
+    flex: 1 1 50%;
+  }
+
+  .dataHeader {
+    flex: 1 1 50%;
+  }
+
+  .dataCell {
+    flex: 1 1 100%;
+  }
+
+  .dataCell {
+    flex: 1 1 100%;
+    margin-left: 24px;
+  }
+
+  .mat-table .mat-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .mat-table .mat-cell:before {
+    content: attr(data-label);
+    float: left;
+    padding-right: 5px;
+  }
+
+  mat-row::after {
+    min-height: auto;
+    padding-bottom: 10px;
+  }
+
+  .dataRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actionCell {
+    margin-left: 24px;
+  }
+
 }

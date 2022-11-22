@@ -4,9 +4,10 @@
     <mat-horizontal-stepper>
       <mat-step label="Source Data">
         <div class="tab-content">
-          <mat-form-field class="full-width">
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Signal K Path</mat-label>
             <mat-select
-              placeholder="Signal K Path"
+              placeholder="Select data path"
               [(ngModel)]="formDataset.path"
               name="selectedPath"
               (ngModelChange)="changePath()"
@@ -24,9 +25,10 @@
             Restric to own vessel
           </mat-checkbox>
           <br/><br/>
-          <mat-form-field class="full-width">
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Source</mat-label>
             <mat-select
-              placeholder="Source"
+              placeholder="Select data source"
               [(ngModel)]="formDataset.signalKSource"
               name="selectedSource"
               required
@@ -52,7 +54,8 @@
       </mat-step>
       <mat-step label="Data Points">
         <div class="tab-content">
-          <mat-form-field class="full-width">
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Set data capture interval (sec)</mat-label>
             <input
               matInput
               placeholder="Interval(seconds)"
@@ -62,7 +65,8 @@
               required
             />
           </mat-form-field>
-          <mat-form-field class="full-width">
+          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+            <mat-label>Total most recent data points that makes the dataset</mat-label>
             <input
               matInput
               placeholder="Data Points"
