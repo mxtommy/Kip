@@ -47,28 +47,11 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
     this.cdRef.detectChanges();
   }
 
-  private newUuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-    });
-  }
-
-  delZone(uuid: string) {
-    let zones = this.appSettingsService.getZones();
-    //find index
-    let index = zones.findIndex(zone => (zone.uuid == uuid));
-    if (index >= 0) {
-      zones.splice(index,1);
-      this.appSettingsService.saveZones(zones);
-    }
-  }
-
-  trackByUuid(index: number, item: IZone): string {
+  public trackByUuid(index: number, item: IZone): string {
     return `${item.uuid}`;
   }
 
-  applyFilter(event: Event) {
+  public applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.tableData.filter = filterValue.trim().toLowerCase();
 
@@ -77,43 +60,84 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
     }
   }
 
-  openDialog(): void {
-    const dialogRef = this.dialog.open(DialogNewZone, {
-      width: '80%',
-      data: {}
-    });
+  public openZoneDialog(uuid?: string): void {
+    let dialogRef;
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        console.log(result);
-        let zones = this.appSettingsService.getZones();
-        zones.push({
-          uuid: this.newUuid(),
-          upper: result.upper,
-          lower: result.lower,
-          path: result.path.path,
-          unit: result.path.convertUnitTo,
-          state: parseInt(result.state)
+    if (uuid) {
+      const thisZone: IZone = this.tableData.data.find((zone: IZone) => {
+        return zone.uuid === uuid;
         });
-        console.log(zones);
-        this.appSettingsService.saveZones(zones);
+
+      if (thisZone) {
+        dialogRef = this.dialog.open(DialogEditZone, {
+          data: thisZone
+        });
+      }
+    } else {
+        dialogRef = this.dialog.open(DialogNewZone, {
+        });
+    }
+
+    dialogRef.afterClosed().subscribe((zone: IZone) => {
+      if (zone === undefined || !zone) {
+        return; //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
+      } else {
+        if (zone.uuid) {
+          this.editZone(zone);
+        } else {
+          zone.uuid = this.newUuid();
+          this.addZone(zone);
+        }
       }
     });
   }
 
+  public addZone(zone: IZone) {
+    let zones: IZone[] = this.appSettingsService.getZones();
+    zones.push(zone);
+    this.appSettingsService.saveZones(zones);
+  }
 
+  public editZone(zone: IZone) {
+    if (zone.uuid) { // is existing zone
+      const zones: IZone[] = this.appSettingsService.getZones();
+      const index = zones.findIndex(zones => zones.uuid === zone.uuid );
+
+      if(index >= 0) {
+        zones.splice(index, 1, zone);
+        this.appSettingsService.saveZones(zones);
+      }
+    }
+  }
+
+  public deleteZone(uuid: string) {
+    let zones = this.appSettingsService.getZones();
+    //find index
+    let index = zones.findIndex(zone => zone.uuid === uuid);
+    if (index >= 0) {
+      zones.splice(index, 1);
+      this.appSettingsService.saveZones(zones);
+    }
+  }
+
+  private newUuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+    });
+  }
 }
 
 
-
+// Add zone compoment
 @Component({
   selector: 'dialog-new-zone',
-  templateUrl: 'settings-zones.modal.html',
-  styleUrls: ['./settings-zones.modal.css']
+  templateUrl: 'settings-new-zone.modal.html',
+  styleUrls: ['./settings-new-zone.modal.css']
 })
 export class DialogNewZone {
 
-  newZoneForm: FormGroup = new FormGroup({
+  zoneForm: FormGroup = new FormGroup({
     upper: new FormControl(null),
     lower: new FormControl(null),
     state: new FormControl('0', Validators.required),
@@ -135,10 +159,8 @@ export class DialogNewZone {
   selectedUnit = null;
 
   constructor(
-    public dialogRef: MatDialogRef<DialogNewZone>,
-    @Inject(MAT_DIALOG_DATA) public data) {
+    public dialogRef: MatDialogRef<DialogNewZone>) {
     }
-
 
   rangeValidationFunction(formGroup: FormGroup): any {
       let upper = formGroup.get('upper').value;
@@ -146,10 +168,36 @@ export class DialogNewZone {
       return ((upper === null) && (lower === null)) ? { needUpperLower: true } : null;
    }
 
-  onNoClick(): void {
-    this.dialogRef.close();
+  closeForm() {
+    let zone: IZone = {
+      uuid: null,
+      upper: this.zoneForm.get('upper').value,
+      lower: this.zoneForm.get('lower').value,
+      path: this.zoneForm.get('path.path').value,
+      unit: this.zoneForm.get('path.convertUnitTo').value,
+      state: parseInt(this.zoneForm.get('state').value)
+    };
+    this.dialogRef.close(zone);
   }
-  submitConfig() {
-    this.dialogRef.close(this.newZoneForm.value);
+}
+
+
+// Edit zone compoment
+@Component({
+  selector: 'dialog-edit-zone',
+  templateUrl: 'settings-edit-zone.modal.html',
+  styleUrls: ['./settings-edit-zone.modal.css']
+})
+export class DialogEditZone {
+
+  constructor(
+    public dialogRef: MatDialogRef<DialogEditZone>,
+    @Inject(MAT_DIALOG_DATA) public zone: IZone,
+    ) {
+
+    }
+
+  closeForm() {
+    this.dialogRef.close(this.zone);
   }
 }

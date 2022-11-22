@@ -38,18 +38,21 @@
 
 .dataHeader {
   flex: 1 1 10%;
+  justify-content: center;
 }
 
 .dataCell {
   flex: 1 1 10%;
+  justify-content: center;
 }
 
 .actionHeader {
-  flex: 1 1 15%;
+  flex: 1 1 20%;
 }
 
 .actionCell {
-  flex: 1 1 15%;
+  flex: 1 1 20%;
+  justify-content: end;
 }
 
 @media screen and (max-width: 750px) {

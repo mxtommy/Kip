@@ -137,7 +137,6 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   constructor(
     private SignalKService: SignalKService,
-    private DataSetService: DataSetService,
     public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
     @Inject(MAT_DIALOG_DATA) public dataset: IDataSet
     ) { }

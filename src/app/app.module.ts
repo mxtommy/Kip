@@ -79,7 +79,7 @@ import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
 import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
 import { SettingsUnitsComponent } from './settings-units/settings-units.component';
-import { SettingsZonesComponent, DialogNewZone } from './settings-zones/settings-zones.component';
+import { SettingsZonesComponent, DialogNewZone, DialogEditZone } from './settings-zones/settings-zones.component';
 import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
 import { SettingsConfigComponent } from './settings-config/settings-config.component';
 import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
@@ -145,6 +145,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     SettingsUnitsComponent,
     SettingsZonesComponent,
     DialogNewZone,
+    DialogEditZone,
     WidgetHistoricalComponent,
     LayoutSplitComponent,
     WidgetWindComponent,

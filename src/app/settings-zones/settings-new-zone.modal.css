@@ -1,0 +1,14 @@
+.full-width {
+  width: 100%;
+}
+
+.leftThirdField {
+  display: inline-block;
+  width: calc(30% - 15px);
+  padding-right: 30px;
+}
+
+.rightThirdField {
+  display: inline-block;
+  width: calc(30% - 15px);
+}
