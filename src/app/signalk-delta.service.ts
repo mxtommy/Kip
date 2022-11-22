@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, catchError, delay, Observable , retryWhen, Subject, switchAll, tap } from 'rxjs';
+import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { IDeltaMessage, ISignalKNotification, ISignalKDataPath } from './signalk-interfaces';
@@ -263,7 +263,7 @@ export class SignalKDeltaService {
         source = update['$source'];
       } else if ((update.source !== undefined) && (update.source.src !== undefined) && (update.source.label !== undefined)) {
         source = update.source.label + '.' + update.source.src;
-      } else if (update.source.label !== undefined) {
+      } else if ((update.source !== undefined) && (update.source.label !== undefined)) {
         source = update.source.label;
       } else {
         source = "unknown";
