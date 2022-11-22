@@ -158,6 +158,7 @@ export class SignalKFullService {
                 };
                 this.signalKMeta$.next(meta);
               }
+              if (data.meta['zones']) {console.log(data.meta['zones'])}
             }
           });
         } else {
@@ -178,6 +179,7 @@ export class SignalKFullService {
 
           // try and get metadata.
           if (typeof(data['meta']) == 'object') {
+            if (data.meta['zones']) {console.log(data.meta['zones'])}
             let meta: IMeta = {
               path: path,
               meta: data['meta'],

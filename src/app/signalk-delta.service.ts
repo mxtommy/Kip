@@ -144,13 +144,13 @@ export class SignalKDeltaService {
     }
 
   /**
-   * Connect WebSocket to server. Endpoint URL taken from Connection Sercice and
-   * authentification token is taken from Authentication
+   * Connect WebSocket to server. Endpoint URL taken from Connection Service and
+   * authentication token is taken from Authentication service
    */
    public connectWS(reason: string): void {
     this.streamEndpoint.message = "Connecting";
     this.streamEndpoint.operation = 1;
-    console.log("[Delta Service] " + reason + ": WebSocket openning...");
+    console.log(`[Delta Service] ${reason}: WebSocket openning...`);
     this.streamEndpoint$.next(this.streamEndpoint);
 
     this.socketWS$ = this.getNewWebSocket();
@@ -188,7 +188,7 @@ export class SignalKDeltaService {
   }
 
   /**
-  * Close SignalK server data stream WebSocket
+  * Close Signal K server data stream WebSocket
   */
   public closeWS(reason: string) {
     if (this.socketWS$) {
