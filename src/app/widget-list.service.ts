@@ -4,6 +4,7 @@ import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetDateGenericComponent } from './widget-date-generic/widget-date-generic.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 import { WidgetWindComponent } from './widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
@@ -35,7 +36,7 @@ export class WidgetListService {
 
 
   widgetList: widgetList = {
-    "Basic": [
+    'Basic': [
       {
         name: 'WidgetBlank',
         componentName: WidgetBlankComponent,
@@ -52,34 +53,39 @@ export class WidgetListService {
         description: 'Text Value',
       },
       {
+        name: 'WidgetDateGeneric',
+        componentName: WidgetDateGenericComponent,
+        description: 'Date Value',
+      },
+      {
         name: 'WidgetStateComponent',
         componentName: WidgetStateComponent,
         description: 'State (boolean) Value',
-      },      
+      },
     ],
-    "Gauge": [
+    'Gauge': [
       {
         name: 'WidgetSimpleLinearComponent',
         componentName: WidgetSimpleLinearComponent,
-        description: "Linear Electrical Gauge"
+        description: 'Linear Electrical Gauge'
       },
       {
         name: 'WidgetGaugeNgLinearComponent',
         componentName: WidgetGaugeNgLinearComponent,
-        description: "Linear Gauge"
+        description: 'Linear Gauge'
       },
       {
         name: 'WidgetGaugeNgRadialComponent',
         componentName: WidgetGaugeNgRadialComponent,
-        description: "Radial Gauge"
+        description: 'Radial Gauge'
       },
       {
         name: 'WidgetGaugeComponent',
         componentName: WidgetGaugeComponent,
-        description: "Steel Gauge (Radial/Linear)"
+        description: 'Steel Gauge (Radial/Linear)'
       },
     ],
-    "Components": [
+    'Components': [
       {
         name: 'WidgetHistorical',
         componentName: WidgetHistoricalComponent,
@@ -98,7 +104,7 @@ export class WidgetListService {
       {
           name: 'WidgetRaceTimerComponent',
           componentName: WidgetRaceTimerComponent,
-          description: "Race Timer"
+          description: 'Race Timer'
       },
       {
         name: 'WidgetIframeComponent',
@@ -113,7 +119,7 @@ export class WidgetListService {
     ]
 
   };
-  
+
 
 /*
     {
@@ -124,7 +130,7 @@ export class WidgetListService {
 
 
 
-  
+
 
   getComponentName(typeName: string) {
     for (let [group, widgetList] of Object.entries(this.widgetList)) {

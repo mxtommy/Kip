@@ -1,0 +1,55 @@
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+
+.textGenericWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.textGenericLabel {
+    position: absolute;
+    top: 5%;
+    left: 5%;
+
+}
+
+.textGenericValue {
+    position: absolute;    
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Arial", Times, serif;
+    font-weight: bold;
+}
+
+.textGenericUnit {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+}
+
+
+.settingsButton {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translate(-50%);
+}
+
+.tab-group {
+    border: 1px solid #e8e8e8;
+}
+
+.tab-content {
+    padding: 16px;
+}
+
+.full-width {
+    width: 100%;
+}

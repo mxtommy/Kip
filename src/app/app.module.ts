@@ -52,6 +52,8 @@ import { TimersService } from './timers.service';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetDateGenericComponent } from './widget-date-generic/widget-date-generic.component';
+import {  } from './widget-text-generic/widget-text-generic.component';
 import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
@@ -113,6 +115,7 @@ const appRoutes: Routes = [
     DynamicWidgetDirective,
     WidgetUnknownComponent,
     WidgetTextGenericComponent,
+    WidgetDateGenericComponent,
     FitTextDirective,
     RootDisplayComponent,
     FilterSelfPipe,
