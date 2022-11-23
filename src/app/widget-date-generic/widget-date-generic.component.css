@@ -5,20 +5,20 @@ canvas {
 }
 
 
-.textGenericWrapper {
+.dateGenericWrapper {
     position: relative;
     width: 100%;
     height: 100%;
 }
-.textGenericLabel {
+.dateGenericLabel {
     position: absolute;
     top: 5%;
     left: 5%;
 
 }
 
-.textGenericValue {
-    position: absolute;    
+.dateGenericValue {
+    position: absolute;
     width: 100%;
     height: 100%;
     display: flex;
@@ -28,7 +28,7 @@ canvas {
     font-weight: bold;
 }
 
-.textGenericUnit {
+.dateGenericUnit {
     position: absolute;
     bottom: 5%;
     right: 5%;

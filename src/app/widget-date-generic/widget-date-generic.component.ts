@@ -69,8 +69,6 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
 
-    console.log('this.activeWidget.config', this.activeWidget.config);
-
     if (this.activeWidget.config === null) {
         // no data, let's set some!
       this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
@@ -78,8 +76,6 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
     } else {
       this.config = this.activeWidget.config;
     }
-
-    console.log('this.config', this.config);
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
