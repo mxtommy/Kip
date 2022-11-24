@@ -70,10 +70,10 @@ export interface IZone {
   unit: string;
   upper: number;
   lower: number;
-  state: ZoneState;
+  state: IZoneState;
 }
 
-export enum ZoneState {
+export enum IZoneState {
   normal = 0,
   warning = 1,
   alarm = 2,

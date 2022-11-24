@@ -5,7 +5,6 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
 import { SignalKService } from '../signalk.service';
-import { IPathObject } from "../signalk-interfaces";
 import { DataSetService, IDataSet } from '../data-set.service';
 
 interface settingsForm {

@@ -3,13 +3,14 @@ import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
+import { IZone, IZoneState } from '../app-settings.interfaces';
+import { AppSettingsService } from '../app-settings.service';
 import { SignalKService } from '../signalk.service';
+import { UnitsService } from '../units.service';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service' ;
-import { AppSettingsService } from '../app-settings.service';
 import { LinearGauge, LinearGaugeOptions } from '../gauges-module/linear-gauge';
-import { IZone, ZoneState } from '../app-settings.interfaces';
+
 ;
 
 
@@ -123,10 +124,10 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
         // set colors for zone state
         switch (newValue.state) {
-          case ZoneState.warning:
+          case IZoneState.warning:
             this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
             break;
-          case ZoneState.alarm:
+          case IZoneState.alarm:
             this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
             break;
           default:
@@ -268,7 +269,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
           case 1:
             color = getComputedStyle(this.warnElement.nativeElement).color;
             break;
-          case ZoneState.alarm:
+          case IZoneState.alarm:
             color = getComputedStyle(this.warnDarkElement.nativeElement).color;
             break;
           default:
