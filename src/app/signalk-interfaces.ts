@@ -23,15 +23,6 @@ export type Format = typeof formats[number];
 const policies = ["instant", "ideal", "fixed"] as ["instant", "ideal", "fixed"];
 export type Policy = typeof policies[number];
 
-export interface ISignalKFullDocument {
-  version: string;
-  self: string;
-  vessels: any;
-  sources: any;
-  atons: any;
-  shore: any;
-}
-
 /**
  * Services: signalk-delta service
  * Use in: Root Delta interface - Signal K (WebSocket stream) lowest level raw message interface.
