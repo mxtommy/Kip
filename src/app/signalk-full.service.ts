@@ -199,18 +199,7 @@ export class SignalKFullService {
           meta: document.meta.properties[key],
         };
 
-      } else if (document.meta['displayScale']) {
-        console.log(document.meta);
-      } else if (document.meta['zones']) {
-        console.log(document.meta);
-      } else if (document.meta['displayName']) {
-        console.log(document.meta);
-      } else if (document.meta['zones']) {
-        console.log(document.meta);
-      }
-
-
-      else {
+      } else {
         meta = {
           path: dataPath,
           meta: document['meta'],
