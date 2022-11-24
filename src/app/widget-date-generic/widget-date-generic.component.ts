@@ -21,7 +21,8 @@ const defaultConfig: IWidgetConfig = {
       isPathConfigurable: true,
     }
   },
-  dateFormat: 'dd/MM/yyyy HH:mm:ss'
+  dateFormat: 'dd/MM/yyyy HH:mm:ss',
+  dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
 };
 
 @Component({
@@ -205,7 +206,7 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
     } else {
 
       valueText = this.dataValue;
-      valueText = formatDate(valueText, this.config.dateFormat, 'en-US');
+      valueText = formatDate(valueText, this.config.dateFormat, 'en-US', this.config.dateTimezone);
     }
 
     // check if length of string has changed since last time.

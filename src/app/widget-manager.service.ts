@@ -30,6 +30,7 @@ export interface IWidgetConfig {
 
   // date data
   dateFormat?: string;
+  dateTimezone?: string;
 
   // Wind Gauge data
   windSectorEnable?: boolean;
