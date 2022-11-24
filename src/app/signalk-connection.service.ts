@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ISignalKUrl, IConnectionConfig} from './app-settings.interfaces';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { ISignalKUrl } from './app-settings.interfaces';
 
 interface ISignalKEndpointResponse {
     endpoints: {
@@ -69,8 +69,8 @@ export class SignalKConnectionService {
    * Retreives and publishes target server information and supported service
    * endpoint addresses.
    *
-   * @UsageNote Resetting connection is an action trigger for many
-   * services & components (Delta, Full, Signalk-Settings, etc.).
+   * @UsageNote Resetting connection is a trigger for many
+   * services & components (Delta, Signalk-Settings, etc.).
    *
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
@@ -131,7 +131,7 @@ export class SignalKConnectionService {
   }
 
   // Endpoint status and adrdresses observable
-  getServiceEndpointStatusAsO() {
+  public getServiceEndpointStatusAsO() {
     return this.serverServiceEndpoint$.asObservable();
   }
 

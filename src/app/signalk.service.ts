@@ -3,7 +3,6 @@ import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "./app-interfaces";
 import { IZone, IZoneState } from './app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKFullService } from './signalk-full.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import { NotificationsService } from './notifications.service';
@@ -61,7 +60,6 @@ export class SignalKService {
 
   constructor(
     private appSettingsService: AppSettingsService,
-    private fullDocument: SignalKFullService,
     private deltaService: SignalKDeltaService,
     private notificationsService: NotificationsService,
     private unitService: UnitsService,
@@ -108,33 +106,15 @@ export class SignalKService {
       this.updatePathData(dataPath);
     });
 
-    // Observer of Full Document service data path updates
-    this.fullDocument.subscribeFullDocumentDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
-      this.updatePathData(dataPath);
-    });
-
-    // Observer of Full Document service default source updates
-    this.fullDocument.subscribeDefaultSourceUpdates().subscribe((source: IDefaultSource) => {
-      this.setDefaultSource(source);
-    });
-
     // Observer of Delta service Metadata updates
     this.deltaService.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
       this.setMeta(deltaMeta);
     })
 
-    // Observer of Full Document service Metadata updates
-    this.fullDocument.subscribeMetaUpdates().subscribe((fullDocNeta: IMeta) => {
-      this.setMeta(fullDocNeta);
+    // Observer of vessel Self URN updates
+    this.deltaService.subscribeSelfUpdates().subscribe(self => {
+      this.setSelfUrn(self);
     });
-
-    // Observer of Delta service Meta updates
-    //TODO: add here from Delta
-
-    this.fullDocument.subscribeSelfUpdates().subscribe(self => {
-      this.setSelf(self);
-    });
-
   }
 
   getupdateStatsSecond() {
@@ -193,15 +173,17 @@ export class SignalKService {
     return this.pathRegister[pathIndex].observable.asObservable();
   }
 
-  setSelf(value: string) {
+  private setSelfUrn(value: string) {
     if ((value != "" || value != null) && value != this.selfurn) {
       console.debug('[SignalK Service] Setting self to: ' + value);
       this.selfurn = value;
     }
   }
 
-  updatePathData(dataPath: IPathValueData) {
+  private updatePathData(dataPath: IPathValueData): void {
+    // update connection msg stats
     this.updateStatistics.currentSecond++;
+
     // convert the selfURN to "self"
     let pathSelf: string = dataPath.path.replace(this.selfurn, 'self');
 
@@ -313,7 +295,7 @@ export class SignalKService {
 
   }
 
-  setDefaultSource(source: IDefaultSource): void {
+  private setDefaultSource(source: IDefaultSource): void {
     let pathSelf: string = source.path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {

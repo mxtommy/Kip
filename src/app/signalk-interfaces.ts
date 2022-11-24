@@ -34,63 +34,96 @@ export interface ISignalKFullDocument {
 
 /**
  * Services: signalk-delta service
- * Use in: Root interface - Signal K (WebSocket stream) lowest level raw message interface.
+ * Use in: Root Delta interface - Signal K (WebSocket stream) lowest level raw message interface.
  *
  * Description: lowest level object interface of all data updates send by the server. This includes
- * server resquests, login, token requests and validation, data updates.
+ * server Hello, resquest/response (PUTs, login, device token and validation) and data updates.
  *
  * @memberof signalk-interfaces
  */
  export interface ISignalKDeltaMessage {
+  // Server Hello message structure
+  name?: string;
+  roles?: Array<string>;
+  self?: string;
+  version?: string;
+  timestamp?:string;
+
+  // Main data and meta updates structure
+  context?: string;
+  updates?: ISignalKUpdateMessage[];
+
+  // Request/response response structure
+  requestId?: string;
+  state?: string;
+  statusCode?: number;
+  message?: string;
+
+  //    Request/Response to Device Token request response structure
   accessRequest?: {
     permission?: string;
     token: string;
-    timeToLive?: number; //not yet implemented on server
+    timeToLive?: number; //not yet implemented on server. Use token data to extract TTL
   };
-  context?: string;
-  errorMessage?: string;
+  //    Request/Response to User login session Token response structure
   login?: {
     token: string;
-    timeToLive?: number; //not yet implemented on server
+    timeToLive?: number; //not yet implemented on server. Use token data to extract TTL
   };
-  message?: string;
-  name?: string;
-  requestId?: string;
-  self?: string;
-  roles?: Array<string>;
-  state?: string;
-  statusCode?: number;
-  timestamp?:string;
-  updates?: ISignalKUpdateMessage[];
+  //    Request/Response to Token validation/renewal response structure  ** Not fully implemented in SK. Don,t use for now
   validate?: {
     token?: string;
-    timeToLive?: number; //not yet implemented on server
+    timeToLive?: number; //not yet implemented on server. Use token data to extract TTL
   }
-  version?: string;
+  // used as only when something goes wrong server side or when socket status changes (ei. socket closed by server)
+  errorMessage?: string;
 }
 
 /**
+ * Data Update message object interface.
+ *
  * Services: signalk-delta service
  * Used in: IDeltaMessage.updates interface propertie
- *
- * Description: data update message object interface. This includes: sources, values and metadata
  *
  * @memberof signalk-interfaces
  */
 export interface ISignalKUpdateMessage {
-  source: {
-    label: string;
-    type: string;
-    pgn?: string;
-    src?: string;
-    talker?: string;
-  };
+  $source: string;
+  source?: ISignalKSource;
+  values: ISignalKDataValueUpdate[];
   timestamp: string;
-  values: {
-    path: string;
-    value: any;
-  }[];
   meta?: ISignalKMeta[];
+}
+
+/**
+ * Source update message object interface.
+ * Used in: IDeltaMessage.updates.source interface propertie
+ *
+ * @memberof signalk-interfaces
+ */
+export interface ISignalKSource {
+  // common
+  label: string;
+  type: string;
+  //buth n2k and I2C sensors
+  src?: string;
+  //n2k
+  deviceInstance?: number;
+  pgn?: number;
+  //NMEA0183
+  talker?: string;
+  sentence?: string;
+}
+
+/**
+ * Value update message object interface.
+ * Used in: IDeltaMessage.updates.values.[] interface propertie
+ *
+ * @memberof signalk-interfaces
+ */
+export interface ISignalKDataValueUpdate {
+  path: string;
+  value: any;
 }
 
 /**
