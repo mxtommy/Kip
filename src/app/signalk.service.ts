@@ -1,19 +1,17 @@
-import { SignalKFullService, IDefaultSource, IMeta } from './signalk-full.service';
 import { Injectable } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription } from 'rxjs';
-import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
+import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "./app-interfaces";
+import { IZone, IZoneState } from './app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { NotificationsService } from './notifications.service';
+import { SignalKFullService } from './signalk-full.service';
 import { SignalKDeltaService } from './signalk-delta.service';
-import { ISignalKDataPath } from "./signalk-interfaces";
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
-
+import { NotificationsService } from './notifications.service';
 import * as Qty from 'js-quantities';
-import { IZone, ZoneState } from './app-settings.interfaces';
 
 interface pathRegistrationValue {
   value: any;
-  state: ZoneState;
+  state: IZoneState;
 };
 
 interface pathRegistration {
@@ -39,12 +37,12 @@ export class SignalKService {
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received SignalK Data and used to source Observers
-  paths: IPathObject[] = [];
+  paths: IPathData[] = [];
   // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
 
   // path Observable
-  pathsObservale: BehaviorSubject<IPathObject[]> = new BehaviorSubject<IPathObject[]>([]);
+  pathsObservale: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
 
   // Performance stats
   updateStatistics: updateStatistics = {
@@ -105,25 +103,33 @@ export class SignalKService {
       this.zones = zones;
     });
 
-    // Observer of delta data path updates
-    this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: ISignalKDataPath) => {
+    // Observer of Delta service data path updates
+    this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
       this.updatePathData(dataPath);
     });
 
-    // Observer of Full Document Service data path updates
-    this.fullDocument.subscribeFullDocumentDataPathsUpdates().subscribe((dataPath: ISignalKDataPath) => {
+    // Observer of Full Document service data path updates
+    this.fullDocument.subscribeFullDocumentDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
       this.updatePathData(dataPath);
     });
 
-    // Observer of Full Document Service default source updates
+    // Observer of Full Document service default source updates
     this.fullDocument.subscribeDefaultSourceUpdates().subscribe((source: IDefaultSource) => {
       this.setDefaultSource(source);
     });
 
-    // Observer of Full Document Service Meta updates
-    this.fullDocument.subscribeMetaUpdates().subscribe((meta: IMeta) => {
-      this.setMeta(meta);
+    // Observer of Delta service Metadata updates
+    this.deltaService.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
+      this.setMeta(deltaMeta);
+    })
+
+    // Observer of Full Document service Metadata updates
+    this.fullDocument.subscribeMetaUpdates().subscribe((fullDocNeta: IMeta) => {
+      this.setMeta(fullDocNeta);
     });
+
+    // Observer of Delta service Meta updates
+    //TODO: add here from Delta
 
     this.fullDocument.subscribeSelfUpdates().subscribe(self => {
       this.setSelf(self);
@@ -160,7 +166,7 @@ export class SignalKService {
 
     //find if we already have a value for this path to return.
     let currentValue = null;
-    let state = ZoneState.normal;
+    let state = IZoneState.normal;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex >= 0) { // exists
       if (source === null) {
@@ -194,7 +200,7 @@ export class SignalKService {
     }
   }
 
-  updatePathData(dataPath: ISignalKDataPath) {
+  updatePathData(dataPath: IPathValueData) {
     this.updateStatistics.currentSecond++;
     // convert the selfURN to "self"
     let pathSelf: string = dataPath.path.replace(this.selfurn, 'self');
@@ -225,13 +231,13 @@ export class SignalKService {
           }
         },
         type: typeof(dataPath.value),
-        state: ZoneState.normal
+        state: IZoneState.normal
       });
       pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     }
 
     // Check for any zones to set state
-    let state: ZoneState = ZoneState.normal;
+    let state: IZoneState = IZoneState.normal;
     this.zones.forEach(zone => {
       if (zone.path != pathSelf) { return; }
       let lower = zone.lower || -Infinity;
@@ -244,18 +250,18 @@ export class SignalKService {
     });
     // if we're not in alarm, and new state is alarm, sound the alarm!
     // @ts-ignore
-    if (state != ZoneState.normal && state != this.paths[pathIndex].state) {
+    if (state != IZoneState.normal && state != this.paths[pathIndex].state) {
       let stateString; // notif service needs string....
       let methods;
       switch (state) {
         // @ts-ignore
-        case ZoneState.alarm:
+        case IZoneState.alarm:
           stateString = "alarm"
           methods = [ 'visual', 'sound' ];
           break;
 
         // @ts-ignore
-        case ZoneState.warning:
+        case IZoneState.warning:
             stateString = "warn"
             methods = [ 'visual','sound' ];
             break;
@@ -274,7 +280,7 @@ export class SignalKService {
 
     // if we're in alarm, and new state is not alarm, stop the alarm
     // @ts-ignore
-    if (this.paths[pathIndex].state != ZoneState.normal && state == ZoneState.normal) {
+    if (this.paths[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
       this.notificationsService.deleteAlarm(pathSelf);
     }
 
@@ -315,7 +321,7 @@ export class SignalKService {
     }
   }
 
-  setMeta(meta:IMeta): void {
+  private setMeta(meta: IMeta): void {
     let pathSelf: string = meta.path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
@@ -345,24 +351,24 @@ export class SignalKService {
     return paths; // copy it....
   }
 
-  getPathsObservable(): Observable<IPathObject[]> {
+  getPathsObservable(): Observable<IPathData[]> {
     return this.pathsObservale.asObservable();
   }
 
-  getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathAndMetaObjects[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
-    let pathsMeta: IPathAndMetaObjects[] = [];
+  getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
+    let pathsMeta: IPathMetaData[] = [];
     for (let i = 0; i < this.paths.length;  i++) {
        if (this.paths[i].type == valueType) {
          if (selfOnly) {
           if (this.paths[i].path.startsWith("self")) {
-            let p:IPathAndMetaObjects = {
+            let p:IPathMetaData = {
               path: this.paths[i].path,
               meta: this.paths[i].meta,
             };
             pathsMeta.push(p);
           }
          } else {
-          let p:IPathAndMetaObjects = {
+          let p:IPathMetaData = {
             path: this.paths[i].path,
             meta: this.paths[i].meta,
           };
@@ -373,10 +379,10 @@ export class SignalKService {
     return pathsMeta; // copy it....
   }
 
-  getPathObject(path): IPathObject {
+  getPathObject(path): IPathData {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
-    let foundPathObject: IPathObject = JSON.parse(JSON.stringify(this.paths[pathIndex])); // so we don't return the object reference and hamper garbage collection/leak memory
+    let foundPathObject: IPathData = JSON.parse(JSON.stringify(this.paths[pathIndex])); // so we don't return the object reference and hamper garbage collection/leak memory
     return foundPathObject;
 
   }
@@ -401,7 +407,7 @@ export class SignalKService {
    * @param path The SignalK path of the value
    * @return conversions Full list array or subset of list array
    */
-   getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
+  getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
     let pathUnitType = this.getPathUnitType(path);
     let groupList = [];
     let isUnitInList: boolean = false;

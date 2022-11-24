@@ -2,13 +2,12 @@ import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewCh
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { SignalKService } from '../signalk.service';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
+import { IZoneState } from "../app-settings.interfaces";
 import { AppSettingsService } from '../app-settings.service';
-import { ZoneState } from "../app-settings.interfaces";
-
+import { SignalKService } from '../signalk.service';
+import { UnitsService } from '../units.service';
+import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
@@ -48,7 +47,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   config: IWidgetSvcConfig;
 
   dataValue: number = null;
-  zoneState: ZoneState = null;
+  IZoneState: IZoneState = null;
   maxValue: number = null;
   minValue: number = null;
   dataTimestamp: number = Date.now();
@@ -132,14 +131,14 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['numericPath'].path, this.config.paths['numericPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue.value;
-        this.zoneState = newValue.state;
+        this.IZoneState = newValue.state;
         //start flashing if alarm
-        if (this.zoneState == ZoneState.alarm && !this.flashInterval) {
+        if (this.IZoneState == IZoneState.alarm && !this.flashInterval) {
           this.flashInterval = setInterval(() => {
             this.flashOn = !this.flashOn;
             this.updateCanvas();
           }, 350); // used to flash stuff in alarm
-        } else if (this.zoneState != ZoneState.alarm) {
+        } else if (this.IZoneState != IZoneState.alarm) {
           // stop alarming if not in alarm state
           if (this.flashInterval) {
             clearInterval(this.flashInterval);
@@ -264,8 +263,8 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     }
 
     // get color based on zone
-    switch (this.zoneState) {
-      case ZoneState.alarm:
+    switch (this.IZoneState) {
+      case IZoneState.alarm:
         if (this.flashOn) {
           this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
         } else {
@@ -277,7 +276,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
         }
         break;
 
-      case ZoneState.warning:
+      case IZoneState.warning:
         this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
         break;
 

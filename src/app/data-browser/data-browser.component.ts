@@ -5,7 +5,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
 import { SignalKService } from '../signalk.service';
-import { IPathObject } from "../signalk-interfaces";
+import { IPathData } from "../app-interfaces";
 
 
 @Component({
@@ -61,7 +61,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
     }
   }
 
-  public trackByPath(index: number, item: IPathObject): string {
+  public trackByPath(index: number, item: IPathData): string {
     return `${item.path}`;
   }
 
