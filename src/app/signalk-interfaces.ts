@@ -90,7 +90,7 @@ export interface ISignalKUpdateMessage {
     path: string;
     value: any;
   }[];
-  meta?: ISignalKMetadata[];
+  meta?: ISignalKMeta[];
 }
 
 /**
@@ -109,19 +109,19 @@ export interface ISignalKUpdateMessage {
  *
  * @memberof signalk-interfaces
  */
- export interface ISignalKMetadata {
+ export interface ISignalKMeta {
   path: string; // not in the spec but always present in the data
-  value: { // not in the spec but present in the data. Represents the multiple value a complex path (GPS data) contains
-    description: string;
-    units?: string;
-    properties: {}; // Not defined. Used by GPS and Ship details and other complexe data types
-  }
+  value: ISignalKMetadata;
+}
+
+export interface ISignalKMetadata {
   displayName?: string;
   shortName?: string;
   longName?: string;
   description: string;
   units: string;        // required if value is present. describe the type of data
   timeout?: number;     // tells the consumer how long it should consider the value valid
+  properties: {}; // Not defined. Used by GPS and Ship details and other complexe data types
   method?: Method[];
   displayScale?: {      //This object provides information regarding the recommended type and extent of the scale used for displaying values.
     lower?: number;

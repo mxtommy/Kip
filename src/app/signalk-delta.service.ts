@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { ISignalKDeltaMessage, ISignalKMetadata } from './signalk-interfaces';
+import { ISignalKDeltaMessage, ISignalKMeta, ISignalKMetadata } from './signalk-interfaces';
 import { IMeta, INotification, IPathValueData } from "./app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
@@ -322,7 +322,7 @@ export class SignalKDeltaService {
     }
   }
 
-  private processMeta(metadata: ISignalKMetadata, context: string) {
+  private processMeta(metadata: ISignalKMeta, context: string) {
     if (Object.keys(metadata).length === 0) {
       return;
     } else {
@@ -336,18 +336,7 @@ export class SignalKDeltaService {
           };
           this.signalKMetadata$.next(meta);
         })
-
-      } else if (metadata.displayScale) {
-        console.log();
-      } else if (metadata.zones) {
-        console.log();
-      } else if (metadata.displayName) {
-        console.log();
-      } else if (metadata.method) {
-        console.log();
-      }
-
-      else {
+      } else {
         meta = {
           path: `${context}.${metadata.path}`,
           meta: metadata.value,

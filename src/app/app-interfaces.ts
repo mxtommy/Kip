@@ -90,5 +90,5 @@ export interface IDefaultSource {
 
 export interface IMeta {
   path: string;
-  meta: any;
+  meta: ISignalKMetadata;
 }
