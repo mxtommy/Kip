@@ -1,7 +1,7 @@
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { Injectable } from '@angular/core';
 import { IConfig } from "./app-settings.interfaces";
-import * as compareVersions from 'compare-versions';
+import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
 import { tap, concatMap, catchError, lastValueFrom } from 'rxjs';
@@ -57,7 +57,7 @@ export class StorageService {
 
       server.serverVersion$.subscribe(version => {
       if (version) {
-        this.isAppDataSupported = compareVersions.compare(version, '1.27.0', ">=");
+        this.isAppDataSupported = compare(version, '1.27.0', ">=");
       }
     });
 
