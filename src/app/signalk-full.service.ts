@@ -4,6 +4,7 @@ import { BehaviorSubject, Subject, Observable, lastValueFrom } from 'rxjs';
 import { ISignalKFullDocument } from './signalk-interfaces';
 import { IDefaultSource, IMeta, IPathValueData } from "./app-interfaces";
 import { IEndpointStatus, SignalKConnectionService } from "./signalk-connection.service";
+import { satisfies } from 'compare-versions';
 
 
 export interface IFullDocumentStatus {
@@ -14,7 +15,7 @@ export interface IFullDocumentStatus {
 @Injectable()
 export class SignalKFullService {
 
-  private sKDocumentSpecVersion: string = "~0.1.0";
+  private sKSupportedSchemaVersion: string = "~0.1.0";
 
   // Signal K full document data path Observable
   private sKFullDocPath$ = new Subject<IPathValueData>();
@@ -66,9 +67,11 @@ export class SignalKFullService {
   }
 
   private processFullDocument(document: ISignalKFullDocument): void {
-    this.sKDocumentSpecVersion = document.version;
-    // Check Document version (sk specification version) for compatibility
-    if (satisfies(document.version, this.sKDocumentSpecVersion) )
+    // Check Document version (sk schema version) for compatibility
+    if (!satisfies(document.version, this.sKSupportedSchemaVersion)) {
+      console.error("Signal K schema version not supported by Kip. Contact Kip team");
+      return;
+    }
 
     // Set self urn so we can find our own vessel data in the document vessels subkey
     this.sKFullDocSelf$.next(document.self);
@@ -241,7 +244,3 @@ export class SignalKFullService {
   }
 
 }
-function satisfies(version: string, sKDocumentSpecVersion: string) {
-  throw new Error('Function not implemented.');
-}
-
