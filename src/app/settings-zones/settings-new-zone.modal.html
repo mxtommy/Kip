@@ -1,0 +1,75 @@
+<h2 mat-dialog-title>Add Zone</h2>
+<form (ngSubmit)="closeForm()" [formGroup]="zoneForm">
+  <mat-dialog-content>
+    <div class="flex-container">
+      <mat-checkbox name="filterSelfPaths" formControlName="filterSelfPaths"
+        >Restrict to own vessel</mat-checkbox
+      >
+      <modal-path-selector
+        class="full-width"
+        [formGroup]="zoneForm.controls.path"
+        [filterSelfPaths]="zoneForm.value.filterSelfPaths"
+      >
+      </modal-path-selector>
+
+      <mat-form-field
+        appearance="outline"
+        floatLabel="always"
+      >
+        <mat-label>Lower value</mat-label>
+        <input
+          type="number"
+          matInput
+          placeholder="Enter or select number..."
+          name="lower"
+          formControlName="lower"
+        />
+      </mat-form-field>
+
+      <mat-form-field
+        appearance="outline"
+        floatLabel="always"
+      >
+        <mat-label>Upper value</mat-label>
+        <input
+          type="number"
+          matInput
+          placeholder="Enter or select number..."
+          name="upper"
+          formControlName="upper"
+        />
+      </mat-form-field>
+
+      <mat-form-field
+        appearance="outline"
+        floatLabel="always"
+      >
+        <mat-label>State</mat-label>
+        <mat-select
+          placeholder="Value State"
+          formControlName="state"
+          name="state"
+          required
+        >
+          <mat-option value="0">Normal</mat-option>
+          <mat-option value="1">Warning</mat-option>
+          <mat-option value="2">Alarm</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-raised-button mat-dialog-close>Cancel</button>
+    <button
+      mat-raised-button
+      color="accent"
+      type="submit"
+      [disabled]="!zoneForm.valid"
+    >
+      Add
+    </button>
+    <mat-error style="padding-left: 10px;" *ngIf="zoneForm.hasError('needUpperLower')">
+      At least one value is required (lower / upper)
+    </mat-error>
+  </mat-dialog-actions>
+</form>

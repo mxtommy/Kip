@@ -6,30 +6,30 @@
   $themeForeground: map-get($theme, foreground);
 
   app-widget-simple-linear {
-      .primary {
-        color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceLight);
-      }
-      .accent {
-        color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceLight);
-      }
-      .warn {
-        color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceLight);
-      }
-      .primaryDark {
-        color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceDark);
-      }
-      .accentDark {
-        color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceDark);
-      }
-      .warnDark {
-        color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceDark);
-      }
-      .background {
-        color: mat.get-color-from-palette($themeForeground, divider);
-      }
-      .text {
-        color: mat.get-color-from-palette($themeForeground, text);
-      }
+    .primary {
+      color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceLight);
+    }
+    .accent {
+      color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceLight);
+    }
+    .warn {
+      color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceLight);
+    }
+    .primaryDark {
+      color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceDark);
+    }
+    .accentDark {
+      color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceDark);
+    }
+    .warnDark {
+      color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceDark);
+    }
+    .background {
+      color: mat.get-color-from-palette($themeForeground, divider);
+    }
+    .text {
+      color: mat.get-color-from-palette($themeForeground, text);
+    }
   }
 }
 

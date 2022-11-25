@@ -1,6 +1,4 @@
-import { startWith } from 'rxjs/operators';
-import { ZoneState } from './app-settings.service';
-
+import { ZoneState } from './app-settings.interfaces';
 
 // Metadata, Notification and Stream Subscription type restrictions.
 const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
@@ -36,6 +34,13 @@ export interface IUpdateMessage {
   }[]
 }
 
+export interface ISignalKDataPath {
+  path: string;
+  source: string;
+  timestamp: number;
+  value: any;
+}
+
 /**
  * SignalK Delta low level raw message interface.
  */
@@ -46,6 +51,7 @@ export interface IDeltaMessage {
     timeToLive?: number; //not yet implemented on server
   };
   context?: string;
+  errorMessage?: string;
   login?: {
     token: string;
     timeToLive?: number; //not yet implemented on server
@@ -54,6 +60,7 @@ export interface IDeltaMessage {
   name?: string;
   requestId?: string;
   self?: string;
+  roles?: Array<string>;
   state?: string;
   statusCode?: number;
   timestamp?:string;

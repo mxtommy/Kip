@@ -51,7 +51,7 @@
       status-bar: map_get($pallet, 300),
       app-bar:    map_get($pallet, 100),
       background: map_get($pallet, $bgcolor),
-      hover:      rgba(black, 0.04), // TODO(kara): check style with Material Design UX
+      hover:      rgba(black, 0.04),
       card:       map_get($pallet, 200),
       dialog:     map_get($pallet, 200),
       disabled-button: rgba(black, 0.12),
@@ -70,7 +70,7 @@
       status-bar: black,
       app-bar:    map_get($pallet, 800),
       background: map_get($pallet, $bgcolor),
-      hover:      rgba(white, 0.04), // TODO(kara): check style with Material Design UX
+      hover:      rgba(white, 0.04),
       card:       map_get($pallet, 800),
       dialog:     map_get($pallet, 800),
       disabled-button: rgba(white, 0.12),
@@ -83,7 +83,6 @@
       disabled-list-option: black,
     );
 };
-
 
 //Import themes
 @import 'themes/defaultTheme.scss';
@@ -100,7 +99,7 @@
 @import 'app/modal-path-selector/modal-path-selector.component.scss';
 @import 'app/widget-blank/widget-blank.component.scss';
 @import 'app/svg-wind/svg-wind.component.scss'; // for most svg Widget components
-@import 'app/widget-state/widget-state.component.scss';
+@import 'app/widget-button/widget-button.component.scss';
 @import 'app/widget-gauge-ng-linear/widget-gauge-ng-linear.component.scss';
 @import 'app/widget-numeric/widget-numeric.component.scss';
 @import 'app/widget-race-timer/widget-race-timer.component.scss';
@@ -109,9 +108,7 @@
 @import 'app/widget-autopilot/widget-autopilot.component.scss';
 @import 'app/widget-simple-linear/widget-simple-linear.component.scss';
 @import 'app/settings-datasets/settings-datasets.component.scss';
-
-
-
+@import 'app/settings-config/settings-config.component.scss';
 
 @mixin theme-components($theme) {
   @include mat.all-component-themes($theme);
@@ -120,7 +117,7 @@
   @include modal-path-selector-theme($theme);
   @include widget-blank-theme($theme);
   @include svg-wind-theme($theme); // for both svg-wind and svg-autopilot
-  @include widget-state-theme($theme);
+  @include widget-button-theme($theme);
   @include widget-numeric-theme($theme);
   @include widget-racetimer-theme($theme);
   @include widget-ngGauge-linear-theme($theme);
@@ -128,7 +125,8 @@
   @include alarm-menu-theme($theme);
   @include widget-autopilot-theme($theme);
   @include widget-simple-linear-theme($theme);
-  @include theme-settings-data($theme)
+  @include theme-settings-data($theme);
+  @include theme-settings-config($theme);
 }
 
 @include theme-components($defaultTheme-light);

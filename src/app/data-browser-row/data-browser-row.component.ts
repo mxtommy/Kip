@@ -24,7 +24,7 @@ export class DataBrowserRowComponent implements OnInit {
     private signalKService: SignalKService,
     private unitsService: UnitsService,
     public dialog: MatDialog
-  ) { 
+  ) {
 
   }
 
@@ -44,7 +44,6 @@ export class DataBrowserRowComponent implements OnInit {
 
   openDialog(): void {
     const dialogRef = this.dialog.open(DialogUnitSelect, {
-      width: '250px',
       data: {selectedUnit: this.selectedUnit, units: this.units}
     });
 
@@ -70,10 +69,4 @@ export class DialogUnitSelect {
     public dialogRef: MatDialogRef<DialogUnitSelect>,
     @Inject(MAT_DIALOG_DATA) public data) {
     }
-
-
-  onNoClick(): void {
-    this.dialogRef.close();
-  }
-
 }

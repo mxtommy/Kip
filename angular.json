@@ -28,7 +28,6 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "util",
               "compare-versions",
               "rx-dom-html",
               "chart.js",

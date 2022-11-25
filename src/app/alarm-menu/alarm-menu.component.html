@@ -44,10 +44,10 @@
   <mat-action-list>
     <mat-divider></mat-divider>
     <button mat-list-item class="muteSoundButton" matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">
-      <span *ngIf="!isMuted">
+      <span class="mute-unmte-alarm" *ngIf="!isMuted">
         <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Alarm Audio
       </span>
-      <span *ngIf="isMuted">
+      <span class="mute-unmte-alarm" *ngIf="isMuted">
         <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
       </span>
     </button>

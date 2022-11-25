@@ -1,5 +1,4 @@
 import { Component, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
-import { isNumber } from 'util';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
 

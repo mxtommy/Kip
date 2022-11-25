@@ -1,13 +1,15 @@
+import { SignalKFullService, IDefaultSource, IMeta } from './signalk-full.service';
 import { Injectable } from '@angular/core';
-import { Observable ,  Subject ,  BehaviorSubject, Subscription } from 'rxjs';
+import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathObject, IPathAndMetaObjects } from "../app/signalk-interfaces";
-import * as compareVersions from 'compare-versions';
-
-import { AppSettingsService, IZone, ZoneState } from './app-settings.service';
+import { AppSettingsService } from './app-settings.service';
 import { NotificationsService } from './notifications.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { ISignalKDataPath } from "./signalk-interfaces";
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 
 import * as Qty from 'js-quantities';
+import { IZone, ZoneState } from './app-settings.interfaces';
 
 interface pathRegistrationValue {
   value: any;
@@ -20,7 +22,6 @@ interface pathRegistration {
   source: string; // if this is set, updates to observable are the direct value of this source...
   observable: BehaviorSubject<pathRegistrationValue>;
 }
-
 
 export interface updateStatistics {
   currentSecond: number; // number up updates in the last second
@@ -35,9 +36,6 @@ export interface updateStatistics {
 export class SignalKService {
 
   degToRad = Qty.swiftConverter('deg', 'rad');
-
-  serverSupportApplicationData: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
-  serverVersion: BehaviorSubject<string> = new BehaviorSubject<string>(null) // version of the signalk server
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received SignalK Data and used to source Observers
@@ -65,8 +63,12 @@ export class SignalKService {
 
   constructor(
     private appSettingsService: AppSettingsService,
-    private UnitService: UnitsService,
-    private NotificationsService: NotificationsService) {
+    private fullDocument: SignalKFullService,
+    private deltaService: SignalKDeltaService,
+    private notificationsService: NotificationsService,
+    private unitService: UnitsService,
+  )
+  {
     //every second update the stats for seconds array
     setInterval(() => {
 
@@ -96,9 +98,35 @@ export class SignalKService {
         this.defaultUnits = newDefaults;
       }
     );
-    this.conversionList = this.UnitService.getConversions();
+
+    this.conversionList = this.unitService.getConversions();
+
     this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
       this.zones = zones;
+    });
+
+    // Observer of delta data path updates
+    this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: ISignalKDataPath) => {
+      this.updatePathData(dataPath);
+    });
+
+    // Observer of Full Document Service data path updates
+    this.fullDocument.subscribeFullDocumentDataPathsUpdates().subscribe((dataPath: ISignalKDataPath) => {
+      this.updatePathData(dataPath);
+    });
+
+    // Observer of Full Document Service default source updates
+    this.fullDocument.subscribeDefaultSourceUpdates().subscribe((source: IDefaultSource) => {
+      this.setDefaultSource(source);
+    });
+
+    // Observer of Full Document Service Meta updates
+    this.fullDocument.subscribeMetaUpdates().subscribe((meta: IMeta) => {
+      this.setMeta(meta);
+    });
+
+    this.fullDocument.subscribeSelfUpdates().subscribe(self => {
+      this.setSelf(self);
     });
 
   }
@@ -166,32 +194,14 @@ export class SignalKService {
     }
   }
 
-  setServerInfo(version: string, name: string) {
-    console.log("[SignalK Service] Server Name: " + name + ", Version: " + version);
-    if (version) {
-      this.serverSupportApplicationData.next(compareVersions.compare(version, '1.27.0', ">="));
-    } else {
-      this.serverSupportApplicationData.next(false);
-    }
-    this.serverVersion.next(version);
-  }
-
-  getServerVersionAsO() {
-    return this.serverVersion.asObservable();
-  }
-
-  getServerSupportApplicationDataAsO() {
-    return this.serverSupportApplicationData.asObservable();
-  }
-
-  updatePathData(path: string, source: string, timestamp: number, value: any) {
+  updatePathData(dataPath: ISignalKDataPath) {
     this.updateStatistics.currentSecond++;
     // convert the selfURN to "self"
-    let pathSelf: string = path.replace(this.selfurn, 'self');
+    let pathSelf: string = dataPath.path.replace(this.selfurn, 'self');
 
     // position data is sent as degrees. KIP expects everything to be in SI, so rad.
     if (pathSelf.includes('position.latitude') || pathSelf.includes('position.longitude')) {
-      value = this.degToRad(value);
+      dataPath.value = this.degToRad(dataPath.value);
     }
 
     // update existing if exists.
@@ -199,22 +209,22 @@ export class SignalKService {
     if (pathIndex >= 0) { // exists
 
       // update data
-      this.paths[pathIndex].sources[source] = {
-        timestamp: timestamp,
-        value: value
+      this.paths[pathIndex].sources[dataPath.source] = {
+        timestamp: dataPath.timestamp,
+        value: dataPath.value
       };
 
     } else { // doesn't exist. update...
       this.paths.push({
         path: pathSelf,
-        defaultSource: source, // default source
+        defaultSource: dataPath.source, // default source
         sources: {
-          [source]: {
-            timestamp: timestamp,
-            value: value
+          [dataPath.source]: {
+            timestamp: dataPath.timestamp,
+            value: dataPath.value
           }
         },
-        type: typeof(value),
+        type: typeof(dataPath.value),
         state: ZoneState.normal
       });
       pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
@@ -226,7 +236,7 @@ export class SignalKService {
       if (zone.path != pathSelf) { return; }
       let lower = zone.lower || -Infinity;
       let upper = zone.upper || Infinity;
-      let convertedValue = this.UnitService.convertUnit(zone.unit, value);
+      let convertedValue = this.unitService.convertUnit(zone.unit, dataPath.value);
       if (convertedValue >= lower && convertedValue <= upper) {
         //in zone
         state = Math.max(state, zone.state);
@@ -254,7 +264,7 @@ export class SignalKService {
 
 
       //start
-      this.NotificationsService.addAlarm(pathSelf, {
+      this.notificationsService.addAlarm(pathSelf, {
         method: methods,
         state: stateString,
         message: pathSelf + ' value in ' + stateString,
@@ -265,7 +275,7 @@ export class SignalKService {
     // if we're in alarm, and new state is not alarm, stop the alarm
     // @ts-ignore
     if (this.paths[pathIndex].state != ZoneState.normal && state == ZoneState.normal) {
-      this.NotificationsService.deleteAlarm(pathSelf);
+      this.notificationsService.deleteAlarm(pathSelf);
     }
 
     this.paths[pathIndex].state = state;
@@ -297,19 +307,19 @@ export class SignalKService {
 
   }
 
-  setDefaultSource(path: string, source: string) {
-    let pathSelf: string = path.replace(this.selfurn, 'self');
+  setDefaultSource(source: IDefaultSource): void {
+    let pathSelf: string = source.path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
-      this.paths[pathIndex].defaultSource = source;
+      this.paths[pathIndex].defaultSource = source.source;
     }
   }
 
-  setMeta(path: string, meta) {
-    let pathSelf: string = path.replace(this.selfurn, 'self');
+  setMeta(meta:IMeta): void {
+    let pathSelf: string = meta.path.replace(this.selfurn, 'self');
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
-      this.paths[pathIndex].meta = meta;
+      this.paths[pathIndex].meta = meta.meta;
     }
   }
 
@@ -371,7 +381,7 @@ export class SignalKService {
 
   }
 
-  getPathUnitType(path: string): string { //TODO(David): Look at Unit Path Type
+  getPathUnitType(path: string): string {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
     if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {

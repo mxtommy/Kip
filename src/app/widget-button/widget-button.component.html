@@ -1,0 +1,31 @@
+<div class="wrapper">
+  <div
+    #btnDiv
+    class="indicatorBorder"
+    [style.color]="state ? buttonBorberColorOn : buttonBorberColorOff"
+    [style.background-color]="state ? buttonColorOn : buttonColorOff"
+    (mousedown)="handleClickDown()"
+    (mouseup)="handleClickUp()"
+    (mouseout)="handleClickUp()"
+  >
+    <canvas #btnLabelCanvas></canvas>
+  </div>
+  <div class="settingsButton" *ngIf="unlockStatus">
+    <button
+      color="accent"
+      mat-mini-fab
+      class="selector-fab"
+      (click)="openWidgetSettings()"
+    >
+      <span class="fa-solid fa-cog"></span>
+    </button>
+  </div>
+  <div #primary class="primary" style="display: none"></div>
+  <div #accent class="accent" style="display: none"></div>
+  <div #warn class="warn" style="display: none"></div>
+  <div #primaryDark class="primaryDark" style="display: none"></div>
+  <div #accentDark class="accentDark" style="display: none"></div>
+  <div #warnDark class="warnDark" style="display: none"></div>
+  <div #background class="background" style="display: none"></div>
+  <div #text class="text" style="display: none"></div>
+</div>

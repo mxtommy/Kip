@@ -3,12 +3,13 @@ import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
 
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { TimersService } from '../timers.service';
-import { AppSettingsService, ZoneState } from '../app-settings.service';
+import { AppSettingsService } from '../app-settings.service';
+import { ZoneState } from "../app-settings.interfaces";
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   timerLength: 300
 };
 
@@ -29,7 +30,7 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
 
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
 
   dataValue: number = null;
@@ -51,7 +52,7 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
   constructor(
     public dialog:MatDialog,
     private WidgetManagerService: WidgetManagerService,
-    private AppSettingsService: AppSettingsService, // need for theme change 
+    private AppSettingsService: AppSettingsService, // need for theme change
     private TimersService: TimersService
   ) { }
 
@@ -123,7 +124,7 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
 
        //start flashing if alarm
        if (this.zoneState == ZoneState.alarm && !this.flashInterval) {
-        this.flashInterval = setInterval(() => { 
+        this.flashInterval = setInterval(() => {
           this.flashOn = !this.flashOn;
           this.updateCanvas();
         }, 500); // used to flash stuff in alarm
@@ -190,19 +191,19 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
     let v = this.dataValue;
     if (this.dataValue < 0) { v = v *-1} // always positive
     var seconds = v % 600;
-    
+
     if (this.dataValue > 0) {
       if (seconds > 300) {
         this.TimersService.setTimer("race", this.dataValue + (600 - seconds));
       } else {
         this.TimersService.setTimer("race", this.dataValue - seconds);
-      } 
+      }
     } else {
       if (seconds > 300) {
         this.TimersService.setTimer("race", this.dataValue - (600 - seconds));
       } else {
         this.TimersService.setTimer("race", this.dataValue + seconds);
-      } 
+      }
     }
   }
 
@@ -260,7 +261,7 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
       if (this.dataValue < 0) {
         valueText = "-" + valueText;
       }
-      
+
     } else {
       valueText = "--";
     }
@@ -269,11 +270,11 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
-      // start with large font, no sense in going bigger than the size of the canvas :) 
+      // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
       this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       let measure = this.canvasCtx.measureText(valueText).width;
-      
+
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;

@@ -1,0 +1,81 @@
+<form name="zoneEditForm" (ngSubmit)="closeForm()" #zoneEditForm="ngForm">
+<h2 mat-dialog-title>Edit Zone</h2>
+<mat-dialog-content>
+
+  <mat-form-field
+  class="full-width"
+  appearance="fill"
+  floatLabel="always"
+  >
+    <mat-label>Signal K Path</mat-label>
+    <input
+      type="text"
+      matInput
+      placeholder="Enter or select number..."
+      name="path"
+      [ngModel]="zone.path"
+      disabled
+    />
+  </mat-form-field>
+
+  <div class="flex-container">
+    <mat-form-field
+      class="leftThirdField"
+      appearance="outline"
+      floatLabel="always"
+    >
+      <mat-label>Lower value</mat-label>
+      <input
+        type="number"
+        matInput
+        placeholder="Enter or select number..."
+        name="lower"
+        [(ngModel)]="zone.lower"
+      />
+    </mat-form-field>
+
+    <mat-form-field
+      class="leftThirdField"
+      appearance="outline"
+      floatLabel="always"
+    >
+      <mat-label>Upper value</mat-label>
+      <input
+        type="number"
+        matInput
+        placeholder="Enter or select number..."
+        name="upper"
+        [(ngModel)]="zone.upper"
+      />
+    </mat-form-field>
+
+    <mat-form-field
+      class="rightThirdField"
+      appearance="outline"
+      floatLabel="always"
+    >
+
+      <mat-label>State</mat-label>
+      <mat-select
+        placeholder="Value State"
+        name="state"
+        [(ngModel)]="zone.state"
+        name="selectedState"
+        required
+      >
+        <mat-option [value]="0">Normal</mat-option>
+        <mat-option [value]="1">Warning</mat-option>
+        <mat-option [value]="2">Alarm</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-raised-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button color="accent" type="submit" [disabled]="!zoneEditForm.valid || (!zone.lower && !zone.upper)">Save</button>
+    <mat-error style="padding-left: 10px;" *ngIf="!zone.lower && !zone.upper">
+      At least one value is required (lower / upper)
+    </mat-error>
+  </mat-dialog-actions>
+</form>

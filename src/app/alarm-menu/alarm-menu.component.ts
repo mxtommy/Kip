@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NotificationsService, Alarm, IAlarmInfo } from '../notifications.service';
-import { AppSettingsService, INotificationConfig } from '../app-settings.service';
+import { AppSettingsService } from '../app-settings.service';
 import { Subscription } from 'rxjs';
+import { INotificationConfig } from '../app-settings.interfaces';
 
 
 
@@ -43,9 +44,8 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
 
   constructor(
     private notificationsService: NotificationsService,
-    private appSettingsService: AppSettingsService,
   ) {
-    this.notificationServiceSettings = appSettingsService.getNotificationConfigService().subscribe(config => {
+    this.notificationServiceSettings = this.notificationsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
     });
   }

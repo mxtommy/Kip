@@ -7,33 +7,89 @@
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
 
-  table, th, td {
-    border-bottom: 1px solid mat.get-color-from-palette($foreground, divider);
-  }
+}
 
-  th {
-    padding: 10px;
-    text-align: left;
-    background-color: mat.get-color-from-palette($accent, 300);
-    color: mat.get-color-from-palette($foreground, text);
-  }
-
-  td {
-    padding: 5px 5px 5px 10px;
-    text-align: left;
-    font-size: 14px;
-  }
-
-  tr:nth-child(even) {
-    background-color: mat.get-color-from-palette($background, hover);
-  }
-
+.full-display {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 500;
 }
 
 .full-width {
-    width: 100%;
+  width: 100%;
 }
 
-table {
-  border-collapse: collapse;
+.mat-column-actions {
+  text-align: end;
+}
+
+.buttons {
+  margin-right: 5px;
+}
+
+.pathCell {
+  flex: 1 1 50%;
+}
+
+.pathHeader {
+  flex: 1 1 50%;
+}
+
+.dataHeader {
+  flex: 1 1 10%;
+  justify-content: center;
+}
+
+.dataCell {
+  flex: 1 1 10%;
+  justify-content: center;
+}
+
+.actionHeader {
+  flex: 1 1 20%;
+}
+
+.actionCell {
+  flex: 1 1 20%;
+  justify-content: end;
+}
+
+@media screen and (max-width: 750px) {
+  .pathHeader {
+    flex: 1 1 30%;
+  }
+
+  .dataHeader {
+    flex: 1 1 30%;
+  }
+
+  .actionHeader {
+    display: none;
+  }
+
+  .mat-table .mat-cell:before {
+    content: attr(data-label);
+    float: left;
+    padding-right: 5px;
+  }
+
+  mat-row::after {
+    min-height: auto;
+    padding-bottom: 10px;
+  }
+
+  .dataRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dataCell {
+    margin-left: 24px;
+  }
+
+  .actionCell {
+    margin-left: 24px;
+  }
+
 }

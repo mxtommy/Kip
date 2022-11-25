@@ -1,15 +1,15 @@
 import { Component, Input, OnInit, OnDestroy, Inject } from '@angular/core';
-import { Subscription ,  Observable, interval } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 
 import { MatDialog } from '@angular/material/dialog';
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   filterSelfPaths: true,
   paths: {
     "headingPath": {
@@ -71,7 +71,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   @Input('unlockStatus') unlockStatus: boolean;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   currentHeading: number = 0;
   headingSub: Subscription = null;
@@ -218,7 +218,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
           //0-360
           this.trueWindAngle = converted;
         } else {
-          // some other path... assume it's the angle 
+          // some other path... assume it's the angle
           this.trueWindAngle = converted;
         }
 

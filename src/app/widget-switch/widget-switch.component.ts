@@ -6,10 +6,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -35,7 +35,7 @@ export class WidgetSwitchComponent implements OnInit, OnDestroy {
   @Input('unlockStatus') unlockStatus: boolean;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   dataValue: number = null;
   dataTimestamp: number = Date.now();
