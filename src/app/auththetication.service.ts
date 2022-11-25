@@ -43,7 +43,7 @@ export class AuththeticationService {
           console.log('[Authentication Service] Device Access Token found with expiry: NEVER');
           this._authToken$.next(token);
         } else if (this.isTokenExpired(token.expiry)) {
-          console.warn("[Authentication Service] Device Access Token expired. Deleting token");
+          console.log("[Authentication Service] Device Access Token expired. Deleting token");
           localStorage.removeItem('authorization_token');
         } else {
           // We don't set logged . This is not a Session token.
@@ -52,7 +52,7 @@ export class AuththeticationService {
         }
       } else {
         console.log('[Authentication Service] User session token found in Local Storage');
-        console.warn('[Authentication Service] Deleting user session token');
+        console.log('[Authentication Service] Deleting user session token');
         localStorage.removeItem('authorization_token');
       }
    }
@@ -66,17 +66,17 @@ export class AuththeticationService {
       .subscribe(() => {
         let token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
         if (token.isDeviceAccessToken) {
-          console.error('[Authentication Service] Device Access Token expired. Manually renew token using SignalK Connection Tab');
+          console.warn('[Authentication Service] Device Access Token expired. Manually renew token using SignalK Connection Tab');
         } else {
           if (this.isTokenExpired(token.expiry)) {
-            console.warn('[Authentication Service] User session Token expired');
+            console.log('[Authentication Service] User session Token expired');
           } else {
             let connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
             console.log('[Authentication Service] User session Token expires soon. Renewing token.');
             console.log("[Authentication Service] \nToken Expiry: " + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer));
             this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
             .catch( (error: HttpErrorResponse) => {
-              console.warn("[AppInit Service] Token renewal failure. Server returned: " + JSON.stringify(error.error));
+              console.error("[AppInit Service] Token renewal failure. Server returned: " + JSON.stringify(error.error));
             });
           }
         }
@@ -233,12 +233,6 @@ export class AuththeticationService {
     .catch(error => {
       console.error(error)
     });
-    //TODO: below should be removed once the sk bug is fixed
-    this._IsLoggedIn$.next(false);
-    if (!isLoginAction) {
-      this._authToken$.next(null);
-    }
-    console.log("[Authentication Service] User logged out");
   }
 
   public deleteToken() {
