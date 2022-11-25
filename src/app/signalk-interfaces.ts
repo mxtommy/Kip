@@ -1,21 +1,14 @@
-/**
- * This file contains Signal K data interfaces.
- *
- * Those interfaces describe the different data types and structures of the
- * Signal K specification. They apply to both REST and WebSocket.
- *
- * For internal Kip data interfaces, see app-interfaces file.
- */
+import { ZoneState } from './app-settings.interfaces';
 
 // Metadata, Notification and Stream Subscription type restrictions.
 const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
-export type State = typeof states[number];
+type State = typeof states[number];
 
 const types = ["linear", "logarithmic", "squareroot", "power"] as ["linear", "logarithmic", "squareroot", "power"];
-export type Type = typeof types[number];
+type Type = typeof types[number];
 
 const methods = ["visual", "sound"] as ["visual", "sound"];
-export type Method = typeof methods[number];
+type Method = typeof methods[number];
 
 const formats = ["delta", "full"] as ["delta", "full"];
 export type Format = typeof formats[number];
@@ -23,25 +16,35 @@ export type Format = typeof formats[number];
 const policies = ["instant", "ideal", "fixed"] as ["instant", "ideal", "fixed"];
 export type Policy = typeof policies[number];
 
-export interface ISignalKFullDocument {
-  version: string;
-  self: string;
-  vessels: any;
-  sources: any;
-  atons: any;
-  shore: any;
+/**
+ * Not used
+ */
+export interface IUpdateMessage {
+  source: {
+    label: string;
+    type: string;
+    pgn?: string;
+    src?: string;
+    talker?: string;
+  };
+  timestamp: string;
+  values: {
+    path: string;
+    value: any;
+  }[]
+}
+
+export interface ISignalKDataPath {
+  path: string;
+  source: string;
+  timestamp: number;
+  value: any;
 }
 
 /**
- * Services: signalk-delta service
- * Use in: Root interface - Signal K (WebSocket stream) lowest level raw message interface.
- *
- * Description: lowest level object interface of all data updates send by the server. This includes
- * server resquests, login, token requests and validation, data updates.
- *
- * @memberof signalk-interfaces
+ * SignalK Delta low level raw message interface.
  */
- export interface ISignalKDeltaMessage {
+export interface IDeltaMessage {
   accessRequest?: {
     permission?: string;
     token: string;
@@ -61,7 +64,7 @@ export interface ISignalKFullDocument {
   state?: string;
   statusCode?: number;
   timestamp?:string;
-  updates?: ISignalKUpdateMessage[];
+  updates?: IUpdateMessage[];
   validate?: {
     token?: string;
     timeToLive?: number; //not yet implemented on server
@@ -70,73 +73,76 @@ export interface ISignalKFullDocument {
 }
 
 /**
- * Services: signalk-delta service
- * Used in: IDeltaMessage.updates interface propertie
- *
- * Description: data update message object interface. This includes: sources, values and metadata
- *
- * @memberof signalk-interfaces
+ * Kip SignalK path Objects interface. This object is used to contain all server received data
  */
-export interface ISignalKUpdateMessage {
-  source: {
-    label: string;
-    type: string;
-    pgn?: string;
-    src?: string;
-    talker?: string;
-  };
-  timestamp: string;
-  values: {
-    path: string;
-    value: any;
-  }[];
-  meta?: ISignalKMeta[];
+export interface IPathObject {
+  path: string;
+  defaultSource: string; // default source
+  sources: {
+    [sourceName: string]: { // per source data
+      timestamp: number;
+      value: any;
+    }
+  }
+  meta?: ISignalKMetadata;
+  type: string;
+  state: ZoneState;
 }
 
 /**
- * Signal K messsage object interface. Describes meta data received from server.
- *
- * Used by: signalk-delta (parser) and signalk-full (parser) services
- *
- * Included in: IUpdateMessage, IPathFullObject, IPathMetaObject
- *
- * Follow URL for full SignalK specification and description of fields:
- * @url https://signalk.org/specification/1.7.0/doc/data_model_metadata.html
- *
- * When present, metadata can be use for gauge configuration and the state of
- * values in a given scale. It's meant to help automatic gauge configuration, and describe
- * the type of data provided by a given path.
- *
- * @memberof signalk-interfaces
+ * SignalK Metadata Object interface. Follow URL for full SignalK specification
+ * and description of fields:
+ * @url https://signalk.org/specification/1.4.0/doc/data_model_metadata.html
  */
- export interface ISignalKMeta {
-  path: string; // not in the spec but always present in the data
-  value: ISignalKMetadata;
-}
-
 export interface ISignalKMetadata {
+  // normal state value
+  description: string;  //SK base required value
+  units: string;         //SK base required value
   displayName?: string;
-  shortName?: string;
   longName?: string;
-  description: string;
-  units: string;        // required if value is present. describe the type of data
-  timeout?: number;     // tells the consumer how long it should consider the value valid
-  properties: {}; // Not defined. Used by GPS and Ship details and other complexe data types
+  shortName?: string;
+  state?: State;
+  timeout?: number;
   method?: Method[];
   displayScale?: {      //This object provides information regarding the recommended type and extent of the scale used for displaying values.
     lower?: number;
     upper?: number;
-    type: Type;
-    power?: number;
+    type?: Type;
   }
+  // elevated state value
   alertMethod?: Method[];
   warnMethod?: Method[];
   alarmMethod?: Method[];
   emergencyMethod?: Method[];
   zones?: {             //This provides a series of hints to the consumer which can be used to properly set a range on a display gauge and also color sectors of a gauge to indicate normal or dangerous operating conditions.
-    state: State;
+    state: string;
     lower?: number;
     upper?: number;
     message?: string;
   }[]
+}
+
+/**
+ * Interface for Metadata by Paths
+ */
+export interface IPathAndMetaObjects {
+  path: string;
+  meta?: ISignalKMetadata;
+}
+
+/**
+ * SignalK Notification Object interface. Follow URL for full SignalK specification
+ * and description of fields:
+ * @url https://signalk.org/specification/1.4.0/doc/notifications.html
+ */
+export interface ISignalKNotification {
+  method: Method[],
+  state: State,
+  message: string
+  timestamp: string,
+}
+
+export interface IPathInfo {
+  path: string;
+
 }
