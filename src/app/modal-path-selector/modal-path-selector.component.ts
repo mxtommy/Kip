@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnChanges, SimpleChange  } from '@angular/core';
 import { SignalKService } from '../signalk.service';
-import { IPathAndMetaObjects } from "../signalk-interfaces";
+import { IPathMetaData } from "../app-interfaces";
 import { UnitsService, IUnitGroup } from '../units.service';
 import { FormGroup, FormControl,Validators } from '@angular/forms';
 import { map, startWith } from 'rxjs/operators';
@@ -16,8 +16,8 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
   //path control
   @Input() formGroup: FormGroup;
   @Input() filterSelfPaths: boolean;
-  availablePaths: IPathAndMetaObjects[];
-  filteredPaths: Observable<IPathAndMetaObjects[]> = new Observable;
+  availablePaths: IPathMetaData[];
+  filteredPaths: Observable<IPathMetaData[]> = new Observable;
 
   //source control
   availableSources: Array<string>;
@@ -27,7 +27,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
   default: string;
 
   ////require-match validation for path
-  requirePathMatch = (allPathsAndMeta: IPathAndMetaObjects[]) => {
+  requirePathMatch = (allPathsAndMeta: IPathMetaData[]) => {
     return (control: FormControl) => {
       const selection: any = control.value;
       if (allPathsAndMeta.some(pm => pm.path === selection)) {
@@ -97,11 +97,11 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     this.formGroup.controls['path'].setValidators([Validators.required]); //, this.requirePathMatch(this.availablePaths)]); // allow non-existing paths, maybe new path?
   }
 
-  filterPaths( value: string ): IPathAndMetaObjects[] {
+  filterPaths( value: string ): IPathMetaData[] {
     const filterValue = value.toLowerCase();
     return this.availablePaths.filter(pathAndMetaObj => pathAndMetaObj.path.toLowerCase().includes(filterValue)).slice(0,50);
   }
-  
+
 
 
   updateSourcesAndUnits() {

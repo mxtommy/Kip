@@ -8,7 +8,7 @@ import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from './app-settings.interfaces';
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { SignalKDeltaService, INotificationDelta, IStreamStatus } from './signalk-delta.service';
-import { ISignalKNotification } from "./signalk-interfaces";
+import { INotification } from "./app-interfaces";
 import { Howl } from 'howler';
 
 const alarmTrack = {
@@ -34,13 +34,13 @@ export interface AppNotification {
  *
  * @path SignalK alarm path - Defines source of the alarm
  * @ack Optional Alarm acknowledgment property
- * @notification Native SignalK Notification message as Object ISignalKNotification
+ * @notification Native SignalK Notification message as Object INotification
  */
 export interface Alarm {
   path: string;
   type: string;
   isAck: boolean;
-  notification: ISignalKNotification;
+  notification: INotification;
 }
 
 /**
@@ -154,9 +154,9 @@ export class NotificationsService {
   /**
    * Add new Alarm and send
    * @param path SignalK path of the notification
-   * @param notification Raw content of the notification message from SignalK server as ISignalKNotification
+   * @param notification Raw content of the notification message from SignalK server as INotification
    */
-  public addAlarm(path: string, notification: ISignalKNotification) {
+  public addAlarm(path: string, notification: INotification) {
 
     if (/^notifications.security./.test(path)) {
       return; // as per sbender this part is not ready in the spec - Don't add to alarms
@@ -184,7 +184,7 @@ export class NotificationsService {
    * @param path
    * @param notification
    */
-  public updateAlarm(path: string, notification: ISignalKNotification) {
+  public updateAlarm(path: string, notification: INotification) {
     this.alarms[path].notification = notification;
     this.checkAlarms();
     this.activeAlarmsSubject.next(this.alarms);
@@ -245,7 +245,7 @@ export class NotificationsService {
       let aSev = 0;
       let vSev = 0;
 
-      //seems ISignalKNotification can sometimes not have method set. (Problem from server?)
+      //seems INotification can sometimes not have method set. (Problem from server?)
       if (!('method' in alarm.notification)) {
         continue; // if there's no method, don't alarm...
       }
@@ -319,7 +319,7 @@ export class NotificationsService {
    * routes to Kip Notification system as Alarms and Notifications.
    *
    * @param path path of message ie. the subject of the message
-   * @param notificationValue Content of the message. Must conform to ISignalKNotification interface.
+   * @param notificationValue Content of the message. Must conform to INotification interface.
    * @usageNotes This function is internal and should not be used.
    */
   public processNotificationDelta(notificationDelta: INotificationDelta) {
@@ -333,9 +333,9 @@ export class NotificationsService {
     } else {
       if (notificationDelta.path in this.alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.alarms[notificationDelta.path].notification['state'] != notificationDelta.notification['state'])
-              ||(this.alarms[notificationDelta.path].notification['message'] != notificationDelta.notification['message'])
-              ||(JSON.stringify(this.alarms[notificationDelta.path].notification['method']) != JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
+        if (    (this.alarms[notificationDelta.path].notification['state'] !== notificationDelta.notification['state'])
+              ||(this.alarms[notificationDelta.path].notification['message'] !== notificationDelta.notification['message'])
+              ||(JSON.stringify(this.alarms[notificationDelta.path].notification['method']) !== JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
           this.updateAlarm(notificationDelta.path, notificationDelta.notification);
         }
       } else {

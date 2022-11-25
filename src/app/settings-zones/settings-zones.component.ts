@@ -7,7 +7,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
 import { AppSettingsService } from '../app-settings.service';
-import { IPathAndMetaObjects } from "../signalk-interfaces";
+import { IPathMetaData } from "../app-interfaces";
 import { IZone } from "../app-settings.interfaces";
 
 @Component({
@@ -152,8 +152,8 @@ export class DialogNewZone {
   }, this.rangeValidationFunction);
 
   @Input() filterSelfPaths: boolean;
-  availablePaths: IPathAndMetaObjects[];
-  filteredPaths: Observable<IPathAndMetaObjects[]> = new Observable;
+  availablePaths: IPathMetaData[];
+  filteredPaths: Observable<IPathMetaData[]> = new Observable;
 
   selectedUnit = null;
 

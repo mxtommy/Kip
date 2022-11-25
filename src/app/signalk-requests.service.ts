@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
-import { IDeltaMessage } from './signalk-interfaces';
+import { ISignalKDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
 import { AuththeticationService } from './auththetication.service';
@@ -155,7 +155,7 @@ export class SignalkRequestsService {
    *
    * @param delta SignalK Delta message
    */
-  private updateRequest(delta: IDeltaMessage) {
+  private updateRequest(delta: ISignalKDeltaMessage) {
     let index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
