@@ -1,36 +1,30 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Subject, Observable, lastValueFrom } from 'rxjs';
-import { ISignalKDataPath } from "./signalk-interfaces";
+import { ISignalKFullDocument } from './signalk-interfaces';
+import { IDefaultSource, IMeta, IPathValueData } from "./app-interfaces";
 import { IEndpointStatus, SignalKConnectionService } from "./signalk-connection.service";
+import { satisfies } from 'compare-versions';
+
 
 export interface IFullDocumentStatus {
   operation: number;
   message: string;
 }
 
-export interface IDefaultSource {
-  path: string;
-  source: string;
-}
-
-export interface IMeta {
-  path: string;
-  meta: any;
-}
-
 @Injectable()
 export class SignalKFullService {
 
+  private sKSupportedSchemaVersion: string = "~0.1.0";
 
-  // SignalK data path full document Observable
-  private signalKFullDocument$ = new Subject<ISignalKDataPath>();
-  // SignalK default source Observable
-  private signalKdefaultSource$ = new Subject<IDefaultSource>();
-  // SignalK default source Observable
-  private signalKMeta$ = new Subject<IMeta>();
-  // SignalK default source Observable
-  private signalKSelf$ = new Subject<string>();
+  // Signal K full document data path Observable
+  private sKFullDocPath$ = new Subject<IPathValueData>();
+  // Signal K full document default source Observable
+  private sKFullDocDefaultSource$ = new Subject<IDefaultSource>();
+  // Signal K full document metadata Observable
+  private sKFullDocMeta$ = new Subject<IMeta>();
+  // Signal K full document Self value Observable
+  private sKFullDocSelf$ = new Subject<string>();
 
   public fullDocEndpoint: IFullDocumentStatus = {
     operation: 0,
@@ -56,13 +50,13 @@ export class SignalKFullService {
   }
 
   private getFullDocument() {
-    lastValueFrom(this.http.get(this.endpointHTTP, {observe: 'response'}))
+    lastValueFrom(this.http.get<ISignalKFullDocument>(this.endpointHTTP, {observe: 'response'}))
     .then( response => {
       this.fullDocEndpoint.operation = 2;
       this.fullDocEndpoint.message = response.status.toString();
       this.fullDocumentEndpoint$.next(this.fullDocEndpoint);
       console.log("[Full Document Service] Document retreived");
-      this.processFullUpdate(response.body);
+      this.processFullDocument(response.body);
     })
     .catch((err: HttpErrorResponse) => {
       this.fullDocEndpoint.operation = 3;
@@ -72,118 +66,108 @@ export class SignalKFullService {
     });
   }
 
-  private processFullUpdate(data): void {
-    //set self urn
-    this.signalKSelf$.next(data.self);
-    // so we will walk the array recusively
-    this.findKeys(data);
-  }
-
-  private findKeys(data, currentPath: string[] = []): void {
-    let path = currentPath.join('.');
-
-    if (data === null) { //notifications don't have timestamp... hmmm TODO get notif into tree...
+  private processFullDocument(document: ISignalKFullDocument): void {
+    // Check Document version (sk schema version) for compatibility
+    if (!satisfies(document.version, this.sKSupportedSchemaVersion)) {
+      console.error("Signal K schema version not supported by Kip. Contact Kip team");
       return;
     }
+
+    // Set self urn so we can find our own vessel data in the document vessels subkey
+    this.sKFullDocSelf$.next(document.self);
+
+    // Walk the document array recusively
+    this.findKeys(document);
+  }
+
+  private findKeys(document, currentPath: string[] = []): void {
+    let path = currentPath.join('.');
+
+    if (document === null) { //TODO: notifications don't have timestamp... We need to get notifications into local datasource
+      return;
+    }
+
     if (path == 'sources') { return; } // ignore the sources tree
 
-    if ( (typeof(data) == 'string') || (typeof(data) == 'number') || (typeof(data) == 'boolean')) {  // is it a simple value?
+    // check Value type
+    if ( (typeof(document) == 'string') || (typeof(document) == 'number') || (typeof(document) == 'boolean')) {  // is it a simple value?
       let timestamp = Date.now();
       let source = 'noSource'
 
-      let dataPath: ISignalKDataPath = {
+      let dataPath: IPathValueData = {
         path: path,
         source: source,
         timestamp: timestamp,
-        value: data,
+        value: document,
       };
-      this.signalKFullDocument$.next(dataPath);
+      this.sKFullDocPath$.next(dataPath);
 
       let defaultSource: IDefaultSource = {
         path: path,
         source: source,
       }
-      this.signalKdefaultSource$.next(defaultSource);
+      this.sKFullDocDefaultSource$.next(defaultSource);
       return;
     }
-    else if ('timestamp' in data) { // is it a timestamped value?
+    else if ('timestamp' in document) { // is it a timestamped value?
 
       // try and get source
       let source: string;
-      if (typeof(data['$source']) == 'string') {
-        source = data['$source'];
-      } else if (typeof(data['source']) == 'object') {
-        source = data['source']['label'];
+      if (typeof(document['$source']) == 'string') {
+        source = document['$source'];
+      } else if (typeof(document['source']) == 'object') {
+        source = document['source']['label'];
       } else {
         source = 'noSource';
       }
 
-      let timestamp = Date.parse(data.timestamp);
+      let timestamp = Date.parse(document.timestamp);
 
 
       // is it a normal value, or a compound value?
-      if ('value' in data) {
-        if (typeof(data['value']) == 'object' && (data['value'] !== null)) {
+      if ('value' in document) {
+        if (typeof(document['value']) == 'object' && (document['value'] !== null)) {
           // compound
-          Object.keys(data['value']).forEach(key => {
-            let compoundPath = path+"."+key;
+          Object.keys(document['value']).forEach(key => {
+            let compoundPath = path+"." + key;
 
-            let dataPath: ISignalKDataPath = {
+            let dataPath: IPathValueData = {
               path: compoundPath,
               source: source,
               timestamp: timestamp,
-              value: data.value[key],
+              value: document.value[key],
             };
-            this.signalKFullDocument$.next(dataPath);
+            this.sKFullDocPath$.next(dataPath);
 
             let defaultSource: IDefaultSource = {
               path: compoundPath,
               source: source,
             };
-            this.signalKdefaultSource$.next(defaultSource);
+            this.sKFullDocDefaultSource$.next(defaultSource);
 
-            // try and get metadata.
-            if (typeof(data['meta']) == 'object') {
-              //does meta have one with properties for each one?
-              if (typeof(data.meta['properties']) == 'object' && typeof(data.meta.properties[key]) == 'object') {
-                let meta: IMeta = {
-                  path: compoundPath,
-                  meta: data.meta.properties[key],
-                };
-                this.signalKMeta$.next(meta);
-              } else {
-                let meta: IMeta = {
-                  path: compoundPath,
-                  meta: data['meta'],
-                };
-                this.signalKMeta$.next(meta);
-              }
+            // Get metadata if available
+            if (typeof(document['meta']) == 'object') {
+              this.processMeta(document, compoundPath, key);
             }
           });
         } else {
           //simple
-          let dataPath: ISignalKDataPath = {
+          let dataPath: IPathValueData = {
             path: path,
             source: source,
             timestamp: timestamp,
-            value: data.value,
+            value: document.value,
           };
-          this.signalKFullDocument$.next(dataPath);
+          this.sKFullDocPath$.next(dataPath);
 
           let defaultSource: IDefaultSource = {
             path: path,
             source: source,
           };
-          this.signalKdefaultSource$.next(defaultSource);
+          this.sKFullDocDefaultSource$.next(defaultSource);
 
           // try and get metadata.
-          if (typeof(data['meta']) == 'object') {
-            let meta: IMeta = {
-              path: path,
-              meta: data['meta'],
-            };
-            this.signalKMeta$.next(meta);
-          }
+          this.processMeta(document, path);
         }
       }
 
@@ -193,13 +177,37 @@ export class SignalKFullService {
     // it's not a value, dig deaper
     else {
       // process children
-      let keys = Object.keys(data);
+      let keys = Object.keys(document);
       let len = keys.length;
       for (let i = 0; i < len; i += 1) {
         let newPath = currentPath.slice();
         newPath.push(keys[i])
-        this.findKeys(data[keys[i]], newPath);
+        this.findKeys(document[keys[i]], newPath);
       }
+    }
+  }
+
+  private processMeta(document, dataPath: string, key?: string) {
+    if (Object.keys(document.meta).length === 0) {
+      return;
+    } else {
+      let meta: IMeta;
+      //does meta have one with properties for each one?
+      if (typeof(document.meta['properties']) == 'object' && typeof(document.meta.properties[key]) == 'object') {
+        meta = {
+          path: dataPath,
+          meta: document.meta.properties[key],
+        };
+
+      } else {
+        meta = {
+          path: dataPath,
+          meta: document['meta'],
+        };
+
+      }
+
+      this.sKFullDocMeta$.next(meta);
     }
   }
 
@@ -208,20 +216,20 @@ export class SignalKFullService {
     return this.fullDocumentEndpoint$.asObservable();
   }
 
-  public subscribeFullDocumentDataPathsUpdates(): Observable<ISignalKDataPath> {
-    return this.signalKFullDocument$.asObservable();
+  public subscribeFullDocumentDataPathsUpdates(): Observable<IPathValueData> {
+    return this.sKFullDocPath$.asObservable();
   }
 
   public subscribeDefaultSourceUpdates(): Observable<IDefaultSource> {
-    return this.signalKdefaultSource$.asObservable();
+    return this.sKFullDocDefaultSource$.asObservable();
   }
 
   public subscribeMetaUpdates(): Observable<IMeta> {
-    return this.signalKMeta$.asObservable();
+    return this.sKFullDocMeta$.asObservable();
   }
 
   public subscribeSelfUpdates(): Observable<string> {
-    return this.signalKSelf$.asObservable();
+    return this.sKFullDocSelf$.asObservable();
   }
 
 }
