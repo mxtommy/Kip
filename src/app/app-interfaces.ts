@@ -1,4 +1,3 @@
-import { state } from '@angular/animations';
 /*********************************************************************************
  * This file contains App (Kip) internal data interfaces.
  *
