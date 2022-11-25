@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { IDeltaMessage, ISignalKNotification, ISignalKDataPath } from './signalk-interfaces';
+import { ISignalKDeltaMessage, ISignalKMeta, ISignalKMetadata } from './signalk-interfaces';
+import { IMeta, INotification, IPathValueData } from "./app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
 
@@ -25,7 +26,7 @@ export interface IStreamStatus {
 
 export interface INotificationDelta {
   path: string;
-  notification: ISignalKNotification;
+  notification: INotification;
 }
 
 @Injectable({
@@ -34,11 +35,13 @@ export interface INotificationDelta {
 export class SignalKDeltaService {
 
   // SignalK Requests message stream Observable
-  private signalKRequests$ = new Subject<IDeltaMessage>();
+  private signalKRequests$ = new Subject<ISignalKDeltaMessage>();
   // SignalK Notifications message stream Observable
   private signalKNotifications$ = new Subject<INotificationDelta>();
   // SignalK data path message stream Observable
-  private signalKDatapath$ = new Subject<ISignalKDataPath>();
+  private signalKDatapath$ = new Subject<IPathValueData>();
+  // SignalK Metadata message stream Observer
+  private signalKMetadata$ = new Subject<IMeta>();
 
   // Delta Service Endpoint status publishing
   public streamEndpoint: IStreamStatus = {
@@ -51,7 +54,7 @@ export class SignalKDeltaService {
   // Websocket config
   private endpointWS: string = null;
   private WS_RECONNECT_INTERVAL = 5000;                 // connection error retry interval
-  private WS_CONNECTION_ARGUMENT = "?subscribe=all"; // default but we could use none + specific paths in the future
+  private WS_CONNECTION_ARGUMENT = "?subscribe=all&sendMeta=all"; // default but we could use none + specific paths in the future
   private socketWS$: WebSocketSubject<any>;
   public socketWSCloseEvent$ = new Subject<CloseEvent>();
   public socketWSOpenEvent$ = new Subject<Event>();
@@ -219,26 +222,26 @@ export class SignalKDeltaService {
     }
   }
 
-  private processWebsocketMessage(message: IDeltaMessage) {
+  private processWebsocketMessage(message: ISignalKDeltaMessage) {
     // Read raw message and route to appropriate sub
-    if (typeof(message.self) != 'undefined') {  // is Hello message
+    if (typeof(message.self) !== 'undefined') {  // is Hello message
       this.server.setServerInfo(message.name, message.version, message.roles);
       return;
     }
 
 
-    if (typeof(message.updates) != 'undefined') {
-      this.processUpdateDelta(message); // is Data Update process further
-    } else if (typeof(message.requestId) != 'undefined') {
-      this.signalKRequests$.next(message); // is a Request, send to signalk-request service.
-    } else if (typeof(message.errorMessage) != 'undefined') {
+    if (typeof(message.updates) !=='undefined') {
+      this.processDeltaUpdate(message); // is Data Update process further
+    } else if (typeof(message.requestId) !== 'undefined') {
+      this.signalKRequests$.next(message); // is a Request/response, send to signalk-request service.
+    } else if (typeof(message.errorMessage) !== 'undefined') {
       console.warn("[Delta Service] Service sent stream error message: " + message.errorMessage);
     } else {
       console.warn("[Delta Service] Unknown message type. Message content:" + message);
     }
   }
 
-  private processUpdateDelta(message:IDeltaMessage) {
+  private processDeltaUpdate(message:ISignalKDeltaMessage) {
     let context: string;
     if (typeof(message.context) == 'undefined') {
       context = 'self'; //default if not defined
@@ -246,9 +249,9 @@ export class SignalKDeltaService {
       context = message.context;
     }
 
-    // process message Updates
+    // Process message Updates
     for (let update of message.updates) {
-      // get source identifier. 'src' is nmea2k and 'talker' is nmea0183
+      // Set source identifier. 'src' is nmea2k and 'talker' is nmea0183
       let source = '';
       if ((update.source !== undefined) && (update.source.type !== undefined) && update.source.label !== undefined) {
         if (update.source.type == 'NMEA2000') {
@@ -269,52 +272,86 @@ export class SignalKDeltaService {
         source = "unknown";
       }
 
-      // process message values
+      // process message Values
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
-      for (let value of update.values) {
-        if (/^notifications./.test(value.path)) {   // is a notification message, pass to notification service
-          let notification: INotificationDelta = {
-            path: value.path,
-            notification: value.value,
-          };
-          this.signalKNotifications$.next(notification);
-        } else {
-          // it's a data update. Update local tree
-          let fullPath = context + '.' + value.path;
-          if (value.path == '') { fullPath = context; } // if path is empty we shouldn't have a . at the end
-          if ( (typeof(value.value) == 'object') && (value.value !== null)) {
-            // compound data
-            let keys = Object.keys(value.value);
-            for (let i = 0; i < keys.length; i++) {
-              let dataPath: ISignalKDataPath = {
-                path: fullPath + `.` + keys[i],
+      if (update.values !== undefined) {
+        for (let item of update.values) {
+          if (/^notifications./.test(item.path)) {
+            // It's is a notification message, pass to notification service
+            let notification: INotificationDelta = {
+              path: item.path,
+              notification: item.value,
+            };
+            this.signalKNotifications$.next(notification);
+          } else {
+            // It's a data update. Update local source
+            let fullPath = `${context}.${item.path}`;
+            if (item.path == '') { fullPath = context; } // if path is empty we shouldn't have a . at the end
+            if ( (typeof(item.value) == 'object') && (item.value !== null)) {
+              // It's contains compounded data
+              let keys = Object.keys(item.value);
+              for (let i = 0; i < keys.length; i++) {
+                let dataPath: IPathValueData = {
+                  path: fullPath + `.` + keys[i],
+                  source: source,
+                  timestamp: timestamp,
+                  value: item.value[keys[i]],
+                }
+                this.signalKDatapath$.next(dataPath);
+              }
+            } else {
+              // It's a simple data
+              let dataPath: IPathValueData = {
+                path: fullPath,
                 source: source,
                 timestamp: timestamp,
-                value: value.value[keys[i]],
+                value: item.value,
               }
               this.signalKDatapath$.next(dataPath);
             }
-          } else {
-            // simple data
-            let dataPath: ISignalKDataPath = {
-              path: fullPath,
-              source: source,
-              timestamp: timestamp,
-              value: value.value,
-            }
-            this.signalKDatapath$.next(dataPath);
           }
+        }
+      }
+
+      // process message Meta
+      if (update.meta !== undefined) {
+        for (let meta of update.meta) {
+          this.processMeta(meta, context);
         }
       }
     }
   }
 
-  // WebSoocket Stream Status observable
+  private processMeta(metadata: ISignalKMeta, context: string) {
+    if (Object.keys(metadata).length === 0) {
+      return;
+    } else {
+      let meta: IMeta;
+      // does meta have one with properties for each one?
+      if (metadata.value.properties !== undefined) {
+        Object.keys(metadata.value.properties).forEach(key => {
+          meta = {
+            path: `${context}.${metadata.path}.${key}`,
+            meta: metadata.value.properties[key],
+          };
+          this.signalKMetadata$.next(meta);
+        })
+      } else {
+        meta = {
+          path: `${context}.${metadata.path}`,
+          meta: metadata.value,
+        };
+        this.signalKMetadata$.next(meta);
+      }
+    }
+  }
+
+  // WebSocket Stream Status observable
   getDataStreamStatusAsO() {
     return this.streamEndpoint$.asObservable();
   }
 
-  public subscribeRequestUpdates(): Observable<IDeltaMessage> {
+  public subscribeRequestUpdates(): Observable<ISignalKDeltaMessage> {
     return this.signalKRequests$.asObservable();
   }
 
@@ -322,14 +359,21 @@ export class SignalKDeltaService {
     return this.signalKNotifications$.asObservable();
   }
 
-  public subscribeDataPathsUpdates() : Observable<ISignalKDataPath> {
+  public subscribeDataPathsUpdates() : Observable<IPathValueData> {
     return this.signalKDatapath$.asObservable();
   }
 
-  // Close the WebSocket on app termination. This send a Close to the server for
-  // a clean disconnect. Else the server keeps buffering the messages and it creates an
-  // overflow that that will eventually have the server kill the connection.
-  OnDestroy() {
+  public subscribeMetadataUpdates() : Observable<IMeta> {
+    return this.signalKMetadata$.asObservable();
+  }
+
+  /**
+  * Close the WebSocket on app termination. This send a Close to the server for
+  * a clean disconnect. Else the server keeps buffering the messages and it creates an
+  *
+  * @memberof SignalKDeltaService
+  */
+  OnDestroy(): void {
     this.closeWS("App terminated");
   }
 
