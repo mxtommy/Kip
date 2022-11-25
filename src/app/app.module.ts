@@ -247,25 +247,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
 
 
 export class AppModule {
-  constructor(
-    /**
-     * Below provides Services instanciation only - there is no calls to Service.
-     * It provides/forces early instanciation of services if needed.
-     * This fixes instanciation issues on loossely couple services (where some services
-     * use Observers but are only instaciated by component later in the app, causing
-     * them to miss some events until instanciated.
-     *
-     * Example: SignalKDeltaService needs to be instaciated to receive connection status
-     * from SignalKConnectionService in order to open WebSocket immediatly upon
-     * connection to listen and process deltas. Both services are not interdependant
-     * and only communicated using Obervable. If not instaciated before it is called by
-     * a component, SignalKDeltaService will miss connection status and not connect WebSockets.
-     *
-     * Below should be Singleton Services ie. "providedIn: root" and/or part of prodivers
-     * section listed above.
-    */
-     //signalKDeltaService: SignalKDeltaService,
-     //signalkRequestsService: SignalkRequestsService,
-     //signalKFullService: SignalKFullService,
-  ) { }
+  constructor() {
+
+  }
 }
