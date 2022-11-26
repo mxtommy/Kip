@@ -11,7 +11,6 @@ import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
-import { SignalKFullService } from './signalk-full.service';
 
 declare var NoSleep: any; //3rd party
 
@@ -51,7 +50,6 @@ export class AppComponent implements OnInit, OnDestroy {
     public auththeticationService: AuththeticationService,
     private deltaService: SignalKDeltaService,
     // below services are needed: first service instanciation after Init Service
-    private signalKFullService: SignalKFullService, //needs SignalKService & SignalKConnectionService
     private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
     ) { }
 

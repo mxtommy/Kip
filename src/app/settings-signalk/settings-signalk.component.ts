@@ -7,7 +7,6 @@ import { AppSettingsService } from '../app-settings.service';
 import { IConnectionConfig } from "../app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../signalk-connection.service';
 import { SignalKService } from '../signalk.service';
-import { SignalKFullService, IFullDocumentStatus } from './../signalk-full.service';
 import { SignalKDeltaService, IStreamStatus } from './../signalk-delta.service';
 import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
@@ -35,7 +34,6 @@ export class SettingsSignalkComponent implements OnInit {
 
   endpointServiceStatus: IEndpointStatus;
   skEndpointServiceStatusSub: Subscription;
-  fullDocumentStatus: IFullDocumentStatus;
   skFullDocumentStatusSub: Subscription;
   streamStatus: IStreamStatus;
   skStreamStatusSub: Subscription;
@@ -61,7 +59,6 @@ export class SettingsSignalkComponent implements OnInit {
     private signalKConnectionService: SignalKConnectionService,
     private signalkRequestsService: SignalkRequestsService,
     private deltaService: SignalKDeltaService,
-    private fullDocumentService: SignalKFullService,
     public auth: AuththeticationService)
   { }
 
@@ -93,11 +90,6 @@ export class SettingsSignalkComponent implements OnInit {
     // get for signalk connection status
     this.skEndpointServiceStatusSub = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus) => {
           this.endpointServiceStatus = status;
-    });
-
-    // get FullDocument Service status
-    this.skFullDocumentStatusSub = this.fullDocumentService.getFullDocumentStatusAsO().subscribe((status: IFullDocumentStatus): void => {
-      this.fullDocumentStatus = status;
     });
 
     // get Delta Service status
@@ -268,7 +260,6 @@ export class SettingsSignalkComponent implements OnInit {
 
   ngOnDestroy() {
     this.skEndpointServiceStatusSub.unsubscribe();
-    this.skFullDocumentStatusSub.unsubscribe();
     this.skStreamStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();
     this.isLoggedInSub.unsubscribe();

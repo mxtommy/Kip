@@ -41,7 +41,6 @@ import { DynamicWidgetDirective } from './dynamic-widget.directive';
 import { SignalKService } from './signalk.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { SignalKDeltaService } from './signalk-delta.service';
-import { SignalKFullService } from './signalk-full.service';
 import { DataSetService } from './data-set.service';
 import { LayoutSplitsService } from './layout-splits.service';
 import { AppSettingsService } from './app-settings.service';
@@ -231,7 +230,6 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     SignalKService,
     SignalKConnectionService,
     SignalKDeltaService,
-    SignalKFullService,
     DataSetService,
     LayoutSplitsService,
     WidgetListService,

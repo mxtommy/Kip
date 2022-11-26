@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { ISignalKDeltaMessage, ISignalKMeta, ISignalKMetadata } from './signalk-interfaces';
+import { ISignalKDeltaMessage, ISignalKMeta, ISignalKMetadata, ISignalKUpdateMessage } from './signalk-interfaces';
 import { IMeta, INotification, IPathValueData } from "./app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
@@ -42,6 +42,8 @@ export class SignalKDeltaService {
   private signalKDatapath$ = new Subject<IPathValueData>();
   // SignalK Metadata message stream Observer
   private signalKMetadata$ = new Subject<IMeta>();
+  // Self URN message stream Observer
+  private vesselSelfUrn$ = new Subject<string>();
 
   // Delta Service Endpoint status publishing
   public streamEndpoint: IStreamStatus = {
@@ -223,37 +225,34 @@ export class SignalKDeltaService {
   }
 
   private processWebsocketMessage(message: ISignalKDeltaMessage) {
-    // Read raw message and route to appropriate sub
-    if (typeof(message.self) !== 'undefined') {  // is Hello message
-      this.server.setServerInfo(message.name, message.version, message.roles);
-      return;
-    }
+    // We check updates first as it is by far the most frequent
+    if (message.updates) {
+      this.parseUpdates(message.updates, message.context); // process update
 
-
-    if (typeof(message.updates) !=='undefined') {
-      this.processDeltaUpdate(message); // is Data Update process further
-    } else if (typeof(message.requestId) !== 'undefined') {
+    } else if (message.requestId) {
       this.signalKRequests$.next(message); // is a Request/response, send to signalk-request service.
-    } else if (typeof(message.errorMessage) !== 'undefined') {
-      console.warn("[Delta Service] Service sent stream error message: " + message.errorMessage);
-    } else {
+
+    } else if (message.errorMessage) {
+      console.warn("[Delta Service] Service sent stream error message: " + message.errorMessage); // server error message ie. socket failed or closing, sk bug, sk restarted, etc.
+
+    } else if (message.self) {
+      this.vesselSelfUrn$.next(message.self);
+      this.server.setServerInfo(message.name, message.version, message.roles); // is server Hello message
+
+    } else { // not in our list of message types....
       console.warn("[Delta Service] Unknown message type. Message content:" + message);
     }
   }
 
-  private processDeltaUpdate(message:ISignalKDeltaMessage) {
-    let context: string;
-    if (typeof(message.context) == 'undefined') {
+  private parseUpdates(updates: ISignalKUpdateMessage[], context: string) {
+    if (!context) {
       context = 'self'; //default if not defined
-    } else {
-      context = message.context;
     }
 
-    // Process message Updates
-    for (let update of message.updates) {
-      // Set source identifier. 'src' is nmea2k and 'talker' is nmea0183
-      let source = '';
-      if ((update.source !== undefined) && (update.source.type !== undefined) && update.source.label !== undefined) {
+    for (let update of updates) {
+      // process source identifier. 'src' is nmea2k and 'talker' is nmea0183
+      let source: string = null;
+      if ((update.source) && (update.source.type) && update.source.label) {
         if (update.source.type == 'NMEA2000') {
           source = update.source.label + '.' + update.source.src;
         } else if (update.source.type == 'NMEA0183') {
@@ -262,20 +261,23 @@ export class SignalKDeltaService {
           // donno what it is...
           source = update.source.label;
         }
-      } else if (update['$source'] !== undefined) {
-        source = update['$source'];
+      } else if (update.$source !== undefined) {
+        source = update.$source;
       } else if ((update.source !== undefined) && (update.source.src !== undefined) && (update.source.label !== undefined)) {
         source = update.source.label + '.' + update.source.src;
       } else if ((update.source !== undefined) && (update.source.label !== undefined)) {
         source = update.source.label;
       } else {
-        source = "unknown";
+        source = "Unknown";
       }
 
-      // process message Values
+      // process Values
       let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
       if (update.values !== undefined) {
         for (let item of update.values) {
+
+
+          //TODO:  notification are in path vessels.self.navigation...
           if (/^notifications./.test(item.path)) {
             // It's is a notification message, pass to notification service
             let notification: INotificationDelta = {
@@ -296,7 +298,7 @@ export class SignalKDeltaService {
                   source: source,
                   timestamp: timestamp,
                   value: item.value[keys[i]],
-                }
+                };
                 this.signalKDatapath$.next(dataPath);
               }
             } else {
@@ -306,23 +308,23 @@ export class SignalKDeltaService {
                 source: source,
                 timestamp: timestamp,
                 value: item.value,
-              }
+              };
               this.signalKDatapath$.next(dataPath);
             }
           }
         }
       }
 
-      // process message Meta
+      // Process Meta
       if (update.meta !== undefined) {
         for (let meta of update.meta) {
-          this.processMeta(meta, context);
+          this.parseMeta(meta, context);
         }
       }
     }
   }
 
-  private processMeta(metadata: ISignalKMeta, context: string) {
+  private parseMeta(metadata: ISignalKMeta, context: string) {
     if (Object.keys(metadata).length === 0) {
       return;
     } else {
@@ -365,6 +367,10 @@ export class SignalKDeltaService {
 
   public subscribeMetadataUpdates() : Observable<IMeta> {
     return this.signalKMetadata$.asObservable();
+  }
+
+  public subscribeSelfUpdates(): Observable<string> {
+    return this.vesselSelfUrn$.asObservable();
   }
 
   /**
