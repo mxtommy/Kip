@@ -192,14 +192,20 @@ export class SignalKService {
       dataPath.value = this.degToRad(dataPath.value);
     }
 
-    // update existing if exists.
+    // See if path key exists
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) { // exists
 
-      // update data
+      // Update data
+      // null source path means, path was first created by metadata. Set source values
+      if (this.paths[pathIndex].defaultSource === null) {
+        this.paths[pathIndex].defaultSource = dataPath.source;
+        this.paths[pathIndex].type = typeof(dataPath.value);
+      }
+
       this.paths[pathIndex].sources[dataPath.source] = {
         timestamp: dataPath.timestamp,
-        value: dataPath.value
+        value: dataPath.value,
       };
 
     } else { // doesn't exist. update...
@@ -215,6 +221,7 @@ export class SignalKService {
         type: typeof(dataPath.value),
         state: IZoneState.normal
       });
+      // get new object index for further processing
       pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     }
 
@@ -279,6 +286,7 @@ export class SignalKService {
           source = pathRegister.source;
         } else {
           //we're looking for a source we don't know of... do nothing I guess?
+          console.warn(`Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
         }
         if (source !== null) {
           pathRegister.observable.next({
@@ -308,6 +316,15 @@ export class SignalKService {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
       this.paths[pathIndex].meta = meta.meta;
+    } else { // not in our list yet. Meta update can in first. Create the path with empty source values for later update
+      this.paths.push({
+        path: pathSelf,
+        defaultSource: null,
+        sources: {},
+        meta: meta.meta,
+        type: null,
+        state: IZoneState.normal
+      });
     }
   }
 

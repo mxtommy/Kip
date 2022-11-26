@@ -38,7 +38,7 @@ import { IZoneState } from './app-settings.interfaces';
  */
  export interface IPathData {
   path: string;
-  defaultSource: string; // default source
+  defaultSource?: string; // default source
   sources: {
     [sourceName: string]: { // per source data
       timestamp: number;

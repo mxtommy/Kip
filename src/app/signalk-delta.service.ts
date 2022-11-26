@@ -261,14 +261,14 @@ export class SignalKDeltaService {
           // donno what it is...
           source = update.source.label;
         }
-      } else if (update['$source'] !== undefined) {
-        source = update['$source'];
+      } else if (update.$source !== undefined) {
+        source = update.$source;
       } else if ((update.source !== undefined) && (update.source.src !== undefined) && (update.source.label !== undefined)) {
-        source = update.source.label + '.' + update.source.src; //???
+        source = update.source.label + '.' + update.source.src;
       } else if ((update.source !== undefined) && (update.source.label !== undefined)) {
-        source = update.source.label; //????
+        source = update.source.label;
       } else {
-        source = "unknown";
+        source = "Unknown";
       }
 
       // process Values
