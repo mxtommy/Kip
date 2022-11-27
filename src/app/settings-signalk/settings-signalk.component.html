@@ -15,7 +15,9 @@
           </mat-error>
         </mat-form-field>
         <br/>
-        <mat-slide-toggle name="useSharedConfig"[(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" (click)="useSharedConfigToggleClick(connectionConfig.useSharedConfig)">Enable user Sign in and configuration sharing</mat-slide-toggle>
+        <mat-slide-toggle name="useSharedConfigToggle" #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" (change)="useSharedConfigToggleClick($event)">
+          Enable user Sign in and configuration sharing
+        </mat-slide-toggle>
         <br/><br/>
         <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
           Set Sign in credentials

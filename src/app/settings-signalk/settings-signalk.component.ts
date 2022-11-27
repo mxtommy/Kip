@@ -13,6 +13,7 @@ import { SignalkRequestsService } from '../signalk-requests.service';
 import { NotificationsService } from '../notifications.service';
 import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
+import { compare } from 'compare-versions';
 
 
 @Component({
@@ -34,7 +35,6 @@ export class SettingsSignalkComponent implements OnInit {
 
   endpointServiceStatus: IEndpointStatus;
   skEndpointServiceStatusSub: Subscription;
-  skFullDocumentStatusSub: Subscription;
   streamStatus: IStreamStatus;
   skStreamStatusSub: Subscription;
 
@@ -252,11 +252,17 @@ export class SettingsSignalkComponent implements OnInit {
     })
   }
 
-  public useSharedConfigToggleClick(value: boolean) {
-    if(!value) {
+  public useSharedConfigToggleClick(e) {
+    if(e.checked) {
+      let version = this.signalKConnectionService.serverVersion$.getValue();
+      if (!compare(version, '1.46.2', ">=")) {
+        this.notificationsService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better",0);
+        this.connectionConfig.useSharedConfig = false;
+        return;
+      }
       this.openUserCredentialModal(null);
     }
-  }
+  };
 
   ngOnDestroy() {
     this.skEndpointServiceStatusSub.unsubscribe();
