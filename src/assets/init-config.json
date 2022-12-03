@@ -1,8 +1,0 @@
-{
-  "signalKUrl": "http://10.211.55.3:3000",
-  "useDeviceToken": false,
-  "loginName": "godind",
-  "loginPassword": "deuxtrois",
-  "useSharedConfig": true,
-  "sharedConfigName": "default"
-}
