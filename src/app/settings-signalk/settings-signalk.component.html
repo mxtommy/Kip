@@ -15,7 +15,7 @@
           </mat-error>
         </mat-form-field>
         <br/>
-        <mat-slide-toggle name="useSharedConfigToggle" #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" (change)="useSharedConfigToggleClick($event)">
+        <mat-slide-toggle name="useSharedConfigToggle" #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
           Enable user Sign in and configuration sharing
         </mat-slide-toggle>
         <br/><br/>
