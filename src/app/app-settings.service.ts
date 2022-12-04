@@ -51,8 +51,6 @@ export class AppSettingsService {
     console.log("[AppSettings Service] Service startup..");
     this.storage.activeConfigVersion = configVersion;
 
-    let serverConfig: IConfig = this.storage.defaultRemoteConfig;
-
     if (!window.localStorage) {
       // REQUIRED BY APP - localStorage support
       console.error("[AppSettings Service] LocalStorage NOT SUPPORTED by browser\nThis is a requirement to run Kip. See browser documentation to enable this feature.");
@@ -60,23 +58,31 @@ export class AppSettingsService {
     } else {
       this.loadConnectionConfig();
 
-        if (serverConfig) {
-          console.log("[AppSettings Service] Remote configuration storage enabled");
-          this.activeConfig = this.validateAppConfig(serverConfig);
-          this.pushSettings();
-        } else {
-          console.log("[AppSettings Service] LocalStorage enabled");
+      let serverConfig: IConfig;
 
-          let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
-          localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
-          localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
-          localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
-          localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
-          localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
+      if (this.storage.initConfig === null && this.useSharedConfig && this.loginName !== null && this.loginPassword !== null && this.signalkUrl.url !== null ) {
+        this.resetSettings();
+      } else {
+        serverConfig = this.storage.initConfig;
+      }
 
-          this.activeConfig = this.validateAppConfig(localStorageConfig);
-          this.pushSettings();
-        }
+      if (serverConfig) {
+        console.log("[AppSettings Service] Remote configuration storage enabled");
+        this.activeConfig = this.validateAppConfig(serverConfig);
+        this.pushSettings();
+      } else {
+        console.log("[AppSettings Service] LocalStorage enabled");
+
+        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+        localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
+        localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
+        localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
+        localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
+        localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
+
+        this.activeConfig = this.validateAppConfig(localStorageConfig);
+        this.pushSettings();
+      }
     }
   }
 

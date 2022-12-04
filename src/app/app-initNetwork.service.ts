@@ -16,7 +16,7 @@ import { AuththeticationService } from './auththetication.service';
 
 @Injectable()
 export class AppNetworkInitService {
-  private config: IConnectionConfig = null;
+  private config: IConnectionConfig;
   private isLoggedIn;
 
   constructor (
@@ -35,30 +35,30 @@ export class AppNetworkInitService {
     this.loadLocalStorageConfig();
 
     try {
-      if (this.config.signalKUrl) {
+      if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
         await this.connection.resetSignalK({url: this.config.signalKUrl, new: false});
       }
 
-      if (!this.isLoggedIn && this.config.signalKUrl && this.config.useSharedConfig && this.config.loginName && this.config.loginPassword) {
+      if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
         await this.login();
       }
 
-      if (this.isLoggedIn && this.config.useSharedConfig) {
+      if (this.isLoggedIn && this.config?.useSharedConfig) {
         this.storage.activeConfigVersion = this.config.configVersion;
         this.storage.sharedConfigName = this.config.sharedConfigName;
         await this.storage.getConfig("user", this.config.sharedConfigName, true);
       }
 
-      if (!this.isLoggedIn && this.config.signalKUrl && this.config.useSharedConfig) {
+      if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig) {
         this.router.navigate(['/login']); // need to set credentials
       }
 
     } catch (error) {
-      console.warn("[AppNetworkInit Service] Services loaded. Conneciton is not configured");
+      console.warn("[AppInit Network Service] Services loaded. Connection is not configured");
       console.error(error);
-      return Promise.reject("[AppNetworkInit Service] Services loaded. Conneciton not configured");
+      return Promise.reject("[AppInit Network Service] Services loaded. Conneciton not configured");
     } finally {
-      console.log("[AppNetworkInit Service] Initialyzation completed");
+      console.log("[AppInit Network Service] Initialyzation completed");
     }
   }
 
@@ -71,7 +71,7 @@ export class AppNetworkInitService {
         } else if (error.status === 401) {
           this.router.navigate(['/login']);
         }
-        console.error("[AppNetworkInit Service] Login failure. Server returned: " + JSON.stringify(error.error));
+        console.error("[AppInit Network Service] Login failure. Server returned: " + JSON.stringify(error.error));
       });
     }
   }
@@ -80,10 +80,10 @@ export class AppNetworkInitService {
     this.config = JSON.parse(localStorage.getItem('connectionConfig'));
 
     if (!this.config) {
-      console.log("[AppNetworkInit Service] No Connection Config found in LocalStorage. Maybe a first time app start");
+      console.log("[AppInit Network Service] No Connection Config found in LocalStorage. Maybe a first time app start");
 
     } else if (!this.config.signalKUrl) {
-      console.warn("[AppNetworkInit Service] Config found but no server URL is present");
+      console.warn("[AppInit Network Service] Config found but no server URL is present");
     }
   }
 }

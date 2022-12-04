@@ -311,7 +311,7 @@ export class StorageService {
     throw error;
   }
 
-  public get defaultRemoteConfig(): IConfig {
+  public get initConfig(): IConfig {
     return this.InitConfig;
   }
 
