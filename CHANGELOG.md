@@ -14,10 +14,11 @@
 * Retirement of full.service in favor of the Delta service for improved preformance, reduced CPU load and code simplification
 * Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
 * Enhanced Request Service support
+* Enhanced Console logging for improved tracing and debugging
 * Various dependency upgrades
 * Code cleanup and documentation
 ## Fixes
-* Update widget-numeric.component.html typo fix. Special thanks to mhaberler
+* widget-numeric.component.html code typo preventing proper theme rendering. Special thanks to mhaberler
 * Issue where simple linear gauge assumes min value=0. Special thanks to amirlanesman
 # V 1.3.1
 * Angular production build script update
