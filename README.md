@@ -56,6 +56,10 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   Electrical and Tank monitoring sample 
   ![Electrical Concept Image](./KipMonitor-1024x488.png)
 
+## Shared Configuration
+  Configure once and seamlessly share the layout and configuration on multiple devices and browsers (computer, phones, tablets,
+  Raspberry Pi, etc.) by pointing to a single SignalK server URL address from anywhere.
+
 # Developing
 
 Kip is built on Angular using various open-source assets. All free!
