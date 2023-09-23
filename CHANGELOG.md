@@ -1,3 +1,24 @@
+# V 2.0.0
+## New features
+* Breaking Change - Kip configuration sharing using SignalK user key data storage feature
+* Support for Signal K User authentication
+* Kip authentication flow and UI
+* Race Timer widget
+* Ah and kWh units support. Special thanks to amirlanesman
+* New Storage Service
+* New Authentification Service
+* New App bootstrap Init Service
+## Improvements
+* Migration to RxJS WebSocket
+* Support for Signal K Delta Metadata updates
+* Retirement of full.service in favor of the Delta service for improved preformance, reduced CPU load and code simplification
+* Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
+* Enhanced Request Service support
+* Various dependency upgrades
+* Code cleanup and documentation
+## Fixes
+* Update widget-numeric.component.html typo fix. Special thanks to mhaberler
+* Issue where simple linear gauge assumes min value=0. Special thanks to amirlanesman
 # V 1.3.1
 * Angular production build script update
 * fixed historical widget axis and label theming color, thanks VibroAxe
