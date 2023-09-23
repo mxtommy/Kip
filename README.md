@@ -1,10 +1,10 @@
 # Kip 
 
-This is a marine instrumentation package to display signalK data. Display can be split up in any arrangement to show any kind data available on the server.
+This is a marine instrumentation package to display Signalk data. Kip, much like modern expensive MFDs, is very flexible and can be split up in any arrangement and display any kind of data available.
 
 # Design Goal
 
-The idea is to replicate the functionality of your average MFD such as the B&G Triton, Raymarine i70, or Garmin GMI20.
+The idea is to replicate the functionality of MFDs such as the B&G Triton, Raymarine i70, or Garmin GMI20.
 - Display should be fullscreen and not require any scrolling
 - Anything displayed should be as big as possible in the given space
 - Touchscreen user experience should be excellent
