@@ -48,11 +48,11 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
 ### Reusable Gauge and Widget Library
-  All Kip Gauges and Widgets are visual presentation controles that are very versatile and themeable with multiple configuration options available to suit your needs:
-  - Text display: Create gauges to disply any textual data sent by your system - MPPT state, Timezone date and time, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
-  - Numeric display: Create gauges to disply any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
+  All Kip Gauges and Widgets are visual presentation controls that are very versatile with multiple configuration options available to suit your needs:
+  - Text display: Create gauges to display any textual data sent by your system - MPPT state, Timezone date and time, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
+  - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Wind gauge: Your typical sailboat wind gauge
-  - Autopilot: Operate your autopilot from any device remotly 
+  - Autopilot: Operate your autopilot from any device remotely 
   - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery voltage, etc.
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
@@ -60,7 +60,7 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   - Button and Switch control: Operate remote devices
   - Race Timer: Track regatta start sequence
   - Historical datagram chart: Display numerical data over time on a chart
-  - Embeded Webpage: A powerfull way of embeding any web based content or application accessible as a URL within an onscreen widget to integrate with your gauges and layout - Grafana dashboards, Node-RED, internet weather services, twitter, Gmail, your own standalone webapp, you name it! 
+  - Embedded Webpage: A powerful way of embedding any web based content or application accessible as a URL within an onscreen widget to integrate with your gauges and layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
 
   Get the latest version of Kip to see what's new!
 
