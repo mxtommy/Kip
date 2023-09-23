@@ -1,6 +1,6 @@
-# Kip 
+# About Kip 
 
-This is a marine instrumentation package to display Signalk data. Kip, much like modern expensive MFDs, is very flexible and can be split up in any arrangement and display any kind of data available.
+Kip is a marine instrumentation package to display Signalk data. Kip, much like modern expensive MFDs, is very flexible and can be split up in any arrangement and display any kind of data available.
 
 # Design Goal
 
