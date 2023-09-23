@@ -47,8 +47,8 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   Many units are supported. Choose your prefered App defaults, than tweak it gauge-by-gauge as necessary. Kip will convert the displayed units for you.
   ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
-### Reusable Gauge Library
-  Available, configurable Gauges and Widgets:
+### Reusable Gauge and Widget Library
+  All Kip Gauges and Widgets are visual presentation controles that are very versatile and themeable with multiple configuration options available to suit your needs:
   - Text display: Create gauges to disply any textual data sent by your system - MPPT state, Timezone date and time, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
   - Numeric display: Create gauges to disply any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Wind gauge: Your typical sailboat wind gauge
