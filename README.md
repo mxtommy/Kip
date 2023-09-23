@@ -113,6 +113,8 @@ Or
 Join us on Slack -> SignalK-dev / Apps_and_client channel. We will hook up and assist as best we can.
 
 # Feature Ideas
+ * Improved Metadata configuration
+ * Improved Zones support and alerting
  * AIS Widget
  * GPS information Widget
  * Attitude Indicator Widget
