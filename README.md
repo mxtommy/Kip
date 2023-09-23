@@ -56,7 +56,7 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   Electrical and Tank monitoring sample 
   ![Electrical Concept Image](./KipMonitor-1024x488.png)
 
-## Shared Configuration
+## Share Configuration And Access From Anywhere
   Configure once and seamlessly share the layout and configuration on multiple devices and browsers (computer, phones, tablets,
   Raspberry Pi, etc.) by pointing to a single SignalK server URL address from anywhere.
 
