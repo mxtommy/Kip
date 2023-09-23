@@ -208,7 +208,7 @@ export class AuththeticationService {
     return date;
   }
 
-  // not yet implemented by SignalK but part of the specs. Using contained token string expiration value instead for now
+  // not yet implemented by Signalk but part of the specs. Using contained token string expiration value instead for now
   private renewToken() {
     return this.http.post<HttpResponse<Response>>(this.validateTokenUrl, null, {observe: 'response'});
   }

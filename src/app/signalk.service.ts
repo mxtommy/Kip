@@ -403,7 +403,7 @@ export class SignalKService {
    * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
    * but Kip does not handle it...yet.
    *
-   * @param path The SignalK path of the value
+   * @param path The Signalk path of the value
    * @return conversions Full list array or subset of list array
    */
   getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {

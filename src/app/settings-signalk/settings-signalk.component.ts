@@ -70,7 +70,7 @@ export class SettingsSignalkComponent implements OnInit {
       this.isLoggedIn = false;
     }
 
-    // get SignalK connection configuration
+    // get Signalk connection configuration
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
 
     // get token status

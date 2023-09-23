@@ -70,7 +70,7 @@ import { IZoneState } from './app-settings.interfaces';
  *
  * Use by: Notification service (consumer), signalk-delta (parser)
  *
- * Follow URL for full SignalK specification and description of fields:
+ * Follow URL for full Signalk specification and description of fields:
  * @url https://signalk.org/specification/1.7.0/doc/request_response.html
  *
  * @memberof app-interfaces

@@ -1,7 +1,7 @@
 # V 2.0.0
 ## New features
-* Breaking Change - Kip configuration sharing using SignalK user key data storage feature
-* Support for Signal K User authentication
+* Breaking Change - Kip configuration sharing using Signalk user key data storage feature
+* Support for Signalk User authentication
 * Kip authentication flow and UI
 * Race Timer widget
 * Ah and kWh units support. Special thanks to amirlanesman
@@ -10,7 +10,7 @@
 * New App bootstrap Init Service
 ## Improvements
 * Migration to RxJS WebSocket
-* Support for Signal K Delta Metadata updates
+* Support for Signalk Delta Metadata updates
 * Retirement of full.service in favor of the Delta service for improved preformance, reduced CPU load and code simplification
 * Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
 * Enhanced Request Service support
@@ -129,7 +129,7 @@
 * Only resize Steelseries Gauges max 1 a second (helps in resizing)
 * Add Frequency Units
 * Put Support! On/Off and Momentary support on boolean state
-* Request R/W token from SignalK Server
+* Request R/W token from Signalk Server
 
 ### V0.1.8
 * Fix bug related to source parsing in deltas
