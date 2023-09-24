@@ -11,6 +11,7 @@
 ## Improvements
 * Migration to RxJS WebSocket
 * Improved JavaScript Web Token (JWT) management using HTTP Intreceptor
+* Improved management of Signalk communications reducing server buffer overflow and server-side termination exceptions handling.
 * Support for Signalk Delta Metadata updates
 * Retirement of full.service in favor of the Delta service for improved preformance, reduced CPU load and code simplification
 * Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
