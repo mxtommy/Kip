@@ -4,6 +4,7 @@
 * Support for Signal K User authentication
 * Kip authentication flow and UI
 * Race Timer widget
+* Data/time Widget. Special thanks to techgardeners
 * Ah and kWh units support. Special thanks to amirlanesman
 * New Storage Service
 * New Authentification Service
@@ -17,11 +18,13 @@
 * Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
 * Enhanced Request Service support
 * Enhanced Console logging for improved tracing and debugging
+* Added the ability to add a display text to the Blank widget. Special thanks to techgardeners
 * Various dependency upgrades
 * Code cleanup and documentation
 ## Fixes
 * widget-numeric.component.html code typo preventing proper theme rendering. Special thanks to mhaberler
 * Issue where simple linear gauge assumes min value=0. Special thanks to amirlanesman
+* Fix spelling in datasets configuration. Special tahnks to philipa 
 # V 1.3.1
 * Angular production build script update
 * fixed historical widget axis and label theming color, thanks VibroAxe
