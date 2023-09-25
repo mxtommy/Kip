@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "1.3.1",
+  "version": "2.0.0",
   "license": "MIT",
   "keywords": [
     "signalk-webapp",
@@ -55,7 +55,7 @@
     "chart.js": "^3.5.1",
     "chartjs-adapter-moment": "^1.0.0",
     "codelyzer": "^6.0.0",
-    "compare-versions": "^3.6.0",
+    "compare-versions": "^5.0.1",
     "core-js": "^3.13.1",
     "hammerjs": "^2.0.8",
     "howler": "^2.2.1",
@@ -71,7 +71,7 @@
     "moment": "^2.29.1",
     "protractor": "~7.0.0",
     "rx-dom-html": "^7.0.3",
-    "rxjs": "^6.6.7",
+    "rxjs": "^7.5.7",
     "sass": "^1.49.9",
     "screenfull": "^5.1.0",
     "ts-node": "^8.10.2",
@@ -79,8 +79,5 @@
     "tslint": "^6.1.3",
     "typescript": "^4.3.5",
     "zone.js": "~0.11.4"
-  },
-  "dependencies": {
-    "util": "^0.12.4"
   }
 }

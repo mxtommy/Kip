@@ -150,7 +150,7 @@
         </ng-template>
         <modal-path-selector class="full-width"
           *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
-          [formGroup]="formMaster.controls.paths.controls[pathForm]"
+          [formGroup]="formMaster.controls.paths.get(pathForm)"
           [filterSelfPaths]="formMaster.value.filterSelfPaths">
         </modal-path-selector>
         <mat-checkbox name="filterSelfPaths" formControlName="filterSelfPaths">Restrict to own vessel</mat-checkbox>

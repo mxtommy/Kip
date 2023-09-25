@@ -1,10 +1,10 @@
-# Kip 
+# About Kip 
 
-This is a marine instrumentation package to display signalK data. Display can be split up in any arrangement to show any kind data available on the server.
+Kip is a marine instrumentation package to display Signal K data. Kip, much like modern expensive MFDs, is very flexible and can be split up in any arrangement and display any kind of data available.
 
 # Design Goal
 
-The idea is to replicate the functionality of your average MFD such as the B&G Triton, Raymarine i70, or Garmin GMI20.
+The idea is to replicate the functionality of MFDs such as the B&G Triton, Raymarine i70, or Garmin GMI20.
 - Display should be fullscreen and not require any scrolling
 - Anything displayed should be as big as possible in the given space
 - Touchscreen user experience should be excellent
@@ -19,8 +19,8 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   Modern Dark Theme
   ![Modern Dark Theme](./KipSample-1-1024x488.png)
   
-  SignalK Inspired Theme
-  ![SignalK Inspired Theme](./KipSample-2-1024x488.png)
+  Signal K Inspired Theme
+  ![Signal K Inspired Theme](./KipSample-2-1024x488.png)
   
   Light Blue Theme
   ![Light Blue Theme](./KipSample-3-1024x488.png)
@@ -33,21 +33,35 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
-  Built purposeful screen(s) with however many gauges you want, where you want them. 
+  Built purposeful screen(s) with however many auges or display widgets you want, where you want them. 
 
   Split or delete gauge zones, resize and position, then simply add the gauge of your choosing. Add as many pages as you whish to keep screens purposeful.
   ![Layouts Configuration Image](./KipWidgetConfig-layout-1024x488.png)
   
-  Easy basic gauge config.
+  Easy basic gauge and widget configuratio.
   ![Gauges Configuration Image](./KipConfig-display-1024x488.png) 
   
-  See what SignalK has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
+  See what Signal K has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
   ![Paths Configuration Image](./KipWidgetConfig-paths-1024x488.png)
   
-  Many units are supported. Choose your prefered App defaults, than tweak it gauge by gauge as necessary. Kip will convert the displayed units for you.
+  Many units are supported. Choose your prefered App defaults, than tweak it gauge-by-gauge as necessary. Kip will convert the displayed units for you.
   ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
-### Reusable Gauge Library
+### Reusable Gauge and Widget Library
+  All Kip Gauges and Widgets are visual presentation controls that are very versatile with multiple configuration options available to suit your needs:
+  - Text display: Create gauges to display any textual data sent by your system - MPPT state, Timezone date and time, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
+  - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
+  - Wind gauge: Your typical sailboat wind gauge
+  - Autopilot: Operate your autopilot from any device remotely 
+  - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery voltage, etc.
+  - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
+  - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
+  - Radial and linear Steel gauge: Old school look & fell gauges
+  - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signal K device that support boolean PUT operations
+  - Race Timer: Track regatta start sequence
+  - Historical datagram chart: Display numerical data over time on a chart
+  - Embedded Webpage: A powerful way of embedding any web based content or application accessible as a URL within an onscreen widget to integrate with your gauges and layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
+
   Get the latest version of Kip to see what's new!
 
   Sample gauge types
@@ -55,6 +69,10 @@ The idea is to replicate the functionality of your average MFD such as the B&G T
   
   Electrical and Tank monitoring sample 
   ![Electrical Concept Image](./KipMonitor-1024x488.png)
+
+## Share Configuration And Access From Anywhere
+  Configure once and seamlessly share the layout and configuration on multiple devices and browsers (computer, phones, tablets,
+  Raspberry Pi, etc.) by pointing to a single Signal K server URL address from anywhere.
 
 # Developing
 
@@ -92,11 +110,14 @@ Or
   4. Deploy and have fun! 
 
 **Collaborate**
-Join us on Slack -> SignalK-dev / Apps_and_client channel. We will hook up and assist as best we can.
+Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and assist as best we can.
 
 # Feature Ideas
- * More Customization options for Historical Charts
- * Attitude Indicator
+ * Improved Metadata configuration
+ * Improved Zones support and alerting
+ * AIS Widget
+ * GPS information Widget
+ * Attitude Indicator Widget
  * Sailing Polars with ChartJS Radar type chart?
  * More Customization options for radial/linear Gauges
  * Pre-created widgets for commonly used displays

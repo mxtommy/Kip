@@ -1,3 +1,27 @@
+# V 2.0.0
+## New features
+* Breaking Change - Kip configuration sharing using Signal K user key data storage feature
+* Support for Signal K User authentication
+* Kip authentication flow and UI
+* Race Timer widget
+* Ah and kWh units support. Special thanks to amirlanesman
+* New Storage Service
+* New Authentification Service
+* New App bootstrap Init Service
+## Improvements
+* Migration to RxJS WebSocket
+* Improved JavaScript Web Token (JWT) management using HTTP Intreceptor
+* Improved management of Signal K communications reducing server buffer overflow and server-side termination exceptions handling.
+* Support for Signal K Delta Metadata updates
+* Retirement of full.service in favor of the Delta service for improved preformance, reduced CPU load and code simplification
+* Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
+* Enhanced Request Service support
+* Enhanced Console logging for improved tracing and debugging
+* Various dependency upgrades
+* Code cleanup and documentation
+## Fixes
+* widget-numeric.component.html code typo preventing proper theme rendering. Special thanks to mhaberler
+* Issue where simple linear gauge assumes min value=0. Special thanks to amirlanesman
 # V 1.3.1
 * Angular production build script update
 * fixed historical widget axis and label theming color, thanks VibroAxe
@@ -87,7 +111,7 @@
 * Load / Save config from server!
 * Notifications service for application status (snackbar)
 * Deleting the last widget in a page deletes the page!
-* Signalk Notifications in menubar!
+* Signal K Notifications in menubar!
 
 ### V0.1.12
 * iFrame to embed something in kip
@@ -107,7 +131,7 @@
 * Only resize Steelseries Gauges max 1 a second (helps in resizing)
 * Add Frequency Units
 * Put Support! On/Off and Momentary support on boolean state
-* Request R/W token from SignalK Server
+* Request R/W token from Signal K Server
 
 ### V0.1.8
 * Fix bug related to source parsing in deltas

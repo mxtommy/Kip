@@ -1,3 +1,4 @@
+import { AuththeticationService } from './auththetication.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
@@ -9,7 +10,7 @@ import * as screenfull from 'screenfull';
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
-import { SignalKConnectionService, SignalKStatus } from './signalk-connection.service';
+import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
 
 declare var NoSleep: any; //3rd party
 
@@ -30,7 +31,8 @@ export class AppComponent implements OnInit, OnDestroy {
   fullscreenStatus = false;
 
   themeName: string;
-  themeClass: string = 'modern-dark fullheight';
+  activeThemeClass: string = 'modern-dark fullheight';
+  activeTheme: string;
   themeNameSub: Subscription;
 
   isNightMode: boolean = false;
@@ -39,35 +41,50 @@ export class AppComponent implements OnInit, OnDestroy {
   connectionStatusSub: Subscription;
 
   constructor(
-    private AppSettingsService: AppSettingsService,
-    private DataSetService: DataSetService,
-    private notificationsService: NotificationsService,
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
-    private LayoutSplitsService: LayoutSplitsService,
-    private signalKConnectionService: SignalKConnectionService,
+    private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
+    public appSettingsService: AppSettingsService, // needs storage & AppInit
+    private DataSetService: DataSetService, // needs AppSettingsService & SignalKService
+    private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
+    public auththeticationService: AuththeticationService,
+    private deltaService: SignalKDeltaService,
+    // below services are needed: first service instanciation after Init Service
+    private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
     ) { }
 
 
   ngOnInit() {
-    this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(
+    // Page layout area operations sub
+    this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }
     );
 
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-      newTheme => {
-        this.themeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
-        if (this.themeName) {
-          this.overlayContainer.getContainerElement().classList.remove(this.themeName);
+    // Theme operations sub
+    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
+        this.activeThemeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
+
+        if (!this.themeName) { // first run
+          this.themeName = newTheme;
+        } else  {
+          this.overlayContainer.getContainerElement().classList.remove(this.activeTheme);
         }
-        this.overlayContainer.getContainerElement().classList.add(newTheme);
-        this.themeName = newTheme;
+
+        if (!this.isNightMode) {
+          if (newTheme !== this.themeName) {
+            this.overlayContainer.getContainerElement().classList.add(newTheme);
+            this.themeName = newTheme;
+          } else {
+            this.overlayContainer.getContainerElement().classList.add(this.themeName);
+          }
+        } else {
+          this.overlayContainer.getContainerElement().classList.add(newTheme);
+        }
+        this.activeTheme = newTheme;
       }
-    )
-    this.DataSetService.startAllDataSets();
+    );
 
-
-    // Snackbar Notification Code
+    // Snackbar Notifications sub
     this.appNotificationSub = this.notificationsService.getSnackbarAppNotifications().subscribe(
 
       appNotification => {
@@ -76,7 +93,7 @@ export class AppComponent implements OnInit, OnDestroy {
           verticalPosition: 'top'
         });
 
-        if (!this.AppSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
+        if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
           let sound = new Howl({
             src: ['assets/notification.mp3'],
             autoUnlock: true,
@@ -101,49 +118,52 @@ export class AppComponent implements OnInit, OnDestroy {
           sound.play();
         }
       }
-    )
+    );
 
     // Connection Status Notification sub
-    this.connectionStatusSub = this.signalKConnectionService.getSignalKConnectionsStatus().subscribe(
-      status => {
+    this.connectionStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
         this.displayConnectionsStatusNotification(status);
       }
     );
 
-
-    // add user login page here
+    this.DataSetService.startAllDataSets();
   }
 
-  ngOnDestroy() {
-    this.unlockStatusSub.unsubscribe();
-    this.themeNameSub.unsubscribe();
-    this.appNotificationSub.unsubscribe();
-    this.connectionStatusSub.unsubscribe();
-  }
+  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
 
-  displayConnectionsStatusNotification(connectionsStatus: SignalKStatus) {
-    if (connectionsStatus.operation == 1) { // starting server
-      if (!connectionsStatus.endpoint.status) {
-        this.notificationsService.sendSnackbarNotification(connectionsStatus.endpoint.message, 5000, true);
-      } else if (!connectionsStatus.rest.status) {
-        this.notificationsService.sendSnackbarNotification("Connected to SignalK Server.", 5000, false);
-      }
-    }
-    if (connectionsStatus.operation == 3) { // URL changed/reset
-      this.notificationsService.sendSnackbarNotification("Connection Update/Reset successful.", 5000, false);
+    switch (streamStatus.operation) {
+      case 0: // not connected
+        this.notificationsService.sendSnackbarNotification("Not connected to server.", 5000, true);
+        break;
+
+      case 1: // connecting
+        this.notificationsService.sendSnackbarNotification("Connecting to server.", 2000, true);
+       break;
+
+      case 2: // connected
+        this.notificationsService.sendSnackbarNotification("Connection successful.", 2000, false);
+        break;
+
+      case 3: // connection error
+        this.notificationsService.sendSnackbarNotification("Error connecting to server.", 0, false);
+        break;
+
+      default:
+        this.notificationsService.sendSnackbarNotification("Unknown stream connection status.", 0, false);
+        break;
     }
   }
 
   setTheme(theme: string) {
-    this.AppSettingsService.setThemName(theme);
+    this.appSettingsService.setThemName(theme);
   }
 
   setNightMode(nightMode: boolean) {
     this.isNightMode = nightMode;
     if (this.isNightMode) {
-      this.AppSettingsService.setThemName("nightMode");
+      this.appSettingsService.setThemName("nightMode");
     } else {
-      this.AppSettingsService.setThemName(this.AppSettingsService.getThemeName());
+      this.appSettingsService.setThemName(this.themeName);
     }
   }
 
@@ -155,9 +175,8 @@ export class AppComponent implements OnInit, OnDestroy {
       console.log("Unlocking");
       this.unlockStatus = true;
     }
-    this.AppSettingsService.setUnlockStatus(this.unlockStatus);
+    this.appSettingsService.setUnlockStatus(this.unlockStatus);
   }
-
 
   newPage() {
     this.LayoutSplitsService.newRootSplit();
@@ -187,6 +206,13 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     this.fullscreenStatus = !this.fullscreenStatus;
+  }
+
+  ngOnDestroy() {
+    this.unlockStatusSub.unsubscribe();
+    this.themeNameSub.unsubscribe();
+    this.appNotificationSub.unsubscribe();
+    this.connectionStatusSub.unsubscribe();
   }
 
 }

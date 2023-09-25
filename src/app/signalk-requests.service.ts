@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
-import { IDeltaMessage } from './signalk-interfaces';
+import { ISignalKDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
+import { AuththeticationService } from './auththetication.service';
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
@@ -31,31 +32,24 @@ export interface skRequest {
 })
 export class SignalkRequestsService {
 
-  private requestStatus = new Subject<skRequest>(); // public Observable passing message post processing
+  private requestStatus$ = new Subject<skRequest>(); // public Observable passing message post processing
   private requests: skRequest[] = []; // Private array of all requests.
 
   constructor(
     private signalKDeltaService: SignalKDeltaService,
     private appSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
+    private auth: AuththeticationService,
     ) {
       // Observer to get all signalk-delta messages of type request type.
-      const requestsSub: Subscription = this.signalKDeltaService.subscribeRequest().subscribe(
+      const requestsSub: Subscription = this.signalKDeltaService.subscribeRequestUpdates().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
-      );
-      // Observer of SignalK Tokens to automate login
-      const tokenSub: Subscription = this.appSettingsService.getSignalKTokenAsO().subscribe(
-        token => {
-          if (token.isExpired && token.isSessionToken) {
-            this.requestUserLogin(this.appSettingsService.loginName, this.appSettingsService.loginPassword);
-          }
-        }
       );
     }
 
   /**
-   * Submit a SignalK server Read/Write Device authorization token request - only required
-   * if you need to submit data to SignalK (PUT or storage requests).
+   * Submit a Signal K server Read/Write Device authorization token request - only required
+   * if you need to submit data to Signal K (PUT or storage requests).
    *
    * Once approved, a Devices authorization Token will be saved in the Kip
    * Config and sent with every requests.
@@ -67,13 +61,13 @@ export class SignalkRequestsService {
     let deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
-        clientId: this.appSettingsService.getKipUUID(),
+        clientId: this.appSettingsService.KipUUID,
         description: "Kip web app",
         permissions: "admin"
       }
     }
 
-    console.log("[Request Service] Requesting Device Token");
+    console.log("[Request Service] Requesting Device Authorization Token");
     this.signalKDeltaService.publishDelta(deviceTokenRequest);
 
     let request = {
@@ -86,9 +80,9 @@ export class SignalkRequestsService {
   }
 
   /**
-  * Submit a SignalK server User login request - user needs to exist in SignalK Server.
-  * Required to use the SignalK User Storage feature (ie. to store Config by users)
-  * and if you need to submit data to SignalK.
+  * Submit a Signal K WebSocket User login request - user needs to exist in Signal K Server.
+  * Required to use the Signal K User Storage feature (ie. to store Config by users)
+  * and if you need to submit data to Signal K.
   *
   * An alternative to user authentification is to use requestDeviceAccessToken method
   * removing the need for usr/pwd but this will limit Kip's automatic Config sharing feature.
@@ -96,8 +90,8 @@ export class SignalkRequestsService {
   * Once approved, the user authorization Token will be saved in the Config and sent with every
   * requests.
   *
-  * @param {string} userId The SignalK server User ID
-  * @param {string} userPassword The SignalK server user Password
+  * @param {string} userId The Signal K server User ID
+  * @param {string} userPassword The Signal K server user Password
   * @return {*} {string} requestId Identifier for this specific request. Enables Request result monitoring.
   * @memberof SignalkRequestsService
   */
@@ -124,8 +118,8 @@ export class SignalkRequestsService {
   }
 
   /**
-  * Sends request to SignalK server and returns requestId.
-  * @param path SignalK full path. Automatically removes "self" if included in path.
+  * Sends request to Signal K server and returns requestId.
+  * @param path Signal K full path. Automatically removes "self" if included in path.
   * @param value Value to be sent.
   * @param widgetUUID Optional - Subscriber's Widget UUID to be included as part of
   * the subscribeRequest Subject response. Enables Widget specific filtering.
@@ -159,9 +153,9 @@ export class SignalkRequestsService {
   /**
    * Handles request updates, issue display and logging.
    *
-   * @param delta SignalK Delta message
+   * @param delta Signal K Delta message
    */
-  private updateRequest(delta: IDeltaMessage) {
+  private updateRequest(delta: ISignalKDeltaMessage) {
     let index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
@@ -170,7 +164,7 @@ export class SignalkRequestsService {
 
       const currentStatusCode = deltaStatusCodes[delta.statusCode];
 
-      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401)) {
+      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401 || this.requests[index].statusCode == 405)) {
         this.requests[index].statusCodeDescription = currentStatusCode;
 
         if (this.requests[index].statusCode == 202) {
@@ -178,20 +172,20 @@ export class SignalkRequestsService {
           return;
         }
 
+        if (this.requests[index].statusCode == 405) {
+          console.log("[Request Service] Status Code: " + this.requests[index].statusCode + " - " + this.requests[index].message);
+        }
+
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.appSettingsService.setSignalKToken({token: delta.accessRequest.token, isNew: true, isSessionToken: false, isExpired: false});
-          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Token received from server.");
-          console.log("[Request Service] " + delta.accessRequest.permission + ": Device Token received");
+          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
+          console.log(`[Request Service] ${delta.accessRequest.permission}: Device Access Token received`);
+          this.auth.setDeviceAccessToken(delta.accessRequest.token);
 
         } else if (delta.login !== undefined) {
-
+          // Delta (WebSocket) login not implemented. Use REST login from
+          // Authetification service to obtain Session token
           if (delta.login.token !== undefined) {
-            this.appSettingsService.setSignalKToken({token: delta.login.token, isNew: true, isSessionToken: true, isExpired: false});
-            console.log("[Request Service] User Token received");
-          } else {
-            // Delta is a login response but token is empty, meaning it's a 401 - login failed. Must set to null in case we have an old token.
-            console.log("[Request Service] User Login failed");
-            this.appSettingsService.setSignalKToken({token: null, isNew: true, isSessionToken: true, isExpired: false});
+            // Do logic
           }
 
         }
@@ -201,10 +195,10 @@ export class SignalkRequestsService {
         console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
-        this.requestStatus.next(this.requests[index]);    // Broadcast results
-        this.requests.splice(index, 1);                 // result dispatched, cleanup array
+        this.requestStatus$.next(this.requests[index]);    // dispatched results
+        this.requests.splice(index, 1);                 // cleanup array
       } catch (err) {
-        this.requestStatus.error(err);
+        this.requestStatus$.error(err);
         console.error("[Request Service] " + err);
         this.requests = []; // flush array to clean values that will become stale post error
       }
@@ -215,14 +209,14 @@ export class SignalkRequestsService {
   }
 
   /**
-   * Subscribe to SignalK request response. This allows you to inspect server
+   * Subscribe to Signal K request response. This allows you to inspect server
    * response information such as State, Status Codes and such for further processing
    * logic. Subscription object should be used for the Return :)
    *
    * @return Observable of type skRequest.
    */
   public subscribeRequest(): Observable<skRequest> {
-    return this.requestStatus.asObservable();
+    return this.requestStatus$.asObservable();
   }
 
   private newUuid() {

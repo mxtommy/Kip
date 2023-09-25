@@ -56,7 +56,7 @@ export class DataSetService {
       this.dataSets = AppSettingsService.getDataSets();
   }
 
-  startAllDataSets() {
+  public startAllDataSets() {
     console.log("Starting " + this.dataSets.length.toString() + " DataSets");
     for (let i = 0; i < this.dataSets.length; i++) {
       this.startDataSet(this.dataSets[i].uuid);
@@ -70,7 +70,7 @@ export class DataSetService {
     });
   }
 
-  subscribeDataSet(uuid, dataSetUuid) {
+  public subscribeDataSet(uuid, dataSetUuid) {
     //see if already subscribed, if yes return that...
     let registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid == dataSetUuid));
     if (registerIndex >= 0) { // exists
@@ -98,11 +98,9 @@ export class DataSetService {
     return this.dataSetRegister[registerIndex].observable.asObservable();
   }
 
-
-
-  stopDataSet(uuid: string) {
+  private stopDataSet(uuid: string) {
     // stop any registrations to this dataset...
-    for (let i=this.dataSetRegister.length-1; i >= 0; i--) { //backwards because lengh will change...
+    for (let i = this.dataSetRegister.length-1; i >= 0; i--) { //backwards because lengh will change...
       if (this.dataSetRegister[i].uuid == uuid) {
         this.dataSetRegister.splice(i,1);
       }
@@ -120,7 +118,7 @@ export class DataSetService {
      }
   }
 
-  startDataSet(uuid: string) {
+  private startDataSet(uuid: string) {
     let dataIndex = this.dataSets.findIndex(dataSet => dataSet.uuid == uuid);
     if (dataIndex < 0) { return; }//not found...
 
@@ -167,7 +165,7 @@ export class DataSetService {
 
   }
 
-  addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {
+  public addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {
     let uuid = this.newUuid();
 
     let newSub: IDataSet = {
@@ -183,27 +181,50 @@ export class DataSetService {
     this.AppSettingsService.saveDataSets(this.dataSets);
   }
 
-  deleteDataSet(uuid: string) {
-    //get index
-    let dataSetIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
-    if (dataSetIndex < 0) { return; } // uuid doesn't exist...
+  public updateDataset(dataset: IDataSet): void {
+    // index of sub and dataset can be different after updating datasets
+    // get sub index for this dataset
+    let datasetSubIndex = this.dataSetSub.findIndex(sub => sub.uuid === dataset.uuid);
+    if (datasetSubIndex >= 0) { // sub exist
+      this.stopDataSet(dataset.uuid);
+    }
 
-    this.stopDataSet(uuid);
-    // deleteSubscription
-    this.dataSets.splice(dataSetIndex,1);
+    // get index for this dataset
+    let datasetIndex = this.dataSets.findIndex(dset => dset.uuid === dataset.uuid);
+    if (datasetIndex >= 0) { // dataset exist
+      this.dataSets.splice(datasetIndex, 1, dataset);
+      this.startDataSet(dataset.uuid);
+    }
 
     this.AppSettingsService.saveDataSets(this.dataSets);
-
   }
 
-  getDataSets(): IDataSet[] {
-    let result = [];
+  public deleteDataSet(uuid: string) {
+    // index of sub and dataset can be different after updating datasets
+    // get sub index
+    let datasetSubIndex = this.dataSetSub.findIndex(sub => sub.uuid === uuid);
+    if (datasetSubIndex >= 0) { // sub exist
+      this.stopDataSet(uuid);
+    }
+
+     // get index for this dataset
+    let datasetIndex = this.dataSets.findIndex(dset => dset.uuid === uuid);
+    if (datasetIndex >= 0) { // dataset exist
+      this.dataSets.splice(datasetIndex,1);
+    }
+
+    this.AppSettingsService.saveDataSets(this.dataSets);
+  }
+
+  public getDataSets(): IDataSet[] {
+    let result: IDataSet[] = [];
     for (let i=0;i<this.dataSets.length; i++) {
 
       let name = this.dataSets[i].path + ' - Interval:' + this.dataSets[i].updateTimer.toString() + ' - DataPoints:' + this.dataSets[i].dataPoints.toString()
       result.push({
         uuid: this.dataSets[i].uuid,
         path: this.dataSets[i].path,
+        signalKSource: this.dataSets[i].signalKSource,
         updateTimer: this.dataSets[i].updateTimer,
         dataPoints: this.dataSets[i].dataPoints,
         name: name
@@ -212,7 +233,7 @@ export class DataSetService {
     return result;
   }
 
-  aggregateDataCache(uuid: string) {
+  private aggregateDataCache(uuid: string) {
     let avg: number = null;
 
     //get index
@@ -254,7 +275,7 @@ export class DataSetService {
     }
   }
 
-  updateDataCache(uuid: string, newValue: number) {
+  private updateDataCache(uuid: string, newValue: number) {
     //get index
     let dsIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
 
@@ -268,6 +289,5 @@ export class DataSetService {
       this.dataSetSub[dsIndex].dataCache.maxValue = newValue;
     }
   }
-
 
 }

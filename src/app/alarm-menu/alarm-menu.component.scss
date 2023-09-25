@@ -11,6 +11,10 @@
     z-index: 1000;
   }
 
+  .mute-unmte-alarm {
+    width: max-content;
+  }
+
   // Alarm button when warning
   .alarmWarning {
     animation:blinkingAlarmWarning 1.5s infinite;

@@ -3,10 +3,12 @@
  */
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { ISignalKNotification } from "./signalk-interfaces";
-import { AppSettingsService, INotificationConfig } from "./app-settings.service";
-import { isNull } from 'util';
 
+import { AppSettingsService } from "./app-settings.service";
+import { INotificationConfig } from './app-settings.interfaces';
+import { DefaultNotificationConfig } from './config.blank.notification.const';
+import { SignalKDeltaService, INotificationDelta, IStreamStatus } from './signalk-delta.service';
+import { INotification } from "./app-interfaces";
 import { Howl } from 'howler';
 
 const alarmTrack = {
@@ -16,7 +18,6 @@ const alarmTrack = {
   1003 : 'alarm',
   1004 : 'emergency',
 };
-
 
 /**
  * Snack-bar notification message interface.
@@ -28,18 +29,18 @@ export interface AppNotification {
 }
 
 /**
- * Kip Alarm object. Alarm index key is the path string. Alarm contains native SignalK Notification
+ * Kip Alarm object. Alarm index key is the path string. Alarm contains native Signal K Notification
  * values in and additional feature enhancing alarm properties.
  *
- * @path SignalK alarm path - Defines source of the alarm
+ * @path Signal K alarm path - Defines source of the alarm
  * @ack Optional Alarm acknowledgment property
- * @notification Native SignalK Notification message as Object ISignalKNotification
+ * @notification Native Signal K Notification message as Object INotification
  */
 export interface Alarm {
   path: string;
   type: string;
   isAck: boolean;
-  notification: ISignalKNotification;
+  notification: INotification;
 }
 
 /**
@@ -59,6 +60,7 @@ export interface IAlarmInfo {
 export class NotificationsService {
   private notificationServiceSettings: Subscription;
   private notificationConfig: INotificationConfig;
+  public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
   private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
   private activeAlarmsSubject = new BehaviorSubject<any>({});
@@ -80,10 +82,12 @@ export class NotificationsService {
 
   constructor(
     private appSettingsService: AppSettingsService,
+    private deltaService: SignalKDeltaService,
     ) {
-    // Observe Notification configuration
-    this.notificationServiceSettings = this.appSettingsService.getNotificationConfigService().subscribe(config => {
+    // Observer of Notification Servicer configuration
+    this.notificationServiceSettings = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
+      this.notificationConfig$.next(config); // push to alrm menu
       if (this.notificationConfig.disableNotifications) {
         this.resetAlarms();
       }
@@ -92,6 +96,18 @@ export class NotificationsService {
       } else {
         this.checkAlarms(); //see if any we need to start playing again
       }
+    });
+
+    //Observer of server connection status
+    this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
+      if (streamStatus.operation === 2) {
+        this.resetAlarms();
+      }
+    });
+
+    // Observer of Delta Service Notification message
+    this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotificationDelta) => {
+      this.processNotificationDelta(notification);
     });
 
     // init alarm player
@@ -137,10 +153,10 @@ export class NotificationsService {
 
   /**
    * Add new Alarm and send
-   * @param path SignalK path of the notification
-   * @param notification Raw content of the notification message from SignalK server as ISignalKNotification
+   * @param path Signal K path of the notification
+   * @param notification Raw content of the notification message from Signal K server as INotification
    */
-  public addAlarm(path: string, notification: ISignalKNotification) {
+  public addAlarm(path: string, notification: INotification) {
 
     if (/^notifications.security./.test(path)) {
       return; // as per sbender this part is not ready in the spec - Don't add to alarms
@@ -168,7 +184,7 @@ export class NotificationsService {
    * @param path
    * @param notification
    */
-  public updateAlarm(path: string, notification: ISignalKNotification) {
+  public updateAlarm(path: string, notification: INotification) {
     this.alarms[path].notification = notification;
     this.checkAlarms();
     this.activeAlarmsSubject.next(this.alarms);
@@ -216,7 +232,6 @@ export class NotificationsService {
 
   /**
    * Checks all alarms for worst state, and sets any visualSev/AudioSev
-   * @returns
    */
   public checkAlarms() {
     // find worse alarm state
@@ -230,7 +245,7 @@ export class NotificationsService {
       let aSev = 0;
       let vSev = 0;
 
-      //seems ISignalKNotification can sometimes not have method set. (Problem from server?)
+      //seems INotification can sometimes not have method set. (Problem from server?)
       if (!('method' in alarm.notification)) {
         continue; // if there's no method, don't alarm...
       }
@@ -293,39 +308,39 @@ export class NotificationsService {
    *
    * @usageNotes To send a Snackbar notification, use sendSnackbarNotification().
    * Notifications are purely client side and have no relationship or
-   * interactions with the SignalK server.
+   * interactions with the Signal K server.
    */
   public getSnackbarAppNotifications() {
     return this.snackbarAppNotifications.asObservable();
   }
 
-/**
- * Processes SignalK Delta metadata containing Notifications information and
- * routes to Kip Notification system as Alarms and Notifications.
- *
- * @param path path of message ie. the subject of the message
- * @param notificationValue Content of the message. Must conform to ISignalKNotification interface.
- * @usageNotes This function is internal and should not be used.
- */
-  public processNotificationDelta(path: string, notificationValue: ISignalKNotification) {
+  /**
+   * Processes Signal K Delta metadata containing Notifications information and
+   * routes to Kip Notification system as Alarms and Notifications.
+   *
+   * @param path path of message ie. the subject of the message
+   * @param notificationValue Content of the message. Must conform to INotification interface.
+   * @usageNotes This function is internal and should not be used.
+   */
+  public processNotificationDelta(notificationDelta: INotificationDelta) {
     if (this.notificationConfig.disableNotifications) {
       return;
     }
 
-    if (isNull(notificationValue)) {
+    if (notificationDelta.notification === null) {
       // Alarm removed/cleared on server.
-      if (this.deleteAlarm(path)) {};
+      if (this.deleteAlarm(notificationDelta.path)) {};
     } else {
-      if (path in this.alarms) {
+      if (notificationDelta.path in this.alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.alarms[path].notification['state'] != notificationValue['state'])
-              ||(this.alarms[path].notification['message'] != notificationValue['message'])
-              ||(JSON.stringify(this.alarms[path].notification['method']) != JSON.stringify(notificationValue['method'])) ) { // no easy way to compare arrays??? ok...
-          this.updateAlarm(path, notificationValue);
+        if (    (this.alarms[notificationDelta.path].notification['state'] !== notificationDelta.notification['state'])
+              ||(this.alarms[notificationDelta.path].notification['message'] !== notificationDelta.notification['message'])
+              ||(JSON.stringify(this.alarms[notificationDelta.path].notification['method']) !== JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
+          this.updateAlarm(notificationDelta.path, notificationDelta.notification);
         }
       } else {
         // New Alarm, send it
-        this.addAlarm(path, notificationValue);
+        this.addAlarm(notificationDelta.path, notificationDelta.notification);
       }
     }
   }
@@ -359,16 +374,16 @@ export class NotificationsService {
     return player;
   }
 
-    /**
-   * mute Howl Player active track ei.: howlId. Note Howl howlId is not the
-   * same as Player Soundtrack TrackId which represents the selected sound file.
-   * @param state sound muted boolean state
-   */
-    mutePlayer(state) {
-      this.howlPlayer.mute(state, this.activeHowlId);
-      this.isHowlIdMuted = state;
-      this.checkAlarms(); //make sure to push updated info tro alarm menu
-    }
+  /**
+  * mute Howl Player active track ei.: howlId. Note Howl howlId is not the
+  * same as Player Soundtrack TrackId which represents the selected sound file.
+  * @param state sound muted boolean state
+  */
+  mutePlayer(state) {
+    this.howlPlayer.mute(state, this.activeHowlId);
+    this.isHowlIdMuted = state;
+    this.checkAlarms(); //make sure to push updated info tro alarm menu
+  }
 
    /**
    * play audio notification sound
@@ -390,5 +405,7 @@ export class NotificationsService {
     this.activeHowlId = this.howlPlayer.play();
   }
 
-
+  public getNotificationServiceConfigAsO(): Observable<INotificationConfig> {
+    return this.notificationConfig$.asObservable();
+  }
 }

@@ -5,11 +5,10 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { AppSettingsService } from '../app-settings.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
-import { isNull } from 'util';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -37,7 +36,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   activeWidget: IWidget;
-    config: IWidgetConfig;
+    config: IWidgetSvcConfig;
 
   dataValue: any = null;
 
@@ -103,6 +102,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       this.currentValueLength = 0; //will force resetting the font size
       this.updateCanvas();
       this.updateCanvasBG();
+    } else {
+      this.updateCanvasBG();
     }
 
   }
@@ -144,7 +145,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     }
   }
 
-  openWidgetSettings(content) {
+  openWidgetSettings() {
 
     let dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
@@ -203,11 +204,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
-      // start with large font, no sense in going bigger than the size of the canvas :) 
+      // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
       this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       let measure = this.canvasCtx.measureText(valueText).width;
-      
+
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;

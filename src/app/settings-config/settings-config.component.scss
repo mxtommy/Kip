@@ -1,0 +1,154 @@
+@use '~@angular/material' as mat;
+@mixin theme-settings-config($theme) {
+
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  .descriptiveTexts {
+    color: mat.get-color-from-palette($foreground, text);
+    font-size: 14px;
+  }
+}
+
+a {
+  font-size: 14px;
+}
+a:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+a:link, a:visited {
+  color: rgb(138, 180, 248);
+  text-decoration: none;
+}
+
+.confirmTextarea {
+  resize: none;
+}
+
+.config-size {
+  width: 100%;
+}
+
+.textheight {
+  height: 120px;
+  background-color: black;
+}
+
+.warningText {
+padding-left: 15px;
+}
+
+.no-token-notice {
+  height: 58px;
+  contain: content;
+  text-align: center;
+  font-style: italic;
+}
+
+.mat-radio-button ~ .mat-radio-button {
+margin-right: 16px;
+margin-left: 16px;
+}
+
+.config-row {
+display: flex;
+flex-direction: row;
+flex-wrap: wrap;
+width: 100%;
+margin: 10px 0px;
+}
+
+.config-column {
+display: flex;
+flex-direction: column;
+flex-basis: 100%;
+flex: 1;
+margin: 10px;
+}
+
+.flex-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.flex-item {
+  flex: 1 1 29%;
+}
+
+.flex-item-copy {
+  flex: 2 1 40%;
+}
+
+.sources-radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 15px 0;
+}
+
+.sources-radio-button {
+  margin: 5px;
+  margin-left: 0px !important;
+}
+
+.select-config {
+  margin-left: 28px;
+}
+
+.btn-div {
+  align-self: center;
+}
+
+.btn-div button {
+  width: -webkit-fill-available;
+}
+
+.config-operation-container {
+  display: grid;
+  grid-template-columns: [col-start] auto [col1-end] min-content [col2-end];
+  grid-template-rows: [row-start] max-content [row1-end] max-content [row2-end];
+  grid-template-areas:
+    "demo-txt demo-btn"
+    "reset-txt reset-btn"
+    "config-txt config-btn"
+    "editor-txt editor-btn";
+  row-gap: 20px;
+  column-gap: 10px;
+}
+
+.demo-txt {
+  grid-area: demo-txt;
+}
+
+.demo-btn {
+  grid-area: demo-btn;
+}
+
+.reset-txt {
+  grid-area: reset-txt;
+}
+
+.reset-btn {
+  grid-area: reset-btn;
+}
+
+.config-txt {
+  grid-area: config-txt;
+}
+
+.config-btn {
+  grid-area: config-btn;
+}
+
+.editor-txt {
+  grid-area: editor-txt;
+}
+
+.editor-btn {
+  grid-area: editor-btn;
+}

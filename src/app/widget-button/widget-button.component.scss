@@ -1,0 +1,60 @@
+@use '~@angular/material' as mat;
+
+@mixin widget-button-theme($theme) {
+
+  $ngGauge: map-get($theme, ngGauge);
+  $themeForeground: map-get($theme, foreground);
+  $themeBackground: map-get($theme, background);
+
+  app-widget-button {
+    .primary {
+      color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceLight);
+    }
+    .accent {
+      color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceLight);
+    }
+    .warn {
+      color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceLight);
+    }
+    .primaryDark {
+      color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceDark);
+    }
+    .accentDark {
+      color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceDark);
+    }
+    .warnDark {
+      color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceDark);
+    }
+    .background {
+      color: mat.get-color-from-palette($themeForeground, divider);
+    }
+    .text {
+      color: mat.get-color-from-palette($themeForeground, text);
+    }
+  }
+}
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.indicatorBorder {
+margin-left: 5%;
+margin-right: 5%;
+top: 5%;
+position: relative;
+width: 90%;
+height: 90%;
+box-sizing: border-box;
+border: solid 0.2em;
+border-radius: 1em / 1em;
+}
+
+.settingsButton {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translate(-50%);
+}
