@@ -6,7 +6,7 @@
         tab located in the Configuration/Settings menu option at the lower right of the display.</p>
       <h4>Activating configuration sharing (default mode)</h4>
         <p> With "Enable user Sign in and configuration sharing" option activate, the configuration
-          will automatically be retreived from the Signalk server storage upon startup. Any changes you make
+          will automatically be retreived from the Signal K server storage upon startup. Any changes you make
           (layout, widgets, settings, etc.) will also be automatically saved to the server in real time.
           If you use multiple devices and browsers (computer, phones, tablets, Raspberry Pi, etc.), or you try
           a new device for the first time, it will get the most recent configuration automatically upon
@@ -14,8 +14,8 @@
           devices. There are minor caveats you need to be aware of with the option:
         </p>
         <ul>
-          <li>You need to Sign in with a Signalk user to allow server storage of the KIP configuration.</li>
-          <li>You need to first create a User in Signalk or use an existing user before enabling this option</li>
+          <li>You need to Sign in with a Signal K user to allow server storage of the KIP configuration.</li>
+          <li>You need to first create a User in Signal K or use an existing user before enabling this option</li>
           <li>The configuration is stored within the server user storage space. This means you have to
             use the same credentials on all devices to share that user's configuration. Note that you could
             also have different credentials for different configuration arrangements such as, one for
@@ -30,10 +30,10 @@
         </ul>
         <p>
           To use this feature, you need to follow a few simple steps. First is creating a user with "Admin Permissions" in
-          Signalk:
+          Signal K:
         </p>
         <ol>
-          <li>Go to Signalk server's Security/User menu to create a user with "Admin Permissions"</li>
+          <li>Go to Signal K server's Security/User menu to create a user with "Admin Permissions"</li>
           <li>Come back to Kip and go to the Configuration/Settings menu. In the "Signal K" tab, toggle
             the "Enable user Sign in and configuration sharing" option to Actice</li>
           <li>Click the "Set Sign in credentials" button and enter the previously created
@@ -55,7 +55,7 @@
         <ol>
           <li>Go to the Configuration/Settings menu in the "Signal K" tab and click the "Request Token"
             button</li>
-          <li>Then go to the Signalk server Admin interface and approve the request in the Security/Access Requests menu</li>
+          <li>Then go to the Signal K server Admin interface and approve the request in the Security/Access Requests menu</li>
         </ol>
         <p>Once approved, on the device with the
           configuration you want to copy, name the config and save it to the Global storage. Then use
@@ -152,7 +152,7 @@
             <mat-expansion-panel [expanded]="step === 3" (opened)="setStep(3)">
               <mat-expansion-panel-header>
                 <mat-panel-title>
-                  Signalk to InfluxDB (by Boating with the Baileys)
+                  Signal K to InfluxDB (by Boating with the Baileys)
                 </mat-panel-title>
                 <mat-panel-description>
                   Database to store historical data

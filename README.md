@@ -1,6 +1,6 @@
 # About Kip 
 
-Kip is a marine instrumentation package to display Signalk data. Kip, much like modern expensive MFDs, is very flexible and can be split up in any arrangement and display any kind of data available.
+Kip is a marine instrumentation package to display Signal K data. Kip, much like modern expensive MFDs, is very flexible and can be split up in any arrangement and display any kind of data available.
 
 # Design Goal
 
@@ -19,8 +19,8 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Modern Dark Theme
   ![Modern Dark Theme](./KipSample-1-1024x488.png)
   
-  Signalk Inspired Theme
-  ![Signalk Inspired Theme](./KipSample-2-1024x488.png)
+  Signal K Inspired Theme
+  ![Signal K Inspired Theme](./KipSample-2-1024x488.png)
   
   Light Blue Theme
   ![Light Blue Theme](./KipSample-3-1024x488.png)
@@ -41,7 +41,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Easy basic gauge and widget configuratio.
   ![Gauges Configuration Image](./KipConfig-display-1024x488.png) 
   
-  See what Signalk has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
+  See what Signal K has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
   ![Paths Configuration Image](./KipWidgetConfig-paths-1024x488.png)
   
   Many units are supported. Choose your prefered App defaults, than tweak it gauge-by-gauge as necessary. Kip will convert the displayed units for you.
@@ -57,7 +57,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges
-  - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signalk device that support boolean PUT operations
+  - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signal K device that support boolean PUT operations
   - Race Timer: Track regatta start sequence
   - Historical datagram chart: Display numerical data over time on a chart
   - Embedded Webpage: A powerful way of embedding any web based content or application accessible as a URL within an onscreen widget to integrate with your gauges and layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
@@ -72,7 +72,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 ## Share Configuration And Access From Anywhere
   Configure once and seamlessly share the layout and configuration on multiple devices and browsers (computer, phones, tablets,
-  Raspberry Pi, etc.) by pointing to a single SignalK server URL address from anywhere.
+  Raspberry Pi, etc.) by pointing to a single Signal K server URL address from anywhere.
 
 # Developing
 

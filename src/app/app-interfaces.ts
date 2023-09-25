@@ -16,7 +16,7 @@ import { IZoneState } from './app-settings.interfaces';
  * of a path. Used as a Read/Write interface on internal App paths data source.
 
  * Use by: signalk-full services (parser), signalk-delta services (parser) and
- * signalk services (internal app datasource)
+ * Signal K services (internal app datasource)
  *
  * @memberof app-interfaces
  */
@@ -32,7 +32,7 @@ import { IZoneState } from './app-settings.interfaces';
  * all possible signal K data sources and their values, default source, data type description,
  * data zone state, all meta data, etc.
  *
- * Use by: data-browser (consumer) and signalk services (internal datasource)
+ * Use by: data-browser (consumer) and Signal K services (internal datasource)
  *
  * @memberof app-interfaces
  */
@@ -55,7 +55,7 @@ import { IZoneState } from './app-settings.interfaces';
  * as an interface to access meta data subset extracted from internal App
  * paths data source.
  *
- * Use by: modal-path-selection (consumer), setting-zones (consumer) and signalk (internal datasource) service
+ * Use by: modal-path-selection (consumer), setting-zones (consumer) and Signal K (internal datasource) service
  *
  * @memberof app-interfaces
  */
@@ -70,7 +70,7 @@ import { IZoneState } from './app-settings.interfaces';
  *
  * Use by: Notification service (consumer), signalk-delta (parser)
  *
- * Follow URL for full Signalk specification and description of fields:
+ * Follow URL for full Signal K specification and description of fields:
  * @url https://signalk.org/specification/1.7.0/doc/request_response.html
  *
  * @memberof app-interfaces

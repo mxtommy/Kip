@@ -35,7 +35,7 @@ export class SignalKService {
   degToRad = Qty.swiftConverter('deg', 'rad');
   selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
-  // Local array of paths containing received SignalK Data and used to source Observers
+  // Local array of paths containing received Signal K Data and used to source Observers
   paths: IPathData[] = [];
   // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
@@ -329,10 +329,10 @@ export class SignalKService {
   }
 
   /**
-   * Returns a list of all known SignalK paths of the specified type (sting or numeric)
+   * Returns a list of all known Signal K paths of the specified type (sting or numeric)
    * @param valueType data type: string or numeric
    * @param selfOnly if true, returns only paths the begins with "self". If false or not specified, everything known
-   * @return array of signalK path string
+   * @return array of Signal K path string
    */
   getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let paths: string[] = [];
@@ -403,7 +403,7 @@ export class SignalKService {
    * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
    * but Kip does not handle it...yet.
    *
-   * @param path The Signalk path of the value
+   * @param path The Signal K path of the value
    * @return conversions Full list array or subset of list array
    */
   getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {

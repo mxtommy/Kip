@@ -48,8 +48,8 @@ export class SignalkRequestsService {
     }
 
   /**
-   * Submit a Signalk server Read/Write Device authorization token request - only required
-   * if you need to submit data to Signalk (PUT or storage requests).
+   * Submit a Signal K server Read/Write Device authorization token request - only required
+   * if you need to submit data to Signal K (PUT or storage requests).
    *
    * Once approved, a Devices authorization Token will be saved in the Kip
    * Config and sent with every requests.
@@ -80,9 +80,9 @@ export class SignalkRequestsService {
   }
 
   /**
-  * Submit a Signalk WebSocket User login request - user needs to exist in Signalk Server.
-  * Required to use the Signalk User Storage feature (ie. to store Config by users)
-  * and if you need to submit data to Signalk.
+  * Submit a Signal K WebSocket User login request - user needs to exist in Signal K Server.
+  * Required to use the Signal K User Storage feature (ie. to store Config by users)
+  * and if you need to submit data to Signal K.
   *
   * An alternative to user authentification is to use requestDeviceAccessToken method
   * removing the need for usr/pwd but this will limit Kip's automatic Config sharing feature.
@@ -90,8 +90,8 @@ export class SignalkRequestsService {
   * Once approved, the user authorization Token will be saved in the Config and sent with every
   * requests.
   *
-  * @param {string} userId The Signalk server User ID
-  * @param {string} userPassword The Signalk server user Password
+  * @param {string} userId The Signal K server User ID
+  * @param {string} userPassword The Signal K server user Password
   * @return {*} {string} requestId Identifier for this specific request. Enables Request result monitoring.
   * @memberof SignalkRequestsService
   */
@@ -118,8 +118,8 @@ export class SignalkRequestsService {
   }
 
   /**
-  * Sends request to Signalk server and returns requestId.
-  * @param path Signalk full path. Automatically removes "self" if included in path.
+  * Sends request to Signal K server and returns requestId.
+  * @param path Signal K full path. Automatically removes "self" if included in path.
   * @param value Value to be sent.
   * @param widgetUUID Optional - Subscriber's Widget UUID to be included as part of
   * the subscribeRequest Subject response. Enables Widget specific filtering.
@@ -153,7 +153,7 @@ export class SignalkRequestsService {
   /**
    * Handles request updates, issue display and logging.
    *
-   * @param delta Signalk Delta message
+   * @param delta Signal K Delta message
    */
   private updateRequest(delta: ISignalKDeltaMessage) {
     let index = this.requests.findIndex(r => r.requestId == delta.requestId);
@@ -209,7 +209,7 @@ export class SignalkRequestsService {
   }
 
   /**
-   * Subscribe to Signalk request response. This allows you to inspect server
+   * Subscribe to Signal K request response. This allows you to inspect server
    * response information such as State, Status Codes and such for further processing
    * logic. Subscription object should be used for the Return :)
    *

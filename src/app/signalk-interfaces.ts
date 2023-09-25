@@ -124,7 +124,7 @@ export interface ISignalKDataValueUpdate {
  *
  * Included in: IUpdateMessage, IPathFullObject, IPathMetaObject
  *
- * Follow URL for full Signalk specification and description of fields:
+ * Follow URL for full Signal K specification and description of fields:
  * @url https://signalk.org/specification/1.7.0/doc/data_model_metadata.html
  *
  * When present, metadata can be use for gauge configuration and the state of

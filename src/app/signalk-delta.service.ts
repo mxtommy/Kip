@@ -34,13 +34,13 @@ export interface INotificationDelta {
   })
 export class SignalKDeltaService {
 
-  // Signalk Requests message stream Observable
+  // Signal K Requests message stream Observable
   private signalKRequests$ = new Subject<ISignalKDeltaMessage>();
-  // Signalk Notifications message stream Observable
+  // Signal K Notifications message stream Observable
   private signalKNotifications$ = new Subject<INotificationDelta>();
-  // Signalk data path message stream Observable
+  // Signal K data path message stream Observable
   private signalKDatapath$ = new Subject<IPathValueData>();
-  // Signalk Metadata message stream Observer
+  // Signal K Metadata message stream Observer
   private signalKMetadata$ = new Subject<IMeta>();
   // Self URN message stream Observer
   private vesselSelfUrn$ = new Subject<string>();

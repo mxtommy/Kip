@@ -116,7 +116,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
       if (pathObject != null) {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       } else {
-        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL or SignalK server config. We need to disable the fields.
+        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL or Signal K server config. We need to disable the fields.
         try {
           this.formGroup.controls['source'].disable();
           this.formGroup.controls['convertUnitTo'].disable();

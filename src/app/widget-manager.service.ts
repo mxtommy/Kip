@@ -76,12 +76,12 @@ interface IWidgetPaths {
   source: string | null;     //can be null or set
   pathType: string  | null;
   pathFilter?: string,     //Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
-  convertUnitTo?: string;    // Convert SignalK value to specific format for display. Also used as a source to identify conversion group
+  convertUnitTo?: string;    // Convert Signal K value to specific format for display. Also used as a source to identify conversion group
   isPathConfigurable: boolean; // should we show this path in Widget Path config or is it static and hidden
-  period?: number;    // SignalK - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000
-  format?: Format;     // SignalK - format=[delta|full] specifies delta or full format. Default: delta
-  policy?: Policy;     // SignalK - policy=[instant|ideal|fixed]. Default: ideal
-  minPeriod?: number;  // SignalK - minPeriod=[millisecs] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network.
+  period?: number;    // Signal K - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000
+  format?: Format;     // Signal K - format=[delta|full] specifies delta or full format. Default: delta
+  policy?: Policy;     // Signal K - policy=[instant|ideal|fixed]. Default: ideal
+  minPeriod?: number;  // Signal K - minPeriod=[millisecs] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network.
 }
 
 

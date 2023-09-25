@@ -26,12 +26,12 @@
       <mat-divider inset></mat-divider>
       <mat-card-actions align="end">
         <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">
-          <button mat-raised-button color="primary" matTooltip="Delete SignalK Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
+          <button mat-raised-button color="primary" matTooltip="Delete Signal K Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
             Delete Token
           </button>
         </span>
         <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
-          <button mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANNATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotly. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server. See SignalK Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
+          <button mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANNATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotly. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
             Request Token
           </button>
         </span>

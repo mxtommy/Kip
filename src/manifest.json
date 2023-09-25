@@ -4,9 +4,9 @@
     "display": "standalone",
     "scope": "./",
     "start_url": "./",
-    "name": "Kip",
-    "short_name": "Kip",
-    "description": "Kip Signalk Dashboard",
+    "name": "KIP",
+    "short_name": "KIP",
+    "description": "A Signal K Instrument Dashboard",
     "orientation": "landscape",
     "icons": [
         {

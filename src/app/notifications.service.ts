@@ -29,12 +29,12 @@ export interface AppNotification {
 }
 
 /**
- * Kip Alarm object. Alarm index key is the path string. Alarm contains native Signalk Notification
+ * Kip Alarm object. Alarm index key is the path string. Alarm contains native Signal K Notification
  * values in and additional feature enhancing alarm properties.
  *
- * @path Signalk alarm path - Defines source of the alarm
+ * @path Signal K alarm path - Defines source of the alarm
  * @ack Optional Alarm acknowledgment property
- * @notification Native Signalk Notification message as Object INotification
+ * @notification Native Signal K Notification message as Object INotification
  */
 export interface Alarm {
   path: string;
@@ -153,8 +153,8 @@ export class NotificationsService {
 
   /**
    * Add new Alarm and send
-   * @param path Signalk path of the notification
-   * @param notification Raw content of the notification message from Signalk server as INotification
+   * @param path Signal K path of the notification
+   * @param notification Raw content of the notification message from Signal K server as INotification
    */
   public addAlarm(path: string, notification: INotification) {
 
@@ -308,14 +308,14 @@ export class NotificationsService {
    *
    * @usageNotes To send a Snackbar notification, use sendSnackbarNotification().
    * Notifications are purely client side and have no relationship or
-   * interactions with the Signalk server.
+   * interactions with the Signal K server.
    */
   public getSnackbarAppNotifications() {
     return this.snackbarAppNotifications.asObservable();
   }
 
   /**
-   * Processes Signalk Delta metadata containing Notifications information and
+   * Processes Signal K Delta metadata containing Notifications information and
    * routes to Kip Notification system as Alarms and Notifications.
    *
    * @param path path of message ie. the subject of the message
