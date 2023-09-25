@@ -15,7 +15,7 @@
 * Improved management of Signal K communications reducing server buffer overflow and server-side termination exceptions handling.
 * Support for Signal K Delta Metadata updates
 * Retirement of full.service in favor of the Delta service for improved performance, reduced CPU load and code simplification
-* Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
+* Kip configuration data split into Connection and Configuration files enhancing KIP configuration sharing
 * Enhanced Request Service support
 * Enhanced Console logging for improved tracing and debugging
 * Added the ability to add a display text to the Blank widget. Special thanks to techgardeners
