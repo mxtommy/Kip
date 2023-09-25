@@ -1,10 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import {ModalWidgetComponent} from '../modal-widget/modal-widget.component';
 import {MatDialog} from '@angular/material/dialog';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
-const defaultConfig: IWidgetConfig = {
-  displayName: 'Blank'
+const defaultConfig: IWidgetSvcConfig = {
+  displayName: ''
 };
 
 @Component({
@@ -17,7 +17,7 @@ export class WidgetBlankComponent implements OnInit {
   @Input('unlockStatus') unlockStatus: boolean;
 
   activeWidget: IWidget;
-  config: IWidgetConfig;
+  config: IWidgetSvcConfig;
 
   constructor(
     public dialog: MatDialog,
@@ -36,7 +36,7 @@ export class WidgetBlankComponent implements OnInit {
   }
 
 
-  openWidgetSettings(content) {
+  openWidgetSettings() {
 
     const dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
