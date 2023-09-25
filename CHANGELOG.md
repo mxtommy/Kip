@@ -2,7 +2,7 @@
 ## New features
 * Breaking Change - KIP configuration sharing using Signal K user key data storage feature
 * Support for Signal K User authentication
-* Kip authentication flow and UI
+* KIP authentication flow and UI
 * Race Timer widget
 * Data/time Widget. Special thanks to techgardeners
 * Ah and kWh units support. Special thanks to amirlanesman
