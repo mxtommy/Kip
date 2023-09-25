@@ -4,6 +4,7 @@ import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetDateGenericComponent } from './widget-date-generic/widget-date-generic.component';
 import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
 import { WidgetWindComponent } from './widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
@@ -35,7 +36,7 @@ export class WidgetListService {
 
 
   widgetList: widgetList = {
-    "Basic": [
+    'Basic': [
       {
         name: 'WidgetBlank',
         componentName: WidgetBlankComponent,
@@ -52,16 +53,21 @@ export class WidgetListService {
         description: 'Text display',
       },
       {
+        name: 'WidgetDateGeneric',
+        componentName: WidgetDateGenericComponent,
+        description: 'Date value display',
+      },
+      {
         name: 'WidgetStateComponent',
-        componentName: WidgetButtonComponent,
+        componentName: WidgetStateComponent,
         description: 'Button/Switch control',
       },
     ],
-    "Gauge": [
+    'Gauge': [
       {
         name: 'WidgetGaugeNgLinearComponent',
         componentName: WidgetGaugeNgLinearComponent,
-        description: "Linear Gauge"
+        description: 'Linear Gauge'
       },
       {
         name: 'WidgetSimpleLinearComponent',
@@ -71,7 +77,7 @@ export class WidgetListService {
       {
         name: 'WidgetGaugeNgRadialComponent',
         componentName: WidgetGaugeNgRadialComponent,
-        description: "Radial Gauge"
+        description: 'Radial Gauge'
       },
       {
         name: 'WidgetGaugeComponent',
@@ -79,7 +85,7 @@ export class WidgetListService {
         description: "Radial & Linear Steel Gauges"
       },
     ],
-    "Components": [
+    'Components': [
       {
         name: 'WidgetHistorical',
         componentName: WidgetHistoricalComponent,
@@ -120,6 +126,7 @@ export class WidgetListService {
       description: 'Switch Input',
     },  */
 
+  
   getComponentName(typeName: string) {
     for (let [group, widgetList] of Object.entries(this.widgetList)) {
       let widget = widgetList.find(c => c.name == typeName);

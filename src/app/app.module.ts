@@ -59,6 +59,7 @@ import { AppHelpComponent } from './app-help/app-help.component';
 import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
+import { WidgetDateGenericComponent } from './widget-date-generic/widget-date-generic.component';
 import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
@@ -133,6 +134,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     WidgetUnknownComponent,
     WidgetBlankComponent,
     WidgetTextGenericComponent,
+    WidgetDateGenericComponent,
     FitTextDirective,
     FilterSelfPipe,
     SafePipe,

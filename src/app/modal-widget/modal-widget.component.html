@@ -34,6 +34,20 @@
                 </mat-checkbox>
               </div>
             </div>
+            <div class="full-width">
+              <div class="full-width"  *ngIf="(widgetConfig.dateFormat !== undefined)">
+                <mat-form-field class="dateFormat" appearance="outline" floatLabel="always">
+                  <mat-label>Date format</mat-label>
+                  <input matInput placeholder="dd/MM/yyyy HH:mm:ss" name="dateFormat" formControlName="dateFormat">
+                </mat-form-field>
+              </div>
+              <div class="full-width"  *ngIf="(widgetConfig.dateTimezone !== undefined)">
+                <mat-form-field class="dateFormat" appearance="outline" floatLabel="always">
+                  <mat-label>Timezone</mat-label>
+                  <input matInput placeholder="es: +0430 | Europe/Rome" name="dateTimezone" formControlName="dateTimezone">
+                </mat-form-field>
+              </div>
+            </div>
 <!-- sailgauge stuff -->
             <div class="full-width" *ngIf="(widgetConfig.laylineEnable !== undefined)">
               <mat-form-field class="minField" appearance="outline" floatLabel="always">

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
-import { Format, Policy } from "./signalk-interfaces";
+import { Format, Policy } from './signalk-interfaces';
 
 export interface IWidget {
   uuid: string;
@@ -10,31 +10,35 @@ export interface IWidget {
 
 export interface IWidgetSvcConfig {
   displayName?: string;
-  filterSelfPaths?: boolean; //widget filter self paths only?
+  filterSelfPaths?: boolean; // widget filter self paths only?
   paths?: {
     [key: string]: IWidgetPaths;
-  },
+  };
   convertUnitTo?: string;
   usage?: {
     [key: string]: string[]; // Autopilot: key should match key in paths, specifies autopilot widget possible paths for AP mode
-  },
+  };
   typeVal?: {
     [key: string]: string; // Autopilot: key should match key in paths, specifies autopilot widget paths value type for AP mode
-  },
+  };
 
-  //numeric data
+  // numeric data
   numDecimal?: number; // number of decimal places if a number
   numInt?: number;
   showMin?: boolean;
   showMax?: boolean;
 
-  //Wind Gauge data
+  // date data
+  dateFormat?: string;
+  dateTimezone?: string;
+
+  // Wind Gauge data
   windSectorEnable?: boolean;
   windSectorWindowSeconds?: number;
   laylineEnable?: boolean;
   laylineAngle?: number;
 
-  //gauge Data
+  // gauge Data
   gaugeType?: string;
   gaugeUnitLabelFormat?: string;
   gaugeTicks?: boolean;
@@ -49,7 +53,7 @@ export interface IWidgetSvcConfig {
   autoStart?: boolean;
   compassUseNumbers?: boolean;
 
-  //Historical
+  // Historical
   dataSetUUID?: string;
   invertData?: boolean;
   displayMinMax?: boolean;
@@ -57,12 +61,12 @@ export interface IWidgetSvcConfig {
   includeZero?: boolean;
   verticalGraph?: boolean;
 
-  //Puts
+  // Puts
   putEnable?: boolean;
   putMomentary?: boolean;
   putMomentaryValue?: boolean;
 
-  //iFrame
+  // iFrame
   widgetUrl?: string;
 
 
@@ -72,11 +76,11 @@ export interface IWidgetSvcConfig {
 
 interface IWidgetPaths {
   description: string;
-  path: string | null;       //can be null or set
-  source: string | null;     //can be null or set
+  path: string | null;       // can be null or set
+  source: string | null;     // can be null or set
   pathType: string  | null;
-  pathFilter?: string,     //Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
-  convertUnitTo?: string;    // Convert Signal K value to specific format for display. Also used as a source to identify conversion group
+  pathFilter?: string;     // Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
+  convertUnitTo?: string;    // Convert SignalK value to specific format for display. Also used as a source to identify conversion group
   isPathConfigurable: boolean; // should we show this path in Widget Path config or is it static and hidden
   period?: number;    // Signal K - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000
   format?: Format;     // Signal K - format=[delta|full] specifies delta or full format. Default: delta
@@ -101,7 +105,7 @@ export class WidgetManagerService {
 
   private newUuid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
   }
@@ -111,20 +115,20 @@ export class WidgetManagerService {
   }
 
   newWidget() {
-    let uuid = this.newUuid();
-    this.widgets.push({ uuid: uuid, type: "WidgetBlank", config: null });
+    const uuid = this.newUuid();
+    this.widgets.push({ uuid: uuid, type: 'WidgetBlank', config: null });
     this.saveWidgets();
     return uuid;
   }
 
   deleteWidget(uuid) {
-    let wIndex = this.widgets.findIndex(w => w.uuid == uuid)
+    const wIndex = this.widgets.findIndex(w => w.uuid == uuid);
     if (wIndex < 0) { return; } // not found
     this.widgets.splice(wIndex, 1);
   }
 
   updateWidgetType(uuid: string, newNodeType: string) {
-    let wIndex = this.widgets.findIndex(w => w.uuid == uuid)
+    const wIndex = this.widgets.findIndex(w => w.uuid == uuid);
     if (wIndex < 0) { return; } // not found
     this.widgets[wIndex].config = null;
     this.widgets[wIndex].type = newNodeType;
@@ -132,7 +136,7 @@ export class WidgetManagerService {
   }
 
   updateWidgetConfig(uuid: string, newConfig) {
-    let wIndex = this.widgets.findIndex(w => w.uuid == uuid)
+    const wIndex = this.widgets.findIndex(w => w.uuid == uuid);
     if (wIndex < 0) { return; } // not found
     this.widgets[wIndex].config = newConfig;
     this.saveWidgets();
