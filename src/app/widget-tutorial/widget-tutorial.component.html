@@ -1,5 +1,5 @@
 <div *ngIf="!unlockStatus">
-  <h1>Kip Installation Notes</h1>
+  <h3>Kip Installation Notes</h3>
   <p>For complete functionality, certain Signal K plugin should be installed on the server
     you are connecting to:
   </p>
@@ -12,30 +12,41 @@
         supervision.</b></li>
   </ul>
 </div>
+
 <div *ngIf="!unlockStatus">
-  <h1>Initial Configuration</h1>
-  <h2>Two options are available:</h2>
+  <h3>Getting Started</h3>
+  <h4>Two options are available:</h4>
   <ol>
-    <li>Load Demo Configuration
-      <p>If you want to dive right in to see what KIP can do, you can use this button to
-        load demo configuration with simulation data from demo.signalk.org. Note that an
-        internet connection is required to receive simulation data:</p>
+    <li>Load Live Demo
+      <p>To dive right in and see what KIP can do!
+        Load the demo configuration with simulated data from demo.signalk.org. Note that an
+        internet connection is required.</p>
       <button mat-raised-button routerLink="/demo">Load Demo</button>
       <br/><br/>
     </li>
-    <li>Editing Page Layout
+    <li>Connect to a Signal K server, then start configuring instruments
       <p>
-        Page layouts are "Locked" by default. This is to prevent accidental touch
-        screens interaction from changing anything.
-        A page layout is a screen where you can add, configure and remove the various
-        avalable widgets such as gauges and components.
-        Multiple pages can be added to facilitate organization.
-        You can unlock page layout using the hamburger icon in the lower right corner
-        and selecting "Configuration -> Edit Layout". Go Ahead try it now!
+        Configure KIP's Signal K server URL connection and connect to receive data. Use the
+        "Set Sign In credentials" button to authenticate to the server with a pre existing
+        Signal K user/password and enable KIP configuration to be shared by any device. See
+        <a href="/#/help">Configuration Management Help</a> for more instructions.
       </p>
+      <button mat-raised-button routerLink="/settings">Configure</button>
+      <br/>
     </li>
   </ol>
-</div>
+  <h4>Then start editing Page Layouts</h4>
+    <p>
+      Page layouts are "Locked" by default. This is to prevent accidental touch
+      screens interaction from changing anything.
+      A page layout is a screen where you can add, configure and remove the various
+      avalable widgets such as gauges and components.
+      Multiple pages can be added to facilitate organization.
+      You can unlock page layout using the hamburger icon in the lower right corner
+      and selecting "Configuration -> Edit Layout". Go Ahead try it now!
+    </p>
+  </div>
+
 <div *ngIf="unlockStatus">
   <h1>Next Steps...</h1>
   <h2>Configuring Page Layout</h2>
