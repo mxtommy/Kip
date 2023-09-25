@@ -1,6 +1,6 @@
 # V 2.0.0
 ## New features
-* Breaking Change - Kip configuration sharing using Signal K user key data storage feature
+* Breaking Change - KIP configuration sharing using Signal K user key data storage feature
 * Support for Signal K User authentication
 * Kip authentication flow and UI
 * Race Timer widget
