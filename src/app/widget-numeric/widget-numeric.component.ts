@@ -106,7 +106,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.resizeWidget();
   }
 
-  private resizeWidget() {
+  private resizeWidget(): void {
     let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
 
     if (rect.height < 50) { return; }

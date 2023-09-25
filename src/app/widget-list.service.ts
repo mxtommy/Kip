@@ -59,7 +59,7 @@ export class WidgetListService {
       },
       {
         name: 'WidgetStateComponent',
-        componentName: WidgetStateComponent,
+        componentName: WidgetButtonComponent,
         description: 'Button/Switch control',
       },
     ],
@@ -126,7 +126,7 @@ export class WidgetListService {
       description: 'Switch Input',
     },  */
 
-  
+
   getComponentName(typeName: string) {
     for (let [group, widgetList] of Object.entries(this.widgetList)) {
       let widget = widgetList.find(c => c.name == typeName);

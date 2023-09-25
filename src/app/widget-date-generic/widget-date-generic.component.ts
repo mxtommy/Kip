@@ -6,10 +6,10 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { AppSettingsService } from '../app-settings.service';
-import { WidgetManagerService, IWidget, IWidgetConfig } from '../widget-manager.service';
+import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 
-const defaultConfig: IWidgetConfig = {
+const defaultConfig: IWidgetSvcConfig = {
   displayName: null,
   filterSelfPaths: true,
   paths: {
@@ -39,7 +39,7 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   activeWidget: IWidget;
-    config: IWidgetConfig;
+    config: IWidgetSvcConfig;
 
   dataValue: any = null;
 
@@ -95,7 +95,7 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
     this.resizeWidget();
   }
 
-  resizeWidget() {
+  private resizeWidget(): void {
     const rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
 
     if (rect.height < 50) { return; }
@@ -107,6 +107,8 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
       this.canvasBG.nativeElement.height = Math.floor(rect.height);
       this.currentValueLength = 0; // will force resetting the font size
       this.updateCanvas();
+      this.updateCanvasBG();
+    } else {
       this.updateCanvasBG();
     }
 
@@ -152,7 +154,7 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
     }
   }
 
-  openWidgetSettings(content) {
+  openWidgetSettings() {
 
     const dialogRef = this.dialog.open(ModalWidgetComponent, {
       width: '80%',
@@ -245,7 +247,6 @@ export class WidgetDateGenericComponent implements OnInit, OnDestroy {
   }
 
   drawTitle() {
-
     const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.

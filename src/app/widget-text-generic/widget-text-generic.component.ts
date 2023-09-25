@@ -89,7 +89,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.resizeWidget();
   }
 
-  resizeWidget() {
+  private resizeWidget(): void {
     let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
 
     if (rect.height < 50) { return; }
