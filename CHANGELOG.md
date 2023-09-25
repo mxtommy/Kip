@@ -14,7 +14,7 @@
 * Improved JavaScript Web Token (JWT) management using HTTP Intreceptor
 * Improved management of Signal K communications reducing server buffer overflow and server-side termination exceptions handling.
 * Support for Signal K Delta Metadata updates
-* Retirement of full.service in favor of the Delta service for improved preformance, reduced CPU load and code simplification
+* Retirement of full.service in favor of the Delta service for improved performance, reduced CPU load and code simplification
 * Kip configuration data split into Connection and Configuration files enhancing Kip configuration sharing
 * Enhanced Request Service support
 * Enhanced Console logging for improved tracing and debugging
