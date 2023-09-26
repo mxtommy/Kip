@@ -233,7 +233,7 @@ export class SignalKDeltaService {
       this.signalKRequests$.next(message); // is a Request/response, send to signalk-request service.
 
     } else if (message.errorMessage) {
-      console.warn("[Delta Service] Service sent stream error message: " + message.errorMessage); // server error message ie. socket failed or closing, sk bug, sk restarted, etc.
+      console.warn("[Delta Service] Service received stream error message: " + message.errorMessage); // server error message ie. socket failed or closing, sk bug, sk restarted, etc.
 
     } else if (message.self) {
       this.vesselSelfUrn$.next(message.self);
@@ -375,7 +375,8 @@ export class SignalKDeltaService {
 
   /**
   * Close the WebSocket on app termination. This send a Close to the server for
-  * a clean disconnect. Else the server keeps buffering the messages and it creates an
+  * a clean disconnect. Else the server keeps buffering the messages that creates
+  * an overflow.
   *
   * @memberof SignalKDeltaService
   */
