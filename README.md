@@ -83,31 +83,30 @@ Kip is built on Angular using various open-source assets. All free!
 Linux, Macs, Pi or Windows dev platform supported
 1. Install the latest Node version
 2. Download you favorite coding IDE (we use the free Visual Code)
-3. Create your own GitHub Kip fork and configure your IDE source control to point to this Fork (With Visual Code, GitHub support is built-in)
+3. Create your own GitHub KIP fork.
+4. Configure your IDE's source control to point to this fork (With Visual Code, GitHub support is built-in) and get the latest Master branch locally.
 
 **Setup**
-1. Create a GitHub Branch of your own Kip Fork
+1. From your fork's Master branch, create working branch with a name such as: New-Widget-abc or fix-issue-abc, etc.
 2. Checkout this new Branch to get the source code locally.
 3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project folder.
 4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read local Kip project dependencies (see Steps 2), download and install everything automatically for you.
-5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will read local Kip project configuration (see Tools - steps 4) and build everything.
+5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build --base-href=/@mxtommy/kip/`. CLI tool will read local Kip project configuration and set the base href(see Tools - steps 4) and build everything.
 
 **Work**
-1. Fire up your local dev instance with CLI using `ng serve --configuration=dev`.
+1. Fire up your local dev instance with CLI using `ng serve --configuration=dev` to enable the debugger map file loading.
 2. Point your favorite browser to `http://localhost:4200/` and voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
 
 **Publish**
-1. From your Fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release. 
+1. Once done with your work, from your fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release. 
 
 Or
 
-2. Build your own version:
-  1. Use the `-prod` flag for a production build.
-  2. To generate a npm package, run `npm run-script build-npm`.
-  3. Warning: Git Bash seems to mess up Base Href, fix it in public/index.html if needed
-  4. Deploy and have fun! 
+2. Build your own production version:
+  1. Build: In a terminal from you project folder, use `ng build --configuration=production --base-href=/@mxtommy/kip/` or `npm run-script build-npm` to generate a production build.
+  2. Have fun! 
 
 **Collaborate**
 Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and assist as best we can.
