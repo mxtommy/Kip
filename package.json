@@ -14,7 +14,7 @@
     "nmea"
   ],
   "signalk": {
-    "appIcon": "./src/assets/icon-64x64.png",
+    "appIcon": "./assets/icon-64x64.png",
     "displayName": "KIP Instrument MFD"
   },
   "homepage": "https://github.com/mxtommy/Kip",
