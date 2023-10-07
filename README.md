@@ -125,7 +125,8 @@ Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and a
 
 # Feature Ideas
  * AIS Widget - Help Wanted
- * GPS information Widget - Help WantedImproved Metadata configuration
+ * GPS information Widget - Help Wanted
+ * Improved Metadata configuration
  * Improved Zones support
  * Add a KIP Widget CLI Schematic to automate new Widget creation and improve contribution
  * Improved error logging / performance gain
