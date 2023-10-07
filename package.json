@@ -66,7 +66,7 @@
     "howler": "^2.2.1",
     "jasmine-core": "~4.0.1",
     "jasmine-spec-reporter": "~5.0.0",
-    "js-quantities": "^1.7.6",
+    "js-quantities": "^1.8.0",
     "karma": "~6.3.17",
     "karma-chrome-launcher": "~3.1.0",
     "karma-cli": "~2.0.0",
