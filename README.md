@@ -21,7 +21,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 ## User Experience
 ### Built-in Themes
-  Use your favorite style from the built-in themes.
+  Use your favorite style from the built-in themes gallery.
 
   Modern Dark Theme
   ![Modern Dark Theme](./KipSample-1-1024x488.png)
