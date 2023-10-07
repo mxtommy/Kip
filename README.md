@@ -54,11 +54,11 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   See what Signal K has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
   ![Paths Configuration Image](./KipWidgetConfig-paths-1024x488.png)
   
-  Many units are supported. Choose your prefered App defaults, than tweak it gauge-by-gauge as necessary. Kip will convert the displayed units for you.
+  Many units are supported. Choose your prefered App defaults, than tweak it gauge-by-gauge as necessary. KIP will convert the displayed units for you.
   ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
 ### Reusable Gauge and Widget Library
-  All Kip Gauges and Widgets are visual presentation controls that are very versatile with multiple configuration options available to suit your needs:
+  All KIP Gauges and Widgets are visual presentation controls that are very versatile with multiple configuration options available to suit your needs:
   - Text display: Create gauges to display any textual data sent by your system - MPPT state, Timezone date and time, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
   - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Wind gauge: Your typical sailboat wind gauge
