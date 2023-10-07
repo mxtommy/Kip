@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as Qty from 'js-quantities';
-// import { Qty } from 'js-quantities';
-// import Qty from 'js-quantities/esm';
+import Qty from 'js-quantities';
 
 import { AppSettingsService } from './app-settings.service';
 import { Subscription } from 'rxjs';

@@ -6,9 +6,7 @@ import { AppSettingsService } from './app-settings.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import { NotificationsService } from './notifications.service';
-import * as Qty from 'js-quantities';
-// import { Qty } from 'js-quantities';
-// import Qty from 'js-quantities/esm';
+import Qty from 'js-quantities';
 
 interface pathRegistrationValue {
   value: any;
