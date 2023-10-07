@@ -1,5 +1,6 @@
 import { AuththeticationService } from './auththetication.service';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import { APP_BASE_HREF } from '@angular/common'
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -41,6 +42,7 @@ export class AppComponent implements OnInit, OnDestroy {
   connectionStatusSub: Subscription;
 
   constructor(
+    @Inject(APP_BASE_HREF) public baseHref: string,
     private _snackBar: MatSnackBar,
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService

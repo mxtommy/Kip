@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
+import { APP_BASE_HREF } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -44,6 +45,7 @@ export class AppSettingsService {
   root
 
   constructor(
+    @Inject(APP_BASE_HREF) private baseHref: string,
     private router: Router,
     private storage: StorageService,
     )
@@ -425,7 +427,8 @@ export class AppSettingsService {
   }
 
   public reloadApp() {
-    location.replace("/");
+    location.replace(this.baseHref);
+
   }
   //// Storage Objects
   // builds config data oject from running data
