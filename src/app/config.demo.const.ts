@@ -84,7 +84,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
         "paths": {
           "headingPath": {
             "description": "Heading",
-            "path": "self.navigation.courseOverGroundTrue",
+            "path": "self.navigation.headingTrue",
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
