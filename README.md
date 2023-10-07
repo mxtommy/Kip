@@ -87,7 +87,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 # Developing
 
-Kip is built on Angular using various open-source assets. All free!
+KIP is built on Angular using various open-source assets. All free!
 
 **Tools**
 
