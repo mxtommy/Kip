@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { FormBuilder, FormGroup, FormControl, Validators, NgForm }    from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, FormControl, Validators, NgForm }    from '@angular/forms';
 
 import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
 import { AppSettingsService } from '../app-settings.service';
@@ -27,7 +27,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public supportApplicationData: boolean = false;
   public serverConfigList: IRemoteConfig[] = [];
 
-  public copyConfigForm: FormGroup;
+  public copyConfigForm: UntypedFormGroup;
   public storageLocation: string = null;
   public locations: string[] = ["Local Storage", "Remote Storage"];
 
@@ -49,7 +49,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     private storageSvc: StorageService,
     private notificationsService: NotificationsService,
     private auth: AuththeticationService,
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
   ) { }
 
   ngOnInit() {

@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
-import { FormGroup, FormControl, Validators }    from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { Subscription, Observable } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -137,17 +137,17 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
 })
 export class DialogNewZone {
 
-  zoneForm: FormGroup = new FormGroup({
-    upper: new FormControl(null),
-    lower: new FormControl(null),
-    state: new FormControl('0', Validators.required),
-    filterSelfPaths: new FormControl(true),
-    path: new FormGroup({
-      path: new FormControl(null),
-      isPathConfigurable: new FormControl(true),
-      convertUnitTo: new FormControl("unitless"),
-      pathType: new FormControl("number"),
-      source: new FormControl(null)
+  zoneForm: UntypedFormGroup = new UntypedFormGroup({
+    upper: new UntypedFormControl(null),
+    lower: new UntypedFormControl(null),
+    state: new UntypedFormControl('0', Validators.required),
+    filterSelfPaths: new UntypedFormControl(true),
+    path: new UntypedFormGroup({
+      path: new UntypedFormControl(null),
+      isPathConfigurable: new UntypedFormControl(true),
+      convertUnitTo: new UntypedFormControl("unitless"),
+      pathType: new UntypedFormControl("number"),
+      source: new UntypedFormControl(null)
     })
   }, this.rangeValidationFunction);
 
@@ -161,7 +161,7 @@ export class DialogNewZone {
     public dialogRef: MatDialogRef<DialogNewZone>) {
     }
 
-  rangeValidationFunction(formGroup: FormGroup): any {
+  rangeValidationFunction(formGroup: UntypedFormGroup): any {
       let upper = formGroup.get('upper').value;
       let lower = formGroup.get('lower').value;
       return ((upper === null) && (lower === null)) ? { needUpperLower: true } : null;

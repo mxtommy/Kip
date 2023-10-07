@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl }    from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl }    from '@angular/forms';
 import { AppSettingsService } from '../app-settings.service';
 import { NotificationsService } from '../notifications.service';
 
@@ -12,7 +12,7 @@ import { IUnitDefaults, UnitsService, IUnit } from '../units.service';
 })
 export class SettingsUnitsComponent implements OnInit {
 
-  formUnitMaster: FormGroup;
+  formUnitMaster: UntypedFormGroup;
 
   groupUnits: {[key: string]: IUnit}[] = [];
   defaultUnits: IUnitDefaults;
@@ -44,9 +44,9 @@ export class SettingsUnitsComponent implements OnInit {
     }
 
     //generate formGroup
-    let groups = new FormGroup({});
+    let groups = new UntypedFormGroup({});
     Object.keys(this.defaultUnits).forEach(key => {
-      groups.addControl(key, new FormControl(this.defaultUnits[key]));
+      groups.addControl(key, new UntypedFormControl(this.defaultUnits[key]));
     });
 
     this.formUnitMaster = groups;
