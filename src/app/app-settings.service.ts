@@ -427,7 +427,7 @@ export class AppSettingsService {
   }
 
   public reloadApp() {
-    console.log("Reload app at basehref:" + this.baseHref);
+    console.log("[AppSettings Service] Reload app at basehref: " + this.baseHref);
     location.replace(this.baseHref);
   }
   //// Storage Objects
