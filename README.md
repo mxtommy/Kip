@@ -58,17 +58,22 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges
   - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signal K device that support boolean PUT operations
+  - Date value: a timezone aware, rich format date/time display 
   - Race Timer: Track regatta start sequence
   - Historical datagram chart: Display numerical data over time on a chart
   - Embedded Webpage: A powerful way of embedding any web based content or application accessible as a URL within an onscreen widget to integrate with your gauges and layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
 
   Get the latest version of Kip to see what's new!
 
-  Sample gauge types
-  ![Sample Gauges Image](./KipGaugeSample-1-1024x545.png)
+  Gauge types sample
+  ![Sample Gauges Image](./KipGaugeSample1-1024x545.png)
   
   Electrical and Tank monitoring sample 
-  ![Electrical Concept Image](./KipMonitor-1024x488.png)
+  ![Electrical Concept Image](./KipGaugeSample2-1024x488.png)
+
+  Grafana Embedded Webpage sample 
+  ![Embedded Webpage Concept Image](./KipGaugeSample3-1024x508.png)
+
 
 ## Share Configuration And Access From Anywhere
   Configure once and seamlessly share the layout and configuration on multiple devices and browsers (computer, phones, tablets,
