@@ -73,7 +73,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Historical datagram chart: Display numerical data over time on a chart
   - Embedded Webpage: A powerful way of integrating any web based content or application within with your KIP layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
 
-  Get the latest version of Kip to see what's new!
+  Get the latest version of KIP to see what's new!
 
   Gauge types sample
   ![Sample Gauges Image](./KipGaugeSample1-1024x545.png)
