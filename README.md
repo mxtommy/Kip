@@ -13,7 +13,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 - Include support for latest Chromium and other modern browsers
 
 # Features
-## Access from Phones, tablets and computers 
+## Access from Phones, Tablets and Computers 
   Simply navigate to http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip to load KIP and enjoy it's features remotly on any device.
 
 ## Multiple User Profiles
