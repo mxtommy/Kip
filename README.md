@@ -9,8 +9,8 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 - Anything displayed should be as big as possible in the given space
 - Touchscreen user experience should be excellent
 - Layout and configuration should be both easy to operate and flexible
-- Responsive design to support different device form factors (phones, tablets, etc.)
-- Compatibility with Chromium and other browsers (as much as possible)
+- Phones, tablets, computers and other device and form factors should render well 
+- Include support for latest Chromium and other modern browsers
 
 # Features
 ## Access from Phones, tablets and computers 
