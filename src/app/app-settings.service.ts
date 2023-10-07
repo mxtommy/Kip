@@ -427,8 +427,8 @@ export class AppSettingsService {
   }
 
   public reloadApp() {
+    console.log("Reload app at basehref:" + this.baseHref);
     location.replace(this.baseHref);
-
   }
   //// Storage Objects
   // builds config data oject from running data
