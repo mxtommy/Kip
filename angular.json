@@ -11,6 +11,8 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "baseHref": "/@mxtommy/kip",
+            "deployUrl": "/@mxtommy/kip",
             "aot": true,
             "outputPath": "public",
             "index": "src/index.html",

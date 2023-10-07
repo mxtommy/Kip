@@ -91,11 +91,11 @@ Linux, Macs, Pi or Windows dev platform supported
 2. Checkout this new Branch to get the source code locally.
 3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project folder.
 4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read local Kip project dependencies (see Steps 2), download and install everything automatically for you.
-5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build --base-href=/@mxtommy/kip/`. CLI tool will read local Kip project configuration and set the base href(see Tools - steps 4) and build everything.
+5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will read local Kip project configuration and set the base href(see Tools - steps 4) and build everything.
 
 **Work**
 1. Fire up your local dev instance with CLI using `ng serve --configuration=dev` to enable the debugger map file loading.
-2. Point your favorite browser to `http://localhost:4200/` and voila!
+2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/` and voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
 
@@ -105,7 +105,7 @@ Linux, Macs, Pi or Windows dev platform supported
 Or
 
 2. Build your own production version:
-  1. Build: In a terminal from you project folder, use `ng build --configuration=production --base-href=/@mxtommy/kip/` or `npm run-script build-npm` to generate a production build.
+  1. Build: In a terminal from you project folder, use `ng build --configuration=production` to generate a production build.
   2. Have fun! 
 
 **Collaborate**
