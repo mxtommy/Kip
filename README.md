@@ -71,7 +71,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Date display: a timezone aware control with flexible presentation formating support 
   - Race Timer: Track regatta start sequence
   - Historical datagram chart: Display numerical data over time on a chart
-  - Embedded Webpage: A powerful way of embedding any web based content or application accessible as a URL within an onscreen widget to integrate with your gauges and layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
+  - Embedded Webpage: A powerful way of integrating any web based content or application within with your layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
 
   Get the latest version of Kip to see what's new!
 
