@@ -17,7 +17,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Simply navigate to `http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip` to load KIP and enjoy it's features remotly on any device.
 
 ## Multiple User Profiles
-  KIP supports user based configuration profiles (pages, layouts, widget configuration, etc.). The use of profiles offers configuration arrangements for individual users or to target specific usecase and form factors. 
+  If you have different roles on board; captiain, skipper, tacticien, navigator, engineers or simply different people with diffenrent needs, each can tailor as they wish. The use of profiles can also offers configuration arrangements to tie specific configuration arrangements to usecase or form factors.
 
 ## User Experience
 ### Built-in Themes
@@ -84,10 +84,6 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Grafana Embedded Webpage sample 
   ![Embedded Webpage Concept Image](./KipGaugeSample3-1024x508.png)
 
-
-## Share Configuration And Access From Anywhere
-  Configure once and seamlessly share the layout and configuration on multiple devices and browsers (computer, phones, tablets,
-  Raspberry Pi, etc.) by pointing to a single Signal K server URL address from anywhere.
 
 # Developing
 
