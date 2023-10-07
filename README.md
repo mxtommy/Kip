@@ -132,7 +132,7 @@ Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and a
  * Improved error logging / performance gain
  * Retire outdated Steelgauges
  * Rebuild alerting to new Signal K Specifications
- * Attitude Indicator Widget
- * Sailing Polars with ChartJS Radar type chart?
+ * Attitude Indicator Widget - Help Wanted
+ * Sailing Polars Widget - Help Wanted
  * More Customization options for radial/linear Gauges
- * Pre-created widgets for commonly used displays
+ * Pre-created Widgets for commonly used displays
