@@ -14,7 +14,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 # Features
 ## Access from Phones, Tablets and Computers
-  Simply navigate to http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip to load KIP and enjoy it's features remotly on any device.
+  Simply navigate to http://"Signal K Server URL":"Signal K Server port"/@mxtommy/kip to load KIP and enjoy it's features remotly on any device.
 
 ## Multiple User Profiles
   KIP supports user based configuration profiles (pages, layouts, widget configuration, etc.). The use of profiles offers configuration arrangements by user or to target specific usecase and form factors. 
