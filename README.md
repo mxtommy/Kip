@@ -63,7 +63,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Wind gauge: Your typical sailboat wind gauge
   - Autopilot: Operate your autopilot from any device remotely 
-  - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery voltage, etc.
+  - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery remaining capacity, etc.
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges
