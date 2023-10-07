@@ -43,9 +43,9 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
-  Built purposeful screen(s) with however many auges or display widgets you want, where you want them. 
+  Meant to build purposeful screen(s) with however many gauges or widgets you want, where you want them. 
 
-  Split or delete gauge zones, resize and position, then simply add the gauge of your choosing. Add as many pages as you whish to keep screens purposeful.
+  Quickly devide the screen area into zones, resize and position, add the gauge of your choosing. Need more? Add as many additionnal pages as you whish to keep screens purposeful. Simply tap the buttom navigation keys to quickly rotate from page to page.
   ![Layouts Configuration Image](./KipWidgetConfig-layout-1024x488.png)
   
   Easy basic gauge and widget configuratio.
