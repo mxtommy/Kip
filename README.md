@@ -9,9 +9,16 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 - Anything displayed should be as big as possible in the given space
 - Touchscreen user experience should be excellent
 - Layout and configuration should be both easy to operate and flexible
-- Compatibility with Chromium browser and other device form factor important (**HELP WANTED)  
+- Responsive design to support different device form factors (phones, tablets, etc.)
+- Compatibility with Chromium and other browsers (as much as possible)
 
 # Features
+## Access from Phones, tablets and computers 
+  Simply navigate to http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip to load KIP and enjoy it's features remotly on any device.
+
+## Multiple User Profiles
+  KIP supports user based configuration profiles (pages, layouts, widget configuration, etc.). The use of profiles offers configuration arrangements by user or to target specific usecase and form factors. 
+
 ## User Experience
 ### Built-in Theme Sample
   Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
