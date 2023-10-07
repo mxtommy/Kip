@@ -36,7 +36,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "~13.3.11",
     "@angular/animations": "13.4.0",
-    "@angular/cdk": "^12.2.13",
+    "@angular/cdk": "^13.3.9",
     "@angular/cli": "^13.3.11",
     "@angular/common": "13.4.0",
     "@angular/compiler": "13.4.0",
@@ -45,7 +45,7 @@
     "@angular/forms": "13.4.0",
     "@angular/language-service": "13.4.0",
     "@angular/localize": "^13.4.0",
-    "@angular/material": "^12.2.13",
+    "@angular/material": "^13.3.9",
     "@angular/platform-browser": "13.4.0",
     "@angular/platform-browser-dynamic": "13.4.0",
     "@angular/platform-server": "13.4.0",

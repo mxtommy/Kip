@@ -12,7 +12,6 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "baseHref": "./",
-            "deployUrl": "",
             "aot": true,
             "outputPath": "public",
             "index": "src/index.html",

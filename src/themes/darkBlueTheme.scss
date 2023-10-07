@@ -1,5 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
-@use '~@angular/material' as mat;
+@use '@angular/material' as mat;
 $mat-darkBlue-primary: (
     50 : #e0e2ec,
     100 : #b3b7cf,
