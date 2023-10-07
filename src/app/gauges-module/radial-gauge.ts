@@ -24,7 +24,7 @@
 
 import { Component, NgZone, ElementRef, OnInit } from '@angular/core';
 import { BaseGauge } from './base-gauge';
-import * as CanvasGauges from 'canvas-gauges';
+import CanvasGauges from 'canvas-gauges';
 
 export { RadialGaugeOptions } from 'canvas-gauges';
 
