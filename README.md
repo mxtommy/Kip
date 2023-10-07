@@ -21,7 +21,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 ## User Experience
 ### Built-in Themes
-  Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
+  Use your favorite style from the built-in themes.
 
   Modern Dark Theme
   ![Modern Dark Theme](./KipSample-1-1024x488.png)
@@ -32,10 +32,13 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Light Blue Theme
   ![Light Blue Theme](./KipSample-3-1024x488.png)
 
-### Accessible Night Mode
-  Keep your night vision with a quick Night Mode access button, regardless of the selected theme. The below image looks very dark, but at night...it's perfect!
+  NOTE: Request a new theme by sending us inspirational/reference material (web sites, picture, etc.).
+  If we fall in love, we will do it. Even better, branch and contribute yourself. We will assist and guide!
 
-  ![Light Blue Theme](./KipNightMode-1024x488.png)
+### Night Mode
+  Keep your night vision, regardless of the selected theme. The below image looks very dark, but at night...it's perfect!
+
+  ![Night mode](./KipNightMode-1024x488.png)
 
 
 ## Gauge Layout and Configuration
