@@ -106,12 +106,13 @@ Linux, Macs, Pi or Windows dev platform supported
 
 **Work**
 1. Fire up your local dev instance with CLI using `ng serve --configuration=dev --serve-path=/` to enable the debugger map file loading.
-2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/` and voila!
+2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/`
+3. Voila! You can build, test and fix.
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
 
 **Publish**
-1. Once done with your work, from your fork's working Branch, make a GitHub pull request to have your code reviewed, merged and part of the next release. 
+1. Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
 
 Or
 
@@ -119,14 +120,17 @@ Or
   1. Build: In a terminal from you project folder, use `ng build --configuration=production` to generate a production build.
   2. Have fun! 
 
-**Collaborate**
+**Communication and Collaboration**
 Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and assist as best we can.
 
 # Feature Ideas
  * Improved Metadata configuration
- * Improved Zones support and alerting
+ * Improved Zones support
+ * Rebuild alerting to new Signal K Specifications
  * AIS Widget
  * GPS information Widget
+ * Improved error logging / performance gain
+ * Retire outdated Steelgauges
  * Attitude Indicator Widget
  * Sailing Polars with ChartJS Radar type chart?
  * More Customization options for radial/linear Gauges
