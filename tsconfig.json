@@ -5,9 +5,11 @@
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2018",
+    "target": "es2020",
     "typeRoots": [
       "node_modules/@types"
     ],

@@ -6,7 +6,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './layout-splits.service';
-import * as screenfull from 'screenfull';
+import screenfull from 'screenfull';
 
 import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';

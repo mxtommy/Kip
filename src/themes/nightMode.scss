@@ -1,5 +1,5 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
-@use '~@angular/material' as mat;
+@use '@angular/material' as mat;
 $nightMode-primary: (
     50 : #ecf5fb,
     100 : #520000,
