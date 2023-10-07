@@ -92,7 +92,7 @@ KIP is built on Angular using various open-source assets. All free!
 **Tools**
 
 Linux, Macs, Pi or Windows dev platform supported
-1. Install the latest Node version
+1. Install the latest Node version (v16+)
 2. Download your favorite coding IDE (we use the free Visual Code)
 3. Create your own GitHub KIP fork.
 4. Configure your IDE's source control to point to this fork (With Visual Code, GitHub support is built-in) and get the latest Master branch locally.
