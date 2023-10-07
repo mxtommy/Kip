@@ -20,7 +20,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   KIP supports user based configuration profiles (pages, layouts, widget configuration, etc.). The use of profiles offers configuration arrangements for individual users or to target specific usecase and form factors. 
 
 ## User Experience
-### Built-in Theme Sample
+### Built-in Themes
   Request a theme and send us inspirational/reference material (web sites, picture, etc.). If we fall in love, we will do it. Even better, branch and contribute. We will assist and guide!
 
   Modern Dark Theme
