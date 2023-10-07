@@ -124,13 +124,13 @@ Or
 Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and assist as best we can.
 
 # Feature Ideas
- * Improved Metadata configuration
+ * AIS Widget - Help Wanted
+ * GPS information Widget - Help WantedImproved Metadata configuration
  * Improved Zones support
- * Rebuild alerting to new Signal K Specifications
- * AIS Widget
- * GPS information Widget
+ * Add a KIP Widget CLI Schematic to automate new Widget creation and improve contribution
  * Improved error logging / performance gain
  * Retire outdated Steelgauges
+ * Rebuild alerting to new Signal K Specifications
  * Attitude Indicator Widget
  * Sailing Polars with ChartJS Radar type chart?
  * More Customization options for radial/linear Gauges
