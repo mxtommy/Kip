@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnChanges, SimpleChange  } from '@angular/cor
 import { SignalKService } from '../signalk.service';
 import { IPathMetaData } from "../app-interfaces";
 import { UnitsService, IUnitGroup } from '../units.service';
-import { FormGroup, FormControl,Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl,Validators } from '@angular/forms';
 import { map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs'
 
@@ -14,7 +14,7 @@ import { Observable } from 'rxjs'
 })
 export class ModalPathSelectorComponent implements OnInit, OnChanges {
   //path control
-  @Input() formGroup: FormGroup;
+  @Input() formGroup: UntypedFormGroup;
   @Input() filterSelfPaths: boolean;
   availablePaths: IPathMetaData[];
   filteredPaths: Observable<IPathMetaData[]> = new Observable;
@@ -28,7 +28,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
   ////require-match validation for path
   requirePathMatch = (allPathsAndMeta: IPathMetaData[]) => {
-    return (control: FormControl) => {
+    return (control: UntypedFormControl) => {
       const selection: any = control.value;
       if (allPathsAndMeta.some(pm => pm.path === selection)) {
         return null;

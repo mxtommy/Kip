@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NgModel } from '@angular/forms';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
@@ -97,7 +97,7 @@ export class UnitWindowModalComponent implements OnInit {
 
   newWidget: string;
   widgetList: widgetList;
-  selectedTab = new FormControl(0);
+  selectedTab = new UntypedFormControl(0);
 
   constructor(
     private widgetListService: WidgetListService,
