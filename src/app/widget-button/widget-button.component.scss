@@ -34,6 +34,15 @@
   }
 }
 
+.light {
+  height: 50%;
+  width: 50%;
+  background-color: black;
+  border-radius: 50%;
+  background: radial-gradient(circle at 100px 100px, red, #000);
+  display: inline-block;
+}
+
 .wrapper {
   position: relative;
   width: 100%;
