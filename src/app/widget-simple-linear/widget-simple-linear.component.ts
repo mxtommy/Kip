@@ -1,5 +1,5 @@
 import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, sampleTime } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
 import { SignalKService } from '../signalk.service';
@@ -48,9 +48,11 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
   @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
 
-  activeWidget: IWidget;
-  config: IWidgetSvcConfig;
+  // widget framework
+  private activeWidget: IWidget;
+  public config: IWidgetSvcConfig;
 
+  // main gauge value variable
   public unitsLabel:string = "";
   public dataValue: string = "0";
   public gaugeValue: Number = 0;
@@ -58,7 +60,9 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
   public barColorGradient: string = "";
   public barColorBackground: string = "";
 
-  valueSub: Subscription = null;
+
+  private valueSub$: Subscription = null;
+  private sample: number = 500;
 
   // dynamics theme support
   themeNameSub: Subscription = null;
@@ -118,7 +122,7 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
 
     if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.signalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
+    this.valueSub$ = this.signalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
       newValue => {
         if (newValue.value == null) {return}
 
@@ -149,9 +153,9 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
   }
 
   unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
+    if (this.valueSub$ !== null) {
+      this.valueSub$.unsubscribe();
+      this.valueSub$ = null;
       this.signalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
     }
   }

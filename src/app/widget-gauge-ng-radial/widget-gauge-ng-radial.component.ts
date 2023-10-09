@@ -1,5 +1,5 @@
-import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, AfterContentInit, AfterContentChecked } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, AfterContentInit, AfterContentChecked, Pipe } from '@angular/core';
+import { Subscription, sampleTime } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
@@ -64,20 +64,25 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
   @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
 
-  activeWidget: IWidget;
-  config: IWidgetSvcConfig;
+  // widget framework
+  private activeWidget: IWidget;
+  public config: IWidgetSvcConfig;
 
+  // main gauge value variable
   public dataValue = 0;
-  valueSub: Subscription = null;
+  private valueSub$: Subscription = null;
+  private sample: number = 500;
 
   // dynamics theme support
   themeNameSub: Subscription = null;
 
+  // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
   public colorStrokeTicks: string = "";
   public unitName: string = null;
 
+  // Zones support
   zones: Array<IZone> = [];
   zonesSub: Subscription;
 
@@ -90,6 +95,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   ) { }
 
   ngOnInit() {
+    // optain widget config
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
@@ -102,6 +108,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.config.compassUseNumbers = false;
       }
     }
+
     this.subscribePath();
     this.subscribeTheme();
     this.subscribeZones();
@@ -125,12 +132,16 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.unsubscribePath();
     if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
+    this.valueSub$ = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value);
+        // Only push new values formated to gauge settings to reduce gauge paint requests
+        let oldValue = this.dataValue;
+        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value));
+        if (oldValue != temp) {
+          this.dataValue = temp;
+        }
 
-
-        // set colors for zone state
+        // set zone state colors
         switch (newValue.state) {
           case IZoneState.warning:
             this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
@@ -148,9 +159,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   }
 
   unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
+    if (this.valueSub$ !== null) {
+      this.valueSub$.unsubscribe();
+      this.valueSub$ = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
     }
   }
@@ -205,6 +216,17 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.updateGaugeConfig();
       }
     });
+  }
+
+  private formatDataValue(value:number): number {
+    // make sure we are within range of the gauge settings, else the needle can go outside the range
+    if (value < this.config.minValue || value == null) {
+      value = this.config.minValue;
+    }
+    if (value > this.config.maxValue) {
+      value = this.config.maxValue;
+    }
+    return value;
   }
 
   updateGaugeConfig(){
@@ -284,11 +306,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.majorTicksInt = this.config.numInt;
     this.gaugeOptions.majorTicksDec = this.config.numDecimal;
 
+    this.gaugeOptions.animationDuration = this.sample - 25; // prevent data/amnimation collisions
+
     // Radial gauge type
     switch(this.config.radialSize) {
       case "capacity":
         this.unitName = this.config.paths['gaugePath'].convertUnitTo;
-        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks drawing firs tick always and using color="" does not work
+        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks; always drawing firts tick and using color="" does not work
         this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
         this.gaugeOptions.fontTitleSize = 60;
         this.gaugeOptions.minValue = this.config.minValue;
