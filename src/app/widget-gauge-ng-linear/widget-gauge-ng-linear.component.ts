@@ -1,5 +1,5 @@
 import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, Input, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, sampleTime} from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
@@ -63,21 +63,24 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
 
-  activeWidget: IWidget;
-  config: IWidgetSvcConfig;
+  // widget framework
+  private activeWidget: IWidget;
+  public config: IWidgetSvcConfig;
 
+  // main gauge value variable
   public dataValue = 0;
   public dataValueTrimmed = 0;
-
-  valueSub: Subscription = null;
+  private valueSub$: Subscription = null;
+  private sample: number = 500;
 
   // dynamics theme support
   themeNameSub: Subscription = null;
 
+  // Gauge options
   public gaugeOptions = {} as LinearGaugeOptions;
-
   public isGaugeVertical: Boolean = true;
 
+  // Zones support
   zones: Array<IZone> = [];
   zonesSub: Subscription;
 
@@ -90,6 +93,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   ) {}
 
   ngOnInit() {
+    // optain widget config
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
         // no data, let's set some!
@@ -117,10 +121,14 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     this.unsubscribePath();
     if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).subscribe(
+    this.valueSub$ = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value);
-
+        // Only push new values formated to gauge settings to reduce gauge paint requests
+        let oldValue = this.dataValue;
+        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value));
+        if (oldValue != temp) {
+          this.dataValue = temp;
+        }
 
         // set colors for zone state
         switch (newValue.state) {
@@ -140,9 +148,9 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   }
 
   unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
+    if (this.valueSub$ !== null) {
+      this.valueSub$.unsubscribe();
+      this.valueSub$ = null;
       this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
     }
   }
@@ -197,6 +205,17 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.updateGaugeConfig();
       }
     });
+  }
+
+  private formatDataValue(value:number): number {
+    // make sure we are within range of the gauge settings, else the needle can go outside the range
+    if (value < this.config.minValue || value == null) {
+      value = this.config.minValue;
+    }
+    if (value > this.config.maxValue) {
+      value = this.config.maxValue;
+    }
+    return value;
   }
 
   updateGaugeConfig(){
@@ -290,6 +309,8 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
     this.gaugeOptions.majorTicksInt = this.config.numInt;
     this.gaugeOptions.majorTicksDec = this.config.numDecimal;
+
+    this.gaugeOptions.animationDuration = this.sample - 25; // prevent data/amnimation collisions
 
     if (this.config.gaugeTicks) {
       this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
