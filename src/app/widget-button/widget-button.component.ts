@@ -49,6 +49,7 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
   @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
   @ViewChild('btnDiv', {static: true, read: ElementRef}) divBtnElement: ElementRef;
+  @ViewChild('lightDiv', {static: true, read: ElementRef}) divLightElement: ElementRef;
   @ViewChild('btnLabelCanvas', {static: true, read: ElementRef}) canvasBtnTxtElement: ElementRef;
 
   valueSub: Subscription = null;
@@ -64,6 +65,8 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
   public buttonBorberColorOff: string = "";
   public buttonColorOff: string = "";
   public buttonLabelColorOff: string = "";
+  public lightColorOn: string = "";
+  public lightColorOff: string = "";
 
   public canvasButtonTxt;
   private currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -112,6 +115,8 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
         this.buttonLabelColorOn = window.getComputedStyle(this.primaryElement.nativeElement).color;
         this.buttonBorberColorOff = window.getComputedStyle(this.primaryElement.nativeElement).color;
         this.buttonBorberColorOn = window.getComputedStyle(this.primaryDarkElement.nativeElement).color;
+        this.lightColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
+        this.lightColorOn = window.getComputedStyle(this.primaryDarkElement.nativeElement).color;
         break;
 
       case "accent":
@@ -119,6 +124,8 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
         this.buttonLabelColorOn = window.getComputedStyle(this.accentElement.nativeElement).color;
         this.buttonBorberColorOff = window.getComputedStyle(this.accentElement.nativeElement).color;
         this.buttonBorberColorOn = window.getComputedStyle(this.accentDarkElement.nativeElement).color;
+        this.lightColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
+        this.lightColorOn =  window.getComputedStyle(this.accentDarkElement.nativeElement).color;
         break;
 
       case "warn":
@@ -126,6 +133,8 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
         this.buttonLabelColorOn = window.getComputedStyle(this.warnElement.nativeElement).color;
         this.buttonBorberColorOff = window.getComputedStyle(this.warnElement.nativeElement).color;
         this.buttonBorberColorOn = window.getComputedStyle(this.warnDarkElement.nativeElement).color;
+        this.lightColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
+        this.lightColorOn = window.getComputedStyle(this.warnDarkElement.nativeElement).color;
         break;
     }
   }
@@ -328,11 +337,7 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
     this.canvasButtonTxt.font = this.valueFontSize.toString() + "px Arial";
     this.canvasButtonTxt.textAlign = "center";
     this.canvasButtonTxt.textBaseline="middle";
-    if (this.state) {
-      this.canvasButtonTxt.fillStyle = this.buttonLabelColorOn;
-    } else {
-      this.canvasButtonTxt.fillStyle = this.buttonLabelColorOff;
-    }
+    this.canvasButtonTxt.fillStyle = window.getComputedStyle(this.textElement.nativeElement).color;
     this.canvasButtonTxt.fillText(valueText,this.canvasBtnTxtElement.nativeElement.width/2,(this.canvasBtnTxtElement.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
