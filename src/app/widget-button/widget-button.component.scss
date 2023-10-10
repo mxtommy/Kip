@@ -35,21 +35,56 @@
 }
 
 .wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
-.indicatorBorder {
-margin-left: 5%;
-margin-right: 5%;
-top: 5%;
-position: relative;
-width: 90%;
-height: 90%;
-box-sizing: border-box;
-border: solid 0.2em;
-border-radius: 1em / 1em;
+.light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  border-color: #262626;
+  border-style: solid;
+  border-width: medium;
+}
+
+.square {
+  position: relative;
+	width: 10%;		/* desired width */
+}
+
+.square:before{
+	content: "";
+	display: block;
+	padding-top: 100%; 	/* ratio of 1:1*/
+}
+
+.label {
+  position: relative;
+  width: 60%;
+}
+
+.button {
+  position: relative;
+  width: 25%;
+  box-sizing: border-box;
+  border: inset 4px;
+  border-radius: 20px;
+}
+
+.button:before{
+	content: "";
+	display: block;
+	padding-top: 70%; 	/* ratio of 1:1*/
+}
+
+.button:active {
+  border-style: outset;
 }
 
 .settingsButton {
