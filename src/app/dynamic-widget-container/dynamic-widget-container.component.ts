@@ -11,11 +11,11 @@ import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 import { WidgetListService, widgetList } from '../widget-list.service';
 
 @Component({
-  selector: 'app-unit-window',
-  templateUrl: './unit-window.component.html',
-  styleUrls: ['./unit-window.component.css']
+  selector: 'app-dynamic-widget-container',
+  templateUrl: './dynamic-widget-container.component.html',
+  styleUrls: ['./dynamic-widget-container.component.css']
 })
-export class UnitWindowComponent implements OnInit {
+export class DynamicWidgetContainerComponent implements OnInit {
   @Input('widgetUUID') widgetUUID: string;
   @Input('unlockStatus') unlockStatus: boolean;
   @ViewChild(DynamicWidgetDirective, {static: true, read: ViewContainerRef}) dynamicWidget : ViewContainerRef;
@@ -57,7 +57,7 @@ export class UnitWindowComponent implements OnInit {
   }
 
   selectWidget() {
-    let dialogRef = this.dialog.open(UnitWindowModalComponent, {
+    let dialogRef = this.dialog.open(DynamicWidgetContainerModalComponent, {
 
       data: { currentType: this.activeWidget.type }
     });
@@ -85,11 +85,11 @@ export abstract class DynamicComponentData {
 
 
 @Component({
-  selector: 'app-unit-window-modal',
-  templateUrl: './unit-window.modal.html',
-  styleUrls: ['./unit-window.component.css']
+  selector: 'app-dynamic-widget-container-modal',
+  templateUrl: './dynamic-widget-container.modal.html',
+  styleUrls: ['./dynamic-widget-container.component.css']
 })
-export class UnitWindowModalComponent implements OnInit {
+export class DynamicWidgetContainerModalComponent implements OnInit {
 
   newWidget: string;
   widgetList: widgetList;
@@ -97,7 +97,7 @@ export class UnitWindowModalComponent implements OnInit {
 
   constructor(
     private widgetListService: WidgetListService,
-    public dialogRef:MatDialogRef<UnitWindowModalComponent>,
+    public dialogRef:MatDialogRef<DynamicWidgetContainerModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   onNoClick(): void {

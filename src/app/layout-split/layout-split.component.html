@@ -6,10 +6,10 @@
   <ng-template ngFor let-area let-i="index" [ngForOf]="splitSet.splitAreas">
     <as-split-area [order]="i" [size]="area.size" [ngSwitch]="area.type">
         <div class="splitArea" *ngSwitchCase="'widget'">
-          <app-unit-window
+          <app-dynamic-widget-container
               [widgetUUID]="area.uuid"
               [unlockStatus]="unlockStatus"
-          ></app-unit-window>
+          ></app-dynamic-widget-container>
           <div *ngIf="unlockStatus" class="splitMenu">
               <mat-menu #splitMenu="matMenu">
                 <button mat-menu-item (click)="splitArea(area.uuid, 'vertical')">Split Horz.</button>

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { UnitWindowComponent } from './unit-window.component';
+import { UnitWindowComponent } from './dynamic-widget-container.component';
 
 describe('UnitWindowComponent', () => {
   let component: UnitWindowComponent;

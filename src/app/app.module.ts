@@ -63,7 +63,7 @@ import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
 import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
 import { WidgetDateGenericComponent } from './widget-date-generic/widget-date-generic.component';
-import { UnitWindowComponent, UnitWindowModalComponent } from './unit-window/unit-window.component';
+import { DynamicWidgetContainerComponent, DynamicWidgetContainerModalComponent } from './dynamic-widget-container/Dynamic-Widget-Container.component';
 import { SettingsComponent } from './settings/settings.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
 import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
@@ -131,8 +131,8 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     AppComponent,
     AppHelpComponent,
     SettingsComponent,
-    UnitWindowComponent,
-    UnitWindowModalComponent,
+    DynamicWidgetContainerComponent,
+    DynamicWidgetContainerModalComponent,
     DialogUnitSelect,
     DynamicWidgetDirective,
     WidgetUnknownComponent,
