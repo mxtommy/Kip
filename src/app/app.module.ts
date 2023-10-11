@@ -214,7 +214,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     MatSortModule,
   ],
   providers: [
-    // Imports Interceptor to capture http requests and incert authorization
+    // Imports Interceptor that capture http requests and inserts authorization
     // Token automatically in every httpClient outbound calls.
     // NOTE: it does not work for WebSockets. Only http/REST calls
     {

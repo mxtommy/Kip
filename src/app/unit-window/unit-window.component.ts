@@ -1,6 +1,8 @@
-import { Component, OnInit, Input, Inject, ComponentFactoryResolver, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
+/**
+ * This component handles Widget selection and dynamic instanciation of Widgets
+ */
+import { Component, OnInit, Input, Inject, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { NgModel } from '@angular/forms';
 import { UntypedFormControl } from '@angular/forms';
 
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -20,42 +22,36 @@ export class UnitWindowComponent implements OnInit {
 
 
   activeWidget: IWidget;
-  instance;
+  widgetInstance;
   private componentRef: ComponentRef<{}>;
 
   constructor(
-      private componentFactoryResolver: ComponentFactoryResolver,
       public dialog:MatDialog,
       private WidgetManagerService: WidgetManagerService,
       private widgetListService: WidgetListService) { }
 
   ngOnInit() {
+    // Get the active Widget's Component name from configuration, based on the UUID of current View.
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    let componentName = this.widgetListService.getComponentName(this.activeWidget.type);
+    const widgetComponentName = this.widgetListService.getComponentName(this.activeWidget.type);
 
-    //dynamically load component.
-    let componentFactory = this.componentFactoryResolver.resolveComponentFactory(componentName);
-    // let viewContainerRef = this.dynamicWidget;
-    // viewContainerRef.clear();
+    // Dynamically create component and attach to View.
     this.dynamicWidget.clear();
-    this.componentRef = this.dynamicWidget.createComponent(componentFactory);
+    this.componentRef = this.dynamicWidget.createComponent(widgetComponentName);
 
-    // inject info into new component
-    this.instance = <DynamicComponentData> this.componentRef.instance;
-    this.instance.widgetUUID = this.widgetUUID;
-    this.instance.unlockStatus = this.unlockStatus;
+    // Inject details into new component
+    this.widgetInstance = <DynamicComponentData> this.componentRef.instance;
+    this.widgetInstance.widgetUUID = this.widgetUUID;
+    this.widgetInstance.unlockStatus = this.unlockStatus;
   }
 
   ngOnChanges(changes: any) {
-//    this.ngOnInit();
-
     if ( ('widgetUUID' in changes ) && (changes.widgetUUID.firstChange === false)) {
       this.ngOnInit();
     }
 
-
     if ( ('unlockStatus' in changes ) && (changes.unlockStatus.firstChange === false)) {
-      this.instance.unlockStatus = this.unlockStatus;
+      this.widgetInstance.unlockStatus = this.unlockStatus;
     }
 
   }

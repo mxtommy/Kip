@@ -1,13 +1,31 @@
+/**
+ * This service runs all Widget management operations, handles widget
+ * persistance and defines possible Widget properties.
+ */
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
 import { Format, Policy } from './signalk-interfaces';
-
+/**
+ * This interface defines possible Widget properties.
+ *
+ * @export
+ * @interface IWidget
+ */
 export interface IWidget {
   uuid: string;
   type: string;
   config: IWidgetSvcConfig;
 }
 
+/**
+ * This interface defines all possible Widget configuration settings.
+ * Usage: Widgets for configuration storage and Widget Manager service.
+ *
+ * Note: Used by IWidget interface.
+ *
+ * @export
+ * @interface IWidgetSvcConfig
+ */
 export interface IWidgetSvcConfig {
   displayName?: string;
   filterSelfPaths?: boolean; // widget filter self paths only?
@@ -73,11 +91,16 @@ export interface IWidgetSvcConfig {
   // Race Timer
   timerLength?: number;
 }
-
+/**
+ * Defines all possible properties for data paths. Combines both
+ * both KIP and Signal K path features.
+ *
+ * @interface IWidgetPaths
+ */
 interface IWidgetPaths {
   description: string;
-  path: string | null;       // can be null or set
-  source: string | null;     // can be null or set
+  path: string | null;
+  source: string | null;
   pathType: string  | null;
   pathFilter?: string;     // Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
   convertUnitTo?: string;    // Convert SignalK value to specific format for display. Also used as a source to identify conversion group
@@ -100,8 +123,6 @@ export class WidgetManagerService {
   ) {
     this.widgets = this.AppSettingsService.getWidgets();
   }
-
-
 
   private newUuid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

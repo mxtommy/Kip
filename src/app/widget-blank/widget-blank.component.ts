@@ -28,8 +28,8 @@ export class WidgetBlankComponent implements OnInit {
     this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
     if (this.activeWidget.config === null) {
       // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
+      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig); // push defalut to manager service for storage
+      this.config = defaultConfig; // load default in current intance.
     } else {
       this.config = this.activeWidget.config;
     }
@@ -47,8 +47,8 @@ export class WidgetBlankComponent implements OnInit {
       // save new settings
       if (result) {
         console.log(result);
-        this.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+        this.config = result; // load to current instance
+        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config); // Push to storage
       }
 
     });
