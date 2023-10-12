@@ -1,12 +1,5 @@
-.unitContainer {
+.dynamicWidgetContainer {
     position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.unitWindow {
-    position: absolute;
-    /*padding: 20px;*/
     width: 100%;
     height: 100%;
 }
@@ -22,7 +15,7 @@
   transition-property: none;
 }
 
-.unitMenu {
+.selectWidgetMenu {
     position: absolute;
     right: 5%;
     bottom: 5%;
