@@ -1,0 +1,13 @@
+<div class="dynamicWidgetContainer">
+    <mat-card>
+      <ng-template dynamic-widget></ng-template>
+    </mat-card>
+  <div class="selectWidgetMenu">
+    <button *ngIf="unlockStatus" color="accent" mat-mini-fab class="selector-fab" (click)="selectWidget()"><span class="fa-solid fa-list"></span></button>
+  </div>
+  <div class="settingsButton" *ngIf="unlockStatus">
+    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
+      <span class="fa-solid fa-cog"></span>
+    </button>
+  </div>
+</div>

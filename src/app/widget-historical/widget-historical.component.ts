@@ -1,28 +1,13 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input } from '@angular/core';
-import Chart from 'chart.js/auto';
-import 'chartjs-adapter-moment';
-import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-moment';
 
 import { DataSetService } from '../data-set.service';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
-
-const defaultConfig: IWidgetSvcConfig = {
-  displayName: null,
-  filterSelfPaths: true,
-  convertUnitTo: "unitless",
-  dataSetUUID: null,
-  invertData: false,
-  displayMinMax: false,
-  includeZero: true,
-  minValue: null,
-  maxValue: null,
-  verticalGraph: false,
-};
 
 interface IDataSetOptions {
     label: string;
@@ -38,14 +23,21 @@ interface IDataSetOptions {
   styleUrls: ['./widget-historical.component.css']
 })
 export class WidgetHistoricalComponent implements OnInit, OnDestroy {
-
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
-
+  @Input('widgetProperties') widgetProperties!: IWidget;
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
-  activeWidget: IWidget;
-  config: IWidgetSvcConfig;
+  defaultConfig: IWidgetSvcConfig = {
+    displayName: null,
+    filterSelfPaths: true,
+    convertUnitTo: "unitless",
+    dataSetUUID: null,
+    invertData: false,
+    displayMinMax: false,
+    includeZero: true,
+    minValue: null,
+    maxValue: null,
+    verticalGraph: false,
+  };
 
   chartCtx;
   chart = null;
@@ -62,23 +54,12 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
   themeNameSub: Subscription = null;
 
   constructor(
-    public dialog:MatDialog,
     private DataSetService: DataSetService,
-    private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
     private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) { }
 
   ngOnInit() {
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-    }
-
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
 
@@ -95,7 +76,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     // Setup DataSets
     let ds: IDataSetOptions[] = [
       {
-        label: `${this.config.displayName}-Avg.`,
+        label: `${this.widgetProperties.config.displayName}-Avg.`,
         data: this.chartDataAvg,
         fill: 'false',
         borderColor: this.textColor,
@@ -103,17 +84,17 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     ];
 
     // Min / max display options
-    if (this.config.displayMinMax) {
+    if (this.widgetProperties.config.displayMinMax) {
       ds.push(
         {
-          label: `${this.config.displayName}-Min`,
+          label: `${this.widgetProperties.config.displayName}-Min`,
           data: this.chartDataMin,
           fill: '+1',
           borderColor: this.textColor,
         borderDash: [10, 10]
       },
       {
-          label: `${this.config.displayName}-Max`,
+          label: `${this.widgetProperties.config.displayName}-Max`,
           data: this.chartDataMax,
           fill: '-1',
           borderColor: this.textColor,
@@ -122,8 +103,8 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       );
     }
 
-    let xAxis = this.config.verticalGraph ? 'y' : 'x';
-    let yAxis = this.config.verticalGraph ? 'x' : 'y';
+    let xAxis = this.widgetProperties.config.verticalGraph ? 'y' : 'x';
+    let yAxis = this.widgetProperties.config.verticalGraph ? 'x' : 'y';
 
     this.chart = new Chart(this.chartCtx,{
       type: 'line',
@@ -132,17 +113,17 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       },
       options: {
         maintainAspectRatio: false,
-        indexAxis: this.config.verticalGraph ? 'y' : 'x',
+        indexAxis: this.widgetProperties.config.verticalGraph ? 'y' : 'x',
         parsing: {
           xAxisKey: xAxis,
           yAxisKey: yAxis,
         },
         scales: {
           [yAxis]: {
-            position: this.config.verticalGraph ? 'top' : 'right',
-            ...(this.config.minValue !== null && {suggestedMin: this.config.minValue}),
-            ...(this.config.maxValue !== null && {suggestedMax: this.config.maxValue}),
-            ...(this.config.includeZero && { beginAtZero: true}),
+            position: this.widgetProperties.config.verticalGraph ? 'top' : 'right',
+            ...(this.widgetProperties.config.minValue !== null && {suggestedMin: this.widgetProperties.config.minValue}),
+            ...(this.widgetProperties.config.maxValue !== null && {suggestedMax: this.widgetProperties.config.maxValue}),
+            ...(this.widgetProperties.config.includeZero && { beginAtZero: true}),
             ticks: {
               color: this.textColor,
               autoSkip: true,
@@ -150,7 +131,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
             }
           },
           [xAxis]: {
-            position: this.config.verticalGraph ? 'right': 'bottom',
+            position: this.widgetProperties.config.verticalGraph ? 'right': 'bottom',
             type: 'time',
             time: {
                 minUnit: 'second',
@@ -197,15 +178,15 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   private subscribeDataSet() {
       this.unsubscribeDataSet();
-      if (this.config.dataSetUUID === null) { return } // nothing to sub to...
+      if (this.widgetProperties.config.dataSetUUID === null) { return } // nothing to sub to...
 
-      this.dataSetSub = this.DataSetService.subscribeDataSet(this.widgetUUID, this.config.dataSetUUID).subscribe(
+      this.dataSetSub = this.DataSetService.subscribeDataSet(this.widgetProperties.uuid, this.widgetProperties.config.dataSetUUID).subscribe(
           dataSet => {
               if (dataSet === null) {
                 return; // we will get null back if we subscribe to a dataSet before the app has started it. When it learns about it we will get first value
               }
               let invert = 1;
-              if (this.config.invertData) { invert = -1; }
+              if (this.widgetProperties.config.invertData) { invert = -1; }
               //Avg
               this.chartDataAvg = [];
               for (let i=0;i<dataSet.length;i++){
@@ -215,13 +196,13 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 }
                 this.chartDataAvg.push({
                   x: dataSet[i].timestamp,
-            y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].average) * invert)
+            y: (this.UnitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].average) * invert)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
 
               //min/max
-              if (this.config.displayMinMax) {
+              if (this.widgetProperties.config.displayMinMax) {
                 this.chartDataMin = [];
                 this.chartDataMax = [];
                 for (let i=0;i<dataSet.length;i++){
@@ -231,11 +212,11 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                   } else {
                     this.chartDataMin.push({
                         x: dataSet[i].timestamp,
-                y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].minValue) * invert)
+                y: (this.UnitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].minValue) * invert)
                     });
                     this.chartDataMax.push({
                         x: dataSet[i].timestamp,
-                y: (this.UnitsService.convertUnit(this.config.convertUnitTo, dataSet[i].maxValue) * invert)
+                y: (this.UnitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].maxValue) * invert)
                     });
                   }
                 }
@@ -248,10 +229,10 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
               //  this.chart.update();
               //} else {
                 // append the cumulated average to the label text
-            this.chart.data.datasets[0].label = this.config.displayName + " [" + average(this.chartDataAvg.map(e => e.y)).toFixed(2) + "]";
-            if (this.config.displayMinMax) {
-              this.chart.data.datasets[1].label = this.config.displayName + " [" + average(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
-              this.chart.data.datasets[2].label = this.config.displayName + " [" + average(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
+            this.chart.data.datasets[0].label = this.widgetProperties.config.displayName + " [" + average(this.chartDataAvg.map(e => e.y)).toFixed(2) + "]";
+            if (this.widgetProperties.config.displayMinMax) {
+              this.chart.data.datasets[1].label = this.widgetProperties.config.displayName + " [" + average(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
+              this.chart.data.datasets[2].label = this.widgetProperties.config.displayName + " [" + average(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
             }
             this.chart.update('none');
               //}
@@ -281,24 +262,6 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       this.themeNameSub.unsubscribe();
       this.themeNameSub = null;
     }
-  }
-
-  public openWidgetSettings() {
-    let dialogRef = this.dialog.open(ModalWidgetComponent, {
-      width: '80%',
-      data: this.config
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      // save new settings
-      if (result) {
-        console.log(result);
-        this.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-        this.startChart(); //need to recreate chart to update options :P
-        this.subscribeDataSet();
-      }
-    });
   }
 
   ngOnDestroy() {

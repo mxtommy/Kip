@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChange  } from '@angular/core';
 import { SignalKService } from '../signalk.service';
 import { IPathMetaData } from "../app-interfaces";
-import { UnitsService, IUnitGroup } from '../units.service';
+import { IUnitGroup } from '../units.service';
 import { UntypedFormGroup, UntypedFormControl,Validators } from '@angular/forms';
 import { map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs'
@@ -38,13 +38,12 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
   }
 
   constructor(
-    private signalKService: SignalKService,
-    private unitsService: UnitsService
+    private signalKService: SignalKService
     ) { }
 
   ngOnInit() {
     this.unitList = {};
-    //disable formControl if path is empty - a new, not configured widget...
+    //disable formControl if path is empty. ie: a new/not yet configured Widget...
     if (this.formGroup.value.path == null) {
       this.formGroup.controls['source'].disable();
       if (this.formGroup.value.pathType == "number") {
@@ -70,11 +69,15 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
         if (this.formGroup.controls['path'].valid) {
           this.formGroup.controls['source'].enable();
           this.formGroup.controls['source'].patchValue('default');
-          this.formGroup.controls['convertUnitTo'].enable();
-          this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
+          if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+            this.formGroup.controls['convertUnitTo'].enable();
+            this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
+          }
         } else {
           this.formGroup.controls['source'].disable();
-          this.formGroup.controls['convertUnitTo'].disable();
+          if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+            this.formGroup.controls['convertUnitTo'].disable();
+          }
         }
       } catch (error) {
         console.debug(error);
@@ -116,10 +119,12 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
       if (pathObject != null) {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       } else {
-        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL or Signal K server config. We need to disable the fields.
+        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL, or Signal K server config. We need to disable the fields.
         try {
           this.formGroup.controls['source'].disable();
-          this.formGroup.controls['convertUnitTo'].disable();
+          if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+            this.formGroup.controls['convertUnitTo'].disable();
+          }
         } catch (error) {
           console.debug(error);
         }

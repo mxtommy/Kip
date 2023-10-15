@@ -1,16 +1,16 @@
 <div style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
   <div [className]="isGaugeVertical ? 'verticalLinearWrapper' : 'horizontalLinearWrapper'" #linearWrapperDiv (resized)="onResized($event)">
-    <linear-gauge class="linearGauge" id="{{widgetUUID}}" #linearGauge
+    <linear-gauge class="linearGauge" id="{{widgetProperties.uuid}}" #linearGauge
       [attr.width]="gaugeOptions.width"
       [attr.height]="gaugeOptions.height"
 
-      [attr.title]="config.displayName"
+      [attr.title]="widgetProperties.config.displayName"
       font-title="arial"
       [attr.font-title-size]="gaugeOptions.fontTitleSize"
       font-title-weight="bold"
       [attr.color-title]="gaugeOptions.colorTitle"
 
-      [attr.units]="config.paths['gaugePath'].convertUnitTo"
+      [attr.units]="widgetProperties.config.paths['gaugePath'].convertUnitTo"
       [value]="dataValue"
 
       [attr.min-value]="gaugeOptions.minValue"
@@ -117,10 +117,4 @@
   <div #warnDark class='warnDark' style="display: none;"></div>
   <div #background class='background' style="display: none;"></div>
   <div #text class='text' style="display: none;"></div>
-
-  <div class="settingsButton" *ngIf="unlockStatus">
-    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
-        <span class="fa-solid fa-cog"></span>
-    </button>
-  </div>
 </div>

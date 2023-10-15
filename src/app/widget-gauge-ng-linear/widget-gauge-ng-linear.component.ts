@@ -1,40 +1,14 @@
 import { ViewChild, ElementRef, Component, OnInit, AfterContentInit, Input, OnDestroy } from '@angular/core';
 import { Subscription, sampleTime} from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../app-settings.interfaces';
 import { AppSettingsService } from '../app-settings.service';
 import { SignalKService } from '../signalk.service';
 import { UnitsService } from '../units.service';
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { LinearGauge, LinearGaugeOptions } from '../gauges-module/linear-gauge';
 
-;
-
-
-const defaultConfig: IWidgetSvcConfig = {
-  displayName: null,
-  filterSelfPaths: true,
-  paths: {
-    "gaugePath": {
-      description: "Numeric Data",
-      path: null,
-      source: null,
-      pathType: "number",
-      isPathConfigurable: true,
-      convertUnitTo: "unitless"
-    }
-  },
-  gaugeType: 'ngLinearVertical',  //ngLinearVertical or ngLinearHorizontal
-  gaugeTicks: false,
-  minValue: 0,
-  maxValue: 100,
-  numInt: 1,
-  numDecimal: 0,
-  barColor: 'accent',
-};
 
 interface IDataHighlight extends Array<{
   from : number;
@@ -52,8 +26,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   @ViewChild('linearWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('linearGauge', {static: true, read: ElementRef}) protected linearGauge: ElementRef;
 
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
+  @Input('widgetProperties') widgetProperties!: IWidget;
 
   @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
   @ViewChild('accent', {static: true, read: ElementRef}) private accentElement: ElementRef;
@@ -63,9 +36,27 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
 
-  // widget framework
-  private activeWidget: IWidget;
-  public config: IWidgetSvcConfig;
+  defaultConfig: IWidgetSvcConfig = {
+    displayName: null,
+    filterSelfPaths: true,
+    paths: {
+      "gaugePath": {
+        description: "Numeric Data",
+        path: null,
+        source: null,
+        pathType: "number",
+        isPathConfigurable: true,
+        convertUnitTo: "unitless"
+      }
+    },
+    gaugeType: 'ngLinearVertical',  //ngLinearVertical or ngLinearHorizontal
+    gaugeTicks: false,
+    minValue: 0,
+    maxValue: 100,
+    numInt: 1,
+    numDecimal: 0,
+    barColor: 'accent',
+  };
 
   // main gauge value variable
   public dataValue = 0;
@@ -85,23 +76,12 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
   zonesSub: Subscription;
 
   constructor(
-    public dialog:MatDialog,
     private SignalKService: SignalKService,
-    private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
     private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) {}
 
   ngOnInit() {
-    // optain widget config
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-    }
     this.subscribePath();
     this.subscribeTheme();
     this.subscribeZones();
@@ -119,13 +99,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
   subscribePath() {
     this.unsubscribePath();
-    if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub$ = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
+    this.valueSub$ = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
       newValue => {
         // Only push new values formated to gauge settings to reduce gauge paint requests
         let oldValue = this.dataValue;
-        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value));
+        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value));
         if (oldValue != temp) {
           this.dataValue = temp;
         }
@@ -151,7 +131,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     if (this.valueSub$ !== null) {
       this.valueSub$.unsubscribe();
       this.valueSub$ = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
     }
   }
 
@@ -188,32 +168,13 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     }
   }
 
-  openWidgetSettings() {
-    let dialogRef = this.dialog.open(ModalWidgetComponent, {
-      width: '80%',
-      data: this.config
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      // save new settings
-      if (result) {
-        console.log(result);
-        this.unsubscribePath();  //unsub now as we will change variables so wont know what was subbed before...
-        this.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-        this.subscribePath();
-        this.updateGaugeConfig();
-      }
-    });
-  }
-
   private formatDataValue(value:number): number {
     // make sure we are within range of the gauge settings, else the needle can go outside the range
-    if (value < this.config.minValue || value == null) {
-      value = this.config.minValue;
+    if (value < this.widgetProperties.config.minValue || value == null) {
+      value = this.widgetProperties.config.minValue;
     }
-    if (value > this.config.maxValue) {
-      value = this.config.maxValue;
+    if (value > this.widgetProperties.config.maxValue) {
+      value = this.widgetProperties.config.maxValue;
     }
     return value;
   }
@@ -234,7 +195,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.colorNeedleShadowUp = "";
     this.gaugeOptions.colorNeedleShadowDown = "black";
 
-    switch (this.config.barColor) {
+    switch (this.widgetProperties.config.barColor) {
       case "primary":
           themePaletteColor = getComputedStyle(this.primaryElement.nativeElement).color;
           themePaletteDarkColor = getComputedStyle(this.primaryDarkElement.nativeElement).color;
@@ -280,9 +241,9 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     let myZones: IDataHighlight = [];
     this.zones.forEach(zone => {
       // get zones for our path
-      if (zone.path == this.config.paths['gaugePath'].path) {
-        let lower = zone.lower || this.config.minValue;
-        let upper = zone.upper || this.config.maxValue;
+      if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
+        let lower = zone.lower || this.widgetProperties.config.minValue;
+        let upper = zone.upper || this.widgetProperties.config.maxValue;
         let color: string;
         switch (zone.state) {
           case 1:
@@ -302,17 +263,17 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
 
     // Config storage values
-    this.gaugeOptions.minValue = this.config.minValue;
-    this.gaugeOptions.maxValue = this.config.maxValue;
-    this.gaugeOptions.valueInt = this.config.numInt;
-    this.gaugeOptions.valueDec = this.config.numDecimal;
+    this.gaugeOptions.minValue = this.widgetProperties.config.minValue;
+    this.gaugeOptions.maxValue = this.widgetProperties.config.maxValue;
+    this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
+    this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal;
 
-    this.gaugeOptions.majorTicksInt = this.config.numInt;
-    this.gaugeOptions.majorTicksDec = this.config.numDecimal;
+    this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
+    this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
 
     this.gaugeOptions.animationDuration = this.sample - 25; // prevent data/amnimation collisions
 
-    if (this.config.gaugeTicks) {
+    if (this.widgetProperties.config.gaugeTicks) {
       this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;
     } else {
       this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
@@ -328,14 +289,14 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.needleSide = "both";
 
     // Vertical
-    if (this.config.gaugeType == 'ngLinearVertical'){
+    if (this.widgetProperties.config.gaugeType == 'ngLinearVertical'){
       this.isGaugeVertical = true;   // Changes div wrapper class to respect aspect ratio
       this.gaugeOptions.barLength = 75;
       this.gaugeOptions.fontUnitsSize = 40;
       this.gaugeOptions.fontTitleSize = 40;
 
       // Vertical With ticks
-      if (this.config.gaugeTicks == true) {
+      if (this.widgetProperties.config.gaugeTicks == true) {
         this.gaugeOptions.barWidth = 30;
 
         this.gaugeOptions.needleStart = -45;
@@ -347,7 +308,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.ticksPadding = 4;
 
         this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
+        this.gaugeOptions.majorTicks = [this.widgetProperties.config.minValue, this.widgetProperties.config.maxValue];
 
         this.gaugeOptions.numberSide = "right";
         this.gaugeOptions.numbersMargin = 0;
@@ -387,7 +348,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
 
       // horizontal With ticks
       this.gaugeOptions.barWidth = 40;
-        if (this.config.gaugeTicks == true) {
+        if (this.widgetProperties.config.gaugeTicks == true) {
 
           this.gaugeOptions.exactTicks = false;
           this.gaugeOptions.barWidth = 30;
@@ -400,7 +361,7 @@ export class WidgetGaugeNgLinearComponent implements OnInit, OnDestroy, AfterCon
           this.gaugeOptions.ticksPadding = 5;
 
           this.gaugeOptions.strokeTicks = false;
-          this.gaugeOptions.majorTicks = [this.config.minValue, this.config.maxValue];
+          this.gaugeOptions.majorTicks = [this.widgetProperties.config.minValue, this.widgetProperties.config.maxValue];
 
           this.gaugeOptions.numberSide = "right";
           this.gaugeOptions.numbersMargin = -5;

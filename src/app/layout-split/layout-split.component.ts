@@ -16,10 +16,10 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   splitSetSub: Subscription;
 
   constructor(
-    private LayoutSplitsService: LayoutSplitsService) { }
+    private layoutSplitsService: LayoutSplitsService) { }
 
   ngOnInit() {
-    this.splitSetSub = this.LayoutSplitsService.getSplitObs(this.splitUUID).subscribe(
+    this.splitSetSub = this.layoutSplitsService.getSplitObs(this.splitUUID).subscribe(
       splitSet => {
         this.splitSet = splitSet;
        }
@@ -43,16 +43,16 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onDragEnd(sizesArray: {gutterNum: number, sizes: Array<number>}) {
-     this.LayoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
+     this.layoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
   }
 
   splitArea(areaUUID: string, direction: string) {
-    this.LayoutSplitsService.splitArea(this.splitSet.uuid,areaUUID, direction);
+    this.layoutSplitsService.splitArea(this.splitSet.uuid,areaUUID, direction);
   }
 
 
   deleteArea(areaUUID) {
-    this.LayoutSplitsService.deleteArea(this.splitSet.uuid, areaUUID);
+    this.layoutSplitsService.deleteArea(this.splitSet.uuid, areaUUID);
   }
 
 

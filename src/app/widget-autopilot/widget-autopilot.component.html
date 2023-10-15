@@ -1,4 +1,4 @@
-<div id="{{widgetUUID}}" #autopilot class="autopilotWidget">
+<div id="{{widgetProperties.uuid}}" #autopilot class="autopilotWidget">
   <div class="headerAutopilot">
     <div class="apTitle">
       <span>N2K Autopilot</span>
@@ -60,11 +60,6 @@
         <span *ngIf="alarmsCount" matBadge="{{alarmsCount}}" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
       </button>
     </div>
-  </div>
-  <div class="settingsButton" *ngIf="unlockStatus">
-    <button type="button"  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
-        <span class="fa-solid fa-cog"></span>
-    </button>
   </div>
   <div #primary class='primary' style="display: none;"></div>
   <div #accent class='accent' style="display: none;"></div>

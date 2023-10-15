@@ -34,7 +34,12 @@
   }
 }
 
-.wrapper {
+.switchWrapper {
+  position: relative;
+  margin: 0px;
+  top: 47%;
+  -ms-transform: translateY(-47%);
+  transform: translateY(-47%);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -85,11 +90,4 @@
 
 .button:active {
   border-style: outset;
-}
-
-.settingsButton {
-  position: absolute;
-  bottom: 5%;
-  left: 50%;
-  transform: translate(-50%);
 }

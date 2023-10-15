@@ -46,7 +46,7 @@ export const SteelFrameColors = {
 })
 export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
 
-  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
+  @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef;
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('gaugeType') gaugeType: string; // linear or radial
@@ -83,7 +83,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
 
 
   ngOnInit() {
-
   }
 
   ngAfterViewInit() {
@@ -124,8 +123,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
         case 'full':
         default:
           this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE4;
-
-
       }
     }
 
@@ -156,7 +153,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
       this.gaugeOptions['useSectionColors'] = true;
     }
 
-
     //Colors
     if (SteelBackgroundColors[this.backgroundColor]) {
       this.gaugeOptions['backgroundColor'] = SteelBackgroundColors[this.backgroundColor];
@@ -167,7 +163,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
     if (this.barGauge) {
       this.gaugeOptions['valueColor'] = steelseries.ColorDef.GREEN;
     }
-
 
     //defaults
     this.gaugeOptions['lcdVisible'] = true;
@@ -193,7 +188,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
         this.gauge = new steelseries.Linear(this.widgetUUID, this.gaugeOptions);
       }
     }
-
   }
 
   onResized(event: ResizedEvent) {
@@ -207,12 +201,12 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
       this.isInResizeWindow = true;
 
       setTimeout(() => {
-        let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
+        let rect = this.sgWrapperDiv.nativeElement.getBoundingClientRect();
         this.gaugeWidth = rect.width;
         this.gaugeHeight = rect.height;
         this.isInResizeWindow = false;
         this.startGauge();
-         }, 1000);
+         }, 500);
     }
   }
 

@@ -1,5 +1,5 @@
 <div style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
-  <div class="wrapper">
+  <div class="switchWrapper">
 
     <div class="square">
       <div #lighDiv class="light"
@@ -18,17 +18,6 @@
     >
     </div>
 
-
-    <div class="settingsButton" *ngIf="unlockStatus">
-      <button
-        color="accent"
-        mat-mini-fab
-        class="selector-fab"
-        (click)="openWidgetSettings()"
-      >
-        <span class="fa-solid fa-cog"></span>
-      </button>
-    </div>
     <div #primary class="primary" style="display: none"></div>
     <div #accent class="accent" style="display: none"></div>
     <div #warn class="warn" style="display: none"></div>

@@ -1,107 +1,11 @@
 import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 
 import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
-
-
-const defaultConfig: IWidgetSvcConfig = {
-  displayName: 'N2k Autopilot',
-  filterSelfPaths: true,
-  paths: {
-    "apState": {
-      description: "Autopilot State",
-      path: 'self.steering.autopilot.state',
-      source: 'default',
-      pathType: "string",
-      isPathConfigurable: false,
-      convertUnitTo: "",
-    },
-    "apTargetHeadingMag": {
-      description: "Autopilot Target Heading Mag",
-      path: 'self.steering.autopilot.target.headingMagnetic',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-    "apTargetWindAngleApp": {
-      description: "Autopilot Target Wind Angle Apparent",
-      path: 'self.steering.autopilot.target.windAngleApparent',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-    "apNotifications": {
-      description: "Autopilot Notifications",
-      path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* type subscription paths in sk service and widget config modal
-      source: 'default',
-      pathType: "string",
-      convertUnitTo: "",
-      isPathConfigurable: false,
-    },
-    "headingMag": {
-      description: "Heading Magnetic",
-      path: 'self.navigation.headingMagnetic',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-    "headingTrue": {
-      description: "Heading True",
-      path: 'self.navigation.headingTrue',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-    "windAngleApparent": {
-      description: "Wind Angle Apparent",
-      path: 'self.environment.wind.angleApparent',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-    "windAngleTrueWater": {
-      description: "Wind Angle True Water",
-      path: 'self.environment.wind.angleTrueWater',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-    "rudderAngle": {
-      description: "Rudder Angle",
-      path: 'self.steering.rudderAngle',
-      source: 'default',
-      pathType: "number",
-      convertUnitTo: "deg",
-      isPathConfigurable: true,
-    },
-  },
-  usage: {
-    "headingMag": ['wind', 'route', 'auto', 'standby'],
-    "headingTrue": ['wind', 'route', 'auto', 'standby'],
-    "windAngleApparent": ['wind'],
-    "windAngleTrueWater": ['wind'],
-  },
-  typeVal: {
-    "headingMag": 'Mag',
-    "headingTrue": 'True',
-    "windAngleApparent": 'AWA',
-    "windAngleTrueWater": 'TWA',
-  },
-  barColor: 'accent',     // theme palette to select
-  autoStart: false,
-};
 
 const defaultPpreferedDisplayMode = {
   wind: 'windAngleApparent',
@@ -136,8 +40,7 @@ const timeoutBlink = 250;
   styleUrls: ['./widget-autopilot.component.scss'],
 })
 export class WidgetAutopilotComponent implements OnInit, OnDestroy {
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
+  @Input('widgetProperties') widgetProperties!: IWidget;
 
   // AP keypad
   @ViewChild('powerBtn') powerBtn: MatButton;
@@ -166,6 +69,99 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   @ViewChild('warnDark') private warnDarkElement: ElementRef;
   @ViewChild('background') private backgroundElement: ElementRef;
   @ViewChild('text') private textElement: ElementRef;
+
+  defaultConfig: IWidgetSvcConfig = {
+    displayName: 'N2k Autopilot',
+    filterSelfPaths: true,
+    paths: {
+      "apState": {
+        description: "Autopilot State",
+        path: 'self.steering.autopilot.state',
+        source: 'default',
+        pathType: "string",
+        isPathConfigurable: false,
+        convertUnitTo: "",
+      },
+      "apTargetHeadingMag": {
+        description: "Autopilot Target Heading Mag",
+        path: 'self.steering.autopilot.target.headingMagnetic',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+      "apTargetWindAngleApp": {
+        description: "Autopilot Target Wind Angle Apparent",
+        path: 'self.steering.autopilot.target.windAngleApparent',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+      "apNotifications": {
+        description: "Autopilot Notifications",
+        path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* type subscription paths in sk service and widget config modal
+        source: 'default',
+        pathType: "string",
+        convertUnitTo: "",
+        isPathConfigurable: false,
+      },
+      "headingMag": {
+        description: "Heading Magnetic",
+        path: 'self.navigation.headingMagnetic',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+      "headingTrue": {
+        description: "Heading True",
+        path: 'self.navigation.headingTrue',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+      "windAngleApparent": {
+        description: "Wind Angle Apparent",
+        path: 'self.environment.wind.angleApparent',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+      "windAngleTrueWater": {
+        description: "Wind Angle True Water",
+        path: 'self.environment.wind.angleTrueWater',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+      "rudderAngle": {
+        description: "Rudder Angle",
+        path: 'self.steering.rudderAngle',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+      },
+    },
+    usage: {
+      "headingMag": ['wind', 'route', 'auto', 'standby'],
+      "headingTrue": ['wind', 'route', 'auto', 'standby'],
+      "windAngleApparent": ['wind'],
+      "windAngleTrueWater": ['wind'],
+    },
+    typeVal: {
+      "headingMag": 'Mag',
+      "headingTrue": 'True',
+      "windAngleApparent": 'AWA',
+      "windAngleTrueWater": 'TWA',
+    },
+    barColor: 'accent',     // theme palette to select
+    autoStart: false,
+  };
 
   activeWidget: IWidget;
   config: IWidgetSvcConfig;
@@ -208,25 +204,16 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   notificationTest = {};
 
+
   constructor(
-    public dialog:MatDialog,
     private SignalKService: SignalKService,
     private SignalkRequestsService: SignalkRequestsService,
-    private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
+    private widgetManagerService: WidgetManagerService
   ) { }
 
   ngOnInit() {
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-      this.displayName = this.config.displayName;
-    }
-    if (this.config.autoStart) {
+    if (this.widgetProperties.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
     // this.demoMode(); // demo mode for troubleshooting
@@ -264,8 +251,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   subscribeAPNotification() {
-    if (typeof(this.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
-    this.skApNotificationSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apNotifications'].path, this.config.paths['apNotifications'].source).subscribe(
+    if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
+    this.skApNotificationSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
       newValue => {
 
           if (!newValue.value == null) {
@@ -280,13 +267,13 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.skApNotificationSub !== null) {
       this.skApNotificationSub.unsubscribe();
       this.skApNotificationSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apNotifications'].path);
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path);
     }
   }
 
   subscribeSKRequest() {
     this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.widgetUUID) {
+      if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         this.commandReceived(requestResult);
       }
     });
@@ -301,8 +288,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   subscribeAPTargetAppWind() {
     this.unsubscribeAPTargetAppWind();
-    if (typeof(this.config.paths['apTargetWindAngleApp'].path) != 'string') { return } // nothing to sub to...
-    this.apTargetAppWindSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apTargetWindAngleApp'].path, this.config.paths['apTargetWindAngleApp'].source).subscribe(
+    if (typeof(this.widgetProperties.config.paths['apTargetWindAngleApp'].path) != 'string') { return } // nothing to sub to...
+    this.apTargetAppWindSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apTargetWindAngleApp'].path, this.widgetProperties.config.paths['apTargetWindAngleApp'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentAPTargetAppWind = 0;
@@ -317,13 +304,13 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.apTargetAppWindSub !== null) {
       this.apTargetAppWindSub.unsubscribe();
       this.apTargetAppWindSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apTargetWindAngleApp'].path);
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apTargetWindAngleApp'].path);
     }
   }
 
   subscribeAPState() {
-    if (typeof(this.config.paths['apState'].path) != 'string') { return } // nothing to sub to...
-    this.apStateSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['apState'].path, this.config.paths['apState'].source).subscribe(
+    if (typeof(this.widgetProperties.config.paths['apState'].path) != 'string') { return } // nothing to sub to...
+    this.apStateSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apState'].path, this.widgetProperties.config.paths['apState'].source).subscribe(
       newValue => {
         this.currentAPState = newValue.value;
         this.SetKeyboardMode(this.currentAPState);
@@ -335,14 +322,14 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.apStateSub !== null) {
       this.apStateSub.unsubscribe();
       this.apStateSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['apState'].path);
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apState'].path);
     }
   }
 
   subscribeHeading() {
     this.unsubscribeHeading();
-    if (typeof(this.config.paths['headingMag'].path) != 'string') { return } // nothing to sub to...
-    this.headingSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['headingMag'].path, this.config.paths['headingMag'].source).subscribe(
+    if (typeof(this.widgetProperties.config.paths['headingMag'].path) != 'string') { return } // nothing to sub to...
+    this.headingSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingMag'].path, this.widgetProperties.config.paths['headingMag'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentHeading = 0;
@@ -359,15 +346,15 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.headingSub !== null) {
       this.headingSub.unsubscribe();
       this.headingSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['headingMag'].path);
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingMag'].path);
     }
   }
 
   subscribeAppWindAngle() {
     this.unsubscribeAppWindAngle();
-    if (typeof(this.config.paths['windAngleApparent'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(this.widgetProperties.config.paths['windAngleApparent'].path) != 'string') { return } // nothing to sub to...
 
-    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['windAngleApparent'].path, this.config.paths['windAngleApparent'].source).subscribe(
+    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['windAngleApparent'].path, this.widgetProperties.config.paths['windAngleApparent'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentAppWindAngle = null;
@@ -392,14 +379,14 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.appWindAngleSub !== null) {
       this.appWindAngleSub.unsubscribe();
       this.appWindAngleSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['windAngleApparent'].path);
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['windAngleApparent'].path);
     }
   }
 
   subscribeRudder() {
     this.unsubscribeRudder();
-    if (typeof(this.config.paths['rudderAngle'].path) != 'string') { return } // nothing to sub to...
-    this.rudderSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['rudderAngle'].path, this.config.paths['rudderAngle'].source).subscribe(
+    if (typeof(this.widgetProperties.config.paths['rudderAngle'].path) != 'string') { return } // nothing to sub to...
+    this.rudderSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['rudderAngle'].path, this.widgetProperties.config.paths['rudderAngle'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentRudder = 0;
@@ -416,30 +403,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.rudderSub !== null) {
       this.rudderSub.unsubscribe();
       this.rudderSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['rudderAngle'].path);
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['rudderAngle'].path);
     }
-  }
-
-  openWidgetSettings() {
-    let dialogRef = this.dialog.open(ModalWidgetComponent, {
-      width: '80%',
-      data: this.config
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      // save new settings
-      if (result) {
-        this.config = result;
-        this.displayName = this.config.displayName;
-        console.log(result);
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-
-        if (this.isApConnected) {
-          this.stopAllSubscriptions();
-          this.startAllSubscriptions();
-        }
-      }
-    });
   }
 
   addHeading(h1: number, h2: number) {
@@ -459,8 +424,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   startApHead() {
     this.startAllSubscriptions();
-    this.config.autoStart = true; // save power-on state to autostart or not
-    this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+    this.widgetProperties.config.autoStart = true; // save power-on state to autostart or not
+    this.widgetManagerService.updateWidgetConfig(this.widgetProperties.uuid, this.widgetProperties.config);
 
     this.isApConnected = true;
     this.muteBtn.disabled = true;
@@ -485,8 +450,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
     this.isApConnected = false; // hide ap screen
     this.stopAllSubscriptions();
-    this.config.autoStart = false; // save power on state to autostart or not
-    this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
+    this.widgetProperties.config.autoStart = false; // save power on state to autostart or not
+    this.widgetManagerService.updateWidgetConfig(this.widgetProperties.uuid, this.widgetProperties.config);
   }
 
   SetKeyboardMode(apMode: string) {
@@ -603,7 +568,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   sendCommand(cmdAction) {
-    let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetUUID);
+    let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
     this.apScreen.activityIconVisibility = "visible";
     setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 

@@ -1,9 +1,9 @@
-<div class="wrapper" #wrapperDiv (resized)="onResized($event)">
-  <radial-gauge class="radialGauge" id="{{widgetUUID}}" #radialGauge
+<div class="ngRadialWrapper" #ngRadialWrapperDiv (resized)="onResized($event)">
+  <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #radialGauge
     [attr.width]="gaugeOptions.width"
     [attr.height]="gaugeOptions.height"
 
-    [attr.title]="config.displayName"
+    [attr.title]="widgetProperties.config.displayName"
     font-title="arial"
     [attr.font-title-size]="gaugeOptions.fontTitleSize"
     font-title-weight="bold"
@@ -11,8 +11,8 @@
 
     [attr.units]="unitName"
     [value]="dataValue"
-    [attr.min-value]="config.minValue"
-    [attr.max-value]="config.maxValue"
+    [attr.min-value]="widgetProperties.config.minValue"
+    [attr.max-value]="widgetProperties.config.maxValue"
     font-Units="arial"
     font-Units-size="25"
     font-Units-weight=""
@@ -104,7 +104,6 @@
     [attr.color-needle-circle-outer]="gaugeOptions.colorNeedleCircleOuter"
     [attr.color-needle-circle-outer-end]="gaugeOptions.colorNeedleCircleOuterEnd"
   ></radial-gauge>
-
   <div #primary class='primary' style="display: none;"></div>
   <div #accent class='accent' style="display: none;"></div>
   <div #warn class='warn' style="display: none;"></div>
@@ -113,10 +112,4 @@
   <div #warnDark class='warnDark' style="display: none;"></div>
   <div #background class='background' style="display: none;"></div>
   <div #text class='text' style="display: none;"></div>
-
-  <div class="settingsButton" *ngIf="unlockStatus">
-    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
-        <span class="fa-solid fa-cog"></span>
-    </button>
-  </div>
 </div>

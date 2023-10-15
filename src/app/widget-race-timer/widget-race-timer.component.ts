@@ -1,16 +1,10 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { TimersService } from '../timers.service';
 import { IZoneState } from "../app-settings.interfaces";
 import { AppSettingsService } from '../app-settings.service';
-
-
-const defaultConfig: IWidgetSvcConfig = {
-  timerLength: 300
-};
 
 @Component({
   selector: 'app-widget-race-timer',
@@ -18,19 +12,16 @@ const defaultConfig: IWidgetSvcConfig = {
   styleUrls: ['./widget-race-timer.component.scss']
 })
 export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChecked {
-
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
+  @Input('widgetProperties') widgetProperties!: IWidget;
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
-  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
+  @ViewChild('raceTimerWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
   @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
   @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
 
-
-  activeWidget: IWidget;
-  config: IWidgetSvcConfig;
-
+  defaultConfig: IWidgetSvcConfig = {
+    timerLength: 300
+  };
 
   dataValue: number = null;
   IZoneState: IZoneState = null;
@@ -49,26 +40,15 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
 
 
   constructor(
-    public dialog:MatDialog,
-    private WidgetManagerService: WidgetManagerService,
     private AppSettingsService: AppSettingsService, // need for theme change
     private TimersService: TimersService
   ) { }
 
   ngOnInit(): void {
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-    }
     this.subscribeTimer();
     this.subscribeTheme();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-
   }
 
   ngOnDestroy() {
@@ -101,11 +81,10 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
 
   }
 
-
   subscribeTimer() {
     this.unsubscribeTimer();
 
-    let length = (this.config.timerLength*-1)*10;
+    let length = (this.widgetProperties.config.timerLength*-1)*10;
 
     this.timerSub = this.TimersService.createTimer("race", -3000, 100).subscribe(
       newValue => {
@@ -134,8 +113,6 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
           this.flashInterval = null;
         }
       }
-
-
         this.updateCanvas();
       }
     );
@@ -160,14 +137,12 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
     }
   }
 
-
   unsubscribeTimer() {
     if (this.timerSub !== null) {
       this.timerSub.unsubscribe();
       this.timerSub = null;
     }
   }
-
 
   startTimer() {
     this.TimersService.startTimer("race");
@@ -206,7 +181,6 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
     }
   }
 
-
   addOneMin() {
       this.TimersService.setTimer("race", this.dataValue + 600);
   }
@@ -238,9 +212,7 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
     }
   }
 
-
   strTypeHelper
-
 
   drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
@@ -318,11 +290,4 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
     this.canvasCtx.textBaseline="middle";
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
-
-
-
-
-
-
-
 }
