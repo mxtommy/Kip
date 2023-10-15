@@ -43,7 +43,6 @@ export class LayoutSplitsService {
     }
 
     this.rootUUIDs = this.AppSettingsService.getRootSplits();
-    //this.activeRoot.next(this.rootUUIDs[0]);
   }
 
   private newUuid() {
@@ -149,7 +148,7 @@ export class LayoutSplitsService {
     this.router.navigate(['/page', this.rootUUIDs.indexOf(uuid)]);
   }
 
-  splitArea(splitSetUUID: string, areaUUID: string, direction: string) {
+  splitArea(splitSetUUID: string, areaUUID: string, direction: string): void {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }
     let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(
@@ -186,7 +185,7 @@ export class LayoutSplitsService {
     this.updateSplit(splitSetUUID);
   }
 
-  updateSplitSizes(splitSetUUID: string, sizesArray: Array<number>) {
+  updateSplitSizes(splitSetUUID: string, sizesArray: Array<number>): void {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }
     for (let i=0; i < sizesArray.length; i++) {
@@ -196,7 +195,7 @@ export class LayoutSplitsService {
   }
 
 
-  deleteArea(splitSetUUID, areaUUID) {
+  deleteArea(splitSetUUID, areaUUID): void {
 
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }

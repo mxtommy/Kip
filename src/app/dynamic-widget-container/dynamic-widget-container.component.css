@@ -21,6 +21,13 @@
     bottom: 5%;
 }
 
+.settingsButton {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
 .mat-select-trigger {
     min-width: 30px !important;
 }

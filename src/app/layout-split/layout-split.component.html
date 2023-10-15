@@ -7,7 +7,7 @@
     <as-split-area [order]="i" [size]="area.size" [ngSwitch]="area.type">
         <div class="splitArea" *ngSwitchCase="'widget'">
           <app-dynamic-widget-container
-              [widgetUUID]="area.uuid"
+              [splitUUID]="area.uuid"
               [unlockStatus]="unlockStatus"
           ></app-dynamic-widget-container>
           <div *ngIf="unlockStatus" class="splitMenu">

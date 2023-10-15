@@ -1,47 +1,39 @@
 import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { SignalKService } from '../signalk.service';
 import { AppSettingsService } from '../app-settings.service';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
-
-const defaultConfig: IWidgetSvcConfig = {
-  displayName: null,
-  filterSelfPaths: true,
-  paths: {
-    "stringPath": {
-      description: "String Data",
-      path: null,
-      source: null,
-      pathType: "string",
-      isPathConfigurable: true,
-    }
-  },
-};
 
 @Component({
   selector: 'app-widget-text-generic',
   templateUrl: './widget-text-generic.component.html',
   styleUrls: ['./widget-text-generic.component.css']
 })
-export class WidgetTextGenericComponent implements OnInit, OnDestroy {
+export class WidgetTextGenericComponent implements OnInit, AfterViewChecked, OnDestroy {
 
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
+  @Input('widgetProperties') widgetProperties!: IWidget;
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
-  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
+  @ViewChild('textGenericWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
-  activeWidget: IWidget;
-    config: IWidgetSvcConfig;
+  defaultConfig: IWidgetSvcConfig = {
+    displayName: null,
+    filterSelfPaths: true,
+    paths: {
+      "stringPath": {
+        description: "String Data",
+        path: null,
+        source: null,
+        pathType: "string",
+        isPathConfigurable: true,
+      }
+    },
+  };
 
   dataValue: any = null;
-
   dataTimestamp: number = Date.now();
-
   valueFontSize: number = 1;
   currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
   canvasCtx;
@@ -55,23 +47,12 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
 
   constructor(
-    public dialog:MatDialog,
-    private SignalKService: SignalKService,
-    private WidgetManagerService: WidgetManagerService,
-    private AppSettingsService: AppSettingsService, // need for theme change subscription
+    private signalKService: SignalKService,
+    private appSettingsService: AppSettingsService, // need for theme change subscription
     ) {
   }
 
   ngOnInit() {
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-    }
-
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
 
@@ -111,8 +92,8 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
 
   subscribePath() {
     this.unsubscribePath();
-    if (typeof(this.config.paths['stringPath'].path) != 'string') { return } // nothing to sub to...
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['stringPath'].path, this.config.paths['stringPath'].source).subscribe(
+    if (typeof(this.widgetProperties.config.paths['stringPath'].path) != 'string') { return } // nothing to sub to...
+    this.valueSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue.value;
         this.updateCanvas();
@@ -124,12 +105,12 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['stringPath'].path)
+      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path)
     }
   }
   // Subscribe to theme event
   subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
+    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
       themeChange => {
       setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
         this.drawTitle();
@@ -143,27 +124,6 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
       this.themeNameSub.unsubscribe();
       this.themeNameSub = null;
     }
-  }
-
-  openWidgetSettings() {
-
-    let dialogRef = this.dialog.open(ModalWidgetComponent, {
-      width: '80%',
-      data: this.config
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      // save new settings
-      if (result) {
-        console.log(result);
-        this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-        this.subscribePath();
-        this.resizeWidget();
-      }
-
-    });
   }
 
 
@@ -233,11 +193,11 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
     var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
     // set font small and make bigger until we hit a max.
-    if (this.config.displayName === null) { return; }
+    if (this.widgetProperties.config.displayName === null) { return; }
     var fontSize = 1;
 
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+    while ( (this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
         this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
@@ -245,7 +205,7 @@ export class WidgetTextGenericComponent implements OnInit, OnDestroy {
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
     this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasBGCtx.fillText(this.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 
 

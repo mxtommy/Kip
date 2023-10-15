@@ -1,14 +1,30 @@
 /**
- * This component handles Widget selection and dynamic instanciation of Widgets
+ * This component is hosted in layout-split and handles Widget framework operations and
+ * dynamic instanciation.
  */
 import { Component, OnInit, Input, Inject, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UntypedFormControl } from '@angular/forms';
 
+import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
-
 import { WidgetListService, widgetList } from '../widget-list.service';
+
+/**
+ * Used to add data properties to ComponentRef/Widgets so they are exposed as
+ * @input() decorators in the Widget instance.
+ *
+ * @export
+ * @abstract
+ * @class DynamicComponentData
+ */
+export abstract class DynamicComponentData {
+  unlockStatus: boolean;
+  widgetProperties: IWidget;
+  widgetUUID: string;
+}
+
 
 @Component({
   selector: 'app-dynamic-widget-container',
@@ -16,58 +32,65 @@ import { WidgetListService, widgetList } from '../widget-list.service';
   styleUrls: ['./dynamic-widget-container.component.css']
 })
 export class DynamicWidgetContainerComponent implements OnInit {
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
-  @ViewChild(DynamicWidgetDirective, {static: true, read: ViewContainerRef}) dynamicWidget : ViewContainerRef;
+  @Input('splitUUID') splitUUID: string;   // Get UUID from layout-split. We use it as the widgetUUID later for the widget
+  @Input('unlockStatus') unlockStatus: boolean; // From layout-split.
+  @ViewChild(DynamicWidgetDirective, {static: true, read: ViewContainerRef}) dynamicWidgetContainerRef : ViewContainerRef; // Parent layout-split container ref
 
 
-  activeWidget: IWidget;
-  widgetInstance;
-  private componentRef: ComponentRef<{}>;
+  private splitWidgetSettings: IWidget;
+  public widgetInstance;
+  private newContainerRefRef: ComponentRef<{}>;
 
   constructor(
-      public dialog:MatDialog,
+      public dialog: MatDialog,
       private WidgetManagerService: WidgetManagerService,
       private widgetListService: WidgetListService) { }
 
   ngOnInit() {
-    // Get the active Widget's Component name from configuration, based on the UUID of current View.
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    const widgetComponentName = this.widgetListService.getComponentName(this.activeWidget.type);
+    this.widgetInstance = null;
+    this.splitWidgetSettings = null;
+    // Use parent layout-split UUID to find configured target Widgett. Split UUID is used for Widget UUID
+    this.splitWidgetSettings = this.WidgetManagerService.getWidget(this.splitUUID); // get from parent
+    const widgetComponentTypeName = this.widgetListService.getComponentName(this.splitWidgetSettings.type);
 
-    // Dynamically create component and attach to View.
-    this.dynamicWidget.clear();
-    this.componentRef = this.dynamicWidget.createComponent(widgetComponentName);
+    // Dynamically create containerRef.
+    // this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
+    this.newContainerRefRef = this.dynamicWidgetContainerRef.createComponent(widgetComponentTypeName);
 
-    // Inject details into new component
-    this.widgetInstance = <DynamicComponentData> this.componentRef.instance;
-    this.widgetInstance.widgetUUID = this.widgetUUID;
-    this.widgetInstance.unlockStatus = this.unlockStatus;
+    // Init and add abstract class data properties and inject properties into Widget
+    this.widgetInstance = <DynamicComponentData> this.newContainerRefRef.instance;
+    if (this.splitWidgetSettings.config == null) {
+      this.loadWidgetDefaults();
+    }
+    this.widgetInstance.unlockStatus = this.unlockStatus;  //TODO(David): Remove once all Widget are updated
+    this.widgetInstance.widgetProperties = this.splitWidgetSettings;
+    this.widgetInstance.widgetUUID = this.splitWidgetSettings.uuid;  //TODO(David): Remove once all Widget are updated
   }
 
   ngOnChanges(changes: any) {
-    if ( ('widgetUUID' in changes ) && (changes.widgetUUID.firstChange === false)) {
+    if ( ('widgetUUID' in changes ) && (!changes.widgetUUID.firstChange)) {
       this.ngOnInit();
     }
 
-    if ( ('unlockStatus' in changes ) && (changes.unlockStatus.firstChange === false)) {
-      this.widgetInstance.unlockStatus = this.unlockStatus;
+    if ( ('unlockStatus' in changes ) && (!changes.unlockStatus.firstChange)) {
+      this.widgetInstance.unlockStatus = this.unlockStatus;  //TODO(David): Remove once all Widget are updated
     }
 
   }
 
-  selectWidget() {
+  public selectWidget(): void {
     let dialogRef = this.dialog.open(DynamicWidgetContainerModalComponent, {
 
-      data: { currentType: this.activeWidget.type }
+      data: { currentType: this.splitWidgetSettings.type }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       let fullWidgetList = this.widgetListService.getList();
       for (let [group, widgetList] of Object.entries(fullWidgetList)) {
         if (widgetList.findIndex(w => w.name == result) >= 0 ) {
-          if (this.activeWidget.type != result) {
-            this.WidgetManagerService.updateWidgetType(this.widgetUUID, result);
+          if (this.splitWidgetSettings.type != result) {
+            this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
+            this.WidgetManagerService.updateWidgetType(this.splitUUID, result);
             this.ngOnInit();
           }
         }
@@ -76,11 +99,35 @@ export class DynamicWidgetContainerComponent implements OnInit {
 
   }
 
-}
+  public openWidgetSettings(): void {
+    const dialogRef = this.dialog.open(ModalWidgetComponent, {
+      width: '80%',
+      data: {...this.splitWidgetSettings.config}
+    });
 
-export abstract class DynamicComponentData {
-    widgetUUID: string;
-    unlockStatus: boolean;
+    dialogRef.afterClosed().subscribe(result => {
+      // save new settings
+      if (result) {
+        if (result.paths != undefined) {
+          var OrgPaths = {...this.splitWidgetSettings.config.paths}; // keep old paths to combine with results if some paths are missing
+          var CombPaths = {...OrgPaths, ...result.paths};
+          this.splitWidgetSettings.config = structuredClone(result); // copy all sub objects
+          this.splitWidgetSettings.config.paths = {...CombPaths};
+        } else {
+          this.splitWidgetSettings.config = structuredClone(result); // copy all sub objects
+        }
+
+        this.dynamicWidgetContainerRef.clear();
+        this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, this.splitWidgetSettings.config); // Push to storage
+        this.ngOnInit();
+      }
+    });
+  }
+
+  private loadWidgetDefaults(): void {
+      this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, {...this.widgetInstance.defaultConfig}); // push default to manager service for storage
+      this.splitWidgetSettings.config = this.widgetInstance.defaultConfig; // load default in current intance.
+  }
 }
 
 

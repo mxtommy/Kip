@@ -1,12 +1,5 @@
-.wrapper {
+.iFrameWrapper {
   position: relative;
   width: 100%;
   height: 100%;
-}
-
-.settingsButton {
-  position: absolute;
-  bottom: 5%;
-  left: 50%;
-  transform: translate(-50%);
 }

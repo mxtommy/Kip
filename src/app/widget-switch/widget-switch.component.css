@@ -4,13 +4,6 @@
     height: 100%;
 }
 
-.settingsButton {
-    position: absolute;
-    bottom: 5%;
-    left: 50%;
-    transform: translate(-50%);
-}
-
 .switchContainer {
     position: relative;
     margin: auto;
@@ -41,7 +34,7 @@
     -webkit-transition: .4s;
     transition: .4s;
   }
-  
+
   .slider:before {
     position: absolute;
     content: "";
@@ -53,18 +46,17 @@
     -webkit-transition: .4s;
     transition: .4s;
   }
-  
+
   input:checked + .slider {
     background-color: #2196F3;
   }
-  
+
   input:focus + .slider {
     box-shadow: 0 0 1px #2196F3;
   }
-  
+
   input:checked + .slider:before {
     -webkit-transform: translateX(95%);
     -ms-transform: translateX(95%);
     transform: translateX(95%);
   }
-  

@@ -1,39 +1,13 @@
 import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, AfterContentInit, AfterContentChecked, Pipe } from '@angular/core';
 import { Subscription, sampleTime } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../app-settings.interfaces';
 import { AppSettingsService } from '../app-settings.service';
 import { SignalKService } from '../signalk.service';
 import { UnitsService } from '../units.service';
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { RadialGauge, RadialGaugeOptions } from '../gauges-module/radial-gauge';
-
-const defaultConfig: IWidgetSvcConfig = {
-  displayName: null,
-  filterSelfPaths: true,
-  paths: {
-    "gaugePath": {
-      description: "Numeric Data",
-      path: null,
-      source: null,
-      pathType: "number",
-      isPathConfigurable: true,
-      convertUnitTo: "unitless"
-    }
-  },
-  gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
-  gaugeTicks: false,
-  radialSize: 'measuring',
-  compassUseNumbers: false,
-  minValue: 0,
-  maxValue: 100,
-  numInt: 1,
-  numDecimal: 0,
-  barColor: 'accent',     // theme palette to select
-};
 
 interface IDataHighlight extends Array<{
     from : number;
@@ -48,11 +22,10 @@ interface IDataHighlight extends Array<{
 })
 export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
 
-  @ViewChild('wrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
+  @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('radialGauge', {static: true, read: RadialGauge}) public radialGauge: RadialGauge;
 
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
+  @Input('widgetProperties') widgetProperties!: IWidget;
 
   // hack to access material-theme palette colors
   @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
@@ -64,9 +37,29 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
   @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
 
-  // widget framework
-  private activeWidget: IWidget;
-  public config: IWidgetSvcConfig;
+  defaultConfig: IWidgetSvcConfig = {
+    displayName: null,
+    filterSelfPaths: true,
+    paths: {
+      "gaugePath": {
+        description: "Numeric Data",
+        path: null,
+        source: null,
+        pathType: "number",
+        isPathConfigurable: true,
+        convertUnitTo: "unitless"
+      }
+    },
+    gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
+    gaugeTicks: false,
+    radialSize: 'measuring',
+    compassUseNumbers: false,
+    minValue: 0,
+    maxValue: 100,
+    numInt: 1,
+    numDecimal: 0,
+    barColor: 'accent',     // theme palette to select
+  };
 
   // main gauge value variable
   public dataValue = 0;
@@ -87,28 +80,12 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   zonesSub: Subscription;
 
   constructor(
-    public dialog:MatDialog,
     private SignalKService: SignalKService,
-    private WidgetManagerService: WidgetManagerService,
     private UnitsService: UnitsService,
     private AppSettingsService: AppSettingsService, // need for theme change subscription
   ) { }
 
   ngOnInit() {
-    // optain widget config
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-      //new config option, might not be set.
-      if (!('compassUseNumbers' in this.config)) {
-        this.config.compassUseNumbers = false;
-      }
-    }
-
     this.subscribePath();
     this.subscribeTheme();
     this.subscribeZones();
@@ -130,13 +107,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
   subscribePath() {
     this.unsubscribePath();
-    if (typeof(this.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub$ = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['gaugePath'].path, this.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
+    this.valueSub$ = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
       newValue => {
         // Only push new values formated to gauge settings to reduce gauge paint requests
         let oldValue = this.dataValue;
-        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.config.paths['gaugePath'].convertUnitTo, newValue.value));
+        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value));
         if (oldValue != temp) {
           this.dataValue = temp;
         }
@@ -162,7 +139,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     if (this.valueSub$ !== null) {
       this.valueSub$.unsubscribe();
       this.valueSub$ = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['gaugePath'].path)
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
     }
   }
 
@@ -199,32 +176,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     }
   }
 
-  openWidgetSettings() {
-    let dialogRef = this.dialog.open(ModalWidgetComponent, {
-      width: '80%',
-      data: this.config
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      // save new settings
-      if (result) {
-        console.log(result);
-        this.unsubscribePath();  //unsub now as we will change variables so wont know what was subbed before...
-        this.config = result;
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-        this.subscribePath();
-        this.updateGaugeConfig();
-      }
-    });
-  }
-
   private formatDataValue(value:number): number {
     // make sure we are within range of the gauge settings, else the needle can go outside the range
-    if (value < this.config.minValue || value == null) {
-      value = this.config.minValue;
+    if (value < this.widgetProperties.config.minValue || value == null) {
+      value = this.widgetProperties.config.minValue;
     }
-    if (value > this.config.maxValue) {
-      value = this.config.maxValue;
+    if (value > this.widgetProperties.config.maxValue) {
+      value = this.widgetProperties.config.maxValue;
     }
     return value;
   }
@@ -246,7 +204,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
 
     // Theme colors
-    switch (this.config.barColor) {
+    switch (this.widgetProperties.config.barColor) {
       case "primary":
         themePaletteColor = getComputedStyle(this.primaryElement.nativeElement).color;
         themePaletteDarkColor = getComputedStyle(this.primaryDarkElement.nativeElement).color;
@@ -279,9 +237,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     let myZones: IDataHighlight = [];
     this.zones.forEach(zone => {
       // get zones for our path
-      if (zone.path == this.config.paths['gaugePath'].path) {
-        let lower = zone.lower || this.config.minValue;
-        let upper = zone.upper || this.config.maxValue;
+      if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
+        let lower = zone.lower || this.widgetProperties.config.minValue;
+        let upper = zone.upper || this.widgetProperties.config.maxValue;
         let color: string;
         switch (zone.state) {
           case 1:
@@ -300,23 +258,23 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.highlights = myZones;
 
     // Config storage values
-    this.gaugeOptions.valueInt = this.config.numInt;
-    this.gaugeOptions.valueDec = this.config.numDecimal;
+    this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
+    this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal;
 
-    this.gaugeOptions.majorTicksInt = this.config.numInt;
-    this.gaugeOptions.majorTicksDec = this.config.numDecimal;
+    this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
+    this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
 
     this.gaugeOptions.animationDuration = this.sample - 25; // prevent data/amnimation collisions
 
     // Radial gauge type
-    switch(this.config.radialSize) {
+    switch(this.widgetProperties.config.radialSize) {
       case "capacity":
-        this.unitName = this.config.paths['gaugePath'].convertUnitTo;
+        this.unitName = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks; always drawing firts tick and using color="" does not work
         this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
         this.gaugeOptions.fontTitleSize = 60;
-        this.gaugeOptions.minValue = this.config.minValue;
-        this.gaugeOptions.maxValue = this.config.maxValue;
+        this.gaugeOptions.minValue = this.widgetProperties.config.minValue;
+        this.gaugeOptions.maxValue = this.widgetProperties.config.maxValue;
         this.gaugeOptions.barProgress = true;
         this.gaugeOptions.barWidth = 15;
 
@@ -358,14 +316,14 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         break;
 
       case "measuring":
-        this.unitName = this.config.paths['gaugePath'].convertUnitTo;
-        let calculatedMajorTicks = this.calculateMajorTicks(this.config.minValue, this.config.maxValue);
+        this.unitName = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
+        let calculatedMajorTicks = this.calculateMajorTicks(this.widgetProperties.config.minValue, this.widgetProperties.config.maxValue);
 
         this.gaugeOptions.colorTitle = this.colorStrokeTicks = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorTitle;
 
         this.gaugeOptions.fontTitleSize = 20;
-        this.gaugeOptions.minValue = this.config.minValue;
-        this.gaugeOptions.maxValue = this.config.maxValue;
+        this.gaugeOptions.minValue = this.widgetProperties.config.minValue;
+        this.gaugeOptions.maxValue = this.widgetProperties.config.maxValue;
         this.gaugeOptions.barProgress = true;
         this.gaugeOptions.barWidth = 15;
 
@@ -408,9 +366,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
       case "marineCompass":
         // overwrite min/max/unit to make sure we don't limit
-        this.config.minValue = 0;
-        this.config.maxValue = 360;
-        this.config.paths["gaugePath"].convertUnitTo = "deg";
+        this.widgetProperties.config.minValue = 0;
+        this.widgetProperties.config.maxValue = 360;
+        this.widgetProperties.config.paths["gaugePath"].convertUnitTo = "deg";
         this.unitName = null;
 
 
@@ -433,7 +391,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.exactTicks = false;
         this.gaugeOptions.strokeTicks = false;
 
-        this.gaugeOptions.majorTicks = this.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.majorTicks = this.widgetProperties.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
         this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;
         this.gaugeOptions.minorTicks = 22;
@@ -462,9 +420,9 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
 
       case "baseplateCompass":
         // overwrite min/max/unit to make sure we don't limit
-        this.config.minValue = 0;
-        this.config.maxValue = 360;
-        this.config.paths["gaugePath"].convertUnitTo = "deg";
+        this.widgetProperties.config.minValue = 0;
+        this.widgetProperties.config.maxValue = 360;
+        this.widgetProperties.config.paths["gaugePath"].convertUnitTo = "deg";
         this.unitName = null;
 
         this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorUnits;
@@ -485,7 +443,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         this.gaugeOptions.startAngle = 180;
         this.gaugeOptions.exactTicks = false;
         this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = this.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
+        this.gaugeOptions.majorTicks = this.widgetProperties.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
         this.gaugeOptions.numbersMargin = 3;
         this.gaugeOptions.fontNumbersSize = 15;
         this.gaugeOptions.minorTicks = 22;

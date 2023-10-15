@@ -1,34 +1,11 @@
 import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { MatDialog } from '@angular/material/dialog';
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-
 import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
 import { AppSettingsService } from '../app-settings.service';
 import { NotificationsService } from '../notifications.service';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-
-
-const defaultConfig: IWidgetSvcConfig = {
-  displayName: null,
-  filterSelfPaths: true,
-  paths: {
-    "boolPath": {
-      description: "Boolean Data",
-      path: null,
-      source: null,
-      pathType: "boolean",
-      isPathConfigurable: true,
-      convertUnitTo: "unitless"
-    }
-  },
-  putEnable: false,
-  putMomentary: false,
-  putMomentaryValue: true,
-  barColor: 'accent',
-};
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 
 
 @Component({
@@ -36,10 +13,9 @@ const defaultConfig: IWidgetSvcConfig = {
   templateUrl: './widget-button.component.html',
   styleUrls: ['./widget-button.component.scss']
 })
-export class WidgetButtonComponent implements OnInit, OnDestroy {
+export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestroy {
 
-  @Input('widgetUUID') widgetUUID: string;
-  @Input('unlockStatus') unlockStatus: boolean;
+  @Input('widgetProperties') widgetProperties!: IWidget;
   @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
   @ViewChild('accent', {static: true, read: ElementRef}) private accentElement: ElementRef;
   @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
@@ -52,9 +28,26 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
   @ViewChild('lightDiv', {static: true, read: ElementRef}) divLightElement: ElementRef;
   @ViewChild('btnLabelCanvas', {static: true, read: ElementRef}) canvasBtnTxtElement: ElementRef;
 
+  defaultConfig: IWidgetSvcConfig = {
+    displayName: 'switch label',
+    filterSelfPaths: true,
+    paths: {
+      "boolPath": {
+        description: "Boolean Data",
+        path: null,
+        source: null,
+        pathType: "boolean",
+        isPathConfigurable: true,
+        convertUnitTo: "unitless"
+      }
+    },
+    putEnable: false,
+    putMomentary: false,
+    putMomentaryValue: true,
+    barColor: 'accent',
+  };
+
   valueSub: Subscription = null;
-  activeWidget: IWidget;
-  config: IWidgetSvcConfig;
 
   // dynamics theme support
   private themeNameSub: Subscription = null;
@@ -79,25 +72,14 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
   skRequestSub = new Subscription; // Request result observer
 
   constructor(
-    public dialog:MatDialog,
     private SignalKService: SignalKService,
     private SignalkRequestsService: SignalkRequestsService,
-    private WidgetManagerService: WidgetManagerService,
     private notification: NotificationsService,
     private appSettings: AppSettingsService,
     ) {
   }
 
   ngOnInit() {
-    this.activeWidget = this.WidgetManagerService.getWidget(this.widgetUUID);
-    if (this.activeWidget.config === null) {
-        // no data, let's set some!
-      this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, defaultConfig);
-      this.config = defaultConfig; // load default config.
-    } else {
-      this.config = this.activeWidget.config;
-    }
-
     this.updateGaugeSettings();
     this.canvasButtonTxt = this.canvasBtnTxtElement.nativeElement.getContext('2d');
 
@@ -109,7 +91,7 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
   private updateGaugeSettings() {
     this.buttonColorOff = ''; //window.getComputedStyle(this.backgroundElement.nativeElement).color;
     this.buttonColorOn = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-    switch (this.config.barColor) {
+    switch (this.widgetProperties.config.barColor) {
       case "primary":
         this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
         this.buttonLabelColorOn = window.getComputedStyle(this.primaryElement.nativeElement).color;
@@ -159,9 +141,9 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
 
   private subscribePath() {
     this.unsubscribePath();
-    if (typeof(this.config.paths['boolPath'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(this.widgetProperties.config.paths['boolPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetUUID, this.config.paths['boolPath'].path, this.config.paths['boolPath'].source).subscribe(
+    this.valueSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source).subscribe(
       newValue => {
         this.state = newValue.value;
         this.updateBtnCanvas();
@@ -173,14 +155,14 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetUUID, this.config.paths['boolPath'].path)
+      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path)
     }
   }
 
   private subscribeSKRequest() {
     this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.widgetUUID) {
-        let errMsg = `Button ${this.config.displayName}: `;
+      if (requestResult.widgetUUID == this.widgetProperties.uuid) {
+        let errMsg = `Button ${this.widgetProperties.config.displayName}: `;
         if (requestResult.statusCode != 200){
           if (requestResult.message){
             errMsg += requestResult.message;
@@ -215,35 +197,15 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
     }
   }
 
-  public openWidgetSettings() {
-    let dialogRef = this.dialog.open(ModalWidgetComponent, {
-      width: '80%',
-      data: this.config
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      // save new settings
-      if (result) {
-        console.log(result);
-        this.unsubscribePath();//unsub now as we will change variables so wont know what was subbed before...
-        this.config = result;
-        this.updateGaugeSettings();
-        this.updateBtnCanvas();
-        this.WidgetManagerService.updateWidgetConfig(this.widgetUUID, this.config);
-        this.subscribePath();
-      }
-    });
-  }
-
   public handleClickDown() {
-    if (!this.config.putEnable) { return; }
+    if (!this.widgetProperties.config.putEnable) { return; }
 
-    if (!this.config.putMomentary) {
+    if (!this.widgetProperties.config.putMomentary) {
       //on/off mode. Send whatever we're not :)
       this.SignalkRequestsService.putRequest(
-        this.config.paths['boolPath'].path,
-        this.config.paths['boolPath'].source,
-        this.widgetUUID
+        this.widgetProperties.config.paths['boolPath'].path,
+        this.widgetProperties.config.paths['boolPath'].source,
+        this.widgetProperties.uuid
       );
 
       if (!this.state) {
@@ -254,12 +216,12 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
       this.pressed = true;
 
       // send it once to start
-      this.SignalkRequestsService.putRequest(this.config.paths['boolPath'].path, this.config.paths['boolPath'].source, this.widgetUUID);
+      this.SignalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
 
       //send it again every 20ms
       this.timeoutHandler = setInterval(() => {
-        this.SignalkRequestsService.putRequest(this.config.paths['boolPath'].path, this.config.paths['boolPath'].source, this.widgetUUID);
-        this.config.putMomentaryValue;
+        this.SignalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
+        this.widgetProperties.config.putMomentaryValue;
       }, 100);
 
       return;
@@ -267,14 +229,14 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
   }
 
   public handleClickUp() {
-    if (!this.config.putEnable || !this.pressed) { return; }
+    if (!this.widgetProperties.config.putEnable || !this.pressed) { return; }
 
-    if (this.config.putMomentary) {
+    if (this.widgetProperties.config.putMomentary) {
       this.pressed = false;
       clearInterval(this.timeoutHandler);
       // momentary mode
-      this.SignalkRequestsService.putRequest(this.config.paths['boolPath'].path, this.config.paths['boolPath'].source, this.widgetUUID);
-      if (!this.config.putMomentaryValue) {
+      this.SignalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
+      if (!this.widgetProperties.config.putMomentaryValue) {
         return;
       }
     }
@@ -306,10 +268,10 @@ export class WidgetButtonComponent implements OnInit, OnDestroy {
     let maxTextHeight = Math.floor(this.canvasBtnTxtElement.nativeElement.height - (this.canvasBtnTxtElement.nativeElement.height * 0.2));
     let valueText : string;
 
-    if (this.config.displayName === null) {
+    if (this.widgetProperties.config.displayName === null) {
       valueText = "";
     } else {
-      valueText = this.config.displayName;
+      valueText = this.widgetProperties.config.displayName;
     }
     //check if length of string has changed since laste time.
     if (this.currentValueLength != valueText.length) {

@@ -131,7 +131,7 @@
 ### V0.1.9
 * Updated NPM dependencies
 * Show connection lost overlay on closed websocket connection
-* Only resize Steelseries Gauges max 1 a second (helps in resizing)
+* Only resize Steelseries Gauges once a second (helps in resizing)
 * Add Frequency Units
 * Put Support! On/Off and Momentary support on boolean state
 * Request R/W token from Signal K Server

@@ -1,20 +1,15 @@
-<div class="wrapper">
+<div class="windWrapper">
         <app-svg-wind
             [compassHeading]="currentHeading"
             [trueWindAngle]="trueWindAngle"
             [trueWindSpeed]="trueWindSpeed"
             [appWindAngle]="appWindAngle"
             [appWindSpeed]="appWindSpeed"
-            [laylineAngle]="config.laylineAngle"
-            [laylineEnable]="config.laylineEnable"
-            [windSectorEnable]="config.windSectorEnable"
+            [laylineAngle]="widgetProperties.config.laylineAngle"
+            [laylineEnable]="widgetProperties.config.laylineEnable"
+            [windSectorEnable]="widgetProperties.config.windSectorEnable"
             [trueWindMinHistoric]="trueWindMinHistoric"
             [trueWindMidHistoric]="trueWindMidHistoric"
             [trueWindMaxHistoric]="trueWindMaxHistoric"
         ></app-svg-wind>
-        <div class="settingsButton" *ngIf="unlockStatus">
-            <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
-                <span class="fa-solid fa-cog"></span>
-            </button>
-        </div>
 </div>
