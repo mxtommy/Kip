@@ -5,6 +5,7 @@
 import { Component, OnInit, Input, Inject, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UntypedFormControl } from '@angular/forms';
+import { cloneDeep } from "lodash-es";
 
 import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
 import { WidgetManagerService, IWidget } from '../widget-manager.service';
@@ -111,7 +112,7 @@ export class DynamicWidgetContainerComponent implements OnInit {
         if (result.paths != undefined) {
           var OrgPaths = {...this.splitWidgetSettings.config.paths}; // keep old paths to combine with results if some paths are missing
           var CombPaths = {...OrgPaths, ...result.paths};
-          this.splitWidgetSettings.config = structuredClone(result); // copy all sub objects
+          this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
           this.splitWidgetSettings.config.paths = {...CombPaths};
         } else {
           this.splitWidgetSettings.config = structuredClone(result); // copy all sub objects

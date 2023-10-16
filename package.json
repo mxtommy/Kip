@@ -53,6 +53,8 @@
     "@types/canvas-gauges": "^2.1.2",
     "@types/jasmine": "~3.6.0",
     "@types/jasminewd2": "^2.0.9",
+    "@types/js-quantities": "^1.6.4",
+    "@types/lodash-es": "^4.17.9",
     "@types/node": "^20.8.6",
     "angular-resize-event": "^3.2.0",
     "angular-split": "^14.1.0",
@@ -86,6 +88,6 @@
     "zone.js": "~0.11.4"
   },
   "dependencies": {
-    "@types/js-quantities": "^1.6.4"
+    "lodash-es": "^4.17.21"
   }
 }
