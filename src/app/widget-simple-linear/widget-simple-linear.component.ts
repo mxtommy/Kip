@@ -38,7 +38,7 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
       }
     },
     minValue: 0,
-    maxValue: 14.4,
+    maxValue: 15,
     numInt: 1,
     numDecimal: 2,
     gaugeType: "simpleLinear", // Applied to Units label. abr = first letter only. full = full string
