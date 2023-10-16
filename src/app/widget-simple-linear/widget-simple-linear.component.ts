@@ -1,10 +1,8 @@
 import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription, sampleTime } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 
 import { SignalKService } from '../signalk.service';
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
 import { UnitsService } from '../units.service';
 import { AppSettingsService } from '../app-settings.service';
 
