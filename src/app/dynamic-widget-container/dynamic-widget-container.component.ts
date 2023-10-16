@@ -115,7 +115,7 @@ export class DynamicWidgetContainerComponent implements OnInit {
           this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
           this.splitWidgetSettings.config.paths = {...CombPaths};
         } else {
-          this.splitWidgetSettings.config = structuredClone(result); // copy all sub objects
+          this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
         }
 
         this.dynamicWidgetContainerRef.clear();
