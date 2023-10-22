@@ -1,29 +1,20 @@
-import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { Input, Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { Subscription, sampleTime } from 'rxjs';
 
-import { SignalKService } from '../signalk.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
-import { AppSettingsService } from '../app-settings.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 @Component({
   selector: 'app-widget-simple-linear',
   templateUrl: './widget-simple-linear.component.html',
   styleUrls: ['./widget-simple-linear.component.scss']
 })
-export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
-  @Input('widgetProperties') widgetProperties!: IWidget;
-  @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
-  @ViewChild('accent', {static: true, read: ElementRef}) private accentElement: ElementRef;
-  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
-  @ViewChild('primaryDark', {static: true, read: ElementRef}) private primaryDarkElement: ElementRef;
-  @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDarkElement: ElementRef;
-  @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
-  @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
-  @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
+export class WidgetSimpleLinearComponent implements DynamicWidget, OnInit, OnDestroy, OnChanges {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: "Display Name",
+    displayName: "Gauge Label",
     filterSelfPaths: true,
     paths: {
       "gaugePath": {
@@ -56,38 +47,35 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
   private valueSub$: Subscription = null;
   private sample: number = 500;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
-  constructor(
-    private signalKService: SignalKService,
-    private unitsService: UnitsService,
-    private appSettingsService: AppSettingsService, // need for theme change subscription
-  ) { }
+  constructor(public widgetBaseService: WidgetBaseService) { }
 
   ngOnInit(): void {
-    this.updateGaugeSettings();
     this.subscribePath();
-    this.subscribeTheme();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.theme) {
+      this.updateGaugeSettings();
+    }
   }
 
   updateGaugeSettings() {
-    this.barColorBackground = window.getComputedStyle(this.backgroundElement.nativeElement).color;
+    this.barColorBackground = this.theme.background;
 
     switch (this.widgetProperties.config.barColor) {
       case "primary":
-        this.barColor = getComputedStyle(this.primaryElement.nativeElement).color;
-        this.barColorGradient = getComputedStyle(this.primaryDarkElement.nativeElement).color;
+        this.barColor = this.theme.primary;
+        this.barColorGradient = this.theme.primaryDark;
         break;
 
       case "accent":
-        this.barColor = getComputedStyle(this.accentElement.nativeElement).color;
-        this.barColorGradient = getComputedStyle(this.accentDarkElement.nativeElement).color;
+        this.barColor = this.theme.accent;
+        this.barColorGradient = this.theme.accentDark;
         break;
 
       case "warn":
-        this.barColor = getComputedStyle(this.warnElement.nativeElement).color;
-        this.barColorGradient = getComputedStyle(this.warnDarkElement.nativeElement).color;
+        this.barColor = this.theme.warn;
+        this.barColorGradient = this.theme.warnDark;
         break;
     }
   }
@@ -104,64 +92,51 @@ export class WidgetSimpleLinearComponent implements OnInit, OnDestroy {
 
     if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub$ = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
-      newValue => {
-        if (newValue.value == null) {return}
 
-        // convert to unit and format value using widget settings
-        let value  = this.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value).toFixed(this.widgetProperties.config.numDecimal);
+    try {
+      this.valueSub$ = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
+        newValue => {
+          if (newValue.value == null) {return}
 
-        // Format display value using widget settings
-        let displayValue = value;
-        if (this.widgetProperties.config.numDecimal != 0){
-          this.dataValue = displayValue.padStart((this.widgetProperties.config.numInt + this.widgetProperties.config.numDecimal + 1), "0");
-        } else {
-          this.dataValue = displayValue.padStart(this.widgetProperties.config.numInt, "0");
+          // convert to unit and format value using widget settings
+          let value  = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value).toFixed(this.widgetProperties.config.numDecimal);
+
+          // Format display value using widget settings
+          let displayValue = value;
+          if (this.widgetProperties.config.numDecimal != 0){
+            this.dataValue = displayValue.padStart((this.widgetProperties.config.numInt + this.widgetProperties.config.numDecimal + 1), "0");
+          } else {
+            this.dataValue = displayValue.padStart(this.widgetProperties.config.numInt, "0");
+          }
+
+          // Format value for gauge bar
+          let gaugeValue = Number(value);
+
+          // Limit gauge bar animation overflow to gauge settings
+          if (gaugeValue >= this.widgetProperties.config.maxValue) {
+            this.gaugeValue = this.widgetProperties.config.maxValue;
+          } else if (gaugeValue <= this.widgetProperties.config.minValue) {
+            this.gaugeValue = this.widgetProperties.config.minValue;
+          } else {
+            this.gaugeValue = gaugeValue;
+          }
         }
-
-        // Format value for gauge bar
-        let gaugeValue = Number(value);
-
-        // Limit gauge bar animation overflow to gauge settings
-        if (gaugeValue >= this.widgetProperties.config.maxValue) {
-          this.gaugeValue = this.widgetProperties.config.maxValue;
-        } else if (gaugeValue <= this.widgetProperties.config.minValue) {
-          this.gaugeValue = this.widgetProperties.config.minValue;
-        } else {
-          this.gaugeValue = gaugeValue;
-        }
-      }
-    );
+      );
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   unsubscribePath() {
     if (this.valueSub$ !== null) {
       this.valueSub$.unsubscribe();
       this.valueSub$ = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
-    }
-  }
-
-  // Subscribe to theme event
-  subscribeTheme() {
-  this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
-    themeChange => {
-      setTimeout(() => {   // delay so browser getComputedStyles has time to complete theme style change.
-        this.updateGaugeSettings();
-      }, 50);
-    })
-  }
-
-  unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
     }
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
-    this.unsubscribeTheme();
   }
 
 }

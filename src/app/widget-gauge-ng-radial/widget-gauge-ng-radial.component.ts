@@ -1,41 +1,25 @@
-import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, AfterContentInit, AfterContentChecked, Pipe } from '@angular/core';
+import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { Subscription, sampleTime } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../app-settings.interfaces';
-import { AppSettingsService } from '../app-settings.service';
-import { SignalKService } from '../signalk.service';
-import { UnitsService } from '../units.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { RadialGauge, RadialGaugeOptions } from '../gauges-module/radial-gauge';
+import { WidgetBaseService } from '../widget-base.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig, IDataHighlight } from '../widgets-interface';
 
-interface IDataHighlight extends Array<{
-    from : number;
-    to : number;
-    color: string;
-  }> {};
+import { RadialGauge, RadialGaugeOptions } from '../gauges-module/radial-gauge';
 
 @Component({
   selector: 'app-widget-gauge-ng-radial',
   templateUrl: './widget-gauge-ng-radial.component.html',
   styleUrls: ['./widget-gauge-ng-radial.component.scss']
 })
-export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterContentInit, AfterContentChecked {
+export class WidgetGaugeNgRadialComponent implements DynamicWidget, OnInit, OnChanges, OnDestroy {
 
   @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('radialGauge', {static: true, read: RadialGauge}) public radialGauge: RadialGauge;
 
-  @Input('widgetProperties') widgetProperties!: IWidget;
-
-  // hack to access material-theme palette colors
-  @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
-  @ViewChild('accent', {static: true, read: ElementRef}) private accentElement: ElementRef;
-  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
-  @ViewChild('primaryDark', {static: true, read: ElementRef}) private primaryDarkElement: ElementRef;
-  @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDarkElement: ElementRef;
-  @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
-  @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
-  @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
   defaultConfig: IWidgetSvcConfig = {
     displayName: null,
@@ -66,9 +50,6 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   private valueSub$: Subscription = null;
   private sample: number = 500;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
@@ -79,41 +60,35 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
   zones: Array<IZone> = [];
   zonesSub: Subscription;
 
-  constructor(
-    private SignalKService: SignalKService,
-    private UnitsService: UnitsService,
-    private AppSettingsService: AppSettingsService, // need for theme change subscription
-  ) { }
+  constructor(public widgetBaseService: WidgetBaseService) {
+  }
 
   ngOnInit() {
-    this.subscribePath();
-    this.subscribeTheme();
+    this.subscribeDataPath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source, null, this.sample, );
     this.subscribeZones();
+
    }
 
   ngOnDestroy() {
     this.unsubscribePath();
-    this.unsubscribeTheme();
     this.unsubscribeZones();
   }
 
-  ngAfterContentInit() {
-    this.updateGaugeConfig();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.theme) {
+      this.updateGaugeConfig();
+    }
   }
 
-  ngAfterContentChecked() {
-    // this.resizeWidget();
-  }
-
-  subscribePath() {
+  public subscribeDataPath(widgetUuid: string, dataPath: string, dataSource: string, convertUnit?: string, throttleTime?: number, minDataRange?: number, maxDataRange?: number, intPlaces?: number, decimalPlaces?: number): any {
     this.unsubscribePath();
-    if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
+    if (typeof(dataPath) != 'string') { return } // nothing to sub to...
 
-    this.valueSub$ = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
+    this.valueSub$ = this.widgetBaseService.signalKService.subscribePath(widgetUuid, dataPath, dataSource).pipe(sampleTime(this.sample)).subscribe(
       newValue => {
         // Only push new values formated to gauge settings to reduce gauge paint requests
         let oldValue = this.dataValue;
-        let temp = this.formatDataValue(this.UnitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value));
+        let temp = this.formatDataValue(this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value));
         if (oldValue != temp) {
           this.dataValue = temp;
         }
@@ -121,13 +96,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         // set zone state colors
         switch (newValue.state) {
           case IZoneState.warning:
-            this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            this.gaugeOptions.colorValueText = this.theme.warnDark;
             break;
           case IZoneState.alarm:
-            this.gaugeOptions.colorValueText = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            this.gaugeOptions.colorValueText = this.theme.warnDark;
             break;
           default:
-            this.gaugeOptions.colorValueText = getComputedStyle(this.textElement.nativeElement).color;
+            this.gaugeOptions.colorValueText = this.theme.text;
 
         }
 
@@ -139,30 +114,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     if (this.valueSub$ !== null) {
       this.valueSub$.unsubscribe();
       this.valueSub$ = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
-    }
-  }
-
-   // Subscribe to theme event
-   subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-       setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.updateGaugeConfig();
-       }, 50);
-    })
-  }
-
-  unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
     }
   }
 
   // Subscribe to Zones
   subscribeZones() {
-    this.zonesSub = this.AppSettingsService.getZonesAsO().subscribe(
+    this.zonesSub = this.widgetBaseService.appSettingsService.getZonesAsO().subscribe(
       zones => {
         this.zones = zones;
         this.updateGaugeConfig();
@@ -192,10 +150,10 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
-    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits = getComputedStyle(this.textElement.nativeElement).color;
+    this.gaugeOptions.colorTitle = this.gaugeOptions.colorUnits =this.theme.text;
 
     this.gaugeOptions.colorPlate = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeOptions.colorBar = getComputedStyle(this.backgroundElement.nativeElement).color;
+    this.gaugeOptions.colorBar = this.theme.background;
     this.gaugeOptions.colorNeedleShadowUp = "";
     this.gaugeOptions.colorNeedleShadowDown = "black";
     this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
@@ -206,24 +164,24 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     // Theme colors
     switch (this.widgetProperties.config.barColor) {
       case "primary":
-        themePaletteColor = getComputedStyle(this.primaryElement.nativeElement).color;
-        themePaletteDarkColor = getComputedStyle(this.primaryDarkElement.nativeElement).color;
+        themePaletteColor = this.theme.primary;
+        themePaletteDarkColor = this.theme.primaryDark;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
         this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       case "accent":
-        themePaletteColor = getComputedStyle(this.accentElement.nativeElement).color;
-        themePaletteDarkColor = getComputedStyle(this.accentDarkElement.nativeElement).color;
+        themePaletteColor = this.theme.accent;
+        themePaletteDarkColor = this.theme.accentDark;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
         this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
         break;
 
       case "warn":
-        themePaletteColor = getComputedStyle(this.warnElement.nativeElement).color;
-        themePaletteDarkColor = getComputedStyle(this.warnDarkElement.nativeElement).color;
+        themePaletteColor = this.theme.warn;
+        themePaletteDarkColor = this.theme.warnDark;
         this.gaugeOptions.colorBarProgress = themePaletteColor;
         this.gaugeOptions.colorNeedle = themePaletteDarkColor;
         this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
@@ -243,13 +201,13 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
         let color: string;
         switch (zone.state) {
           case 1:
-            color = getComputedStyle(this.warnElement.nativeElement).color;
+            color = this.theme.warn;
             break;
           case IZoneState.alarm:
-            color = getComputedStyle(this.warnDarkElement.nativeElement).color;
+            color = this.theme.warnDark;
             break;
           default:
-            color = getComputedStyle(this.primaryElement.nativeElement).color;
+            color = this.theme.primary;
         }
 
         myZones.push({from: lower, to: upper, color: color});
@@ -264,7 +222,7 @@ export class WidgetGaugeNgRadialComponent implements OnInit, OnDestroy, AfterCon
     this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
 
-    this.gaugeOptions.animationDuration = this.sample - 25; // prevent data/amnimation collisions
+    this.gaugeOptions.animationDuration = this.sample - 25; // prevent data and amnimation delay collisions
 
     // Radial gauge type
     switch(this.widgetProperties.config.radialSize) {

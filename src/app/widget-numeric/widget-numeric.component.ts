@@ -2,18 +2,17 @@ import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewCh
 import { Subscription } from 'rxjs';
 
 import { IZoneState } from "../app-settings.interfaces";
-import { AppSettingsService } from '../app-settings.service';
-import { SignalKService } from '../signalk.service';
-import { UnitsService } from '../units.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 @Component({
   selector: 'app-widget-numeric',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss']
 })
-export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy, AfterViewChecked {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('NumWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
@@ -21,7 +20,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: null,
+    displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {
       "numericPath": {
@@ -54,22 +53,14 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
   //subs
   valueSub: Subscription = null;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
   canvasCtx;
   canvasBGCtx;
 
-  constructor(
-    private SignalKService: SignalKService,
-    private UnitsService: UnitsService,
-    private AppSettingsService: AppSettingsService, // need for theme change subscription
-    ) {
+  constructor(public widgetBaseService: WidgetBaseService) {
   }
 
   ngOnInit() {
     this.subscribePath();
-    this.subscribeTheme();
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
@@ -78,7 +69,6 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
 
   ngOnDestroy() {
     this.unsubscribePath();
-    this.unsubscribeTheme();
     if (this.flashInterval) {
       clearInterval(this.flashInterval);
       this.flashInterval = null;
@@ -111,7 +101,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     this.unsubscribePath();
     if (typeof(this.widgetProperties.config.paths['numericPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['numericPath'].path, this.widgetProperties.config.paths['numericPath'].source).subscribe(
+    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['numericPath'].path, this.widgetProperties.config.paths['numericPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue.value;
         this.IZoneState = newValue.state;
@@ -143,25 +133,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
       this.valueSub.unsubscribe();
       this.valueSub = null;
 
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['numericPath'].path);
-    }
-  }
-
-  // Subscribe to theme event
-  private subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.updateCanvas();
-        this.updateCanvasBG();
-      }, 100);
-    })
-  }
-
-  private unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['numericPath'].path);
     }
   }
 
@@ -385,7 +357,7 @@ export class WidgetNumericComponent implements OnInit, OnDestroy, AfterViewCheck
     let valText: string = null;
 
     // apply converstion
-    valConverted = this.UnitsService.convertUnit(this.widgetProperties.config.paths['numericPath'].convertUnitTo, val);
+    valConverted = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['numericPath'].convertUnitTo, val);
 
     if (!isNaN(valConverted)) { // retest as convert stuff might have returned a text string
       // apply mask

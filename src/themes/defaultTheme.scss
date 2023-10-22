@@ -7,7 +7,7 @@
 // Generate mat-material default theme palettes. Generate now so we call pull if necessary
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
-//    used for error and warning.
+//    be used for error and warning.
 $defaultTheme-primary: mat.define-palette(mat.$cyan-palette);
 $defaultTheme-accent:  mat.define-palette(mat.$blue-palette, A200, A100, A400);
 $defaultTheme-warn:    mat.define-palette(mat.$red-palette);

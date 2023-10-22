@@ -1,9 +1,8 @@
 import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { SignalKService } from '../signalk.service';
-import { AppSettingsService } from '../app-settings.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 
 @Component({
@@ -11,15 +10,15 @@ import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
   templateUrl: './widget-text-generic.component.html',
   styleUrls: ['./widget-text-generic.component.css']
 })
-export class WidgetTextGenericComponent implements OnInit, AfterViewChecked, OnDestroy {
-
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetTextGenericComponent implements DynamicWidget, OnInit, AfterViewChecked, OnDestroy {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('textGenericWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: null,
+    displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {
       "stringPath": {
@@ -42,14 +41,7 @@ export class WidgetTextGenericComponent implements OnInit, AfterViewChecked, OnD
   //subs
   valueSub: Subscription = null;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
-
-  constructor(
-    private signalKService: SignalKService,
-    private appSettingsService: AppSettingsService, // need for theme change subscription
-    ) {
+  constructor(public widgetBaseService: WidgetBaseService) {
   }
 
   ngOnInit() {
@@ -57,13 +49,11 @@ export class WidgetTextGenericComponent implements OnInit, AfterViewChecked, OnD
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
 
     this.subscribePath();
-    this.subscribeTheme();
     this.resizeWidget();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
-    this.unsubscribeTheme();
   }
 
   ngAfterViewChecked() {
@@ -89,11 +79,10 @@ export class WidgetTextGenericComponent implements OnInit, AfterViewChecked, OnD
 
   }
 
-
   subscribePath() {
     this.unsubscribePath();
     if (typeof(this.widgetProperties.config.paths['stringPath'].path) != 'string') { return } // nothing to sub to...
-    this.valueSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
+    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue.value;
         this.updateCanvas();
@@ -105,24 +94,7 @@ export class WidgetTextGenericComponent implements OnInit, AfterViewChecked, OnD
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path)
-    }
-  }
-  // Subscribe to theme event
-  subscribeTheme() {
-    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.drawTitle();
-        this.drawValue();
-      }, 100);
-    })
-  }
-
-  unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path)
     }
   }
 

@@ -5,9 +5,8 @@ import Chart from 'chart.js/auto';
 import 'chartjs-adapter-moment';
 
 import { DataSetService } from '../data-set.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
-import { AppSettingsService } from '../app-settings.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 interface IDataSetOptions {
     label: string;
@@ -20,14 +19,15 @@ interface IDataSetOptions {
 @Component({
   selector: 'app-widget-historical',
   templateUrl: './widget-historical.component.html',
-  styleUrls: ['./widget-historical.component.css']
+  styleUrls: ['./widget-historical.component.scss']
 })
-export class WidgetHistoricalComponent implements OnInit, OnDestroy {
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetHistoricalComponent implements DynamicWidget, OnInit, OnDestroy {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: null,
+    displayName: 'Display Label',
     filterSelfPaths: true,
     convertUnitTo: "unitless",
     dataSetUUID: null,
@@ -50,13 +50,9 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
   dataSetSub: Subscription = null;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
   constructor(
-    private DataSetService: DataSetService,
-    private UnitsService: UnitsService,
-    private AppSettingsService: AppSettingsService, // need for theme change subscription
+    public widgetBaseService: WidgetBaseService,
+    private dataSetService: DataSetService,
   ) { }
 
   ngOnInit() {
@@ -65,7 +61,6 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
 
     this.startChart();
     this.subscribeDataSet();
-    this.subscribeTheme();
   }
 
   private startChart() {
@@ -180,7 +175,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
       this.unsubscribeDataSet();
       if (this.widgetProperties.config.dataSetUUID === null) { return } // nothing to sub to...
 
-      this.dataSetSub = this.DataSetService.subscribeDataSet(this.widgetProperties.uuid, this.widgetProperties.config.dataSetUUID).subscribe(
+      this.dataSetSub = this.dataSetService.subscribeDataSet(this.widgetProperties.uuid, this.widgetProperties.config.dataSetUUID).subscribe(
           dataSet => {
               if (dataSet === null) {
                 return; // we will get null back if we subscribe to a dataSet before the app has started it. When it learns about it we will get first value
@@ -196,7 +191,7 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                 }
                 this.chartDataAvg.push({
                   x: dataSet[i].timestamp,
-            y: (this.UnitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].average) * invert)
+            y: (this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].average) * invert)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
@@ -212,11 +207,11 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
                   } else {
                     this.chartDataMin.push({
                         x: dataSet[i].timestamp,
-                y: (this.UnitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].minValue) * invert)
+                y: (this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].minValue) * invert)
                     });
                     this.chartDataMax.push({
                         x: dataSet[i].timestamp,
-                y: (this.UnitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].maxValue) * invert)
+                y: (this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].maxValue) * invert)
                     });
                   }
                 }
@@ -247,27 +242,8 @@ export class WidgetHistoricalComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Subscribe to theme event
-  private subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe( themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-        this.startChart()
-      }, 100);
-    })
-  }
-
-  private unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
-    }
-  }
-
   ngOnDestroy() {
     this.unsubscribeDataSet();
-    this.unsubscribeTheme();
     console.log("stopped Sub");
   }
-
 }

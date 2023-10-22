@@ -1,17 +1,18 @@
+import { DynamicWidget, ITheme } from './../widgets-interface';
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 
-import { SignalKService } from '../signalk.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
+import { IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 @Component({
   selector: 'app-widget-wind',
   templateUrl: './widget-wind.component.html',
   styleUrls: ['./widget-wind.component.css']
 })
-export class WidgetWindComponent implements OnInit, OnDestroy {
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetWindComponent implements DynamicWidget, OnInit, OnDestroy {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
   defaultConfig: IWidgetSvcConfig = {
     filterSelfPaths: true,
@@ -86,14 +87,11 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   trueWindMidHistoric: number;
   trueWindMaxHistoric: number;
 
-  windSectorObservableSub: Subscription;
+  windSectorObservableSub: Subscription = null;
 
 
-  constructor(
-    private signalKService: SignalKService,
-    private unitsService: UnitsService) {
+  constructor(public widgetBaseService: WidgetBaseService) {
   }
-
 
   ngOnInit() {
     this.startAll();
@@ -124,12 +122,12 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   subscribeHeading() {
     this.unsubscribeHeading();
     if (typeof(this.widgetProperties.config.paths['headingPath'].path) != 'string') { return } // nothing to sub to...
-    this.headingSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingPath'].path, this.widgetProperties.config.paths['headingPath'].source).subscribe(
+    this.headingSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingPath'].path, this.widgetProperties.config.paths['headingPath'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentHeading = 0;
         } else {
-          this.currentHeading = this.unitsService.convertUnit('deg', newValue.value);
+          this.currentHeading = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
         }
 
       }
@@ -140,14 +138,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindAngle();
     if (typeof(this.widgetProperties.config.paths['appWindAngle'].path) != 'string') { return } // nothing to sub to...
 
-    this.appWindAngleSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindAngle'].path, this.widgetProperties.config.paths['appWindAngle'].source).subscribe(
+    this.appWindAngleSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindAngle'].path, this.widgetProperties.config.paths['appWindAngle'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.appWindAngle = null;
           return;
         }
 
-        let converted = this.unitsService.convertUnit('deg', newValue.value);
+        let converted = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
         // 0-180+ for stb
         // -0 to -180 for port
         // need in 0-360
@@ -165,9 +163,9 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindSpeed();
     if (typeof(this.widgetProperties.config.paths['appWindSpeed'].path) != 'string') { return } // nothing to sub to...
 
-    this.appWindSpeedSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindSpeed'].path, this.widgetProperties.config.paths['appWindSpeed'].source).subscribe(
+    this.appWindSpeedSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindSpeed'].path, this.widgetProperties.config.paths['appWindSpeed'].source).subscribe(
       newValue => {
-        this.appWindSpeed = this.unitsService.convertUnit(this.widgetProperties.config.paths['appWindSpeed'].convertUnitTo, newValue.value);
+        this.appWindSpeed = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['appWindSpeed'].convertUnitTo, newValue.value);
       }
     );
   }
@@ -176,14 +174,14 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeTrueWindAngle();
     if (typeof(this.widgetProperties.config.paths['trueWindAngle'].path) != 'string') { return } // nothing to sub to...
 
-    this.trueWindAngleSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindAngle'].path, this.widgetProperties.config.paths['trueWindAngle'].source).subscribe(
+    this.trueWindAngleSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindAngle'].path, this.widgetProperties.config.paths['trueWindAngle'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.trueWindAngle = null;
           return;
         }
 
-        let converted = this.unitsService.convertUnit('deg', newValue.value);
+        let converted = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
 
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
           // 0-180+ for stb
@@ -214,9 +212,9 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     this.unsubscribeTrueWindSpeed();
     if (typeof(this.widgetProperties.config.paths['trueWindSpeed'].path) != 'string') { return } // nothing to sub to...
 
-    this.trueWindSpeedSub = this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindSpeed'].path, this.widgetProperties.config.paths['trueWindSpeed'].source).subscribe(
+    this.trueWindSpeedSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindSpeed'].path, this.widgetProperties.config.paths['trueWindSpeed'].source).subscribe(
       newValue => {
-        this.trueWindSpeed = this.unitsService.convertUnit(this.widgetProperties.config.paths['trueWindSpeed'].convertUnitTo, newValue.value);
+        this.trueWindSpeed = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['trueWindSpeed'].convertUnitTo, newValue.value);
       }
     );
   }
@@ -264,14 +262,18 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
   }
 
   stopWindSectors() {
-    this.windSectorObservableSub.unsubscribe();
+    if (this.windSectorObservableSub !== null) {
+      this.windSectorObservableSub.unsubscribe();
+      this.windSectorObservableSub = null;
+    }
+
   }
 
   unsubscribeHeading() {
     if (this.headingSub !== null) {
       this.headingSub.unsubscribe();
       this.headingSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingPath'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingPath'].path);
     }
   }
 
@@ -279,7 +281,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     if (this.appWindAngleSub !== null) {
       this.appWindAngleSub.unsubscribe();
       this.appWindAngleSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindAngle'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindAngle'].path);
     }
   }
 
@@ -287,7 +289,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     if (this.appWindSpeedSub !== null) {
       this.appWindSpeedSub.unsubscribe();
       this.appWindSpeedSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindSpeed'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['appWindSpeed'].path);
     }
   }
 
@@ -295,7 +297,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     if (this.trueWindAngleSub !== null) {
       this.trueWindAngleSub.unsubscribe();
       this.trueWindAngleSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindAngle'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindAngle'].path);
     }
   }
 
@@ -303,7 +305,7 @@ export class WidgetWindComponent implements OnInit, OnDestroy {
     if (this.trueWindSpeedSub !== null) {
       this.trueWindSpeedSub.unsubscribe();
       this.trueWindSpeedSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindSpeed'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['trueWindSpeed'].path);
     }
   }
 

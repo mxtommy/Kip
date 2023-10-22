@@ -1,6 +1,6 @@
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
-import { IWidget } from './widget-manager.service';
+import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from './units.service';
 
 export interface IConnectionConfig {

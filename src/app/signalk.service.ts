@@ -138,13 +138,13 @@ export class SignalKService {
   }
 
   subscribePath(uuid: string, path: string, source: string) {
-    //see if already subscribed, if yes return that...
+    // see if already subscribed, if yes return that...
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
       return this.pathRegister[registerIndex].observable.asObservable();
     }
 
-    //find if we already have a value for this path to return.
+    // find if we already have a value for this path to return.
     let currentValue = null;
     let state = IZoneState.normal;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
@@ -166,7 +166,7 @@ export class SignalKService {
       observable: new BehaviorSubject<pathRegistrationValue>({ value: currentValue, state: state })
     };
 
-    //register
+    // register
     this.pathRegister.push(newRegister);
     // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
     pathIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));

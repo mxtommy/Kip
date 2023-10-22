@@ -1,18 +1,19 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from './../widget-base.service';
 import { TimersService } from '../timers.service';
 import { IZoneState } from "../app-settings.interfaces";
-import { AppSettingsService } from '../app-settings.service';
 
 @Component({
   selector: 'app-widget-race-timer',
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss']
 })
-export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetRaceTimerComponent implements DynamicWidget, OnInit, OnDestroy, AfterViewChecked {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('raceTimerWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
@@ -33,27 +34,20 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
 
   timerSub: Subscription = null;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
   canvasCtx;
   canvasBGCtx;
 
 
-  constructor(
-    private AppSettingsService: AppSettingsService, // need for theme change
-    private TimersService: TimersService
-  ) { }
+  constructor(private TimersService: TimersService) { }
 
   ngOnInit(): void {
     this.subscribeTimer();
-    this.subscribeTheme();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
   }
 
   ngOnDestroy() {
     this.unsubscribeTimer();
-    this.unsubscribeTheme();
     if (this.flashInterval) {
       clearInterval(this.flashInterval);
       this.flashInterval = null;
@@ -116,25 +110,6 @@ export class WidgetRaceTimerComponent implements OnInit, OnDestroy, AfterViewChe
         this.updateCanvas();
       }
     );
-  }
-
-
-  // Subscribe to theme event
-  subscribeTheme() {
-    this.themeNameSub = this.AppSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.updateCanvas();
-        this.updateCanvasBG();
-      }, 100);
-    })
-  }
-
-  unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
-    }
   }
 
   unsubscribeTimer() {

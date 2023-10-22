@@ -2,10 +2,10 @@ import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@ang
 import { Subscription } from 'rxjs';
 import { MatButton } from '@angular/material/button';
 
-import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService, skRequest } from '../signalk-requests.service';
-import { WidgetManagerService, IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
+import { WidgetManagerService} from '../widget-manager.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 const defaultPpreferedDisplayMode = {
   wind: 'windAngleApparent',
@@ -39,8 +39,9 @@ const timeoutBlink = 250;
   templateUrl: './widget-autopilot.component.html',
   styleUrls: ['./widget-autopilot.component.scss'],
 })
-export class WidgetAutopilotComponent implements OnInit, OnDestroy {
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestroy {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
   // AP keypad
   @ViewChild('powerBtn') powerBtn: MatButton;
@@ -59,16 +60,6 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   // AP Screen
   @ViewChild('appSvgAutopilot') apScreen : any;
-
-  // hack to access material-theme palette colors
-  @ViewChild('primary') private primaryElement: ElementRef;
-  @ViewChild('accent') private accentElement: ElementRef;
-  @ViewChild('warn') private warnElement: ElementRef;
-  @ViewChild('primaryDark') private primaryDarkElement: ElementRef;
-  @ViewChild('accentDark') private accentDarkElement: ElementRef;
-  @ViewChild('warnDark') private warnDarkElement: ElementRef;
-  @ViewChild('background') private backgroundElement: ElementRef;
-  @ViewChild('text') private textElement: ElementRef;
 
   defaultConfig: IWidgetSvcConfig = {
     displayName: 'N2k Autopilot',
@@ -206,11 +197,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
 
   constructor(
-    private SignalKService: SignalKService,
-    private SignalkRequestsService: SignalkRequestsService,
-    private UnitsService: UnitsService,
-    private widgetManagerService: WidgetManagerService
-  ) { }
+    public widgetBaseService: WidgetBaseService,
+    public signalkRequestsService: SignalkRequestsService,
+    public widgetManagerService: WidgetManagerService) { }
 
   ngOnInit() {
     if (this.widgetProperties.config.autoStart) {
@@ -252,7 +241,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   subscribeAPNotification() {
     if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
-    this.skApNotificationSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
+    this.skApNotificationSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
       newValue => {
 
           if (!newValue.value == null) {
@@ -267,12 +256,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.skApNotificationSub !== null) {
       this.skApNotificationSub.unsubscribe();
       this.skApNotificationSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path);
     }
   }
 
   subscribeSKRequest() {
-    this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
+    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         this.commandReceived(requestResult);
       }
@@ -289,12 +278,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   subscribeAPTargetAppWind() {
     this.unsubscribeAPTargetAppWind();
     if (typeof(this.widgetProperties.config.paths['apTargetWindAngleApp'].path) != 'string') { return } // nothing to sub to...
-    this.apTargetAppWindSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apTargetWindAngleApp'].path, this.widgetProperties.config.paths['apTargetWindAngleApp'].source).subscribe(
+    this.apTargetAppWindSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apTargetWindAngleApp'].path, this.widgetProperties.config.paths['apTargetWindAngleApp'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentAPTargetAppWind = 0;
         } else {
-          this.currentAPTargetAppWind = this.UnitsService.convertUnit('deg', newValue.value);
+          this.currentAPTargetAppWind = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
         }
       }
     );
@@ -304,13 +293,13 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.apTargetAppWindSub !== null) {
       this.apTargetAppWindSub.unsubscribe();
       this.apTargetAppWindSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apTargetWindAngleApp'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apTargetWindAngleApp'].path);
     }
   }
 
   subscribeAPState() {
     if (typeof(this.widgetProperties.config.paths['apState'].path) != 'string') { return } // nothing to sub to...
-    this.apStateSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apState'].path, this.widgetProperties.config.paths['apState'].source).subscribe(
+    this.apStateSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apState'].path, this.widgetProperties.config.paths['apState'].source).subscribe(
       newValue => {
         this.currentAPState = newValue.value;
         this.SetKeyboardMode(this.currentAPState);
@@ -322,20 +311,20 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.apStateSub !== null) {
       this.apStateSub.unsubscribe();
       this.apStateSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apState'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apState'].path);
     }
   }
 
   subscribeHeading() {
     this.unsubscribeHeading();
     if (typeof(this.widgetProperties.config.paths['headingMag'].path) != 'string') { return } // nothing to sub to...
-    this.headingSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingMag'].path, this.widgetProperties.config.paths['headingMag'].source).subscribe(
+    this.headingSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingMag'].path, this.widgetProperties.config.paths['headingMag'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentHeading = 0;
         } else {
 
-          this.currentHeading = this.UnitsService.convertUnit('deg', newValue.value);
+          this.currentHeading = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
         }
 
       }
@@ -346,7 +335,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.headingSub !== null) {
       this.headingSub.unsubscribe();
       this.headingSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingMag'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['headingMag'].path);
     }
   }
 
@@ -354,14 +343,14 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.unsubscribeAppWindAngle();
     if (typeof(this.widgetProperties.config.paths['windAngleApparent'].path) != 'string') { return } // nothing to sub to...
 
-    this.appWindAngleSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['windAngleApparent'].path, this.widgetProperties.config.paths['windAngleApparent'].source).subscribe(
+    this.appWindAngleSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['windAngleApparent'].path, this.widgetProperties.config.paths['windAngleApparent'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentAppWindAngle = null;
           return;
         }
 
-        let converted = this.UnitsService.convertUnit('deg', newValue.value);
+        let converted = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
         // 0-180+ for stb
         // -0 to -180 for port
         // need in 0-360
@@ -379,20 +368,20 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.appWindAngleSub !== null) {
       this.appWindAngleSub.unsubscribe();
       this.appWindAngleSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['windAngleApparent'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['windAngleApparent'].path);
     }
   }
 
   subscribeRudder() {
     this.unsubscribeRudder();
     if (typeof(this.widgetProperties.config.paths['rudderAngle'].path) != 'string') { return } // nothing to sub to...
-    this.rudderSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['rudderAngle'].path, this.widgetProperties.config.paths['rudderAngle'].source).subscribe(
+    this.rudderSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['rudderAngle'].path, this.widgetProperties.config.paths['rudderAngle'].source).subscribe(
       newValue => {
         if (newValue.value === null) {
           this.currentRudder = 0;
         } else {
 
-          this.currentRudder = this.UnitsService.convertUnit('deg', newValue.value);
+          this.currentRudder = this.widgetBaseService.unitsService.convertUnit('deg', newValue.value);
         }
 
       }
@@ -403,7 +392,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     if (this.rudderSub !== null) {
       this.rudderSub.unsubscribe();
       this.rudderSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['rudderAngle'].path);
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['rudderAngle'].path);
     }
   }
 
@@ -568,7 +557,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   sendCommand(cmdAction) {
-    let requestId = this.SignalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
+    let requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
     this.apScreen.activityIconVisibility = "visible";
     setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
 

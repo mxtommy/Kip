@@ -1,22 +1,19 @@
+import { WidgetBaseService } from './../widget-base.service';
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-
-import { SignalKService } from '../signalk.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
-import { UnitsService } from '../units.service';
-
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
 
 @Component({
   selector: 'app-widget-gauge',
   templateUrl: './widget-gauge.component.html',
   styleUrls: ['./widget-gauge.component.css']
 })
-export class WidgetGaugeComponent implements OnInit, OnDestroy {
-
-  @Input('widgetProperties') widgetProperties!: IWidget;
+export class WidgetGaugeComponent implements DynamicWidget, OnInit, OnDestroy {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: null,
+    displayName: "Gauge Label",
     filterSelfPaths: true,
     paths: {
       "gaugePath": {
@@ -41,9 +38,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
   dataValue: any = null;
   valueSub: Subscription = null;
 
-  constructor(
-    private SignalKService: SignalKService,
-    private UnitsService: UnitsService) {
+  constructor(private widgetBaseService: WidgetBaseService) {
   }
 
   ngOnInit() {
@@ -59,9 +54,9 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
     this.unsubscribePath();
     if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).subscribe(
+    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).subscribe(
       newValue => {
-        this.dataValue = this.UnitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value);
+        this.dataValue = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value);
       }
     );
   }
@@ -70,7 +65,7 @@ export class WidgetGaugeComponent implements OnInit, OnDestroy {
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
     }
   }
 }

@@ -4,7 +4,6 @@ canvas {
   left: 0;
 }
 
-
 .dateGenericWrapper {
     position: relative;
     width: 100%;
@@ -14,7 +13,6 @@ canvas {
     position: absolute;
     top: 5%;
     left: 5%;
-
 }
 
 .dateGenericValue {

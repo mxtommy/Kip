@@ -1,39 +1,3 @@
-@use '@angular/material' as mat;
-
-@mixin widget-button-theme($theme) {
-
-  $ngGauge: map-get($theme, ngGauge);
-  $themeForeground: map-get($theme, foreground);
-  $themeBackground: map-get($theme, background);
-
-  app-widget-button {
-    .primary {
-      color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceLight);
-    }
-    .accent {
-      color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceLight);
-    }
-    .warn {
-      color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceLight);
-    }
-    .primaryDark {
-      color: mat.get-color-from-palette($ngGauge, primary-gaugeFaceDark);
-    }
-    .accentDark {
-      color: mat.get-color-from-palette($ngGauge, accent-gaugeFaceDark);
-    }
-    .warnDark {
-      color: mat.get-color-from-palette($ngGauge, warn-gaugeFaceDark);
-    }
-    .background {
-      color: mat.get-color-from-palette($themeForeground, divider);
-    }
-    .text {
-      color: mat.get-color-from-palette($themeForeground, text);
-    }
-  }
-}
-
 .switchWrapper {
   position: relative;
   margin: 0px;

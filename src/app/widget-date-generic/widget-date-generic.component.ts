@@ -1,25 +1,25 @@
+import { WidgetBaseService } from './../widget-base.service';
 import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { Subscription } from 'rxjs';
 
-import { SignalKService } from '../signalk.service';
-import { AppSettingsService } from '../app-settings.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
 
 @Component({
   selector: 'app-widget-date-generic',
   templateUrl: './widget-date-generic.component.html',
   styleUrls: ['./widget-date-generic.component.css']
 })
-export class WidgetDateGenericComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class WidgetDateGenericComponent implements DynamicWidget, OnInit, AfterViewChecked, OnDestroy {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
-  @Input('widgetProperties') widgetProperties!: IWidget;
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: null,
+    displayName: 'Time Label',
     filterSelfPaths: true,
     paths: {
       'stringPath': {
@@ -34,12 +34,8 @@ export class WidgetDateGenericComponent implements OnInit, AfterViewChecked, OnD
     dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
   };
 
-  activeWidget: IWidget;
-
   dataValue: any = null;
-
   dataTimestamp: number = Date.now();
-
   valueFontSize = 1;
 
   // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -50,14 +46,7 @@ export class WidgetDateGenericComponent implements OnInit, AfterViewChecked, OnD
   // subs
   valueSub: Subscription = null;
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
-
-  constructor(
-    private signalKService: SignalKService,
-    private appSettingsService: AppSettingsService, // need for theme change subscription
-    ) {
+  constructor(private widgetBaseService: WidgetBaseService) {
   }
 
   ngOnInit() {
@@ -65,13 +54,11 @@ export class WidgetDateGenericComponent implements OnInit, AfterViewChecked, OnD
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
 
     this.subscribePath();
-    this.subscribeTheme();
     this.resizeWidget();
   }
 
   ngOnDestroy() {
     this.unsubscribePath();
-    this.unsubscribeTheme();
   }
 
   ngAfterViewChecked() {
@@ -103,8 +90,7 @@ export class WidgetDateGenericComponent implements OnInit, AfterViewChecked, OnD
     this.unsubscribePath();
     if (typeof(this.widgetProperties.config.paths['stringPath'].path) != 'string') { return; } // nothing to sub to...
 
-    this.valueSub = this.signalKService
-      .subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
+    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
       newValue => {
         this.dataValue = newValue.value;
         this.updateCanvas();
@@ -116,24 +102,7 @@ export class WidgetDateGenericComponent implements OnInit, AfterViewChecked, OnD
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path);
-    }
-  }
-  // Subscribe to theme event
-  subscribeTheme() {
-    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.drawTitle();
-        this.drawValue();
-      }, 100);
-    });
-  }
-
-  unsubscribeTheme() {
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path);
     }
   }
 

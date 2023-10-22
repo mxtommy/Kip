@@ -177,7 +177,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     AlarmMenuComponent,
     SettingsNotificationsComponent,
     DataBrowserComponent,
-    DataBrowserRowComponent,
+    DataBrowserRowComponent
   ],
   imports: [
     BrowserModule,

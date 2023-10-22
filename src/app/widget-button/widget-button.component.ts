@@ -1,11 +1,10 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { SignalKService } from '../signalk.service';
 import { SignalkRequestsService } from '../signalk-requests.service';
-import { AppSettingsService } from '../app-settings.service';
 import { NotificationsService } from '../notifications.service';
-import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
+import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { WidgetBaseService } from '../widget-base.service';
 
 
 @Component({
@@ -13,23 +12,16 @@ import { IWidget, IWidgetSvcConfig } from '../widget-manager.service';
   templateUrl: './widget-button.component.html',
   styleUrls: ['./widget-button.component.scss']
 })
-export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, OnDestroy, AfterViewChecked {
+  @Input() theme!: ITheme;
+  @Input() widgetProperties!: IWidget;
 
-  @Input('widgetProperties') widgetProperties!: IWidget;
-  @ViewChild('primary', {static: true, read: ElementRef}) private primaryElement: ElementRef;
-  @ViewChild('accent', {static: true, read: ElementRef}) private accentElement: ElementRef;
-  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
-  @ViewChild('primaryDark', {static: true, read: ElementRef}) private primaryDarkElement: ElementRef;
-  @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDarkElement: ElementRef;
-  @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDarkElement: ElementRef;
-  @ViewChild('background', {static: true, read: ElementRef}) private backgroundElement: ElementRef;
-  @ViewChild('text', {static: true, read: ElementRef}) private textElement: ElementRef;
   @ViewChild('btnDiv', {static: true, read: ElementRef}) divBtnElement: ElementRef;
   @ViewChild('lightDiv', {static: true, read: ElementRef}) divLightElement: ElementRef;
   @ViewChild('btnLabelCanvas', {static: true, read: ElementRef}) canvasBtnTxtElement: ElementRef;
 
   defaultConfig: IWidgetSvcConfig = {
-    displayName: 'switch label',
+    displayName: 'Switch Label',
     filterSelfPaths: true,
     paths: {
       "boolPath": {
@@ -48,9 +40,6 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
   };
 
   valueSub: Subscription = null;
-
-  // dynamics theme support
-  private themeNameSub: Subscription = null;
 
   public buttonBorberColorOn: string = "";
   public buttonColorOn: string = "";
@@ -72,57 +61,61 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
   skRequestSub = new Subscription; // Request result observer
 
   constructor(
-    private SignalKService: SignalKService,
+    private widgetBaseService: WidgetBaseService,
     private SignalkRequestsService: SignalkRequestsService,
-    private notification: NotificationsService,
-    private appSettings: AppSettingsService,
+    private notification: NotificationsService
     ) {
   }
 
   ngOnInit() {
-    this.updateGaugeSettings();
     this.canvasButtonTxt = this.canvasBtnTxtElement.nativeElement.getContext('2d');
 
     this.subscribePath();
     this.subscribeSKRequest();
-    this.subscribeTheme();
   }
 
   private updateGaugeSettings() {
-    this.buttonColorOff = ''; //window.getComputedStyle(this.backgroundElement.nativeElement).color;
-    this.buttonColorOn = window.getComputedStyle(this.backgroundElement.nativeElement).color;
+    this.buttonColorOff = ''; //this.theme.background;
+    this.buttonColorOn = this.theme.background;
     switch (this.widgetProperties.config.barColor) {
       case "primary":
-        this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-        this.buttonLabelColorOn = window.getComputedStyle(this.primaryElement.nativeElement).color;
-        this.buttonBorberColorOff = window.getComputedStyle(this.primaryElement.nativeElement).color;
-        this.buttonBorberColorOn = window.getComputedStyle(this.primaryDarkElement.nativeElement).color;
-        this.lightColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-        this.lightColorOn = window.getComputedStyle(this.primaryDarkElement.nativeElement).color;
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.primary;
+        this.buttonBorberColorOff = this.theme.primary;
+        this.buttonBorberColorOn = this.theme.primaryDark;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.primaryDark;
         break;
 
       case "accent":
-        this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-        this.buttonLabelColorOn = window.getComputedStyle(this.accentElement.nativeElement).color;
-        this.buttonBorberColorOff = window.getComputedStyle(this.accentElement.nativeElement).color;
-        this.buttonBorberColorOn = window.getComputedStyle(this.accentDarkElement.nativeElement).color;
-        this.lightColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-        this.lightColorOn =  window.getComputedStyle(this.accentDarkElement.nativeElement).color;
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.accent;
+        this.buttonBorberColorOff = this.theme.accent;
+        this.buttonBorberColorOn = this.theme.accentDark;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn =  this.theme.accentDark;
         break;
 
       case "warn":
-        this.buttonLabelColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-        this.buttonLabelColorOn = window.getComputedStyle(this.warnElement.nativeElement).color;
-        this.buttonBorberColorOff = window.getComputedStyle(this.warnElement.nativeElement).color;
-        this.buttonBorberColorOn = window.getComputedStyle(this.warnDarkElement.nativeElement).color;
-        this.lightColorOff = window.getComputedStyle(this.backgroundElement.nativeElement).color;
-        this.lightColorOn = window.getComputedStyle(this.warnDarkElement.nativeElement).color;
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.warn;
+        this.buttonBorberColorOff = this.theme.warn;;
+        this.buttonBorberColorOn = this.theme.warnDark;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.warnDark;
         break;
     }
   }
 
   ngAfterViewChecked() {
     this.resizeWidget();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.theme) {
+      this.updateGaugeSettings();
+      this.updateBtnCanvas();
+    }
   }
 
   private resizeWidget() {
@@ -143,7 +136,7 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
     this.unsubscribePath();
     if (typeof(this.widgetProperties.config.paths['boolPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.SignalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source).subscribe(
+    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source).subscribe(
       newValue => {
         this.state = newValue.value;
         this.updateBtnCanvas();
@@ -155,7 +148,7 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
     if (this.valueSub !== null) {
       this.valueSub.unsubscribe();
       this.valueSub = null;
-      this.SignalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path)
+      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path)
     }
   }
 
@@ -177,24 +170,6 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
 
   private unsubscribeSKRequest() {
     this.skRequestSub.unsubscribe();
-  }
-
-  // Subscribe to theme event
-  private subscribeTheme() {
-    this.themeNameSub = this.appSettings.getThemeNameAsO().subscribe(
-      themeChange => {
-        setTimeout(() => {   // delay so browser getComputedStyles has time to complete theme style change.
-          this.updateGaugeSettings();
-          this.updateBtnCanvas();
-        },50);
-      })
-  }
-
-  private unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
-    }
   }
 
   public handleClickDown() {
@@ -245,7 +220,6 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
   ngOnDestroy() {
     this.unsubscribePath();
     this.unsubscribeSKRequest();
-    this.unsubscribeTheme();
   }
 
   /* ******************************************************************************************* */
@@ -299,7 +273,7 @@ export class WidgetButtonComponent implements OnInit, AfterViewChecked, OnDestro
     this.canvasButtonTxt.font = this.valueFontSize.toString() + "px Arial";
     this.canvasButtonTxt.textAlign = "center";
     this.canvasButtonTxt.textBaseline="middle";
-    this.canvasButtonTxt.fillStyle = window.getComputedStyle(this.textElement.nativeElement).color;
+    this.canvasButtonTxt.fillStyle = this.theme.text;
     this.canvasButtonTxt.fillText(valueText,this.canvasBtnTxtElement.nativeElement.width/2,(this.canvasBtnTxtElement.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 

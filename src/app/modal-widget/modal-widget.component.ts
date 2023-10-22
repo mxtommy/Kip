@@ -5,7 +5,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { IUnitGroup } from '../units.service';
 import { SignalKService } from '../signalk.service';
 import { DataSetService, IDataSet } from '../data-set.service';
-import { IWidgetSvcConfig } from '../widget-manager.service';
+import { IWidgetSvcConfig } from '../widgets-interface';
 
 
 @Component({
