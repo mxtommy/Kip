@@ -125,6 +125,7 @@ Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and a
 
 # Feature Ideas
  * AIS Widget - Help Wanted
+ * Fuel Consumption Widget
  * GPS information Widget - Help Wanted
  * Improved Metadata configuration
  * Improved Zones support
