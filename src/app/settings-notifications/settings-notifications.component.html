@@ -1,14 +1,12 @@
-<form name="notificationSetting">
-  <mat-card>
-    <mat-card-title>
-      Server Notifications
-    </mat-card-title>
-    <mat-card-subtitle>
-      Notifications are a special type of data sent from Signal K and displayed in the
+<div class="mat-typography">
+  <form name="notificationSetting">
+
+      <h1>Server Notifications</h1>
+
+      <p class="mat-card-subtitle">Notifications are a special type of data sent from Signal K and displayed in the
       notification menu. They are meant to alert or inform operators. Set server
-      notification preferences such as types of messages to display and audio prompts.
-    </mat-card-subtitle>
-    <mat-card-content>
+      notification preferences such as types of messages to display and audio prompts.</p>
+
       <mat-slide-toggle name="disableNotifications" [(ngModel)]="notificationConfig.disableNotifications" [ngModelOptions]="{standalone: true}">Disable All Notifications</mat-slide-toggle>
       <mat-accordion>
         <mat-expansion-panel expanded="true">
@@ -44,10 +42,10 @@
           <mat-checkbox [(ngModel)]="notificationConfig.sound.muteEmergency" [ngModelOptions]="{standalone: true}">Disable <b>Emergency Severity</b> notifications</mat-checkbox>
         </mat-expansion-panel>
       </mat-accordion>
-    </mat-card-content>
+
     <mat-divider inset></mat-divider>
-    <mat-card-actions align="end">
+
       <button mat-raised-button color="accent" (click)='saveNotificationsSettings()'>Save</button>
-    </mat-card-actions>
-  </mat-card>
+
 </form>
+</div>

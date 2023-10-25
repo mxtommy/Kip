@@ -19,7 +19,7 @@ import { compare } from 'compare-versions';
 @Component({
   selector: 'app-settings-signalk',
   templateUrl: './settings-signalk.component.html',
-  styleUrls: ['./settings-signalk.component.css'],
+  styleUrls: ['./settings-signalk.component.scss'],
 })
 
 export class SettingsSignalkComponent implements OnInit {

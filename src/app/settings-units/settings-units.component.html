@@ -1,12 +1,11 @@
-<form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster">
-  <mat-card>
-    <mat-card-title>
-      Application Default Units
-    </mat-card-title>
-    <mat-card-subtitle>
-      Set the default units preferences per types of unit groups. The values will be automatically converted for display.
-    </mat-card-subtitle>
-    <mat-card-content>
+<div class="mat-typography">
+
+<form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster" style="height: 100%;">
+
+      <h1>Application Default Units</h1>
+
+      <p class="mat-card-subtitle">Set the default units preferences per types of unit groups. The values will be automatically converted for display.</p>
+
       <mat-form-field class="UnitSettings" *ngFor="let unitType of defaultUnits | keyvalue">
         <mat-select
           [placeholder] = "unitType.key"
@@ -15,10 +14,10 @@
           <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit.measure" >{{ unit.description }}</mat-option>
         </mat-select>
       </mat-form-field>
-    </mat-card-content>
+
     <mat-divider inset></mat-divider>
-    <mat-card-actions align="end">
+
       <button mat-raised-button color="accent" type="submit" [disabled]="!formUnitMaster.valid">Save</button>
-    </mat-card-actions>
-  </mat-card>
+
 </form>
+</div>

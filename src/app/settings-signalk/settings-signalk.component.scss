@@ -1,3 +1,27 @@
+@use '@angular/material' as mat;
+
+@mixin theme-settings-data($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  DIV.serverStatus {
+    width: 100%;
+    background-color: $accent;
+    margin-top: 10px;
+    padding: 10px;
+  }
+}
+
+.serverStatus {
+  width: 100%;
+  background-color: red;
+  margin-top: 20px;
+  padding: 10px;
+}
+
 .connectUrlInput {
   width: 100%;
 }

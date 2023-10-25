@@ -1,52 +1,42 @@
-<form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
-  <mat-card>
-      <mat-card-title>
-        Settings
-      </mat-card-title>
-      <mat-card-subtitle>
-        Set server connection properties, Sign in credential and manage Device Authorisation token.
-      </mat-card-subtitle>
-      <mat-card-content>
-        <mat-form-field class="connectUrlInput">
-          <mat-label>Signal K URL</mat-label>
-          <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
-          <mat-error>
-            Valid URL is required. Ex. "https://demo.signalK.com" or "http://my.server.com:3000"
-          </mat-error>
-        </mat-form-field>
-        <br/>
-        <mat-slide-toggle name="useSharedConfigToggle" #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
-          Enable user Sign in and configuration sharing
-        </mat-slide-toggle>
-        <br/><br/>
-        <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
-          Set Sign in credentials
+<div class="mat-typography">
+  <form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
+    <h1>Settings</h1>
+    <p class="mat-card-subtitle">Set server connection properties, Sign in credential and manage Device Authorisation token.</p>
+    <mat-form-field class="connectUrlInput">
+      <mat-label>Signal K URL</mat-label>
+      <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
+      <mat-error>
+        Valid URL is required. Ex. "https://demo.signalK.com" or "http://my.server.com:3000"
+      </mat-error>
+    </mat-form-field>
+    <br/>
+    <mat-slide-toggle name="useSharedConfigToggle" #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
+      Enable user Sign in and configuration sharing
+    </mat-slide-toggle>
+    <br/><br/>
+    <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
+      Set Sign in credentials
+    </button>
+    <div style="width: 100%; text-align: end;">
+      <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">
+        <button mat-raised-button color="primary" matTooltip="Delete Signal K Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
+          Delete Token
         </button>
-      </mat-card-content>
-      <mat-divider inset></mat-divider>
-      <mat-card-actions align="end">
-        <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">
-          <button mat-raised-button color="primary" matTooltip="Delete Signal K Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
-            Delete Token
-          </button>
-        </span>
-        <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
-          <button mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANNATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotly. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
-            Request Token
-          </button>
-        </span>
-        <button mat-raised-button type="submit" color="accent" style="margin-left: 10px;" [disabled]="!connectionForm.form.valid">
-          Connect
+      </span>
+      <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
+        <button mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANNATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotly. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
+          Request Token
         </button>
-      </mat-card-actions>
-    </mat-card>
-</form>
-<br/>
-<mat-card>
-  <h3>
-    Status
-  </h3>
-  <mat-card-content>
+      </span>
+      <button mat-raised-button type="submit" color="accent" style="margin-left: 10px;" [disabled]="!connectionForm.form.valid">
+        Connect
+      </button>
+    </div>
+  </form>
+  <div class="serverStatus">
+    <h3>
+      Status
+    </h3>
     <div class="flex-container">
       <div class="flex-item-detail">
         <table>
@@ -104,7 +94,5 @@
         <canvas #lineGraph id="chart"></canvas>
       </div>
     </div>
-  </mat-card-content>
-</mat-card>
-
-<div #background class="background" style="display: none"></div>
+  </div>
+</div>

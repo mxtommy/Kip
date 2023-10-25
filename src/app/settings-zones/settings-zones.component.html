@@ -1,12 +1,7 @@
-<mat-card>
-  <mat-card-title>
-    Zones Configuration
-  </mat-card-title>
-  <mat-card-subtitle>
-    Zones can be used to inform Kip about the state the data it receives. For example
-    is a battery voltage of 12.1V normal, requires attention or is in critical state.
-  </mat-card-subtitle>
-  <mat-card-content>
+<div class="mat-typography">
+    <h1>Zones Configuration</h1>
+    <p class="mat-card-subtitle">Zones can be used to inform Kip about the state the data it receives. For example
+    is a battery voltage of 12.1V normal, requires attention or is in critical state.</p>
     <mat-form-field>
       <mat-label>Filter</mat-label>
       <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>
@@ -72,10 +67,7 @@
     <div class="paginator">
       <mat-paginator pageSize="5" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
     </div>
-  </mat-card-content>
   <mat-divider inset></mat-divider>
-  <mat-card-actions align="end">
     <button type="button" mat-raised-button color="accent" (click)="openZoneDialog()">Add</button>
-  </mat-card-actions>
-</mat-card>
+</div>
 

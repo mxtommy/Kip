@@ -1,5 +1,6 @@
-    <h3 class="mat-card-title" style="padding-left: 12px; margin-top: 16px;">Configuration Management</h3>
-    <p class="mat-card-subtitle" style="padding-left: 12px">
+<div class="mat-typography">
+<h1>Configuration Management</h1>
+    <p class="mat-card-subtitle">
       Recommended Reading: To understand configuration management and storage
       options, consult the
       <a href="/#/help">Configuration Management Help</a> section.
@@ -11,12 +12,11 @@
           (ngSubmit)="saveConfig(this.getLocalConfig(), saveConfigScope, saveConfigName)"
           #saveConfigForm="ngForm"
         >
-          <mat-card>
+
             <h3>Save</h3>
-            <mat-card-subtitle>
+
               Save current configuration to server
-            </mat-card-subtitle>
-            <mat-card-content>
+
               <div *ngIf="hasToken; else elseBlock">
                 <mat-form-field style="width: 25%;">
                   <mat-label>Scope</mat-label>
@@ -52,9 +52,9 @@
                   <p>Sign in or Device Token required</p>
                 </div>
               </ng-template>
-            </mat-card-content>
+
             <mat-divider inset></mat-divider>
-            <mat-card-actions align="end">
+
               <button
                 mat-raised-button
                 type="submit"
@@ -63,8 +63,6 @@
               >
                 Save
               </button>
-            </mat-card-actions>
-          </mat-card>
         </form>
       </div>
       <div class="flex-item">
@@ -73,12 +71,11 @@
           (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name )"
           #deleteConfigForm="ngForm"
         >
-          <mat-card>
+
             <h3>Delete</h3>
-            <mat-card-subtitle>
+
               Delete a configuration from the server
-            </mat-card-subtitle>
-            <mat-card-content>
+
               <div *ngIf="hasToken; else elseBlock">
                 <mat-form-field style="width: 95%;">
                   <mat-label>Configuration</mat-label>
@@ -96,9 +93,9 @@
                   <p>Sign in or Device Token required</p>
                 </div>
               </ng-template>
-            </mat-card-content>
+
             <mat-divider inset></mat-divider>
-            <mat-card-actions align="end">
+
               <button
                 mat-raised-button
                 type="submit"
@@ -107,18 +104,16 @@
               >
                 Delete
               </button>
-            </mat-card-actions>
-          </mat-card>
+
         </form>
       </div>
       <div class="flex-item-copy">
         <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
-          <mat-card>
+
             <h3>Copy</h3>
-            <mat-card-subtitle>
+
               Create, duplicate and overwrite configurations.
-            </mat-card-subtitle>
-            <mat-card-content>
+
               <div class="config-row">
                 <div class="config-column">
                   <label id="sources-radio-group-label">Source</label>
@@ -177,9 +172,9 @@
                   </mat-form-field>
                 </div>
               </div>
-            </mat-card-content>
+
             <mat-divider inset></mat-divider>
-            <mat-card-actions align="end">
+
               <button
                 mat-raised-button
                 type="submit"
@@ -188,17 +183,16 @@
               >
                 Copy
               </button>
-            </mat-card-actions>
-          </mat-card>
+
         </form>
       </div>
     </div>
     <div class="config-row">
-      <mat-card>
+
         <h3>Operations</h3>
-          <mat-card-subtitle>
-            Load predefined configuration or reset configurations to defaults.
-          </mat-card-subtitle>
+
+        <p class="mat-card-subtitle">Load predefined configuration or reset configurations to defaults.</p>
+
         <div class="config-operation-container">
           <div class="demo-txt">
             <span class="descriptiveTexts"
@@ -264,17 +258,16 @@
             <mat-checkbox class="example-margin" [(ngModel)]="showRawEditor">Show Editor</mat-checkbox>
           </div>
         </div>
-      </mat-card>
+
     </div>
     <div class="config-row" *ngIf="showRawEditor">
-      <mat-card>
+
         <h3>Local Configration Editor</h3>
-        <mat-card-subtitle>
+
           <i>Config is in raw json and no validation on save. Make sure you double
             check your changes, else you lose your configuration. A good choice is
             to back up first using the Save feature above first!</i>
-        </mat-card-subtitle>
-        <mat-card-content>
+
         <div style="margin-left: 10px; margin-right: 10px">
           <form (ngSubmit)="rawConfigSave('IConnectionConfig')">
             <mat-expansion-panel color="accent">
@@ -421,6 +414,6 @@
             </mat-expansion-panel>
           </form>
         </div>
-        </mat-card-content>
-      </mat-card>
+
     </div>
+  </div>

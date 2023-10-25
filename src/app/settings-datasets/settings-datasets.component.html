@@ -1,12 +1,10 @@
+<div class="mat-typography">
 <form name="existingDataSet" #existingDataSet="ngForm">
-  <mat-card>
-    <mat-card-title>
-      Datasets Configuration
-    </mat-card-title>
-    <mat-card-subtitle>
-      Create historical datasets to record data values over time and display them on charts with the Historical DataSet widget.
-    </mat-card-subtitle>
-    <mat-card-content>
+
+  <h1>Datasets Configuration</h1>
+
+  <p class="mat-card-subtitle">Create historical datasets to record data values over time and display them on charts with the Historical DataSet widget.</p>
+
 
       <mat-form-field>
         <mat-label>Filter</mat-label>
@@ -54,10 +52,10 @@
       <div class="paginator">
         <mat-paginator pageSize="5" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
       </div>
-    </mat-card-content>
+
     <mat-divider inset></mat-divider>
-    <mat-card-actions align="end">
+
       <button mat-raised-button color="accent" (click)='openDatasetModal()'>Add</button>
-    </mat-card-actions>
-  </mat-card>
+
 </form>
+</div>

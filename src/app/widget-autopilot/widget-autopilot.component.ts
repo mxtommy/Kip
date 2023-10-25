@@ -1,4 +1,4 @@
-import { ViewChild, Input, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ViewChild, Input, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton } from '@angular/material/button';
 
