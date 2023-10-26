@@ -101,16 +101,16 @@
 @import 'app/dynamic-widget-container/dynamic-widget-container.component.scss';
 @import 'app/layout-split/layout-split.component.scss';
 @import 'app/modal-path-selector/modal-path-selector.component.scss';
-@import 'app/widget-blank/widget-blank.component.scss';
-@import 'app/svg-wind/svg-wind.component.scss'; // for most svg Widget components
-@import 'app/widget-numeric/widget-numeric.component.scss';
-@import 'app/widget-race-timer/widget-race-timer.component.scss';
-@import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
 @import 'app/alarm-menu/alarm-menu.component.scss';
-@import 'app/widget-autopilot/widget-autopilot.component.scss';
-@import 'app/settings-signalk/settings-signalk.component.scss';
-@import 'app/settings-datasets/settings-datasets.component.scss';
-@import 'app/settings-config/settings-config.component.scss';
+@import 'app/settings/signalk/signalk.component.scss';
+@import 'app/settings/datasets/datasets.component.scss';
+@import 'app/settings/config/config.component.scss';
+@import 'app/widgets/widget-blank/widget-blank.component.scss';
+@import 'app/widgets/svg-wind/svg-wind.component.scss'; // for most svg Widget components
+@import 'app/widgets/widget-numeric/widget-numeric.component.scss';
+@import 'app/widgets/widget-race-timer/widget-race-timer.component.scss';
+@import 'app/widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
+@import 'app/widgets/widget-autopilot/widget-autopilot.component.scss';
 
 @mixin theme-components($theme) {
   @include mat.all-component-themes($theme);

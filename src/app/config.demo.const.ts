@@ -260,6 +260,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
         "gaugeType": "ngRadial",
         "gaugeTicks": false,
         "radialSize": "baseplateCompass",
+        "compassUseNumbers": false,
         "minValue": 0,
         "maxValue": 360,
         "numInt": 1,

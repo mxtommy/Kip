@@ -10,7 +10,7 @@ import { cloneDeep } from "lodash-es";
 
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 import { DynamicWidget, IWidget, ITheme } from '../widgets-interface';
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
+import { ModalWidgetConfigComponent } from '../modal-widget-config/modal-widget-config.component';
 import { AppSettingsService } from '../app-settings.service';
 import { WidgetManagerService } from '../widget-manager.service';
 import { WidgetListService, widgetList } from '../widget-list.service';
@@ -128,7 +128,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   }
 
   public openWidgetSettings(): void {
-    const dialogRef = this.dialog.open(ModalWidgetComponent, {
+    const dialogRef = this.dialog.open(ModalWidgetConfigComponent, {
       width: '80%',
       data: {...this.splitWidgetSettings.config}
     });

@@ -17,7 +17,7 @@ export class ResetConfigComponent implements OnInit {
     private AppSettingsService: AppSettingsService,
     private route: ActivatedRoute) { }
 
-    
+
   ngOnInit() {
     this.route.url.subscribe(url => {
       if (url[0].path == 'demo') {
