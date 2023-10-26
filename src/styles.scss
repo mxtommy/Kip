@@ -84,6 +84,9 @@
     );
 };
 
+//Import commun/shared styles
+@import 'styles-commun/settingsTabContent.scss';
+
 //Import themes
 @import 'themes/defaultTheme.scss';
 @import 'themes/signalkTheme.scss';
@@ -105,12 +108,14 @@
 @import 'app/widget-gauge-ng-radial/widget-gauge-ng-radial.component.scss';
 @import 'app/alarm-menu/alarm-menu.component.scss';
 @import 'app/widget-autopilot/widget-autopilot.component.scss';
+@import 'app/settings-signalk/settings-signalk.component.scss';
 @import 'app/settings-datasets/settings-datasets.component.scss';
 @import 'app/settings-config/settings-config.component.scss';
 
 @mixin theme-components($theme) {
   @include mat.all-component-themes($theme);
   @include app-theme($theme);
+  @include tab-content-styles();
   @include layout-split-theme($theme);
   @include dynamic-widget-container-theme($theme);
   @include modal-path-selector-theme($theme);
@@ -120,6 +125,7 @@
   @include widget-autopilot-theme($theme);
   @include svg-wind-theme($theme); // for both svg-wind and svg-autopilot
   @include alarm-menu-theme($theme);
+  @include theme-settings-sk($theme);
   @include theme-settings-data($theme);
   @include theme-settings-config($theme);
 }

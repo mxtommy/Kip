@@ -1,23 +1,18 @@
 <div class="mat-typography">
-
-<form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster" style="height: 100%;">
-
-      <h1>Application Default Units</h1>
-
-      <p class="mat-card-subtitle">Set the default units preferences per types of unit groups. The values will be automatically converted for display.</p>
-
-      <mat-form-field class="UnitSettings" *ngFor="let unitType of defaultUnits | keyvalue">
-        <mat-select
-          [placeholder] = "unitType.key"
-          [formControlName] = "unitType.key"
-          >
-          <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit.measure" >{{ unit.description }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-    <mat-divider inset></mat-divider>
-
-      <button mat-raised-button color="accent" type="submit" [disabled]="!formUnitMaster.valid">Save</button>
-
-</form>
+  <form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster" style="height: 100%;">
+    <h1>Application Default Units</h1>
+    <p class="mat-card-subtitle">Set the default units preferences per types of unit groups. The values will be automatically converted for display.</p>
+    <mat-form-field class="UnitSettings" *ngFor="let unitType of defaultUnits | keyvalue">
+      <mat-select
+        [placeholder] = "unitType.key"
+        [formControlName] = "unitType.key"
+        >
+        <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit.measure" >{{ unit.description }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="formActionFooter">
+      <mat-divider class="formActionDivider"></mat-divider>
+      <button mat-raised-button class="formActionButton" color="accent" type="submit" [disabled]="!formUnitMaster.valid">Save</button>
+    </div>
+  </form>
 </div>

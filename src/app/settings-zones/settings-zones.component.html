@@ -1,5 +1,5 @@
 <div class="mat-typography">
-    <h1>Zones Configuration</h1>
+  <h1>Zones Configuration</h1>
     <p class="mat-card-subtitle">Zones can be used to inform Kip about the state the data it receives. For example
     is a battery voltage of 12.1V normal, requires attention or is in critical state.</p>
     <mat-form-field>
@@ -67,7 +67,8 @@
     <div class="paginator">
       <mat-paginator pageSize="5" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
     </div>
-  <mat-divider inset></mat-divider>
-    <button type="button" mat-raised-button color="accent" (click)="openZoneDialog()">Add</button>
+    <div class="formActionFooter">
+      <mat-divider class="formActionDivider"></mat-divider>
+      <button type="button" mat-raised-button color="accent" class="formActionButton" (click)="openZoneDialog()">Add</button>
+    </div>
 </div>
-

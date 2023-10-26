@@ -1,25 +1,19 @@
 @use '@angular/material' as mat;
 
-@mixin theme-settings-data($theme) {
+@mixin theme-settings-sk($theme) {
   $primary: map-get($theme, primary);
   $accent: map-get($theme, accent);
   $warn: map-get($theme, warn);
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
 
-  DIV.serverStatus {
-    width: 100%;
-    background-color: $accent;
-    margin-top: 10px;
-    padding: 10px;
+  // mat.get-color-from-palette($foreground, dividers);
+  .serverStatus {
+    background-color: mat.get-color-from-palette($foreground, dividers);
+    margin-top: 20px;
+    margin: 7% 5% 0% 5%;
+    padding: 10px 20px 20px 20px;
   }
-}
-
-.serverStatus {
-  width: 100%;
-  background-color: red;
-  margin-top: 20px;
-  padding: 10px;
 }
 
 .connectUrlInput {
@@ -30,6 +24,7 @@
 }
 
 .flex-container {
+  width: 100%;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -39,7 +34,7 @@
 }
 
 .flex-item-detail {
-  flex: 0 1 350px;
+  flex: 0 0 290px;
 }
 
 .flex-item-chart {

@@ -8,6 +8,20 @@
     color: mat.get-color-from-palette($foreground, text);
     font-size: 14px;
   }
+
+  .flex-item {
+    flex: 1 1 29%;
+    background-color: mat.get-color-from-palette($foreground, dividers);
+    padding: 20px;
+    border-radius: 4px;
+  }
+
+  .flex-item-copy {
+    flex: 2 1 40%;
+    background-color: mat.get-color-from-palette($foreground, dividers);
+    padding: 10px 20px 10px 20px;
+    border-radius: 4px;
+  }
 }
 
 a {
@@ -37,7 +51,7 @@ a:link, a:visited {
 }
 
 .warningText {
-padding-left: 15px;
+  padding-left: 15px;
 }
 
 .no-token-notice {
@@ -48,24 +62,23 @@ padding-left: 15px;
 }
 
 .mat-radio-button ~ .mat-radio-button {
-margin-right: 16px;
-margin-left: 16px;
+  margin-right: 16px;
+  margin-left: 16px;
 }
 
 .config-row {
-display: flex;
-flex-direction: row;
-flex-wrap: wrap;
-width: 100%;
-margin: 10px 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .config-column {
-display: flex;
-flex-direction: column;
-flex-basis: 100%;
-flex: 1;
-margin: 10px;
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+  margin: 0px 10px 0px 10px;
 }
 
 .flex-container {
@@ -77,14 +90,6 @@ margin: 10px;
   gap: 10px;
   min-height: 100%;
   height: 100%;
-}
-
-.flex-item {
-  flex: 1 1 29%;
-}
-
-.flex-item-copy {
-  flex: 2 1 40%;
 }
 
 .sources-radio-group {
@@ -99,7 +104,7 @@ margin: 10px;
 }
 
 .select-config {
-  margin-left: 28px;
+  margin-left: 0px;
 }
 
 .btn-div {
