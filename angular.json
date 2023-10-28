@@ -29,10 +29,8 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "compare-versions",
+              "canvas-gauges",
               "rx-dom-html",
-              "chart.js",
-              "css-element-queries",
               "howler"
             ]
           },

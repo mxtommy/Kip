@@ -10,7 +10,7 @@ export interface DynamicWidget {
   widgetProperties: IWidget;
   theme: ITheme;
   defaultConfig: IWidgetSvcConfig;
-  unlockStatus?: boolean;
+  unlockStatus?: boolean; // only used by Tutorial
 }
 
 /**
@@ -42,6 +42,10 @@ export interface IWidget {
   config: IWidgetSvcConfig;
 }
 
+export interface IPathArray {
+  [key: string]: IWidgetPath;
+}
+
 /**
  * This interface defines all possible Widget configuration settings.
  * Usage: Widgets for configuration storage and Widget Manager service.
@@ -54,9 +58,7 @@ export interface IWidget {
 export interface IWidgetSvcConfig {
   displayName?: string;
   filterSelfPaths?: boolean; // widget filter self paths only?
-  paths?: {
-    [key: string]: IWidgetPaths;
-  };
+  paths?:IPathArray;
   convertUnitTo?: string;
   usage?: {
     [key: string]: string[]; // Autopilot: key should match key in paths, specifies autopilot widget possible paths for AP mode
@@ -129,8 +131,8 @@ export interface IWidgetSvcConfig {
  * }>}
  */
 export interface IDataHighlight extends Array<{
-  from : number;
-  to : number;
+  from: number;
+  to: number;
   color: string;
 }> {};
 
@@ -140,7 +142,7 @@ export interface IDataHighlight extends Array<{
  *
  * @interface IWidgetPaths
  */
-interface IWidgetPaths {
+export interface IWidgetPath {
   description: string;
   path: string | null;
   source: string | null;
