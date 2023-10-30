@@ -150,6 +150,7 @@ export interface IWidgetPath {
   pathFilter?: string;     // Future - use to filter path list ie. self.navigation.* or *.navigation.*.blabla.*
   convertUnitTo?: string;    // Convert SignalK value to specific format for display. Also used as a source to identify conversion group
   isPathConfigurable: boolean; // should we show this path in Widget Path config or is it static and hidden
+  sampleTime: number;  // Used to throttle/limit Observer emited data and reduce Angular change detection. Configure according to data type source and human perception. Value in milliseconds
   period?: number;    // Signal K - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000
   format?: Format;     // Signal K - format=[delta|full] specifies delta or full format. Default: delta
   policy?: Policy;     // Signal K - policy=[instant|ideal|fixed]. Default: ideal

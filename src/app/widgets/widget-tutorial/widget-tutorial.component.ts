@@ -1,20 +1,18 @@
-import { Component, ComponentRef, Input, OnInit, ViewContainerRef } from '@angular/core';
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
+import { Component, Input } from '@angular/core';
+import { IWidgetSvcConfig } from '../../widgets-interface';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-tutorial',
   templateUrl: './widget-tutorial.component.html',
   styleUrls: ['./widget-tutorial.component.css']
 })
-export class WidgetTutorialComponent implements DynamicWidget, OnInit {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export class WidgetTutorialComponent extends BaseWidgetComponent {
   @Input() unlockStatus: boolean;
 
   defaultConfig: IWidgetSvcConfig = {};
-  constructor() { }
-
-  ngOnInit() {
-  }
+  constructor() {
+    super();
+   }
 
 }

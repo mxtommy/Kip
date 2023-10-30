@@ -41,7 +41,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "deg"
+          convertUnitTo: "deg",
+          sampleTime: 500
         },
         "trueWindAngle": {
           description: "True Wind Angle",
@@ -49,7 +50,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "deg"
+          convertUnitTo: "deg",
+          sampleTime: 500
         },
         "trueWindSpeed": {
           description: "True Wind Speed",
@@ -57,7 +59,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "knots"
+          convertUnitTo: "knots",
+          sampleTime: 500
         },
         "appWindAngle": {
           description: "Apparent Wind Angle",
@@ -65,7 +68,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "deg"
+          convertUnitTo: "deg",
+          sampleTime: 500
         },
         "appWindSpeed": {
           description: "Apparent Wind Speed",
@@ -73,7 +77,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "knots"
+          convertUnitTo: "knots",
+          sampleTime: 500
         },
       },
       windSectorEnable: true,

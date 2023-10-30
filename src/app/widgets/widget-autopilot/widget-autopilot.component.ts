@@ -72,6 +72,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "string",
         isPathConfigurable: false,
         convertUnitTo: "",
+        sampleTime: 500
       },
       "apTargetHeadingMag": {
         description: "Autopilot Target Heading Mag",
@@ -80,6 +81,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
       "apTargetWindAngleApp": {
         description: "Autopilot Target Wind Angle Apparent",
@@ -88,6 +90,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
       "apNotifications": {
         description: "Autopilot Notifications",
@@ -96,6 +99,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "string",
         convertUnitTo: "",
         isPathConfigurable: false,
+        sampleTime: 500
       },
       "headingMag": {
         description: "Heading Magnetic",
@@ -104,6 +108,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
       "headingTrue": {
         description: "Heading True",
@@ -112,6 +117,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
       "windAngleApparent": {
         description: "Wind Angle Apparent",
@@ -120,6 +126,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
       "windAngleTrueWater": {
         description: "Wind Angle True Water",
@@ -128,6 +135,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
       "rudderAngle": {
         description: "Rudder Angle",
@@ -136,6 +144,7 @@ export class WidgetAutopilotComponent implements DynamicWidget, OnInit, OnDestro
         pathType: "number",
         convertUnitTo: "deg",
         isPathConfigurable: true,
+        sampleTime: 500
       },
     },
     usage: {

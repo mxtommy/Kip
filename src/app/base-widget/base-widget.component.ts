@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, sampleTime } from 'rxjs';
 import { SignalKService, pathRegistrationValue } from '../signalk.service';
 import { UnitsService } from '../units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
@@ -8,15 +8,7 @@ import { ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
 interface IWidgetDataStream {
   pathName: string;
   observable: Observable<pathRegistrationValue>;
-  subscription: Subscription | null;
 };
-
-// interface IWidgetDataStream extends Array<{
-//   pathName: string;
-//   observable: Observable<pathRegistrationValue>;
-//   subscription: Subscription | null;
-// }> {};
-
 
 @Component({
   template: ''
@@ -36,14 +28,15 @@ export abstract class BaseWidgetComponent {
   }
 
   protected createDataOservable(): void {
+    if (this.widgetProperties === undefined) return;
+
     Object.keys(this.widgetProperties.config.paths).forEach(pathKey => {
-      if (typeof(this.widgetProperties.config.paths[pathKey].path) != 'string' || this.widgetProperties.config.paths[pathKey].path == '') {
+      if (typeof(this.widgetProperties.config.paths[pathKey].path) != 'string' || this.widgetProperties.config.paths[pathKey].path == '' || this.widgetProperties.config.paths[pathKey].path == null) {
         return;
       } else {
         this.dataStream.push({
           pathName: pathKey,
-          observable: this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path, this.widgetProperties.config.paths[pathKey].source),
-          subscription: null
+          observable: this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path, this.widgetProperties.config.paths[pathKey].source)
         });
       }
     })
@@ -64,12 +57,12 @@ export abstract class BaseWidgetComponent {
     let pathObs = this.dataStream.find((stream: IWidgetDataStream) => {
       return stream.pathName === pathName;
     })
+
+    if (pathObs === undefined) return;
     if (this.dataSubscription == null){
-      this.dataSubscription = pathObs.observable.subscribe(observer);
-      console.log('Subscribe: ' + pathName);
+      this.dataSubscription = pathObs.observable.pipe(sampleTime(this.widgetProperties.config.paths[pathName].sampleTime)).subscribe(observer);
     } else {
       this.dataSubscription.add(pathObs.observable.subscribe(observer));
-      console.log('Subscribe Add: ' + pathName);
     }
   }
 
@@ -81,7 +74,6 @@ export abstract class BaseWidgetComponent {
         this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path);
         }
       );
-      console.log('Unsubscribed');
-    } else console.log('NOTHING TO Unsubscribed');
+    }
   }
 }

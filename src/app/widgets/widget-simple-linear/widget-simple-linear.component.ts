@@ -1,41 +1,14 @@
-import { Input, Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { Subscription, sampleTime } from 'rxjs';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
 
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
-import { WidgetBaseService } from '../../widget-base.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-simple-linear',
   templateUrl: './widget-simple-linear.component.html',
   styleUrls: ['./widget-simple-linear.component.scss']
 })
-export class WidgetSimpleLinearComponent implements DynamicWidget, OnInit, OnDestroy, OnChanges {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: "Gauge Label",
-    filterSelfPaths: true,
-    paths: {
-      "gaugePath": {
-        description: "Numeric Data",
-        path: null,
-        source: null,
-        pathType: "number",
-        isPathConfigurable: true,
-        convertUnitTo: "v"
-      }
-    },
-    minValue: 0,
-    maxValue: 15,
-    numInt: 1,
-    numDecimal: 2,
-    gaugeType: "simpleLinear", // Applied to Units label. abr = first letter only. full = full string
-    gaugeUnitLabelFormat: "full", // Applied to Units label. abr = first letter only. full = full string
-    barColor: 'accent',
-  };
-
-  // main gauge value variable
+export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
   public unitsLabel:string = "";
   public dataValue: string = "0";
   public gaugeValue: Number = 0;
@@ -43,14 +16,71 @@ export class WidgetSimpleLinearComponent implements DynamicWidget, OnInit, OnDes
   public barColorGradient: string = "";
   public barColorBackground: string = "";
 
+  constructor() {
+    super();
 
-  private valueSub$: Subscription = null;
-  private sample: number = 500;
-
-  constructor(public widgetBaseService: WidgetBaseService) { }
+    this.defaultConfig = {
+      displayName: "Gauge Label",
+      filterSelfPaths: true,
+      paths: {
+        "gaugePath": {
+          description: "Numeric Data",
+          path: null,
+          source: null,
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "v",
+          sampleTime: 500
+        }
+      },
+      minValue: 0,
+      maxValue: 15,
+      numInt: 1,
+      numDecimal: 2,
+      gaugeType: "simpleLinear", // Applied to Units label. abr = first letter only. full = full string
+      gaugeUnitLabelFormat: "full", // Applied to Units label. abr = first letter only. full = full string
+      barColor: 'accent',
+    };
+  }
 
   ngOnInit(): void {
-    this.subscribePath();
+    this.createDataOservable();
+
+    // set Units label sting based on gauge config
+    if (this.widgetProperties.config.gaugeUnitLabelFormat == "abr") {
+      //  TODO: fix label using group description for Full or measure for abr and not config conversion value as below!
+      this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
+    } else {
+      this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
+    }
+
+    this.observeDataStream('gaugePath', newValue => {
+        if (newValue.value == null) {return}
+
+        // convert to unit and format value using widget settings
+        let value  = newValue.value.toFixed(this.widgetProperties.config.numDecimal);
+
+        // Format display value using widget settings
+        let displayValue = value;
+        if (this.widgetProperties.config.numDecimal != 0){
+          this.dataValue = displayValue.padStart((this.widgetProperties.config.numInt + this.widgetProperties.config.numDecimal + 1), "0");
+        } else {
+          this.dataValue = displayValue.padStart(this.widgetProperties.config.numInt, "0");
+        }
+
+        // Format value for gauge bar
+        let gaugeValue = Number(value);
+
+        // Limit gauge bar animation overflow to gauge settings
+        if (gaugeValue >= this.widgetProperties.config.maxValue) {
+          this.gaugeValue = this.widgetProperties.config.maxValue;
+        } else if (gaugeValue <= this.widgetProperties.config.minValue) {
+          this.gaugeValue = this.widgetProperties.config.minValue;
+        } else {
+          this.gaugeValue = gaugeValue;
+        }
+      }
+    );
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -80,63 +110,7 @@ export class WidgetSimpleLinearComponent implements DynamicWidget, OnInit, OnDes
     }
   }
 
-  subscribePath() {
-    this.unsubscribePath();
-
-    // set Units label sting based on gauge config
-    if (this.widgetProperties.config.gaugeUnitLabelFormat == "abr") {
-      this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
-    } else {
-      this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
-    }
-
-    if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
-
-
-    try {
-      this.valueSub$ = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
-        newValue => {
-          if (newValue.value == null) {return}
-
-          // convert to unit and format value using widget settings
-          let value  = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value).toFixed(this.widgetProperties.config.numDecimal);
-
-          // Format display value using widget settings
-          let displayValue = value;
-          if (this.widgetProperties.config.numDecimal != 0){
-            this.dataValue = displayValue.padStart((this.widgetProperties.config.numInt + this.widgetProperties.config.numDecimal + 1), "0");
-          } else {
-            this.dataValue = displayValue.padStart(this.widgetProperties.config.numInt, "0");
-          }
-
-          // Format value for gauge bar
-          let gaugeValue = Number(value);
-
-          // Limit gauge bar animation overflow to gauge settings
-          if (gaugeValue >= this.widgetProperties.config.maxValue) {
-            this.gaugeValue = this.widgetProperties.config.maxValue;
-          } else if (gaugeValue <= this.widgetProperties.config.minValue) {
-            this.gaugeValue = this.widgetProperties.config.minValue;
-          } else {
-            this.gaugeValue = gaugeValue;
-          }
-        }
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  unsubscribePath() {
-    if (this.valueSub$ !== null) {
-      this.valueSub$.unsubscribe();
-      this.valueSub$ = null;
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
-    }
-  }
-
   ngOnDestroy() {
-    this.unsubscribePath();
+    this.unsubscribeDataOservable();
   }
-
 }

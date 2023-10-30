@@ -31,7 +31,8 @@ export class WidgetGaugeNgRadialComponent implements DynamicWidget, OnInit, OnCh
         source: null,
         pathType: "number",
         isPathConfigurable: true,
-        convertUnitTo: "unitless"
+        convertUnitTo: "unitless",
+        sampleTime: 500
       }
     },
     gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal

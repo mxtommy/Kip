@@ -1,8 +1,7 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
-import { WidgetBaseService } from '../../widget-base.service';
+import { IWidgetSvcConfig } from '../../widgets-interface';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 
 @Component({
@@ -10,26 +9,10 @@ import { WidgetBaseService } from '../../widget-base.service';
   templateUrl: './widget-text-generic.component.html',
   styleUrls: ['./widget-text-generic.component.css']
 })
-export class WidgetTextGenericComponent implements DynamicWidget, OnInit, AfterViewChecked, OnDestroy {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export class WidgetTextGenericComponent extends BaseWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('textGenericWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: 'Gauge Label',
-    filterSelfPaths: true,
-    paths: {
-      "stringPath": {
-        description: "String Data",
-        path: null,
-        source: null,
-        pathType: "string",
-        isPathConfigurable: true,
-      }
-    },
-  };
 
   dataValue: any = null;
   dataTimestamp: number = Date.now();
@@ -38,22 +21,41 @@ export class WidgetTextGenericComponent implements DynamicWidget, OnInit, AfterV
   canvasCtx;
   canvasBGCtx;
 
-  //subs
-  valueSub: Subscription = null;
+  constructor() {
+    super();
 
-  constructor(public widgetBaseService: WidgetBaseService) {
+    this.defaultConfig = {
+      displayName: 'Gauge Label',
+      filterSelfPaths: true,
+      paths: {
+        "stringPath": {
+          description: "String Data",
+          path: null,
+          source: null,
+          pathType: "string",
+          isPathConfigurable: true,
+          sampleTime: 500
+        }
+      }
+    };
   }
 
   ngOnInit() {
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
 
-    this.subscribePath();
+    this.createDataOservable();
+
+    this.observeDataStream('stringPath', newValue => {
+      this.dataValue = newValue.value;
+      this.updateCanvas();
+    });
+
     this.resizeWidget();
   }
 
   ngOnDestroy() {
-    this.unsubscribePath();
+    this.unsubscribeDataOservable();
   }
 
   ngAfterViewChecked() {
@@ -79,32 +81,10 @@ export class WidgetTextGenericComponent implements DynamicWidget, OnInit, AfterV
 
   }
 
-  subscribePath() {
-    this.unsubscribePath();
-    if (typeof(this.widgetProperties.config.paths['stringPath'].path) != 'string') { return } // nothing to sub to...
-    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
-      newValue => {
-        this.dataValue = newValue.value;
-        this.updateCanvas();
-      }
-    );
-  }
-
-  unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path)
-    }
-  }
 
 
 /* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/*                                  Canvas                                                     */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
+/*                                  Canvas drawing                                             */
 /* ******************************************************************************************* */
 
   updateCanvas() {
@@ -179,8 +159,4 @@ export class WidgetTextGenericComponent implements DynamicWidget, OnInit, AfterV
     this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
     this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
-
-
-
-
 }

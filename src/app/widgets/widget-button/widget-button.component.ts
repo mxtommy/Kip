@@ -30,7 +30,8 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
         source: null,
         pathType: "boolean",
         isPathConfigurable: true,
-        convertUnitTo: "unitless"
+        convertUnitTo: "unitless",
+        sampleTime: 500
       }
     },
     putEnable: false,

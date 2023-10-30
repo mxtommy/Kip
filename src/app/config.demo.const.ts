@@ -66,7 +66,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "m"
+            "convertUnitTo": "m",
+            "sampleTime": 500
           }
         },
         "displayName": "Depth",
@@ -88,7 +89,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "deg"
+            "convertUnitTo": "deg",
+            "sampleTime": 500
           },
           "trueWindAngle": {
             "description": "True Wind Angle",
@@ -96,7 +98,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "deg"
+            "convertUnitTo": "deg",
+            "sampleTime": 500
           },
           "trueWindSpeed": {
             "description": "True Wind Speed",
@@ -104,7 +107,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "knots"
+            "convertUnitTo": "knots",
+            "sampleTime": 500
           },
           "appWindAngle": {
             "description": "Apparent Wind Angle",
@@ -112,7 +116,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "deg"
+            "convertUnitTo": "deg",
+            "sampleTime": 500
           },
           "appWindSpeed": {
             "description": "Apparent Wind Speed",
@@ -120,7 +125,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "knots"
+            "convertUnitTo": "knots",
+            "sampleTime": 500
           }
         },
         "filterSelfPaths": true,
@@ -143,7 +149,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "knots"
+            "convertUnitTo": "knots",
+            "sampleTime": 500
           }
         },
         "gaugeType": "ngRadial",
@@ -169,7 +176,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "knots"
+            "convertUnitTo": "knots",
+            "sampleTime": 500
           }
         },
         "gaugeType": "ngLinearHorizontal",
@@ -192,7 +200,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "knots"
+            "convertUnitTo": "knots",
+            "sampleTime": 500
           }
         },
         "displayName": "Speed",
@@ -214,7 +223,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "knots"
+            "convertUnitTo": "knots",
+            "sampleTime": 500
           }
         },
         "displayName": "VMG",
@@ -254,7 +264,8 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "source": "default",
             "pathType": "number",
             "isPathConfigurable": true,
-            "convertUnitTo": "deg"
+            "convertUnitTo": "deg",
+            "sampleTime": 500
           }
         },
         "gaugeType": "ngRadial",

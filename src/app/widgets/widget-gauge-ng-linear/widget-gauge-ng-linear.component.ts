@@ -30,7 +30,8 @@ export class WidgetGaugeNgLinearComponent implements DynamicWidget, OnInit, OnDe
         source: null,
         pathType: "number",
         isPathConfigurable: true,
-        convertUnitTo: "unitless"
+        convertUnitTo: "unitless",
+        sampleTime: 500
       }
     },
     gaugeType: 'ngLinearVertical',  //ngLinearVertical or ngLinearHorizontal

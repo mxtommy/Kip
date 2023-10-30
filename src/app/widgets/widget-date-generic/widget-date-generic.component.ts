@@ -28,6 +28,7 @@ export class WidgetDateGenericComponent implements DynamicWidget, OnInit, AfterV
         source: null,
         pathType: 'string',
         isPathConfigurable: true,
+        sampleTime: 500
       }
     },
     dateFormat: 'dd/MM/yyyy HH:mm:ss',

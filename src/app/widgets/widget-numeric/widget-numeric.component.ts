@@ -29,7 +29,8 @@ export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy,
         source: null,
         pathType: "number",
         isPathConfigurable: true,
-        convertUnitTo: "unitless"
+        convertUnitTo: "unitless",
+        sampleTime: 500
       }
     },
     showMax: false,
