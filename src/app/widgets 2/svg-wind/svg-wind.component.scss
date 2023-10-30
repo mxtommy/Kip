@@ -1,0 +1,76 @@
+// Style file used by various SVG components
+// do not delete
+@use '@angular/material' as mat;
+
+@mixin svg-wind-theme($theme) {
+
+    $primary: map-get($theme, primary);
+    $warn: map-get($theme, warn);
+    $background: map-get($theme, background);
+    $foreground: map-get($theme, foreground);
+    $wind: map-get($theme, wind);
+
+    .boatBackground {
+        fill: mat.get-color-from-palette($wind, boat-background) !important; //400
+    }
+
+    .heading-background {
+        fill: mat.get-color-from-palette($wind, heading-background)
+    }
+
+    .wind-text {
+        fill: mat.get-color-from-palette($foreground, text);
+    }
+
+    .laylines {
+      stroke:  mat.get-color-from-palette($foreground, text);
+    }
+
+    .wind-sector-port {
+      fill: mat.get-color-from-palette($wind, port);
+    }
+
+    .wind-sector-stbd {
+      fill: mat.get-color-from-palette($wind, starboard);
+    }
+
+    .compass-outer-ring {
+        stroke: mat.get-color-from-palette($wind, compass-dark);
+    }
+    .compass-inner-ring {
+        stroke: mat.get-color-from-palette($wind, compass-light);
+    }
+
+    .wind-rose-background {
+        stroke: mat.get-color-from-palette($wind, wind-rose-background);
+    }
+
+    .port {
+        stroke: mat.get-color-from-palette($wind, port);
+    }
+    .starboard  {
+        stroke: mat.get-color-from-palette($wind, starboard);
+    }
+
+    .rudderPort {
+      fill: mat.get-color-from-palette($wind, rudder-port);
+    }
+    .rudderStarboard  {
+      fill: mat.get-color-from-palette($wind, rudder-starboard);
+    }
+
+    .true-wind {
+        fill: mat.get-color-from-palette($wind, true-wind-background)
+    }
+
+    .app-wind {
+        fill: mat.get-color-from-palette($wind, app-wind-background)
+    }
+}
+
+// for Autopilot
+.activityIcon {
+  opacity: 40%;
+  color: white;
+  width:25px;
+}

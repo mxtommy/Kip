@@ -1,19 +1,19 @@
 import { Component, OnInit, Inject, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
+import { FormGroup, FormControl, Validators }    from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { Subscription, Observable } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
-import { AppSettingsService } from '../../app-settings.service';
-import { IPathMetaData } from "../../app-interfaces";
-import { IZone } from "../../app-settings.interfaces";
+import { AppSettingsService } from '../app-settings.service';
+import { IPathMetaData } from "../app-interfaces";
+import { IZone } from "../app-settings.interfaces";
 
 @Component({
-  selector: 'settings-zones',
-  templateUrl: './zones.component.html',
-  styleUrls: ['./zones.component.css']
+  selector: 'app-settings-zones',
+  templateUrl: './settings-zones.component.html',
+  styleUrls: ['./settings-zones.component.css']
 })
 export class SettingsZonesComponent implements OnInit, AfterViewInit {
 
@@ -23,6 +23,8 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
   tableData = new MatTableDataSource([]);
 
   displayedColumns: string[] = ['path', 'unit', 'lower', 'upper', 'state', "actions"];
+
+
 
   zonesSub: Subscription;
 
@@ -130,22 +132,22 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
 // Add zone compoment
 @Component({
   selector: 'dialog-new-zone',
-  templateUrl: 'new-zone.modal.html',
-  styleUrls: ['./new-zone.modal.css']
+  templateUrl: 'settings-new-zone.modal.html',
+  styleUrls: ['./settings-new-zone.modal.css']
 })
 export class DialogNewZone {
 
-  zoneForm: UntypedFormGroup = new UntypedFormGroup({
-    upper: new UntypedFormControl(null),
-    lower: new UntypedFormControl(null),
-    state: new UntypedFormControl('0', Validators.required),
-    filterSelfPaths: new UntypedFormControl(true),
-    path: new UntypedFormGroup({
-      path: new UntypedFormControl(null),
-      isPathConfigurable: new UntypedFormControl(true),
-      convertUnitTo: new UntypedFormControl("unitless"),
-      pathType: new UntypedFormControl("number"),
-      source: new UntypedFormControl(null)
+  zoneForm: FormGroup = new FormGroup({
+    upper: new FormControl(null),
+    lower: new FormControl(null),
+    state: new FormControl('0', Validators.required),
+    filterSelfPaths: new FormControl(true),
+    path: new FormGroup({
+      path: new FormControl(null),
+      isPathConfigurable: new FormControl(true),
+      convertUnitTo: new FormControl("unitless"),
+      pathType: new FormControl("number"),
+      source: new FormControl(null)
     })
   }, this.rangeValidationFunction);
 
@@ -159,7 +161,7 @@ export class DialogNewZone {
     public dialogRef: MatDialogRef<DialogNewZone>) {
     }
 
-  rangeValidationFunction(formGroup: UntypedFormGroup): any {
+  rangeValidationFunction(formGroup: FormGroup): any {
       let upper = formGroup.get('upper').value;
       let lower = formGroup.get('lower').value;
       return ((upper === null) && (lower === null)) ? { needUpperLower: true } : null;
@@ -182,15 +184,17 @@ export class DialogNewZone {
 // Edit zone compoment
 @Component({
   selector: 'dialog-edit-zone',
-  templateUrl: 'edit-zone.modal.html',
-  styleUrls: ['./edit-zone.modal.css']
+  templateUrl: 'settings-edit-zone.modal.html',
+  styleUrls: ['./settings-edit-zone.modal.css']
 })
 export class DialogEditZone {
 
   constructor(
     public dialogRef: MatDialogRef<DialogEditZone>,
     @Inject(MAT_DIALOG_DATA) public zone: IZone,
-    ) { }
+    ) {
+
+    }
 
   closeForm() {
     this.dialogRef.close(this.zone);

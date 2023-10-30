@@ -1,0 +1,81 @@
+<mat-card>
+  <mat-card-title>
+    Zones Configuration
+  </mat-card-title>
+  <mat-card-subtitle>
+    Zones can be used to inform Kip about the state the data it receives. For example
+    is a battery voltage of 12.1V normal, requires attention or is in critical state.
+  </mat-card-subtitle>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>Filter</mat-label>
+      <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>
+    </mat-form-field>
+    <div class="mat-elevation-z8 full-width table-container">
+      <mat-table class="full-display" [dataSource]="tableData" [trackBy]="trackByUuid" matSort matSortActive="path" matSortDirection="asc">
+
+        <!-- Path Column -->
+        <ng-container matColumnDef="path">
+          <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header>Path</mat-header-cell>
+          <mat-cell class="pathCell" *matCellDef="let element" data-label="Path: "> {{element.path}} </mat-cell>
+        </ng-container>
+
+        <!-- Unit Column -->
+        <ng-container matColumnDef="unit">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>Unit</mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Unit: "> {{element.unit}} </mat-cell>
+        </ng-container>
+
+        <!-- Lower Column -->
+        <ng-container matColumnDef="lower">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>Lower</mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Lower: "> {{element.lower}} </mat-cell>
+        </ng-container>
+
+        <!-- Upper Column -->
+        <ng-container matColumnDef="upper">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>Upper</mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Upper: "> {{element.upper}} </mat-cell>
+        </ng-container>
+
+        <!-- State Column -->
+        <ng-container matColumnDef="state">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>State</mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="State: ">
+            <div [ngSwitch]="element.state">
+              <div *ngSwitchCase="0">Normal</div>
+              <div *ngSwitchCase="1">Warning</div>
+              <div *ngSwitchCase="2">Alarm</div>
+            </div>
+          </mat-cell>
+        </ng-container>
+
+        <!-- Action Column -->
+        <ng-container matColumnDef="actions">
+          <mat-header-cell class="actionHeader" *matHeaderCellDef mat-sort-header>  </mat-header-cell>
+          <mat-cell class="actionCell" *matCellDef="let element">
+            <button mat-raised-button class="buttons" color="accent" (click)="openZoneDialog(element.uuid)">Edit</button>
+            <button mat-raised-button color="accent" (click)="deleteZone(element.uuid)">Delete</button>
+          </mat-cell>
+        </ng-container>
+
+        <!-- Table header -->
+        <mat-header-row class="headerRow" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row class="dataRow" *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+        <!-- Row shown when there is no matching data. Material bug here... -->
+        <mat-row *matNoDataRow>
+          No data matching the filter "{{input.value}}"
+        </mat-row>
+      </mat-table>
+    </div>
+    <div class="paginator">
+      <mat-paginator pageSize="5" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+    </div>
+  </mat-card-content>
+  <mat-divider inset></mat-divider>
+  <mat-card-actions align="end">
+    <button type="button" mat-raised-button color="accent" (click)="openZoneDialog()">Add</button>
+  </mat-card-actions>
+</mat-card>
+

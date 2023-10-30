@@ -2,7 +2,7 @@
  * This component is hosted in layout-split and handles Widget framework operations and
  * dynamic instanciation.
  */
-import { Component, OnInit, OnDestroy, Input, Inject, ViewChild, ViewContainerRef, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Inject, ViewChild, ViewContainerRef, ElementRef, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UntypedFormControl } from '@angular/forms';
@@ -48,16 +48,17 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
       private widgetListService: WidgetListService) { }
 
   ngOnInit() {
-    this.loadTheme();
-    this.instanciateWidget();
+    this.subscribeTheme();
+    // this.loadTheme();
+    // this.instanciateWidget();
 
     // Track theme changes
-    if(this.themeNameSub == null) {
-      this.subscribeTheme();
-    }
+    // if(this.themeNameSub == null) {
+    //   this.subscribeTheme();
+    // }
   }
 
-  private loadTheme() {
+  private loadTheme(): void {
     this.themeColor.primary = getComputedStyle(this.primary.nativeElement).color;
     this.themeColor.accent = getComputedStyle(this.accent.nativeElement).color;
     this.themeColor.warn = getComputedStyle(this.warn.nativeElement).color;
@@ -68,12 +69,12 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
     this.themeColor.text = getComputedStyle(this.text.nativeElement).color;
   }
 
-  ngOnChanges(changes: any) {
-    if ( ('widgetUUID' in changes ) && (!changes.widgetUUID.firstChange)) {
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.splitUUID && !changes.splitUUID.firstChange) {
       this.instanciateWidget();
     }
 
-    if ( ('unlockStatus' in changes ) && (!changes.unlockStatus.firstChange)) {
+    if (changes.unlockStatus && !changes.unlockStatus.firstChange) {
       if(this.splitWidgetSettings.type == 'WidgetTutorial') {
         this.widgetInstance.unlockStatus = this.unlockStatus;  // keep for Tutorial Widget
       }
@@ -117,7 +118,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
       for (let [group, widgetList] of Object.entries(fullWidgetList)) {
         if (widgetList.findIndex(w => w.name == result) >= 0 ) {
           if (this.splitWidgetSettings.type != result) {
-            this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
+            // this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
             this.WidgetManagerService.updateWidgetType(this.splitUUID, result);
             this.instanciateWidget();
           }
@@ -145,7 +146,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
           this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
         }
 
-        this.dynamicWidgetContainerRef.clear();
+        // this.dynamicWidgetContainerRef.clear();
         this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, this.splitWidgetSettings.config); // Push to storage
         this.instanciateWidget();
       }

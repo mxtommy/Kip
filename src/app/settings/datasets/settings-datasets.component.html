@@ -1,0 +1,63 @@
+<form name="existingDataSet" #existingDataSet="ngForm">
+  <mat-card>
+    <mat-card-title>
+      Datasets Configuration
+    </mat-card-title>
+    <mat-card-subtitle>
+      Create historical datasets to record data values over time and display them on charts with the Historical DataSet widget.
+    </mat-card-subtitle>
+    <mat-card-content>
+
+      <mat-form-field>
+        <mat-label>Filter</mat-label>
+        <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>
+      </mat-form-field>
+      <div class="mat-elevation-z8 full-width table-container">
+
+        <mat-table class="full-display" [dataSource]="tableData" [trackBy]="trackByUuid" matSort matSortActive="path" matSortDirection="asc">
+
+          <!-- Path Column -->
+          <ng-container matColumnDef="path">
+            <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header> Path </mat-header-cell>
+            <mat-cell class="pathCell" *matCellDef="let element" data-label="Path: "> {{element.path}} </mat-cell>
+          </ng-container>
+
+          <!-- updateTimer Column -->
+          <ng-container matColumnDef="updateTimer">
+            <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Interval </mat-header-cell>
+            <mat-cell class="dataCell" *matCellDef="let element" data-label="Interval: ">every {{element.updateTimer}} sec</mat-cell>
+          </ng-container>
+
+          <!-- dataPoints Column -->
+          <ng-container matColumnDef="dataPoints">
+            <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Data Points </mat-header-cell>
+            <mat-cell class="dataCell" *matCellDef="let element" data-label="Data Points: ">{{element.dataPoints}} times</mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <mat-header-cell class="actionHeader" *matHeaderCellDef mat-sort-header>  </mat-header-cell>
+            <mat-cell class="actionCell" *matCellDef="let element">
+              <button mat-raised-button class="small-button buttons" color="accent" (click)="openDatasetModal(element.uuid)">Edit</button>
+              <button mat-raised-button class="small-button buttons" color="accent" (click)="deleteDataset(element.uuid)">Delete</button>
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row class="headerRow" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+          <mat-row class="dataRow" *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+          <!-- Row shown when there is no matching data. -->
+          <mat-row *matNoDataRow>
+            No data matching the filter "{{input.value}}"
+          </mat-row>
+        </mat-table>
+      </div>
+      <div class="paginator">
+        <mat-paginator pageSize="5" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+      </div>
+    </mat-card-content>
+    <mat-divider inset></mat-divider>
+    <mat-card-actions align="end">
+      <button mat-raised-button color="accent" (click)='openDatasetModal()'>Add</button>
+    </mat-card-actions>
+  </mat-card>
+</form>

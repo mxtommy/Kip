@@ -1,5 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
+import { Component, OnInit, OnDestroy} from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
@@ -7,7 +6,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
   templateUrl: './widget-blank.component.html',
   styleUrls: ['./widget-blank.component.scss']
 })
-export class WidgetBlankComponent extends BaseWidgetComponent implements DynamicWidget, OnInit {
+export class WidgetBlankComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
 
   constructor() {
     super();
@@ -18,6 +17,10 @@ export class WidgetBlankComponent extends BaseWidgetComponent implements Dynamic
   }
 
   ngOnInit() {
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribeDataOservable();
   }
 
 }
