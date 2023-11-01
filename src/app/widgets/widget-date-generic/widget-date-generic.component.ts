@@ -1,39 +1,17 @@
-import { WidgetBaseService } from '../../widget-base.service';
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { formatDate } from '@angular/common';
-import { Subscription } from 'rxjs';
 
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-date-generic',
   templateUrl: './widget-date-generic.component.html',
   styleUrls: ['./widget-date-generic.component.css']
 })
-export class WidgetDateGenericComponent implements DynamicWidget, OnInit, AfterViewChecked, OnDestroy {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
-
+export class WidgetDateGenericComponent extends BaseWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('wrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: 'Time Label',
-    filterSelfPaths: true,
-    paths: {
-      'stringPath': {
-        description: 'String Data',
-        path: null,
-        source: null,
-        pathType: 'string',
-        isPathConfigurable: true,
-        sampleTime: 500
-      }
-    },
-    dateFormat: 'dd/MM/yyyy HH:mm:ss',
-    dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  };
 
   dataValue: any = null;
   dataTimestamp: number = Date.now();
@@ -44,22 +22,40 @@ export class WidgetDateGenericComponent implements DynamicWidget, OnInit, AfterV
   canvasCtx;
   canvasBGCtx;
 
-  // subs
-  valueSub: Subscription = null;
+  constructor() {
+    super();
 
-  constructor(private widgetBaseService: WidgetBaseService) {
+    this.defaultConfig = {
+      displayName: 'Time Label',
+      filterSelfPaths: true,
+      paths: {
+        'gaugePath': {
+          description: 'String Data',
+          path: null,
+          source: null,
+          pathType: 'string',
+          isPathConfigurable: true,
+          sampleTime: 500
+        }
+      },
+      dateFormat: 'dd/MM/yyyy HH:mm:ss',
+      dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
   }
 
   ngOnInit() {
+    this.observeDataStream('gaugePath', newValue => {
+      this.dataValue = newValue.value;
+      this.updateCanvas();
+    });
+
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-
-    this.subscribePath();
     this.resizeWidget();
   }
 
   ngOnDestroy() {
-    this.unsubscribePath();
+    this.unsubscribeDataStream();
   }
 
   ngAfterViewChecked() {
@@ -84,38 +80,9 @@ export class WidgetDateGenericComponent implements DynamicWidget, OnInit, AfterV
     }
 
   }
-
-
-  subscribePath() {
-
-    this.unsubscribePath();
-    if (typeof(this.widgetProperties.config.paths['stringPath'].path) != 'string') { return; } // nothing to sub to...
-
-    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path, this.widgetProperties.config.paths['stringPath'].source).subscribe(
-      newValue => {
-        this.dataValue = newValue.value;
-        this.updateCanvas();
-      }
-    );
-  }
-
-  unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['stringPath'].path);
-    }
-  }
-
-
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
-
   updateCanvas() {
     if (this.canvasCtx) {
       this.canvasCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);

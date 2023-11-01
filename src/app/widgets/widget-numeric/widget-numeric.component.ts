@@ -1,43 +1,19 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 
 import { IZoneState } from "../../app-settings.interfaces";
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
-import { WidgetBaseService } from '../../widget-base.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-numeric',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss']
 })
-export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy, AfterViewChecked {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('NumWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
   @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
   @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: 'Gauge Label',
-    filterSelfPaths: true,
-    paths: {
-      "numericPath": {
-        description: "Numeric Data",
-        path: null,
-        source: null,
-        pathType: "number",
-        isPathConfigurable: true,
-        convertUnitTo: "unitless",
-        sampleTime: 500
-      }
-    },
-    showMax: false,
-    showMin: false,
-    numDecimal: 1,
-    numInt: 1
-  };
 
   dataValue: number = null;
   IZoneState: IZoneState = null;
@@ -51,17 +27,62 @@ export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy,
   flashOn: boolean = false;
   flashInterval;
 
-  //subs
-  valueSub: Subscription = null;
-
   canvasCtx;
   canvasBGCtx;
 
-  constructor(public widgetBaseService: WidgetBaseService) {
+  constructor() {
+    super();
+
+    this.defaultConfig = {
+      displayName: 'Gauge Label',
+      filterSelfPaths: true,
+      paths: {
+        "numericPath": {
+          description: "Numeric Data",
+          path: null,
+          source: null,
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "unitless",
+          sampleTime: 500
+        }
+      },
+      showMax: false,
+      showMin: false,
+      numDecimal: 1,
+      numInt: 1
+    };
   }
 
   ngOnInit() {
-    this.subscribePath();
+    this.observeDataStream('numericPath', newValue => {
+        this.dataValue = newValue.value;
+
+        // init min/max
+        if (this.minValue === null) { this.minValue = this.dataValue; }
+        if (this.maxValue === null) { this.maxValue = this.dataValue; }
+        if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
+        if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
+
+
+        this.IZoneState = newValue.state;
+        //start flashing if alarm
+        if (this.IZoneState == IZoneState.alarm && !this.flashInterval) {
+          this.flashInterval = setInterval(() => {
+            this.flashOn = !this.flashOn;
+            this.updateCanvas();
+          }, 350); // used to flash stuff in alarm
+        } else if (this.IZoneState != IZoneState.alarm) {
+          // stop alarming if not in alarm state
+          if (this.flashInterval) {
+            clearInterval(this.flashInterval);
+            this.flashInterval = null;
+          }
+        }
+
+        this.updateCanvas();
+      }
+    );
 
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
@@ -69,7 +90,8 @@ export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy,
   }
 
   ngOnDestroy() {
-    this.unsubscribePath();
+    this.unsubscribeDataStream();
+
     if (this.flashInterval) {
       clearInterval(this.flashInterval);
       this.flashInterval = null;
@@ -98,55 +120,10 @@ export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy,
 
   }
 
-  private subscribePath() {
-    this.unsubscribePath();
-    if (typeof(this.widgetProperties.config.paths['numericPath'].path) != 'string') { return } // nothing to sub to...
 
-    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['numericPath'].path, this.widgetProperties.config.paths['numericPath'].source).subscribe(
-      newValue => {
-        this.dataValue = newValue.value;
-        this.IZoneState = newValue.state;
-        //start flashing if alarm
-        if (this.IZoneState == IZoneState.alarm && !this.flashInterval) {
-          this.flashInterval = setInterval(() => {
-            this.flashOn = !this.flashOn;
-            this.updateCanvas();
-          }, 350); // used to flash stuff in alarm
-        } else if (this.IZoneState != IZoneState.alarm) {
-          // stop alarming if not in alarm state
-          if (this.flashInterval) {
-            clearInterval(this.flashInterval);
-            this.flashInterval = null;
-          }
-        }
-        // init min/max
-        if (this.minValue === null) { this.minValue = this.dataValue; }
-        if (this.maxValue === null) { this.maxValue = this.dataValue; }
-        if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
-        if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
-        this.updateCanvas();
-      }
-    );
-  }
-
-  private unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
-
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['numericPath'].path);
-    }
-  }
-
-
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
-
   private updateCanvas() {
     if (this.canvasCtx) {
       this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
@@ -358,7 +335,7 @@ export class WidgetNumericComponent implements DynamicWidget, OnInit, OnDestroy,
     let valText: string = null;
 
     // apply converstion
-    valConverted = this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['numericPath'].convertUnitTo, val);
+    valConverted = this.unitsService.convertUnit(this.widgetProperties.config.paths['numericPath'].convertUnitTo, val);
 
     if (!isNaN(valConverted)) { // retest as convert stuff might have returned a text string
       // apply mask

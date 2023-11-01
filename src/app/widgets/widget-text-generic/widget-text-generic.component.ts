@@ -44,8 +44,6 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
 
-    this.createDataOservable();
-
     this.observeDataStream('stringPath', newValue => {
       this.dataValue = newValue.value;
       this.updateCanvas();
@@ -55,7 +53,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataOservable();
+    this.unsubscribeDataStream();
   }
 
   ngAfterViewChecked() {

@@ -1,50 +1,22 @@
-import { ViewChild, ElementRef, Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { Subscription, sampleTime } from 'rxjs';
+import { ViewChild, ElementRef, Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../app-settings.interfaces';
-import { WidgetBaseService } from '../../widget-base.service';
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig, IDataHighlight } from '../../widgets-interface';
+import { IDataHighlight } from '../../widgets-interface';
 
 import { RadialGauge, RadialGaugeOptions } from '../../gauges-module/radial-gauge';
+import { AppSettingsService } from './../../app-settings.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-gauge-ng-radial',
   templateUrl: './widget-gauge-ng-radial.component.html',
   styleUrls: ['./widget-gauge-ng-radial.component.scss']
 })
-export class WidgetGaugeNgRadialComponent implements DynamicWidget, OnInit, OnChanges, OnDestroy {
-
+export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('radialGauge', {static: true, read: RadialGauge}) public radialGauge: RadialGauge;
-
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: null,
-    filterSelfPaths: true,
-    paths: {
-      "gaugePath": {
-        description: "Numeric Data",
-        path: null,
-        source: null,
-        pathType: "number",
-        isPathConfigurable: true,
-        convertUnitTo: "unitless",
-        sampleTime: 500
-      }
-    },
-    gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
-    gaugeTicks: false,
-    radialSize: 'measuring',
-    compassUseNumbers: false,
-    minValue: 0,
-    maxValue: 100,
-    numInt: 1,
-    numDecimal: 0,
-    barColor: 'accent',     // theme palette to select
-  };
 
   // main gauge value variable
   public dataValue = 0;
@@ -61,17 +33,62 @@ export class WidgetGaugeNgRadialComponent implements DynamicWidget, OnInit, OnCh
   zones: Array<IZone> = [];
   zonesSub: Subscription;
 
-  constructor(public widgetBaseService: WidgetBaseService) {
+  constructor(private appSettingsService: AppSettingsService) {
+    super();
+
+    this.defaultConfig = {
+      displayName: null,
+      filterSelfPaths: true,
+      paths: {
+        "gaugePath": {
+          description: "Numeric Data",
+          path: null,
+          source: null,
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "unitless",
+          sampleTime: 500
+        }
+      },
+      gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
+      gaugeTicks: false,
+      radialSize: 'measuring',
+      compassUseNumbers: false,
+      minValue: 0,
+      maxValue: 100,
+      numInt: 1,
+      numDecimal: 0,
+      barColor: 'accent',     // theme palette to select
+    };
   }
 
   ngOnInit() {
-    this.subscribeDataPath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source, null, this.sample, );
-    this.subscribeZones();
+    this.observeDataStream('gaugePath', newValue => {
+    let oldValue = this.dataValue;
+    let temp: any = this.formatWidgetNumberValue(newValue.value);
 
+    if (oldValue != (temp as number)) {
+      this.dataValue = temp;
+    }
+
+    // set zone state colors
+    switch (newValue.state) {
+      case IZoneState.warning:
+        this.gaugeOptions.colorValueText = this.theme.warnDark;
+        break;
+      case IZoneState.alarm:
+        this.gaugeOptions.colorValueText = this.theme.warnDark;
+        break;
+      default:
+        this.gaugeOptions.colorValueText = this.theme.text;
+      }
+    });
+
+    this.subscribeZones();
    }
 
   ngOnDestroy() {
-    this.unsubscribePath();
+    this.unsubscribeDataStream();
     this.unsubscribeZones();
   }
 
@@ -81,47 +98,9 @@ export class WidgetGaugeNgRadialComponent implements DynamicWidget, OnInit, OnCh
     }
   }
 
-  public subscribeDataPath(widgetUuid: string, dataPath: string, dataSource: string, convertUnit?: string, throttleTime?: number, minDataRange?: number, maxDataRange?: number, intPlaces?: number, decimalPlaces?: number): any {
-    this.unsubscribePath();
-    if (typeof(dataPath) != 'string') { return } // nothing to sub to...
-
-    this.valueSub$ = this.widgetBaseService.signalKService.subscribePath(widgetUuid, dataPath, dataSource).pipe(sampleTime(this.sample)).subscribe(
-      newValue => {
-        // Only push new values formated to gauge settings to reduce gauge paint requests
-        let oldValue = this.dataValue;
-        let temp = this.formatDataValue(this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value));
-        if (oldValue != temp) {
-          this.dataValue = temp;
-        }
-
-        // set zone state colors
-        switch (newValue.state) {
-          case IZoneState.warning:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            break;
-          case IZoneState.alarm:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            break;
-          default:
-            this.gaugeOptions.colorValueText = this.theme.text;
-
-        }
-
-      }
-    );
-  }
-
-  unsubscribePath() {
-    if (this.valueSub$ !== null) {
-      this.valueSub$.unsubscribe();
-      this.valueSub$ = null;
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
-    }
-  }
-
   // Subscribe to Zones
   subscribeZones() {
-    this.zonesSub = this.widgetBaseService.appSettingsService.getZonesAsO().subscribe(
+    this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(
       zones => {
         this.zones = zones;
         this.updateGaugeConfig();
@@ -133,17 +112,6 @@ export class WidgetGaugeNgRadialComponent implements DynamicWidget, OnInit, OnCh
       this.zonesSub.unsubscribe();
       this.zonesSub = null;
     }
-  }
-
-  private formatDataValue(value:number): number {
-    // make sure we are within range of the gauge settings, else the needle can go outside the range
-    if (value < this.widgetProperties.config.minValue || value == null) {
-      value = this.widgetProperties.config.minValue;
-    }
-    if (value > this.widgetProperties.config.maxValue) {
-      value = this.widgetProperties.config.maxValue;
-    }
-    return value;
   }
 
   updateGaugeConfig(){

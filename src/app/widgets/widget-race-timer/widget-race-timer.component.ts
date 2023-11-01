@@ -1,28 +1,21 @@
-import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy,ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
-import { WidgetBaseService } from '../../widget-base.service';
 import { TimersService } from '../../timers.service';
 import { IZoneState } from "../../app-settings.interfaces";
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-race-timer',
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss']
 })
-export class WidgetRaceTimerComponent implements DynamicWidget, OnInit, OnDestroy, AfterViewChecked {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('raceTimerWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
   @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
   @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
-
-  defaultConfig: IWidgetSvcConfig = {
-    timerLength: 300
-  };
 
   dataValue: number = null;
   IZoneState: IZoneState = null;
@@ -37,8 +30,13 @@ export class WidgetRaceTimerComponent implements DynamicWidget, OnInit, OnDestro
   canvasCtx;
   canvasBGCtx;
 
+  constructor(private TimersService: TimersService) {
+    super();
 
-  constructor(private TimersService: TimersService) { }
+    this.defaultConfig = {
+      timerLength: 300
+    };
+  }
 
   ngOnInit(): void {
     this.subscribeTimer();

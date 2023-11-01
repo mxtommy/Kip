@@ -22,9 +22,9 @@
   "author": "Thomas St.Pierre <thomas@samoht.ca>",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --configuration=dev",
-    "build": "ng build --base-href=/@mxtommy/kip/",
-    "build-npm": "ng build --configuration=production --base-href=/@mxtommy/kip/",
+    "start": "ng serve --configuration=dev --serve-path=/",
+    "build-dev": "ng build --configuration=dev --base-href=/@mxtommy/kip/",
+    "build-prod": "ng build --configuration=production --base-href=/@mxtommy/kip/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

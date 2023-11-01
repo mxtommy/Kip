@@ -1,12 +1,11 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-moment';
 
 import { DataSetService } from '../../data-set.service';
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
-import { WidgetBaseService } from '../../widget-base.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 interface IDataSetOptions {
     label: string;
@@ -21,23 +20,8 @@ interface IDataSetOptions {
   templateUrl: './widget-historical.component.html',
   styleUrls: ['./widget-historical.component.scss']
 })
-export class WidgetHistoricalComponent implements DynamicWidget, OnInit, OnDestroy {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export class WidgetHistoricalComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: 'Display Label',
-    filterSelfPaths: true,
-    convertUnitTo: "unitless",
-    dataSetUUID: null,
-    invertData: false,
-    displayMinMax: false,
-    includeZero: true,
-    minValue: null,
-    maxValue: null,
-    verticalGraph: false,
-  };
 
   chartCtx;
   chart = null;
@@ -50,10 +34,22 @@ export class WidgetHistoricalComponent implements DynamicWidget, OnInit, OnDestr
 
   dataSetSub: Subscription = null;
 
-  constructor(
-    public widgetBaseService: WidgetBaseService,
-    private dataSetService: DataSetService,
-  ) { }
+  constructor(private dataSetService: DataSetService) {
+    super();
+
+    this.defaultConfig = {
+      displayName: 'Display Label',
+      filterSelfPaths: true,
+      convertUnitTo: "unitless",
+      dataSetUUID: null,
+      invertData: false,
+      displayMinMax: false,
+      includeZero: true,
+      minValue: null,
+      maxValue: null,
+      verticalGraph: false,
+    };
+   }
 
   ngOnInit() {
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
@@ -191,7 +187,7 @@ export class WidgetHistoricalComponent implements DynamicWidget, OnInit, OnDestr
                 }
                 this.chartDataAvg.push({
                   x: dataSet[i].timestamp,
-            y: (this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].average) * invert)
+            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].average) * invert)
                 });
               }
               this.chart.config.data.datasets[0].data = this.chartDataAvg;
@@ -207,11 +203,11 @@ export class WidgetHistoricalComponent implements DynamicWidget, OnInit, OnDestr
                   } else {
                     this.chartDataMin.push({
                         x: dataSet[i].timestamp,
-                y: (this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].minValue) * invert)
+                y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].minValue) * invert)
                     });
                     this.chartDataMax.push({
                         x: dataSet[i].timestamp,
-                y: (this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].maxValue) * invert)
+                y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].maxValue) * invert)
                     });
                   }
                 }
@@ -244,6 +240,5 @@ export class WidgetHistoricalComponent implements DynamicWidget, OnInit, OnDestr
 
   ngOnDestroy() {
     this.unsubscribeDataSet();
-    console.log("stopped Sub");
   }
 }

@@ -51,7 +51,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 300
         },
         "trueWindSpeed": {
           description: "True Wind Speed",
@@ -60,7 +60,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 300
         },
         "appWindAngle": {
           description: "Apparent Wind Angle",
@@ -69,7 +69,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 300
         },
         "appWindSpeed": {
           description: "Apparent Wind Speed",
@@ -78,7 +78,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 300
         },
       },
       windSectorEnable: true,
@@ -89,8 +89,6 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
    }
 
   ngOnInit(): void {
-    this.createDataOservable();
-
     this.observeDataStream('headingPath', newValue => {
       if (newValue.value === null) {
         this.currentHeading = 0;
@@ -156,7 +154,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataOservable();
+    this.unsubscribeDataStream();
     this.stopWindSectors();
   }
 
@@ -166,7 +164,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     });
   }
 
-  addHistoricalTrue (windHeading) {
+  addHistoricalTrue (windHeading: number) {
     this.trueWindHistoric.push({
       timestamp: Date.now(),
       heading: windHeading

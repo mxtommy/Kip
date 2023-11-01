@@ -1,10 +1,9 @@
-import { Component, Input, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { SignalkRequestsService } from '../../signalk-requests.service';
 import { NotificationsService } from '../../notifications.service';
-import { DynamicWidget, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
-import { WidgetBaseService } from '../../widget-base.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 
 @Component({
@@ -12,35 +11,10 @@ import { WidgetBaseService } from '../../widget-base.service';
   templateUrl: './widget-button.component.html',
   styleUrls: ['./widget-button.component.scss']
 })
-export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, OnDestroy, AfterViewChecked {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
-
+export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @ViewChild('btnDiv', {static: true, read: ElementRef}) divBtnElement: ElementRef;
   @ViewChild('lightDiv', {static: true, read: ElementRef}) divLightElement: ElementRef;
   @ViewChild('btnLabelCanvas', {static: true, read: ElementRef}) canvasBtnTxtElement: ElementRef;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: 'Switch Label',
-    filterSelfPaths: true,
-    paths: {
-      "boolPath": {
-        description: "Boolean Data",
-        path: null,
-        source: null,
-        pathType: "boolean",
-        isPathConfigurable: true,
-        convertUnitTo: "unitless",
-        sampleTime: 500
-      }
-    },
-    putEnable: false,
-    putMomentary: false,
-    putMomentaryValue: true,
-    barColor: 'accent',
-  };
-
-  valueSub: Subscription = null;
 
   public buttonBorberColorOn: string = "";
   public buttonColorOn: string = "";
@@ -62,16 +36,40 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
   skRequestSub = new Subscription; // Request result observer
 
   constructor(
-    private widgetBaseService: WidgetBaseService,
-    private SignalkRequestsService: SignalkRequestsService,
+    private signalkRequestsService: SignalkRequestsService,
     private notification: NotificationsService
     ) {
+      super();
+
+      this.defaultConfig = {
+        displayName: 'Switch Label',
+        filterSelfPaths: true,
+        paths: {
+          "boolPath": {
+            description: "Boolean Data",
+            path: null,
+            source: null,
+            pathType: "boolean",
+            isPathConfigurable: true,
+            convertUnitTo: "unitless",
+            sampleTime: 500
+          }
+        },
+        putEnable: false,
+        putMomentary: false,
+        putMomentaryValue: true,
+        barColor: 'accent',
+      };
   }
 
   ngOnInit() {
     this.canvasButtonTxt = this.canvasBtnTxtElement.nativeElement.getContext('2d');
 
-    this.subscribePath();
+    this.observeDataStream('boolPath', newValue => {
+      this.state = newValue.value;
+      this.updateBtnCanvas();
+      }
+    );
     this.subscribeSKRequest();
   }
 
@@ -133,28 +131,8 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
 
   }
 
-  private subscribePath() {
-    this.unsubscribePath();
-    if (typeof(this.widgetProperties.config.paths['boolPath'].path) != 'string') { return } // nothing to sub to...
-
-    this.valueSub = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source).subscribe(
-      newValue => {
-        this.state = newValue.value;
-        this.updateBtnCanvas();
-      }
-    );
-  }
-
-  private unsubscribePath() {
-    if (this.valueSub !== null) {
-      this.valueSub.unsubscribe();
-      this.valueSub = null;
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['boolPath'].path)
-    }
-  }
-
   private subscribeSKRequest() {
-    this.skRequestSub = this.SignalkRequestsService.subscribeRequest().subscribe(requestResult => {
+    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         let errMsg = `Button ${this.widgetProperties.config.displayName}: `;
         if (requestResult.statusCode != 200){
@@ -178,7 +156,7 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
 
     if (!this.widgetProperties.config.putMomentary) {
       //on/off mode. Send whatever we're not :)
-      this.SignalkRequestsService.putRequest(
+      this.signalkRequestsService.putRequest(
         this.widgetProperties.config.paths['boolPath'].path,
         this.widgetProperties.config.paths['boolPath'].source,
         this.widgetProperties.uuid
@@ -192,11 +170,11 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
       this.pressed = true;
 
       // send it once to start
-      this.SignalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
+      this.signalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
 
       //send it again every 20ms
       this.timeoutHandler = setInterval(() => {
-        this.SignalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
+        this.signalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
         this.widgetProperties.config.putMomentaryValue;
       }, 100);
 
@@ -211,7 +189,7 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
       this.pressed = false;
       clearInterval(this.timeoutHandler);
       // momentary mode
-      this.SignalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
+      this.signalkRequestsService.putRequest(this.widgetProperties.config.paths['boolPath'].path, this.widgetProperties.config.paths['boolPath'].source, this.widgetProperties.uuid);
       if (!this.widgetProperties.config.putMomentaryValue) {
         return;
       }
@@ -219,7 +197,7 @@ export class WidgetButtonComponent implements DynamicWidget, OnInit, OnChanges, 
   }
 
   ngOnDestroy() {
-    this.unsubscribePath();
+    this.unsubscribeDataStream();
     this.unsubscribeSKRequest();
   }
 

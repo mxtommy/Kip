@@ -36,8 +36,6 @@ export class WidgetSwitchComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnInit() {
-    this.createDataOservable();
-
     this.observeDataStream('statePath', newValue => {
       this.state = newValue.value;
     });
@@ -46,7 +44,7 @@ export class WidgetSwitchComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataOservable();
+    this.unsubscribeDataStream();
     this.skRequestSub.unsubscribe();
   }
 

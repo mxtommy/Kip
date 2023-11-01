@@ -1,6 +1,4 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs';
-
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
@@ -10,8 +8,8 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
   public unitsLabel:string = "";
-  public dataValue: string = "0";
-  public gaugeValue: Number = 0;
+  public dataLabelValue: string = "0";
+  public dataValue: Number = 0;
   public barColor: string = "";
   public barColorGradient: string = "";
   public barColorBackground: string = "";
@@ -44,8 +42,6 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   }
 
   ngOnInit(): void {
-    this.createDataOservable();
-
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gaugeUnitLabelFormat == "abr") {
       //  TODO: fix label using group description for Full or measure for abr and not config conversion value as below!
@@ -57,27 +53,13 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     this.observeDataStream('gaugePath', newValue => {
         if (newValue.value == null) {return}
 
-        // convert to unit and format value using widget settings
-        let value  = newValue.value.toFixed(this.widgetProperties.config.numDecimal);
-
-        // Format display value using widget settings
-        let displayValue = value;
+        newValue.value = this.formatWidgetNumberValue(newValue.value);
+        this.dataValue = (newValue.value as number);
+        // Format Widget display label value using settings
         if (this.widgetProperties.config.numDecimal != 0){
-          this.dataValue = displayValue.padStart((this.widgetProperties.config.numInt + this.widgetProperties.config.numDecimal + 1), "0");
+          this.dataLabelValue = newValue.value.padStart((this.widgetProperties.config.numInt + 1 + this.widgetProperties.config.numDecimal), "0");
         } else {
-          this.dataValue = displayValue.padStart(this.widgetProperties.config.numInt, "0");
-        }
-
-        // Format value for gauge bar
-        let gaugeValue = Number(value);
-
-        // Limit gauge bar animation overflow to gauge settings
-        if (gaugeValue >= this.widgetProperties.config.maxValue) {
-          this.gaugeValue = this.widgetProperties.config.maxValue;
-        } else if (gaugeValue <= this.widgetProperties.config.minValue) {
-          this.gaugeValue = this.widgetProperties.config.minValue;
-        } else {
-          this.gaugeValue = gaugeValue;
+          this.dataLabelValue = newValue.value.padStart(this.widgetProperties.config.numInt, "0");
         }
       }
     );
@@ -111,6 +93,6 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataOservable();
+    this.unsubscribeDataStream();
   }
 }

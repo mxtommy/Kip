@@ -1,11 +1,12 @@
-import { ViewChild, ElementRef, Component, OnInit, OnChanges, Input, OnDestroy, SimpleChanges } from '@angular/core';
-import { Subscription, sampleTime} from 'rxjs';
+import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../app-settings.interfaces';
-import { DynamicWidget, IDataHighlight, ITheme, IWidget, IWidgetSvcConfig } from '../../widgets-interface';
+import { IDataHighlight } from '../../widgets-interface';
 import { LinearGauge, LinearGaugeOptions } from '../../gauges-module/linear-gauge';
-import { WidgetBaseService } from '../../widget-base.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { AppSettingsService } from './../../app-settings.service';
 
 @Component({
   selector: 'app-widget-gauge-ng-linear',
@@ -13,40 +14,13 @@ import { WidgetBaseService } from '../../widget-base.service';
   styleUrls: ['./widget-gauge-ng-linear.component.scss']
 })
 
-export class WidgetGaugeNgLinearComponent implements DynamicWidget, OnInit, OnDestroy, OnChanges {
+export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('linearWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('linearGauge', {static: true, read: ElementRef}) protected linearGauge: ElementRef;
-
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
-
-  defaultConfig: IWidgetSvcConfig = {
-    displayName: "Gauge Label",
-    filterSelfPaths: true,
-    paths: {
-      "gaugePath": {
-        description: "Numeric Data",
-        path: null,
-        source: null,
-        pathType: "number",
-        isPathConfigurable: true,
-        convertUnitTo: "unitless",
-        sampleTime: 500
-      }
-    },
-    gaugeType: 'ngLinearVertical',  //ngLinearVertical or ngLinearHorizontal
-    gaugeTicks: false,
-    minValue: 0,
-    maxValue: 100,
-    numInt: 1,
-    numDecimal: 0,
-    barColor: 'accent',
-  };
 
   // main gauge value variable
   public dataValue = 0;
   public dataValueTrimmed = 0;
-  private valueSub$: Subscription = null;
   private sample: number = 500;
 
   // Gauge options
@@ -57,34 +31,40 @@ export class WidgetGaugeNgLinearComponent implements DynamicWidget, OnInit, OnDe
   zones: Array<IZone> = [];
   zonesSub: Subscription;
 
-  constructor(public widgetBaseService: WidgetBaseService) {}
+  constructor(private appSettingsService: AppSettingsService) {
+    super();
+
+    this.defaultConfig = {
+      displayName: "Gauge Label",
+      filterSelfPaths: true,
+      paths: {
+        "gaugePath": {
+          description: "Numeric Data",
+          path: null,
+          source: null,
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "unitless",
+          sampleTime: 500
+        }
+      },
+      gaugeType: 'ngLinearVertical',  //ngLinearVertical or ngLinearHorizontal
+      gaugeTicks: false,
+      minValue: 0,
+      maxValue: 100,
+      numInt: 1,
+      numDecimal: 0,
+      barColor: 'accent',
+    };
+
+  }
 
   ngOnInit() {
-    this.subscribePath();
-    this.subscribeZones();
-  }
-
-  ngOnDestroy() {
-    this.unsubscribePath();
-    this.unsubscribeZones();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.theme) {
-      this.updateGaugeConfig();
-    }
-  }
-
-  subscribePath() {
-    this.unsubscribePath();
-    if (typeof(this.widgetProperties.config.paths['gaugePath'].path) != 'string') { return } // nothing to sub to...
-
-    this.valueSub$ = this.widgetBaseService.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path, this.widgetProperties.config.paths['gaugePath'].source).pipe(sampleTime(this.sample)).subscribe(
-      newValue => {
+    this.observeDataStream('gaugePath', newValue => {
         // Only push new values formated to gauge settings to reduce gauge paint requests
         let oldValue = this.dataValue;
-        let temp = this.formatDataValue(this.widgetBaseService.unitsService.convertUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, newValue.value));
-        if (oldValue != temp) {
+        let temp: any = this.formatWidgetNumberValue(newValue.value);
+        if (oldValue != (temp as number)) {
           this.dataValue = temp;
         }
 
@@ -98,24 +78,27 @@ export class WidgetGaugeNgLinearComponent implements DynamicWidget, OnInit, OnDe
             break;
           default:
             this.gaugeOptions.colorValueText = getComputedStyle(this.wrapper.nativeElement).color;
-
         }
-
       }
     );
+
+    this.subscribeZones();
   }
 
-  unsubscribePath() {
-    if (this.valueSub$ !== null) {
-      this.valueSub$.unsubscribe();
-      this.valueSub$ = null;
-      this.widgetBaseService.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['gaugePath'].path)
+  ngOnDestroy() {
+    this.unsubscribeDataStream();
+    this.unsubscribeZones();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.theme) {
+      this.updateGaugeConfig();
     }
   }
 
   // Subscribe to Zones
   subscribeZones() {
-    this.zonesSub = this.widgetBaseService.appSettingsService.getZonesAsO().subscribe(
+    this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(
       zones => {
         this.zones = zones;
         this.updateGaugeConfig();
@@ -129,19 +112,7 @@ export class WidgetGaugeNgLinearComponent implements DynamicWidget, OnInit, OnDe
     }
   }
 
-  private formatDataValue(value:number): number {
-    // make sure we are within range of the gauge settings, else the needle can go outside the range
-    if (value < this.widgetProperties.config.minValue || value == null) {
-      value = this.widgetProperties.config.minValue;
-    }
-    if (value > this.widgetProperties.config.maxValue) {
-      value = this.widgetProperties.config.maxValue;
-    }
-    return value;
-  }
-
   updateGaugeConfig(){
-    //// Hack to get Theme colors using hidden minxin, DIV and @ViewChild
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
@@ -366,5 +337,4 @@ export class WidgetGaugeNgLinearComponent implements DynamicWidget, OnInit, OnDe
       this.gaugeOptions.width = event.newRect.width;
     }
   }
-
 }

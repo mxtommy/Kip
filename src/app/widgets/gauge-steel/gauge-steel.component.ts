@@ -1,4 +1,4 @@
-import { Component, Input, AfterViewInit, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { ResizedEvent } from 'angular-resize-event';
 
 declare var steelseries: any; // 3rd party
@@ -44,7 +44,7 @@ export const SteelFrameColors = {
   templateUrl: './gauge-steel.component.html',
   styleUrls: ['./gauge-steel.component.css']
 })
-export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
+export class GaugeSteelComponent implements AfterViewInit, OnChanges {
 
   @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef;
 
@@ -80,10 +80,6 @@ export class GaugeSteelComponent implements OnInit, AfterViewInit, OnChanges {
   // common options for both radial and linear
 
   sections;
-
-
-  ngOnInit() {
-  }
 
   ngAfterViewInit() {
     if (!this.gaugeType) { this.gaugeType = 'radial'; }
