@@ -26,8 +26,22 @@ export abstract class BaseWidgetComponent {
 
   constructor() {
   }
-
-  protected createDataOservable(): void {
+/**
+ * Will iterate and creates all Widget Observables based on the Widget's widgetProperties.config.paths
+ * child Objects definitions. If no widgetProperties.config.paths child Objects definitions
+ * exists, execution returns without further execution.
+ *
+ * This method will be automalically called by observeDataStream() if it finds that no Observable
+ * have been created.
+ *
+ * This methode can be called manually if you are not using observeDataStream() and you are manually
+ * handling Observer operations for your custom needs.
+ *
+ * @protected
+ * @return {*}  {void}
+ * @memberof BaseWidgetComponent
+ */
+protected createDataOservable(): void {
     // check if Widget has properties
     if (this.widgetProperties === undefined) return;
     if (Object.keys(this.widgetProperties.config?.paths).length == 0) {
@@ -49,13 +63,24 @@ export abstract class BaseWidgetComponent {
       }
     })
   }
-
-  protected observeDataStream(pathName: string, func: ((value) => void))  {
+/**
+ * Use this method the subscribe to a Signal K data path Observable and receive a
+ * live data stream from the server. This method apply
+ * widgetProperties.config.paths[pathName] Object's properties: path, source, pathType,
+ * convertUnitTo and sampleTime, to setup the subsciption and define behavior.
+ *
+ * @protected
+ * @param {string} pathName the name of the path ie. paths: { "numericPath" ...
+ * @param {((value) => void)} subscribeNextFunction The callback function for the Next notification delivered by the Observable. The function should be the same as a standard observer.subscribe( x => { console.log(x) } ).
+ * @return {*}
+ * @memberof BaseWidgetComponent
+ */
+protected observeDataStream(pathName: string, subscribeNextFunction: ((value) => void))  {
     if (this.dataStream == null) {
       this.createDataOservable();
     }
 
-    const observer = this.buildObserver(pathName, func);
+    const observer = this.buildObserver(pathName, subscribeNextFunction);
 
     let pathObs = this.dataStream.find((stream: IWidgetDataStream) => {
       return stream.pathName === pathName;
@@ -71,9 +96,9 @@ export abstract class BaseWidgetComponent {
     }
   }
 
-  private buildObserver(pathKey: string, func: ((value) => void)): Observer<pathRegistrationValue> {
+  private buildObserver(pathKey: string, subscribeNextFunction: ((value) => void)): Observer<pathRegistrationValue> {
     const observer: Observer<pathRegistrationValue> = {
-      next: (x: pathRegistrationValue) => func(x),
+      next: (x: pathRegistrationValue) => subscribeNextFunction(x),
       error: err => console.error('Observer got an error: ' + err),
       complete: () => console.log('Observer got a complete notification: ' + pathKey),
     };
@@ -84,7 +109,7 @@ export abstract class BaseWidgetComponent {
           (x: pathRegistrationValue) => {
             // TODO: Something looks broken in conversion (m/s - kph - mph) also (meters to feet, etc.) See Numeric Widget and Simple Linear widgets as exemples
             x.value  = this.unitsService.convertUnit(this.widgetProperties.config.paths[pathKey].convertUnitTo, x.value);
-            func(x);
+            subscribeNextFunction(x);
           }
         break;
 
@@ -94,7 +119,17 @@ export abstract class BaseWidgetComponent {
     return observer;
   }
 
-  protected formatWidgetNumberValue(v: number): string {
+/**
+ * This methode will automatically ensure that Widget min/max values and decimal places
+ * are applied. To respect decimal places a strong must be returned, else trailing
+ * zeros are stripped.
+ *
+ * @protected
+ * @param {number} v the number to format
+ * @return {*}  {string} the final ouput to display
+ * @memberof BaseWidgetComponent
+ */
+protected formatWidgetNumberValue(v: number): string {
     if (v == null) {return}
     // As per Widget config
     // - Limit value to Min/Max range
@@ -107,8 +142,16 @@ export abstract class BaseWidgetComponent {
     let vStr: string = v.toFixed(this.widgetProperties.config.numDecimal);
     return vStr;
   }
-
-  protected unsubscribeDataStream(): void {
+/**
+ * Call this method to automatically unsubscribe all Widget's Observers at once, clean up KIP's Observable
+ * registry and reset Widget Subscriptions to free up memory.
+ *
+ * Should be called in ngOnDestroy() to free ressources.
+ *
+ * @protected
+ * @memberof BaseWidgetComponent
+ */
+protected unsubscribeDataStream(): void {
     if (this.dataSubscription != null) {
       this.dataSubscription.unsubscribe();
       // Cleanup KIP's pathRegister
