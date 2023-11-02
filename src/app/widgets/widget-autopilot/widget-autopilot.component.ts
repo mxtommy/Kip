@@ -263,7 +263,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       }
     );
 
-
     this.subscribeSKRequest();
     this.subscribeAPNotification();
     console.log("Autopilot Subs Started");
