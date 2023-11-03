@@ -65,6 +65,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
         if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
 
 
+
         this.IZoneState = newValue.state;
         //start flashing if alarm
         if (this.IZoneState == IZoneState.alarm && !this.flashInterval) {
@@ -148,7 +149,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     let valueText: any;
 
     if (this.dataValue !== null) {
-      valueText = this.formatValue(Number(this.dataValue));
+      valueText = this.applyDecorations(this.formatWidgetNumberValue(this.dataValue));
     } else {
       valueText = "--";
     }
@@ -272,14 +273,14 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     if (this.widgetProperties.config.showMin) {
       if (this.minValue != null) {
-        valueText = " Min: " + this.formatValue(Number(this.minValue));
+        valueText = " Min: " + this.applyDecorations(this.formatWidgetNumberValue(this.minValue));
       } else {
         valueText = " Min: --";
       }
     }
     if (this.widgetProperties.config.showMax) {
       if (this.maxValue != null) {
-        valueText += " Max: " + this.formatValue(Number(this.maxValue));
+        valueText += " Max: " + this.applyDecorations(this.formatWidgetNumberValue(this.maxValue));
       } else {
         valueText += valueText + " Max: --";
       }
@@ -317,73 +318,47 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
   }
 
-  /**
-   * Transforms a value to be ready for presentation based on Widget configuration settings. Handles
-   * data conversions, format masking and decorations.
-   *
-   * Ex: for Ratio value set to display as percentage with 2 integers and 1 decimals.
-   * The conversion will multiply ratio by 100, apply format masking 99.9 and append a % sign. Returned
-   * value for a ration of 0.095345 would be: 09.5%
-   *
-   * @private
-   * @param {number} val the numeric value to the formated
-   * @return {*}  {string} formated value ready for display
-   * @memberof WidgetNumericComponent
-   */
-  private formatValue(val: number): string {
-    let valConverted: any = null;
-    let valText: string = null;
-
-    // apply converstion
-    valConverted = this.unitsService.convertUnit(this.widgetProperties.config.paths['numericPath'].convertUnitTo, val);
-
-    if (!isNaN(valConverted)) { // retest as convert stuff might have returned a text string
-      // apply mask
-      valText = this.padValue(valConverted.toFixed(this.widgetProperties.config.numDecimal), this.widgetProperties.config.numInt, this.widgetProperties.config.numDecimal);
-    } else {
-      valText = valConverted;
-    }
-    // apply decoration
+  private applyDecorations(txtValue: string): string {
+    // apply decoration when requied
     switch (this.widgetProperties.config.paths['numericPath'].convertUnitTo) {
       case 'percent':
-        valText += '%';
+        txtValue += '%';
         break;
 
       case 'percentraw':
-        valText += '%';
+        txtValue += '%';
       break;
 
       default:
         break;
     }
-
-    return valText;
+    return txtValue;
   }
 
-  private padValue(val, int, dec): string {
-    let i = 0;
-    let s, n, foo;
-    let strVal: string
-    val = parseFloat(val);
-    n = (val < 0);
-    val = Math.abs(val);
-    if (dec > 0) {
-        foo = val.toFixed(dec).toString().split('.');
-        s = int - foo[0].length;
-        for (; i < s; ++i) {
-            foo[0] = '0' + foo[0];
-        }
-        strVal = (n ? '-' : '') + foo[0] + '.' + foo[1];
-    }
-    else {
-        strVal = Math.round(val).toString();
-        s = int - strVal.length;
-        for (; i < s; ++i) {
-            strVal = '0' + strVal;
-        }
-        strVal = (n ? '-' : '') + strVal;
-    }
-    return strVal;
-  }
+  // private padValue(val, int, dec): string {
+  //   let i = 0;
+  //   let s, n, foo;
+  //   let strVal: string
+  //   val = parseFloat(val);
+  //   n = (val < 0);
+  //   val = Math.abs(val);
+  //   if (dec > 0) {
+  //       foo = val.toFixed(dec).toString().split('.');
+  //       s = int - foo[0].length;
+  //       for (; i < s; ++i) {
+  //           foo[0] = '0' + foo[0];
+  //       }
+  //       strVal = (n ? '-' : '') + foo[0] + '.' + foo[1];
+  //   }
+  //   else {
+  //       strVal = Math.round(val).toString();
+  //       s = int - strVal.length;
+  //       for (; i < s; ++i) {
+  //           strVal = '0' + strVal;
+  //       }
+  //       strVal = (n ? '-' : '') + strVal;
+  //   }
+  //   return strVal;
+  // }
 
 }

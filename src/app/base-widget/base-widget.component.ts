@@ -113,7 +113,6 @@ export abstract class BaseWidgetComponent {
       case 'number':
         observer.next =
           (x: pathRegistrationValue) => {
-            // TODO: Something looks broken in conversion (m/s - kph - mph) also (meters to feet, etc.) See Numeric Widget and Simple Linear widgets as exemples
             x.value  = this.unitsService.convertUnit(this.widgetProperties.config.paths[pathKey].convertUnitTo, x.value);
             subscribeNextFunction(x);
           }
@@ -131,7 +130,7 @@ export abstract class BaseWidgetComponent {
    * zeros are stripped.
    *
    * @protected
-   * @param {number} v the number to format
+   * @param {number} v the value to format
    * @return {*}  {string} the final ouput to display
    * @memberof BaseWidgetComponent
    */
@@ -144,8 +143,9 @@ export abstract class BaseWidgetComponent {
     } else if (v <= this.widgetProperties.config.minValue) {
       v = this.widgetProperties.config.minValue;
     }
-    // - Strip decimals but keep as strong for format position
+    // - Strip decimals but keep as a string type for blank trailling decimal positions
     let vStr: string = v.toFixed(this.widgetProperties.config.numDecimal);
+
     return vStr;
   }
 
