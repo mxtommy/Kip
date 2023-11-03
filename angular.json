@@ -31,7 +31,8 @@
             "allowedCommonJsDependencies": [
               "canvas-gauges",
               "rx-dom-html",
-              "howler"
+              "howler",
+              "js-quantities"
             ]
           },
           "configurations": {
