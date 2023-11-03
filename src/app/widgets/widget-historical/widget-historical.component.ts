@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/co
 import { Subscription } from 'rxjs';
 
 import Chart from 'chart.js/auto';
-import 'chartjs-adapter-moment';
+import 'chartjs-adapter-date-fns';
 
 import { DataSetService } from '../../data-set.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
