@@ -10,6 +10,11 @@
 * New Authentification Service
 * New App bootstrap Init Service
 ## Improvements
+* Button/Switch Widget UI improvement to On/Off status indicator 
+* Upgrade to Angular 14
+* Performance improvements with reduction of Angular Change Detection
+* Reduced bundle size
+* Streamlined Widget framework to facilitate Widget contribution and creation
 * Migration to RxJS WebSocket
 * Improved JavaScript Web Token (JWT) management using HTTP Intreceptor
 * Improved management of Signal K communications reducing server buffer overflow and server-side termination exceptions handling.
