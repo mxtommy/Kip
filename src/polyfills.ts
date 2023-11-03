@@ -57,7 +57,7 @@ import 'core-js/es/reflect';
 /***************************************************************************************************
  * Zone JS is required by Angular itself.
  */
-import 'zone.js/dist/zone';  // Included with Angular CLI.
+import 'zone.js';  // Included with Angular CLI.
 
 
 
@@ -76,5 +76,5 @@ import 'zone.js/dist/zone';  // Included with Angular CLI.
 // import 'intl/locale-data/jsonp/en';
 
 // Process sharing fix for util module - Angular v12 upgratde fix. This might go away as it probably
-// comes from dependencies that fails to handle proper process sharing rules 
+// comes from dependencies that fails to handle proper process sharing rules
 (window as any).process = { env: { DEBUG: undefined }, };

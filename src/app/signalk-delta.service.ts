@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { ISignalKDeltaMessage, ISignalKMeta, ISignalKMetadata, ISignalKUpdateMessage } from './signalk-interfaces';
+import { ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from './signalk-interfaces';
 import { IMeta, INotification, IPathValueData } from "./app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuththeticationService, IAuthorizationToken } from './auththetication.service';

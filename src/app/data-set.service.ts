@@ -57,7 +57,7 @@ export class DataSetService {
   }
 
   public startAllDataSets() {
-    console.log("Starting " + this.dataSets.length.toString() + " DataSets");
+    console.log("[DataSet Service] Starting " + this.dataSets.length.toString() + " DataSets");
     for (let i = 0; i < this.dataSets.length; i++) {
       this.startDataSet(this.dataSets[i].uuid);
     }
@@ -140,9 +140,6 @@ export class DataSetService {
 
     // initialize data
     this.dataSetSub[dataSubIndex].data = [];
-    //for (let i=0; i<this.dataSets[dataIndex].dataPoints; i++) {
-    //    this.dataSetSub[dataSubIndex].data.push(null);
-    //}
 
     // inistialize dataCache
     this.dataSetSub[dataSubIndex].dataCache = {
