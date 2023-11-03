@@ -1,17 +1,18 @@
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import Chart from 'chart.js/auto';
+import { Chart } from 'chart.js';
+Chart.register();
 import { MatDialog } from '@angular/material/dialog';
 
-import { AppSettingsService } from '../app-settings.service';
-import { IConnectionConfig } from "../app-settings.interfaces";
-import { SignalKConnectionService, IEndpointStatus } from '../signalk-connection.service';
-import { SignalKService } from '../signalk.service';
-import { SignalKDeltaService, IStreamStatus } from './../signalk-delta.service';
-import { AuththeticationService, IAuthorizationToken } from './../auththetication.service';
-import { SignalkRequestsService } from '../signalk-requests.service';
-import { NotificationsService } from '../notifications.service';
-import { ModalUserCredentialComponent } from '../modal-user-credential/modal-user-credential.component';
+import { AppSettingsService } from '../../app-settings.service';
+import { IConnectionConfig } from "../../app-settings.interfaces";
+import { SignalKConnectionService, IEndpointStatus } from '../../signalk-connection.service';
+import { SignalKService } from '../../signalk.service';
+import { SignalKDeltaService, IStreamStatus } from '../../signalk-delta.service';
+import { AuththeticationService, IAuthorizationToken } from '../../auththetication.service';
+import { SignalkRequestsService } from '../../signalk-requests.service';
+import { NotificationsService } from '../../notifications.service';
+import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
 

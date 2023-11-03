@@ -1,8 +1,11 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import Chart from 'chart.js/auto';
+import { Chart } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+
+Chart.register();
+
 
 import { DataSetService } from '../../data-set.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
