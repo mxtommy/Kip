@@ -96,10 +96,8 @@ export class AppComponent implements OnInit, OnDestroy {
         });
 
         if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
-          let sound = new Howl({
+          const sound = new Howl({
             src: ['assets/notification.mp3'],
-            autoUnlock: true,
-            autoSuspend: false,
             autoplay: true,
             preload: true,
             loop: false,
@@ -118,6 +116,8 @@ export class AppComponent implements OnInit, OnDestroy {
             }
           });
           sound.play();
+          Howler.autoUnlock = true;
+          Howler.autoSuspend = false;
         }
       }
     );

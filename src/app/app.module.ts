@@ -59,51 +59,51 @@ import { AuthenticationInterceptor } from "./authentication-interceptor";
 //Components
 import { AppComponent } from './app.component';
 import { AppHelpComponent } from './app-help/app-help.component';
-import { WidgetBlankComponent } from './widget-blank/widget-blank.component';
-import { WidgetUnknownComponent } from './widget-unknown/widget-unknown.component';
-import { WidgetTextGenericComponent } from './widget-text-generic/widget-text-generic.component';
-import { WidgetDateGenericComponent } from './widget-date-generic/widget-date-generic.component';
+import { WidgetBlankComponent } from './widgets/widget-blank/widget-blank.component';
+import { WidgetUnknownComponent } from './widgets/widget-unknown/widget-unknown.component';
+import { WidgetTextGenericComponent } from './widgets/widget-text-generic/widget-text-generic.component';
+import { WidgetDateGenericComponent } from './widgets/widget-date-generic/widget-date-generic.component';
 import { DynamicWidgetContainerComponent, DynamicWidgetContainerModalComponent } from './dynamic-widget-container/dynamic-widget-container.component';
-import { SettingsComponent } from './settings/settings.component';
+import { SettingsTabsComponent } from './settings/tabs/tabs.component';
 import { RootDisplayComponent } from './root-display/root-display.component';
-import { WidgetNumericComponent } from './widget-numeric/widget-numeric.component';
-import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings-datasets/settings-datasets.component';
-import { SettingsSignalkComponent } from './settings-signalk/settings-signalk.component';
-import { WidgetHistoricalComponent } from './widget-historical/widget-historical.component';
+import { WidgetNumericComponent } from './widgets/widget-numeric/widget-numeric.component';
+import { SettingsDatasetsComponent, SettingsDatasetsModalComponent } from './settings/datasets/datasets.component';
+import { SettingsSignalkComponent } from './settings/signalk/signalk.component';
+import { WidgetHistoricalComponent } from './widgets/widget-historical/widget-historical.component';
 import { LayoutSplitComponent } from './layout-split/layout-split.component';
-import { WidgetWindComponent, } from './widget-wind/widget-wind.component';
-import { SvgWindComponent } from './svg-wind/svg-wind.component';
-import { WidgetGaugeComponent } from './widget-gauge/widget-gauge.component';
-import { GaugeSteelComponent } from './gauge-steel/gauge-steel.component';
-import { WidgetTutorialComponent } from './widget-tutorial/widget-tutorial.component';
+import { WidgetWindComponent, } from './widgets/widget-wind/widget-wind.component';
+import { SvgWindComponent } from './widgets/svg-wind/svg-wind.component';
+import { WidgetGaugeComponent } from './widgets/widget-gauge/widget-gauge.component';
+import { GaugeSteelComponent } from './widgets/gauge-steel/gauge-steel.component';
+import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
-import { WidgetButtonComponent } from './widget-button/widget-button.component';
-import { ModalWidgetComponent } from './modal-widget/modal-widget.component';
-import { WidgetSwitchComponent } from './widget-switch/widget-switch.component'
+import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
+import { ModalWidgetConfigComponent } from './modal-widget-config/modal-widget-config.component';
+import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
-import { SettingsUnitsComponent } from './settings-units/settings-units.component';
-import { SettingsZonesComponent, DialogNewZone, DialogEditZone } from './settings-zones/settings-zones.component';
-import { WidgetIframeComponent } from './widget-iframe/widget-iframe.component';
-import { SettingsConfigComponent } from './settings-config/settings-config.component';
-import { WidgetGaugeNgLinearComponent } from './widget-gauge-ng-linear/widget-gauge-ng-linear.component';
-import { WidgetGaugeNgRadialComponent } from './widget-gauge-ng-radial/widget-gauge-ng-radial.component';
+import { SettingsUnitsComponent } from './settings/units/units.component';
+import { SettingsZonesComponent, DialogNewZone, DialogEditZone } from './settings/zones/zones.component';
+import { WidgetIframeComponent } from './widgets/widget-iframe/widget-iframe.component';
+import { SettingsConfigComponent } from './settings/config/config.component';
+import { WidgetGaugeNgLinearComponent } from './widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
+import { WidgetGaugeNgRadialComponent } from './widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
-import { WidgetAutopilotComponent } from './widget-autopilot/widget-autopilot.component';
-import { SvgAutopilotComponent } from './svg-autopilot/svg-autopilot.component';
-import { SettingsNotificationsComponent } from './settings-notifications/settings-notifications.component';
-import { SvgSimpleLinearGaugeComponent } from './svg-simple-linear-gauge/svg-simple-linear-gauge.component';
-import { WidgetSimpleLinearComponent } from './widget-simple-linear/widget-simple-linear.component';
+import { WidgetAutopilotComponent } from './widgets/widget-autopilot/widget-autopilot.component';
+import { SvgAutopilotComponent } from './widgets/svg-autopilot/svg-autopilot.component';
+import { SettingsNotificationsComponent } from './settings/notifications/notifications.component';
+import { SvgSimpleLinearGaugeComponent } from './widgets/svg-simple-linear-gauge/svg-simple-linear-gauge.component';
+import { WidgetSimpleLinearComponent } from './widgets/widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
 import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/data-browser-row.component';
 import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
-import { WidgetRaceTimerComponent } from './widget-race-timer/widget-race-timer.component';
-import { WidgetLoginComponent } from './widget-login/widget-login.component';
+import { WidgetRaceTimerComponent } from './widgets/widget-race-timer/widget-race-timer.component';
+import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
 
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '/page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
-  { path: 'settings', component: SettingsComponent },
+  { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data',  component: DataBrowserComponent },
   { path: 'reset', component: ResetConfigComponent },
@@ -130,7 +130,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     RootDisplayComponent,
     AppComponent,
     AppHelpComponent,
-    SettingsComponent,
+    SettingsTabsComponent,
     DynamicWidgetContainerComponent,
     DynamicWidgetContainerModalComponent,
     DialogUnitSelect,
@@ -171,13 +171,13 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     DialogEditZone,
     LayoutSplitComponent,
     ResetConfigComponent,
-    ModalWidgetComponent,
+    ModalWidgetConfigComponent,
     ModalPathSelectorComponent,
     ModalUserCredentialComponent,
     AlarmMenuComponent,
     SettingsNotificationsComponent,
     DataBrowserComponent,
-    DataBrowserRowComponent,
+    DataBrowserRowComponent
   ],
   imports: [
     BrowserModule,

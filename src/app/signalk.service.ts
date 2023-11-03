@@ -8,16 +8,24 @@ import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import { NotificationsService } from './notifications.service';
 import Qty from 'js-quantities';
 
-interface pathRegistrationValue {
+export interface pathRegistrationValue {
   value: any;
   state: IZoneState;
 };
 
+/**
+ *
+ * @param {string} uuid The UUID for the widget registering the path
+ * @param {string} path A Signal K path
+ * @param {string} source Set Signal K data path source when multiple sources exists for the same path. If set, the Signal K default source will be ignored.
+ * @param {string} subject A rxjs BehaviorSubject of Type pathRegistrationValue used to return Observable
+ * @interface pathRegistration
+ */
 interface pathRegistration {
   uuid: string;
   path: string;
-  source: string; // if this is set, updates to observable are the direct value of this source...
-  observable: BehaviorSubject<pathRegistrationValue>;
+  source: string;
+  subject: BehaviorSubject<pathRegistrationValue>;
 }
 
 export interface updateStatistics {
@@ -138,13 +146,13 @@ export class SignalKService {
   }
 
   subscribePath(uuid: string, path: string, source: string) {
-    //see if already subscribed, if yes return that...
+    // see if already subscribed, if yes return that...
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
-      return this.pathRegister[registerIndex].observable.asObservable();
+      return this.pathRegister[registerIndex].subject.asObservable();
     }
 
-    //find if we already have a value for this path to return.
+    // find if we already have a value for this path to return.
     let currentValue = null;
     let state = IZoneState.normal;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
@@ -159,18 +167,19 @@ export class SignalKService {
       state = this.paths[pathIndex].state;
     }
 
-    let newRegister = {
+    let newRegister: pathRegistration  = {
       uuid: uuid,
       path: path,
       source: source,
-      observable: new BehaviorSubject<pathRegistrationValue>({ value: currentValue, state: state })
+      subject: new BehaviorSubject<pathRegistrationValue>({ value: currentValue, state: state })
     };
 
-    //register
+    // Add to register array
     this.pathRegister.push(newRegister);
-    // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
+    // rxjs Subject should be created now. We use search now as maybe someone else adds something and it's no longer last in array :P
     pathIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
-    return this.pathRegister[pathIndex].observable.asObservable();
+    // Create Subject observable and and return
+    return this.pathRegister[pathIndex].subject.asObservable();
   }
 
   private setSelfUrn(value: string) {
@@ -289,7 +298,7 @@ export class SignalKService {
           console.warn(`Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
         }
         if (source !== null) {
-          pathRegister.observable.next({
+          pathRegister.subject.next({
             value: this.paths[pathIndex].sources[source].value,
             state: this.paths[pathIndex].state
           });

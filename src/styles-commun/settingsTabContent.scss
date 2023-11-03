@@ -1,0 +1,15 @@
+@mixin tab-content-styles {
+  .formActionFooter {
+    width: 100%;
+    text-align: end;
+  }
+
+  .formActionButton {
+    margin-left: 10px;
+  }
+
+  .formActionDivider{
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+}

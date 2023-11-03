@@ -1,11 +1,8 @@
 /*********************************************************************************
- * This file contains App (Kip) internal data interfaces.
+ * This file contains the most, but not all, common KIP App internal data types and
+ * struture interfaces. They are used by various services, componenets and widgets.
  *
- * Those interfaces describe most (only is reuse is needed) shared app data types
- * and data structures used in the application. They are use by various services,
- * componenets and widgets.
- *
- * For Signal K data interfaces (external data), see signalk-interfaces file.
+ * For external data interfaces, such as Signal K, see signalk-interfaces file.
  *********************************************************************************/
 
 import { ISignalKMetadata, State, Method } from "./signalk-interfaces";

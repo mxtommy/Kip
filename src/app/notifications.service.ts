@@ -351,10 +351,8 @@ export class NotificationsService {
    */
    getPlayer(track: number): Howl {
     this.activeAlarmSoundtrack = track;
-    let player = new Howl({
+    const player = new Howl({
         src: ['assets/' + alarmTrack[track] + '.mp3'],
-        autoUnlock: true,
-        autoSuspend: false,
         autoplay: false,
         preload: true,
         loop: true,

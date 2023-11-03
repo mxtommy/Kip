@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
-import { IWidget } from './widget-manager.service';
+import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from './units.service';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "./app-settings.interfaces";

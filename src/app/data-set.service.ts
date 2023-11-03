@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { Subscription ,  Observable ,  BehaviorSubject, interval } from 'rxjs';
+import { Injectable, NgZone } from '@angular/core';
+import { Subscription, BehaviorSubject, interval } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 
@@ -52,12 +52,13 @@ export class DataSetService {
   constructor(
     private AppSettingsService: AppSettingsService,
     private SignalKService: SignalKService,
+    private zones: NgZone
   ) {
       this.dataSets = AppSettingsService.getDataSets();
   }
 
   public startAllDataSets() {
-    console.log("Starting " + this.dataSets.length.toString() + " DataSets");
+    console.log("[DataSet Service] Starting " + this.dataSets.length.toString() + " DataSets");
     for (let i = 0; i < this.dataSets.length; i++) {
       this.startDataSet(this.dataSets[i].uuid);
     }
@@ -140,9 +141,6 @@ export class DataSetService {
 
     // initialize data
     this.dataSetSub[dataSubIndex].data = [];
-    //for (let i=0; i<this.dataSets[dataIndex].dataPoints; i++) {
-    //    this.dataSetSub[dataSubIndex].data.push(null);
-    //}
 
     // inistialize dataCache
     this.dataSetSub[dataSubIndex].dataCache = {
@@ -158,9 +156,11 @@ export class DataSetService {
         this.updateDataCache(uuid, newValue.value);
     });
 
-    // start update timer
-    this.dataSetSub[dataSubIndex].updateTimerSub = interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
-        this.aggregateDataCache(uuid);
+    // start update timer out side of zones to remove change detection triggers. We observe the array data updates, not the data directly comming from SK
+    this.zones.runOutsideAngular(() => {
+      this.dataSetSub[dataSubIndex].updateTimerSub = interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
+          this.aggregateDataCache(uuid);
+      });
     });
 
   }

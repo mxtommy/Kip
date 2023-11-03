@@ -2,81 +2,102 @@
  * This component is hosted in layout-split and handles Widget framework operations and
  * dynamic instanciation.
  */
-import { Component, OnInit, Input, Inject, ComponentRef, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Inject, ViewChild, ViewContainerRef, ElementRef, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UntypedFormControl } from '@angular/forms';
 import { cloneDeep } from "lodash-es";
 
-import { ModalWidgetComponent } from '../modal-widget/modal-widget.component';
-import { WidgetManagerService, IWidget } from '../widget-manager.service';
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
+import { DynamicWidget, IWidget, ITheme } from '../widgets-interface';
+import { ModalWidgetConfigComponent } from '../modal-widget-config/modal-widget-config.component';
+import { AppSettingsService } from '../app-settings.service';
+import { WidgetManagerService } from '../widget-manager.service';
 import { WidgetListService, widgetList } from '../widget-list.service';
-
-/**
- * Used to add data properties to ComponentRef/Widgets so they are exposed as
- * @input() decorators in the Widget instance.
- *
- * @export
- * @abstract
- * @class DynamicComponentData
- */
-export abstract class DynamicComponentData {
-  unlockStatus: boolean;
-  widgetProperties: IWidget;
-  widgetUUID: string;
-}
 
 
 @Component({
   selector: 'app-dynamic-widget-container',
   templateUrl: './dynamic-widget-container.component.html',
-  styleUrls: ['./dynamic-widget-container.component.css']
+  styleUrls: ['./dynamic-widget-container.component.scss']
 })
-export class DynamicWidgetContainerComponent implements OnInit {
+export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   @Input('splitUUID') splitUUID: string;   // Get UUID from layout-split. We use it as the widgetUUID later for the widget
   @Input('unlockStatus') unlockStatus: boolean; // From layout-split.
   @ViewChild(DynamicWidgetDirective, {static: true, read: ViewContainerRef}) dynamicWidgetContainerRef : ViewContainerRef; // Parent layout-split container ref
 
+  // hack to access material-theme palette colors
+  @ViewChild('primary', {static: true, read: ElementRef}) private primary: ElementRef;
+  @ViewChild('accent', {static: true, read: ElementRef}) private accent: ElementRef;
+  @ViewChild('warn', {static: true, read: ElementRef}) private warn: ElementRef;
+  @ViewChild('primaryDark', {static: true, read: ElementRef}) private primaryDark: ElementRef;
+  @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDark: ElementRef;
+  @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDark: ElementRef;
+  @ViewChild('background', {static: true, read: ElementRef}) private background: ElementRef;
+  @ViewChild('text', {static: true, read: ElementRef}) private text: ElementRef;
 
+  private themeNameSub: Subscription = null;
   private splitWidgetSettings: IWidget;
+  private themeColor: ITheme = {primary: '', accent: '', warn: '', primaryDark: '', accentDark: '', warnDark: '', background: '', text: ''};
   public widgetInstance;
-  private newContainerRefRef: ComponentRef<{}>;
 
   constructor(
       public dialog: MatDialog,
+      private appSettingsService: AppSettingsService, // need for theme change subscription
       private WidgetManagerService: WidgetManagerService,
       private widgetListService: WidgetListService) { }
 
   ngOnInit() {
-    this.widgetInstance = null;
+    this.subscribeTheme();
+  }
+
+  private loadTheme(): void {
+    this.themeColor.primary = getComputedStyle(this.primary.nativeElement).color;
+    this.themeColor.accent = getComputedStyle(this.accent.nativeElement).color;
+    this.themeColor.warn = getComputedStyle(this.warn.nativeElement).color;
+    this.themeColor.primaryDark = getComputedStyle(this.primaryDark.nativeElement).color;
+    this.themeColor.accentDark = getComputedStyle(this.accentDark.nativeElement).color;
+    this.themeColor.warnDark = getComputedStyle(this.warnDark.nativeElement).color;
+    this.themeColor.background = getComputedStyle(this.background.nativeElement).color;
+    this.themeColor.text = getComputedStyle(this.text.nativeElement).color;
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.splitUUID && !changes.splitUUID.firstChange) {
+      this.instanciateWidget();
+    }
+
+    if (changes.unlockStatus && !changes.unlockStatus.firstChange) {
+      if(this.splitWidgetSettings.type == 'WidgetTutorial') {
+        this.widgetInstance.unlockStatus = this.unlockStatus;  // keep for Tutorial Widget
+      }
+
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribeTheme();
+  }
+
+  private instanciateWidget(): void {
     this.splitWidgetSettings = null;
     // Use parent layout-split UUID to find configured target Widgett. Split UUID is used for Widget UUID
     this.splitWidgetSettings = this.WidgetManagerService.getWidget(this.splitUUID); // get from parent
     const widgetComponentTypeName = this.widgetListService.getComponentName(this.splitWidgetSettings.type);
 
-    // Dynamically create containerRef.
-    // this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
-    this.newContainerRefRef = this.dynamicWidgetContainerRef.createComponent(widgetComponentTypeName);
-
-    // Init and add abstract class data properties and inject properties into Widget
-    this.widgetInstance = <DynamicComponentData> this.newContainerRefRef.instance;
+    // Dynamically create component.
+    this.widgetInstance = null;
+    this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
+    const dynamicWidget = this.dynamicWidgetContainerRef.createComponent<DynamicWidget>(widgetComponentTypeName);
+    this.widgetInstance = dynamicWidget.instance;
     if (this.splitWidgetSettings.config == null) {
       this.loadWidgetDefaults();
     }
-    this.widgetInstance.unlockStatus = this.unlockStatus;  //TODO(David): Remove once all Widget are updated
-    this.widgetInstance.widgetProperties = this.splitWidgetSettings;
-    this.widgetInstance.widgetUUID = this.splitWidgetSettings.uuid;  //TODO(David): Remove once all Widget are updated
-  }
-
-  ngOnChanges(changes: any) {
-    if ( ('widgetUUID' in changes ) && (!changes.widgetUUID.firstChange)) {
-      this.ngOnInit();
+    dynamicWidget.setInput('widgetProperties', this.splitWidgetSettings);
+    dynamicWidget.setInput('theme', this.themeColor);
+    if(this.splitWidgetSettings.type == 'WidgetTutorial') {
+      dynamicWidget.setInput('unlockStatus', this.unlockStatus);  // keep for Tutorial Widget
     }
-
-    if ( ('unlockStatus' in changes ) && (!changes.unlockStatus.firstChange)) {
-      this.widgetInstance.unlockStatus = this.unlockStatus;  //TODO(David): Remove once all Widget are updated
-    }
-
   }
 
   public selectWidget(): void {
@@ -90,9 +111,9 @@ export class DynamicWidgetContainerComponent implements OnInit {
       for (let [group, widgetList] of Object.entries(fullWidgetList)) {
         if (widgetList.findIndex(w => w.name == result) >= 0 ) {
           if (this.splitWidgetSettings.type != result) {
-            this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
+            // this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
             this.WidgetManagerService.updateWidgetType(this.splitUUID, result);
-            this.ngOnInit();
+            this.instanciateWidget();
           }
         }
       }
@@ -101,7 +122,7 @@ export class DynamicWidgetContainerComponent implements OnInit {
   }
 
   public openWidgetSettings(): void {
-    const dialogRef = this.dialog.open(ModalWidgetComponent, {
+    const dialogRef = this.dialog.open(ModalWidgetConfigComponent, {
       width: '80%',
       data: {...this.splitWidgetSettings.config}
     });
@@ -118,9 +139,9 @@ export class DynamicWidgetContainerComponent implements OnInit {
           this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
         }
 
-        this.dynamicWidgetContainerRef.clear();
+        // this.dynamicWidgetContainerRef.clear();
         this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, this.splitWidgetSettings.config); // Push to storage
-        this.ngOnInit();
+        this.instanciateWidget();
       }
     });
   }
@@ -129,13 +150,30 @@ export class DynamicWidgetContainerComponent implements OnInit {
       this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, {...this.widgetInstance.defaultConfig}); // push default to manager service for storage
       this.splitWidgetSettings.config = this.widgetInstance.defaultConfig; // load default in current intance.
   }
+
+  private subscribeTheme() {
+    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
+      themeChange => {
+        setTimeout(() => {   // delay so browser getComputedStyles has time to complet Material Theme style changes.
+          this.loadTheme();
+          this.instanciateWidget();
+         }, 50);
+    })
+  }
+
+  private unsubscribeTheme(){
+    if (this.themeNameSub !== null) {
+      this.themeNameSub.unsubscribe();
+      this.themeNameSub = null;
+    }
+  }
 }
 
 
 @Component({
   selector: 'app-dynamic-widget-container-modal',
   templateUrl: './dynamic-widget-container.modal.html',
-  styleUrls: ['./dynamic-widget-container.component.css']
+  styleUrls: ['./dynamic-widget-container.component.scss']
 })
 export class DynamicWidgetContainerModalComponent implements OnInit {
 
