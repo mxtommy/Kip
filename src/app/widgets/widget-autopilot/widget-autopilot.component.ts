@@ -124,7 +124,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           },
           "apNotifications": {
             description: "Autopilot Notifications",
-            path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* type subscription paths in sk service and widget config modal
+            path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* path subscription paths in sk service and widget config modal
             source: 'default',
             pathType: "string",
             convertUnitTo: "",

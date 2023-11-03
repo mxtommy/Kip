@@ -27,7 +27,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
           source: null,
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "v",
+          convertUnitTo: "V",
           sampleTime: 500
         }
       },
@@ -44,7 +44,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   ngOnInit(): void {
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gaugeUnitLabelFormat == "abr") {
-      //  TODO: fix label using group description for Full or measure for abr and not config conversion value as below!
+      //  TODO: Improve Units service to have Full Measure label, abbriviation and descriptions so that we can use Full or abr display labels...!
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
     } else {
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
