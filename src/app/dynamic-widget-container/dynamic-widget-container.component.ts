@@ -49,13 +49,6 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.subscribeTheme();
-    // this.loadTheme();
-    // this.instanciateWidget();
-
-    // Track theme changes
-    // if(this.themeNameSub == null) {
-    //   this.subscribeTheme();
-    // }
   }
 
   private loadTheme(): void {

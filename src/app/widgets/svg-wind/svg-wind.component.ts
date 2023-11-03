@@ -247,33 +247,10 @@ export class SvgWindComponent {
 
   }
 
-
-
-
   addHeading(h1: number = 0, h2: number = 0) {
     let h3 = h1 + h2;
     while (h3 > 359) { h3 = h3 - 359; }
     while (h3 < 0) { h3 = h3 + 359; }
     return h3;
   }
-
-
 }
-
-
-
-
-
-
-/*
-<animateTransform #compassAnimate attributeName="transform"
-type="rotate"
-[attr.from]="'-'+oldCompassRotate+' 250 250'"
-[attr.to]="'-'+newCompassRotate+' 250 250'"
-begin="indefinite"
-dur="0.5s"
-additive="replace"
-fill="freeze"
-/>
-
-*/

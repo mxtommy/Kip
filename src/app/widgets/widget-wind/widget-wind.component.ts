@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
@@ -29,7 +29,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   windSectorObservableSub: Subscription = null;
 
-  constructor() {
+  constructor(private zones: NgZone) {
     super();
 
     this.defaultConfig = {
@@ -159,8 +159,10 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   startWindSectors() {
-    this.windSectorObservableSub = interval(500).subscribe(x => {
-      this.historicalCleanup();
+    this.zones.runOutsideAngular(() => {
+      this.windSectorObservableSub = interval(500).subscribe(x => {
+        this.historicalCleanup();
+      });
     });
   }
 

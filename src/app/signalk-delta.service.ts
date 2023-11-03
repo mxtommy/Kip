@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
@@ -67,6 +67,7 @@ export class SignalKDeltaService {
   constructor(
     private server: SignalKConnectionService,
     private auth: AuththeticationService,
+    private zones: NgZone
     )
     {
       // Monitor Connection Service Endpoint Status
@@ -159,17 +160,20 @@ export class SignalKDeltaService {
     this.streamEndpoint$.next(this.streamEndpoint);
 
     this.socketWS$ = this.getNewWebSocket();
-    this.socketWS$.pipe(
-      retryWhen(errors =>
-        errors.pipe(
-          tap(err => {
-            console.error("[Delta Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
-          }),
-          delay(this.WS_RECONNECT_INTERVAL)
+    // Every WebSocket onmessage listener event (data cmming in) generates fires a ChangeDetection cycles that is not relevent in KIP. KIP sends socket messages to internal service data array only, so no UI updates (change detection) are necessary. UI Updates observing the internal data array updates. Running outside zones.js to eliminate unnessesary changedetection cycle.
+    this.zones.runOutsideAngular(() => {
+      this.socketWS$.pipe(
+        retryWhen(errors =>
+          errors.pipe(
+            tap(err => {
+              console.error("[Delta Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
+            }),
+            delay(this.WS_RECONNECT_INTERVAL)
+          )
         )
-      )
-    ).subscribe(msgWS => {
-      this.processWebsocketMessage(msgWS);
+      ).subscribe(msgWS => {
+        this.processWebsocketMessage(msgWS);
+      });
     });
   }
 

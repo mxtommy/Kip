@@ -43,13 +43,12 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   ngOnInit() {
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.resizeWidget();
 
     this.observeDataStream('stringPath', newValue => {
       this.dataValue = newValue.value;
       this.updateCanvas();
     });
-
-    this.resizeWidget();
   }
 
   ngOnDestroy() {
