@@ -82,7 +82,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   private instanciateWidget(): void {
     this.splitWidgetSettings = null;
     // Use parent layout-split UUID to find configured target Widgett. Split UUID is used for Widget UUID
-    this.splitWidgetSettings = this.WidgetManagerService.getWidget(this.splitUUID); // get from parent
+    this.splitWidgetSettings = cloneDeep(this.WidgetManagerService.getWidget(this.splitUUID)); // get from parent
     const widgetComponentTypeName = this.widgetListService.getComponentName(this.splitWidgetSettings.type);
 
     // Dynamically create component.
