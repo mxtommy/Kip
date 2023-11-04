@@ -1,3 +1,16 @@
+# Manual project excludes
+/src
+.angular/
+e2e/
+svg-templates/
+karma.conf.js
+.angulardoc.json
+.browserslistrc
+angular.json
+tsconfig.json
+tslint.json
+protractor.conf.js
+
 
 # dependencies
 /node_modules

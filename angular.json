@@ -154,7 +154,7 @@
   },
   "cli": {
     "warnings": {
-      "versionMismatch": false
+      "versionMismatch": true
     }
   }
 }
