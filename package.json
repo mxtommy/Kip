@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "An advanced and verasatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {"name": "Thomas St.Pierre", "email": "thomas@samoht.ca"},
@@ -22,7 +22,7 @@
     "nmea"
   ],
   "signalk": {
-    "appIcon": "./assets/icon-64x64.png",
+    "appIcon": "./assets/icon-72x72.png",
     "displayName": "KIP Instrument MFD"
   },
   "scripts": {
