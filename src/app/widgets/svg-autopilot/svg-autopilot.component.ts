@@ -1,11 +1,15 @@
-import { Component, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 
+interface ISVGRotationObject {
+  oldDegreeIndicator: string,
+  newDegreeIndicator: string,
+  animationElement: ElementRef
+}
 
 @Component({
   selector: 'app-svg-autopilot',
   templateUrl: './svg-autopilot.component.html',
-  // uses svg-wind SCSS styles
   animations: [
     trigger('fadeInOut', [
       state('connected', style({
@@ -23,7 +27,8 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
     ]),
   ]
 })
-export class SvgAutopilotComponent {
+
+export class SvgAutopilotComponent implements AfterViewInit {
   // AP screen
   @ViewChild('apStencil', {static: true, read: ElementRef}) ApStencil: ElementRef;
   @ViewChild('countDown', {static: true, read: ElementRef}) countDown: ElementRef;
@@ -41,18 +46,12 @@ export class SvgAutopilotComponent {
   @Input('apTargetAppWindAngle') apTargetAppWindAngle: string;
   @Input('isApConnected') isApConnected: boolean;
 
-  constructor() { }
-
   // compass
-  oldCompassRotate: number = 0;
-  newCompassRotate: number = 0;
-  headingValue: string ="0";
+  compassFaceplate: ISVGRotationObject;
+  headingValue: string ="--";
 
   // Apparent wind
-  oldAppWindAngle: string = "0";
-  newAppWindAngle: string = "0";
-  oldAppWindRotateAngle: string = "0";
-  newAppWindRotateAngle: string = "0";
+  appWind: ISVGRotationObject;
 
   // rudder
   oldRudderPrtAngle: number = 0;
@@ -69,16 +68,33 @@ export class SvgAutopilotComponent {
   messageVisibility: string = "hidden";
   messageInnerText: string = "";
 
+  constructor() {
+    this.compassFaceplate =  {
+      oldDegreeIndicator: '0',
+      newDegreeIndicator: '0',
+      animationElement: undefined
+    };
+
+    this.appWind =  {
+      oldDegreeIndicator: '0',
+      newDegreeIndicator: '0',
+      animationElement: undefined
+    };
+  }
+
+  ngAfterViewInit(): void {
+    this.compassFaceplate.animationElement = this.compassAnimate;
+    this.appWind.animationElement = this.appWindAnimate;
+  }
 
   ngOnChanges(changes: SimpleChanges) {
 
     //heading
     if (changes.compassHeading) {
       if (! changes.compassHeading.firstChange) {
-        this.oldCompassRotate = this.newCompassRotate;
-        this.newCompassRotate = changes.compassHeading.currentValue;
-        this.headingValue = this.newCompassRotate.toFixed(0);
-        this.compassAnimate.nativeElement.beginElement();
+        this.compassFaceplate.oldDegreeIndicator = this.compassFaceplate.newDegreeIndicator;
+        this.headingValue = this.compassFaceplate.newDegreeIndicator = changes.compassHeading.currentValue.toFixed(0);
+        this.smoothCircularRotation(this.compassFaceplate);
       }
     }
 
@@ -99,48 +115,9 @@ export class SvgAutopilotComponent {
     //appWindAngle
     if (changes.appWindAngle) {
       if (! changes.appWindAngle.firstChange) {
-        this.oldAppWindAngle = this.newAppWindAngle;
-        this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
-
-        let oldAngle = Number(this.oldAppWindAngle)
-        let newAngle = Number(this.newAppWindAngle);
-        let diff = oldAngle - newAngle;
-
-        // only update if on DOM and value rounded changed
-        if (this.appWindAnimate && (diff != 0)) {
-          // Special cases to smooth out passing between 359 to/from 0
-          // if more than half the circle, it could need to go over the 359 / 0 values
-          if ( Math.abs(diff) > 180 ) {
-            // In what direction are we moving?
-            if (Math.sign(diff) == 1) {
-              if (oldAngle == 359) {
-                // special cases
-                this.oldAppWindAngle = "0";
-                this.appWindAnimate.nativeElement.beginElement();
-              } else {
-                this.newAppWindAngle = "359";
-                this.appWindAnimate.nativeElement.beginElement();
-                this.oldAppWindAngle = "0";
-                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
-                this.appWindAnimate.nativeElement.beginElement();
-              }
-            } else {
-              if (oldAngle == 0) {
-                // special cases
-                this.oldAppWindAngle = "359";
-                this.appWindAnimate.nativeElement.beginElement();
-              } else {
-                this.newAppWindAngle = "0";
-                this.appWindAnimate.nativeElement.beginElement();
-                this.oldAppWindAngle = "359";
-                this.newAppWindAngle = changes.appWindAngle.currentValue.toFixed(0);
-                this.appWindAnimate.nativeElement.beginElement();
-              }
-            }
-          } else {
-            this.appWindAnimate.nativeElement.beginElement();
-          }
-        }
+        this.appWind.oldDegreeIndicator = this.appWind.newDegreeIndicator;
+        this.appWind.newDegreeIndicator = changes.appWindAngle.currentValue.toFixed(0);
+        this.smoothCircularRotation(this.appWind);
       }
     }
 
@@ -167,6 +144,47 @@ export class SvgAutopilotComponent {
         if (this.rudderStbAnimate) { // only update if on dom...
           this.rudderStbAnimate.nativeElement.beginElement();
         }
+      }
+    }
+  }
+
+  private smoothCircularRotation(rotationElement: ISVGRotationObject): void {
+    const oldAngle = Number(rotationElement.oldDegreeIndicator)
+    const newAngle = Number(rotationElement.newDegreeIndicator);
+    const diff = oldAngle - newAngle;
+    // only update if on DOM and value rounded changed
+    if (rotationElement.animationElement && (diff != 0)) {
+      // Special cases to smooth out passing between 359 to/from 0
+      // if more than half the circle, it could need to go over the 359 to 0 without doing full full circle
+      if ( Math.abs(diff) > 180 ) {
+        // In what direction are we moving?
+        if (Math.sign(diff) == 1) {
+          if (oldAngle == 359) {
+            // special cases
+            rotationElement.oldDegreeIndicator = "0";
+            rotationElement.animationElement.nativeElement.beginElement();
+          } else {
+            rotationElement.newDegreeIndicator = "359";
+            rotationElement.animationElement.nativeElement.beginElement();
+            rotationElement.oldDegreeIndicator = "0";
+            rotationElement.newDegreeIndicator = newAngle.toFixed(0);
+            rotationElement.animationElement.nativeElement.beginElement();
+          }
+        } else {
+          if (oldAngle == 0) {
+            // special cases
+            rotationElement.oldDegreeIndicator = "359";
+            rotationElement.animationElement.nativeElement.beginElement();
+          } else {
+            rotationElement.newDegreeIndicator = "0";
+            rotationElement.animationElement.nativeElement.beginElement();
+            rotationElement.oldDegreeIndicator = "359";
+            rotationElement.newDegreeIndicator = newAngle.toFixed(0);
+            rotationElement.animationElement.nativeElement.beginElement();
+          }
+        }
+      } else {
+        rotationElement.animationElement.nativeElement.beginElement();
       }
     }
   }

@@ -5,20 +5,14 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-wind',
-  templateUrl: './widget-wind.component.html',
-  styleUrls: ['./widget-wind.component.css']
+  templateUrl: './widget-wind.component.html'
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   currentHeading: number = 0;
-
-  appWindAngle: number = null;
-
-  appWindSpeed: number = null;
-
-  trueWindAngle: number = null;
-
-  trueWindSpeed: number = null;
-
+  appWindAngle: number = 0;
+  appWindSpeed: number = 0;
+  trueWindAngle: number = 0;
+  trueWindSpeed: number = 0;
   trueWindHistoric: {
     timestamp: number;
     heading: number;
@@ -99,8 +93,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
     this.observeDataStream('appWindAngle', newValue => {
         if (newValue.value === null) {
-          this.appWindAngle = null;
-          return;
+          this.appWindAngle = 0;
         }
 
         if (newValue.value < 0) {// stb
@@ -123,8 +116,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
     this.observeDataStream('trueWindAngle', newValue => {
         if (newValue.value === null) {
-          this.trueWindAngle = null;
-          return;
+          this.trueWindAngle = 0;
         }
 
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
