@@ -11,6 +11,12 @@
 * West Longitudes show negatives by @godind in https://github.com/mxtommy/Kip/pull/206
 * App-help-styiling-to-Angular by @godind in https://github.com/mxtommy/Kip/pull/207
 * Bump @babel/traverse from 7.23.0 to 7.23.2 by @dependabot in https://github.com/mxtommy/Kip/pull/194
+# V 2.0.1
+## Improvements
+* Update: KIP Icon by @godind in https://github.com/mxtommy/Kip/commit/2b2aa0da868d91b405af7cc5392a2e9b93c1d4d1
+* Update: CHANGELOG.md by @godind in https://github.com/mxtommy/Kip/commit/3bf7120c1fb06468be6d95de9d947fdaa0e28658
+## Fixes
+* Fix: Object reference error and polyfills by @godind in https://github.com/mxtommy/Kip/commit/73f47aec694ccfe6ea2f1b92ad23dcc53b41e09f
 # V 2.0.0
 ## New features
 * Breaking Change - KIP configuration sharing using Signal K user key data storage feature
