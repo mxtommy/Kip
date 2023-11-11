@@ -1,3 +1,16 @@
+# V 2.1.0
+## Improvements
+* Cleaner Wind Widget styles and layout with improved visual experience
+## Fixes
+* 178-wind-gauge-jumping-through-n-0-degrees by @godind in https://github.com/mxtommy/Kip/pull/200
+* Unit label typo. Help hyperlinks by @godind in https://github.com/mxtommy/Kip/pull/201
+* AP and linear gauge styles by @godind in https://github.com/mxtommy/Kip/pull/202
+* Help typo fix by @godind in https://github.com/mxtommy/Kip/pull/203
+* Latitude and Longitude format by @godind in https://github.com/mxtommy/Kip/pull/204
+* numeric with decimal and long/lat by @godind in https://github.com/mxtommy/Kip/pull/205
+* West Longitudes show negatives by @godind in https://github.com/mxtommy/Kip/pull/206
+* App-help-styiling-to-Angular by @godind in https://github.com/mxtommy/Kip/pull/207
+* Bump @babel/traverse from 7.23.0 to 7.23.2 by @dependabot in https://github.com/mxtommy/Kip/pull/194
 # V 2.0.0
 ## New features
 * Breaking Change - KIP configuration sharing using Signal K user key data storage feature
