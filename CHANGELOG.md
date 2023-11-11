@@ -1,3 +1,6 @@
+# V 2.1.2
+## Fixes
+* Package description typo and changelog updates
 # V 2.1.0
 ## Improvements
 * Cleaner Wind Widget styles and layout with improved visual experience
