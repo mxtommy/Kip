@@ -53,8 +53,8 @@ export class UnitsService {
     ] },
     { group: 'Flow', units: [
       { measure: 'm3/s', description: "Cubic meters per second (default)"},
-      { measure: 'l/min', description: "Litters per minute"},
-      { measure: 'l/h', description: "Litters per hour"},
+      { measure: 'l/min', description: "Liters per minute"},
+      { measure: 'l/h', description: "Liters per hour"},
       { measure: 'g/min', description: "Gallons per minute"},
       { measure: 'g/h', description: "Gallons per hour"}
     ] },
