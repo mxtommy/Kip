@@ -246,6 +246,7 @@ export class UnitsService {
         let s = 'N';
         if (v < 0) { s = 'S'; degree = degree * -1 }
         let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+        if (s == 'S') { r = r * -1 }
         return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
       },
     'latitudeSec': function(v) {
@@ -254,6 +255,7 @@ export class UnitsService {
       let s = 'N';
       if (v < 0) { s = 'S'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+      if (s == 'S') { r = r * -1 }
       let minutes = Math.trunc(r);
       let seconds = (r % 1) * 60;
 
@@ -265,6 +267,7 @@ export class UnitsService {
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+      if (s == 'W') { r = r * -1 }
       return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
     },
     'longitudeSec': function(v) {
@@ -273,6 +276,7 @@ export class UnitsService {
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
+      if (s == 'W') { r = r * -1 }
       let minutes = Math.trunc(r);
       let seconds = (r % 1) * 60;
 
