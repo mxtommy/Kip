@@ -5,20 +5,14 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
   selector: 'app-widget-wind',
-  templateUrl: './widget-wind.component.html',
-  styleUrls: ['./widget-wind.component.css']
+  templateUrl: './widget-wind.component.html'
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   currentHeading: number = 0;
-
-  appWindAngle: number = null;
-
-  appWindSpeed: number = null;
-
-  trueWindAngle: number = null;
-
-  trueWindSpeed: number = null;
-
+  appWindAngle: number = 0;
+  appWindSpeed: number = 0;
+  trueWindAngle: number = 0;
+  trueWindSpeed: number = 0;
   trueWindHistoric: {
     timestamp: number;
     heading: number;
@@ -51,7 +45,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 300
+          sampleTime: 500
         },
         "trueWindSpeed": {
           description: "True Wind Speed",
@@ -60,7 +54,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "knots",
-          sampleTime: 300
+          sampleTime: 500
         },
         "appWindAngle": {
           description: "Apparent Wind Angle",
@@ -69,7 +63,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 300
+          sampleTime: 500
         },
         "appWindSpeed": {
           description: "Apparent Wind Speed",
@@ -78,13 +72,14 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "knots",
-          sampleTime: 300
+          sampleTime: 500
         },
       },
       windSectorEnable: true,
       windSectorWindowSeconds: 10,
       laylineEnable: true,
       laylineAngle: 35,
+      sailSetupEnable: false
     };
    }
 
@@ -92,15 +87,13 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     this.observeDataStream('headingPath', newValue => {
       if (newValue.value === null) {
         this.currentHeading = 0;
-      } else {
-        this.currentHeading = newValue.value;
       }
+      this.currentHeading = newValue.value;
     });
 
     this.observeDataStream('appWindAngle', newValue => {
         if (newValue.value === null) {
-          this.appWindAngle = null;
-          return;
+          this.appWindAngle = 0;
         }
 
         if (newValue.value < 0) {// stb
@@ -112,19 +105,22 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     );
 
     this.observeDataStream('appWindSpeed', newValue => {
-        this.appWindSpeed = newValue.value;
+      if (newValue === null) {
+        this.appWindSpeed = 0;
       }
-    );
+      this.appWindSpeed = newValue.value;
+    });
 
     this.observeDataStream('trueWindSpeed', newValue => {
-        this.trueWindSpeed = newValue.value;
+      if (newValue === null) {
+        this.trueWindSpeed = 0;
       }
-    );
+      this.trueWindSpeed = newValue.value;
+    });
 
     this.observeDataStream('trueWindAngle', newValue => {
         if (newValue.value === null) {
-          this.trueWindAngle = null;
-          return;
+          this.trueWindAngle = 0;
         }
 
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...

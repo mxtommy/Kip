@@ -35,8 +35,7 @@ const timeoutBlink = 250;
 
 @Component({
   selector: 'app-widget-autopilot',
-  templateUrl: './widget-autopilot.component.html',
-  styleUrls: ['./widget-autopilot.component.scss'],
+  templateUrl: './widget-autopilot.component.html'
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   // AP keypad

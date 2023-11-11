@@ -4,7 +4,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 @Component({
   selector: 'app-widget-simple-linear',
   templateUrl: './widget-simple-linear.component.html',
-  styleUrls: ['./widget-simple-linear.component.scss']
+  styleUrls: ['./widget-simple-linear.component.css']
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
   public unitsLabel:string = "";

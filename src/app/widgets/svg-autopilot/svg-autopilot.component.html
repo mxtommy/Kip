@@ -451,8 +451,8 @@
         </g>
         <animateTransform #compassAnimate attributeName="transform"
           type="rotate"
-          [attr.from]="'-'+oldCompassRotate+' 226 276'"
-          [attr.to]="'-'+newCompassRotate+' 226 276'"
+          [attr.from]="'-'+compassFaceplate.oldDegreeIndicator+' 226 276'"
+          [attr.to]="'-'+compassFaceplate.newDegreeIndicator+' 226 276'"
           begin="indefinite"
           dur="0.1s"
           additive="replace"
@@ -1009,8 +1009,8 @@
         </g>
         <animateTransform #appWindAnimate attributeName="transform"
           type="rotate"
-          [attr.from]="oldAppWindAngle+' 226 276'"
-          [attr.to]="newAppWindAngle+' 226 276'"
+          [attr.from]="appWind.oldDegreeIndicator+' 226 276'"
+          [attr.to]="appWind.newDegreeIndicator+' 226 276'"
           begin="indefinite"
           dur="0.1s"
           additive="replace"

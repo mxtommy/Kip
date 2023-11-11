@@ -12,7 +12,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 @Component({
   selector: 'app-widget-gauge-ng-radial',
   templateUrl: './widget-gauge-ng-radial.component.html',
-  styleUrls: ['./widget-gauge-ng-radial.component.scss']
+  styleUrls: ['./widget-gauge-ng-radial.component.css']
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;

@@ -21,7 +21,7 @@ interface IDataSetOptions {
 @Component({
   selector: 'app-widget-historical',
   templateUrl: './widget-historical.component.html',
-  styleUrls: ['./widget-historical.component.scss']
+  styleUrls: ['./widget-historical.component.css']
 })
 export class WidgetHistoricalComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
