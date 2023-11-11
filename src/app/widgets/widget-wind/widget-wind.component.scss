@@ -2,21 +2,24 @@
 
 @mixin widget-wind-theme($theme) {
   $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
   $warn: map-get($theme, warn);
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
   $wind: map-get($theme, wind);
 
   .boatBackground {
-      fill: mat.get-color-from-palette($wind, boat-background) !important; //400
+    stop-color: mat.get-color-from-palette($wind, boat-background) !important; //400
   }
 
   .heading-background {
-      fill: mat.get-color-from-palette($wind, heading-background)
+    stroke: mat.get-color-from-palette($wind, heading-background);
+    fill: mat.get-color-from-palette($wind, compass-light);
   }
 
   .wind-text {
-      fill: mat.get-color-from-palette($foreground, text);
+      fill: mat.get-color-from-palette($wind, heading-background);
+      stroke: mat.get-color-from-palette($wind, heading-background);
   }
 
   .laylines {
@@ -36,10 +39,31 @@
   }
   .compass-inner-ring {
       stroke: mat.get-color-from-palette($wind, compass-light);
+      fill: mat.get-color-from-palette($wind, compass-light);
   }
 
   .wind-rose-background {
       stroke: mat.get-color-from-palette($wind, wind-rose-background);
+  }
+
+  .sailSetupBoat {
+    stroke: mat.get-color-from-palette($wind, compass-light);
+  }
+
+  .sailSetupFull {
+    fill: mat.get-color-from-palette($primary, 300);
+  }
+
+  .sailSetupReef1 {
+    fill: mat.get-color-from-palette($accent, 300);
+  }
+
+  .sailSetupReef2 {
+    fill: mat.get-color-from-palette($warn, 300);
+  }
+
+  .sailSetupReef3 {
+    fill: mat.get-color-from-palette($warn, 500);
   }
 
   .port {
