@@ -88,6 +88,10 @@
       fill: mat.get-color-from-palette($wind, app-wind-background)
   }
 
+  .simpleLinear-text {
+    fill: mat.get-color-from-palette($foreground, text);
+}
+
   .windWrapper {
     position: relative;
     width: 100%;
