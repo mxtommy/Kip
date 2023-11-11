@@ -136,22 +136,16 @@ export abstract class BaseWidgetComponent {
    */
   protected formatWidgetNumberValue(v: number): string {
     if (v == null) {return}
-    let vStr: string;
-
-    //special case with Lon/Lat conversion units
-    if (this.widgetProperties.config.convertUnitTo === undefined) {
-      vStr = v.toString();
-    } else {
-      // As per Widget config
-      // - Limit value to Min/Max range
-      if (v >= this.widgetProperties.config.maxValue) {
-        v = this.widgetProperties.config.maxValue;
-      } else if (v <= this.widgetProperties.config.minValue) {
-        v = this.widgetProperties.config.minValue;
-      }
-      // - Strip decimals but keep as a string type for blank trailling decimal positions
-      vStr = v.toFixed(this.widgetProperties.config.numDecimal);
+    // As per Widget config
+    // - Limit value to Min/Max range
+    if (v >= this.widgetProperties.config.maxValue) {
+      v = this.widgetProperties.config.maxValue;
+    } else if (v <= this.widgetProperties.config.minValue) {
+      v = this.widgetProperties.config.minValue;
     }
+    // - Strip decimals but keep as a string type for blank trailling decimal positions
+    let vStr: string = v.toFixed(this.widgetProperties.config.numDecimal);
+
     return vStr;
   }
 

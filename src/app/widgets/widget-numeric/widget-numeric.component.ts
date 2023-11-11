@@ -149,7 +149,13 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     let valueText: any;
 
     if (this.dataValue !== null) {
-      valueText = this.applyDecorations(this.formatWidgetNumberValue(this.dataValue));
+      //TODO: Check for lon/lat special case -- ugly setup. we should probably have a lon/lat wodget for this!
+      let cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+      if (cUnit == 'latitudeSec' || cUnit == 'latitudeMin' || cUnit == 'longitudeSec' || cUnit == 'longitudeMin') {
+        valueText = this.dataValue.toString();
+      } else {
+        valueText = this.applyDecorations(this.formatWidgetNumberValue(this.dataValue));
+      }
     } else {
       valueText = "--";
     }
