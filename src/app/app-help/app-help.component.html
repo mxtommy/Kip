@@ -1,7 +1,8 @@
-<mat-tab-group class="tabGroup">
+<mat-tab-group class="tabGroups mat-typography">
 
   <mat-tab label="Configuration Management">
-    <h3>KIP Configuration</h3>
+    <div class="tabGroupPanel">
+      <h3>KIP Configuration</h3>
       <p>KIP can handle configuration in two different ways depending on your configuration settings found in the "Signal K"
         tab located in the Configuration/Settings menu option at the lower right of the display.</p>
       <h4>Activating configuration sharing (default mode)</h4>
@@ -63,137 +64,146 @@
           required on the device saving the configuration. IMPORTTANT: everytime you make a configuration
           change that you want to replicate, you must manually re-save and re-load on all devices.
         </p>
+      </div>
   </mat-tab>
 
 
   <mat-tab label="Editing Layout">
-    <div *ngIf="!unlockStatus">
-      <h3>Unlocking</h3>
-      <p>
-        The layout is "Locked" by default. This is to prevent accidental interaction from touch screens from changing anything.
-        You can unlock KIP using the hamburger icon in the lower right corner and selecting "Configuration -> Edit Layout". Go Ahead try it now!
-      </p>
-    </div>
-    <div *ngIf="unlockStatus">
-      <h3>Configuring Layout</h3>
-      <p>
-        Now that KIP is unlocked, you can do a few actions.
-      </p>
-      <ul>
-        <li>The icon in the lower right can be used to select the Widget you would like to display</li>
-        <li>The icon in the lower left can be used to "split" the existing area. You can use this to display multiple items on one page</li>
-        <li>The "X" in the upper right can be used to delete an area (basically undoing a split)</li>
-        <li>Once a widget is selected, there will be a gear in the lower middle. Clicking it will allow you to setup the widget parameters</li>
-        <li>You can drag the bars between widgits to resize them</li>
-      </ul>
+    <div class="tabGroupPanel">
+      <div *ngIf="!unlockStatus">
+        <h3>Unlocking</h3>
+        <p>
+          The layout is "Locked" by default. This is to prevent accidental interaction from touch screens from changing anything.
+          You can unlock KIP using the hamburger icon in the lower right corner and selecting "Configuration -> Edit Layout". Go Ahead try it now!
+        </p>
+      </div>
+      <div *ngIf="unlockStatus">
+        <h3>Configuring Layout</h3>
+        <p>
+          Now that KIP is unlocked, you can do a few actions.
+        </p>
+        <ul>
+          <li>The icon in the lower right can be used to select the Widget you would like to display</li>
+          <li>The icon in the lower left can be used to "split" the existing area. You can use this to display multiple items on one page</li>
+          <li>The "X" in the upper right can be used to delete an area (basically undoing a split)</li>
+          <li>Once a widget is selected, there will be a gear in the lower middle. Clicking it will allow you to setup the widget parameters</li>
+          <li>You can drag the bars between widgits to resize them</li>
+        </ul>
+      </div>
     </div>
   </mat-tab>
 
 
   <mat-tab label="Video Tutorials">
-    <ng-template matTabContent>
-      <mat-tab-group class="tabGroup">
-        <mat-tab label="KIP">
-          <mat-accordion>
-            <mat-expansion-panel [expanded]="step === 0" (opened)="setStep(0)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  5 Minutes with Kip (by Boating with the Baileys)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Introduction to using KIP
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/v6o4uK-Iq8s" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
+    <div class="tabGroupPanel">
+      <ng-template matTabContent>
+        <mat-tab-group class="tabGroups">
+          <mat-tab label="KIP">
+            <div class="tabGroupPanel">
+              <mat-accordion>
+                <mat-expansion-panel [expanded]="step === 0" (opened)="setStep(0)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      5 Minutes with Kip (by Boating with the Baileys)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Introduction to using KIP
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/v6o4uK-Iq8s" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
 
-            <mat-expansion-panel [expanded]="step === 1" (opened)="setStep(1)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Graphana embeded in KIP (by Boating with the Baileys)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Pretty graphs
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/S8FbtwBwW3w" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
+                <mat-expansion-panel [expanded]="step === 1" (opened)="setStep(1)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      Graphana embeded in KIP (by Boating with the Baileys)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Pretty graphs
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/S8FbtwBwW3w" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
 
-            <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Setting up zones in KIP (by Boating with the Baileys)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Warnings/Alarms
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/BJFjLzjlpuY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
+                <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      Setting up zones in KIP (by Boating with the Baileys)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Warnings/Alarms
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/BJFjLzjlpuY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
 
-          </mat-accordion>
+              </mat-accordion>
+            </div>
+          </mat-tab>
 
-        </mat-tab>
+          <mat-tab label="Graphana">
+            <div class="tabGroupPanel">
+              <mat-accordion>
+                <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      5 Minutes with Graphana (by Boating with the Baileys)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Introduction to using Graphana
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/b3lHwLnYgx0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
 
-        <mat-tab label="Graphana">
-          <mat-accordion>
-            <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  5 Minutes with Graphana (by Boating with the Baileys)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Introduction to using Graphana
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/b3lHwLnYgx0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
+                <mat-expansion-panel [expanded]="step === 3" (opened)="setStep(3)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      Signal K to InfluxDB (by Boating with the Baileys)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Database to store historical data
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/ULnN-cByQXE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
+              </mat-accordion>
+            </div>
+          </mat-tab>
 
-            <mat-expansion-panel [expanded]="step === 3" (opened)="setStep(3)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Signal K to InfluxDB (by Boating with the Baileys)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Database to store historical data
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/ULnN-cByQXE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
-          </mat-accordion>
-        </mat-tab>
+          <mat-tab label="OpenPlotter">
+            <div class="tabGroupPanel">
+              <mat-accordion>
+                <mat-expansion-panel [expanded]="step === 4" (opened)="setStep(4)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      OpenPlotter (by Boating with the Baileys)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Installing OpenPlotter
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/Q0sEpgzhHTE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
 
-        <mat-tab label="OpenPlotter">
-          <mat-accordion>
-            <mat-expansion-panel [expanded]="step === 4" (opened)="setStep(4)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  OpenPlotter (by Boating with the Baileys)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Installing OpenPlotter
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/Q0sEpgzhHTE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
+                <mat-expansion-panel [expanded]="step === 5" (opened)="setStep(5)">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      OpenPlotter instruction video (by Smart Sailing Boat)
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Installing OpenPlotter
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/r8CGixMl18k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </mat-expansion-panel>
+              </mat-accordion>
+            </div>
+          </mat-tab>
 
-            <mat-expansion-panel [expanded]="step === 5" (opened)="setStep(5)">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  OpenPlotter instruction video (by Smart Sailing Boat)
-                </mat-panel-title>
-                <mat-panel-description>
-                  Installing OpenPlotter
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <iframe width="560" height="315" src="https://www.youtube.com/embed/r8CGixMl18k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </mat-expansion-panel>
-          </mat-accordion>
-        </mat-tab>
-
-      </mat-tab-group>
-    </ng-template>
-
+        </mat-tab-group>
+      </ng-template>
+    </div>
   </mat-tab>
 </mat-tab-group>
 
