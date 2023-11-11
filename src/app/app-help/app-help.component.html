@@ -2,68 +2,40 @@
 
   <mat-tab label="Configuration Management">
     <div class="tabGroupPanel">
-      <h3>KIP Configuration</h3>
-      <p>KIP can handle configuration in two different ways depending on your configuration settings found in the "Signal K"
-        tab located in the Configuration/Settings menu option at the lower right of the display.</p>
-      <h4>Activating configuration sharing (default mode)</h4>
-        <p> With "Enable user Sign in and configuration sharing" option activate, the configuration
-          will automatically be retreived from the Signal K server storage upon startup. Any changes you make
-          (layout, widgets, settings, etc.) will also be automatically saved to the server in real time.
-          If you use multiple devices and browsers (computer, phones, tablets, Raspberry Pi, etc.), or you try
-          a new device for the first time, it will get the most recent configuration automatically upon
-          startup. This provides the ability to seamlessly share the configuration between all
-          devices. There are minor caveats you need to be aware of with the option:
+      <h3>How does KIP manage configuration</h3>
+      <p>Essentially, KIP has two modes when it comes configuration mnagement. Note that
+        all related settings are located in the "Signal K" tab under the Configuration/Settings
+        menu option.</p>
+
+      <h4>Default: Local Configuration</h4>
+      <p>If you simply enter the Signalk URL and click the Connect button to use KIP, meaning you have not
+        switched on the "Enable user Sign in and configuration sharing" option, KIP will connect to the
+        server and store it's configuration (your layouts and settings) locally in the Browser.</p>
+      <p>In this mode, <strong>configuration cannot be shared</strong>.</p>
+
+      <h4>Shared Configuration</h4>
+        <p>If you switch on the "Enable user Sign in and configuration sharing" option,
+          supply a valid user and password then click the Connect button, KIP will connect to the
+          server and automatically Save, Retreive and Update it's configuration from the server,
+          <strong>under that users storage space</strong>. This means that <strong>each user has it's own
+          configuration</strong>.</p>
+        <p>To reuse that configuration, on any device or browser, simply Sign in with that
+          <strong>same user</strong>. Nothing more is required.
         </p>
-        <ul>
-          <li>You need to Sign in with a Signal K user to allow server storage of the KIP configuration.</li>
-          <li>You need to first create a User in Signal K or use an existing user before enabling this option</li>
-          <li>The configuration is stored within the server user storage space. This means you have to
-            use the same credentials on all devices to share that user's configuration. Note that you could
-            also have different credentials for different configuration arrangements such as, one for
-            small and another for large form factor layouts.</li>
-          <li>All confguration changes are saved in realtime but, there is no ability to notify other active
-            KIP instances that they should update from the server storage in realtime or to restart the app
-            automatically. This means you have to manually restart the active KIP instances
-            to implement the changes. If you are not careful when using multiple simultaneous instances of
-            KIP when editing shared configurations, you could end up overwriting and loosing your lastet
-            changes. We recommend editing from one instance and restarting all other active instances
-            to keep things simple.</li>
-        </ul>
-        <p>
-          To use this feature, you need to follow a few simple steps. First is creating a user with "Admin Permissions" in
-          Signal K:
+        <p>To create an alternavite configuration, Sign in with
+          <strong>a different user</strong> and create your configuration.
+        </p>
+
+
+        <p>To Sign in to Signal K, a user must first be created, or you can use the default admin
+          user (not recommended). Here are the steps to create a Signal K User:
         </p>
         <ol>
-          <li>Go to Signal K server's Security/User menu to create a user with "Admin Permissions"</li>
-          <li>Come back to Kip and go to the Configuration/Settings menu. In the "Signal K" tab, toggle
-            the "Enable user Sign in and configuration sharing" option to Actice</li>
-          <li>Click the "Set Sign in credentials" button and enter the previously created
-              user ID and password</li>
-          <li>Click the "Sign in" button</li>
+          <li>Go to Signal K server's Security/Users menu and click "Add" to create a user</li>
+          <li>Provide a User ID and Password</li>
+          <li>Assign Read/Write Permissions at a minimum</li>
+          <li>Click Apply and you are done</li>
         </ol>
-        <p>From then on, the configuration will be shared. Remember to sign in with the same
-          user and password on other devices to use that config! Have fun...</p>
-
-      <h4>Disabling configuration sharing (legacy mode)</h4>
-        <p>If "Enable user Sign in and configuration sharing" option is not active, the configuration
-          will be stored in the local browser storage. Meaning each individual browsers you use,
-          on all your different devices (computers, phones, tablets...) will have standalone configurations.
-          You can still manually copy the local storage configurations to the server and manually retreive
-          from other devices/browsers.</p>
-
-        <p>To do so you must first have rigths to save configuration to the server using a Device
-          Authorization Token. Follows those simple steps:</p>
-        <ol>
-          <li>Go to the Configuration/Settings menu in the "Signal K" tab and click the "Request Token"
-            button</li>
-          <li>Then go to the Signal K server Admin interface and approve the request in the Security/Access Requests menu</li>
-        </ol>
-        <p>Once approved, on the device with the
-          configuration you want to copy, name the config and save it to the Global storage. Then use
-          the other devices and load the config from the server. Note that the Device Authorization Token is only
-          required on the device saving the configuration. IMPORTTANT: everytime you make a configuration
-          change that you want to replicate, you must manually re-save and re-load on all devices.
-        </p>
       </div>
   </mat-tab>
 
