@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { AppSettingsService } from '../app-settings.service';
@@ -8,7 +8,6 @@ import { AppSettingsService } from '../app-settings.service';
 @Component({
   selector: 'app-help',
   templateUrl: './app-help.component.html',
-  styleUrls: ['./app-help.component.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class AppHelpComponent implements OnInit {
