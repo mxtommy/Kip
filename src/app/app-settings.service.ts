@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
+import { cloneDeep } from "lodash-es";
 
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
@@ -15,6 +16,7 @@ import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
 import { StorageService } from './storage.service';
+import { IAuthorizationToken } from './auththetication.service';
 
 const defaultTheme = 'modern-dark';
 const configVersion = 9; // used to invalidate old configs. connectionConfig and appConfig use this same version.
@@ -50,7 +52,7 @@ export class AppSettingsService {
     private storage: StorageService,
     )
   {
-    console.log("[AppSettings Service] Service startup..");
+    console.log("[AppSettings Service] Service startup...");
     this.storage.activeConfigVersion = configVersion;
 
     if (!window.localStorage) {
@@ -93,7 +95,7 @@ export class AppSettingsService {
 
     if ((typeof config.configVersion !== 'number') || (config.configVersion !== configVersion)) {
       //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
-      console.error("[AppSettings Service] Invalid onnectionConfig version. Resetting and loading configuration default");
+      console.error("[AppSettings Service] Invalid connectionConfig version. Resetting and loading connection configuration default");
       this.resetConnection();
     } else {
       this.signalkUrl = {url: config.signalKUrl, new: false};
@@ -113,23 +115,48 @@ export class AppSettingsService {
 
   private validateAppConfig(config: IConfig): IConfig {
     if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
-      if (this.useSharedConfig) {
-        //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
-        console.error("[AppSettings Service] Invalid Server config version. Resetting and loading configuration default");
+      if (config.app.configVersion == 6) {
+        config.app = this.upgradeAppConfig(config.app);
+        if (this.useSharedConfig) {
+          console.log("[AppSettings Service] Writing upgraded AppConfig to remote storage");
+          this.storage.setConfig('user','default',config);
+        }
       } else {
-        console.error("[AppSettings Service] Invalid localStorage config version. Replacing with Defaults");
-        // we don't remove connectionConfig. It only hold: url, use, pwd, kipUUID, etc. Those
-        // values can and should stay local and persist over time
-        localStorage.removeItem("appConfig");
-        localStorage.removeItem("widgetConfig");
-        localStorage.removeItem("layoutConfig");
-        localStorage.removeItem("themeConfig");
-        localStorage.removeItem("zonesConfig");
+        if (this.useSharedConfig) {
+          console.error("[AppSettings Service] Invalid Server config version. Resetting and loading configuration default");
+        } else {
+          console.error("[AppSettings Service] Invalid localStorage config version. Replacing with Defaults");
+          // we don't remove connectionConfig. It only hold: url, use, pwd, kipUUID, etc. Those
+          // values can and should stay local and persist over time
+          localStorage.removeItem("appConfig");
+          localStorage.removeItem("widgetConfig");
+          localStorage.removeItem("layoutConfig");
+          localStorage.removeItem("themeConfig");
+          localStorage.removeItem("zonesConfig");
+        }
+        this.resetSettings();
       }
-
-      this.resetSettings();
     }
     return config;
+  }
+
+  private upgradeAppConfig(appConfig: any): IAppConfig {
+    let upgradedConfig: IAppConfig = {
+      configVersion: 9,
+      dataSets: cloneDeep(appConfig.dataSets),
+      notificationConfig: cloneDeep(appConfig.notificationConfig),
+      unitDefaults: cloneDeep(appConfig.unitDefaults)
+    };
+    console.log("[AppSettings Service] Writing upgraded AppConfig to LocalStorage");
+    this.replaceConfig('appConfig', upgradedConfig);
+
+    let conConf :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
+    conConf.signalKUrl = this.signalkUrl = appConfig.signalKUrl;
+    conConf.kipUUID = this.kipUUID = appConfig.kipUUID;
+    console.log("[AppSettings Service] Writing upgraded connectionConfig to LocalStorage");
+    this.replaceConfig('connectionConfig', conConf);
+
+    return upgradedConfig;
   }
 
   private loadConfigFromLocalStorage(type: string) {
@@ -243,6 +270,7 @@ export class AppSettingsService {
   public getThemeConfig(): IThemeConfig {
     return this.buildThemeStorageObject();
   }
+
   public getZonesConfig(): IZonesConfig {
     return this.buildZonesStorageObject()
   }
@@ -255,6 +283,7 @@ export class AppSettingsService {
   public getUnlockStatusAsO() {
     return this.unlockStatus.asObservable();
   }
+
   public setUnlockStatus(value) {
     this.unlockStatus.next(value);
   }
@@ -263,6 +292,7 @@ export class AppSettingsService {
   public getThemeNameAsO() {
     return this.themeName.asObservable();
   }
+
   public setThemName(newTheme: string) {
     this.themeName.next(newTheme);
     if (newTheme != "nightMode") { // don't save NightMode, only temporary
@@ -277,6 +307,7 @@ export class AppSettingsService {
 
     }
   }
+
   public getThemeName(): string {
     return this.themeName.getValue();;
   }
@@ -303,9 +334,11 @@ export class AppSettingsService {
   public getSplitSets() {
     return this.splitSets;
   }
+
   public getRootSplits() {
     return this.rootSplits;
   }
+
   public saveSplitSets(splitSets) {
     this.splitSets = splitSets;
     if (this.useSharedConfig) {
@@ -319,6 +352,7 @@ export class AppSettingsService {
       this.saveLayoutConfigToLocalStorage();
     }
   }
+
   public saveRootUUIDs(rootUUIDs) {
     this.rootSplits = rootUUIDs;
     if (this.useSharedConfig) {
@@ -404,8 +438,11 @@ export class AppSettingsService {
   }
 
   /**
-   * Updates keys of localStorage config and reloads apps if required to apply new config. IMPORTANT NOTE: Kip does not apply config unless app is reloaded
-   * @param configType String of either appConfig, widgetConfig, layoutConfig or themeConfig.
+   * Updates keys of localStorage config and reloads apps if required to apply new config.
+   *
+   * IMPORTANT NOTE: Kip does not apply config unless app is reloaded
+   *
+   * @param configType String of either connectionConfig, appConfig, widgetConfig, layoutConfig or themeConfig.
    * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
    * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
