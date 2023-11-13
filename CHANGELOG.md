@@ -1,3 +1,6 @@
+# V 2.1.3
+## Improvements
+* Upgrade v6 configuration by @godind in https://github.com/mxtommy/Kip/pull/208
 # V 2.1.2
 ## Fixes
 * Package description typo and changelog updates
