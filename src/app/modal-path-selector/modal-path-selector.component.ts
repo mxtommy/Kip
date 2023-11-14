@@ -46,6 +46,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     //disable formControl if path is empty. ie: a new/not yet configured Widget...
     if (this.formGroup.value.path == null) {
       this.formGroup.controls['source'].disable();
+      this.formGroup.controls['sampleTime'].disable();
       if (this.formGroup.value.pathType == "number") {
         this.formGroup.controls['convertUnitTo'].disable();
       }
@@ -59,8 +60,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     // autocomplete filtering
     this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(startWith(''), map(value => this.filterPaths(value)))
 
-
-
     //subscribe to path formControl changes
     this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
 
@@ -69,12 +68,14 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
         if (this.formGroup.controls['path'].valid) {
           this.formGroup.controls['source'].enable();
           this.formGroup.controls['source'].patchValue('default');
+          this.formGroup.controls['sampleTime'].enable();
           if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
             this.formGroup.controls['convertUnitTo'].enable();
             this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
           }
         } else {
           this.formGroup.controls['source'].disable();
+          this.formGroup.controls['sampleTime'].disable();
           if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
             this.formGroup.controls['convertUnitTo'].disable();
           }
@@ -105,8 +106,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     return this.availablePaths.filter(pathAndMetaObj => pathAndMetaObj.path.toLowerCase().includes(filterValue)).slice(0,50);
   }
 
-
-
   updateSourcesAndUnits() {
     if (this.formGroup.controls['path'].value == undefined || this.formGroup.controls['path'].value == null || this.formGroup.controls['path'].value == "") {
       if (this.formGroup.value.source == undefined || this.formGroup.value.source == null || this.formGroup.value.source == "") {
@@ -122,6 +121,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
         // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL, or Signal K server config. We need to disable the fields.
         try {
           this.formGroup.controls['source'].disable();
+          this.formGroup.controls['sampleTime'].disable();
           if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
             this.formGroup.controls['convertUnitTo'].disable();
           }
