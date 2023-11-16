@@ -156,6 +156,7 @@ export class SvgWindComponent implements AfterViewInit {
     //trueWindSpeed
     if (changes.trueWindSpeed) {
       if (! changes.trueWindSpeed.firstChange) {
+          if (changes.trueWindSpeed.currentValue === null) {return}
           this.trueWindSpeedDisplay = changes.trueWindSpeed.currentValue.toFixed(1);
       }
     }

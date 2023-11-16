@@ -1,16 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { INotificationConfig } from '../../app-settings.interfaces';
-import { AppService } from './../../app.service';
+import { AppService } from '../../app.service';
 import { AppSettingsService } from '../../app-settings.service';
 import { NotificationsService } from '../../notifications.service';
 
 
 @Component({
-  selector: 'settings-notifications',
-  templateUrl: './notifications.component.html',
-  styleUrls: ['./notifications.component.css'],
+  selector: 'settings-general',
+  templateUrl: './general.component.html',
+  styleUrls: ['./general.component.css'],
 })
-export class SettingsNotificationsComponent implements OnInit {
+export class SettingsGeneralComponent implements OnInit {
 
   public notificationConfig: INotificationConfig;
   public autoNightModeConfig: boolean;

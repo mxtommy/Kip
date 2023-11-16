@@ -22,6 +22,7 @@ export class AppService {
     private sk: SignalKService,
     private notification: NotificationsService
   ) {
+    this.autoNightMode = this.settings.getAutoNightMode();
     this.autoNightModeObserver();
   }
 

@@ -334,6 +334,10 @@ export class AppSettingsService {
     }
   }
 
+  public getAutoNightMode(): boolean {
+    return this.autoNightMode.getValue();
+  }
+
   // Widgets
   public getWidgets() {
     return this.widgets;
