@@ -4,6 +4,7 @@ import { DefaultUnitsConfig } from "./config.blank.units.const";
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 9,
+  "autoNightMode": false,
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,

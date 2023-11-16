@@ -90,7 +90,7 @@ import { WidgetGaugeNgRadialComponent } from './widgets/widget-gauge-ng-radial/w
 import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
 import { WidgetAutopilotComponent } from './widgets/widget-autopilot/widget-autopilot.component';
 import { SvgAutopilotComponent } from './widgets/svg-autopilot/svg-autopilot.component';
-import { SettingsNotificationsComponent } from './settings/notifications/notifications.component';
+import { SettingsGeneralComponent } from './settings/general/general.component';
 import { SvgSimpleLinearGaugeComponent } from './widgets/svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 import { WidgetSimpleLinearComponent } from './widgets/widget-simple-linear/widget-simple-linear.component';
 import { DataBrowserComponent } from './data-browser/data-browser.component';
@@ -175,7 +175,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     ModalPathSelectorComponent,
     ModalUserCredentialComponent,
     AlarmMenuComponent,
-    SettingsNotificationsComponent,
+    SettingsGeneralComponent,
     DataBrowserComponent,
     DataBrowserRowComponent
   ],
