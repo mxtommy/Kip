@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { INotificationConfig } from '../../app-settings.interfaces';
+import { AppService } from './../../app.service';
 import { AppSettingsService } from '../../app-settings.service';
 import { NotificationsService } from '../../notifications.service';
 
@@ -7,24 +8,48 @@ import { NotificationsService } from '../../notifications.service';
 @Component({
   selector: 'settings-notifications',
   templateUrl: './notifications.component.html',
-  styleUrls: ['./notifications.component.css']
+  styleUrls: ['./notifications.component.css'],
 })
 export class SettingsNotificationsComponent implements OnInit {
 
-  notificationConfig: INotificationConfig;
+  public notificationConfig: INotificationConfig;
+  public autoNightModeConfig: boolean;
 
   constructor(
-    private notificationsService: NotificationsService,
-    private appSettingsService: AppSettingsService,
+    private notifications: NotificationsService,
+    private app: AppService,
+    private settings: AppSettingsService,
   ) { }
 
   ngOnInit() {
-    this.notificationConfig = this.appSettingsService.getNotificationConfig();
+    this.notificationConfig = this.settings.getNotificationConfig();
+    this.autoNightModeConfig = this.app.autoNightMode;
   }
 
-  saveNotificationsSettings() {
-    this.appSettingsService.setNotificationConfig(this.notificationConfig);
-    this.notificationsService.sendSnackbarNotification("Notification configuration saved", 5000, false);
+  public saveAllSettings():void {
+    try {
+      this.saveNotificationsSettings();
+      this.saveAutoNightMode();
+      this.notifications.sendSnackbarNotification("General settings saved", 5000, false);
+    } catch (error) {
+      this.notifications.sendSnackbarNotification("Error saving settings: " + error, 5000, false);
+    }
+
   }
 
+  public saveNotificationsSettings(): void {
+    this.settings.setNotificationConfig(this.notificationConfig);
+  }
+
+  public saveAutoNightMode() {
+    this.app.autoNightModeConfig = this.autoNightModeConfig;
+  }
+
+  public isAutoNightPathSupported(event):void {
+    if (event.checked) {
+      if (!this.app.validateAutoNighModeSupported()) {
+        this.autoNightModeConfig = false;
+      }
+    }
+  }
 }

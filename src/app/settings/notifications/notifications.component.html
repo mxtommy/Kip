@@ -1,6 +1,9 @@
 <div class="mat-typography">
-  <form name="notificationSetting">
-    <h1>Server Notifications</h1>
+  <form #general="ngForm" name="GeneraSetting">
+    <h2>Night Vision</h2>
+    <mat-checkbox [(ngModel)]="autoNightModeConfig" [ngModelOptions]="{standalone: false}" name="autoNightMode" (change)="isAutoNightPathSupported($event)">Automatically change between Day and Night display modes based on sun phases</mat-checkbox>
+    <br/><br/>
+    <h2>Notifications</h2>
     <p class="mat-card-subtitle">Notifications are a special type of data sent from Signal K and displayed in the
       notification menu. They are meant to alert or inform operators. Set server
       notification preferences such as types of messages to display and audio prompts.</p>
@@ -41,7 +44,7 @@
     </mat-accordion>
     <div class="formActionFooter">
       <mat-divider class="formActionDivider"></mat-divider>
-      <button mat-raised-button color="accent" class="formActionButton" (click)='saveNotificationsSettings()'>Save</button>
+      <button mat-raised-button color="accent" class="formActionButton" (click)='saveAllSettings()'>Save</button>
     </div>
   </form>
 </div>

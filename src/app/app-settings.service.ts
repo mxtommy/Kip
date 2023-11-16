@@ -16,7 +16,6 @@ import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
 import { StorageService } from './storage.service';
-import { IAuthorizationToken } from './auththetication.service';
 
 const defaultTheme = 'modern-dark';
 const configVersion = 9; // used to invalidate old configs. connectionConfig and appConfig use this same version.
@@ -29,6 +28,7 @@ export class AppSettingsService {
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
+  private autoNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   private useDeviceToken: boolean = false;
   private loginName: string;
@@ -49,7 +49,7 @@ export class AppSettingsService {
   constructor(
     @Inject(APP_BASE_HREF) private baseHref: string,
     private router: Router,
-    private storage: StorageService,
+    private storage: StorageService
     )
   {
     console.log("[AppSettings Service] Service startup...");
@@ -143,6 +143,7 @@ export class AppSettingsService {
   private upgradeAppConfig(appConfig: any): IAppConfig {
     let upgradedConfig: IAppConfig = {
       configVersion: 9,
+      autoNightMode: this.autoNightMode.getValue(),
       dataSets: cloneDeep(appConfig.dataSets),
       notificationConfig: cloneDeep(appConfig.notificationConfig),
       unitDefaults: cloneDeep(appConfig.unitDefaults)
@@ -215,7 +216,12 @@ export class AppSettingsService {
     this.zones.next(this.activeConfig.zones.zones);
     this.splitSets = this.activeConfig.layout.splitSets;
     this.rootSplits = this.activeConfig.layout.rootSplits;
-  }
+
+    if (this.activeConfig.app.autoNightMode === undefined) {
+      this.setAutoNightMode(false);
+    } else
+    this.autoNightMode.next(this.activeConfig.app.autoNightMode);
+    }
 
   //UnitDefaults
   public getDefaultUnitsAsO() {
@@ -312,10 +318,27 @@ export class AppSettingsService {
     return this.themeName.getValue();;
   }
 
+  // Auto night mode
+  public getAutoNightModeAsO() {
+    return this.autoNightMode.asObservable();
+  }
+
+  public setAutoNightMode(enabled: boolean) {
+    this.autoNightMode.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
   // Widgets
   public getWidgets() {
     return this.widgets;
   }
+
   public saveWidgets(widgets: Array<IWidget>) {
     this.widgets = widgets;
     if (this.useSharedConfig) {
@@ -473,6 +496,7 @@ export class AppSettingsService {
 
     let storageObject: IAppConfig = {
       configVersion: configVersion,
+      autoNightMode: this.autoNightMode.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),

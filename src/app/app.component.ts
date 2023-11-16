@@ -12,6 +12,7 @@ import { AppSettingsService } from './app-settings.service';
 import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
+import { AppService } from './app.service';
 
 declare var NoSleep: any; //3rd party
 
@@ -51,6 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
     public auththeticationService: AuththeticationService,
     private deltaService: SignalKDeltaService,
+    private appService: AppService,
     // below services are needed: first service instanciation after Init Service
     private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
     ) { }
@@ -72,7 +74,8 @@ export class AppComponent implements OnInit, OnDestroy {
           this.overlayContainer.getContainerElement().classList.remove(this.activeTheme);
         }
 
-        if (!this.isNightMode) {
+        if (newTheme != 'nightMode') {
+          this.isNightMode = false;
           if (newTheme !== this.themeName) {
             this.overlayContainer.getContainerElement().classList.add(newTheme);
             this.themeName = newTheme;
@@ -81,6 +84,7 @@ export class AppComponent implements OnInit, OnDestroy {
           }
         } else {
           this.overlayContainer.getContainerElement().classList.add(newTheme);
+          this.isNightMode = true;
         }
         this.activeTheme = newTheme;
       }

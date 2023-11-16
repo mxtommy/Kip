@@ -3,6 +3,7 @@ import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IW
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
   "configVersion": 9,
+  "autoNightMode": false,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
