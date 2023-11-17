@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnChanges, SimpleChange  } from '@angular/cor
 import { SignalKService } from '../signalk.service';
 import { IPathMetaData } from "../app-interfaces";
 import { IUnitGroup } from '../units.service';
-import { UntypedFormGroup, UntypedFormControl,Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl,Validators, FormControl } from '@angular/forms';
 import { map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs'
 
@@ -43,6 +43,10 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.unitList = {};
+    // If SampleTime control is not present because the path property is missing, add it.
+    if (this.formGroup.value.sampleTime === undefined) {
+      this.formGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
+    }
     //disable formControl if path is empty. ie: a new/not yet configured Widget...
     if (this.formGroup.value.path == null) {
       this.formGroup.controls['source'].disable();
