@@ -96,7 +96,6 @@ export class AppSettingsService {
     let config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
     if ((typeof config.configVersion !== 'number') || (config.configVersion !== configVersion)) {
-      //TODO: create modal dialog to handle old server config: Upgrade, replace, get default...
       console.error("[AppSettings Service] Invalid connectionConfig version. Resetting and loading connection configuration default");
       this.resetConnection();
     } else {
