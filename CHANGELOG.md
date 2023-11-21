@@ -1,3 +1,11 @@
+# V 2.2.2
+## Fixes
+* Add missing SampleTime path property in some rare cases
+* Fixed old configuration Device Token upgrade issue
+* Fixed upgrading global scope version 1 configuration file with improved UI
+# V 2.2.1
+## Fixes
+* npm package cleanup
 # V 2.2.0
 ## New features
 * Option to enable automatic day and night modes activation based on sun phases 
