@@ -2,38 +2,80 @@
 
   <mat-tab label="Configuration Management">
     <div class="tabGroupPanel">
-      <h3>How does KIP manage configuration</h3>
-      <p>Essentially, KIP has two modes when it comes configuration mnagement. Note that
-        all related settings are located in the "Signal K" tab under the Configuration/Settings
-        menu option.</p>
+      <h3>How does KIP handle configuration?</h3>
+      <p>KIP has a "Signal K Authentication" option that can either be enabled or disabled. This
+         option sets the configuration storage location. The "Signal K Authentication"
+         configuration option is located in the "Signal K" tab under the Configuration/Settings
+         menu.</p>
+      <ul>
+        <li>Signal K Authentication: Disabled (default value) - KIP stores it's configuration localy.</li>
+        <li>Signal K Authentication: Enabled - KIP stores it's configuration remotly on the
+          Signal K server.</li>
+      </ul>
 
-      <h4>Default: Local Configuration</h4>
-      <p>If you simply enter the Signalk URL and click the Connect button to use KIP, meaning you have not
-        switched on the "Enable user Sign in and configuration sharing" option, KIP will connect to the
-        server and store it's configuration (your layouts and settings) locally in the Browser.</p>
-      <p>In this mode, <strong>configuration cannot be shared</strong>.</p>
+      <h4>Local Storage</h4>
+      <p>Connecting without enabling "Signal K Authentication" activates KIP's Local Storage
+        feature. In Local Storage, KIP automatically saves and retreives all configuration
+        changes (application settings, pages, layouts, Widget Options,
+        etc.) in realtime from the browser storage. This means that each browser
+        has it's own configuration and so if you use multiple devices, and maybe multiple browsers
+        (Chromium, Chrome, Firefox, etc.) on each of those devices, they will all have
+        independent configurations.</p>
+      <p>In this mode, <strong>configuration is not shared</strong>.</p>
 
-      <h4>Shared Configuration</h4>
-        <p>If you switch on the "Enable user Sign in and configuration sharing" option,
-          supply a valid user and password then click the Connect button, KIP will connect to the
-          server and automatically Save, Retreive and Update it's configuration from the server,
-          <strong>under that users storage space</strong>. This means that <strong>each user has it's own
-          configuration</strong>.</p>
-        <p>To reuse that configuration, on any device or browser, simply Sign in with that
-          <strong>same user</strong>. Nothing more is required.
-        </p>
-        <p>To create an alternavite configuration, Sign in with
-          <strong>a different user</strong> and create your configuration.
-        </p>
+      <h4>Remote Storage</h4>
+        <p><i>This mode offfers automatic configuration sharing to any device and any browser, <strong>
+          as long as you authenticate to Signal K using the same User ID</strong>.
+          It's that simple!</i></p>
+        <p>Connecting to a server with the "Signal K Authentication" enabled, activates KIP's
+          remote configuration storage feature. In Remote Storage, KIP automatically saves and
+          retreives all configuration changes (application settings, pages, layouts, Widget Options,
+          etc.) automatically in realtime to/from the server.</p>
+        <ul>
+          <li> Configuration named "default": KIP always uses the configuration named "default".
+          As you work towards your perfect configuration, KIP automatically updates this
+          configuration. <strong>KIP will always load and execute the configuration named "default".</strong></li>
+        </ul>
+        <p>Using KIP's Storage tab, accessible from Configuration/Settings menu, you can manually
+          copy the "default" configuration to a new configuration and provide it
+          a different name. This creates a backup or a version of "default". Reversly, copying a
+          configuration back onto "default" will overwrite KIP's active
+          configuration and triggure an automatic application reload to take those changes into effect.
+          </p>
+          <p>You can also create different Signal K users, each with their respective configurations.
+            You can use this approach to target configuration for different device form factors,
+            station, crew roles, etc. Keeping all those concepts in mind, plan varefully and leverage KIP's
+            configuration management flexibility to it's fullest.</p>
 
-
-        <p>To Sign in to Signal K, a user must first be created, or you can use the default admin
-          user (not recommended). Here are the steps to create a Signal K User:
+        <h4>Remote Storage Scopes</h4>
+        <ul>
+          <li>User Storage Scope: When connecting to a server with the "Signal K Authentication" enabled, Signal K will stores
+            configuration under the logged in user's storage space.
+            Each user has it's own independent private storage space. This storage space is known as the
+            User Scope in KIP. Users can't access or view each other's
+            storage. When you work with configurations, either by changing KIP's config, copying,
+            deleting or saving a new configuration from the Storage tab, you are always accessing the current active user's
+            storage (the configuration of the user you are authenticated as while doing theose pperations).
+            You can never access other user's config or accidentally overwite them. To view another user's
+            configuration, authenticate as that user. KIP will always read and execute the configuration named "default"
+            from the User Scope.</li>
+          <li>Global Storage Scope: Signal K also offer a shared storage space that is independent of the
+            User Scope. This storage space is known as the
+            Global Scope in KIP. Global Scope is only visible to users with Signal K "Admin" permission.
+            Use Global Scope to Save/Copy configurations between different users (both users
+            will momentarly need admin permission).</li>
+        </ul>
+        <p>Note that KIP will <strong>never load and execute configurations
+        from the Global Scope</strong>, even if it's named "default".</p>
+      <h3>Creating a Signal K user</h3>
+        <p>To authenticate to Signal K, a user must first be created. Foolow the below basic steps
+          to create a Signal K User:
         </p>
         <ol>
-          <li>Go to Signal K server's Security/Users menu and click "Add" to create a user</li>
-          <li>Provide a User ID and Password</li>
-          <li>Assign Read/Write Permissions at a minimum</li>
+          <li>Navigate to Signal K server's Security/Users menu and click "Add" to create a new user</li>
+          <li>Provide the user a "User ID" and "Password"</li>
+          <li>Assign "Read/Write" permission at a minimum. If you want the ability to access the
+            Global Storage with this "User ID", assign "Admin" permission</li>
           <li>Click Apply and you are done</li>
         </ol>
       </div>

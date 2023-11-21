@@ -7,6 +7,7 @@ import { AppSettingsService } from '../../app-settings.service';
 import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../app-settings.interfaces';
 import { NotificationsService } from '../../notifications.service';
 import { StorageService } from '../../storage.service';
+import { cloneDeep, forEach } from 'lodash-es';
 
 interface IRemoteConfig {
   scope: string,
@@ -26,6 +27,8 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   public supportApplicationData: boolean = false;
   public serverConfigList: IRemoteConfig[] = [];
+  public serverUpgradableConfigList: IRemoteConfig[] = [];
+
 
   public copyConfigForm: UntypedFormGroup;
   public storageLocation: string = null;
@@ -90,13 +93,19 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     this.getLiveConfig();
     this.getServerConfigList();
+    this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
 
-  public getServerConfigList() {
+  public getServerConfigList(configFileVersionName?: number) {
     if (this.supportApplicationData) {
-      this.storageSvc.listConfigs()
+      this.storageSvc.listConfigs(configFileVersionName)
       .then((configs) => {
-        this.serverConfigList = configs;
+        // see if we have an old config file
+        if(configFileVersionName) {
+          this.serverUpgradableConfigList = configs;
+        } else {
+          this.serverConfigList = configs;
+        }
       })
       .catch(error => {
         this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
@@ -104,11 +113,13 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
   }
 
-  public saveConfig(conf: IConfig, scope: string, name: string) {
-    if (this.supportApplicationData) { // TOD: add to form to block display
+  public saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean) {
+    if (this.supportApplicationData) {
       if (this.storageSvc.setConfig(scope, name, conf)) {
         this.notificationsService.sendSnackbarNotification(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
-        this.getServerConfigList();
+        if (!dontRefreshConfigList) {
+          this.getServerConfigList();
+        }
       } else {
         this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 0, false);
       }
@@ -159,10 +170,57 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
   }
 
-  public deleteConfig (scope: string, name: string) {
-    this.storageSvc.removeItem(scope, name);
-    this.getServerConfigList();
+  public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
+    this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
     this.notificationsService.sendSnackbarNotification(`Configuration [${name}] deleted from [${scope}] storage scope`, 5000, false);
+    if (!dontRefreshConfigList) {
+      this.getServerConfigList();
+    }
+  }
+
+  public upgradeConfig() {
+    this.serverUpgradableConfigList.forEach(async (oldConfig:IRemoteConfig, index) => {
+      let conf: IConfig = null;
+      await this.storageSvc.getConfig(oldConfig.scope, oldConfig.name, 1)
+        .then((config: IConfig) => {
+          console.log('[Configuration] Upgrading v1 config [' + oldConfig.name + '] from [' + oldConfig.scope + '] scope');
+          conf = config
+          let upgradedAppConfig: IAppConfig = {
+            configVersion: 9,
+            autoNightMode: this.appSettingsService.getAutoNightMode(),
+            dataSets: cloneDeep(config.app.dataSets),
+            notificationConfig: cloneDeep(config.app.notificationConfig),
+            unitDefaults: cloneDeep(config.app.unitDefaults)
+          };
+          conf.app = upgradedAppConfig
+        })
+        .catch(error => {
+          console.error("[Configuration] Error upgrading older configuration: " + error.statusText);
+        });
+
+      console.log('[Configuration] Saving upgraded config [' + oldConfig.name + '] to [' + oldConfig.scope + '] scope');
+      this.storageSvc.patchGlobal(oldConfig.name, oldConfig.scope, conf, 'add');
+    });
+    this.notificationsService.sendSnackbarNotification("Configuration migration completed. WARNING: Test the migrated configurations before deleting them.", 0, false);
+  }
+
+  public refreshConfig(): void {
+    this.storageSvc.listConfigs()
+      .then((configs) => {
+        this.serverConfigList = configs;
+      })
+      .catch(error => {
+        this.notificationsService.sendSnackbarNotification("[Configuration] Error listing server configurations: " + error, 3000, false);
+      });
+  }
+
+  public deleteOldConfig(): void {
+    this.serverUpgradableConfigList.forEach(oldConfig => {
+        console.log('[Configuration] Deleting v1 config [' + oldConfig.name + '] from [' + oldConfig.scope + '] scope');
+        this.storageSvc.removeItem(oldConfig.scope, oldConfig.name, 1);
+
+        this.serverUpgradableConfigList = [];
+    });
   }
 
   public rawConfigSave(configType: string) {
