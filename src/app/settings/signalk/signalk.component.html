@@ -10,13 +10,13 @@
       </mat-error>
     </mat-form-field>
     <br/>
-    <mat-slide-toggle name="useSharedConfigToggle" #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
-      Enable user Sign in and configuration sharing
+    <mat-slide-toggle name="useSharedConfigToggle" matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser." #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
+      Signal K Authentication
     </mat-slide-toggle>
     <br/>
     <br/>
-    <button mat-raised-button type="button" color="primary" matTooltip="Configure User Credentials" [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
-      Set Sign in credentials
+    <button mat-raised-button type="button" color="primary" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
+      Set Credentials
     </button>
     <div class="formActionFooter">
       <mat-divider class="formActionDivider"></mat-divider>

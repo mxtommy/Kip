@@ -3,10 +3,19 @@
 
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
+  $warn: map-get($theme, warn);
+
 
   .descriptiveTexts {
     color: mat.get-color-from-palette($foreground, text);
     font-size: 14px;
+  }
+
+  .flex-item-upgrade {
+    flex: 1 1 100%;
+    background-color: mat.get-color-from-palette($warn, 400);;
+    padding: 10px 20px 10px 20px;
+    border-radius: 4px;
   }
 
   .flex-item {

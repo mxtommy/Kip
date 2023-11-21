@@ -14,6 +14,8 @@ import { IConnectionConfig, ISignalKUrl } from "./app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuththeticationService } from './auththetication.service';
 
+const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+
 @Injectable()
 export class AppNetworkInitService {
   private config: IConnectionConfig;
@@ -44,9 +46,9 @@ export class AppNetworkInitService {
       }
 
       if (this.isLoggedIn && this.config?.useSharedConfig) {
-        this.storage.activeConfigVersion = this.config.configVersion;
+        this.storage.activeConfigFileVersion = configFileVersion;
         this.storage.sharedConfigName = this.config.sharedConfigName;
-        await this.storage.getConfig("user", this.config.sharedConfigName, true);
+        await this.storage.getConfig("user", this.config.sharedConfigName, configFileVersion, true);
       }
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig) {

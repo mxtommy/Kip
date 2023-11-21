@@ -6,6 +6,55 @@
       <a routerLink="/help">Configuration Management Help</a> section.
     </p>
     <div class="flex-container">
+      <div class="flex-item-upgrade" *ngIf="serverUpgradableConfigList.length != 0">
+        <form
+          name="upgradeConfigForm"
+          (ngSubmit)="upgradeConfig()"
+          #upgradeConfigForm="ngForm">
+          <h3>Upgradable Configurations Found</h3>
+          <p style="margin-bottom: 16px;">Previous versions of configurations have been found. Click to
+            Upgrade update them to the latest version. Once upgrade completed, refresh the configuration's list
+            using the button and
+            confirm old configurations are present in respective User and/or Global scopes.</p>
+          <p style="margin-bottom: 16px;">Test your configurations then proceed with deletion.</p>
+          <div *ngIf="hasToken; else elseBlock">
+            <div *ngIf="!hasToken">
+              Writing to the server requires user Authentication or a Device token.
+            </div>
+          </div>
+          <ng-template #elseBlock>
+            <div class="no-token-notice">
+              <p>Authentication or Device Token required</p>
+            </div>
+          </ng-template>
+          <div class="formActionFooter">
+            <mat-divider class="formActionDivider"></mat-divider>
+            <button
+              mat-raised-button
+              type="submit"
+              [disabled]="!hasToken || !upgradeConfigForm.valid"
+              color="accent">
+                Upgrade
+            </button>
+            <button style="margin-left: 10px;"
+              mat-raised-button
+              type="button"
+              [disabled]="!hasToken || !upgradeConfigForm.valid"
+              color="accent"
+              (click)="refreshConfig()">
+                Refresh
+            </button>
+            <button style="margin-left: 10px;"
+              mat-raised-button
+              type="button"
+              [disabled]="!hasToken || !upgradeConfigForm.valid"
+              color="accent"
+              (click)="deleteOldConfig()">
+                DELETE
+          </button>
+          </div>
+        </form>
+      </div>
       <div class="flex-item">
         <form
           name="saveConfigForm"
@@ -40,12 +89,12 @@
               />
             </mat-form-field>
             <div *ngIf="!hasToken">
-              Writing to the server requires user Sign in or a Device token
+              Writing to the server requires user Authentication or a Device token
             </div>
           </div>
           <ng-template #elseBlock>
             <div class="no-token-notice">
-              <p>Sign in or Device Token required</p>
+              <p>Authentication or Device Token required</p>
             </div>
           </ng-template>
           <div class="formActionFooter">
@@ -80,7 +129,7 @@
           </div>
           <ng-template #elseBlock>
             <div class="no-token-notice">
-              <p>Sign in or Device Token required</p>
+              <p>Authentication or Device Token required</p>
             </div>
           </ng-template>
           <div class="formActionFooter">

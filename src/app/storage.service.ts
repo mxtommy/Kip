@@ -23,7 +23,7 @@ export class StorageService {
   private serverEndpoint: String = null;
   public isAppDataSupported: boolean = false;
   private serverConfigs: Config[] = [];
-  private configVersion: number = null;
+  private configFileVersion: number = null;
   public sharedConfigName: string;
   private InitConfig: IConfig = null;
   public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
@@ -75,14 +75,24 @@ export class StorageService {
    * Retreives server Application Data config lists for Kip in both Global
    * and User scopes for the current app version.
    *
+   * @param {string} [forceConfigFileVersion] Optionnal parameter. Forces the
+   * Signal K configuration file name to a specific version. If not set, configFileVersion
+   * is used by default (set in app-settings and app-initNetwork services).
+   * Old KIP versions used value of 1.
+   *
    * @return {*}  {Promise<Config[]>}
    * @memberof StorageService
    */
-  public async listConfigs(): Promise<Config[]> {
+  public async listConfigs(forceConfigFileVersion?: number): Promise<Config[]> {
     let serverConfigs: Config[] = [];
     const url = this.serverEndpoint;
-    let globalUrl = url + "global/kip/" + this.configVersion + "/?keys=true";
-    let userUrl = url + "user/kip/" + this.configVersion + "/?keys=true";
+    let globalUrl = url + "global/kip/" + this.configFileVersion + "/?keys=true";
+    let userUrl = url + "user/kip/" + this.configFileVersion + "/?keys=true";
+
+    if (forceConfigFileVersion) {
+      globalUrl = url + "global/kip/" + forceConfigFileVersion + "/?keys=true";
+      userUrl = url + "user/kip/" + forceConfigFileVersion + "/?keys=true";
+    }
 
     await lastValueFrom(this.http.get<string[]>(globalUrl))
       .then((configNames: string[]) => {
@@ -117,14 +127,22 @@ export class StorageService {
    *
    * @param {string} scope String value of either 'global' or 'user'
    * @param {string} configName String value of the config name
+   * @param {string} [forceConfigFileVersion] Optionnal parameter. Forces the
+   * Signal K configuration file name to a specific version. If not set, configFileVersion
+   * is used by default (set in app-settings and app-initNetwork services).
+   * Old KIP versions used value of 1.
    * @param {boolean} isInitLoad User for AppSettings config initialyzation. If True, config will be keept
+   *
    * @return {*}  {IConfig}
    * @memberof StorageService
    */
-  public async getConfig(scope: string, configName: string, isInitLoad?: boolean): Promise<IConfig> {
+  public async getConfig(scope: string, configName: string, forceConfigFileVersion?: number, isInitLoad?: boolean): Promise<IConfig> {
     let conf: IConfig = null;
-    let url = this.serverEndpoint + scope +"/kip/" + this.configVersion + "/" + configName;
+    let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/" + configName;
 
+    if (forceConfigFileVersion) {
+      url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/" + configName;
+    }
     await lastValueFrom(this.http.get<any>(url))
       .then(remoteConfig => {
         conf = remoteConfig;
@@ -141,28 +159,31 @@ export class StorageService {
 
   /**
    * Send configuration data to the server Application Data service
-   * with a scope and name. The configuration will be saved in the
-   * current Kip app version subfolder on the server.
+   * with a scope and name and optionnal file version. The configuration will be saved in the
+   * current Kip app version file number (9.0.0.json) in applicationData subfolder on the server.
    *
    * @usage If the given ConfigName exists in the provided scope for the same version,
-   * the data will be overwriten/replaced on the server.
+   * the data will be overwriten/replaced, else it will be created on the server.
    *
    * @param {string} scope String value of either 'global' or 'user'
    * @param {string} configName String value of the config name
    * @param {IConfig} config config data to be saved
-   * @return {*}  {boolean} returns True if operation is successful
+   * @return {*}  {null} returns null if operation is successfull or raises an error.
    * @memberof StorageService
    */
-  public setConfig(scope: string, configName: string, config: IConfig): Promise<void> {
-    let url = this.serverEndpoint + scope +"/kip/" + this.configVersion + "/"+ configName;
-
-    return lastValueFrom(this.http.post<any>(url, config))
-      .then( _ => {
+  public async setConfig(scope: string, configName: string, config: IConfig): Promise<null> {
+    let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/"+ configName;
+    let response: any;
+    await lastValueFrom(this.http.post<null>(url, config))
+      .then(x => {
         console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
+        response = x;
       })
       .catch(error => {
         this.handleError(error);
-      });
+    });
+
+    return response;
   }
 
   /**
@@ -174,7 +195,7 @@ export class StorageService {
    */
   public patchConfig(ObjType: string, value: any) {
 
-    let url = this.serverEndpoint + "user/kip/" + this.configVersion;
+    let url = this.serverEndpoint + "user/kip/" + this.configFileVersion;
     let document;
 
     switch (ObjType) {
@@ -268,14 +289,75 @@ export class StorageService {
   }
 
   /**
+   * Applies full KIP configuration entry file operations the server's Global Scope application storage.
+   *
+   * @param {string} configName name of the configuration.
+   * @param {string} scope the storage scope to use. Can either be: 'user' or 'global'.
+   * @param {string} operation string describing the type action to perform. values can be: 'add', 'replace' or 'remove'.
+   * @param {IConfig} config unstrignified config object. The resulting outgoing POST request will automatically strignify.
+   * @param {number} fileVersion Configuration file version. Supported are 9 for current and 1 for old configs.
+   * @memberof StorageService
+   */
+  public patchGlobal(configName: string, scope: string, config: IConfig, operation: string, fileVersion?: number) {
+    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
+    if (fileVersion) {
+      url = this.serverEndpoint + scope + "/kip/" + fileVersion;
+    }
+
+    let document;
+    switch (operation) {
+      case "add":
+        document =
+          [{
+            "op": "add",
+            "path": `/${configName}`,
+            "value": config
+          }]
+        break;
+
+      case "replace":
+        document =
+          [{
+            "op": "replace",
+            "path": `/${configName}`,
+            "value": config
+          }]
+        break;
+
+      case "remove":
+        document =
+          [{
+            "op": "remove",
+            "path": `/${configName}`,
+            "value": config
+          }]
+        break;
+
+      default: console.warn("[Storage Service] JSON Patch operation request type unknown");
+        break;
+    }
+
+    let patch: IPatchAction = {url, document};
+    this.patchQueue$.next(patch);
+  }
+
+  /**
    * Deletes/removes a full configuration entry from the server ApplicationStorage using JSON Patch standard.
    *
    * @param {string} scope destination storage scope of either global or user value
    * @param {string} name configuration name to delete
+   * @param {string} [forceConfigFileVersion] Optionnal parameter. Forces the
+   * Signal K configuration file name to a specific version. If not set, configFileVersion
+   * is used by default (set in app-settings and app-initNetwork services).
+   * Old KIP versions used value of 1.
+   *
    * @memberof StorageService
    */
-  public removeItem(scope: string, name: string) {
-    let url = this.serverEndpoint + scope + "/kip/" + this.configVersion;
+  public removeItem(scope: string, name: string, forceConfigFileVersion?: number) {
+    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
+    if (forceConfigFileVersion) {
+      url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion;
+    }
     let document =
     [
       {
@@ -294,8 +376,8 @@ export class StorageService {
 
   }
 
-  public set activeConfigVersion(v : number) {
-    this.configVersion = v;
+  public set activeConfigFileVersion(v : number) {
+    this.configFileVersion = v;
   }
 
   private handleError(error: HttpErrorResponse) {
