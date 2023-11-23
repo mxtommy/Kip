@@ -1,13 +1,13 @@
 
 import { Injectable } from '@angular/core';
 import { HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http'
-import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
+import { AuthenticationService, IAuthorizationToken } from './authentication.service';
 
 @Injectable()
 export class AuthenticationInterceptor implements HttpInterceptor {
   private authToken: IAuthorizationToken = null;
 
-  constructor(private auth: AuththeticationService) {
+  constructor(private auth: AuthenticationService) {
     // Observe the auth token from the Auth service.
     this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
       this.authToken = token;

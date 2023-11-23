@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { AuththeticationService } from "../../auththetication.service";
+import { AuthenticationService } from "../../authentication.service";
 import { AppSettingsService } from '../../app-settings.service';
 import { NotificationsService } from '../../notifications.service';
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
@@ -18,7 +18,7 @@ export class WidgetLoginComponent implements OnInit {
 
   constructor(
     public dialog: MatDialog,
-    private auth: AuththeticationService,
+    private auth: AuthenticationService,
     private notificationsService: NotificationsService,
     private appSettingsService: AppSettingsService,
   ) { }

@@ -5,7 +5,7 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from './signalk-interfaces';
 import { IMeta, INotification, IPathValueData } from "./app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
-import { AuththeticationService, IAuthorizationToken } from './auththetication.service';
+import { AuthenticationService, IAuthorizationToken } from './authentication.service';
 
 
 /**
@@ -39,7 +39,7 @@ export class SignalKDeltaService {
   // Signal K Notifications message stream Observable
   private signalKNotifications$ = new Subject<INotificationDelta>();
   // Signal K data path message stream Observable
-  private signalKDatapath$ = new Subject<IPathValueData>();
+  private signalKDataPath$ = new Subject<IPathValueData>();
   // Signal K Metadata message stream Observer
   private signalKMetadata$ = new Subject<IMeta>();
   // Self URN message stream Observer
@@ -66,21 +66,21 @@ export class SignalKDeltaService {
 
   constructor(
     private server: SignalKConnectionService,
-    private auth: AuththeticationService,
+    private auth: AuthenticationService,
     private zones: NgZone
     )
     {
       // Monitor Connection Service Endpoint Status
-      this.server.serverServiceEndpoint$.subscribe((endpoitStatus: IEndpointStatus) => {
+      this.server.serverServiceEndpoint$.subscribe((endpointStatus: IEndpointStatus) => {
         let reason: string = null;
-        if (endpoitStatus.operation === 2) {
+        if (endpointStatus.operation === 2) {
           reason = "New endpoint";
         } else {
           reason = "Connection stopped";
         }
 
-        if (endpoitStatus.operation === 2) {
-          this.endpointWS = endpoitStatus.WsServiceUrl;
+        if (endpointStatus.operation === 2) {
+          this.endpointWS = endpointStatus.WsServiceUrl;
 
           if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
             this.closeWS(reason);
@@ -91,7 +91,7 @@ export class SignalKDeltaService {
           }, 250);
 
         } else {
-          if (this.socketWS$ && endpoitStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
+          if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
             this.closeWS(reason);
           }
         }
@@ -156,11 +156,11 @@ export class SignalKDeltaService {
    public connectWS(reason: string): void {
     this.streamEndpoint.message = "Connecting";
     this.streamEndpoint.operation = 1;
-    console.log(`[Delta Service] ${reason}: WebSocket openning...`);
+    console.log(`[Delta Service] ${reason}: WebSocket opening...`);
     this.streamEndpoint$.next(this.streamEndpoint);
 
     this.socketWS$ = this.getNewWebSocket();
-    // Every WebSocket onmessage listener event (data cmming in) generates fires a ChangeDetection cycles that is not relevent in KIP. KIP sends socket messages to internal service data array only, so no UI updates (change detection) are necessary. UI Updates observing the internal data array updates. Running outside zones.js to eliminate unnessesary changedetection cycle.
+    // Every WebSocket onmessage listener event (data coming in) generates fires a ChangeDetection cycles that is not relevant in KIP. KIP sends socket messages to internal service data array only, so no UI updates (change detection) are necessary. UI Updates observing the internal data array updates. Running outside zones.js to eliminate unnecessary changedetection cycle.
     this.zones.runOutsideAngular(() => {
       this.socketWS$.pipe(
         retryWhen(errors =>
@@ -209,7 +209,7 @@ export class SignalKDeltaService {
 
   /**
   * Send message to WebSocket stream recipient (SignalK server).
-  * @param msg JSON formated message to be sent. If the WebSocket is not
+  * @param msg JSON formatted message to be sent. If the WebSocket is not
   * available, one retry after 1 sec will be made. The socket parser will automatically
   * stringify the message.
   *
@@ -224,7 +224,7 @@ export class SignalKDeltaService {
         console.log("[Delta Service] WebSocket retry sending message");
         this.socketWS$.next(msg);
       }, 1000);
-      console.log("[Delta Service] No WebSocket present to send messsage");
+      console.log("[Delta Service] No WebSocket present to send message");
     }
   }
 
@@ -250,80 +250,69 @@ export class SignalKDeltaService {
 
   private parseUpdates(updates: ISignalKUpdateMessage[], context: string) {
     if (!context) {
-      context = 'self'; //default if not defined
+      context = 'self'; // if not defined use self
     }
 
     for (let update of updates) {
-      // process source identifier. 'src' is nmea2k and 'talker' is nmea0183
-      let source: string = null;
-      if ((update.source) && (update.source.type) && update.source.label) {
-        if (update.source.type == 'NMEA2000') {
-          source = update.source.label + '.' + update.source.src;
-        } else if (update.source.type == 'NMEA0183') {
-          source = update.source.label + '.' + update.source.talker;
-        } else {
-          // donno what it is...
-          source = update.source.label;
-        }
-      } else if (update.$source !== undefined) {
-        source = update.$source;
-      } else if ((update.source !== undefined) && (update.source.src !== undefined) && (update.source.label !== undefined)) {
-        source = update.source.label + '.' + update.source.src;
-      } else if ((update.source !== undefined) && (update.source.label !== undefined)) {
-        source = update.source.label;
-      } else {
-        source = "Unknown";
-      }
-
-      // process Values
-      let timestamp = Date.parse(update.timestamp); //TODO, supposedly not reliable
-      if (update.values !== undefined) {
-        for (let item of update.values) {
-
-
-          //TODO:  notification are in path vessels.self.navigation...
-          if (/^notifications./.test(item.path)) {
-            // It's is a notification message, pass to notification service
-            let notification: INotificationDelta = {
-              path: item.path,
-              notification: item.value,
-            };
-            this.signalKNotifications$.next(notification);
-          } else {
-            // It's a data update. Update local source
-            let fullPath = `${context}.${item.path}`;
-            if (item.path == '') { fullPath = context; } // if path is empty we shouldn't have a . at the end
-            if ( (typeof(item.value) == 'object') && (item.value !== null)) {
-              // It's contains compounded data
-              let keys = Object.keys(item.value);
-              for (let i = 0; i < keys.length; i++) {
-                let dataPath: IPathValueData = {
-                  path: fullPath + `.` + keys[i],
-                  source: source,
-                  timestamp: timestamp,
-                  value: item.value[keys[i]],
-                };
-                this.signalKDatapath$.next(dataPath);
-              }
-            } else {
-              // It's a simple data
-              let dataPath: IPathValueData = {
-                path: fullPath,
-                source: source,
-                timestamp: timestamp,
-                value: item.value,
-              };
-              this.signalKDatapath$.next(dataPath);
-            }
-          }
-        }
-      }
-
-      // Process Meta
       if (update.meta !== undefined) {
+        // Meta message update
         for (let meta of update.meta) {
           this.parseMeta(meta, context);
         }
+      } else if (update.$source !== undefined) {
+        // Source message update
+        let source: string = update.$source;
+
+        // process Values
+        let timestamp = update.timestamp; // We use to parse to Date every message, but we don't use this property anywhere. Removing parsing but keeping original value for future use
+
+        if (update.values !== undefined) {
+          for (let item of update.values) {
+
+
+            //TODO:  notification are in path vessels.self.navigation...
+            if (/^notifications./.test(item.path)) {
+              // It's is a notification message, pass to notification service
+              let notification: INotificationDelta = {
+                path: item.path,
+                notification: item.value,
+              };
+              this.signalKNotifications$.next(notification);
+            } else {
+              // It's a data update. Update local source
+              let fullPath = `${context}.${item.path}`;
+              if (item.path == '') { fullPath = context; } // if path is empty we shouldn't have a . at the end
+              if ( (typeof(item.value) == 'object') && (item.value !== null)) {
+                // It's contains compounded data
+                let keys = Object.keys(item.value);
+                for (let i = 0; i < keys.length; i++) {
+                  let dataPath: IPathValueData = {
+                    path: fullPath + `.` + keys[i],
+                    source: source,
+                    timestamp: timestamp,
+                    value: item.value[keys[i]],
+                  };
+                  this.signalKDataPath$.next(dataPath);
+                }
+              } else {
+                // It's a simple data
+                let dataPath: IPathValueData = {
+                  path: fullPath,
+                  source: source,
+                  timestamp: timestamp,
+                  value: item.value,
+                };
+                this.signalKDataPath$.next(dataPath);
+              }
+            }
+          }
+        }
+
+      } else {
+        /* Whats left is only updates with 'source' updates. Source are about network
+         device info (mostly each N2K device broadcasts it's detail in the network).
+         KIP does not need or use this info. Leaving this entry for future changes...
+        */
       }
     }
   }
@@ -366,7 +355,7 @@ export class SignalKDeltaService {
   }
 
   public subscribeDataPathsUpdates() : Observable<IPathValueData> {
-    return this.signalKDatapath$.asObservable();
+    return this.signalKDataPath$.asObservable();
   }
 
   public subscribeMetadataUpdates() : Observable<IMeta> {

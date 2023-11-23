@@ -5,7 +5,7 @@ import { AppSettingsService } from './app-settings.service';
 import { ISignalKDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
-import { AuththeticationService } from './auththetication.service';
+import { AuthenticationService } from './authentication.service';
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
@@ -39,7 +39,7 @@ export class SignalkRequestsService {
     private signalKDeltaService: SignalKDeltaService,
     private appSettingsService: AppSettingsService,
     private NotificationsService: NotificationsService,
-    private auth: AuththeticationService,
+    private auth: AuthenticationService,
     ) {
       // Observer to get all signalk-delta messages of type request type.
       const requestsSub: Subscription = this.signalKDeltaService.subscribeRequestUpdates().subscribe(

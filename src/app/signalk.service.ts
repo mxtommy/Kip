@@ -30,8 +30,8 @@ interface pathRegistration {
 
 export interface updateStatistics {
   currentSecond: number; // number up updates in the last second
-  secondsUpdates: number[]; // number of updates receieved for each of the last 60 seconds
-  minutesUpdates: number[]; // number of updates receieved for each of the last 60 minutes
+  secondsUpdates: number[]; // number of updates received for each of the last 60 seconds
+  minutesUpdates: number[]; // number of updates received for each of the last 60 minutes
 
 }
 
@@ -49,7 +49,7 @@ export class SignalKService {
   pathRegister: pathRegistration[] = [];
 
   // path Observable
-  pathsObservale: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
+  pathsObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
 
   // Performance stats
   updateStatistics: updateStatistics = {
@@ -206,7 +206,7 @@ export class SignalKService {
     if (pathIndex >= 0) { // exists
 
       // Update data
-      // null source path means, path was first created by metadata. Set source values
+      // null source path means, local path key was first created by a delta metadata update. Update source values
       if (this.paths[pathIndex].defaultSource === null) {
         this.paths[pathIndex].defaultSource = dataPath.source;
         this.paths[pathIndex].type = typeof(dataPath.value);
@@ -249,7 +249,7 @@ export class SignalKService {
     // if we're not in alarm, and new state is alarm, sound the alarm!
     // @ts-ignore
     if (state != IZoneState.normal && state != this.paths[pathIndex].state) {
-      let stateString; // notif service needs string....
+      let stateString; // notification service needs string....
       let methods;
       switch (state) {
         // @ts-ignore
@@ -308,7 +308,7 @@ export class SignalKService {
     );
 
     // push it to paths observer
-    this.pathsObservale.next(this.paths);
+    this.pathsObservable.next(this.paths);
 
   }
 
@@ -325,7 +325,7 @@ export class SignalKService {
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
     if (pathIndex >= 0) {
       this.paths[pathIndex].meta = meta.meta;
-    } else { // not in our list yet. Meta update can in first. Create the path with empty source values for later update
+    } else { // not in our list yet. The delta meta update came before the source delta update. Create the path with empty source values in preparation of future source delta updates
       this.paths.push({
         path: pathSelf,
         defaultSource: null,
@@ -360,7 +360,7 @@ export class SignalKService {
   }
 
   getPathsObservable(): Observable<IPathData[]> {
-    return this.pathsObservale.asObservable();
+    return this.pathsObservable.asObservable();
   }
 
   getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.

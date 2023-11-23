@@ -20,7 +20,7 @@ import { IZoneState } from './app-settings.interfaces';
  export interface IPathValueData {
   path: string;
   source: string;
-  timestamp: number;
+  timestamp: string;
   value: any;
 }
 
@@ -38,7 +38,7 @@ import { IZoneState } from './app-settings.interfaces';
   defaultSource?: string; // default source
   sources: {
     [sourceName: string]: { // per source data
-      timestamp: number;
+      timestamp: string;
       value: any;
     }
   }

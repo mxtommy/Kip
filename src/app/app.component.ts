@@ -1,4 +1,4 @@
-import { AuththeticationService } from './auththetication.service';
+import { AuthenticationService } from './authentication.service';
 import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common'
 import { Subscription } from 'rxjs';
@@ -50,10 +50,10 @@ export class AppComponent implements OnInit, OnDestroy {
     public appSettingsService: AppSettingsService, // needs storage & AppInit
     private DataSetService: DataSetService, // needs AppSettingsService & SignalKService
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
-    public auththeticationService: AuththeticationService,
+    public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
-    // below services are needed: first service instanciation after Init Service
+    // below services are needed: first service instantiation after Init Service
     private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
     ) { }
 
