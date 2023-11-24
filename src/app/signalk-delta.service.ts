@@ -248,7 +248,7 @@ export class SignalKDeltaService {
     }
   }
 
-  private parseUpdates(updates: ISignalKUpdateMessage[], context: string) {
+  private parseUpdates(updates: ISignalKUpdateMessage[], context: string): void {
     if (!context) {
       context = 'self'; // if not defined use self
     }
@@ -260,59 +260,54 @@ export class SignalKDeltaService {
           this.parseMeta(meta, context);
         }
       } else if (update.$source !== undefined) {
-        // Source message update
-        let source: string = update.$source;
-
-        // process Values
-        let timestamp = update.timestamp; // We use to parse to Date every message, but we don't use this property anywhere. Removing parsing but keeping original value for future use
-
-        if (update.values !== undefined) {
-          for (let item of update.values) {
+        // Source value updates
+        for (let item of update.values) {
 
 
-            //TODO: notification are in path vessels.self.navigation...
-            if (/^notifications./.test(item.path)) {
-              // It's is a notification message, pass to notification service
-              let notification: INotificationDelta = {
-                path: item.path,
-                notification: item.value,
-              };
-              this.signalKNotifications$.next(notification);
-            } else {
-              // It's a data update. Update local source
+          //TODO: notifications have evolved with the specs. Need to update at some point...
+          if (/^notifications./.test(item.path)) {
+            // It's is a notification message, pass to notification service
+            let notification: INotificationDelta = {
+              path: item.path,
+              notification: item.value,
+            };
+            this.signalKNotifications$.next(notification);
+
+          } else {
+            // It's a data update. Update local source
+
+            if (typeof(item.value) == 'object') {
               let fullPath = `${context}.${item.path}`;
-              if (item.path == '') { fullPath = context; } // if path is empty we shouldn't have a . at the end
-              if ( (typeof(item.value) == 'object') && (item.value !== null)) {
-                // It's contains compounded data
-                let keys = Object.keys(item.value);
-                for (let i = 0; i < keys.length; i++) {
-                  let dataPath: IPathValueData = {
-                    path: fullPath + `.` + keys[i],
-                    source: source,
-                    timestamp: timestamp,
-                    value: item.value[keys[i]],
-                  };
-                  this.signalKDataPath$.next(dataPath);
-                }
-              } else {
-                // It's a simple data
+
+              if (item.path == '') { // if path is empty it's because we have an Object.
+                fullPath = context;
+              }
+
+               /* add a path for ech key of the Object. This is very basic as it does not
+              account for know complex types such as GPS satellite data and other. But we
+              don't used those yet */
+              let keys = Object.keys(item.value);
+              for (let i = 0; i < keys.length; i++) {
                 let dataPath: IPathValueData = {
-                  path: fullPath,
-                  source: source,
-                  timestamp: timestamp,
-                  value: item.value,
+                  path: fullPath + `.` + keys[i],
+                  source: update.$source,
+                  timestamp: update.timestamp,
+                  value: item.value[keys[i]],
                 };
                 this.signalKDataPath$.next(dataPath);
               }
+            } else {
+              // It's a simple data
+              let dataPath: IPathValueData = {
+                path: `${context}.${item.path}`,
+                source: update.$source,
+                timestamp: update.timestamp,
+                value: item.value,
+              };
+              this.signalKDataPath$.next(dataPath);
             }
           }
         }
-
-      } else {
-        /* Whats left is only updates with 'source' updates. Source are about network
-         device info (mostly each N2K device broadcasts it's detail in the network).
-         KIP does not need or use this info. Leaving this entry for future changes...
-        */
       }
     }
   }
