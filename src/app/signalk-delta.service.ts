@@ -270,7 +270,7 @@ export class SignalKDeltaService {
           for (let item of update.values) {
 
 
-            //TODO:  notification are in path vessels.self.navigation...
+            //TODO: notification are in path vessels.self.navigation...
             if (/^notifications./.test(item.path)) {
               // It's is a notification message, pass to notification service
               let notification: INotificationDelta = {
