@@ -6,7 +6,7 @@ import {Directive, ElementRef, Input, AfterViewInit, HostListener} from '@angula
 export class FitTextDirective {
 
 
-    @Input('fit-text') fittext: boolean = true;
+    @Input('fit-text') fitText: boolean = true;
     @Input('container') container: HTMLDivElement;
     @Input('activateOnResize') activateOnResize: boolean = true;
     @Input('minFontSize') minFontSize: number = -1 / 0;
@@ -16,9 +16,9 @@ export class FitTextDirective {
     constructor(public el: ElementRef) {}
 
     private setFontSize = (): void => {
-        if (this.fittext) {
+        if (this.fitText) {
  /*           let containerWidth, fontSize;
- 
+
             const windowWidth = window.screen.width;
             const parentWidth = this.container.parentElement.clientWidth;
             console.log(this.el.nativeElement.parentElement.clientWidth);
@@ -30,12 +30,12 @@ export class FitTextDirective {
             let width = this.el.nativeElement.parentElement.clientWidth;
             let height = this.el.nativeElement.parentElement.clientHeight;
 
-            fontSize = 
+            fontSize =
                         Math.min(
                             Math.max(
                                 Math.min(
-                                    width / (this.compression * 10), 
-                                    this.maxFontSize), 
+                                    width / (this.compression * 10),
+                                    this.maxFontSize),
                                 this.minFontSize),
                             height); //TODO, does not take text width into consideration :(
 
@@ -53,9 +53,4 @@ export class FitTextDirective {
                  },10);
         }
     };
-
- /*   ngAfterViewInit() {
-        this.setFontSize();
-    }
-  */
 }
