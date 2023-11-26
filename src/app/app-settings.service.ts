@@ -180,8 +180,15 @@ export class AppSettingsService {
       this.replaceConfig('appConfig', upgradedConfig, true);
     }
   }
-
-  private loadConfigFromLocalStorage(type: string) {
+/**
+ * Get configuration from local browser storage rather then in
+ * memory running config.
+ *
+ * @param {string} type Possible choices are: appConfig,  widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
+ * @return {*}
+ * @memberof AppSettingsService
+ */
+public loadConfigFromLocalStorage(type: string) {
     let config = JSON.parse(localStorage.getItem(type));
 
     if (config === null) {
