@@ -104,7 +104,9 @@ export class SvgWindComponent implements AfterViewInit {
     //heading
     if (changes.compassHeading) {
       if (! changes.compassHeading.firstChange) {
+        if (changes.compassHeading.currentValue === null) {return}
         this.compassFaceplate.oldDegreeIndicator = this.compassFaceplate.newDegreeIndicator;
+
         this.compassFaceplate.newDegreeIndicator = changes.compassHeading.currentValue.toFixed(0);
         this.headingValue = this.compassFaceplate.newDegreeIndicator;
 
@@ -118,6 +120,7 @@ export class SvgWindComponent implements AfterViewInit {
     //appWindAngle
     if (changes.appWindAngle) {
       if (! changes.appWindAngle.firstChange) {
+        if (changes.appWindAngle.currentValue === null) {return}
         this.appWind.oldDegreeIndicator = this.appWind.newDegreeIndicator;
         this.appWindValue.oldDegreeIndicator = this.appWindValue.newDegreeIndicator;
 
@@ -132,6 +135,7 @@ export class SvgWindComponent implements AfterViewInit {
     //appWindSpeed
     if (changes.appWindSpeed) {
       if (! changes.appWindSpeed.firstChange) {
+        if (changes.appWindSpeed.currentValue === null) {return}
         this.appWindSpeedDisplay = changes.appWindSpeed.currentValue.toFixed(1);
       }
     }
@@ -139,6 +143,8 @@ export class SvgWindComponent implements AfterViewInit {
     //trueWindAngle
     if (changes.trueWindAngle) {
       if (! changes.trueWindAngle.firstChange) {
+        if (changes.trueWindAngle.currentValue === null) {return}
+
         this.trueWind.oldDegreeIndicator = this.trueWind.newDegreeIndicator;
         this.trueWindValue.oldDegreeIndicator = this.trueWindValue.newDegreeIndicator;
 
@@ -156,8 +162,8 @@ export class SvgWindComponent implements AfterViewInit {
     //trueWindSpeed
     if (changes.trueWindSpeed) {
       if (! changes.trueWindSpeed.firstChange) {
-          if (changes.trueWindSpeed.currentValue === null) {return}
-          this.trueWindSpeedDisplay = changes.trueWindSpeed.currentValue.toFixed(1);
+        if (changes.trueWindSpeed.currentValue === null) {return}
+        this.trueWindSpeedDisplay = changes.trueWindSpeed.currentValue.toFixed(1);
       }
     }
 
