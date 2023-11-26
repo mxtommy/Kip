@@ -207,6 +207,9 @@ export class SignalKService {
       if (this.paths[pathIndex].defaultSource == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
         this.paths[pathIndex].defaultSource = dataPath.source;
       }
+      if (this.paths[pathIndex].type == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
+        this.paths[pathIndex].type = typeof(dataPath.value);
+      }
       this.paths[pathIndex].pathValue = dataPath.value; // we always push to both pat and source values
       this.paths[pathIndex].sources[dataPath.source] = {
         timestamp: dataPath.timestamp,
@@ -343,14 +346,6 @@ export class SignalKService {
       finalPath = `${context}.${path}`;
     }
     return finalPath;
-  }
-
-  private setDefaultSource(source: IDefaultSource): void {
-    let pathSelf: string = source.path.replace(this.selfUrn, 'self');
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
-    if (pathIndex >= 0) {
-      this.paths[pathIndex].defaultSource = source.source;
-    }
   }
 
   /**
