@@ -1,0 +1,70 @@
+@use '@angular/material' as mat;
+
+@mixin dynamic-widget-container-theme($theme) {
+
+  $themeEmitter: map-get($theme, ngGauge);
+  $themeForeground: map-get($theme, foreground);
+    .primary {
+      color: mat.get-color-from-palette($themeEmitter, primary-gaugeFaceLight);
+    }
+    .accent {
+      color: mat.get-color-from-palette($themeEmitter, accent-gaugeFaceLight);
+    }
+    .warn {
+      color: mat.get-color-from-palette($themeEmitter, warn-gaugeFaceLight);
+    }
+    .primaryDark {
+      color: mat.get-color-from-palette($themeEmitter, primary-gaugeFaceDark);
+    }
+    .accentDark {
+      color: mat.get-color-from-palette($themeEmitter, accent-gaugeFaceDark);
+    }
+    .warnDark {
+      color: mat.get-color-from-palette($themeEmitter, warn-gaugeFaceDark);
+    }
+    .background {
+      color: mat.get-color-from-palette($themeForeground, divider);
+    }
+    .text {
+      color: mat.get-color-from-palette($themeForeground, text);
+    }
+
+}
+
+.dynamicWidgetContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.mat-card {
+  display: block;
+  position: absolute !important;
+  width: calc(100% - 4px);
+  height: calc(100% - 5px);
+  margin: 3px auto auto 2px;
+  padding: 0px;
+  transition: none;
+  transition-property: none;
+}
+
+.selectWidgetMenu {
+    position: absolute;
+    right: 5%;
+    bottom: 5%;
+}
+
+.settingsButton {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.mat-select-trigger {
+    min-width: 30px !important;
+}
+
+.full-width {
+    width: 100%;
+}

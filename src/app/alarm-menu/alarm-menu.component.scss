@@ -1,0 +1,56 @@
+@use '@angular/material' as mat;
+
+@mixin alarm-menu-theme($theme) {
+
+  $primary: map-get($theme, primary);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  .matBadge {
+    z-index: 1000;
+  }
+
+  .mute-unmte-alarm {
+    width: max-content;
+  }
+
+  // Alarm button when warning
+  .alarmWarning {
+    animation:blinkingAlarmWarning 1.5s infinite;
+    background-color: #FFA500 !important
+  }
+  @keyframes blinkingAlarmWarning{
+    0%{		color: rgb(179, 0, 0);	}
+    50%{	color: transparent;	}
+    100%{	color: rgb(179, 0, 0);	}
+  }
+  // Alarm button when crit
+  .alarmCrit {
+    animation:blinkingAlarmCrit 0.25s infinite;
+
+  }
+  @keyframes blinkingAlarmCrit{
+    0%{
+      color: rgb(255, 232, 232);
+      background-color: rgb(179, 0, 0);
+    }
+    50%{
+
+      color: rgb(179, 0, 0);
+      background-color: rgb(255, 232, 232);
+    }
+    100%{
+      color: rgb(255, 232, 232);
+      background-color: rgb(179, 0, 0);
+    }
+  }
+  .muteSoundButton:hover {
+    background: rgba(255, 255, 255, 0.04); // mat-list hover bug fixed in recent versions.
+  }
+
+}
+
+::ng-deep.mat-menu-panel {
+  max-width:fit-content !important;
+}

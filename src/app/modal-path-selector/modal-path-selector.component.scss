@@ -1,0 +1,52 @@
+@use '@angular/material' as mat;
+
+@mixin modal-path-selector-theme($theme) {
+
+  $themeForeground: map-get($theme, foreground);
+
+    .pathMetaDescription {
+      font: small-caption;
+      color: mat.get-color-from-palette($themeForeground, disabled-text);
+  }
+}
+
+.pathGroup {
+  width: 100%;
+}
+
+.pathGroupFields {
+  display: block;
+  width: calc(100% - 5px);
+}
+
+
+.pathField {
+  width: 100%;
+}
+
+.pathProperties {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-items: center;
+  align-content: flex-start;
+  gap: 10px;
+  // padding-left: 15px;
+  // width: 100%;
+}
+
+.fields {
+  width: 100%;
+}
+
+.sourceField {
+  flex: 3 1;
+}
+
+.sampleTimeField {
+  flex: 1 3;
+}
+
+.unitField {
+  flex: 3 1;
+}

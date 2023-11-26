@@ -1,0 +1,29 @@
+.small-button {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  min-height: 20px;
+  vertical-align: top;
+  font-size: 14px;
+  padding: 0 0;
+  margin: 0;
+}
+
+.cell-source:first-of-type {
+  padding-left: 0px;
+}
+
+
+.cell-source:first-of-type {
+  flex: 1 1 40%;
+}
+
+.cell-value {
+  justify-content: center;
+  flex: 1 1 22%;
+}
+
+.cell-action {
+  justify-content: end;
+  flex: 1 1 14%;
+}

@@ -1,0 +1,13 @@
+<div class="iFrameWrapper">
+  <iframe *ngIf="widgetUrl" [src]="widgetUrl | safe" width="100%" height="100%" frameborder="0"></iframe>
+  <div *ngIf="!widgetUrl">
+    <h4>URL Not Configured</h4>
+    <p>For Example in Graphana, select share for the graph you want, go to embed tab, and take the "src" url.</p>
+    <p>You should probably change the from/to timestamps to "from=now-15m" and "to=now" and make sure you have "refresh=30" in the parameters as well!</p>
+    <p>Of note, cross-domain loading security rules apply! <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options" target="_blank">Link!</a></p>
+  </div>
+</div>
+
+
+
+

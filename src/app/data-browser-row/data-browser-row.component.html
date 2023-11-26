@@ -1,0 +1,5 @@
+<mat-cell class="cell-source">{{ source }}</mat-cell>
+<mat-cell class="cell-value">{{ convertValue(pathValue) }}</mat-cell>
+<mat-cell class="cell-action">
+  <button mat-raised-button class="small-button" color="accent" (click)="openDialog()">{{selectedUnit}}</button>
+</mat-cell>
