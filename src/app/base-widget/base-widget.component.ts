@@ -147,7 +147,7 @@ export abstract class BaseWidgetComponent {
    * @memberof BaseWidgetComponent
    */
   protected formatWidgetNumberValue(v: number): string {
-    if (v == null) {return}
+    if (v == null || v === undefined || typeof(v) != "number") {return}
     // As per Widget config
     // - Limit value to Min/Max range
     if (v >= this.widgetProperties.config.maxValue) {
@@ -155,9 +155,8 @@ export abstract class BaseWidgetComponent {
     } else if (v <= this.widgetProperties.config.minValue) {
       v = this.widgetProperties.config.minValue;
     }
-    // - Strip decimals but keep as a string type for blank trailing decimal positions
+    // Strip decimals but keep as a string type for blank trailing decimal positions
     let vStr: string = v.toFixed(this.widgetProperties.config.numDecimal);
-
     return vStr;
   }
 

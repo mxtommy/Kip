@@ -289,7 +289,8 @@ export class UnitsService {
   convertUnit(unit: string, value: number): number {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
-    return this.unitConversionFunctions[unit](value);
+    let num: number = +value; // sometime we get strings here. Weird! Lazy patch.
+    return this.unitConversionFunctions[unit](num);
   }
 
   getDefaults(): IUnitDefaults {
