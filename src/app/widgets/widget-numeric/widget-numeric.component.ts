@@ -20,7 +20,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   maxValue: number = null;
   minValue: number = null;
   dataTimestamp: number = Date.now();
-  currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  currentValueLength: number = 0; // length (in charters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentMinMaxLength: number = 0;
   valueFontSize: number = 1;
   minMaxFontSize: number = 1;
@@ -57,14 +57,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   ngOnInit() {
     this.observeDataStream('numericPath', newValue => {
         this.dataValue = newValue.value;
-
         // init min/max
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }
         if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
         if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
-
-
 
         this.IZoneState = newValue.state;
         //start flashing if alarm
@@ -149,7 +146,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     let valueText: any;
 
     if (this.dataValue !== null) {
-      //TODO: Check for lon/lat special case -- ugly setup. we should probably have a lon/lat wodget for this!
+      //TODO: Check for lon/lat special case -- ugly setup. we should probably have a lon/lat widget for this!
       let cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
       if (cUnit == 'latitudeSec' || cUnit == 'latitudeMin' || cUnit == 'longitudeSec' || cUnit == 'longitudeMin') {
         valueText = this.dataValue.toString();
@@ -159,7 +156,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     } else {
       valueText = "--";
     }
-    //check if length of string has changed since laste time.
+    //check if length of string has changed since last time.
     if (this.currentValueLength != valueText.length) {
       //we need to set font size...
       this.currentValueLength = valueText.length;
@@ -325,7 +322,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   }
 
   private applyDecorations(txtValue: string): string {
-    // apply decoration when requied
+    // apply decoration when required
     switch (this.widgetProperties.config.paths['numericPath'].convertUnitTo) {
       case 'percent':
         txtValue += '%';

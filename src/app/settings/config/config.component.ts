@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, FormControl, Validators, NgForm }    from '@angular/forms';
 
-import { AuththeticationService, IAuthorizationToken } from '../../auththetication.service';
+import { AuthenticationService, IAuthorizationToken } from '../../authentication.service';
 import { AppSettingsService } from '../../app-settings.service';
 import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../app-settings.interfaces';
 import { NotificationsService } from '../../notifications.service';
@@ -51,7 +51,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
     private notificationsService: NotificationsService,
-    private auth: AuththeticationService,
+    private auth: AuthenticationService,
     private fb: UntypedFormBuilder,
   ) { }
 
@@ -64,7 +64,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         if (!token.isDeviceAccessToken) {
           this.saveConfigScope ='user';
         } else {
-          this.saveConfigScope ='glodal';
+          this.saveConfigScope ='global';
         }
       } else {
         this.hasToken = false;

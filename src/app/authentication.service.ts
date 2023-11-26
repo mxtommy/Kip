@@ -10,7 +10,7 @@ export interface IAuthorizationToken {
   isDeviceAccessToken: boolean;
 }
 
-const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL chages. We do a Login before ConnectionService has time to send the new endpoitn url
+const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL changes. We do a Login before ConnectionService has time to send the new endpoitn url
 const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
 const validateTokenEndpoint = 'auth/validate';
@@ -19,7 +19,7 @@ const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
 @Injectable({
   providedIn: 'root'
 })
-export class AuththeticationService {
+export class AuthenticationService {
   private _IsLoggedIn$ = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
@@ -98,13 +98,13 @@ export class AuththeticationService {
    * ASync server login API function. Handles logout, token and logged in status. Use
    * newUrl param to indicate against what server the login should take place, if it's
    * not the current server (if we are changing the sk URL). This param must be used
-   * as the AuththeticationService has no dependency on AppSettings Service and once
-   * AuththeticationService is intanciated, newUrl is the only way to change it's
+   * as the AuthenticationService has no dependency on AppSettings Service and once
+   * AuthenticationService is intanciated, newUrl is the only way to change it's
    * tartget endpoint.
    *
    * @param {{ usr: string; pwd: string; newUrl?: string; }} { usr, pwd, newUrl }
    * @return {*}  {Promise<void>}
-   * @memberof AuththeticationService
+   * @memberof AuthenticationService
    */
   public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
     let serverLoginFullUrl: string;
@@ -149,7 +149,7 @@ export class AuththeticationService {
    *
    * @private
    * @param {*} token token returned by the login API call
-   * @memberof AuththeticationService
+   * @memberof AuthenticationService
    */
   private setSession(token: string): void {
     if (!!token) {
@@ -178,7 +178,7 @@ export class AuththeticationService {
    * @private
    * @param {number} expiry Expiration date in ms extracted from the token
    * @return {*}  {boolean} True if expired
-   * @memberof AuththeticationService
+   * @memberof AuthenticationService
    */
   private isTokenExpired(expiry: number): boolean {
     return (Math.floor((new Date).getTime() / 1000)) >= expiry;
@@ -186,14 +186,14 @@ export class AuththeticationService {
 
   /**
    * Returns a Date() object based on a expiry value of a token. If you
-   * include optionnal param buffer, it will return a date, minus this value.
+   * include optional param buffer, it will return a date, minus this value.
    * Use buffer as a time window to renew a token.
    *
    * @private
    * @param {number} dateAsSeconds Expiration date value in seconds (starting from 1970...)
-   * @param {number} buffer Optionnal value in seconds. will deduct the returned Date by the buffer value
+   * @param {number} buffer Optional value in seconds. will deduct the returned Date by the buffer value
    * @return {*}  {Date} UTC expiration date
-   * @memberof AuththeticationService
+   * @memberof AuthenticationService
    */
   private getTokenExpirationDate(dateAsSeconds: number, buffer?: number): Date {
     let date = new Date(0);
@@ -214,11 +214,11 @@ export class AuththeticationService {
   }
 
   /**
-   * Async function to server logout API to killl the session token, deletes the
+   * Async function to server logout API to kill the session token, deletes the
    * token from local storage and sets isLoggedIn$ to false
    *
    * @return {*}  {Promise<void>}
-   * @memberof AuththeticationService
+   * @memberof AuthenticationService
    */
   public async logout(isLoginAction: boolean): Promise<void> {
     localStorage.removeItem('authorization_token');

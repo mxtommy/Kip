@@ -54,7 +54,7 @@ import { NotificationsService } from './notifications.service';
 import { TimersService } from './timers.service';
 import { StorageService } from './storage.service';
 import { AppNetworkInitService } from "./app-initNetwork.service";
-import { AuththeticationService } from "./auththetication.service";
+import { AuthenticationService } from "./authentication.service";
 import { AuthenticationInterceptor } from "./authentication-interceptor";
 //Components
 import { AppComponent } from './app.component';
@@ -112,8 +112,8 @@ const appRoutes: Routes = [
 ];
 
 /**
- * Bootstrap function used by AppInitService provider at app initialyzation
- * that start network, authetification and storage service pre-app.compoment
+ * Bootstrap function used by AppInitService provider at app initialization
+ * that start network, authentication and storage service pre-app.component
  * start. app.component start all other services.
  *
  * @param {AppNetworkInitService} AppNetworkInitService instance
@@ -223,7 +223,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
       multi: true
     },
     // Imports AppInitService which executes function appInitializerFn()
-    // during the application initialisation process (bootstrapping) to
+    // during the application initialization process (bootstrapping) to
     // get app config from server storage before starting AppSettings service.
     AppNetworkInitService,
       {
@@ -232,7 +232,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
         deps: [AppNetworkInitService],
         multi: true,
       },
-    AuththeticationService,
+    AuthenticationService,
     SignalKService,
     SignalKConnectionService,
     SignalKDeltaService,

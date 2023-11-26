@@ -8,7 +8,7 @@ import { IConnectionConfig } from "../../app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../signalk-connection.service';
 import { SignalKService } from '../../signalk.service';
 import { SignalKDeltaService, IStreamStatus } from '../../signalk-delta.service';
-import { AuththeticationService, IAuthorizationToken } from '../../auththetication.service';
+import { AuthenticationService, IAuthorizationToken } from '../../authentication.service';
 import { SignalkRequestsService } from '../../signalk-requests.service';
 import { NotificationsService } from '../../notifications.service';
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
@@ -59,11 +59,11 @@ export class SettingsSignalkComponent implements OnInit {
     private signalKConnectionService: SignalKConnectionService,
     private signalkRequestsService: SignalkRequestsService,
     private deltaService: SignalKDeltaService,
-    public auth: AuththeticationService)
+    public auth: AuthenticationService)
   { }
 
   ngOnInit() {
-    // init current value. IsLoggedInSub BehaviorSubject will send last value and component will triggger last notifications even if old
+    // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old
     if (this.auth.isLoggedIn$) {
       this.isLoggedIn = true;
     } else {
@@ -151,7 +151,7 @@ export class SettingsSignalkComponent implements OnInit {
     } else {
       this.appSettingsService.setConnectionConfig(this.connectionConfig);
       // Same URL - no need to resetSignalK(). Just login, new token reset will reload WebSockets
-      // and HTTP_INTERCEPTOR will incert the new token automatically on all HTTP calls (exdcept for WebSocket).
+      // and HTTP_INTERCEPTOR will intercept the new token automatically on all HTTP calls (except for WebSocket).
       if ((this.authToken && this.authToken.isDeviceAccessToken) && this.connectionConfig.useSharedConfig) {
         this.serverLogin(this.connectionConfig.signalKUrl);
       } else if ((this.authToken && !this.authToken.isDeviceAccessToken) && !this.connectionConfig.useSharedConfig) {
@@ -172,7 +172,7 @@ export class SettingsSignalkComponent implements OnInit {
       })
       .catch((error: HttpErrorResponse) => {
         if (error.status == 401) {
-          this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valide credentials");
+          this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valid credentials");
           console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
         } else if (error.status == 404) {
           this.notificationsService.sendSnackbarNotification("Sign in failed: Login API not found", 5000, false);

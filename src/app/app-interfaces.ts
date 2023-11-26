@@ -13,21 +13,28 @@ import { IZoneState } from './app-settings.interfaces';
  * of a path. Used as a Read/Write interface on internal App paths data source.
 
  * Use by: signalk-full services (parser), signalk-delta services (parser) and
- * Signal K services (internal app datasource)
+ * Signal K services (internal app dataSource)
  *
  * @memberof app-interfaces
  */
  export interface IPathValueData {
+  context: string;
   path: string;
   source: string;
-  timestamp: number;
+  timestamp: string;
   value: any;
 }
 
 /**
- * An App data structure that represents a path's rich/complet data structure;
- * all possible signal K data sources and their values, default source, data type description,
- * data zone state, all meta data, etc.
+ * An App data structure that represents a path's complete data structure:
+ * Path properties, value, value data type, data sources,
+ * data zone state, meta data, etc.
+ *
+ * In latest SK implementation with support for Source priority, we
+ * should always have one unique value per path. Without Priority each sources
+ * will, inturn, update the path value, and it's own source value, causing
+ * erratic path value updates. This is by design.
+ * To prevent this, users need to set Priority rules or select a specific source.
  *
  * Use by: data-browser (consumer) and Signal K services (internal datasource)
  *
@@ -35,11 +42,12 @@ import { IZoneState } from './app-settings.interfaces';
  */
  export interface IPathData {
   path: string;
+  pathValue: any;
   defaultSource?: string; // default source
   sources: {
     [sourceName: string]: { // per source data
-      timestamp: number;
-      value: any;
+      timestamp: string;
+      sourceValue: any;
     }
   }
   meta?: ISignalKMetadata;
@@ -85,6 +93,8 @@ export interface IDefaultSource {
 }
 
 export interface IMeta {
+  /** Optional SK context representing the root node emitting the value. Empty context should assume the message is from Self. Other contexts can be from AIS, DCS and other types of remote emitting sources configured */
+  context: string,
   path: string;
   meta: ISignalKMetadata;
 }

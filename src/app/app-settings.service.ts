@@ -16,7 +16,7 @@ import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
 
 import { StorageService } from './storage.service';
-import { IAuthorizationToken } from './auththetication.service';
+import { IAuthorizationToken } from './authentication.service';
 
 const defaultTheme = 'modern-dark';
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.

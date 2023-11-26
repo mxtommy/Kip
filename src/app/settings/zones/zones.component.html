@@ -1,7 +1,8 @@
 <div class="mat-typography">
   <h1>Zones Configuration</h1>
-    <p class="mat-card-subtitle">Zones can be used to inform Kip about the state the data it receives. For example
-    is a battery voltage of 12.1V normal, requires attention or is in critical state.</p>
+    <p class="mat-card-subtitle">Use Zones to define the state of the data KIP receives for each path. For example,
+    zones can be used to indicate at what voltage a battery considered in normal, warn or critical state.
+    Once configured, each path's zone states will enable a visual state indicator and audio notification.</p>
     <mat-form-field>
       <mat-label>Filter</mat-label>
       <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>

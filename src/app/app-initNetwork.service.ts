@@ -1,8 +1,8 @@
 import { StorageService } from './storage.service';
 /**
 * This Service uses the APP_INITIALIZER feature to dynamically load
-* network service (SignalKConnection & Authentication) when the app is initiaziled,
-* before loading appComponment and other stuff.
+* network service (SignalKConnection & Authentication) when the app is initialized,
+* before loading appComponent and other stuff.
 *
 * @usage must return a Promise in all cases or will block app from loading.
 * All execution in this service delays app start. Keep code small and simple.
@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { IConnectionConfig, ISignalKUrl } from "./app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
-import { AuththeticationService } from './auththetication.service';
+import { AuthenticationService } from './authentication.service';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 
@@ -23,7 +23,7 @@ export class AppNetworkInitService {
 
   constructor (
     private connection: SignalKConnectionService,
-    private auth: AuththeticationService,
+    private auth: AuthenticationService,
     private router: Router,
     private storage: StorageService, // early boot up for AppSetting svc
   )
@@ -58,9 +58,9 @@ export class AppNetworkInitService {
     } catch (error) {
       console.warn("[AppInit Network Service] Services loaded. Connection is not configured");
       console.error(error);
-      return Promise.reject("[AppInit Network Service] Services loaded. Conneciton not configured");
+      return Promise.reject("[AppInit Network Service] Services loaded. Connection not configured");
     } finally {
-      console.log("[AppInit Network Service] Initialyzation completed");
+      console.log("[AppInit Network Service] Initialization completed");
     }
   }
 

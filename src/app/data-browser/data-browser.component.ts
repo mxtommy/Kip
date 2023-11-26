@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild,ElementRef,ChangeDetectorRef} from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild,ChangeDetectorRef} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -22,7 +22,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
   pageSize = 10;
 
 
-  tableData = new MatTableDataSource([]);
+  tableData = new MatTableDataSource<IPathData>([]);
 
   displayedColumns: string[] = ['path', 'defaultSource'];
 
@@ -40,7 +40,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     setTimeout(()=>{
       this.pathsSub = this.SignalKService.getPathsObservable().subscribe(paths => {
-        this.tableData.data = paths
+        this.tableData.data = paths;
       })},0); // set timeout to make it async otherwise delays page load
   }
 

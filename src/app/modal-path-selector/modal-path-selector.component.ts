@@ -120,7 +120,12 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     } else {
       let pathObject = this.signalKService.getPathObject(this.formGroup.controls['path'].value);
       if (pathObject != null) {
-        this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
+        if (Object.keys(pathObject.sources).length == 1) {
+          this.availableSources = ['default'];
+        } else if (Object.keys(pathObject.sources).length > 1) {
+          this.availableSources = Object.keys(pathObject.sources);
+        }
+        // this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       } else {
         // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL, or Signal K server config. We need to disable the fields.
         try {

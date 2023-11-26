@@ -19,13 +19,8 @@
         <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source / Value</mat-header-cell>
         <mat-cell class="dataCell" *matCellDef="let element">
           <div style="width: 100%;" *ngFor="let item of element.sources |keyvalue; trackBy: trackBySource">
-            <data-browser-row class="flex-container" [path]="element.path" [source]="item.key" [pathValue]="item.value.value"></data-browser-row>
+            <data-browser-row class="flex-container" [path]="element.path" [source]="item.key" [pathValue]="item.value.sourceValue"></data-browser-row>
           </div>
-        <!-- <table width="100%">
-          <tr width="100%" *ngFor="let item of element.sources |keyvalue; trackBy: trackBySource">
-            <data-browser-row width="100%" [path]="element.path" [source]="item.key" [pathValue]="item.value.value"></data-browser-row>
-          </tr>
-        </table> -->
         </mat-cell>
      </ng-container>
 

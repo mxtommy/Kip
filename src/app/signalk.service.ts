@@ -8,6 +8,8 @@ import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import { NotificationsService } from './notifications.service';
 import Qty from 'js-quantities';
 
+const SELFROOTDEF: string = "self";
+
 export interface pathRegistrationValue {
   value: any;
   state: IZoneState;
@@ -30,8 +32,8 @@ interface pathRegistration {
 
 export interface updateStatistics {
   currentSecond: number; // number up updates in the last second
-  secondsUpdates: number[]; // number of updates receieved for each of the last 60 seconds
-  minutesUpdates: number[]; // number of updates receieved for each of the last 60 minutes
+  secondsUpdates: number[]; // number of updates received for each of the last 60 seconds
+  minutesUpdates: number[]; // number of updates received for each of the last 60 minutes
 
 }
 
@@ -41,7 +43,7 @@ export interface updateStatistics {
 export class SignalKService {
 
   degToRad = Qty.swiftConverter('deg', 'rad');
-  selfurn: string = 'self'; // self urn, should get updated on first delta or rest call.
+  selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received Signal K Data and used to source Observers
   paths: IPathData[] = [];
@@ -49,7 +51,7 @@ export class SignalKService {
   pathRegister: pathRegistration[] = [];
 
   // path Observable
-  pathsObservale: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
+  pathsObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
 
   // Performance stats
   updateStatistics: updateStatistics = {
@@ -135,7 +137,7 @@ export class SignalKService {
 
   resetSignalKData() {
     this.paths = [];
-    this.selfurn = 'self';
+    this.selfUrn = 'self';
   }
 
   unsubscribePath(uuid, path) {
@@ -157,12 +159,12 @@ export class SignalKService {
     let state = IZoneState.normal;
     let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
     if (pathIndex >= 0) { // exists
-      if (source === null) {
-        currentValue = this.paths[pathIndex]; //  return the entire pathObject
-      } else if (source == 'default') {
-        currentValue = this.paths[pathIndex].sources[this.paths[pathIndex].defaultSource].value;
+      if (source == 'default') {
+        currentValue = this.paths[pathIndex].pathValue;
       } else if (source in this.paths[pathIndex].sources) {
-        currentValue = this.paths[pathIndex].sources[source].value;
+        currentValue = this.paths[pathIndex].sources[source].sourceValue;
+      } else {
+        currentValue = this.paths[pathIndex]; //  return the entire pathObject
       }
       state = this.paths[pathIndex].state;
     }
@@ -183,61 +185,59 @@ export class SignalKService {
   }
 
   private setSelfUrn(value: string) {
-    if ((value != "" || value != null) && value != this.selfurn) {
+    if ((value != "" || value != null) && value != this.selfUrn) {
       console.debug('[SignalK Service] Setting self to: ' + value);
-      this.selfurn = value;
+      this.selfUrn = value;
     }
   }
 
   private updatePathData(dataPath: IPathValueData): void {
-    // update connection msg stats
-    this.updateStatistics.currentSecond++;
-
-    // convert the selfURN to "self"
-    let pathSelf: string = dataPath.path.replace(this.selfurn, 'self');
+    this.updateStatistics.currentSecond++; // update connection msg stats
+    let updatePath = this.setPathContext(dataPath.context, dataPath.path);
 
     // position data is sent as degrees. KIP expects everything to be in SI, so rad.
-    if (pathSelf.includes('position.latitude') || pathSelf.includes('position.longitude')) {
+    if (updatePath.includes('position.latitude') || updatePath.includes('position.longitude')) {
       dataPath.value = this.degToRad(dataPath.value);
     }
 
     // See if path key exists
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
+    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == updatePath);
     if (pathIndex >= 0) { // exists
 
-      // Update data
-      // null source path means, path was first created by metadata. Set source values
-      if (this.paths[pathIndex].defaultSource === null) {
+      if (this.paths[pathIndex].defaultSource == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
         this.paths[pathIndex].defaultSource = dataPath.source;
+      }
+      if (this.paths[pathIndex].type == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
         this.paths[pathIndex].type = typeof(dataPath.value);
       }
-
+      this.paths[pathIndex].pathValue = dataPath.value; // we always push to both pat and source values
       this.paths[pathIndex].sources[dataPath.source] = {
         timestamp: dataPath.timestamp,
-        value: dataPath.value,
+        sourceValue: dataPath.value,
       };
 
     } else { // doesn't exist. update...
       this.paths.push({
-        path: pathSelf,
-        defaultSource: dataPath.source, // default source
+        path: updatePath,
+        pathValue: dataPath.value,
+        defaultSource: dataPath.source,
+        type: typeof(dataPath.value),
+        state: IZoneState.normal,
         sources: {
           [dataPath.source]: {
             timestamp: dataPath.timestamp,
-            value: dataPath.value
+            sourceValue: dataPath.value
           }
-        },
-        type: typeof(dataPath.value),
-        state: IZoneState.normal
+        }
       });
       // get new object index for further processing
-      pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
+      pathIndex = this.paths.findIndex(pathObject => pathObject.path == updatePath);
     }
 
     // Check for any zones to set state
     let state: IZoneState = IZoneState.normal;
     this.zones.forEach(zone => {
-      if (zone.path != pathSelf) { return; }
+      if (zone.path != updatePath) { return; }
       let lower = zone.lower || -Infinity;
       let upper = zone.upper || Infinity;
       let convertedValue = this.unitService.convertUnit(zone.unit, dataPath.value);
@@ -249,7 +249,7 @@ export class SignalKService {
     // if we're not in alarm, and new state is alarm, sound the alarm!
     // @ts-ignore
     if (state != IZoneState.normal && state != this.paths[pathIndex].state) {
-      let stateString; // notif service needs string....
+      let stateString; // notification service needs string....
       let methods;
       switch (state) {
         // @ts-ignore
@@ -268,10 +268,10 @@ export class SignalKService {
 
 
       //start
-      this.notificationsService.addAlarm(pathSelf, {
+      this.notificationsService.addAlarm(updatePath, {
         method: methods,
         state: stateString,
-        message: pathSelf + ' value in ' + stateString,
+        message: updatePath + ' value in ' + stateString,
         timestamp: Date.now().toString(),
       })
     }
@@ -279,55 +279,58 @@ export class SignalKService {
     // if we're in alarm, and new state is not alarm, stop the alarm
     // @ts-ignore
     if (this.paths[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
-      this.notificationsService.deleteAlarm(pathSelf);
+      this.notificationsService.deleteAlarm(updatePath);
     }
 
     this.paths[pathIndex].state = state;
 
     // push it to any subscriptions of that data
-    this.pathRegister.filter(pathRegister => pathRegister.path == pathSelf).forEach(
+    this.pathRegister.filter(pathRegister => pathRegister.path == updatePath).forEach(
       pathRegister => {
-
-        let source: string = null;
+        /**
+         * Source of value 'default' is use to support SK path Priority feature by taking the pathValue
+         * rather than the direct sourceValue. With Priority configured source can change over time
+         * based on priority.
+         *
+         * Source of value of 'default' should only be selectable in the Widget Options -> Paths -> Data Source
+         * UI control if only one source exists. Having a single source or using 'default' has no impact as
+         * as pathValue is always taken.
+         *
+         * If multiple sources are present, either Priorities have not been properly configured, or the
+         * user does not want Priorities for the path. In this case individual sources must be selected
+         * and 'default' should not be visible.
+         */
         if (pathRegister.source == 'default') {
-          source = this.paths[pathIndex].defaultSource;
+          pathRegister.subject.next({
+            value: this.paths[pathIndex].pathValue,
+            state: this.paths[pathIndex].state
+          });
         } else if (pathRegister.source in this.paths[pathIndex].sources) {
-          source = pathRegister.source;
+          pathRegister.subject.next({
+            value: this.paths[pathIndex].sources[pathRegister.source].sourceValue,
+            state: this.paths[pathIndex].state
+          });
         } else {
           //we're looking for a source we don't know of... do nothing I guess?
           console.warn(`Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
         }
-        if (source !== null) {
-          pathRegister.subject.next({
-            value: this.paths[pathIndex].sources[source].value,
-            state: this.paths[pathIndex].state
-          });
-        }
-
       }
     );
 
     // push it to paths observer
-    this.pathsObservale.next(this.paths);
+    this.pathsObservable.next(this.paths);
 
-  }
-
-  private setDefaultSource(source: IDefaultSource): void {
-    let pathSelf: string = source.path.replace(this.selfurn, 'self');
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
-    if (pathIndex >= 0) {
-      this.paths[pathIndex].defaultSource = source.source;
-    }
   }
 
   private setMeta(meta: IMeta): void {
-    let pathSelf: string = meta.path.replace(this.selfurn, 'self');
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == pathSelf);
+    let metaPath = this.setPathContext(meta.context, meta.path);
+    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == metaPath);
     if (pathIndex >= 0) {
       this.paths[pathIndex].meta = meta.meta;
-    } else { // not in our list yet. Meta update can in first. Create the path with empty source values for later update
+    } else { // not in our list yet. The Meta update came before the Source update.
       this.paths.push({
-        path: pathSelf,
+        path: metaPath,
+        pathValue: null,
         defaultSource: null,
         sources: {},
         meta: meta.meta,
@@ -335,6 +338,14 @@ export class SignalKService {
         state: IZoneState.normal
       });
     }
+  }
+
+  private setPathContext(context: string, path: string): string {
+    let finalPath: string = `${SELFROOTDEF}.${path}`;
+    if (context !== this.selfUrn) { // account for external context data (coming from AIS, etc.)
+      finalPath = `${context}.${path}`;
+    }
+    return finalPath;
   }
 
   /**
@@ -360,7 +371,7 @@ export class SignalKService {
   }
 
   getPathsObservable(): Observable<IPathData[]> {
-    return this.pathsObservale.asObservable();
+    return this.pathsObservable.asObservable();
   }
 
   getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
