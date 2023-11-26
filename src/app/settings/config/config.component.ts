@@ -149,7 +149,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
           conf = config
         });
       } catch (error) {
-        this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
+        this.notificationsService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
         return;
       }
 
