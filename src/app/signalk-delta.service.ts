@@ -252,10 +252,9 @@ export class SignalKDeltaService {
   }
 
   private parseUpdates(updates: ISignalKUpdateMessage[], context: string): void {
-    if (context != this.selfUrn) { // TODO: Remove once work completed
-      // console.log(context);
-      return
-    }
+    // if (context != this.selfUrn) {    // remove non self root nodes
+    //   return
+    // }
     for (let update of updates) {
       if (update.meta !== undefined) {
         // Meta message update
@@ -287,7 +286,12 @@ export class SignalKDeltaService {
                   timestamp: update.timestamp,
                   value: item.value[keys[i]],
                 };
-                if (update.$source == "defaults") {
+                if (update.$source == "defaults") { // defaults are SK special ship description values that have no path. Removing first dot so it attaches to self properly
+                  if (item.path == "") {
+                    dataPath.path = dataPath.path.slice(1);
+                  }
+                }
+                if (context != this.selfUrn) { // data from non self root nodes may have no path. Removing first dot so it attaches to external root node context properly
                   if (item.path == "") {
                     dataPath.path = dataPath.path.slice(1);
                   }

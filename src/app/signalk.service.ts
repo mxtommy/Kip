@@ -197,7 +197,7 @@ export class SignalKService {
 
     // position data is sent as degrees. KIP expects everything to be in SI, so rad.
     if (updatePath.includes('position.latitude') || updatePath.includes('position.longitude')) {
-      dataPath.value = this.degToRad(dataPath.value); //TODO: validate this this works!
+      dataPath.value = this.degToRad(dataPath.value);
     }
 
     // See if path key exists

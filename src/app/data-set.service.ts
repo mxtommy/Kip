@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Subscription, BehaviorSubject, interval } from 'rxjs';
+import { Subscription, BehaviorSubject, sampleTime, pipe, UnaryFunction, filter, OperatorFunction, Observable, interval } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
 
@@ -40,6 +40,12 @@ interface registration {
   uuid: string;
   dataSetUuid: string;
   observable: BehaviorSubject<Array<dataPoint>>;
+}
+
+function filterNullish<T>(): UnaryFunction<Observable<T | null | undefined>, Observable<T>> {
+  return pipe(
+    filter(x => x != null) as OperatorFunction<T | null |  undefined, T>
+  );
 }
 
 @Injectable()
@@ -142,7 +148,7 @@ export class DataSetService {
     // initialize data
     this.dataSetSub[dataSubIndex].data = [];
 
-    // inistialize dataCache
+    // initialize dataCache
     this.dataSetSub[dataSubIndex].dataCache = {
         runningTotal: 0,
         numberOfPoints: 0,
@@ -156,13 +162,14 @@ export class DataSetService {
         this.updateDataCache(uuid, newValue.value);
     });
 
-    // start update timer out side of zones to remove change detection triggers. We observe the array data updates, not the data directly comming from SK
+    // start update timer out side of zones to remove change detection triggers. We observe the array data updates, not the data directly coming from SK
     this.zones.runOutsideAngular(() => {
-      this.dataSetSub[dataSubIndex].updateTimerSub = interval (1000 * this.dataSets[dataIndex].updateTimer).subscribe(x => {
+      this.dataSetSub[dataSubIndex].updateTimerSub = interval(1000 * this.dataSets[dataIndex].updateTimer).pipe(
+        filterNullish()
+        ).subscribe(x => {
           this.aggregateDataCache(uuid);
-      });
+        });
     });
-
   }
 
   public addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {

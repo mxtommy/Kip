@@ -112,8 +112,8 @@ const appRoutes: Routes = [
 ];
 
 /**
- * Bootstrap function used by AppInitService provider at app initialyzation
- * that start network, authetification and storage service pre-app.compoment
+ * Bootstrap function used by AppInitService provider at app initialization
+ * that start network, authentication and storage service pre-app.component
  * start. app.component start all other services.
  *
  * @param {AppNetworkInitService} AppNetworkInitService instance

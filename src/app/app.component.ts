@@ -186,7 +186,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   newPage() {
     this.LayoutSplitsService.newRootSplit();
-      //this.router.navigate(['/page', rootNodes.findIndex(uuid => uuid == newuuid)]);
   }
 
   pageDown() {

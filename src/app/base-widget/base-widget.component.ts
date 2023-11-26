@@ -79,7 +79,8 @@ export abstract class BaseWidgetComponent {
    * Use this method the subscribe to a Signal K data path Observable and receive a
    * live data stream from the server. This method apply
    * widgetProperties.config.paths[pathName] Object's properties: path, source, pathType,
-   * convertUnitTo and sampleTime, to setup the the Observer with defined behavior.
+   * convertUnitTo and sampleTime, to setup the the Observer with defined behavior. To also
+   * filter null and undefined values out of the stream.
    *
    * @protected
    * @param {string} pathName the [key: string] name of the path IWidgetPath Object ie. paths: { "numericPath"... Look at you this.defaultConfig Object to identify the string key to use.
@@ -94,23 +95,22 @@ export abstract class BaseWidgetComponent {
 
     const observer = this.buildObserver(pathName, subscribeNextFunction);
 
-    let pathObs = this.dataStream.find((stream: IWidgetDataStream) => {
+    const pathObs = this.dataStream.find((stream: IWidgetDataStream) => {
       return stream.pathName === pathName;
     })
 
     // check Widget paths Observable(s)
     if (pathObs === undefined) return;
 
+    const dataPipe = pathObs.observable.pipe(
+      filterNullish(),
+      sampleTime(this.widgetProperties.config.paths[pathName].sampleTime)
+      );
+
     if (this.dataSubscription === undefined) {
-      this.dataSubscription = pathObs.observable.pipe(
-        filterNullish(),
-        sampleTime(this.widgetProperties.config.paths[pathName].sampleTime)
-        ).subscribe(observer);
+      this.dataSubscription = dataPipe.subscribe(observer);
     } else {
-      this.dataSubscription.add(pathObs.observable.pipe(
-        filterNullish(),
-        sampleTime(this.widgetProperties.config.paths[pathName].sampleTime)
-        ).subscribe(observer));
+      this.dataSubscription.add(dataPipe.subscribe(observer));
     }
   }
 
