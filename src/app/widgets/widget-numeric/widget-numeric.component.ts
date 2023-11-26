@@ -143,11 +143,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   private drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
-    let valueText: any;
+    let valueText: string;
 
     if (this.dataValue !== null) {
       //TODO: Check for lon/lat special case -- ugly setup. we should probably have a lon/lat widget for this!
-      let cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+      let cUnit: string = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
       if (cUnit == 'latitudeSec' || cUnit == 'latitudeMin' || cUnit == 'longitudeSec' || cUnit == 'longitudeMin') {
         valueText = this.dataValue.toString();
       } else {

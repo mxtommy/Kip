@@ -33,7 +33,7 @@ export class StorageService {
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
-        tap((_) => console.log("[Storage Service] Remote config patch request completed successfuly")),
+        tap((_) => console.log("[Storage Service] Remote config patch request completed successfully")),
         catchError((error) => this.handleError(error))
       );
   }
@@ -45,7 +45,7 @@ export class StorageService {
       server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
         if (status.httpServiceUrl !== null) {
           this.serverEndpoint = status.httpServiceUrl.substring(0,status.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
-          console.log("[Storage Service] Service stratup. AppData API set to: " + this.serverEndpoint);
+          console.log("[Storage Service] Service startup. AppData API set to: " + this.serverEndpoint);
         }
 
         if (status.operation === 2) {
@@ -64,7 +64,7 @@ export class StorageService {
     // Patch request queue to insure JSON Patch requests to SK server don't run over each other and cause collisions/conflicts. SK does not handle multiple async applicationData access calls
     this.patchQueue$
       .pipe(
-          concatMap((arg: IPatchAction) => this.patch(arg)) // insures orderly call senquencing
+          concatMap((arg: IPatchAction) => this.patch(arg)) // insures orderly call sequencing
         )
       .subscribe(_ => {
         //console.log("[Storage Service] Subscription results received")
@@ -72,10 +72,10 @@ export class StorageService {
   }
 
   /**
-   * Retreives server Application Data config lists for Kip in both Global
+   * Retrieves server Application Data config lists for Kip in both Global
    * and User scopes for the current app version.
    *
-   * @param {string} [forceConfigFileVersion] Optionnal parameter. Forces the
+   * @param {string} [forceConfigFileVersion] Optional parameter. Forces the
    * Signal K configuration file name to a specific version. If not set, configFileVersion
    * is used by default (set in app-settings and app-initNetwork services).
    * Old KIP versions used value of 1.
@@ -99,7 +99,7 @@ export class StorageService {
         for(let cname of configNames) {
           serverConfigs.push({ scope: 'global', name: cname });
         }
-        console.log(`[Storage Service] Retreived Global config list`);
+        console.log(`[Storage Service] Retrieved Global config list`);
       })
       .catch(
         error => {
@@ -111,7 +111,7 @@ export class StorageService {
         for(let cname of configNames) {
           serverConfigs.push({ scope: 'user', name: cname });
         }
-        console.log(`[Storage Service] Retreived User config list`);
+        console.log(`[Storage Service] Retrieved User config list`);
       })
       .catch(
         error => {
@@ -122,16 +122,16 @@ export class StorageService {
   }
 
   /**
-   * Retreives version and name specific server Application Data config
+   * Retrieves version and name specific server Application Data config
    * from a given scope.
    *
    * @param {string} scope String value of either 'global' or 'user'
    * @param {string} configName String value of the config name
-   * @param {string} [forceConfigFileVersion] Optionnal parameter. Forces the
+   * @param {string} [forceConfigFileVersion] Optional parameter. Forces the
    * Signal K configuration file name to a specific version. If not set, configFileVersion
    * is used by default (set in app-settings and app-initNetwork services).
    * Old KIP versions used value of 1.
-   * @param {boolean} isInitLoad User for AppSettings config initialyzation. If True, config will be keept
+   * @param {boolean} isInitLoad User for AppSettings config initialization. If True, config will be kept
    *
    * @return {*}  {IConfig}
    * @memberof StorageService
@@ -146,7 +146,7 @@ export class StorageService {
     await lastValueFrom(this.http.get<any>(url))
       .then(remoteConfig => {
         conf = remoteConfig;
-        console.log(`[Storage Service] Retreived config [${configName}] from [${scope}] scope`);
+        console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
         if (isInitLoad) {
           this.InitConfig = remoteConfig;
         }
@@ -159,16 +159,16 @@ export class StorageService {
 
   /**
    * Send configuration data to the server Application Data service
-   * with a scope and name and optionnal file version. The configuration will be saved in the
+   * with a scope and name and optional file version. The configuration will be saved in the
    * current Kip app version file number (9.0.0.json) in applicationData subfolder on the server.
    *
    * @usage If the given ConfigName exists in the provided scope for the same version,
-   * the data will be overwriten/replaced, else it will be created on the server.
+   * the data will be overwritten/replaced, else it will be created on the server.
    *
    * @param {string} scope String value of either 'global' or 'user'
    * @param {string} configName String value of the config name
    * @param {IConfig} config config data to be saved
-   * @return {*}  {null} returns null if operation is successfull or raises an error.
+   * @return {*}  {null} returns null if operation is successful or raises an error.
    * @memberof StorageService
    */
   public async setConfig(scope: string, configName: string, config: IConfig): Promise<null> {
@@ -187,10 +187,10 @@ export class StorageService {
   }
 
   /**
-   * Udpates JSON configuration entry section in the server application storage. This uses the JSON Patch standard.
+   * Updates JSON configuration entry section in the server application storage. This uses the JSON Patch standard.
    *
    * @param {string} ObjType string describing the type of configuration object. Value can be: IAppConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, Array\<IUnitDefaults\>, Array\<IDataSet\>, Array\<IZone\>, IZonesConfig, INotificationConfig
-   * @param {*} value unstrignified update object. The resulting outgoing POST request will automatically strignify.
+   * @param {*} value unstringified update object. The resulting outgoing POST request will automatically stringify.
    * @memberof StorageService
    */
   public patchConfig(ObjType: string, value: any) {
@@ -294,7 +294,7 @@ export class StorageService {
    * @param {string} configName name of the configuration.
    * @param {string} scope the storage scope to use. Can either be: 'user' or 'global'.
    * @param {string} operation string describing the type action to perform. values can be: 'add', 'replace' or 'remove'.
-   * @param {IConfig} config unstrignified config object. The resulting outgoing POST request will automatically strignify.
+   * @param {IConfig} config unstringified config object. The resulting outgoing POST request will automatically stringify.
    * @param {number} fileVersion Configuration file version. Supported are 9 for current and 1 for old configs.
    * @memberof StorageService
    */
@@ -346,7 +346,7 @@ export class StorageService {
    *
    * @param {string} scope destination storage scope of either global or user value
    * @param {string} name configuration name to delete
-   * @param {string} [forceConfigFileVersion] Optionnal parameter. Forces the
+   * @param {string} [forceConfigFileVersion] Optional parameter. Forces the
    * Signal K configuration file name to a specific version. If not set, configFileVersion
    * is used by default (set in app-settings and app-initNetwork services).
    * Old KIP versions used value of 1.

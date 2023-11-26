@@ -130,13 +130,12 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     if (this.copyConfigForm.value.copySource === 'Local Storage') {
       if (this.copyConfigForm.value.copyDestination === 'Remote Storage') {
         // local to remote
+        this.saveConfig(this.getLocalConfigFromLocalStorage(), this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
         if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
-          this.notificationsService.sendSnackbarNotification("Local Storage cannot be copied to [user / default] when Sign in option is enabled. Use another copy source", 0, false);
-        } else {
-          this.saveConfig(this.getLocalConfig(), this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
+          this.appSettingsService.reloadApp();
         }
-
-      } else if(this.copyConfigForm.value.copyDestination === 'Local Storage') {
+      }
+      else if(this.copyConfigForm.value.copyDestination === 'Local Storage') {
         // local to local
         this.notificationsService.sendSnackbarNotification("Local Storage cannot be copies to Local Storage ", 0, false);
       }
@@ -149,7 +148,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
           conf = config
         });
       } catch (error) {
-        this.notificationsService.sendSnackbarNotification("Error retreiving configuration from server: " + error.statusText, 3000, false);
+        this.notificationsService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
         return;
       }
 
@@ -364,13 +363,34 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     };
   }
 
-  public getLocalConfig(): IConfig {
+  public getActiveConfig(): IConfig {
+    let conf: IConfig;
+    if (this.appSettingsService.useSharedConfig) {
+      conf = this.getLocalConfigFromMemory();
+    } else {
+      conf = this.getLocalConfigFromLocalStorage();
+    }
+    return conf;
+  }
+
+  public getLocalConfigFromMemory(): IConfig {
     let localConfig: IConfig = {
       "app": this.appSettingsService.getAppConfig(),
       "widget": this.appSettingsService.getWidgetConfig(),
       "layout": this.appSettingsService.getLayoutConfig(),
       "theme": this.appSettingsService.getThemeConfig(),
       "zones": this.appSettingsService.getZonesConfig(),
+    };
+    return localConfig;
+  }
+
+  public getLocalConfigFromLocalStorage(): IConfig {
+    let localConfig: IConfig = {
+      "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
+      "widget": this.appSettingsService.loadConfigFromLocalStorage('widgetConfig'),
+      "layout": this.appSettingsService.loadConfigFromLocalStorage('layoutConfig'),
+      "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
+      "zones": this.appSettingsService.loadConfigFromLocalStorage('zonesConfig'),
     };
     return localConfig;
   }

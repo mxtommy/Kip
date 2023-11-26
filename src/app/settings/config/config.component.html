@@ -58,7 +58,7 @@
       <div class="flex-item">
         <form
           name="saveConfigForm"
-          (ngSubmit)="saveConfig(this.getLocalConfig(), saveConfigScope, saveConfigName)"
+          (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
           #saveConfigForm="ngForm">
           <h3>Save</h3>
           <p style="margin-bottom: 16px;">Save current configuration to server</p>
