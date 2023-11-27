@@ -15,6 +15,20 @@ export interface pathRegistrationValue {
   state: IZoneState;
 };
 
+// Validation of Signal K RFC3339S datetype format
+const isRfc3339StringDate = (date: Date | string): boolean => {
+  if (isFinite(+(date instanceof Date ? date : new Date(date)))) {
+    let rfc3339 = new RegExp("^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$");
+    if (rfc3339.test(date as string)) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+
 /**
  *
  * @param {string} uuid The UUID for the widget registering the path
@@ -209,6 +223,13 @@ export class SignalKService {
       }
       if (this.paths[pathIndex].type == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
         this.paths[pathIndex].type = typeof(dataPath.value);
+
+        // set path data type to accommodate for SK datetype
+        if (typeof(dataPath.value) == "string") {
+          if (isRfc3339StringDate(dataPath.value)) {
+            this.paths[pathIndex].type = "Date";
+          }
+        }
       }
       this.paths[pathIndex].pathValue = dataPath.value; // we always push to both pat and source values
       this.paths[pathIndex].sources[dataPath.source] = {
@@ -217,11 +238,20 @@ export class SignalKService {
       };
 
     } else { // doesn't exist. update...
+      let pathType: string = typeof(dataPath.value);
+
+      // set path data type to accommodate for SK datetype
+      if (typeof(dataPath.value) == "string") {
+        if (isRfc3339StringDate(dataPath.value)) {
+          pathType = "Date";
+        }
+      }
+
       this.paths.push({
         path: updatePath,
         pathValue: dataPath.value,
         defaultSource: dataPath.source,
-        type: typeof(dataPath.value),
+        type: pathType,
         state: IZoneState.normal,
         sources: {
           [dataPath.source]: {
