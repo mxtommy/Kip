@@ -17,7 +17,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
   dataTimestamp: number = Date.now();
   valueFontSize = 1;
 
-  // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentValueLength = 0;
   canvasCtx;
   canvasBGCtx;
@@ -33,7 +33,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
           description: 'String Data',
           path: null,
           source: null,
-          pathType: 'string',
+          pathType: 'Date',
           isPathConfigurable: true,
           sampleTime: 500
         }
@@ -103,7 +103,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
     let valueText: string;
 
     if (this.dataValue === null) {
-      valueText = 'Source Path not configured';
+      valueText = '--';
     } else {
 
       valueText = this.dataValue;
