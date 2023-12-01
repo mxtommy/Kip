@@ -1,4 +1,13 @@
 # V 2.2.2
+## New features
+* Added support for Signal K Source Priorities
+* Added Signal K RFC 3339 datetime types improving path selection filtering of Date value display Widget and string Widgets
+* Added configuration copy from/to all Scopes feature
+## Fixes
+* Path value of null and undefined causing tofix() failure
+* Historic DataSet widget - initial value incorrect and persisted forever
+* Typo in "Night Vision" description under the General settings tab
+# V 2.2.2
 ## Fixes
 * Add missing SampleTime path property in some rare cases
 * Fixed old configuration Device Token upgrade issue
