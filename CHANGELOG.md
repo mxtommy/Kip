@@ -1,4 +1,4 @@
-# V 2.2.2
+# V 2.3.0
 ## New features
 * Added support for Signal K Source Priorities
 * Added Signal K RFC 3339 datetime types improving path selection filtering of Date value display Widget and string Widgets
