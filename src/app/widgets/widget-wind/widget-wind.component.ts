@@ -85,10 +85,16 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   ngOnInit(): void {
     this.observeDataStream('headingPath', newValue => {
+      if (newValue.value == null) { // act upon data timeout of null
+        newValue.value = 0
+      }
       this.currentHeading = newValue.value;
     });
 
     this.observeDataStream('appWindAngle', newValue => {
+        if (newValue.value == null) { // act upon data timeout of null
+          newValue.value = 0
+        }
         if (newValue.value < 0) {// stb
           this.appWindAngle = 360 + newValue.value; // adding a negative number subtracts it...
         } else {
@@ -98,14 +104,23 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     );
 
     this.observeDataStream('appWindSpeed', newValue => {
+      if (newValue.value == null) { // act upon data timeout of null
+        newValue.value = 0
+      }
       this.appWindSpeed = newValue.value;
     });
 
     this.observeDataStream('trueWindSpeed', newValue => {
+      if (newValue.value == null) { // act upon data timeout of null
+        newValue.value = 0
+      }
       this.trueWindSpeed = newValue.value;
     });
 
     this.observeDataStream('trueWindAngle', newValue => {
+      if (newValue.value == null) { // act upon data timeout of null
+        newValue.value = 0
+      }
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
           // 0-180+ for stb
           // -0 to -180 for port

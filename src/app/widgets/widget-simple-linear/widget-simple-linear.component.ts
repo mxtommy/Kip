@@ -51,7 +51,9 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     }
 
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.value == null) {return}
+        if (newValue.value == null) {
+          newValue.value = 0;
+        }
 
         newValue.value = this.formatWidgetNumberValue(newValue.value);
         this.dataValue = (newValue.value as number);

@@ -1,6 +1,4 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-
-import { IWidgetSvcConfig } from '../../widgets-interface';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 

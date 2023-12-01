@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash-es';
 import { Injectable } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "./app-interfaces";
@@ -60,12 +61,12 @@ export class SignalKService {
   selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received Signal K Data and used to source Observers
-  paths: IPathData[] = [];
+  skData: IPathData[] = [];
   // List of paths used by Kip (Widgets or App (Notifications and such))
   pathRegister: pathRegistration[] = [];
 
   // path Observable
-  pathsObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
+  skDataObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
 
   // Performance stats
   updateStatistics: updateStatistics = {
@@ -150,7 +151,7 @@ export class SignalKService {
   }
 
   resetSignalKData() {
-    this.paths = [];
+    this.skData = [];
     this.selfUrn = 'self';
   }
 
@@ -171,16 +172,16 @@ export class SignalKService {
     // find if we already have a value for this path to return.
     let currentValue = null;
     let state = IZoneState.normal;
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    let pathIndex = this.skData.findIndex(pathObject => pathObject.path == path);
     if (pathIndex >= 0) { // exists
       if (source == 'default') {
-        currentValue = this.paths[pathIndex].pathValue;
-      } else if (source in this.paths[pathIndex].sources) {
-        currentValue = this.paths[pathIndex].sources[source].sourceValue;
+        currentValue = this.skData[pathIndex].pathValue;
+      } else if (source in this.skData[pathIndex].sources) {
+        currentValue = this.skData[pathIndex].sources[source].sourceValue;
       } else {
-        currentValue = this.paths[pathIndex]; //  return the entire pathObject
+        currentValue = this.skData[pathIndex]; //  return the entire pathObject
       }
-      state = this.paths[pathIndex].state;
+      state = this.skData[pathIndex].state;
     }
 
     let newRegister: pathRegistration  = {
@@ -215,24 +216,24 @@ export class SignalKService {
     }
 
     // See if path key exists
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == updatePath);
+    let pathIndex = this.skData.findIndex(pathObject => pathObject.path == updatePath);
     if (pathIndex >= 0) { // exists
 
-      if (this.paths[pathIndex].defaultSource == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
-        this.paths[pathIndex].defaultSource = dataPath.source;
+      if (this.skData[pathIndex].defaultSource == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
+        this.skData[pathIndex].defaultSource = dataPath.source;
       }
-      if (this.paths[pathIndex].type == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
-        this.paths[pathIndex].type = typeof(dataPath.value);
+      if (this.skData[pathIndex].type == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
+        this.skData[pathIndex].type = typeof(dataPath.value);
 
         // set path data type to accommodate for SK datetype
         if (typeof(dataPath.value) == "string") {
           if (isRfc3339StringDate(dataPath.value)) {
-            this.paths[pathIndex].type = "Date";
+            this.skData[pathIndex].type = "Date";
           }
         }
       }
-      this.paths[pathIndex].pathValue = dataPath.value; // we always push to both pat and source values
-      this.paths[pathIndex].sources[dataPath.source] = {
+      this.skData[pathIndex].pathValue = dataPath.value; // we always push to both pat and source values
+      this.skData[pathIndex].sources[dataPath.source] = {
         timestamp: dataPath.timestamp,
         sourceValue: dataPath.value,
       };
@@ -247,7 +248,7 @@ export class SignalKService {
         }
       }
 
-      this.paths.push({
+      this.skData.push({
         path: updatePath,
         pathValue: dataPath.value,
         defaultSource: dataPath.source,
@@ -261,7 +262,7 @@ export class SignalKService {
         }
       });
       // get new object index for further processing
-      pathIndex = this.paths.findIndex(pathObject => pathObject.path == updatePath);
+      pathIndex = this.skData.findIndex(pathObject => pathObject.path == updatePath);
     }
 
     // Check for any zones to set state
@@ -278,7 +279,7 @@ export class SignalKService {
     });
     // if we're not in alarm, and new state is alarm, sound the alarm!
     // @ts-ignore
-    if (state != IZoneState.normal && state != this.paths[pathIndex].state) {
+    if (state != IZoneState.normal && state != this.skData[pathIndex].state) {
       let stateString; // notification service needs string....
       let methods;
       switch (state) {
@@ -308,11 +309,11 @@ export class SignalKService {
 
     // if we're in alarm, and new state is not alarm, stop the alarm
     // @ts-ignore
-    if (this.paths[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
+    if (this.skData[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
       this.notificationsService.deleteAlarm(updatePath);
     }
 
-    this.paths[pathIndex].state = state;
+    this.skData[pathIndex].state = state;
 
     // push it to any subscriptions of that data
     this.pathRegister.filter(pathRegister => pathRegister.path == updatePath).forEach(
@@ -332,13 +333,13 @@ export class SignalKService {
          */
         if (pathRegister.source == 'default') {
           pathRegister.subject.next({
-            value: this.paths[pathIndex].pathValue,
-            state: this.paths[pathIndex].state
+            value: this.skData[pathIndex].pathValue,
+            state: this.skData[pathIndex].state
           });
-        } else if (pathRegister.source in this.paths[pathIndex].sources) {
+        } else if (pathRegister.source in this.skData[pathIndex].sources) {
           pathRegister.subject.next({
-            value: this.paths[pathIndex].sources[pathRegister.source].sourceValue,
-            state: this.paths[pathIndex].state
+            value: this.skData[pathIndex].sources[pathRegister.source].sourceValue,
+            state: this.skData[pathIndex].state
           });
         } else {
           //we're looking for a source we don't know of... do nothing I guess?
@@ -348,17 +349,16 @@ export class SignalKService {
     );
 
     // push it to paths observer
-    this.pathsObservable.next(this.paths);
-
+    this.skDataObservable.next(this.skData);
   }
 
   private setMeta(meta: IMeta): void {
     let metaPath = this.setPathContext(meta.context, meta.path);
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == metaPath);
+    let pathIndex = this.skData.findIndex(pathObject => pathObject.path == metaPath);
     if (pathIndex >= 0) {
-      this.paths[pathIndex].meta = meta.meta;
+      this.skData[pathIndex].meta = meta.meta;
     } else { // not in our list yet. The Meta update came before the Source update.
-      this.paths.push({
+      this.skData.push({
         path: metaPath,
         pathValue: null,
         defaultSource: null,
@@ -386,40 +386,40 @@ export class SignalKService {
    */
   getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let paths: string[] = [];
-    for (let i = 0; i < this.paths.length;  i++) {
-       if (this.paths[i].type == valueType) {
+    for (let i = 0; i < this.skData.length;  i++) {
+       if (this.skData[i].type == valueType) {
          if (selfOnly) {
-          if (this.paths[i].path.startsWith("self")) {
-            paths.push(this.paths[i].path);
+          if (this.skData[i].path.startsWith("self")) {
+            paths.push(this.skData[i].path);
           }
          } else {
-          paths.push(this.paths[i].path);
+          paths.push(this.skData[i].path);
          }
       }
     }
     return paths; // copy it....
   }
 
-  getPathsObservable(): Observable<IPathData[]> {
-    return this.pathsObservable.asObservable();
+  getSkDataObservable(): Observable<IPathData[]> {
+    return this.skDataObservable.asObservable();
   }
 
   getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let pathsMeta: IPathMetaData[] = [];
-    for (let i = 0; i < this.paths.length;  i++) {
-       if (this.paths[i].type == valueType) {
+    for (let i = 0; i < this.skData.length;  i++) {
+       if (this.skData[i].type == valueType) {
          if (selfOnly) {
-          if (this.paths[i].path.startsWith("self")) {
+          if (this.skData[i].path.startsWith("self")) {
             let p:IPathMetaData = {
-              path: this.paths[i].path,
-              meta: this.paths[i].meta,
+              path: this.skData[i].path,
+              meta: this.skData[i].meta,
             };
             pathsMeta.push(p);
           }
          } else {
           let p:IPathMetaData = {
-            path: this.paths[i].path,
-            meta: this.paths[i].meta,
+            path: this.skData[i].path,
+            meta: this.skData[i].meta,
           };
           pathsMeta.push(p);
          }
@@ -429,21 +429,54 @@ export class SignalKService {
   }
 
   getPathObject(path): IPathData {
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    let pathIndex = this.skData.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
-    let foundPathObject: IPathData = JSON.parse(JSON.stringify(this.paths[pathIndex])); // so we don't return the object reference and hamper garbage collection/leak memory
+    let foundPathObject: IPathData = cloneDeep(this.skData[pathIndex]);
     return foundPathObject;
 
   }
 
   getPathUnitType(path: string): string {
-    let pathIndex = this.paths.findIndex(pathObject => pathObject.path == path);
+    let pathIndex = this.skData.findIndex(pathObject => pathObject.path == path);
     if (pathIndex < 0) { return null; }
-    if (('meta' in this.paths[pathIndex]) && ('units' in this.paths[pathIndex].meta)) {
-      return this.paths[pathIndex].meta.units;
+    if (('meta' in this.skData[pathIndex]) && ('units' in this.skData[pathIndex].meta)) {
+      return this.skData[pathIndex].meta.units;
     } else {
       return null;
     }
+  }
+
+  public timeoutPathObservable(path: string, pathType: string): void {
+    // push it to any subscriptions of that data
+    this.pathRegister.filter(pathRegister => pathRegister.path == path).forEach(
+      pathRegister => {
+
+        let timeoutValue: pathRegistrationValue;
+
+        switch (pathType) {
+          case 'string':
+              timeoutValue = {value: null, state: 0}
+            break;
+
+          case 'Date':
+              timeoutValue = {value: null, state: 0}
+            break;
+
+          case 'boolean':
+              // do nothing
+            break;
+
+          case 'number':
+            timeoutValue = {value: 0, state: 0}
+            break;
+
+          default:
+            break;
+        }
+
+        pathRegister.subject.next(timeoutValue);
+      }
+    )
   }
 
   /**

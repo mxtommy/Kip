@@ -39,7 +39,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     setTimeout(()=>{
-      this.pathsSub = this.SignalKService.getPathsObservable().subscribe(paths => {
+      this.pathsSub = this.SignalKService.getSkDataObservable().subscribe(paths => {
         this.tableData.data = paths;
       })},0); // set timeout to make it async otherwise delays page load
   }

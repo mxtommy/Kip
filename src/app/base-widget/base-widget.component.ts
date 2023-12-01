@@ -1,5 +1,6 @@
+import { state } from '@angular/animations';
 import { Component, Input, inject } from '@angular/core';
-import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, filter, pipe, sampleTime } from 'rxjs';
+import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, catchError, concat, delayWhen, filter, map, of, pipe, retry, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
 import { SignalKService, pathRegistrationValue } from '../signalk.service';
 import { UnitsService } from '../units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
@@ -93,6 +94,14 @@ export abstract class BaseWidgetComponent {
       this.createDataObservable();
     }
 
+    const pathType = this.widgetProperties.config.paths[pathName].pathType;
+    const path = this.widgetProperties.config.paths[pathName].path;
+    const convert = this.widgetProperties.config.paths[pathName].convertUnitTo;
+    const widgetSample = this.widgetProperties.config.paths[pathName].sampleTime;
+    const timeoutErrorMsg = "[Widget] 10 sec timeout reached : ";
+    const retryErrorMsg = "[Widget] Retry in 5 sec";
+
+
     const observer = this.buildObserver(pathName, subscribeNextFunction);
 
     const pathObs = this.dataStream.find((stream: IWidgetDataStream) => {
@@ -102,37 +111,77 @@ export abstract class BaseWidgetComponent {
     // check Widget paths Observable(s)
     if (pathObs === undefined) return;
 
-    const dataPipe = pathObs.observable.pipe(
-      filterNullish(),
-      sampleTime(this.widgetProperties.config.paths[pathName].sampleTime)
+    let dataPipe$;
+    // if numeric apply unit conversion
+    if (pathType == 'number') {
+      dataPipe$ = pathObs.observable.pipe(
+        filterNullish(),
+        map(x => ({
+          value: this.unitsService.convertUnit(convert, x.value),
+          statue: x.state
+        })),
+        sampleTime(widgetSample),
+        timeout({
+          each: 10000,
+          with: () =>
+            throwError(() => {
+                console.log(timeoutErrorMsg + path);
+                this.signalKService.timeoutPathObservable(path, pathType)
+              }
+            )
+        }),
+        retryWhen(error =>
+          error.pipe(
+            // log
+            tap(() => console.log(retryErrorMsg)),
+            // restart in 5 seconds
+            delayWhen(() => timer(5000))
+          )
+        )
       );
+    } else if (pathType == 'string' || pathType == 'Date') {
+      dataPipe$ = pathObs.observable.pipe(
+        filterNullish(),
+        sampleTime(widgetSample),
+        timeout({
+          each: 10000,
+          with: () =>
+            throwError(() => {
+                console.log(timeoutErrorMsg + path);
+                this.signalKService.timeoutPathObservable(path, pathType)
+              }
+            )
+        }),
+        retryWhen(error =>
+          error.pipe(
+            // log
+            tap(() => console.log(retryErrorMsg)),
+            // restart in 5 seconds
+            delayWhen(() => timer(5000))
+          )
+        )
+      );
+    } else { // boolean
+      dataPipe$ = pathObs.observable.pipe(
+        filterNullish(),
+        sampleTime(widgetSample),
+      );
+    }
 
     if (this.dataSubscription === undefined) {
-      this.dataSubscription = dataPipe.subscribe(observer);
+      this.dataSubscription = dataPipe$.subscribe(observer);
     } else {
-      this.dataSubscription.add(dataPipe.subscribe(observer));
+      this.dataSubscription.add(dataPipe$.subscribe(observer));
     }
   }
 
   private buildObserver(pathKey: string, subscribeNextFunction: ((value) => void)): Observer<pathRegistrationValue> {
     const observer: Observer<pathRegistrationValue> = {
-      next: (x: pathRegistrationValue) => subscribeNextFunction(x),
-      error: err => console.error('Observer got an error: ' + err),
-      complete: () => console.log('Observer got a complete notification: ' + pathKey),
+      // next: (x: pathRegistrationValue) => subscribeNextFunction(x),
+      next: (value) => subscribeNextFunction(value),
+      error: err => console.error('[Widget] Observer got an error: ' + err),
+      complete: () => console.log('[Widget] Observer got a complete notification: ' + pathKey),
     };
-
-    switch (this.widgetProperties.config.paths[pathKey].pathType) {
-      case 'number':
-        observer.next =
-          (x: pathRegistrationValue) => {
-            x.value  = this.unitsService.convertUnit(this.widgetProperties.config.paths[pathKey].convertUnitTo, x.value);
-            subscribeNextFunction(x);
-          }
-        break;
-
-      default:
-        break;
-    }
     return observer;
   }
 
