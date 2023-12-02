@@ -59,7 +59,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 ### Reusable Gauge and Widget Library
   All KIP Gauges and Widgets are visual presentation controls that are very versatile with multiple configuration options available to suit your needs:
-  - Text display: Create gauges to display any textual data sent by your system - MPPT state, Timezone date and time, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
+  - Text display: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
   - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Wind gauge: Your typical sailboat wind gauge
   - Autopilot: Operate your autopilot from any device remotely 
