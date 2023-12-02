@@ -17,7 +17,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Simply navigate to `http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip` to load KIP and enjoy it's features remotly on any device.
 
 ## Multiple User Profiles
-  If you have different roles on board; captiain, skipper, tacticien, navigator, engineers or simply different people with diffenrent needs, each can tailor as they wish. The use of profiles can also offers the ability to tie specific configuration arrangements to usecase or form factors.
+  If you have different roles on board; captain, skipper, tacticien, navigator, engineers or simply different people with diffenrent needs, each can tailor as they wish. The use of profiles can also offers the ability to tie specific configuration arrangements to usecase or form factors.
 
 ## User Experience
 ### Built-in Themes
