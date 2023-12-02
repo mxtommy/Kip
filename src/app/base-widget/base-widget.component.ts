@@ -147,7 +147,7 @@ export abstract class BaseWidgetComponent {
    * @memberof BaseWidgetComponent
    */
   protected formatWidgetNumberValue(v: number): string {
-    if (v == null || v === undefined || typeof(v) != "number") {return}
+    if (v == null || v === undefined || typeof(v) != "number") {return v.toString()}
     // As per Widget config
     // - Limit value to Min/Max range
     if (v >= this.widgetProperties.config.maxValue) {
