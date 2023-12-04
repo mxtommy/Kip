@@ -36,7 +36,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   If we fall in love, we will do it. Even better, branch and contribute yourself. We will assist and guide!
 
 ### Night Mode
-  Keep your night vision with a simple tab, regardless of the selected theme. The below image looks very dark, but at night...it's perfect!
+  Keep your night vision with a simple tap, regardless of the selected theme. The below image looks very dark, but at night...it's perfect!
 
   ![Night mode](./KipNightMode-1024x488.png)
 
