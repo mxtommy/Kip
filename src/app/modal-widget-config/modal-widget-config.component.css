@@ -1,3 +1,28 @@
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  align-content: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.timeout-checkbox {
+  flex-grow: 1;
+  padding-bottom: 23px;
+}
+
+.timeout-field {
+  flex-grow: 5;
+}
+
+.fields {
+  width: 100%;
+}
+
 .warning {
   color: red;
 }

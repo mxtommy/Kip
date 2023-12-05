@@ -39,7 +39,9 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
         }
       },
       dateFormat: 'dd/MM/yyyy HH:mm:ss',
-      dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 

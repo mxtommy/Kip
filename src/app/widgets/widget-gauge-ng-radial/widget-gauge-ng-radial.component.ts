@@ -59,6 +59,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       numInt: 1,
       numDecimal: 0,
       barColor: 'accent',     // theme palette to select
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 

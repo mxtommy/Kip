@@ -232,7 +232,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         this.valueFontSize--;
         this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
-      console.log(`Recalculated font size, loops: ${loopCount}`);
+      // console.log(`Recalculated font size, loops: ${loopCount}`);
     }
 
     // get color based on zone

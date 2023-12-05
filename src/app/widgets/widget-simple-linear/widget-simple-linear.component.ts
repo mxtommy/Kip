@@ -38,6 +38,8 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       gaugeType: "simpleLinear", // Applied to Units label. abr = first letter only. full = full string
       gaugeUnitLabelFormat: "full", // Applied to Units label. abr = first letter only. full = full string
       barColor: 'accent',
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 
@@ -51,7 +53,9 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     }
 
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.value == null) {return}
+        if (newValue.value == null) {
+          newValue.value = 0;
+        }
 
         newValue.value = this.formatWidgetNumberValue(newValue.value);
         this.dataValue = (newValue.value as number);

@@ -59,6 +59,8 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
         putMomentary: false,
         putMomentaryValue: true,
         barColor: 'accent',
+        enableTimeout: false,
+        dataTimeout: 5
       };
   }
 

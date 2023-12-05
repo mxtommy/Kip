@@ -1,6 +1,4 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-
-import { IWidgetSvcConfig } from '../../widgets-interface';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 
@@ -36,7 +34,9 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
           isPathConfigurable: true,
           sampleTime: 500
         }
-      }
+      },
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 

@@ -55,6 +55,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       numInt: 1,
       numDecimal: 0,
       barColor: 'accent',
+      enableTimeout: false,
+      dataTimeout: 5
     };
 
   }

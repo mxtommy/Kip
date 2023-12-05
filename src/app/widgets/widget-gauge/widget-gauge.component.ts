@@ -33,12 +33,17 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
       maxValue: 100,
       rotateFace: false,
       backgroundColor: 'carbon',
-      frameColor: 'anthracite'
+      frameColor: 'anthracite',
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 
   ngOnInit() {
     this.observeDataStream('gaugePath', newValue => {
+        if (newValue.value == null) {
+          newValue.value = 0;
+        }
         this.dataValue = newValue.value
       }
     );

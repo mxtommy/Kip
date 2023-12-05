@@ -146,9 +146,30 @@
       </mat-tab>
  <!-- Paths stuff -->
       <mat-tab label="Paths" *ngIf="(widgetConfig.paths !== undefined)">
-        <ng-template mat-tab-label>
-          <span *ngIf="!formMaster.controls.paths.valid" class="warning fa fa-exclamation-circle"></span> Paths
-        </ng-template>
+        <div class="container">
+          <div class="full-width" *ngIf="!formMaster.controls.paths.valid">
+            <ng-template mat-tab-label>
+              <span class="warning fa fa-exclamation-circle"></span> Paths
+            </ng-template>
+          </div>
+          <div class="timeout-checkbox">
+            <mat-checkbox class="fields"
+              name="enableTimeout"
+              formControlName="enableTimeout">
+                Enable Widget Data TTL
+            </mat-checkbox>
+          </div>
+          <div class="timeout-field">
+            <mat-form-field class="fields" appearance="outline" floatLabel="always">
+              <mat-label>TTL Timeout For Paths</mat-label>
+              <input type="number" matNativeControl placeholder="Time in seconds..." name="dataTimeout"
+              formControlName="dataTimeout"
+              min="2"
+              required>
+              <span matSuffix>Seconds</span>
+            </mat-form-field>
+          </div>
+        </div>
         <modal-path-selector class="full-width"
           *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
           [formGroup]="formMaster.controls.paths.get(pathForm)"
@@ -233,11 +254,11 @@
             </mat-select>
           </mat-form-field>
           <p>
-            <mat-checkbox
-              formControlName="barGraph"
-              name="barGraph">
-                Digital display
-            </mat-checkbox>
+              <mat-checkbox
+                formControlName="barGraph"
+                name="barGraph">
+                  Digital display
+              </mat-checkbox>
           </p>
           <p *ngIf="(formMaster.controls.gaugeType.value == 'radial')" >
             <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'radial'" name="radialSize" formControlName="radialSize">
