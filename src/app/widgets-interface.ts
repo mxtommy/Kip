@@ -82,6 +82,12 @@ export interface IWidgetSvcConfig {
     [key: string]: string;
   };
 
+  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout period. See dataTimeout */
+  enableTimeout?: boolean;
+  /** Sets data stream no-data timeout notification in minutes */
+  dataTimeout?: number;
+
+
   /** Used by multiple Widget: number of fixed decimal places to display */
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */

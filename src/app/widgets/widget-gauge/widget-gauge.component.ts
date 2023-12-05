@@ -33,7 +33,9 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
       maxValue: 100,
       rotateFace: false,
       backgroundColor: 'carbon',
-      frameColor: 'anthracite'
+      frameColor: 'anthracite',
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 

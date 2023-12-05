@@ -1,4 +1,4 @@
-import { Component, OnInit,  Inject } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
@@ -67,6 +67,9 @@ export class ModalWidgetConfigComponent implements OnInit {
             break;
 
             case "dataSetUUID": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            break;
+
+            case "dataTimeout": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
             break;
 
             default: groups.addControl(key, new UntypedFormControl(formData[key]));

@@ -190,6 +190,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         },
         barColor: 'accent',     // theme palette to select
         autoStart: false,
+        enableTimeout: false,
+        dataTimeout: 5
       };
     }
 

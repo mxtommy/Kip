@@ -50,7 +50,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       showMax: false,
       showMin: false,
       numDecimal: 1,
-      numInt: 1
+      numInt: 1,
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 

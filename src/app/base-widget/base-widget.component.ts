@@ -1,6 +1,5 @@
-import { state } from '@angular/animations';
 import { Component, Input, inject } from '@angular/core';
-import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, catchError, concat, delayWhen, filter, map, of, pipe, retry, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
+import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, delayWhen, filter, map, pipe, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
 import { SignalKService, pathRegistrationValue } from '../signalk.service';
 import { UnitsService } from '../units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
@@ -79,9 +78,9 @@ export abstract class BaseWidgetComponent {
   /**
    * Use this method the subscribe to a Signal K data path Observable and receive a
    * live data stream from the server. This method apply
-   * widgetProperties.config.paths[pathName] Object's properties: path, source, pathType,
-   * convertUnitTo and sampleTime, to setup the the Observer with defined behavior. To also
-   * filter null and undefined values out of the stream.
+   * a combination of widgetProperties.config and widgetProperties.config.paths[pathName]
+   * objects properties to setup the Observer. Ex: Widget min/max, decimal, combined with
+   * path sampleTimes and conversions.
    *
    * @protected
    * @param {string} pathName the [key: string] name of the path IWidgetPath Object ie. paths: { "numericPath"... Look at you this.defaultConfig Object to identify the string key to use.
@@ -98,8 +97,10 @@ export abstract class BaseWidgetComponent {
     const path = this.widgetProperties.config.paths[pathName].path;
     const convert = this.widgetProperties.config.paths[pathName].convertUnitTo;
     const widgetSample = this.widgetProperties.config.paths[pathName].sampleTime;
-    const timeoutErrorMsg = "[Widget] 10 sec timeout reached : ";
-    const retryErrorMsg = "[Widget] Retry in 5 sec";
+    const dataTimeout = this.widgetProperties.config.dataTimeout * 1000;
+    const retryDelay = 5000;
+    const timeoutErrorMsg = `[Widget] ${this.widgetProperties.config.displayName} - ${dataTimeout/1000} second data update timeout reached for `;
+    const retryErrorMsg = `[Widget] ${this.widgetProperties.config.displayName} - Retrying in ${retryDelay/1000} secondes`;
 
 
     const observer = this.buildObserver(pathName, subscribeNextFunction);
@@ -114,53 +115,67 @@ export abstract class BaseWidgetComponent {
     let dataPipe$;
     // if numeric apply unit conversion
     if (pathType == 'number') {
-      dataPipe$ = pathObs.observable.pipe(
-        filterNullish(),
-        map(x => ({
-          value: this.unitsService.convertUnit(convert, x.value),
-          statue: x.state
-        })),
-        sampleTime(widgetSample),
-        timeout({
-          each: 10000,
-          with: () =>
-            throwError(() => {
-                console.log(timeoutErrorMsg + path);
-                this.signalKService.timeoutPathObservable(path, pathType)
-              }
+      if (this.widgetProperties.config.enableTimeout) {
+        dataPipe$ = pathObs.observable.pipe(
+          filterNullish(),
+          map(x => ({
+            value: this.unitsService.convertUnit(convert, x.value),
+            statue: x.state
+          })),
+          sampleTime(widgetSample),
+          timeout({
+            each: dataTimeout,
+            with: () =>
+              throwError(() => {
+                  console.log(timeoutErrorMsg + path);
+                  this.signalKService.timeoutPathObservable(path, pathType)
+                }
+              )
+          }),
+          retryWhen(error =>
+            error.pipe(
+              tap(() => console.log(retryErrorMsg)),
+              delayWhen(() => timer(retryDelay))
             )
-        }),
-        retryWhen(error =>
-          error.pipe(
-            // log
-            tap(() => console.log(retryErrorMsg)),
-            // restart in 5 seconds
-            delayWhen(() => timer(5000))
           )
-        )
-      );
+        );
+      } else {
+        dataPipe$ = pathObs.observable.pipe(
+          filterNullish(),
+          map(x => ({
+            value: this.unitsService.convertUnit(convert, x.value),
+            statue: x.state
+          })),
+          sampleTime(widgetSample),
+        );
+      }
     } else if (pathType == 'string' || pathType == 'Date') {
-      dataPipe$ = pathObs.observable.pipe(
-        filterNullish(),
-        sampleTime(widgetSample),
-        timeout({
-          each: 10000,
-          with: () =>
-            throwError(() => {
-                console.log(timeoutErrorMsg + path);
-                this.signalKService.timeoutPathObservable(path, pathType)
-              }
+      if (this.widgetProperties.config.enableTimeout) {
+        dataPipe$ = pathObs.observable.pipe(
+          filterNullish(),
+          sampleTime(widgetSample),
+          timeout({
+            each: dataTimeout,
+            with: () =>
+              throwError(() => {
+                  console.log(timeoutErrorMsg + path);
+                  this.signalKService.timeoutPathObservable(path, pathType)
+                }
+              )
+          }),
+          retryWhen(error =>
+            error.pipe(
+              tap(() => console.log(retryErrorMsg)),
+              delayWhen(() => timer(retryDelay))
             )
-        }),
-        retryWhen(error =>
-          error.pipe(
-            // log
-            tap(() => console.log(retryErrorMsg)),
-            // restart in 5 seconds
-            delayWhen(() => timer(5000))
           )
-        )
-      );
+        );
+      } else {
+        dataPipe$ = pathObs.observable.pipe(
+          filterNullish(),
+          sampleTime(widgetSample),
+        );
+      }
     } else { // boolean
       dataPipe$ = pathObs.observable.pipe(
         filterNullish(),
@@ -177,7 +192,6 @@ export abstract class BaseWidgetComponent {
 
   private buildObserver(pathKey: string, subscribeNextFunction: ((value) => void)): Observer<pathRegistrationValue> {
     const observer: Observer<pathRegistrationValue> = {
-      // next: (x: pathRegistrationValue) => subscribeNextFunction(x),
       next: (value) => subscribeNextFunction(value),
       error: err => console.error('[Widget] Observer got an error: ' + err),
       complete: () => console.log('[Widget] Observer got a complete notification: ' + pathKey),
@@ -187,7 +201,7 @@ export abstract class BaseWidgetComponent {
 
   /**
    * This method will automatically ensure that Widget min/max values and decimal places
-   * are applied. To respect decimal places a strong must be returned, else trailing
+   * are applied. To respect decimal places a string must be returned, else trailing
    * zeros are stripped.
    *
    * @protected

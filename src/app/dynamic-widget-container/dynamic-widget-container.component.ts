@@ -1,6 +1,6 @@
 /**
  * This component is hosted in layout-split and handles Widget framework operations and
- * dynamic instanciation.
+ * dynamic instantiation.
  */
 import { Component, OnInit, OnDestroy, Input, Inject, ViewChild, ViewContainerRef, ElementRef, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
@@ -64,7 +64,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.splitUUID && !changes.splitUUID.firstChange) {
-      this.instanciateWidget();
+      this.instantiateWidget();
     }
 
     if (changes.unlockStatus && !changes.unlockStatus.firstChange) {
@@ -79,15 +79,15 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
     this.unsubscribeTheme();
   }
 
-  private instanciateWidget(): void {
+  private instantiateWidget(): void {
     this.splitWidgetSettings = null;
-    // Use parent layout-split UUID to find configured target Widgett. Split UUID is used for Widget UUID
+    // Use parent layout-split UUID to find configured target Widget. Split UUID is used for Widget UUID
     this.splitWidgetSettings = cloneDeep(this.WidgetManagerService.getWidget(this.splitUUID)); // get from parent
     const widgetComponentTypeName = this.widgetListService.getComponentName(this.splitWidgetSettings.type);
 
     // Dynamically create component.
     this.widgetInstance = null;
-    this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
+    this.dynamicWidgetContainerRef.clear(); // remove virgin container ref
     const dynamicWidget = this.dynamicWidgetContainerRef.createComponent<DynamicWidget>(widgetComponentTypeName);
     this.widgetInstance = dynamicWidget.instance;
     if (this.splitWidgetSettings.config == null) {
@@ -102,7 +102,6 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   public selectWidget(): void {
     let dialogRef = this.dialog.open(DynamicWidgetContainerModalComponent, {
-
       data: { currentType: this.splitWidgetSettings.type }
     });
 
@@ -111,9 +110,8 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
       for (let [group, widgetList] of Object.entries(fullWidgetList)) {
         if (widgetList.findIndex(w => w.name == result) >= 0 ) {
           if (this.splitWidgetSettings.type != result) {
-            // this.dynamicWidgetContainerRef.clear(); // remove vergin container ref
             this.WidgetManagerService.updateWidgetType(this.splitUUID, result);
-            this.instanciateWidget();
+            this.instantiateWidget();
           }
         }
       }
@@ -141,22 +139,22 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
         // this.dynamicWidgetContainerRef.clear();
         this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, this.splitWidgetSettings.config); // Push to storage
-        this.instanciateWidget();
+        this.instantiateWidget();
       }
     });
   }
 
   private loadWidgetDefaults(): void {
       this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, {...this.widgetInstance.defaultConfig}); // push default to manager service for storage
-      this.splitWidgetSettings.config = this.widgetInstance.defaultConfig; // load default in current intance.
+      this.splitWidgetSettings.config = this.widgetInstance.defaultConfig; // load default in current instance.
   }
 
   private subscribeTheme() {
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
       themeChange => {
-        setTimeout(() => {   // delay so browser getComputedStyles has time to complet Material Theme style changes.
+        setTimeout(() => {   // delay so browser getComputedStyles has time to complete Material Theme style changes.
           this.loadTheme();
-          this.instanciateWidget();
+          this.instantiateWidget();
          }, 50);
     })
   }
@@ -197,7 +195,7 @@ export class DynamicWidgetContainerModalComponent implements OnInit {
   ngOnInit() {
     this.widgetList = this.widgetListService.getList();
     this.newWidget = this.data.currentType;
-    // find index of the group conatining the existing type;
+    // find index of the group containing the existing type;
     let index=0;
     for (let [group, groupWidgetList] of Object.entries(this.widgetList)) {
       if (groupWidgetList.findIndex(w => w.name == this.data.currentType) >= 0 ) {

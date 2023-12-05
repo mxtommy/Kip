@@ -34,7 +34,9 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
           isPathConfigurable: true,
           sampleTime: 500
         }
-      }
+      },
+      enableTimeout: false,
+      dataTimeout: 5
     };
   }
 

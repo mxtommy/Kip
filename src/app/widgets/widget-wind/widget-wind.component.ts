@@ -76,10 +76,12 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         },
       },
       windSectorEnable: true,
-      windSectorWindowSeconds: 10,
+      windSectorWindowSeconds: 5,
       laylineEnable: true,
       laylineAngle: 35,
-      sailSetupEnable: false
+      sailSetupEnable: false,
+      enableTimeout: false,
+      dataTimeout: 5
     };
    }
 
