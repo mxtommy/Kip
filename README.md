@@ -67,7 +67,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges
-  - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signal K device that support boolean PUT operations
+  - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signal K path that support boolean PUT operations
   - Date display: a timezone aware control with flexible presentation formating support 
   - Race Timer: Track regatta start sequence
   - Historical datagram chart: Display numerical data over time on a chart
