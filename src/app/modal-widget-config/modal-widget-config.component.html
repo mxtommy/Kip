@@ -146,12 +146,12 @@
       </mat-tab>
  <!-- Paths stuff -->
       <mat-tab label="Paths" *ngIf="(widgetConfig.paths !== undefined)">
-        <div class="container">
-          <div class="full-width" *ngIf="!formMaster.controls.paths.valid">
+          <div *ngIf="!formMaster.controls.paths.valid">
             <ng-template mat-tab-label>
-              <span class="warning fa fa-exclamation-circle"></span> Paths
+              <span class="warning fa fa-exclamation-circle"></span>&nbsp;Paths
             </ng-template>
           </div>
+        <div class="container">
           <div class="timeout-checkbox">
             <mat-checkbox class="fields"
               name="enableTimeout"

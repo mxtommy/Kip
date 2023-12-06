@@ -39,6 +39,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   ngOnInit(): void {
+    this.validateConfig();
     this.subscribeTimer();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');

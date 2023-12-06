@@ -62,6 +62,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
+    this.validateConfig();
     this.observeDataStream('gaugePath', newValue => {
         // Only push new values formated to gauge settings to reduce gauge paint requests
         let oldValue = this.dataValue;

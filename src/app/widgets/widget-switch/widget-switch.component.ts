@@ -36,6 +36,7 @@ export class WidgetSwitchComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnInit() {
+    this.validateConfig();
     this.observeDataStream('statePath', newValue => {
       this.state = newValue.value;
     });

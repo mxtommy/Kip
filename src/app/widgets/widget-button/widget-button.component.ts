@@ -65,6 +65,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnInit() {
+    this.validateConfig();
     this.canvasButtonTxt = this.canvasBtnTxtElement.nativeElement.getContext('2d');
 
     this.observeDataStream('boolPath', newValue => {
