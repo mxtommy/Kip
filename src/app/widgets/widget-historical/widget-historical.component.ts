@@ -55,6 +55,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
    }
 
   ngOnInit() {
+    this.validateConfig();
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
 

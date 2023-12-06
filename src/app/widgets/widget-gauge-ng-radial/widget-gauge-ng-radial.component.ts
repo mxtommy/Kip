@@ -65,6 +65,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
+    this.validateConfig();
     this.observeDataStream('gaugePath', newValue => {
     let oldValue = this.dataValue;
     let temp: any = this.formatWidgetNumberValue(newValue.value);
