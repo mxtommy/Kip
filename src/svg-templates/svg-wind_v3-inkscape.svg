@@ -27,34 +27,32 @@
      showgrid="true"
      borderlayer="true"
      shape-rendering="auto"
-     inkscape:zoom="2.2713055"
-     inkscape:cx="224.54046"
-     inkscape:cy="125.03822"
-     inkscape:window-width="1269"
-     inkscape:window-height="776"
-     inkscape:window-x="171"
+     inkscape:zoom="2.026595"
+     inkscape:cx="143.5906"
+     inkscape:cy="157.16016"
+     inkscape:window-width="1223"
+     inkscape:window-height="773"
+     inkscape:window-x="217"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layerWindAngle"
+     inkscape:current-layer="layerCompassHeading"
      showguides="true">
     <inkscape:grid
        type="xygrid"
        id="grid19666"
        originx="231"
        originy="231" />
-    <sodipodi:guide
-       position="15.240537,58.743639"
-       orientation="1,0"
-       id="guide3012"
-       inkscape:locked="false" />
-    <sodipodi:guide
-       position="11.901413,11.119548"
-       orientation="0,-1"
-       id="guide3014"
-       inkscape:locked="false" />
   </sodipodi:namedview>
   <defs
      id="defs2">
+    <linearGradient
+       id="linearGradient5555"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#d7d728;stop-opacity:1;"
+         offset="0"
+         id="stop5553" />
+    </linearGradient>
     <inkscape:path-effect
        effect="bend_path"
        id="path-effect27883"
@@ -169,7 +167,8 @@
      id="layer1"
      inkscape:label="SailsRecommendation"
      transform="matrix(0.1248082,0,0,0.11220779,-23.713913,416.39261)"
-     style="display:inline">
+     style="display:inline"
+     sodipodi:insensitive="true">
     <g
        id="Boat"
        style="display:inline"
@@ -266,7 +265,8 @@
      style="display:inline"
      inkscape:groupmode="layer"
      inkscape:label="LayerBackground"
-     inkscape:highlight-color="#36a99f">
+     inkscape:highlight-color="#36a99f"
+     sodipodi:insensitive="true">
     <g
        id="portStarboardDial"
        style="display:inline"
@@ -557,10 +557,48 @@
     </g>
   </g>
   <g
+     style="display:inline"
+     id="layerLayline"
+     inkscape:groupmode="layer"
+     inkscape:label="LayerWindSector"
+     sodipodi:insensitive="true">
+    <path
+       d="M 231,231 V 63.5"
+       id="portSectorShift"
+       class="wind-sector-port"
+       style="fill-opacity:0.809524;stroke:#000000;stroke-width:1.90858;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.483517" />
+    <path
+       d="M 231,231 V 63.5"
+       class="wind-sector-stbd"
+       style="fill-opacity:0.794872;stroke:#000000;stroke-width:1.90858;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.483517"
+       id="StbdSectorShift" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="LayerWindShift"
+     inkscape:label="LayerLayline"
+     style="display:inline"
+     inkscape:highlight-color="#f321da"
+     sodipodi:insensitive="true">
+    <path
+       d="M 231,231 V 63.5"
+       id="PortLayline"
+       style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
+       class="laylines"
+       inkscape:label="PortLayline" />
+    <path
+       d="M 231,231 V 63.5"
+       class="laylines"
+       style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
+       id="StbdLayline"
+       inkscape:label="StbdLayline" />
+  </g>
+  <g
      id="layerCompassHeading"
      style="display:inline"
      inkscape:groupmode="layer"
-     inkscape:label="LayerCompassDial">
+     inkscape:label="LayerCompassDial"
+     sodipodi:insensitive="true">
     <ellipse
        ry="180.0916"
        rx="180.39105"
@@ -799,48 +837,46 @@
          y="143.99249"
          x="68.010208"
          id="tspan7125">330</tspan></text>
-  </g>
-  <g
-     style="display:inline"
-     id="layerLayline"
-     inkscape:groupmode="layer"
-     inkscape:label="LayerWindSector">
-    <path
-       d="M 231,231 V 63.5"
-       id="portSectorShift"
-       class="wind-sector-port"
-       style="fill-opacity:0.809524;stroke:#000000;stroke-width:1.90858;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.483517" />
-    <path
-       d="M 231,231 V 63.5"
-       class="wind-sector-stbd"
-       style="fill-opacity:0.794872;stroke:#000000;stroke-width:1.90858;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.483517"
-       id="StbdSectorShift" />
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="LayerWindShift"
-     inkscape:label="LayerLayline"
-     style="display:inline"
-     inkscape:highlight-color="#f321da">
-    <path
-       d="M 231,231 V 63.5"
-       id="PortLayline"
-       style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
-       class="laylines"
-       inkscape:label="PortLayline" />
-    <path
-       d="M 231,231 V 63.5"
-       class="laylines"
-       style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
-       id="StbdLayline"
-       inkscape:label="StbdLayline" />
+    <g
+       id="layer2"
+       inkscape:label="LayerWaypoint"
+       sodipodi:insensitive="true"
+       style="display:inline">
+      <g
+         id="waypoint"
+         transform="translate(-0.00209063,1.0000011)"
+         inkscape:label="waypoint">
+        <circle
+           style="fill:none;fill-opacity:1;stroke:#45ad36;stroke-width:5.7;stroke-dasharray:none;stroke-opacity:0.984314"
+           id="path6341"
+           cx="231"
+           cy="72.35717"
+           r="5.6431713"
+           inkscape:label="waypointCircle" />
+        <g
+           id="g11647"
+           transform="matrix(1.0001219,0,0,0.99974754,-0.02606381,-20.276417)"
+           style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-opacity:1"
+           inkscape:label="waypointBar">
+          <path
+             id="path10836"
+             style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-width:2.3;stroke-dasharray:none;stroke-opacity:1"
+             d="m 240.4718,93.050621 c 2.54775,0.153686 5.11457,0.356643 7.70105,0.601581 h 0.34551" />
+          <path
+             id="path11640"
+             style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-width:2.3;stroke-dasharray:none;stroke-opacity:1"
+             d="m 213.62158,93.652202 c 2.61223,-0.320275 5.24415,-0.552387 7.8965,-0.705521" />
+        </g>
+      </g>
+    </g>
   </g>
   <g
      inkscape:groupmode="layer"
      id="layerWindAngle"
      inkscape:label="LayerWindIndicators"
      style="display:inline"
-     inkscape:highlight-color="#e9c365">
+     inkscape:highlight-color="#e9c365"
+     sodipodi:insensitive="true">
     <g
        id="ApparentWind"
        style="display:inline">
@@ -908,8 +944,9 @@
      inkscape:groupmode="layer"
      id="LayerHeadingIndicator"
      inkscape:label="LayerHeadingFaceplate"
-     style="display:none"
-     transform="translate(5.0000087,9.6387996)">
+     style="display:inline"
+     transform="translate(5.0000087,9.6387996)"
+     sodipodi:insensitive="true">
     <path
        style="display:inline;opacity:1;fill:#afafaf;fill-opacity:1;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
        id="FaceplateHeading"

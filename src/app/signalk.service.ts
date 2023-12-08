@@ -467,7 +467,7 @@ export class SignalKService {
             break;
 
           case 'number':
-            timeoutValue = {value: 0, state: 0}
+            timeoutValue = {value: null, state: 0}
             break;
 
           default:
