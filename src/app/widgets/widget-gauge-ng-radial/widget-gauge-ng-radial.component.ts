@@ -67,25 +67,27 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngOnInit() {
     this.validateConfig();
     this.observeDataStream('gaugePath', newValue => {
-    let oldValue = this.dataValue;
-    let temp: any = this.formatWidgetNumberValue(newValue.value);
+        if (newValue.value === null) {newValue.value = 0}
+        let oldValue = this.dataValue;
+        let temp: any = this.formatWidgetNumberValue(newValue.value);
 
-    if (oldValue != (temp as number)) {
-      this.dataValue = temp;
-    }
+        if (oldValue != (temp as number)) {
+          this.dataValue = temp;
+        }
 
-    // set zone state colors
-    switch (newValue.state) {
-      case IZoneState.warning:
-        this.gaugeOptions.colorValueText = this.theme.warnDark;
-        break;
-      case IZoneState.alarm:
-        this.gaugeOptions.colorValueText = this.theme.warnDark;
-        break;
-      default:
-        this.gaugeOptions.colorValueText = this.theme.text;
+        // set zone state colors
+        switch (newValue.state) {
+          case IZoneState.warning:
+            this.gaugeOptions.colorValueText = this.theme.warnDark;
+            break;
+          case IZoneState.alarm:
+            this.gaugeOptions.colorValueText = this.theme.warnDark;
+            break;
+          default:
+            this.gaugeOptions.colorValueText = this.theme.text;
+        }
       }
-    });
+    );
 
     this.subscribeZones();
    }

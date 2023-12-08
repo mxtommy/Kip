@@ -110,6 +110,8 @@ export interface IWidgetSvcConfig {
   laylineEnable?: boolean;
   /** Used by wind Widget: upwind layline angle of the vessel applied to the UI feature */
   laylineAngle?: number;
+  /** Used by wind Widget: enable/disable Waypoint UI feature */
+  waypointEnable?: boolean;
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 

@@ -13,6 +13,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   appWindSpeed: number = 0;
   trueWindAngle: number = 0;
   trueWindSpeed: number = 0;
+  waypointAngle: number = 0;
   trueWindHistoric: {
     timestamp: number;
     heading: number;
@@ -74,11 +75,21 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           convertUnitTo: "knots",
           sampleTime: 500
         },
+        "nextWaypointBearing": {
+          description: "Next Waypoint Bearing",
+          path: 'self.navigation.courseGreatCircle.nextPoint.bearingTrue',
+          source: 'default',
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "deg",
+          sampleTime: 500
+        },
       },
       windSectorEnable: true,
       windSectorWindowSeconds: 5,
       laylineEnable: true,
       laylineAngle: 35,
+      waypointEnable: true,
       sailSetupEnable: false,
       enableTimeout: false,
       dataTimeout: 5
@@ -93,6 +104,15 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       }
       this.currentHeading = newValue.value;
     });
+
+    this.observeDataStream('nextWaypointBearing', newValue => {
+      if (newValue.value < 0) {// stb
+        this.waypointAngle = 360 + newValue.value; // adding a negative number subtracts it...
+      } else {
+        this.waypointAngle = newValue.value;
+      }
+    }
+  );
 
     this.observeDataStream('appWindAngle', newValue => {
         if (newValue.value == null) { // act upon data timeout of null

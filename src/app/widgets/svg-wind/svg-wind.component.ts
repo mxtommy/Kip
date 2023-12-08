@@ -19,6 +19,7 @@ export class SvgWindComponent implements AfterViewInit {
   @ViewChild('trueWindAnimate', { static: true, read: ElementRef }) trueWindAnimate!: ElementRef;
   @ViewChild('appWindValueAnimate', { static: true, read: ElementRef }) appWindValueAnimate!: ElementRef;
   @ViewChild('trueWindValueAnimate', { static: true, read: ElementRef }) trueWindValueAnimate!: ElementRef;
+  @ViewChild('waypointAnimate', { static: true, read: ElementRef }) waypointAnimate!: ElementRef;
   //@ViewChild('laylinePortAnimate') laylinePortAnimate: ElementRef;
   //@ViewChild('laylineStbAnimate') laylineStbAnimate: ElementRef;
 
@@ -32,9 +33,12 @@ export class SvgWindComponent implements AfterViewInit {
   @Input('laylineEnable') laylineEnable: boolean;
   @Input('sailSetupEnable') sailSetupEnable: boolean;
   @Input('windSectorEnable') windSectorEnable: boolean;
+  @Input('waypointAngle') waypointAngle: number;
+  @Input('waypointEnable') waypointEnable: boolean;
   @Input('trueWindMinHistoric') trueWindMinHistoric: number;
   @Input('trueWindMidHistoric') trueWindMidHistoric: number;
   @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
+
 
   // Compass faceplate
   compassFaceplate: ISVGRotationObject;
@@ -50,6 +54,10 @@ export class SvgWindComponent implements AfterViewInit {
   trueWindValue: ISVGRotationObject;
   trueWindSpeedDisplay: string = "--";
   trueWindHeading: number = 0;
+
+  //waypoint
+  waypoint: ISVGRotationObject;
+  waypointActive: boolean = false;
 
   //laylines
   laylinePortPath: string = "M 231,231 231,90";
@@ -89,6 +97,12 @@ export class SvgWindComponent implements AfterViewInit {
       newDegreeIndicator: '0',
       animationElement: undefined
     };
+
+    this.waypoint =  {
+      oldDegreeIndicator: '0',
+      newDegreeIndicator: '0',
+      animationElement: undefined
+    };
   }
 
   ngAfterViewInit(): void {
@@ -97,6 +111,7 @@ export class SvgWindComponent implements AfterViewInit {
     this.appWindValue.animationElement = this.appWindValueAnimate;
     this.trueWind.animationElement = this.trueWindAnimate;
     this.trueWindValue.animationElement = this.trueWindValueAnimate;
+    this.waypoint.animationElement = this.waypointAnimate;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -117,6 +132,25 @@ export class SvgWindComponent implements AfterViewInit {
       }
     }
 
+    // WaypointAngle
+    if (changes.waypointAngle) {
+      if (this.waypointEnable == false) {
+        this.waypointActive = false;
+        return
+      }
+
+      if (! changes.waypointAngle.firstChange) {
+        if (changes.waypointAngle.currentValue === null) {
+          this.waypointActive = false;
+        } else {
+          this.waypointActive = true;
+          this.waypoint.oldDegreeIndicator = this.waypoint.newDegreeIndicator;
+          this.waypoint.newDegreeIndicator = changes.waypointAngle.currentValue.toFixed(0);
+          this.smoothCircularRotation(this.waypoint);
+        }
+      }
+    }
+
     //appWindAngle
     if (changes.appWindAngle) {
       if (! changes.appWindAngle.firstChange) {
@@ -132,19 +166,11 @@ export class SvgWindComponent implements AfterViewInit {
         this.smoothCircularRotation(this.appWind, this.appWindValue);
       }
     }
-    //appWindSpeed
-    if (changes.appWindSpeed) {
-      if (! changes.appWindSpeed.firstChange) {
-        if (changes.appWindSpeed.currentValue === null) {return}
-        this.appWindSpeedDisplay = changes.appWindSpeed.currentValue.toFixed(1);
-      }
-    }
 
     //trueWindAngle
     if (changes.trueWindAngle) {
       if (! changes.trueWindAngle.firstChange) {
         if (changes.trueWindAngle.currentValue === null) {return}
-
         this.trueWind.oldDegreeIndicator = this.trueWind.newDegreeIndicator;
         this.trueWindValue.oldDegreeIndicator = this.trueWindValue.newDegreeIndicator;
 
@@ -156,6 +182,14 @@ export class SvgWindComponent implements AfterViewInit {
 
         this.smoothCircularRotation(this.trueWind, this.trueWindValue);
         this.updateLaylines();
+      }
+    }
+
+    //appWindSpeed
+    if (changes.appWindSpeed) {
+      if (! changes.appWindSpeed.firstChange) {
+        if (changes.appWindSpeed.currentValue === null) {return}
+        this.appWindSpeedDisplay = changes.appWindSpeed.currentValue.toFixed(1);
       }
     }
 
@@ -238,16 +272,17 @@ export class SvgWindComponent implements AfterViewInit {
     const oldAngle = Number(rotationElement.oldDegreeIndicator)
     const newAngle = Number(rotationElement.newDegreeIndicator);
     const diff = oldAngle - newAngle;
+
     // only update if on DOM and value rounded changed
     if (rotationElement.animationElement && (diff != 0)) {
       // Special cases to smooth out passing between 359 to/from 0
       // if more than half the circle, it could need to go over the 359 to 0 without doing full full circle
       if ( Math.abs(diff) > 180 ) {
-        // In what direction are we moving?
-        if (Math.sign(diff) == 1) {
-          if (oldAngle == 359) {
+
+        if (Math.sign(diff) == 1) { // Moving clockwise
+          if (oldAngle == 359) { // Going over 0
             // special cases
-            rotationElement.oldDegreeIndicator = "0";
+            rotationElement.oldDegreeIndicator = "0"; // Set to 0 and animate so we don't jump
             rotationElement.animationElement.nativeElement.beginElement();
             if (countRotationElement !== undefined) {
               countRotationElement.oldDegreeIndicator = "0";
@@ -257,7 +292,7 @@ export class SvgWindComponent implements AfterViewInit {
             rotationElement.newDegreeIndicator = "359";
             rotationElement.animationElement.nativeElement.beginElement();
             if (countRotationElement !== undefined) {
-              countRotationElement.newDegreeIndicator = "359";
+              countRotationElement.newDegreeIndicator = "-359";
               countRotationElement.animationElement.nativeElement.beginElement();
             }
             rotationElement.oldDegreeIndicator = "0";
@@ -269,13 +304,13 @@ export class SvgWindComponent implements AfterViewInit {
               countRotationElement.animationElement.nativeElement.beginElement();
             }
           }
-        } else {
-          if (oldAngle == 0) {
+        } else { // Moving counter clockwise
+          if (oldAngle == 0) { // going over 359
             // special cases
             rotationElement.oldDegreeIndicator = "359";
             rotationElement.animationElement.nativeElement.beginElement();
             if (countRotationElement !== undefined) {
-              countRotationElement.oldDegreeIndicator = "359";
+              countRotationElement.oldDegreeIndicator = "-359";
               countRotationElement.animationElement.nativeElement.beginElement();
             }
           } else {
@@ -289,13 +324,13 @@ export class SvgWindComponent implements AfterViewInit {
             rotationElement.newDegreeIndicator = newAngle.toFixed(0);
             rotationElement.animationElement.nativeElement.beginElement();
             if (countRotationElement !== undefined) {
-              countRotationElement.oldDegreeIndicator = "359";
-              countRotationElement.newDegreeIndicator = newAngle.toFixed(0);
+              countRotationElement.oldDegreeIndicator = "-359";
+              countRotationElement.newDegreeIndicator = (newAngle * -1).toFixed(0); // values rotate counter clockwise (negative values). else they'll do a 360
               countRotationElement.animationElement.nativeElement.beginElement();
             }
           }
         }
-      } else {
+      } else { // not doing more then 180, normal rotation
         rotationElement.animationElement.nativeElement.beginElement();
         if (countRotationElement !== undefined) {
           countRotationElement.animationElement.nativeElement.beginElement();
