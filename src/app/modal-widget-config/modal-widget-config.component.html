@@ -48,6 +48,20 @@
               </mat-form-field>
             </div>
           </div>
+          <div class="full-width" *ngIf="(widgetConfig.textColor !== undefined)">
+            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+              <mat-label>Color</mat-label>
+              <mat-select
+              placeholder="Select Color..."
+              formControlName="textColor"
+              name="textColor">
+                <mat-option value='text'>Font</mat-option>
+                <mat-option value='primary'>Primary</mat-option>
+                <mat-option value='accent'>Accent</mat-option>
+                <mat-option value='warn'>Warn</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
           <!-- sailgauge stuff -->
           <div class="flex-container">
             <div class="flex-checkbox" *ngIf="(widgetConfig.laylineEnable !== undefined)">
@@ -149,9 +163,9 @@
               placeholder="Select Theme Color"
               formControlName="barColor"
               name="barColor">
-                <mat-option value='primary'>Primary Color</mat-option>
-                <mat-option value='accent'>Accent Color</mat-option>
-                <mat-option value='warn'>Warn Color</mat-option>
+                <mat-option value='primary'>Primary</mat-option>
+                <mat-option value='accent'>Accent</mat-option>
+                <mat-option value='warn'>Warn</mat-option>
                 <mat-option *ngIf="(widgetConfig.gaugeType == 'ngLinearVertical') || (widgetConfig.gaugeType == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
               </mat-select>
             </mat-form-field>

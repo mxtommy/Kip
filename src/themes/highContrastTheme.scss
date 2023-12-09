@@ -39,9 +39,19 @@ $mat-wind: (
     rudder-starboard: #389c19,
 );
 
+$mat-texts: (
+    text-dark: #797979,
+    primary-light: #3586ca,
+    primary-dark: #1656AB,
+    accent-light: #f5da6f,
+    accent-dark: #e5ab13,
+    warn-light: #e26767,
+    warn-dark: #ba0d0d,
+);
+
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $highContrast-temp-light: mat.define-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
 
 // Merge our mat-theme with component specific palettes
-$highContrast-light: map-merge($highContrast-temp-light, (wind: $mat-wind, ngGauge: $mat-ngGauge));
+$highContrast-light: map-merge($highContrast-temp-light, (widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

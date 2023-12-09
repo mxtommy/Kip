@@ -102,6 +102,16 @@ $mat-wind: (
     rudder-starboard: #389c19,
 );
 
+$mat-texts: (
+    text-dark: #797979,
+    primary-light: #3586ca,
+    primary-dark: #1656AB,
+    accent-light: #f5da6f,
+    accent-dark: #e5ab13,
+    warn-light: #e26767,
+    warn-dark: #ba0d0d,
+);
+
 $signalKTheme-background: custom-theme-light-background($signalKTheme-primary, 50);
 
 // Make temp theme using default palettes
@@ -109,4 +119,4 @@ $signalKTheme-background: custom-theme-light-background($signalKTheme-primary, 5
 $signalKTheme-temp-light: mat.define-light-theme($signalKTheme-primary, $signalKTheme-accent, $signalKTheme-warn);
 
 // Merge our mat-theme with component specific palettes
-$signalKTheme-light: map-merge($signalKTheme-temp-light, (background: $signalKTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));
+$signalKTheme-light: map-merge($signalKTheme-temp-light, (background: $signalKTheme-background, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

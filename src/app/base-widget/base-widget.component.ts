@@ -138,7 +138,7 @@ export abstract class BaseWidgetComponent {
           filterNullish(),
           map(x => ({
             value: this.unitsService.convertUnit(convert, x.value),
-            statue: x.state
+            state: x.state
           })),
           sampleTime(widgetSample),
           timeout({
@@ -162,7 +162,7 @@ export abstract class BaseWidgetComponent {
           filterNullish(),
           map(x => ({
             value: this.unitsService.convertUnit(convert, x.value),
-            statue: x.state
+            state: x.state
           })),
           sampleTime(widgetSample),
         );
