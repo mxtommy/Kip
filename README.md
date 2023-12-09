@@ -91,7 +91,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Grafana Embedded Webpage sample 
   ![Embedded Webpage Concept Image](./KipGaugeSample3-1024x508.png)
 
-  ### Harness The Power Data State Notifications
+  ### Harness The Power Of Data State Notifications
   Stay informed with notifications about the state of the data you are interested in.
   As an example, KIP can notify (inform, warn, alert) you when the water depth or a temperature sensor reaches certain levels. In addition to KIP's centralized basic visual and audio notification support, each type of Widget offers a tailored visual representation appropriate
   to their design objectives for an optimal user experience.

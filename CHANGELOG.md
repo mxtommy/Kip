@@ -1,7 +1,8 @@
 # V 2.4.0
 ## New features
-* Added Numeric, Date and Text Widgets color support
-* Added Next Waypoint bearing indicator to Wind Widget
+* Gesture Support: Added horizontal Swipe to cycle pages and Double Tab to toggle night mode 
+* Numeric, Date and Text Widgets: Added configurable color support
+* Wind Widget: Added Next Waypoint bearing indicator
 * Added support for Widget data expiration (TTL). Previously Widget stayed still when a source stopped sending data or the server connection was lost. 
 ## Improvements
 * Strengthen Widget configuration management when adding new KIP properties 
