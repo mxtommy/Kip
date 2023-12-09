@@ -13,6 +13,7 @@ import { DataSetService } from './data-set.service';
 import { NotificationsService } from './notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
 import { AppService } from './app.service';
+import { HAMMER_GESTURE_CONFIG } from '@angular/platform-browser';
 
 declare var NoSleep: any; //3rd party
 
@@ -55,7 +56,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private appService: AppService,
     // below services are needed: first service instantiation after Init Service
     private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
-    ) { }
+    ) {}
 
 
   ngOnInit() {
@@ -160,6 +161,25 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  public onDoubleTap(e: any): void {
+    this.setNightMode(this.isNightMode ? false: true);
+  }
+
+  public onSwipe(e: any): void {
+    switch (e.direction) {
+      case 2:
+        this.pageUp();
+        break;
+
+      case 4:
+        this.pageDown();
+        break;
+
+      default:
+        break;
+    }
+  }
+
   setTheme(theme: string) {
     this.appSettingsService.setThemName(theme);
   }
@@ -175,10 +195,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   unlockPage() {
     if (this.unlockStatus) {
-      console.log("Locking");
+      // console.log("Locking");
       this.unlockStatus = false;
     } else {
-      console.log("Unlocking");
+      // console.log("Unlocking");
       this.unlockStatus = true;
     }
     this.appSettingsService.setUnlockStatus(this.unlockStatus);

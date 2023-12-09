@@ -1,11 +1,11 @@
 # About KIP
 
-KIP is powerfull marine instrumentation package to display Signal K data. KIP, much like modern expensive MFDs, is very flexible and can be split up in any arrangements and display all kinds of data available to Signal K server.
+KIP is powerful marine instrumentation package to display Signal K data. KIP, much like modern expensive MFDs, is very flexible and can be split up in any arrangements and display all kinds of data available to Signal K server.
 
 # Design Goal
 
 The idea is to replicate the functionality of MFDs such as the B&G Triton, Raymarine i70, or Garmin GMI20.
-- Display should be fullscreen and not require any scrolling
+- Display should use the entire screen and not require any scrolling
 - Anything displayed should be as big as possible in the given space
 - Touchscreen user experience should be excellent
 - Layout and configuration should be both easy to operate and flexible
@@ -14,51 +14,58 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 # Features
 ## Access from Phones, Tablets, Raspberry Pi and Computers
-  Simply navigate to `http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip` to load KIP and enjoy it's features remotly on any device.
+  Simply navigate to `http://<Signal K Server URL>:<Signal K Server port>/@mxtommy/kip` to load KIP and enjoy it's features remotely on any device.
+
+### Responsive Design
+  KIP adjust to the device type and form factor for the best possible user experience.
+
+### Touch Devices
+- Swipe left and right to cycle trough your Widget layouts.
+- Double tap to toggle night mode.
 
 ## Multiple User Profiles
-  If you have different roles on board; captain, skipper, tacticien, navigator, engineers or simply different people with diffenrent needs, each can tailor as they wish. The use of profiles can also offers the ability to tie specific configuration arrangements to usecase or form factors.
+  If you have different roles on board; captain, skipper, tactician, navigator, engineers or simply different people with different needs, each can tailor as they wish. The use of profiles can also offers the ability to tie specific configuration arrangements to use case or form factors.
 
 ## User Experience
-### Built-in Themes
-  Use your favorite style from the built-in themes gallery.
-
-  Modern Dark Theme
-  ![Modern Dark Theme](./KipSample-1-1024x488.png)
-  
-  Signal K Inspired Theme
-  ![Signal K Inspired Theme](./KipSample-2-1024x488.png)
-  
-  Light Blue Theme
-  ![Light Blue Theme](./KipSample-3-1024x488.png)
-
-  NOTE: Request a new theme by sending us inspirational/reference material (web sites, picture, etc.).
-  If we fall in love, we will do it. Even better, branch and contribute yourself. We will assist and guide!
 
 ### Night Mode
   Keep your night vision with a simple tap, regardless of the selected theme. The below image looks very dark, but at night...it's perfect!
 
   ![Night mode](./KipNightMode-1024x488.png)
 
+### Built-in Themes
+  Use your favorite style from the built-in themes gallery.
+
+  Modern Dark Theme
+  ![Modern Dark Theme](./KipSample-1-1024x488.png)
+
+  Signal K Inspired Theme
+  ![Signal K Inspired Theme](./KipSample-2-1024x488.png)
+
+  Light Blue Theme
+  ![Light Blue Theme](./KipSample-3-1024x488.png)
+
+  NOTE: Request a new theme by sending us inspirational/reference material (web sites, picture, etc.).
+  If we fall in love, we will do it. Even better, branch and contribute yourself. We will assist and guide!
 
 ## Gauge Layout and Configuration
 ### Flexible and Easy
   Meant to build purposeful screen(s) with however many gauges or widgets you want, where you want them. 
 
-  Quickly devide the screen area into zones, resize and position, add the gauge of your choosing. Need more? Add as many additionnal pages as you whish to keep screens purposeful. Simply tap the navigation button keys to quickly rotate from page to page.
+  Quickly divide the screen area into zones, resize and position, add the gauge of your choosing. Need more? Add as many additional pages as you whish to keep screens purposeful. Simply tap the navigation button keys to quickly rotate from page to page.
   ![Layouts Configuration Image](./KipWidgetConfig-layout-1024x488.png)
   
-  Easy basic gauge and widget configuratio.
+  Easy basic gauge and widget configuration.
   ![Gauges Configuration Image](./KipConfig-display-1024x488.png) 
   
   See what Signal K has to offer that you can leverage in a gauge. Select it and tweak the display options for your purpose.
   ![Paths Configuration Image](./KipWidgetConfig-paths-1024x488.png)
   
-  Many units are supported. Choose your prefered App defaults, than tweak it gauge-by-gauge as necessary. KIP will convert the displayed units for you.
+  Many units are supported. Choose your preferred App defaults, than tweak it gauge-by-gauge as necessary. KIP will convert the displayed units for you.
   ![Units Configuration Image](./KipConfig-Units-1024x488.png) 
 
 ### Reusable Gauge and Widget Library
-  All KIP Gauges and Widgets are visual presentation controls that are very versatile with multiple configuration options available to suit your needs:
+  All KIP Gauges and Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
   - Text display: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
   - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Wind gauge: Your typical sailboat wind gauge
@@ -67,8 +74,8 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges
-  - Button and Switch control: Operate remote devices - light switches, bildge pump, solenoid, any Signal K path that support boolean PUT operations
-  - Date display: a timezone aware control with flexible presentation formating support 
+  - Button and Switch control: Operate remote devices - light switches, bilge pump, solenoid, any Signal K path that support boolean PUT operations
+  - Date display: a timezone aware control with flexible presentation formatting support 
   - Race Timer: Track regatta start sequence
   - Historical datagram chart: Display numerical data over time on a chart
   - Embedded Webpage: A powerful way of integrating any web based content or application within with your KIP layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
@@ -84,6 +91,10 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   Grafana Embedded Webpage sample 
   ![Embedded Webpage Concept Image](./KipGaugeSample3-1024x508.png)
 
+  ### Harness The Power Data State Notifications
+  Stay informed with notifications about the state of the data you are interested in.
+  As an example, KIP can notify (inform, warn, alert) you when the water depth or a temperature sensor reaches certain levels. In addition to KIP's centralized basic visual and audio notification support, each type of Widget offers a tailored visual representation appropriate
+  to their design objectives for an optimal user experience.
 
 # Developing
 
@@ -132,7 +143,7 @@ Join us on Slack -> Signalk-dev / Apps_and_client channel. We will hook up and a
  * Improved Zones support
  * Add a KIP Widget CLI Schematic to automate new Widget creation and improve contribution
  * Improved error logging / performance gain
- * Retire outdated Steelgauges
+ * Retire outdated SteelGauges
  * Rebuild alerting to new Signal K Specifications
  * Attitude Indicator Widget - Help Wanted
  * Sailing Polars Widget - Help Wanted

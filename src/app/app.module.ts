@@ -1,7 +1,7 @@
 // Modules
 // Angular
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { BrowserModule, HammerModule, HammerGestureConfig, HAMMER_GESTURE_CONFIG } from '@angular/platform-browser';
+import { NgModule, APP_INITIALIZER, Injectable } from '@angular/core';
 import { APP_BASE_HREF, PlatformLocation } from '@angular/common';
 import { RouterModule, Routes }   from '@angular/router';
 import { FormsModule }   from '@angular/forms';
@@ -35,6 +35,7 @@ import { GaugesModule } from './gauges-module/gauges.module';
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizeEventModule } from 'angular-resize-event';
 // Modules Pipes & Directives
+// import { HammerGestureConfig, HAMMER_GESTURE_CONFIG } from '@angular/platform-browser'
 import { FilterSelfPipe } from './filter-self.pipe';
 import { ObjectKeysPipe } from './object-keys.pipe';
 import { SafePipe } from './safe.pipe';
@@ -110,6 +111,22 @@ const appRoutes: Routes = [
   { path: 'login', component: WidgetLoginComponent },
   { path: 'demo', component: ResetConfigComponent }
 ];
+
+
+/**
+ * Injectable class that override Hammerjs default gesture configuration.
+ *
+ * @export
+ * @class kipHammerConfig
+ * @extends {HammerGestureConfig}
+ */
+@Injectable()
+export class kipHammerConfig extends HammerGestureConfig {
+  // Override default hammerjs gestures configuration
+  overrides = <any>{
+    // swipe: { direction: (window as any).Hammer.DIRECTION_ALL },
+  };
+}
 
 /**
  * Bootstrap function used by AppInitService provider at app initialization
@@ -188,7 +205,6 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     AngularSplitModule,
     AngularResizeEventModule,
     BrowserAnimationsModule,
-
     MatMenuModule,
     MatButtonModule,
     MatTooltipModule,
@@ -212,6 +228,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
+    HammerModule
   ],
   providers: [
     // Imports Interceptor that capture http requests and inserts authorization
@@ -232,6 +249,11 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
         deps: [AppNetworkInitService],
         multi: true,
       },
+    // Binds KIP's Hammerjs configuration overrides to a provider
+    {
+      provide: HAMMER_GESTURE_CONFIG,
+      useClass: kipHammerConfig
+    },
     AuthenticationService,
     SignalKService,
     SignalKConnectionService,
