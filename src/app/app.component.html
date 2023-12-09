@@ -1,6 +1,6 @@
 <div [class]="activeThemeClass">
-  <div class="mainContainer app-defaults" >
-    <div class="mainWindow">
+  <div class="mainContainer app-defaults">
+    <div class="mainWindow" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" >
         <router-outlet></router-outlet>
     </div>
     <div class="menuBar">
