@@ -29,10 +29,10 @@
 # V 2.2.0
 ## New features
 * Option to enable automatic day and night modes activation based on sun phases 
-* Path data throttling feature added to Widget Options's Paths offering greater flexibilty in UI experience
+* Path data throttling feature added to Widget Options Paths providing greater flexibilty and UI experience
 # V 2.1.3
 ## Improvements
-* Upgrade v6 configuration
+* automatic upgrade of older KIP v6 configuration
 # V 2.1.2
 ## Fixes
 * Package description typo and changelog updates
@@ -51,9 +51,9 @@
 * Bump @babel/traverse from 7.23.0 to 7.23.2 by @dependabot in https://github.com/mxtommy/Kip/pull/194
 # V 2.0.1
 ## Improvements
-* Update: KIP Icon
+* KIP icon update
 ## Fixes
-* Fix: Object reference error and polyfills by @godind in https://github.com/mxtommy/Kip/commit/73f47aec694ccfe6ea2f1b92ad23dcc53b41e09f
+* Object reference error and polyfills by @godind in https://github.com/mxtommy/Kip/commit/73f47aec694ccfe6ea2f1b92ad23dcc53b41e09f
 # V 2.0.0
 ## New features
 * Breaking Change - KIP configuration sharing using Signal K user key data storage feature
