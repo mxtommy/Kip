@@ -35,10 +35,17 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDark: ElementRef;
   @ViewChild('background', {static: true, read: ElementRef}) private background: ElementRef;
   @ViewChild('text', {static: true, read: ElementRef}) private text: ElementRef;
+  @ViewChild('textDark', {static: true, read: ElementRef}) private textDark: ElementRef;
+  @ViewChild('textPrimaryLight', {static: true, read: ElementRef}) private textPrimaryLight: ElementRef;
+  @ViewChild('textPrimaryDark', {static: true, read: ElementRef}) private textPrimaryDark: ElementRef;
+  @ViewChild('textAccentLight', {static: true, read: ElementRef}) private textAccentLight: ElementRef;
+  @ViewChild('textAccentDark', {static: true, read: ElementRef}) private textAccentDark: ElementRef;
+  @ViewChild('textWarnLight', {static: true, read: ElementRef}) private textWarnLight: ElementRef;
+  @ViewChild('textWarnDark', {static: true, read: ElementRef}) private textWarnDark: ElementRef;
 
   private themeNameSub: Subscription = null;
   private splitWidgetSettings: IWidget;
-  private themeColor: ITheme = {primary: '', accent: '', warn: '', primaryDark: '', accentDark: '', warnDark: '', background: '', text: ''};
+  private themeColor: ITheme = {primary: '', accent: '', warn: '', primaryDark: '', accentDark: '', warnDark: '', background: '', text: '', textDark: '', textPrimaryLight: '', textPrimaryDark: '', textAccentLight:'', textAccentDark:'', textWarnLight:'', textWarnDark:''};
   public widgetInstance;
 
   constructor(
@@ -60,6 +67,13 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
     this.themeColor.warnDark = getComputedStyle(this.warnDark.nativeElement).color;
     this.themeColor.background = getComputedStyle(this.background.nativeElement).color;
     this.themeColor.text = getComputedStyle(this.text.nativeElement).color;
+    this.themeColor.textDark = getComputedStyle(this.textDark.nativeElement).color;
+    this.themeColor.textPrimaryLight = getComputedStyle(this.textPrimaryLight.nativeElement).color;
+    this.themeColor.textPrimaryDark = getComputedStyle(this.textPrimaryDark.nativeElement).color;
+    this.themeColor.textAccentLight = getComputedStyle(this.textAccentLight.nativeElement).color;
+    this.themeColor.textAccentDark = getComputedStyle(this.textAccentDark.nativeElement).color;
+    this.themeColor.textWarnLight = getComputedStyle(this.textWarnLight.nativeElement).color;
+    this.themeColor.textWarnDark = getComputedStyle(this.textWarnDark.nativeElement).color;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -71,7 +85,6 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
       if(this.splitWidgetSettings.type == 'WidgetTutorial') {
         this.widgetInstance.unlockStatus = this.unlockStatus;  // keep for Tutorial Widget
       }
-
     }
   }
 

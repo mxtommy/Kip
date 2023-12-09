@@ -1,34 +1,55 @@
 @use '@angular/material' as mat;
 
 @mixin dynamic-widget-container-theme($theme) {
-
-  $themeEmitter: map-get($theme, ngGauge);
+  $textThemeEmitter: map-get($theme, widgetTexts);
+  $gaugeThemeEmitter: map-get($theme, ngGauge);
   $themeForeground: map-get($theme, foreground);
-    .primary {
-      color: mat.get-color-from-palette($themeEmitter, primary-gaugeFaceLight);
-    }
-    .accent {
-      color: mat.get-color-from-palette($themeEmitter, accent-gaugeFaceLight);
-    }
-    .warn {
-      color: mat.get-color-from-palette($themeEmitter, warn-gaugeFaceLight);
-    }
-    .primaryDark {
-      color: mat.get-color-from-palette($themeEmitter, primary-gaugeFaceDark);
-    }
-    .accentDark {
-      color: mat.get-color-from-palette($themeEmitter, accent-gaugeFaceDark);
-    }
-    .warnDark {
-      color: mat.get-color-from-palette($themeEmitter, warn-gaugeFaceDark);
-    }
-    .background {
-      color: mat.get-color-from-palette($themeForeground, divider);
-    }
-    .text {
-      color: mat.get-color-from-palette($themeForeground, text);
-    }
 
+  .primary {
+    color: mat.get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceLight);
+  }
+  .accent {
+    color: mat.get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceLight);
+  }
+  .warn {
+    color: mat.get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceLight);
+  }
+  .primaryDark {
+    color: mat.get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceDark);
+  }
+  .accentDark {
+    color: mat.get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceDark);
+  }
+  .warnDark {
+    color: mat.get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceDark);
+  }
+  .background {
+    color: mat.get-color-from-palette($themeForeground, divider);
+  }
+  .text {
+    color: mat.get-color-from-palette($themeForeground, text);
+  }
+  .textDark {
+    color: mat.get-color-from-palette($textThemeEmitter, text-dark);
+  }
+  .textPrimaryLight {
+    color: mat.get-color-from-palette($textThemeEmitter, primary-light);
+  }
+  .textPrimaryDark {
+    color: mat.get-color-from-palette($textThemeEmitter, primary-dark);
+  }
+  .textAccentLight {
+    color: mat.get-color-from-palette($textThemeEmitter, accent-light);
+  }
+  .textAccentDark {
+    color: mat.get-color-from-palette($textThemeEmitter, accent-dark);
+  }
+  .textWarnLight {
+    color: mat.get-color-from-palette($textThemeEmitter, warn-light);
+  }
+  .textWarnDark {
+    color: mat.get-color-from-palette($textThemeEmitter, warn-dark);
+  }
 }
 
 .dynamicWidgetContainer {

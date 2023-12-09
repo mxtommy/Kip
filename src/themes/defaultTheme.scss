@@ -39,6 +39,16 @@ $mat-wind: (
     rudder-starboard: #389c19,
 );
 
+$mat-texts: (
+    text-dark: #797979,
+    primary-light: #3586ca,
+    primary-dark: #1656AB,
+    accent-light: #f5da6f,
+    accent-dark: #e5ab13,
+    warn-light: #e26767,
+    warn-dark: #ba0d0d,
+);
+
 // use custom theming hack
 $defaultTheme-background: custom-theme-light-background(mat.$blue-palette, 100);
 
@@ -47,4 +57,4 @@ $defaultTheme-background: custom-theme-light-background(mat.$blue-palette, 100);
 $defaultTheme-temp-light: mat.define-light-theme($defaultTheme-primary, $defaultTheme-accent, $defaultTheme-warn);
 
 // Merge our mat-theme with component specific palettes
-$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));
+$defaultTheme-light: map-merge($defaultTheme-temp-light, (background: $defaultTheme-background, widgetTexts: $mat-texts,  wind: $mat-wind, ngGauge: $mat-ngGauge));

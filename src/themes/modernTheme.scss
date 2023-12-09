@@ -111,12 +111,12 @@ $modern-theme-warn:  mat.define-palette($modern-warn);
 // widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
 // * You can pull from other mat-palettes or use custom color ie. #e3ff43
 $mat-ngGauge: (
-    primary-gaugeFaceLight: #92c7e9, //mat-color($modern-theme-primary, 300),
-    primary-gaugeFaceDark: #3586ca, // mat-color($modern-theme-primary, 900),
-    accent-gaugeFaceLight: #f5da6f,  //mat-color($modern-theme-accent, 300),
-    accent-gaugeFaceDark: #e5ab13,  //mat-color($modern-theme-accent, 900),
-    warn-gaugeFaceLight: #e26767,  //mat-color($modern-theme-warn, 300),
-    warn-gaugeFaceDark: #ba0d0d,  //mat-color($modern-theme-warn, 900),
+    primary-gaugeFaceLight: #92c7e9,
+    primary-gaugeFaceDark: #3586ca,
+    accent-gaugeFaceLight: #e5ab13,
+    accent-gaugeFaceDark: #D38006,
+    warn-gaugeFaceLight: #ba0d0d,
+    warn-gaugeFaceDark: #940303,
 );
 
 // Palette for widget-wind - wind instrument Component
@@ -135,9 +135,19 @@ $mat-wind: (
     rudder-starboard: #389c19
 );
 
+$mat-texts: (
+    text-dark: #ffffff37,
+    primary-light: #3586ca,
+    primary-dark: #175ebab5,
+    accent-light: #e5ab13,
+    accent-dark: #d29b1195,
+    warn-light: #d64040,
+    warn-dark: #db1a1a8b,
+);
+
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $modernTheme-temp: mat.define-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
 
 // Merge our mat-theme with component specific palettes
-$modernTheme-dark: map-merge($modernTheme-temp, (wind: $mat-wind, ngGauge: $mat-ngGauge));
+$modernTheme-dark: map-merge($modernTheme-temp, (widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

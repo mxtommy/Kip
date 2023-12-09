@@ -10,15 +10,17 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
+  @ViewChild('canvasMM', {static: true, read: ElementRef}) canvasMM: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('NumWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
-  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
-  @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
+
 
   dataValue: number = null;
   IZoneState: IZoneState = null;
   maxValue: number = null;
   minValue: number = null;
+  labelColor: string = undefined;
+  valueColor: string = undefined;
   dataTimestamp: number = Date.now();
   currentValueLength: number = 0; // length (in charters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentMinMaxLength: number = 0;
@@ -27,8 +29,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   flashOn: boolean = false;
   flashInterval;
 
-  canvasCtx;
-  canvasBGCtx;
+  canvasValCtx: CanvasRenderingContext2D;
+  canvasMMCtx: CanvasRenderingContext2D;
+  canvasBGCtx: CanvasRenderingContext2D;
 
   constructor() {
     super();
@@ -51,6 +54,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       showMin: false,
       numDecimal: 1,
       numInt: 1,
+      textColor: 'text',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -58,6 +62,10 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
   ngOnInit() {
     this.validateConfig();
+    this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
+    this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
+    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('numericPath', newValue => {
         this.dataValue = newValue.value;
         // init min/max
@@ -67,13 +75,14 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
         if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
 
         this.IZoneState = newValue.state;
+
         //start flashing if alarm
-        if (this.IZoneState == IZoneState.alarm && !this.flashInterval) {
+        if ((this.IZoneState == IZoneState.alarm || this.IZoneState == IZoneState.warning) && !this.flashInterval) {
           this.flashInterval = setInterval(() => {
             this.flashOn = !this.flashOn;
             this.updateCanvas();
           }, 350); // used to flash stuff in alarm
-        } else if (this.IZoneState != IZoneState.alarm) {
+        } else if (this.IZoneState == IZoneState.normal) {
           // stop alarming if not in alarm state
           if (this.flashInterval) {
             clearInterval(this.flashInterval);
@@ -85,8 +94,6 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       }
     );
 
-    this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.resizeWidget();
   }
 
@@ -103,6 +110,35 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.resizeWidget();
   }
 
+  private getColors(color: string): void {
+    switch (color) {
+      case "text":
+        this.labelColor = this.theme.textDark;
+        this.valueColor = this.theme.text;
+        break;
+
+      case "primary":
+        this.labelColor = this.theme.textPrimaryDark;
+        this.valueColor = this.theme.textPrimaryLight;
+        break;
+
+      case "accent":
+        this.labelColor = this.theme.textAccentDark;
+        this.valueColor = this.theme.textAccentLight;
+        break;
+
+      case "warn":
+        this.labelColor = this.theme.textWarnDark;
+        this.valueColor = this.theme.textWarnLight;
+        break;
+
+      default:
+        this.labelColor = this.theme.textDark;
+        this.valueColor = this.theme.text;
+        break;
+    }
+  }
+
   private resizeWidget(): void {
     let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
 
@@ -111,6 +147,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) {
       this.canvasEl.nativeElement.width = Math.floor(rect.width);
       this.canvasEl.nativeElement.height = Math.floor(rect.height);
+      this.canvasMM.nativeElement.width = Math.floor(rect.width);
+      this.canvasMM.nativeElement.height = Math.floor(rect.height);
       this.canvasBG.nativeElement.width = Math.floor(rect.width);
       this.canvasBG.nativeElement.height = Math.floor(rect.height);
       this.currentValueLength = 0; //will force resetting the font size
@@ -126,10 +164,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
   private updateCanvas() {
-    if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    if (this.canvasValCtx) {
+      this.canvasValCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
       this.drawValue();
       if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
+        this.canvasMMCtx.clearRect(0,0,this.canvasMM.nativeElement.width, this.canvasMM.nativeElement.height);
         this.drawMinMax();
       }
     }
@@ -137,15 +176,15 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
   private updateCanvasBG() {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvasBGCtx.clearRect(0,0,this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
       this.drawTitle();
       this.drawUnit();
     }
   }
 
   private drawValue() {
-    let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
-    let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
+    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
+    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     let valueText: string;
 
     if (this.dataValue !== null) {
@@ -166,19 +205,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
       // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
-      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
-      let measure = this.canvasCtx.measureText(valueText).width;
+      this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      let measure = this.canvasValCtx.measureText(valueText).width;
 
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
         this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
       // now decrease by 1 to in case still too big
-      while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
+      while (this.canvasValCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
         this.valueFontSize--;
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
       }
     }
 
@@ -186,39 +225,44 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     switch (this.IZoneState) {
       case IZoneState.alarm:
         if (this.flashOn) {
-          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+          this.canvasValCtx.fillStyle = this.valueColor;
         } else {
           // draw warn background
-          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
-          this.canvasCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-          // text color
-          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnContrastElement.nativeElement).color;
+          this.canvasValCtx.fillStyle = this.theme.warn;
+          this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          this.canvasValCtx.fillStyle = this.valueColor;
         }
         break;
 
       case IZoneState.warning:
-        this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+        if (this.flashOn) {
+          this.canvasValCtx.fillStyle = this.valueColor;
+        } else {
+          // draw warn background
+          this.canvasValCtx.fillStyle = "#ffd00050";
+          this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          this.canvasValCtx.fillStyle = this.valueColor;
+        }
         break;
 
       default:
-        this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+        this.canvasValCtx.fillStyle = this.valueColor;
         break;
     }
 
-    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
-    this.canvasCtx.textAlign = "center";
-    this.canvasCtx.textBaseline="middle";
-    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
+    this.canvasValCtx.textAlign = "center";
+    this.canvasValCtx.textBaseline = "middle";
+    this.canvasValCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height * 0.5)+(this.valueFontSize/15), maxTextWidth);
   }
 
   private drawTitle() {
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
-    var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
+    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.94);
+    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.1);
     // set font small and make bigger until we hit a max.
     if (this.widgetProperties.config.displayName === null) { return; }
 
     // start with large font, no sense in going bigger than the size of the canvas :)
-    var fontSize = maxTextHeight;
+    let fontSize = maxTextHeight;
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     let measure = this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width;
 
@@ -236,8 +280,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasBGCtx.fillStyle = this.labelColor;
+    this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasBG.nativeElement.width*0.03,this.canvasBG.nativeElement.height*0.03, maxTextWidth);
   }
 
   private drawUnit() {
@@ -246,11 +290,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     if (this.widgetProperties.config.paths['numericPath'].convertUnitTo == 'ratio') { return; }
     if (this.widgetProperties.config.paths['numericPath'].convertUnitTo.startsWith('lat')) { return; }
     if (this.widgetProperties.config.paths['numericPath'].convertUnitTo.startsWith('lon')) { return; }
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.8));
-    var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
+    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.35);
+    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.15);
 
     // start with large font, no sense in going bigger than the size of the canvas :)
-    var fontSize = maxTextHeight;
+    let fontSize = maxTextHeight;
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     let measure = this.canvasBGCtx.measureText(this.widgetProperties.config.paths['numericPath'].convertUnitTo).width;
 
@@ -260,7 +304,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       fontSize = Math.floor(fontSize * estimateRatio);
       this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
     }
-    // now decrease by 1 to in case still too big
+    // now decrease by 1 in case font is still too big
     while (this.canvasBGCtx.measureText(this.widgetProperties.config.paths['numericPath'].convertUnitTo).width > maxTextWidth && fontSize > 0) {
       fontSize--;
       this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
@@ -268,14 +312,16 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     this.canvasBGCtx.textAlign = "right";
     this.canvasBGCtx.textBaseline="bottom";
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasBGCtx.fillText(this.widgetProperties.config.paths['numericPath'].convertUnitTo,this.canvasEl.nativeElement.width*0.97,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+    this.canvasBGCtx.fillStyle = this.valueColor;
+    this.canvasBGCtx.fillText(this.widgetProperties.config.paths['numericPath'].convertUnitTo,this.canvasBG.nativeElement.width*0.97,this.canvasBG.nativeElement.height*0.97, maxTextWidth);
   }
 
   private drawMinMax() {
     if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; } //no need to do anything if we're not showing min/max
 
     let valueText: string = '';
+    const maxTextWidth = Math.floor(this.canvasMM.nativeElement.width * 0.45);
+    const maxTextHeight = Math.floor(this.canvasMM.nativeElement.height * 0.075);
 
     if (this.widgetProperties.config.showMin) {
       if (this.minValue != null) {
@@ -288,40 +334,36 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       if (this.maxValue != null) {
         valueText += " Max: " + this.applyDecorations(this.formatWidgetNumberValue(this.maxValue));
       } else {
-        valueText += valueText + " Max: --";
+        valueText += " Max: --";
       }
     }
     valueText = valueText.trim();
 
     if (this.currentMinMaxLength != valueText.length) {
       this.currentMinMaxLength = valueText.length;
-      var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.6));
-      var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.85));
 
       // start with large font, no sense in going bigger than the size of the canvas :)
       this.minMaxFontSize = maxTextHeight;
-      this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
-      let measure = this.canvasBGCtx.measureText(valueText).width;
+      this.canvasMMCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+      let measure = this.canvasMMCtx.measureText(valueText).width;
 
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
         this.minMaxFontSize = Math.floor(this.minMaxFontSize * estimateRatio);
-        this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+        this.canvasMMCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
       }
       // now decrease by 1 to in case still too big
-      while (this.canvasBGCtx.measureText(valueText).width > maxTextWidth && this.minMaxFontSize > 0) {
+      while (this.canvasMMCtx.measureText(valueText).width > maxTextWidth && this.minMaxFontSize > 0) {
         this.minMaxFontSize--;
-        this.canvasBGCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+        this.canvasMMCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
       }
-
     }
 
-    this.canvasCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
-    this.canvasCtx.textAlign = "left";
-    this.canvasCtx.textBaseline="bottom";
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
-    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.97, maxTextWidth);
+    this.canvasMMCtx.textAlign = "left";
+    this.canvasMMCtx.textBaseline="bottom";
+    this.canvasMMCtx.fillStyle = this.valueColor;
+    this.canvasMMCtx.fillText(valueText, this.canvasMM.nativeElement.width*0.03, this.canvasMM.nativeElement.height*0.95, maxTextWidth);
   }
 
   private applyDecorations(txtValue: string): string {
@@ -340,31 +382,4 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     }
     return txtValue;
   }
-
-  // private padValue(val, int, dec): string {
-  //   let i = 0;
-  //   let s, n, foo;
-  //   let strVal: string
-  //   val = parseFloat(val);
-  //   n = (val < 0);
-  //   val = Math.abs(val);
-  //   if (dec > 0) {
-  //       foo = val.toFixed(dec).toString().split('.');
-  //       s = int - foo[0].length;
-  //       for (; i < s; ++i) {
-  //           foo[0] = '0' + foo[0];
-  //       }
-  //       strVal = (n ? '-' : '') + foo[0] + '.' + foo[1];
-  //   }
-  //   else {
-  //       strVal = Math.round(val).toString();
-  //       s = int - strVal.length;
-  //       for (; i < s; ++i) {
-  //           strVal = '0' + strVal;
-  //       }
-  //       strVal = (n ? '-' : '') + strVal;
-  //   }
-  //   return strVal;
-  // }
-
 }

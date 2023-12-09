@@ -69,6 +69,16 @@ $mat-wind: (
     rudder-starboard: #389c19,
 );
 
+$mat-texts: (
+    text-dark: #797979,
+    primary-light: #3586ca,
+    primary-dark: #1656AB,
+    accent-light: #f5da6f,
+    accent-dark: #e5ab13,
+    warn-light: #e26767,
+    warn-dark: #ba0d0d,
+);
+
 // use custom theming hack
 $platypusTheme-background: custom-theme-light-background($mat-perry, 500);
 
@@ -77,4 +87,4 @@ $platypusTheme-background: custom-theme-light-background($mat-perry, 500);
 $platypusTheme-temp-light: mat.define-light-theme($platypusTheme-primary, $platypusTheme-accent, $platypusTheme-warn);
 
 // Merge our mat-theme with component specific palettes
-$platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background, wind: $mat-wind, ngGauge: $mat-ngGauge));
+$platypusTheme-light: map-merge($platypusTheme-temp-light, (background: $platypusTheme-background, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

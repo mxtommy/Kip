@@ -173,6 +173,16 @@ $mat-wind: (
     rudder-starboard: #389c19,
 );
 
+$mat-texts: (
+    text-dark: #520000,
+    primary-light: #520000,
+    primary-dark: #520000,
+    accent-light: #520000,
+    accent-dark: #520000,
+    warn-light: #520000,
+    warn-dark: #520000,
+);
+
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $nightMode-temp: mat.define-dark-theme($nightMode-theme-primary, $nightMode-theme-accent, $nightMode-theme-warn);
@@ -182,4 +192,4 @@ $nightMode-temp: mat.define-dark-theme($nightMode-theme-primary, $nightMode-them
 $nightMode-background: custom-theme-dark-background($nightMode-theme-special, 500);
 $nightMode-foreground: custom-theme-dark-foreground(#520000);
 // Merge our mat-theme with component specific palettes
-$nightMode-dark: map-merge($nightMode-temp, (background: $nightMode-background,foreground: $nightMode-foreground, wind: $mat-wind, ngGauge: $mat-ngGauge));
+$nightMode-dark: map-merge($nightMode-temp, (background: $nightMode-background, foreground: $nightMode-foreground, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

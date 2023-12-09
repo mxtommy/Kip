@@ -18,6 +18,8 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
   canvasCtx;
   canvasBGCtx;
+  labelColor: string = undefined;
+  valueColor: string = undefined;
 
   constructor() {
     super();
@@ -35,6 +37,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
           sampleTime: 500
         }
       },
+      textColor: 'text',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -42,6 +45,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
 
   ngOnInit() {
     this.validateConfig();
+    this.getColors(this.widgetProperties.config.textColor);
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.resizeWidget();
@@ -58,6 +62,35 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
 
   ngAfterViewChecked() {
     this.resizeWidget();
+  }
+
+  private getColors(color: string): void {
+    switch (color) {
+      case "text":
+        this.labelColor = this.theme.textDark;
+        this.valueColor = this.theme.text;
+        break;
+
+      case "primary":
+        this.labelColor = this.theme.textPrimaryDark;
+        this.valueColor = this.theme.textPrimaryLight;
+        break;
+
+      case "accent":
+        this.labelColor = this.theme.textAccentDark;
+        this.valueColor = this.theme.textAccentLight;
+        break;
+
+      case "warn":
+        this.labelColor = this.theme.textWarnDark;
+        this.valueColor = this.theme.textWarnLight;
+        break;
+
+      default:
+        this.labelColor = this.theme.textDark;
+        this.valueColor = this.theme.text;
+        break;
+    }
   }
 
   private resizeWidget(): void {
@@ -100,8 +133,8 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   }
 
   drawValue() {
-    let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
-    let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
+    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
+    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     let valueText : string;
 
     if (this.dataValue === null) {
@@ -135,13 +168,13 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasCtx.fillStyle = this.valueColor;
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
   drawTitle() {
-    var maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
-    var maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
+    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
+    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
     // set font small and make bigger until we hit a max.
     if (this.widgetProperties.config.displayName === null) { return; }
     var fontSize = 1;
@@ -154,7 +187,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
 
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasBGCtx.fillStyle = this.labelColor;
     this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
   }
 }

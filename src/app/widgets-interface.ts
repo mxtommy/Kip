@@ -28,6 +28,13 @@ export interface ITheme {
   warnDark: string;
   background: string;
   text: string;
+  textDark: string;
+  textPrimaryLight: string;
+  textPrimaryDark: string;
+  textAccentLight: string;
+  textAccentDark: string;
+  textWarnLight: string;
+  textWarnDark: string;
 }
 
 /**
@@ -130,6 +137,8 @@ export interface IWidgetSvcConfig {
   frameColor?: string;
   /** Used by multiple gauge Widget */
   barColor?: string;
+  /** Used by multiple gauge Widget */
+  textColor?: string;
   /** Used by multiple gauge Widget */
   radialSize?: string;
   /** Used by multiple Widget to set minimum data range to display. */

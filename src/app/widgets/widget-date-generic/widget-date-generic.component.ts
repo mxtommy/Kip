@@ -22,6 +22,9 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
   canvasCtx;
   canvasBGCtx;
 
+  labelColor: string = undefined;
+  valueColor: string = undefined;
+
   constructor() {
     super();
 
@@ -40,6 +43,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
       },
       dateFormat: 'dd/MM/yyyy HH:mm:ss',
       dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      textColor: 'text',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -47,6 +51,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
 
   ngOnInit() {
     this.validateConfig();
+    this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('gaugePath', newValue => {
       this.dataValue = newValue.value;
       this.updateCanvas();
@@ -63,6 +68,35 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
 
   ngAfterViewChecked() {
     this.resizeWidget();
+  }
+
+  private getColors(color: string): void {
+    switch (color) {
+      case "text":
+        this.labelColor = this.theme.textDark;
+        this.valueColor = this.theme.text;
+        break;
+
+      case "primary":
+        this.labelColor = this.theme.textPrimaryDark;
+        this.valueColor = this.theme.textPrimaryLight;
+        break;
+
+      case "accent":
+        this.labelColor = this.theme.textAccentDark;
+        this.valueColor = this.theme.textAccentLight;
+        break;
+
+      case "warn":
+        this.labelColor = this.theme.textWarnDark;
+        this.valueColor = this.theme.textWarnLight;
+        break;
+
+      default:
+        this.labelColor = this.theme.textDark;
+        this.valueColor = this.theme.text;
+        break;
+    }
   }
 
   private resizeWidget(): void {
@@ -101,8 +135,8 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
   }
 
   drawValue() {
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
+    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
+    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     let valueText: string;
 
     if (this.dataValue === null) {
@@ -145,7 +179,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
     this.canvasCtx.font = 'bold ' + this.valueFontSize.toString() + 'px Arial';
     this.canvasCtx.textAlign = 'center';
     this.canvasCtx.textBaseline = 'middle';
-    this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasCtx.fillStyle = this.valueColor;
     this.canvasCtx.fillText(
       valueText,
       this.canvasEl.nativeElement.width / 2,
@@ -155,8 +189,8 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
   }
 
   drawTitle() {
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.2));
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.8));
+    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
+    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
     // set font small and make bigger until we hit a max.
     if (this.widgetProperties.config.displayName === null) { return; }
     let fontSize = 1;
@@ -169,7 +203,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
 
     this.canvasBGCtx.textAlign = 'left';
     this.canvasBGCtx.textBaseline = 'top';
-    this.canvasBGCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+    this.canvasBGCtx.fillStyle = this.labelColor;
     this.canvasBGCtx.fillText(
       this.widgetProperties.config.displayName,
       this.canvasEl.nativeElement.width * 0.03,
