@@ -1,3 +1,13 @@
+# V 2.4.0
+## New features
+* Added Numeric, Date and Text Widgets color support
+* Added Next Waypoint bearing indicator to Wind Widget
+* Added support for Widget data expiration (TTL). Previously Widget stayed still when a source stopped sending data or the server connection was lost. 
+## Improvements
+* Strengthen Widget configuration management when adding new KIP properties 
+## Fixes
+* Numeric Widget HH:MM:SS conversion unit broken
+* Wind Widget speed value indicator sometimes doing a full rotating when passing over zero degrees
 # V 2.3.0
 ## New features
 * Added support for Signal K Source Priorities
