@@ -30,7 +30,7 @@
     "nmea"
   ],
   "signalk": {
-    "appIcon": "./assets/icon-72x72.png",
+    "appIcon": "assets/icon-72x72.png",
     "displayName": "KIP Instrument MFD"
   },
   "scripts": {
