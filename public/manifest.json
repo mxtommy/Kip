@@ -1,38 +1,53 @@
 {
-    "theme_color": "#FFC90E",
-    "background_color": "#080808",
-    "display": "standalone",
-    "scope": "./",
-    "start_url": "./",
-    "name": "KIP",
-    "short_name": "KIP",
-    "description": "A Signal K Instrument Dashboard",
-    "orientation": "landscape",
-    "icons": [
-        {
-          "src": "assets/icon-64x64.png",
-          "sizes": "64x64",
+  "id": "/@mxtommy/kip/",
+  "theme_color": "#1E1E1E",
+  "background_color": "#1E1E1E",
+  "display": "fullscreen",
+  "scope": "/@mxtommy/kip/",
+  "start_url": "/@mxtommy/kip/",
+  "name": "KIP Instrument MFD",
+  "short_name": "KIP",
+  "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
+  "orientation": "landscape",
+  "icons": [
+      {
+        "src": "assets/icon-64x64.png",
+        "sizes": "64x64",
+        "type": "image/png"
+      },
+      {
+          "src": "assets/icon-192x192.png",
+          "sizes": "192x192",
           "type": "image/png"
-        },
-        {
-            "src": "assets/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "assets/icon-256x256.png",
-            "sizes": "256x256",
-            "type": "image/png"
-        },
-        {
-            "src": "assets/icon-384x384.png",
-            "sizes": "384x384",
-            "type": "image/png"
-        },
-        {
-            "src": "assets/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ]
+      },
+      {
+          "src": "assets/icon-256x256.png",
+          "sizes": "256x256",
+          "type": "image/png"
+      },
+      {
+          "src": "assets/icon-384x384.png",
+          "sizes": "384x384",
+          "type": "image/png"
+      },
+      {
+          "src": "assets/icon-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+      }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshot-540x720.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "assets/screenshot-720x540.png",
+      "type": "image/png",
+      "sizes": "720x540",
+      "form_factor": "wide"
+    }
+  ]
 }

@@ -3,7 +3,7 @@
   "theme_color": "#1E1E1E",
   "background_color": "#1E1E1E",
   "display": "fullscreen",
-  "scope": "/@mxtommy/kip",
+  "scope": "/@mxtommy/kip/",
   "start_url": "/@mxtommy/kip/",
   "name": "KIP Instrument MFD",
   "short_name": "KIP",

@@ -34,10 +34,9 @@
     "displayName": "KIP Instrument MFD"
   },
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve --configuration=dev --serve-path=/",
-    "build-dev": "ng build --configuration=dev --base-href=/@mxtommy/kip/",
-    "build-prod": "ng build --configuration=production --base-href=/@mxtommy/kip/",
+    "dev": "ng serve --configuration=dev --serve-path=/@mxtommy/kip/",
+    "build-dev": "ng build --configuration=dev",
+    "build-prod": "ng build --configuration=production",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
