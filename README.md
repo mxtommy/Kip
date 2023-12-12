@@ -133,8 +133,8 @@ Linux, Macs, Pi or Windows dev platform supported
 5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will  build KIP.
 
 **Work**
-1. Fire up your local dev instance with `npm run start`.
-2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/`
+1. Fire up your local dev instance with `npm run dev`.
+2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`
 3. Voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
