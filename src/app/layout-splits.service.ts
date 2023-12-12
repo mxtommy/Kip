@@ -66,7 +66,7 @@ export class LayoutSplitsService {
 
   nextRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
-    if (this.router.url == "/settings") {
+    if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {
       this.router.navigate(['/page', currentIndex]);
     } else if ((currentIndex == -1) || ((currentIndex + 1) == this.rootUUIDs.length)) {
       this.router.navigate(['/page', 0]);
@@ -77,7 +77,7 @@ export class LayoutSplitsService {
 
   previousRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
-    if (this.router.url == "/settings") {
+    if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {
       this.router.navigate(['/page', currentIndex]);
     } else if (currentIndex >= 1) {
       this.router.navigate(['/page', currentIndex -1]);
