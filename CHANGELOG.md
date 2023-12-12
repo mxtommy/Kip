@@ -1,4 +1,4 @@
-# V 2.4.0
+ # V 2.4.0
 ## New features
 * Gesture Support: Added horizontal Swipe to cycle pages and Double Tab to toggle night mode 
 * Numeric, Date and Text Widgets: Added configurable color support
