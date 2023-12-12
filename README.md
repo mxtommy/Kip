@@ -138,8 +138,10 @@ Linux, Macs, Pi or Windows dev platform supported
 3. Voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
-
 *You also need a running Signal K server for KIP to connect to and receive data.*
+
+**Apple PWA Icon Generation**
+Use the following tool and command line: npx pwa-asset-generator ./src/svg-templates/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src/manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%
 
 **Share**
 Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
