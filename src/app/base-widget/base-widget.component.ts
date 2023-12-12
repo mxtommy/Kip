@@ -135,7 +135,7 @@ export abstract class BaseWidgetComponent {
     if (pathType == 'number') {
       if (this.widgetProperties.config.enableTimeout) {
         dataPipe$ = pathObs.observable.pipe(
-          filterNullish(),
+          // filterNullish(),
           map(x => ({
             value: this.unitsService.convertUnit(convert, x.value),
             state: x.state
@@ -159,7 +159,7 @@ export abstract class BaseWidgetComponent {
         );
       } else {
         dataPipe$ = pathObs.observable.pipe(
-          filterNullish(),
+          // filterNullish(),
           map(x => ({
             value: this.unitsService.convertUnit(convert, x.value),
             state: x.state
@@ -170,7 +170,7 @@ export abstract class BaseWidgetComponent {
     } else if (pathType == 'string' || pathType == 'Date') {
       if (this.widgetProperties.config.enableTimeout) {
         dataPipe$ = pathObs.observable.pipe(
-          filterNullish(),
+          // filterNullish(),
           sampleTime(widgetSample),
           timeout({
             each: dataTimeout,
@@ -190,13 +190,13 @@ export abstract class BaseWidgetComponent {
         );
       } else {
         dataPipe$ = pathObs.observable.pipe(
-          filterNullish(),
+          // filterNullish(),
           sampleTime(widgetSample),
         );
       }
     } else { // boolean
       dataPipe$ = pathObs.observable.pipe(
-        filterNullish(),
+        // filterNullish(),
         sampleTime(widgetSample),
       );
     }
