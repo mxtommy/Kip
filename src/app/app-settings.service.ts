@@ -1,7 +1,5 @@
-import { Inject, Injectable } from '@angular/core';
-import { APP_BASE_HREF } from '@angular/common';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Router } from '@angular/router';
 import { cloneDeep } from "lodash-es";
 
 import { IDataSet } from './data-set.service';
@@ -49,8 +47,6 @@ export class AppSettingsService {
   root
 
   constructor(
-    @Inject(APP_BASE_HREF) private baseHref: string,
-    private router: Router,
     private storage: StorageService
     )
   {
@@ -338,7 +334,6 @@ public loadConfigFromLocalStorage(type: string) {
       } else {
         this.saveThemeConfigToLocalStorage();
       }
-
     }
   }
 
@@ -519,8 +514,8 @@ public loadConfigFromLocalStorage(type: string) {
   }
 
   public reloadApp() {
-    console.log("[AppSettings Service] Reload app at basehref: " + this.baseHref);
-    location.replace(this.baseHref);
+    console.log("[AppSettings Service] Reload app");
+    location.replace("./");
   }
   //// Storage Objects
   // builds config data oject from running data

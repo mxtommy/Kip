@@ -2,7 +2,6 @@
 // Angular
 import { BrowserModule, HammerModule, HammerGestureConfig, HAMMER_GESTURE_CONFIG } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER, Injectable } from '@angular/core';
-import { APP_BASE_HREF, PlatformLocation } from '@angular/common';
 import { RouterModule, Routes }   from '@angular/router';
 import { FormsModule }   from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -102,7 +101,7 @@ import { WidgetLoginComponent } from './widgets/widget-login/widget-login.compon
 
 
 const appRoutes: Routes = [
-  { path: '', redirectTo: '/page/0', pathMatch: 'full' },
+  { path: '', redirectTo: 'page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
@@ -201,7 +200,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    RouterModule.forRoot(appRoutes, { useHash: true /* , enableTracing: true */, relativeLinkResolution: 'legacy' } ),
+    RouterModule.forRoot(appRoutes, { useHash: true /*, enableTracing: true*/, relativeLinkResolution: 'legacy' } ),
     AngularSplitModule,
     AngularResizeEventModule,
     BrowserAnimationsModule,
@@ -266,12 +265,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     AppSettingsService,
     NotificationsService,
     TimersService,
-    StorageService,
-    {
-      provide: APP_BASE_HREF,
-      useFactory: (s: PlatformLocation) => s.getBaseHrefFromDOM(),
-      deps: [PlatformLocation]
-    }
+    StorageService
   ],
   bootstrap: [AppComponent]
 })

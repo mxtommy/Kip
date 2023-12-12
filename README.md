@@ -23,6 +23,23 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 - Swipe left and right to cycle trough your Widget layouts.
 - Double tap to toggle night mode.
 
+### Run KIP As a Web Application
+Run KIP in full screen, with no browser controls visible, just like regular mobile apps. This feature is supported on most mobile OS. Each browser has it's own way of handling PWA deployments.
+
+To install KIP as an App, first load KIP in the browser. Then follow the steps below:
+
+**iOS**
+1. Press the "Share" button
+2. Select "Add to Home Screen" from the action popup list
+3. Tap "Add" in the top right corner to finish installing
+KIP is now installed and available on your home screen
+
+**Android**
+1. Press the "three dot" icon in the upper right to open the menu
+2. Select "Add to Home screen"
+3. Press the "Add" button in the popup
+KIP is now installed and available on your home screen
+
 ## Multiple User Profiles
   If you have different roles on board; captain, skipper, tactician, navigator, engineers or simply different people with different needs, each can tailor as they wish. The use of profiles can also offer the ability to tie specific configuration arrangements to use case or device form factors.
 
@@ -116,21 +133,18 @@ Linux, Macs, Pi or Windows dev platform supported
 5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will  build KIP.
 
 **Work**
-1. Fire up your local dev instance with CLI using `ng serve --configuration=dev --serve-path=/` to enable usage of the debugger map files.
+1. Fire up your local dev instance with `npm run start`.
 2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/`
-3. Voila! You can build, test and fix.
+3. Voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
+*You also need a running Signal K server for KIP to connect to and receive data.*
 
-**Publish**
-1. Once done with your work, from your fork's working branch, commit and publish your changes to you fork.
-2. Make a Pull request to have your code reviewed, merged and added to the next release.
+**Apple PWA Icon Generation**
+Use the following tool and command line: npx pwa-asset-generator ./src/svg-templates/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src/manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%
 
-Or
-
-3. Build your own production version:
-  1. Build: In a terminal from you project folder, use `ng build --configuration=production` to generate a production build.
-  2. Have fun! 
+**Share**
+Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
 
 **Communication and Collaboration**
 Join us on Slack -> Signalk-dev / Kip channel. We will hook up and assist as best we can.

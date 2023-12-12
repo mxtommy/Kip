@@ -66,27 +66,23 @@ export class LayoutSplitsService {
 
   nextRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
-    if (currentIndex == -1) {
-      this.router.navigate(['/page', 0]);
-    } else if (this.router.url != "/settings") {
-      this.router.navigate(['/page', currentIndex + 1]);
-    } else {
+    if (this.router.url == "/settings") {
       this.router.navigate(['/page', currentIndex]);
+    } else if ((currentIndex == -1) || ((currentIndex + 1) == this.rootUUIDs.length)) {
+      this.router.navigate(['/page', 0]);
+    } else {
+      this.router.navigate(['/page', currentIndex + 1]);
     }
   }
 
   previousRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
-    if (currentIndex == -1) {
-      this.router.navigate(['/page', 0]);
-    } else if (this.router.url != "/settings") {
-      if (currentIndex == 0) {
-        this.router.navigate(['/page', this.rootUUIDs.length - 1]);
-      } else {
-        this.router.navigate(['/page', currentIndex - 1]);
-      }
-    } else {
+    if (this.router.url == "/settings") {
       this.router.navigate(['/page', currentIndex]);
+    } else if (currentIndex >= 1) {
+      this.router.navigate(['/page', currentIndex -1]);
+    } else {
+      this.router.navigate(['/page', this.rootUUIDs.length - 1]);
     }
   }
 

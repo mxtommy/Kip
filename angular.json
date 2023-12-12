@@ -11,7 +11,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "baseHref": "./",
+            "baseHref": "/@mxtommy/kip/",
             "aot": true,
             "outputPath": "public",
             "index": "src/index.html",
@@ -20,7 +20,6 @@
             "polyfills": "src/polyfills.ts",
             "assets": [
               "src/assets",
-              "src/favicon.ico",
               "src/manifest.json"
             ],
             "styles": [
