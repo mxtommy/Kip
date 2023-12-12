@@ -1,4 +1,11 @@
- # V 2.4.0
+ 
+# V 2.4.1
+## Fixes
+* Progressive Web Application feature for mobile devices
+* Random conflicting double tab action on mobile devices causing screen zoom instead of Night Mode activation
+* Removed widget data stream filtering of null values 
+* Help and data browser navigation actions skipping current widget active page
+# V 2.4.0
 ## New features
 * Gesture Support: Added horizontal Swipe to cycle pages and Double Tab to toggle night mode 
 * Numeric, Date and Text Widgets: Added configurable color support
