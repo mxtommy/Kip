@@ -69,18 +69,22 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
       this.updateSourcesAndUnits();
       try {
+        this.formGroup.controls['source'].reset(); // clear value
         if (this.formGroup.controls['path'].valid) {
+          if (this.availableSources.length == 1) { // if only on source, set to default (default source means: use parent path, and not a specific source value)
+            this.formGroup.controls['source'].setValue('default');
+          }
           this.formGroup.controls['source'].enable();
-          this.formGroup.controls['source'].patchValue('default');
           this.formGroup.controls['sampleTime'].enable();
           if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+            this.formGroup.controls['convertUnitTo'].setValue(this.unitList.default);
             this.formGroup.controls['convertUnitTo'].enable();
-            this.formGroup.controls['convertUnitTo'].patchValue(this.unitList.default);
           }
         } else {
           this.formGroup.controls['source'].disable();
           this.formGroup.controls['sampleTime'].disable();
           if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+            this.formGroup.controls['convertUnitTo'].reset();
             this.formGroup.controls['convertUnitTo'].disable();
           }
         }
@@ -111,36 +115,29 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
   }
 
   updateSourcesAndUnits() {
-    if (this.formGroup.controls['path'].value == undefined || this.formGroup.controls['path'].value == null || this.formGroup.controls['path'].value == "") {
-      if (this.formGroup.value.source == undefined || this.formGroup.value.source == null || this.formGroup.value.source == "") {
+    let pathObject = this.signalKService.getPathObject(this.formGroup.controls['path'].value);
+    if (pathObject != null) {
+      if (Object.keys(pathObject.sources).length == 1) {
         this.availableSources = ['default'];
-      } else {
-        this.availableSources = ['default'].concat([this.formGroup.value.source]);
+      } else if (Object.keys(pathObject.sources).length > 1) {
+        this.availableSources = Object.keys(pathObject.sources);
       }
+      // this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     } else {
-      let pathObject = this.signalKService.getPathObject(this.formGroup.controls['path'].value);
-      if (pathObject != null) {
-        if (Object.keys(pathObject.sources).length == 1) {
-          this.availableSources = ['default'];
-        } else if (Object.keys(pathObject.sources).length > 1) {
-          this.availableSources = Object.keys(pathObject.sources);
+      // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL, or Signal K server config. We need to disable the fields.
+      try {
+        this.formGroup.controls['source'].disable();
+        this.formGroup.controls['sampleTime'].disable();
+        if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+          this.formGroup.controls['convertUnitTo'].disable();
         }
-        // this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-      } else {
-        // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL, or Signal K server config. We need to disable the fields.
-        try {
-          this.formGroup.controls['source'].disable();
-          this.formGroup.controls['sampleTime'].disable();
-          if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-            this.formGroup.controls['convertUnitTo'].disable();
-          }
-        } catch (error) {
-          console.debug(error);
-        }
-
+      } catch (error) {
+        console.debug(error);
       }
+
     }
-    this.unitList = this.signalKService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+
+    this.unitList = this. signalKService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
   }
 
 }
