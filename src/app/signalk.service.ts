@@ -219,13 +219,17 @@ export class SignalKService {
     let pathIndex = this.skData.findIndex(pathObject => pathObject.path == updatePath);
     if (pathIndex >= 0) { // exists
 
-      if (this.skData[pathIndex].defaultSource == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
+      if (this.skData[pathIndex].defaultSource === undefined) { // undefined means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
         this.skData[pathIndex].defaultSource = dataPath.source;
       }
-      if (this.skData[pathIndex].type == null) { // null means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
+      if ((this.skData[pathIndex].type === undefined) && (dataPath.value !== null)) {
+        // undefined means the path was first created by a Meta update. Meta updates don't
+        // contain source information so we set default source on first source data update.
+        // If the value is null, we don't set the value type yet as null is of type object
+        // and it's not what we want. If null we wait to set the type when we get a value.
         this.skData[pathIndex].type = typeof(dataPath.value);
 
-        // set path data type to accommodate for SK datetype
+        // Manually set path string data type if of valid SK datetype
         if (typeof(dataPath.value) == "string") {
           if (isRfc3339StringDate(dataPath.value)) {
             this.skData[pathIndex].type = "Date";
@@ -360,11 +364,11 @@ export class SignalKService {
     } else { // not in our list yet. The Meta update came before the Source update.
       this.skData.push({
         path: metaPath,
-        pathValue: null,
-        defaultSource: null,
+        pathValue: undefined,
+        defaultSource: undefined,
         sources: {},
         meta: meta.meta,
-        type: null,
+        type: undefined,
         state: IZoneState.normal
       });
     }

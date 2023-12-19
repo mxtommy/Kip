@@ -274,8 +274,8 @@ export class SignalKDeltaService {
             this.signalKNotifications$.next(notification);
 
           } else {
-            // It's a path value source update
-            if (typeof(item.value) == 'object') {
+            // It's a path value source update. Check if it's an Object. NOTE: null represents an undefined object and so is an object it's self, but in SK it should be handled as a value to mean: the path/source exists, but no value can ge generated. Ie. a depth sensor that can't read bottom depth in very deep water will send null.
+            if ((typeof(item.value) == 'object') && (item.value !== null)) {
 
               let keys = Object.keys(item.value);
               for (let i = 0; i < keys.length; i++) {
@@ -299,7 +299,7 @@ export class SignalKDeltaService {
                 this.signalKDataPath$.next(dataPath);
               }
             } else {
-              // It's a simple data value
+              // It's a Primitive type or a null value
               let dataPath: IPathValueData = {
                 context: context,
                 path: item.path,

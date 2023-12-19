@@ -10,7 +10,7 @@
           formControlName="path"
           required
           [matAutocomplete]="pathAutoComplete">
-        <button style="top:-8px" mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].patchValue('')">
+        <button style="top:-8px" mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].setValue('')">
           <span class="fa-solid fa-close"></span>
         </button>
         <mat-autocomplete #pathAutoComplete="matAutocomplete">
