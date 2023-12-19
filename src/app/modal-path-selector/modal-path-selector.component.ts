@@ -64,9 +64,10 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     // autocomplete filtering
     this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(startWith(''), map(value => this.filterPaths(value)))
 
+    this.formGroup.updateValueAndValidity();
+
     //subscribe to path formControl changes
     this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
-
       this.updateSourcesAndUnits();
       try {
         this.formGroup.controls['source'].reset(); // clear value
@@ -121,15 +122,19 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
         this.availableSources = ['default'];
       } else if (Object.keys(pathObject.sources).length > 1) {
         this.availableSources = Object.keys(pathObject.sources);
+        if (this.formGroup.controls['source'].value == 'default') {
+          this.formGroup.controls['source'].reset();
+        }
       }
-      // this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     } else {
       // the path cannot be found. It's probably coming from default fixed Widget config, or user changed server URL, or Signal K server config. We need to disable the fields.
       try {
         this.formGroup.controls['source'].disable();
+        this.formGroup.controls['source'].reset();
         this.formGroup.controls['sampleTime'].disable();
         if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
           this.formGroup.controls['convertUnitTo'].disable();
+          this.formGroup.controls['convertUnitTo'].reset();
         }
       } catch (error) {
         console.debug(error);
