@@ -1,4 +1,7 @@
- 
+# V 2.4.2
+## Fixes
+* null path values causing errors, preventing proper value types assignment and default source selection
+* Help text and color update
 # V 2.4.1
 ## Fixes
 * Progressive Web Application feature for mobile devices
