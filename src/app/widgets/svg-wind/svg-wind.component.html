@@ -462,14 +462,29 @@
     <g
        id="vessel">
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient20477);stroke-width:3.29218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient20477);stroke-width:3.29218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.5"
          d="m 290.42597,338.16266 c 2.63751,1.24549 18.13789,-172.91133 -60.18622,-214.49975"
          id="rightSide" />
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient24749);stroke-width:3.29218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient24749);stroke-width:3.29218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.5"
          d="m 171.57403,338.16266 c -2.63751,1.24549 -18.13789,-172.91133 60.18622,-214.49975"
          id="LeftSide" />
     </g>
+  </g>
+  <!-- Laylines -->
+  <g [style.display]="closeHauledLineEnable ? 'inline' : 'none'"
+     id="LayerLayline"
+     style="display:inline">
+    <path *ngIf="trueWindAngle != null"
+      [attr.d]="closeHauledLineStbdPath"
+       id="PortLayline"
+       style="display:inline;fill:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:4px;stroke-opacity:0.6"
+       class="laylines" />
+    <path *ngIf="trueWindAngle != null"
+      [attr.d]="closeHauledLinePortPath"
+       class="laylines"
+       style="display:inline;fill:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:4px;stroke-opacity:0.6"
+       id="StbdLayline" />
   </g>
 <!-- wind shift sector -->
   <g [style.display]="windSectorEnable ? 'inline' : 'none'"
@@ -485,21 +500,6 @@
       id="StbdSectorShift"
       class="wind-sector-stbd"
       style="fill-opacity:0.3;stroke:none;stroke-width:1.90858;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.483517" />
-  </g>
-  <!-- Laylines -->
-  <g [style.display]="closeHauledLineEnable ? 'inline' : 'none'"
-     id="LayerLayline"
-     style="display:inline">
-    <path *ngIf="trueWindAngle != null"
-      [attr.d]="closeHauledLineStbdPath"
-       id="PortLayline"
-       style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
-       class="laylines" />
-    <path *ngIf="trueWindAngle != null"
-      [attr.d]="closeHauledLinePortPath"
-       class="laylines"
-       style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
-       id="StbdLayline" />
   </g>
 <!-- Compass -->
   <g
@@ -754,16 +754,17 @@
       x="68.010208"
       id="tspan7125">330</tspan></text>
   <!-- COG Indicator -->
-  <g id="COGIndicator">
+  <g [style.display]="courseOverGroundActive ? 'inline' : 'none'"
+    id="COGIndicator">
     <path
       id="indicator"
-      style="fill:#ff6600;stroke-width:5.76507;stroke-linecap:square"
+      style="fill:#e600ff;stroke-width:5.76507;stroke-linecap:square"
       d="m 233.42911,73.408997 a 2.5,2.5 0 0 1 -2.5,2.5 2.5,2.5 0 0 1 -2.5,-2.5 2.5,2.5 0 0 1 2.5,-2.5 2.5,2.5 0 0 1 2.5,2.5 z m -11.72079,-40.278243 6.73667,-4.970565 c 1.41548,-1.044398 3.69456,-1.044398 5.11004,0 l 6.73666,4.97056 c 1.41549,1.044397 1.41549,2.725985 0,3.770382 l -6.73667,4.970566 c -1.41547,1.044391 -3.69456,1.044397 -5.11004,0 l -6.73666,-4.97056 c -1.41548,-1.044397 -1.41548,-2.725991 0,-3.770383 z m 6.73255,-4.677026 h 5 v 45.031639 h -5 z"
     />
-    <animateTransform #waypointAnimate attributeName="transform"
+    <animateTransform #courseOverGroundAnimate attributeName="transform"
       type="rotate"
-      [attr.from]="waypoint.oldDegreeIndicator+' 231 231'"
-      [attr.to]="waypoint.newDegreeIndicator+' 231 231'"
+      [attr.from]="courseOverGround.oldDegreeIndicator+' 231 231'"
+      [attr.to]="courseOverGround.newDegreeIndicator+' 231 231'"
       begin="indefinite"
       dur="0.5s"
       additive="replace"

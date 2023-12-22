@@ -1,6 +1,8 @@
 <div class="windWrapper">
         <app-svg-wind
             [compassHeading]="currentHeading"
+            [courseOverGroundAngle]="courseOverGroundAngle"
+            [courseOverGroundEnable]="widgetProperties.config.courseOverGroundEnable"
             [trueWindAngle]="trueWindAngle"
             [trueWindSpeed]="trueWindSpeed"
             [appWindAngle]="appWindAngle"

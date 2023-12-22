@@ -119,6 +119,8 @@ export interface IWidgetSvcConfig {
   laylineAngle?: number;
   /** Used by wind Widget: enable/disable Waypoint UI feature */
   waypointEnable?: boolean;
+  /** Used by wind Widget: enable/disable COG UI feature */
+  courseOverGroundEnable?: boolean;
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
