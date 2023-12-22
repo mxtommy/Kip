@@ -66,12 +66,12 @@
           <div class="flex-container">
             <div class="flex-checkbox" *ngIf="(widgetConfig.laylineEnable !== undefined)">
               <mat-checkbox class="fields" name="laylineEnable" formControlName="laylineEnable">
-                Show Laylines
+                Show Close-hauled Lines
               </mat-checkbox>
             </div>
             <div class="flex-field" *ngIf="(widgetConfig.laylineEnable !== undefined)">
               <mat-form-field class="fields" appearance="outline" floatLabel="always">
-                <mat-label>Layline Angle</mat-label>
+                <mat-label>Vessel Close-hauled Angle</mat-label>
                 <input type="number" min="10" max="90" matInput placeholder="Select angle..." name="laylineAngle"  formControlName="laylineAngle">
               </mat-form-field>
             </div>

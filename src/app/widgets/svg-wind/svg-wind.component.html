@@ -487,16 +487,16 @@
       style="fill-opacity:0.3;stroke:none;stroke-width:1.90858;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.483517" />
   </g>
   <!-- Laylines -->
-  <g [style.display]="laylineEnable ? 'inline' : 'none'"
+  <g [style.display]="closeHauledLineEnable ? 'inline' : 'none'"
      id="LayerLayline"
      style="display:inline">
     <path *ngIf="trueWindAngle != null"
-      [attr.d]="laylinePortPath"
+      [attr.d]="closeHauledLineStbdPath"
        id="PortLayline"
        style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
        class="laylines" />
     <path *ngIf="trueWindAngle != null"
-      [attr.d]="laylineStbdPath"
+      [attr.d]="closeHauledLinePortPath"
        class="laylines"
        style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
        id="StbdLayline" />

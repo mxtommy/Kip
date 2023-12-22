@@ -30,7 +30,7 @@ export class SvgWindComponent implements AfterViewInit {
   @Input('appWindAngle') appWindAngle: number;
   @Input('appWindSpeed') appWindSpeed: number;
   @Input('laylineAngle') laylineAngle : number;
-  @Input('laylineEnable') laylineEnable: boolean;
+  @Input('closeHauledLineEnable') closeHauledLineEnable: boolean;
   @Input('sailSetupEnable') sailSetupEnable: boolean;
   @Input('windSectorEnable') windSectorEnable: boolean;
   @Input('waypointAngle') waypointAngle: number;
@@ -59,9 +59,9 @@ export class SvgWindComponent implements AfterViewInit {
   waypoint: ISVGRotationObject;
   waypointActive: boolean = false;
 
-  //laylines
-  laylinePortPath: string = "M 231,231 231,90";
-  laylineStbdPath: string = "M 231,231 231,90";
+  //laylines - Close-Hauled lines
+  closeHauledLinePortPath: string = "M 231,231 231,90";
+  closeHauledLineStbdPath: string = "M 231,231 231,90";
 
   //WindSectors
   portWindSectorPath: string = "none";
@@ -127,7 +127,7 @@ export class SvgWindComponent implements AfterViewInit {
 
         // rotates with heading change
         this.smoothCircularRotation(this.compassFaceplate);
-        this.updateLaylines();
+        this.updateClauseHauledLines();
         this.updateWindSectors(); // they need to update to new heading too
       }
     }
@@ -181,7 +181,7 @@ export class SvgWindComponent implements AfterViewInit {
         this.trueWindValue.newDegreeIndicator = valueRotationOffset.toFixed(0);
 
         this.smoothCircularRotation(this.trueWind, this.trueWindValue);
-        this.updateLaylines();
+        this.updateClauseHauledLines();
       }
     }
 
@@ -210,18 +210,18 @@ export class SvgWindComponent implements AfterViewInit {
 
   }
 
-  private updateLaylines(){
+  private updateClauseHauledLines(){
     let portLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle*-1));
     //find xy of that rotation (160 = radius of inner circle)
     let portX = 160 * Math.sin((portLaylineRotate*Math.PI)/180) + 231; //231 is middle
     let portY = (160 * Math.cos((portLaylineRotate*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    this.laylinePortPath = 'M 231,231 ' + portX +',' + portY;
+    this.closeHauledLinePortPath = 'M 231,231 ' + portX +',' + portY;
 
     let stbdLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle));
     //find xy of that rotation (160 = radius of inner circle)
     let stbdX = 160 * Math.sin((stbdLaylineRotate*Math.PI)/180) + 231; //231 is middle
     let stbdY = (160 * Math.cos((stbdLaylineRotate*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    this.laylineStbdPath = 'M 231,231 ' + stbdX +',' + stbdY;
+    this.closeHauledLineStbdPath = 'M 231,231 ' + stbdX +',' + stbdY;
   }
 
   private updateWindSectors() {
