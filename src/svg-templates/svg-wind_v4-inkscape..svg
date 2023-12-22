@@ -5,8 +5,8 @@
    viewBox="0 0 462 462"
    version="1.1"
    id="svg8"
-   sodipodi:docname="svg-wind_v3-inkscape.svg"
-   inkscape:version="1.2.1 (9c6d41e, 2022-07-14)"
+   sodipodi:docname="svg-wind_v4-inkscape..svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -27,13 +27,13 @@
      showgrid="true"
      borderlayer="true"
      shape-rendering="auto"
-     inkscape:zoom="2.026595"
-     inkscape:cx="143.5906"
-     inkscape:cy="157.16016"
-     inkscape:window-width="1223"
-     inkscape:window-height="773"
-     inkscape:window-x="217"
-     inkscape:window-y="25"
+     inkscape:zoom="1.6989666"
+     inkscape:cx="209.53914"
+     inkscape:cy="178.04941"
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="0"
      inkscape:current-layer="layerCompassHeading"
      showguides="true">
@@ -41,7 +41,11 @@
        type="xygrid"
        id="grid19666"
        originx="231"
-       originy="231" />
+       originy="231"
+       spacingy="1"
+       spacingx="1"
+       units="px"
+       visible="true" />
   </sodipodi:namedview>
   <defs
      id="defs2">
@@ -597,8 +601,7 @@
      id="layerCompassHeading"
      style="display:inline"
      inkscape:groupmode="layer"
-     inkscape:label="LayerCompassDial"
-     sodipodi:insensitive="true">
+     inkscape:label="LayerCompassDial">
     <ellipse
        ry="180.0916"
        rx="180.39105"
@@ -837,6 +840,16 @@
          y="143.99249"
          x="68.010208"
          id="tspan7125">330</tspan></text>
+    <g
+       inkscape:groupmode="layer"
+       id="layer3"
+       inkscape:label="LayerCOG">
+      <path
+         id="path2"
+         style="fill:#ff6600;stroke-width:5.76507;stroke-linecap:square"
+         d="m 233.42911,73.408997 a 2.5,2.5 0 0 1 -2.5,2.5 2.5,2.5 0 0 1 -2.5,-2.5 2.5,2.5 0 0 1 2.5,-2.5 2.5,2.5 0 0 1 2.5,2.5 z m -11.72079,-40.278243 6.73667,-4.970565 c 1.41548,-1.044398 3.69456,-1.044398 5.11004,0 l 6.73666,4.97056 c 1.41549,1.044397 1.41549,2.725985 0,3.770382 l -6.73667,4.970566 c -1.41547,1.044391 -3.69456,1.044397 -5.11004,0 l -6.73666,-4.97056 c -1.41548,-1.044397 -1.41548,-2.725991 0,-3.770383 z m 6.73255,-4.677026 h 5 v 45.031639 h -5 z"
+         inkscape:label="COGIndicator" />
+    </g>
     <g
        id="layer2"
        inkscape:label="LayerWaypoint"

@@ -500,7 +500,6 @@
        class="laylines"
        style="display:inline;fill:none;stroke-width:3.06951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:7.16218;stroke-opacity:1"
        id="StbdLayline" />
-
   </g>
 <!-- Compass -->
   <g
@@ -754,41 +753,56 @@
       y="143.99249"
       x="68.010208"
       id="tspan7125">330</tspan></text>
+  <!-- COG Indicator -->
+  <g id="COGIndicator">
+    <path
+      id="indicator"
+      style="fill:#ff6600;stroke-width:5.76507;stroke-linecap:square"
+      d="m 233.42911,73.408997 a 2.5,2.5 0 0 1 -2.5,2.5 2.5,2.5 0 0 1 -2.5,-2.5 2.5,2.5 0 0 1 2.5,-2.5 2.5,2.5 0 0 1 2.5,2.5 z m -11.72079,-40.278243 6.73667,-4.970565 c 1.41548,-1.044398 3.69456,-1.044398 5.11004,0 l 6.73666,4.97056 c 1.41549,1.044397 1.41549,2.725985 0,3.770382 l -6.73667,4.970566 c -1.41547,1.044391 -3.69456,1.044397 -5.11004,0 l -6.73666,-4.97056 c -1.41548,-1.044397 -1.41548,-2.725991 0,-3.770383 z m 6.73255,-4.677026 h 5 v 45.031639 h -5 z"
+    />
+    <animateTransform #waypointAnimate attributeName="transform"
+      type="rotate"
+      [attr.from]="waypoint.oldDegreeIndicator+' 231 231'"
+      [attr.to]="waypoint.newDegreeIndicator+' 231 231'"
+      begin="indefinite"
+      dur="0.5s"
+      additive="replace"
+      fill="freeze"
+      />
+  </g>
   <!-- Waypoint -->
   <g [style.display]="waypointActive ? 'inline' : 'none'"
     id="waypoint"
     style="display:inline">
-    <g
-    id="waypoint"
-    transform="translate(-0.00209063,3)">
-  <circle
-      style="fill:none;fill-opacity:1;stroke:#45ad36;stroke-width:5.7;stroke-dasharray:none;stroke-opacity:0.984314"
-      id="path6341"
-      cx="231"
-      cy="72.35717"
-      r="5.6431713" />
-  <g
-      id="g11647"
-      transform="matrix(1.0001219,0,0,0.99974754,-0.02606381,-20.276417)"
-      style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-opacity:1">
-    <path
-        id="path10836"
-        style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-width:2.3;stroke-dasharray:none;stroke-opacity:1"
-        d="m 240.4718,93.050621 c 2.54775,0.153686 5.11457,0.356643 7.70105,0.601581 h 0.34551" />
-    <path
-        id="path11640"
-        style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-width:2.3;stroke-dasharray:none;stroke-opacity:1"
-        d="m 213.62158,93.652202 c 2.61223,-0.320275 5.24415,-0.552387 7.8965,-0.705521" />
-  </g>
-  </g>
-  <animateTransform #waypointAnimate attributeName="transform"
-    type="rotate"
-    [attr.from]="waypoint.oldDegreeIndicator+' 231 231'"
-    [attr.to]="waypoint.newDegreeIndicator+' 231 231'"
-    begin="indefinite"
-    dur="0.5s"
-    additive="replace"
-    fill="freeze"
+    <g id="waypoint" transform="translate(-0.00209063,3)">
+      <circle
+        style="fill:none;fill-opacity:1;stroke:#45ad36;stroke-width:5.7;stroke-dasharray:none;stroke-opacity:0.984314"
+        id="path6341"
+        cx="231"
+        cy="72.35717"
+        r="5.6431713" />
+      <g
+        id="g11647"
+        transform="matrix(1.0001219,0,0,0.99974754,-0.02606381,-20.276417)"
+        style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-opacity:1">
+        <path
+          id="path10836"
+          style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-width:2.3;stroke-dasharray:none;stroke-opacity:1"
+          d="m 240.4718,93.050621 c 2.54775,0.153686 5.11457,0.356643 7.70105,0.601581 h 0.34551" />
+        <path
+          id="path11640"
+          style="fill:#afafaf;fill-opacity:1;stroke:#afafaf;stroke-width:2.3;stroke-dasharray:none;stroke-opacity:1"
+          d="m 213.62158,93.652202 c 2.61223,-0.320275 5.24415,-0.552387 7.8965,-0.705521" />
+      </g>
+    </g>
+    <animateTransform #waypointAnimate attributeName="transform"
+      type="rotate"
+      [attr.from]="waypoint.oldDegreeIndicator+' 231 231'"
+      [attr.to]="waypoint.newDegreeIndicator+' 231 231'"
+      begin="indefinite"
+      dur="0.5s"
+      additive="replace"
+      fill="freeze"
     />
   </g>
   <animateTransform #compassAnimate attributeName="transform"
