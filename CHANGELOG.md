@@ -1,3 +1,10 @@
+# V 2.5.0
+## New features
+* Course Over Ground indicator added to Wind Widget 
+## Improvements
+* Wind Widget "Laylines" feature label is incorrect and port/starboard wind shift colors are inverted
+## Fixes
+* Fix Widget Options path filtering with performance improvements
 # V 2.4.2
 ## Fixes
 * null path values causing errors, preventing proper value types assignment and default source selection
