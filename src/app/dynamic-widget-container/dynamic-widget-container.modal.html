@@ -1,13 +1,13 @@
  <form name="widgetForm" (ngSubmit)="submitNewWidget()">
-     <h1 mat-dialog-title>Choose Widget:</h1>
+     <h1 mat-dialog-title>Widget Selection</h1>
     <mat-dialog-content>
       <mat-tab-group class="tabGroup" [selectedIndex]="selectedTab.value" (selectedIndexChange)="selectedTab.setValue($event)">
         <mat-tab *ngFor="let item of widgetList | keyvalue: keepOrder " [label]="item.key">
           <div class="tab-content ">
 
             <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-              <mat-label>Widget Type</mat-label>
-              <mat-select placeholder="Please select one" [(ngModel)]="newWidget" name="newWidget">
+              <mat-label>Type</mat-label>
+              <mat-select placeholder="Click or tap to list types..." [(ngModel)]="newWidget" name="newWidget">
                   <mat-option *ngFor="let widget of item.value" [value]="widget.name">
                       {{widget.description}}
                   </mat-option>

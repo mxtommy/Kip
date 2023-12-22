@@ -98,6 +98,7 @@ import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/da
 import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
 import { WidgetRaceTimerComponent } from './widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
+import { WidgetBooleanToggleComponent } from './widgets/widget-boolean-toggle/widget-boolean-toggle.component';
 
 
 const appRoutes: Routes = [
@@ -193,7 +194,8 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     AlarmMenuComponent,
     SettingsGeneralComponent,
     DataBrowserComponent,
-    DataBrowserRowComponent
+    DataBrowserRowComponent,
+    WidgetBooleanToggleComponent
   ],
   imports: [
     BrowserModule,
