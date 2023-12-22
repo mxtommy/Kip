@@ -26,10 +26,10 @@
           </mat-option>
         </mat-autocomplete>
         <mat-error *ngIf="formGroup.controls['path'].hasError('required')">
-          Path <strong>required</strong>
+          Path required
         </mat-error>
-        <mat-error *ngIf="formGroup.controls['path'].hasError('requireMatch')">
-          Please select an existing path
+        <mat-error *ngIf="formGroup.controls['path'].hasError('requireMatch') && !formGroup.controls['path'].hasError('required')">
+          Path does not match any known valid path
         </mat-error>
       </mat-form-field>
       <div class="pathProperties">

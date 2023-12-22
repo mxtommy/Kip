@@ -2,8 +2,8 @@ import { Component, Input, OnInit, OnChanges, SimpleChange  } from '@angular/cor
 import { SignalKService } from '../signalk.service';
 import { IPathMetaData } from "../app-interfaces";
 import { IUnitGroup } from '../units.service';
-import { UntypedFormGroup, UntypedFormControl,Validators, FormControl } from '@angular/forms';
-import { map, startWith } from 'rxjs/operators';
+import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
+import { debounceTime, map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs'
 
 
@@ -31,7 +31,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     return (control: UntypedFormControl) => {
       const selection: any = control.value;
       if (allPathsAndMeta.some(pm => pm.path === selection)) {
-        return null;
+         return null;
       }
       return { requireMatch: true };
     }
@@ -43,6 +43,18 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.unitList = {};
+    //populate available paths
+    this.getPaths(this.filterSelfPaths);
+    //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
+    this.updateSourcesAndUnits();
+    // add path validator fn
+    this.formGroup.controls['path'].setValidators([Validators.required, this.requirePathMatch(this.availablePaths)]);
+    // add autocomplete filtering
+    this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(
+      debounceTime(800),
+      startWith(''),
+      map(value => this.filterPaths(value))
+    );
     // If SampleTime control is not present because the path property is missing, add it.
     if (this.formGroup.value.sampleTime === undefined) {
       this.formGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
@@ -55,16 +67,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
         this.formGroup.controls['convertUnitTo'].disable();
       }
     }
-    //populate available paths
-    this.getPaths(this.filterSelfPaths);
-
-    //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
-    this.updateSourcesAndUnits();
-
-    // autocomplete filtering
-    this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(startWith(''), map(value => this.filterPaths(value)))
-
-    this.formGroup.updateValueAndValidity();
 
     //subscribe to path formControl changes
     this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
@@ -106,8 +108,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
   getPaths(isOnlySef: boolean) {
     this.availablePaths = this.signalKService.getPathsAndMetaByType(this.formGroup.value.pathType, isOnlySef).sort();
-    // path validator (must be path in available) Need to reset validators when paths change
-    this.formGroup.controls['path'].setValidators([Validators.required]); //, this.requirePathMatch(this.availablePaths)]); // allow non-existing paths, maybe new path?
   }
 
   filterPaths( value: string ): IPathMetaData[] {
