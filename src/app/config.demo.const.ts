@@ -93,6 +93,15 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "convertUnitTo": "deg",
             "sampleTime": 500
           },
+          "courseOverGround": {
+            "description": "Course Over Ground",
+            "path": "self.navigation.courseOverGroundTrue",
+            "source": "default",
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg",
+            "sampleTime": 500
+          },
           "trueWindAngle": {
             "description": "True Wind Angle",
             "path": "self.environment.wind.angleTrueWater",
@@ -128,13 +137,26 @@ export const DemoWidgetConfig: IWidgetConfig = {
             "isPathConfigurable": true,
             "convertUnitTo": "knots",
             "sampleTime": 500
+          },
+          "nextWaypointBearing": {
+            "description": "Next Waypoint Bearing",
+            "path": 'self.navigation.courseGreatCircle.nextPoint.bearingTrue',
+            "source": 'default',
+            "pathType": "number",
+            "isPathConfigurable": true,
+            "convertUnitTo": "deg",
+            "sampleTime": 500
           }
         },
-        "filterSelfPaths": true,
         "windSectorEnable": true,
-        "windSectorWindowSeconds": 10,
+        "windSectorWindowSeconds": 5,
         "laylineEnable": true,
-        "laylineAngle": 35
+        "laylineAngle": 40,
+        "waypointEnable": true,
+        "courseOverGroundEnable": true,
+        "sailSetupEnable": false,
+        "enableTimeout": false,
+        "dataTimeout": 5
       }
     },
     {

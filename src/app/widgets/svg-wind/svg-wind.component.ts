@@ -13,18 +13,17 @@ interface ISVGRotationObject {
   templateUrl: './svg-wind.component.html'
 })
 export class SvgWindComponent implements AfterViewInit {
-
   @ViewChild('compassAnimate', { static: true, read: ElementRef }) compassAnimate!: ElementRef;
   @ViewChild('appWindAnimate', { static: true, read: ElementRef }) appWindAnimate!: ElementRef;
   @ViewChild('trueWindAnimate', { static: true, read: ElementRef }) trueWindAnimate!: ElementRef;
   @ViewChild('appWindValueAnimate', { static: true, read: ElementRef }) appWindValueAnimate!: ElementRef;
   @ViewChild('trueWindValueAnimate', { static: true, read: ElementRef }) trueWindValueAnimate!: ElementRef;
   @ViewChild('waypointAnimate', { static: true, read: ElementRef }) waypointAnimate!: ElementRef;
-  //@ViewChild('laylinePortAnimate') laylinePortAnimate: ElementRef;
-  //@ViewChild('laylineStbAnimate') laylineStbAnimate: ElementRef;
-
+  @ViewChild('courseOverGroundAnimate', { static: true, read: ElementRef }) courseOverGroundAnimate!: ElementRef;
 
   @Input('compassHeading') compassHeading: number;
+  @Input('courseOverGroundAngle') courseOverGroundAngle: number;
+  @Input('courseOverGroundEnable') courseOverGroundEnable: boolean;
   @Input('trueWindAngle') trueWindAngle: number;
   @Input('trueWindSpeed') trueWindSpeed: number;
   @Input('appWindAngle') appWindAngle: number;
@@ -38,7 +37,6 @@ export class SvgWindComponent implements AfterViewInit {
   @Input('trueWindMinHistoric') trueWindMinHistoric: number;
   @Input('trueWindMidHistoric') trueWindMidHistoric: number;
   @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
-
 
   // Compass faceplate
   compassFaceplate: ISVGRotationObject;
@@ -58,6 +56,10 @@ export class SvgWindComponent implements AfterViewInit {
   //waypoint
   waypoint: ISVGRotationObject;
   waypointActive: boolean = false;
+
+  // Course Over Ground
+  courseOverGround: ISVGRotationObject;
+  courseOverGroundActive: boolean = false;
 
   //laylines - Close-Hauled lines
   closeHauledLinePortPath: string = "M 231,231 231,90";
@@ -103,6 +105,12 @@ export class SvgWindComponent implements AfterViewInit {
       newDegreeIndicator: '0',
       animationElement: undefined
     };
+
+    this.courseOverGround =  {
+      oldDegreeIndicator: '0',
+      newDegreeIndicator: '0',
+      animationElement: undefined
+    };
   }
 
   ngAfterViewInit(): void {
@@ -112,6 +120,7 @@ export class SvgWindComponent implements AfterViewInit {
     this.trueWind.animationElement = this.trueWindAnimate;
     this.trueWindValue.animationElement = this.trueWindValueAnimate;
     this.waypoint.animationElement = this.waypointAnimate;
+    this.courseOverGround.animationElement = this.courseOverGroundAnimate;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -129,6 +138,25 @@ export class SvgWindComponent implements AfterViewInit {
         this.smoothCircularRotation(this.compassFaceplate);
         this.updateClauseHauledLines();
         this.updateWindSectors(); // they need to update to new heading too
+      }
+    }
+
+    // CourseOverGroundAngle
+    if (changes.courseOverGroundAngle) {
+      if (this.courseOverGroundEnable == false) {
+        this.courseOverGroundActive = false;
+        return
+      }
+
+      if (!changes.courseOverGroundAngle.firstChange) {
+        if (changes.courseOverGroundAngle.currentValue === null) {
+          this.courseOverGroundActive = false;
+        } else {
+          this.courseOverGroundActive = true;
+          this.courseOverGround.oldDegreeIndicator = this.courseOverGround.newDegreeIndicator;
+          this.courseOverGround.newDegreeIndicator = changes.courseOverGroundAngle.currentValue.toFixed(0);
+          this.smoothCircularRotation(this.courseOverGround);
+        }
       }
     }
 

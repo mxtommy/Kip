@@ -9,6 +9,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   currentHeading: number = 0;
+  courseOverGroundAngle: number = 0;
   appWindAngle: number = 0;
   appWindSpeed: number = 0;
   trueWindAngle: number = 0;
@@ -33,6 +34,15 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         "headingPath": {
           description: "Heading",
           path: 'self.navigation.headingTrue',
+          source: 'default',
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "deg",
+          sampleTime: 500
+        },
+        "courseOverGround": {
+          description: "Course Over Ground",
+          path: 'self.navigation.courseOverGroundTrue',
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
@@ -88,8 +98,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       windSectorEnable: true,
       windSectorWindowSeconds: 5,
       laylineEnable: true,
-      laylineAngle: 35,
+      laylineAngle: 40,
       waypointEnable: true,
+      courseOverGroundEnable: true,
       sailSetupEnable: false,
       enableTimeout: false,
       dataTimeout: 5
@@ -103,6 +114,13 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         newValue.value = 0
       }
       this.currentHeading = newValue.value;
+    });
+
+    this.observeDataStream('courseOverGround', newValue => {
+      if (newValue.value == null) { // act upon data timeout of null
+        newValue.value = 0
+      }
+      this.courseOverGroundAngle = newValue.value;
     });
 
     this.observeDataStream('nextWaypointBearing', newValue => {

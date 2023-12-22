@@ -90,6 +90,13 @@
             </div>
           </div>
           <div class="flex-container">
+            <div class="flex-checkbox" *ngIf="(widgetConfig.courseOverGroundEnable !== undefined)">
+              <mat-checkbox class="fields" name="courseOverGroundEnable" formControlName="courseOverGroundEnable">
+                Show Course Over Ground
+              </mat-checkbox>
+            </div>
+          </div>
+          <div class="flex-container">
             <div class="flex-checkbox" *ngIf="(widgetConfig.waypointEnable !== undefined)">
               <mat-checkbox class="fields" name="waypointEnable" formControlName="waypointEnable">
                 Show Next Waypoint
