@@ -132,7 +132,7 @@ Linux, Mac, Pi or Windows dev platform supported
 4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read Kip project dependencies (see Steps 2), download and install everything automatically for you.
 5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will  build KIP.
 
-**Work**
+**Setup**
 1. Fire up your local dev instance with `npm run dev`.
 2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`
 3. Voila!
