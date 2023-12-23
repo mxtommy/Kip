@@ -113,7 +113,7 @@ KIP is now installed and available on your home screen
   As an example, KIP will notify you (inform, warn, alert) when a water depth or temperature sensors reaches certain levels. In addition to KIP's centralized basic visual and audio notification feature, each Widget offers a tailored visual representation appropriate
   to their design objectives providing an optimal user experience.
 
-# How To Contribute to KIP
+# How To Contribute
 
 KIP is under MIT license and is built with Nodes and Angular using various open-source assets. All free!
 
