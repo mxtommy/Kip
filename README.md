@@ -31,7 +31,7 @@ To install KIP as an App, first load KIP in the browser. Then follow the steps b
 **iOS**
 1. Press the "Share" button
 2. Select "Add to Home Screen" from the action popup list
-3. Tap "Add" in the top right corner to finish installing
+3. Tap "Add" in the top right corner to finish installation.
 KIP is now installed and available on your home screen
 
 **Android**
