@@ -119,15 +119,15 @@ KIP is under MIT license and is built with Nodes and Angular using various open-
 
 **Tools**
 
-Linux, Macs, Pi or Windows dev platform supported
+Linux, Mac, Pi or Windows dev platform supported
 1. Install the latest Node version (v16+, v18 recommended)
 2. Download your favorite coding IDE (we use the free Visual Code)
 3. Create your own GitHub KIP fork.
-4. Configure your IDE's source control to point to your forked KIP instance (With Visual Code, GitHub support is built-in) and get the latest Master branch locally.
+4. Configure your IDE's source control to point to your forked KIP instance (With Visual Code, GitHub support is built-in) and get the fork's Master branch locally.
 
-**Setup**
+**Coding**
 1. From your fork's Master branch, create working branch with a name such as: New-Widget-abc or fix-issue-abc, etc.
-2. Checkout this new Branch to get the source code locally.
+2. Checkout this new Branch.
 3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project folder.
 4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read Kip project dependencies (see Steps 2), download and install everything automatically for you.
 5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will  build KIP.
