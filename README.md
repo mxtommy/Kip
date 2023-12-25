@@ -128,7 +128,7 @@ Linux, Mac, Pi or Windows dev platform supported
 **Coding**
 1. From your fork's Master branch, create working branch with a name such as: New-Widget-abc or fix-issue-abc, etc.
 2. Checkout this new Branch.
-3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project folder.
+3. In a command shell (or in the Visual Code Terminal window), go to the root of you local project branch folder, if not done automatically by your IDE.
 4. Install project dependencies using NPM package and dependency manager: run `npm install`. NPM will read Kip project dependencies (see Steps 2), download and install everything automatically for you.
 5. Build the app locally using Angular-CLI: from that same project root folder, run `ng build`. CLI tool will  build KIP.
 
