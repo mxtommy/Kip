@@ -3,8 +3,6 @@
 
 @mixin widget-autopilot-theme($theme) {
 
-  $primary: map-get($theme, primary);
-  $warn: map-get($theme, warn);
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
   $wind: map-get($theme, wind);
@@ -72,6 +70,11 @@
 
   .apText {
     fill: mat.get-color-from-palette($foreground, text);
+  }
+
+  .apCompassOrnaments {
+    fill: mat.get-color-from-palette($wind, heading-background);
+    stroke: mat.get-color-from-palette($wind, heading-background);
   }
 }
 
