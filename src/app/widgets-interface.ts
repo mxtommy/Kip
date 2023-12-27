@@ -44,7 +44,7 @@ export interface ITheme {
  * @interface IWidget
  */
 export interface IWidget {
-  /** The Widget's unique identifyer */
+  /** The Widget's unique identifier */
   uuid: string;
    /** The Widget's type. Value are defined in widget-list.service */
   type: string;
@@ -59,7 +59,7 @@ export interface IWidget {
  * @interface IPathArray
  */
 export interface IPathArray {
-  /** Key string use to name/identifie the path IWidgetPath object. Used for Observable setup */
+  /** Key string use to name/identify the path IWidgetPath object. Used for Observable setup */
   [key: string]: IWidgetPath;
 }
 
@@ -88,6 +88,8 @@ export interface IWidgetSvcConfig {
   typeVal?: {
     [key: string]: string;
   };
+  /** Array of sub/child component setting */
+  multiChildCtrls?: IChildControl[];
 
   /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout period. See dataTimeout */
   enableTimeout?: boolean;
@@ -179,10 +181,27 @@ export interface IWidgetSvcConfig {
  /** Used by IFrame widget: URL lo load in the iframe */
   widgetUrl?: string;
 
-
   /** Use by racetimer widget */
   timerLength?: number;
 }
+
+/**
+ * A configuration object that defines a sub/child component
+ *
+ * @export
+ * @interface IChildControl
+ */
+export interface IChildControl {
+  /** Label of the control */
+  label: string;
+  /** The path key name linked to the control */
+  pathKeyName: string;
+  /** The value of the control */
+  value: any;
+  /** The color of the control */
+  color: string;
+}
+
 /**
  * Widget Zones data highlights interface. Used to defined how current path data
  * value should be displayed/highlighted with respect to the zones configuration.

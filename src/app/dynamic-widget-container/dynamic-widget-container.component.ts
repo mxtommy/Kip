@@ -10,7 +10,7 @@ import { cloneDeep } from "lodash-es";
 
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 import { DynamicWidget, IWidget, ITheme } from '../widgets-interface';
-import { ModalWidgetConfigComponent } from '../modal-widget-config/modal-widget-config.component';
+import { ModalWidgetConfigComponent } from '../widget-config/modal-widget-config/modal-widget-config.component';
 import { AppSettingsService } from '../app-settings.service';
 import { WidgetManagerService } from '../widget-manager.service';
 import { WidgetListService, widgetList } from '../widget-list.service';

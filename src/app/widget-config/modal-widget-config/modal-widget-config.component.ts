@@ -2,10 +2,10 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { IUnitGroup } from '../units.service';
-import { SignalKService } from '../signalk.service';
-import { DataSetService, IDataSet } from '../data-set.service';
-import { IWidgetSvcConfig } from '../widgets-interface';
+import { IUnitGroup } from '../../units.service';
+import { SignalKService } from '../../signalk.service';
+import { DataSetService, IDataSet } from '../../data-set.service';
+import { IWidgetSvcConfig } from '../../widgets-interface';
 
 
 @Component({

@@ -78,7 +78,7 @@ import { GaugeSteelComponent } from './widgets/gauge-steel/gauge-steel.component
 import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
-import { ModalWidgetConfigComponent } from './modal-widget-config/modal-widget-config.component';
+import { ModalWidgetConfigComponent } from './widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
 import { SettingsUnitsComponent } from './settings/units/units.component';
@@ -99,6 +99,8 @@ import { ModalUserCredentialComponent } from './modal-user-credential/modal-user
 import { WidgetRaceTimerComponent } from './widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
 import { WidgetBooleanToggleComponent } from './widgets/widget-boolean-toggle/widget-boolean-toggle.component';
+import { SvgBooleanToggleComponent } from './widgets/svg-boolean-toggle/svg-boolean-toggle.component';
+import { BooleanToggleConfigComponent } from './widget-config/boolean-toggle-config/boolean-toggle-config.component';
 
 
 const appRoutes: Routes = [
@@ -195,7 +197,9 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     SettingsGeneralComponent,
     DataBrowserComponent,
     DataBrowserRowComponent,
-    WidgetBooleanToggleComponent
+    WidgetBooleanToggleComponent,
+    SvgBooleanToggleComponent,
+    BooleanToggleConfigComponent
   ],
   imports: [
     BrowserModule,

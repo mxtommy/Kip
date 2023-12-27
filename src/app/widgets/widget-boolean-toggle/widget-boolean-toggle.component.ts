@@ -1,9 +1,10 @@
-import { Component, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { SignalkRequestsService } from '../../signalk-requests.service';
 import { NotificationsService } from '../../notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { IChildControl } from '../../widgets-interface';
 
 @Component({
   selector: 'app-widget-boolean-toggle',
@@ -12,8 +13,9 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 })
 export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnDestroy {
 
-  public state: boolean = null;
-  skRequestSub = new Subscription; // Request result observer
+  public toggleControls: IChildControl[] = [];
+
+  private skRequestSub = new Subscription; // Request result observer
 
   constructor(
     private signalkRequestsService: SignalkRequestsService,
@@ -22,23 +24,43 @@ export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements
       super();
 
       this.defaultConfig = {
-        displayName: 'Toggle Label',
+        displayName: 'Toggle Panel Label',
         filterSelfPaths: true,
         paths: {
-          "boolPath": {
+          "Toggle Label 1": {
             description: "Boolean Data",
-            path: null,
-            source: null,
+            path: "self.red.boolean1.state",
+            source: "default",
+            pathType: "boolean",
+            isPathConfigurable: true,
+            convertUnitTo: "unitless",
+            sampleTime: 500
+          },
+          "Toggle Label 2": {
+            description: "Boolean Data",
+            path: "self.red.boolean2.state",
+            source: "default",
             pathType: "boolean",
             isPathConfigurable: true,
             convertUnitTo: "unitless",
             sampleTime: 500
           }
         },
-        putEnable: false,
-        putMomentary: false,
-        putMomentaryValue: true,
-        barColor: 'accent',
+        textColor: "text",
+        multiChildCtrls: [
+          {
+            label: "Toggle Label 1",
+            pathKeyName: "Toggle Label 1",
+            value: null,
+            color: "text"
+          },
+          {
+            label: "Toggle Label 2",
+            pathKeyName: "Toggle Label 2",
+            value: null,
+            color: "accent"
+          }
+        ],
         enableTimeout: false,
         dataTimeout: 5
       };
@@ -46,18 +68,27 @@ export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements
 
   ngOnInit(): void {
     this.validateConfig();
-
-    this.observeDataStream('boolPath', newValue => {
-      this.state = newValue.value;
+    // Build control array
+    this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
+        this.toggleControls.push({...ctrlConfig});
       }
     );
+    // Start Observers
+    this.toggleControls.forEach(ctrl => {
+        this.observeDataStream(ctrl.pathKeyName, newValue => {
+            ctrl.value = newValue.value;
+          }
+        );
+      }
+    );
+    // Listen to PUT response msg
     this.subscribeSKRequest();
   }
 
-  private subscribeSKRequest() {
+  private subscribeSKRequest(): void {
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetProperties.uuid) {
-        let errMsg = `Button ${this.widgetProperties.config.displayName}: `;
+        let errMsg = `Toggle Widget ${this.widgetProperties.config.displayName}: `;
         if (requestResult.statusCode != 200){
           if (requestResult.message){
             errMsg += requestResult.message;
@@ -70,14 +101,16 @@ export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements
     });
   }
 
-  private unsubscribeSKRequest() {
-    this.skRequestSub.unsubscribe();
+  public toggle($event: IChildControl): void {
+    this.signalkRequestsService.putRequest(
+      this.widgetProperties.config.paths[$event.pathKeyName].path,
+      $event.value,
+      this.widgetProperties.uuid
+    );
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.unsubscribeDataStream();
-    this.unsubscribeSKRequest();
+    this.skRequestSub?.unsubscribe();
   }
 }
-
-
