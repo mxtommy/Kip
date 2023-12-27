@@ -80,7 +80,7 @@ import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
 import { ModalWidgetConfigComponent } from './widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
-import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
+import { ModalPathSelectorComponent } from './widget-config/modal-path-selector/modal-path-selector.component';
 import { SettingsUnitsComponent } from './settings/units/units.component';
 import { SettingsZonesComponent, DialogNewZone, DialogEditZone } from './settings/zones/zones.component';
 import { WidgetIframeComponent } from './widgets/widget-iframe/widget-iframe.component';
