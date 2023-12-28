@@ -1,0 +1,6 @@
+<div class="wrapper">
+  <app-svg-boolean-switch class="wrapper" *ngFor="let ctrl of toggleControls" [controlData]="ctrl"
+    [theme]="theme"
+    (toggleClick)="toggle($event)">
+  </app-svg-boolean-switch>
+</div>

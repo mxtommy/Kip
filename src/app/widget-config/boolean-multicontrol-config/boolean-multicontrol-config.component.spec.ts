@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BooleanToggleConfigComponent } from './boolean-toggle-config.component';
+import { BooleanMultiControlConfigComponent } from './boolean-multicontrol-config.component';
 
 describe('BooleanToggleConfigComponent', () => {
-  let component: BooleanToggleConfigComponent;
-  let fixture: ComponentFixture<BooleanToggleConfigComponent>;
+  let component: BooleanMultiControlConfigComponent;
+  let fixture: ComponentFixture<BooleanMultiControlConfigComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BooleanToggleConfigComponent ]
+      declarations: [ BooleanMultiControlConfigComponent ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(BooleanToggleConfigComponent);
+    fixture = TestBed.createComponent(BooleanMultiControlConfigComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

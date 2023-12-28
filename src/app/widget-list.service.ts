@@ -9,8 +9,7 @@ import { WidgetHistoricalComponent } from './widgets/widget-historical/widget-hi
 import { WidgetWindComponent } from './widgets/widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from './widgets/widget-gauge/widget-gauge.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
-import { WidgetBooleanToggleComponent } from './widgets/widget-boolean-toggle/widget-boolean-toggle.component'
-import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component';
+import { WidgetBooleanSwitchComponent } from './widgets/widget-boolean-switch/widget-boolean-switch.component'
 import { WidgetIframeComponent } from './widgets/widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetGaugeNgLinearComponent} from './widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
@@ -64,9 +63,9 @@ export class WidgetListService {
         description: 'Boolean Button/Switch',
       },
       {
-        name: 'WidgetBooleanToggleComponent',
-        componentName: WidgetBooleanToggleComponent,
-        description: 'Boolean Toggle',
+        name: 'WidgetBooleanSwitch',
+        componentName: WidgetBooleanSwitchComponent,
+        description: 'Boolean Switches',
       }
     ],
     'Gauge': [

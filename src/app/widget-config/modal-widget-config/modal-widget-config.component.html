@@ -180,6 +180,22 @@
           <!-- end Gauge stuff-->
           </div>
       </mat-tab>
+<!-- Boolean Multi Child Control Config Panel -->
+      <mat-tab label="Controls" *ngIf="(widgetConfig.multiChildCtrls !== undefined)">
+        <div class="tab-content">
+          <div *ngIf="!formMaster.controls.paths.valid">
+            <ng-template mat-tab-label>
+              <span class="warning fa fa-exclamation-circle"></span>&nbsp;Controls
+            </ng-template>
+          </div>
+          <app-boolean-multicontrol-config
+            class="full-width"
+            [formMultiCtrlGroup]="formMaster['controls'].multiChildCtrls['controls']"
+            [formMultiCtrlConfig]="widgetConfig.multiChildCtrls"
+            >
+          </app-boolean-multicontrol-config>
+        </div>
+      </mat-tab>
 <!-- Paths stuff -->
       <mat-tab label="Paths" *ngIf="(widgetConfig.paths !== undefined)">
         <div class="tab-content">
@@ -311,7 +327,7 @@
 <!-- end Gauge stuff-->
 
 <!-- PUT Requests -->
-      <mat-tab label="Put Request" *ngIf="(widgetConfig.putEnable !== undefined)">
+      <mat-tab label="Put Request" *ngIf="(widgetConfig.putEnable !== undefined) && (widgetConfig.multiChildCtrls === undefined)">
           <div class="tab-content">
             <p>
               <mat-checkbox

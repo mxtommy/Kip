@@ -7,11 +7,11 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { IChildControl } from '../../widgets-interface';
 
 @Component({
-  selector: 'app-widget-boolean-toggle',
-  templateUrl: './widget-boolean-toggle.component.html',
-  styleUrls: ['./widget-boolean-toggle.component.css']
+  selector: 'app-widget-boolean-switch',
+  templateUrl: './widget-boolean-switch.component.html',
+  styleUrls: ['./widget-boolean-switch.component.css']
 })
-export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnDestroy {
+export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnDestroy {
 
   public toggleControls: IChildControl[] = [];
 
@@ -46,7 +46,11 @@ export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements
             sampleTime: 500
           }
         },
+        enableTimeout: false,
+        dataTimeout: 5,
         textColor: "text",
+        putEnable: true,
+        putMomentary: false,
         multiChildCtrls: [
           {
             label: "Toggle Label 1",
@@ -60,9 +64,7 @@ export class WidgetBooleanToggleComponent extends BaseWidgetComponent implements
             value: null,
             color: "accent"
           }
-        ],
-        enableTimeout: false,
-        dataTimeout: 5
+        ]
       };
   }
 

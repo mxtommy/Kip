@@ -98,9 +98,9 @@ import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/da
 import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
 import { WidgetRaceTimerComponent } from './widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
-import { WidgetBooleanToggleComponent } from './widgets/widget-boolean-toggle/widget-boolean-toggle.component';
-import { SvgBooleanToggleComponent } from './widgets/svg-boolean-toggle/svg-boolean-toggle.component';
-import { BooleanToggleConfigComponent } from './widget-config/boolean-toggle-config/boolean-toggle-config.component';
+import { WidgetBooleanSwitchComponent } from './widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { SvgBooleanSwitchComponent } from './widgets/svg-boolean-switch/svg-boolean-switch.component';
+import { BooleanMultiControlConfigComponent } from './widget-config/boolean-multicontrol-config/boolean-multicontrol-config.component';
 
 
 const appRoutes: Routes = [
@@ -197,9 +197,9 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     SettingsGeneralComponent,
     DataBrowserComponent,
     DataBrowserRowComponent,
-    WidgetBooleanToggleComponent,
-    SvgBooleanToggleComponent,
-    BooleanToggleConfigComponent
+    WidgetBooleanSwitchComponent,
+    SvgBooleanSwitchComponent,
+    BooleanMultiControlConfigComponent
   ],
   imports: [
     BrowserModule,

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SvgBooleanToggleComponent } from './svg-boolean-toggle.component';
+import { SvgBooleanSwitchComponent } from './svg-boolean-switch.component';
 
 describe('SvgBooleanToggleComponent', () => {
-  let component: SvgBooleanToggleComponent;
-  let fixture: ComponentFixture<SvgBooleanToggleComponent>;
+  let component: SvgBooleanSwitchComponent;
+  let fixture: ComponentFixture<SvgBooleanSwitchComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SvgBooleanToggleComponent ]
+      declarations: [ SvgBooleanSwitchComponent ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(SvgBooleanToggleComponent);
+    fixture = TestBed.createComponent(SvgBooleanSwitchComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
