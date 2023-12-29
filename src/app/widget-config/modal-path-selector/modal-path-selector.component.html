@@ -1,7 +1,9 @@
 <div [formGroup]="formGroup">
-  <div class="pathGroup" *ngIf="formGroup.value.isPathConfigurable">
-    <p>{{formGroup.value.description}}</p>
-    <div class="pathGroupFields">
+  <div class="flex-container rounded-card" *ngIf="formGroup.value.isPathConfigurable">
+    <div class="flex-field-100">
+      <span>{{formGroup.value.description}}</span>
+    </div>
+    <div class="flex-field-100">
 
       <mat-form-field class="pathField" appearance="outline" floatLabel="always">
         <mat-label>Signal K Path</mat-label>
@@ -32,6 +34,7 @@
           Path does not match any known valid path
         </mat-error>
       </mat-form-field>
+      </div>
       <div class="pathProperties">
         <div class="sourceField">
           <mat-form-field class="fields" appearance="outline" floatLabel="always">
@@ -74,6 +77,5 @@
           </mat-form-field>
         </div>
       </div>
-    </div>
   </div>
 </div>

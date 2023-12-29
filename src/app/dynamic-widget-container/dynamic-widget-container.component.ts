@@ -134,14 +134,13 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   public openWidgetSettings(): void {
     const dialogRef = this.dialog.open(ModalWidgetConfigComponent, {
-      width: '80%',
       data: cloneDeep(this.splitWidgetSettings.config)
     });
 
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
       if (result) {
-        if (result.paths != undefined) {
+        if (result.paths && Object.entries(result.paths).length) {
           var OrgPaths = {...this.splitWidgetSettings.config.paths}; // keep old paths to combine with results if some paths are missing
           var CombPaths = {...OrgPaths, ...result.paths};
           this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects

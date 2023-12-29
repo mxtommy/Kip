@@ -85,8 +85,9 @@
 };
 
 //Import commun/shared styles
-@import 'styles-commun/settingsTabContent.scss';
-@import 'styles-commun/tabs.scss';
+@import 'styles-common/settingsTabContent.scss';
+@import 'styles-common/tabs.scss';
+@import 'styles-common/dialog-panel.scss';
 
 //Import themes
 @import 'themes/defaultTheme.scss';
@@ -117,6 +118,7 @@
   @include app-theme($theme);
   @include tab-styles();
   @include tab-content-styles();
+  @include dialog-panel-styles($theme);
   @include layout-split-theme($theme);
   @include dynamic-widget-container-theme($theme);
   @include modal-path-selector-theme($theme);

@@ -1,30 +1,40 @@
-<div [formGroup]="formGroup">
-  <div class="pathGroup">
-    <p>Control #{{controlIndex}}</p>
-  </div>
-  <mat-form-field class="fields" appearance="outline" floatLabel="always">
-    <mat-label>Label</mat-label>
-    <input matInput
-      #labelInput
-      type="string"
-      placeholder="Type Control Label..."
-      formControlName="ctrlLabel"
-      (change)="labelChange(labelInput.value)"
-      Ripple
-      required>
-  </mat-form-field>
+<div [formGroup]="formGroup" class="flex-container rounded-card">
 
-  <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-    <mat-label>Color</mat-label>
-    <mat-select
-    placeholder="Select Color..."
-    formControlName="color"
-    name="color">
-      <mat-option value='text'>Font</mat-option>
-      <mat-option value='primary'>Primary</mat-option>
-      <mat-option value='accent'>Accent</mat-option>
-      <mat-option value='warn'>Warn</mat-option>
-    </mat-select>
-  </mat-form-field>
-  <button type="button" mat-raised-button color="primary" (click)="deleteControl()">Delete</button>
+  <div class="flex-field-100">
+    <span>Control #{{controlIndex}}</span>
+  </div>
+  <div class="flex-field-50">
+
+    <mat-form-field class="fields" appearance="outline" floatLabel="always">
+      <mat-label>Label</mat-label>
+      <input matInput
+        #labelInput
+        type="string"
+        placeholder="Type Control Label..."
+        formControlName="ctrlLabel"
+        (change)="labelChange(labelInput.value)"
+        Ripple
+        required>
+    </mat-form-field>
+  </div>
+
+  <div class="flex-field-50">
+    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+      <mat-label>Color</mat-label>
+      <mat-select
+      placeholder="Select Color..."
+      formControlName="color"
+      name="color">
+        <mat-option value='text'>Font</mat-option>
+        <mat-option value='primary'>Primary</mat-option>
+        <mat-option value='accent'>Accent</mat-option>
+        <mat-option value='warn'>Warn</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="flex-field-100">
+    <button class="float-right" type="button" mat-raised-button color="primary" (click)="deleteControl()">Delete</button>
+  </div>
 </div>
+

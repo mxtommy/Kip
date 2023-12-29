@@ -14,8 +14,8 @@ import { Observable } from 'rxjs'
 })
 export class ModalPathSelectorComponent implements OnInit, OnChanges {
   //path control
-  @Input() formGroup: UntypedFormGroup;
-  @Input() filterSelfPaths: boolean;
+  @Input() formGroup!: UntypedFormGroup;
+  @Input() filterSelfPaths!: boolean;
   availablePaths: IPathMetaData[];
   filteredPaths: Observable<IPathMetaData[]> = new Observable;
 
@@ -24,7 +24,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
 
   //unit control
   unitList: {default?: string, conversions?: IUnitGroup[] };
-  default: string;
 
   ////require-match validation for path
   requirePathMatch = (allPathsAndMeta: IPathMetaData[]) => {
@@ -49,6 +48,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     this.updateSourcesAndUnits();
     // add path validator fn
     this.formGroup.controls['path'].setValidators([Validators.required, this.requirePathMatch(this.availablePaths)]);
+    this.formGroup.controls['path'].updateValueAndValidity();
     // add autocomplete filtering
     this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(
       debounceTime(800),
@@ -56,7 +56,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
       map(value => this.filterPaths(value))
     );
     // If SampleTime control is not present because the path property is missing, add it.
-    if (this.formGroup.value.sampleTime === undefined) {
+    if (!this.formGroup.controls['sampleTime']) {
       this.formGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
     }
     //disable formControl if path is empty. ie: a new/not yet configured Widget...
@@ -69,33 +69,36 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges {
     }
 
     //subscribe to path formControl changes
-    this.formGroup.controls['path'].valueChanges.subscribe(pathValue => {
-      this.updateSourcesAndUnits();
-      try {
-        this.formGroup.controls['source'].reset(); // clear value
-        if (this.formGroup.controls['path'].valid) {
-          if (this.availableSources.length == 1) { // if only on source, set to default (default source means: use parent path, and not a specific source value)
-            this.formGroup.controls['source'].setValue('default');
+    this.formGroup.controls['path'].valueChanges.subscribe({
+        next:  pathValue => {
+          this.updateSourcesAndUnits();
+          try {
+            this.formGroup.controls['source'].reset(); // clear value
+            if (this.formGroup.controls['path'].valid) {
+              if (this.availableSources.length == 1) { // if only on source, set to default (default source means: use parent path, and not a specific source value)
+                this.formGroup.controls['source'].setValue('default');
+              }
+              this.formGroup.controls['source'].enable();
+              this.formGroup.controls['sampleTime'].enable();
+              if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+                this.formGroup.controls['convertUnitTo'].setValue(this.unitList.default);
+                this.formGroup.controls['convertUnitTo'].enable();
+              }
+            } else {
+              this.formGroup.controls['source'].disable();
+              this.formGroup.controls['sampleTime'].disable();
+              if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+                this.formGroup.controls['convertUnitTo'].reset();
+                this.formGroup.controls['convertUnitTo'].disable();
+              }
+            }
+          } catch (error) {
+            console.debug(error);
           }
-          this.formGroup.controls['source'].enable();
-          this.formGroup.controls['sampleTime'].enable();
-          if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-            this.formGroup.controls['convertUnitTo'].setValue(this.unitList.default);
-            this.formGroup.controls['convertUnitTo'].enable();
-          }
-        } else {
-          this.formGroup.controls['source'].disable();
-          this.formGroup.controls['sampleTime'].disable();
-          if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-            this.formGroup.controls['convertUnitTo'].reset();
-            this.formGroup.controls['convertUnitTo'].disable();
-          }
-        }
-      } catch (error) {
-        console.debug(error);
-      }
-    });
-
+        },
+        error: () => { console.error("error") },
+        complete: () => { console.error("completed") }
+      });
   }
 
   ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {

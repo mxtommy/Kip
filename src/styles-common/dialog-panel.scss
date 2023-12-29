@@ -1,0 +1,21 @@
+@use '@angular/material' as mat;
+
+@mixin dialog-panel-styles($theme) {
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  .mat-dialog-panel mat-dialog-container { // used in app.modules.ts provider as global Dialog config
+    background-color: mat.get-color-from-palette($background, background);
+  }
+
+  .mat-dialog-backdrop { // used in app.modules.ts provider as global Dialog config
+    background-color:rgba(0, 0, 0, 0.6);
+  }
+
+  .rounded-card {
+    margin-top: 10px;
+    background-color: mat.get-color-from-palette($foreground, dividers);
+    border-radius: 4px;
+    padding: 10px;
+  }
+}

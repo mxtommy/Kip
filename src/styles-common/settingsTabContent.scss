@@ -1,0 +1,92 @@
+@mixin tab-content-styles {
+  .tab-content {
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .formActionFooter {
+    width: 100%;
+    text-align: end;
+  }
+
+  .formActionButton {
+    margin-left: 10px;
+  }
+
+  .formActionDivider{
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  .flex-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    align-content: flex-start;
+    gap: 10px;
+  }
+
+  .flex-checkbox-30 {
+    flex-grow: 1;
+    flex-basis: 30%;
+    padding-bottom: 23px;
+  }
+
+  .flex-field-30 {
+    flex-grow: 1;
+    flex-basis: 30%;
+  }
+
+  .flex-field-50 {
+    flex-grow: 1;
+    flex-basis: 48%;
+  }
+
+  .flex-field-65 {
+    flex-grow: 1;
+    flex-basis: 65%;
+  }
+
+  .flex-field-100 {
+    flex-grow: 1;
+    flex-basis: 100%;
+  }
+
+  .full-width {
+      width: 100%;
+  }
+
+  .half-width {
+      width: 49%;
+  }
+
+  .fields {
+    width: 100%;
+  }
+
+  .mat-radio-button ~ .mat-radio-button {
+    margin-left: 16px;
+  }
+
+  .minField {
+    display: inline-block;
+    width: calc(50% - 15px);
+    padding-right: 30px;
+  }
+
+  .maxField {
+    display: inline-block;
+    width: calc(50% - 15px);
+  }
+
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    margin: 15px 0;
+  }
+  .radio-button {
+    margin-left: 16px;
+  }
+}

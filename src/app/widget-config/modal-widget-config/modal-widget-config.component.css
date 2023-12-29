@@ -1,64 +1,8 @@
-.tab-content {
-  margin-top: 20px;
-  margin-bottom: 10px;
-}
+/* Common widget config/Options Tab Content styles should be located in
+   styles-common/settingsTabContent.scss for reusability.
 
-.flex-container {
-  /* width: 100%; */
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  align-content: flex-start;
-  gap: 10px;
-}
-
-.flex-checkbox {
-  flex-grow: 1;
-  flex-basis: 30%;
-  padding-bottom: 23px;
-}
-
-.flex-field {
-  flex-grow: 1;
-  flex-basis: 65%;
-}
-
-.fields {
-  width: 100%;
-}
+   Only add non-common/single case styles to this file */
 
 .warning {
   color: red;
-}
-
-.full-width {
-    width: 100%;
-}
-.half-width {
-    width: 49%;
-}
-.mat-radio-button ~ .mat-radio-button {
-  margin-left: 16px;
-}
-
-.minField {
-  display: inline-block;
-  width: calc(50% - 15px);
-  padding-right: 30px;
-}
-
-.maxField {
-  display: inline-block;
-  width: calc(50% - 15px);
-}
-
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  margin: 15px 0;
-}
-.radio-button {
-  margin-left: 16px;
 }

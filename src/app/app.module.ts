@@ -12,7 +12,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatInputModule } from '@angular/material/input';
@@ -259,6 +259,15 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     {
       provide: HAMMER_GESTURE_CONFIG,
       useClass: kipHammerConfig
+    },
+    {provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: {
+      panelClass: 'mat-dialog-panel',
+      backdropClass: 'mat-dialog-backdrop',
+      minWidth: '60%',
+      maxWidth: '95%',
+      minHeight: '50%',
+      maxHeight: '95%',
+      }
     },
     AuthenticationService,
     SignalKService,
