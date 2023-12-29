@@ -135,7 +135,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   public openWidgetSettings(): void {
     const dialogRef = this.dialog.open(ModalWidgetConfigComponent, {
       width: '80%',
-      data: {...this.splitWidgetSettings.config}
+      data: cloneDeep(this.splitWidgetSettings.config)
     });
 
     dialogRef.afterClosed().subscribe(result => {

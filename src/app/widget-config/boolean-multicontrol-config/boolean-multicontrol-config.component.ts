@@ -1,51 +1,36 @@
-import { Component, Input, OnInit} from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { IChildControl } from '../../widgets-interface';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { UntypedFormGroup } from '@angular/forms';
 
-interface ctrlGroup {
-  [key: string]: any,
-  index: number,
-  formGroup: UntypedFormGroup
+interface ctrlUpdate {
+  ctrlId: number,
+  label: string
 }
 
 @Component({
   selector: 'app-boolean-multicontrol-config',
   templateUrl: './boolean-multicontrol-config.component.html',
-  styleUrls: ['./boolean-multicontrol-config.component.css']
+  styleUrls: ['./boolean-multicontrol-config.component.css'],
 })
 export class BooleanMultiControlConfigComponent implements OnInit {
-  @Input() formMultiCtrlGroup!: ctrlGroup;
-  @Input() formMultiCtrlConfig!: Object[];
+  @Input() formGroup!: UntypedFormGroup;
+  @Input() controlIndex: number;
+  @Output() private ctrlLabelChange = new EventEmitter<ctrlUpdate>();
+  @Output() private deleteCtrl = new EventEmitter<number>();
 
   constructor() { }
 
   ngOnInit(): void {
-    console.error('config widget')
   }
 
-  public onAddControlGroup(): void {
-
-
-    let cfg: IChildControl = {
-      label: '',
-      pathKeyName: '',
-      color: 'text',
-      value: null
+  public labelChange(inputValue: string): void {
+    let update: ctrlUpdate = {
+      ctrlId: this.controlIndex,
+      label: inputValue
     }
-    let idxCfg = this.formMultiCtrlConfig.push(cfg)
+    this.ctrlLabelChange.emit(update);
+  }
 
-    let group: UntypedFormGroup = new UntypedFormGroup({
-      label: new UntypedFormControl(),
-      pathKeyName: new UntypedFormControl(),
-      color: new UntypedFormControl('text'),
-      value: new UntypedFormControl(),
-    });
-
-
-    const i = Object.keys(this.formMultiCtrlGroup).length;
-    const fg: Record<string, any> = {}
-    fg[i] = group;
-
-    Object.assign(this.formMultiCtrlGroup, fg);
+  public deleteControl(): void {
+    this.deleteCtrl.emit(this.controlIndex);
   }
 }

@@ -1,14 +1,14 @@
 import { Component, DoCheck, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
-import { IChildControl, ITheme } from '../../widgets-interface';
+import { IDynamicControl, ITheme } from '../../widgets-interface';
 
 @Component({
   selector: 'app-svg-boolean-switch',
   templateUrl: './svg-boolean-switch.component.svg'
 })
 export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
-  @Input('controlData') data: IChildControl = null;
+  @Input('controlData') data: IDynamicControl = null;
   @Input('theme') theme: ITheme = null;
-  @Output() toggleClick = new EventEmitter<IChildControl>();
+  @Output() toggleClick = new EventEmitter<IDynamicControl>();
 
   private toggleOff: string = "0 35 205 35";
   private toggleOn: string = "0 0 205 35";

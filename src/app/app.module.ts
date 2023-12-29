@@ -78,7 +78,7 @@ import { GaugeSteelComponent } from './widgets/gauge-steel/gauge-steel.component
 import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
-import { ModalWidgetConfigComponent } from './widget-config/modal-widget-config/modal-widget-config.component';
+import { ModalWidgetConfigComponent, DialogAddMultiControl } from './widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './widget-config/modal-path-selector/modal-path-selector.component';
 import { SettingsUnitsComponent } from './settings/units/units.component';
@@ -191,6 +191,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     LayoutSplitComponent,
     ResetConfigComponent,
     ModalWidgetConfigComponent,
+    DialogAddMultiControl,
     ModalPathSelectorComponent,
     ModalUserCredentialComponent,
     AlarmMenuComponent,

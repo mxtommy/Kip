@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../signalk-requests.service';
 import { NotificationsService } from '../../notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { IChildControl } from '../../widgets-interface';
+import { IDynamicControl } from '../../widgets-interface';
 
 @Component({
   selector: 'app-widget-boolean-switch',
@@ -13,7 +13,7 @@ import { IChildControl } from '../../widgets-interface';
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnDestroy {
 
-  public toggleControls: IChildControl[] = [];
+  public switchControls: IDynamicControl[] = [];
 
   private skRequestSub = new Subscription; // Request result observer
 
@@ -24,47 +24,15 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
       super();
 
       this.defaultConfig = {
-        displayName: 'Toggle Panel Label',
+        displayName: 'Switch Panel Label',
         filterSelfPaths: true,
-        paths: {
-          "Toggle Label 1": {
-            description: "Boolean Data",
-            path: "self.red.boolean1.state",
-            source: "default",
-            pathType: "boolean",
-            isPathConfigurable: true,
-            convertUnitTo: "unitless",
-            sampleTime: 500
-          },
-          "Toggle Label 2": {
-            description: "Boolean Data",
-            path: "self.red.boolean2.state",
-            source: "default",
-            pathType: "boolean",
-            isPathConfigurable: true,
-            convertUnitTo: "unitless",
-            sampleTime: 500
-          }
-        },
+        paths: {},
         enableTimeout: false,
         dataTimeout: 5,
         textColor: "text",
         putEnable: true,
         putMomentary: false,
-        multiChildCtrls: [
-          {
-            label: "Toggle Label 1",
-            pathKeyName: "Toggle Label 1",
-            value: null,
-            color: "text"
-          },
-          {
-            label: "Toggle Label 2",
-            pathKeyName: "Toggle Label 2",
-            value: null,
-            color: "accent"
-          }
-        ]
+        multiChildCtrls: []
       };
   }
 
@@ -72,11 +40,11 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     this.validateConfig();
     // Build control array
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
-        this.toggleControls.push({...ctrlConfig});
+        this.switchControls.push({...ctrlConfig});
       }
     );
     // Start Observers
-    this.toggleControls.forEach(ctrl => {
+    this.switchControls.forEach(ctrl => {
         this.observeDataStream(ctrl.pathKeyName, newValue => {
             ctrl.value = newValue.value;
           }
@@ -103,7 +71,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     });
   }
 
-  public toggle($event: IChildControl): void {
+  public toggle($event: IDynamicControl): void {
     this.signalkRequestsService.putRequest(
       this.widgetProperties.config.paths[$event.pathKeyName].path,
       $event.value,

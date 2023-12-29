@@ -89,7 +89,7 @@ export interface IWidgetSvcConfig {
     [key: string]: string;
   };
   /** Array of sub/child component setting */
-  multiChildCtrls?: IChildControl[];
+  multiChildCtrls?: IDynamicControl[];
 
   /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout period. See dataTimeout */
   enableTimeout?: boolean;
@@ -189,11 +189,11 @@ export interface IWidgetSvcConfig {
  * A configuration object that defines a sub/child component
  *
  * @export
- * @interface IChildControl
+ * @interface IDynamicControl
  */
-export interface IChildControl {
+export interface IDynamicControl {
   /** Label of the control */
-  label: string;
+  ctrlLabel: string;
   /** The path key name linked to the control */
   pathKeyName: string;
   /** The value of the control */

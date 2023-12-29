@@ -22,7 +22,7 @@
        y="22.636719"><tspan
          id="tspan1-8"
          x="47.083984"
-         y="22.636719">{{ data.label }}</tspan></text>
+         y="22.636719">{{ data.ctrlLabel }}</tspan></text>
     <g transform="translate(6,2)" id="disabledToogleControl">
       <rect
          width="37.714306"
@@ -57,7 +57,7 @@
        y="22.636719"><tspan
          id="tspan1"
          x="47.083984"
-         y="22.636719">{{ data.label }}</tspan></text>
+         y="22.636719">{{ data.ctrlLabel }}</tspan></text>
     <g transform="translate(6,2)" id="enabledToogleControl">
       <rect
          width="37.714306"

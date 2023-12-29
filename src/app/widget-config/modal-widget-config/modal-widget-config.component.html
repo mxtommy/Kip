@@ -188,11 +188,13 @@
               <span class="warning fa fa-exclamation-circle"></span>&nbsp;Controls
             </ng-template>
           </div>
-          <app-boolean-multicontrol-config
-            class="full-width"
-            [formMultiCtrlGroup]="formMaster['controls'].multiChildCtrls['controls']"
-            [formMultiCtrlConfig]="widgetConfig.multiChildCtrls"
-            >
+          <button type="button" mat-raised-button color="primary" (click)="openAddCtrlDialog()">Add Control</button>
+          <app-boolean-multicontrol-config class="full-width"
+            *ngFor="let ctrlForm of formMaster['controls'].multiChildCtrls['controls'] | objectKeys; index as i"
+            [formGroup]="formMaster.controls.multiChildCtrls.get(ctrlForm)"
+            [controlIndex]="i"
+            (ctrlLabelChange)="ctrlLabelChange($event)"
+            (deleteCtrl)="deleteControl($event)">
           </app-boolean-multicontrol-config>
         </div>
       </mat-tab>
