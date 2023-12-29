@@ -140,16 +140,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
       if (result) {
-        if (result.paths && Object.entries(result.paths).length) {
-          var OrgPaths = {...this.splitWidgetSettings.config.paths}; // keep old paths to combine with results if some paths are missing
-          var CombPaths = {...OrgPaths, ...result.paths};
-          this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
-          this.splitWidgetSettings.config.paths = {...CombPaths};
-        } else {
-          this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
-        }
-
-        // this.dynamicWidgetContainerRef.clear();
+        this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
         this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, this.splitWidgetSettings.config); // Push to storage
         this.instantiateWidget();
       }

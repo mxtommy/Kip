@@ -42,7 +42,6 @@
             <mat-select
                 placeholder="Select source"
                 formControlName="source"
-                Ripple
                 required>
                 <mat-option *ngFor="let source of availableSources" [value]="source">
                     {{source}}
@@ -56,7 +55,6 @@
             <input matInput type="number"
               placeholder="Sample time in milliseconds"
               formControlName="sampleTime"
-              Ripple
               required>
           </mat-form-field>
         </div>
@@ -66,7 +64,6 @@
             <mat-select
                 placeholder="Select unit"
                 formControlName="convertUnitTo"
-                disableRipple
                 required>
                 <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
                   <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
