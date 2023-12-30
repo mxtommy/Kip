@@ -267,6 +267,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
       maxWidth: '95%',
       minHeight: '50%',
       maxHeight: '95%',
+      autoFocus: 'first-tabbable'
       }
     },
     AuthenticationService,

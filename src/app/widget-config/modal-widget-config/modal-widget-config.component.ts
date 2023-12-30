@@ -124,7 +124,9 @@ export class ModalWidgetConfigComponent implements OnInit {
 
   public openAddCtrlDialog(): void {
     let label: string = null;
-    const dialogRef = this.dialog.open(DialogAddMultiControl, {data: label});
+    const dialogRef = this.dialog.open(DialogAddMultiControl, {
+      data: label
+    });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {

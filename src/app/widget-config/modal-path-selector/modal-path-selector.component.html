@@ -1,78 +1,75 @@
-<div [formGroup]="formGroup">
-  <div class="flex-container rounded-card" *ngIf="formGroup.value.isPathConfigurable">
-    <div class="flex-field-100">
-      <span>{{formGroup.value.description}}</span>
-    </div>
-    <div class="flex-field-100">
-
-      <mat-form-field class="pathField" appearance="outline" floatLabel="always">
-        <mat-label>Signal K Path</mat-label>
-        <input type="text" matInput
-          placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
-          formControlName="path"
-          required
-          [matAutocomplete]="pathAutoComplete">
-        <button style="top:-8px" mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].setValue('')">
-          <span class="fa-solid fa-close"></span>
-        </button>
-        <mat-autocomplete #pathAutoComplete="matAutocomplete">
-          <mat-option *ngFor="let pathAndMeta of filteredPaths | async" [value]="pathAndMeta.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
-            <ng-container *ngIf="(pathAndMeta.meta != undefined)">
-              <span>{{pathAndMeta.path}}</span>
-              <br>
-              <small class="pathMetaDescription">{{pathAndMeta.meta.description}}</small>
-            </ng-container>
-            <ng-container *ngIf="(pathAndMeta.meta == undefined)">
-                {{pathAndMeta.path}}
-            </ng-container>
-          </mat-option>
-        </mat-autocomplete>
-        <mat-error *ngIf="formGroup.controls['path'].hasError('required')">
-          Path required
-        </mat-error>
-        <mat-error *ngIf="formGroup.controls['path'].hasError('requireMatch') && !formGroup.controls['path'].hasError('required')">
-          Path does not match any known valid path
-        </mat-error>
+<div [formGroup]="formGroup" class="flex-container rounded-card" *ngIf="formGroup.value.isPathConfigurable">
+  <div class="flex-field-100">
+    <span>{{formGroup.value.description}}</span>
+  </div>
+  <div class="flex-field-100">
+    <mat-form-field class="pathField" appearance="outline" floatLabel="always">
+      <mat-label>Signal K Path</mat-label>
+      <input type="text" matInput
+        placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
+        formControlName="path"
+        required
+        [matAutocomplete]="pathAutoComplete">
+      <button style="top:-8px" mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].setValue('')">
+        <span class="fa-solid fa-close"></span>
+      </button>
+      <mat-autocomplete #pathAutoComplete="matAutocomplete">
+        <mat-option *ngFor="let pathAndMeta of filteredPaths | async" [value]="pathAndMeta.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
+          <ng-container *ngIf="(pathAndMeta.meta != undefined)">
+            <span>{{pathAndMeta.path}}</span>
+            <br>
+            <small class="pathMetaDescription">{{pathAndMeta.meta.description}}</small>
+          </ng-container>
+          <ng-container *ngIf="(pathAndMeta.meta == undefined)">
+              {{pathAndMeta.path}}
+          </ng-container>
+        </mat-option>
+      </mat-autocomplete>
+      <mat-error *ngIf="formGroup.controls['path'].errors?.['required']">
+        Path required
+      </mat-error>
+      <mat-error *ngIf="formGroup.controls['path'].errors?.['requireMatch'] && !formGroup.controls['path'].errors?.['required']">
+        Path does not match any known valid path
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="pathProperties">
+    <div class="sourceField">
+      <mat-form-field class="fields" appearance="outline" floatLabel="always">
+        <mat-label>Data Source</mat-label>
+        <mat-select
+            placeholder="Select source"
+            formControlName="source"
+            required>
+            <mat-option *ngFor="let source of availableSources" [value]="source">
+                {{source}}
+            </mat-option>
+        </mat-select>
       </mat-form-field>
-      </div>
-      <div class="pathProperties">
-        <div class="sourceField">
-          <mat-form-field class="fields" appearance="outline" floatLabel="always">
-            <mat-label>Data Source</mat-label>
-            <mat-select
-                placeholder="Select source"
-                formControlName="source"
-                required>
-                <mat-option *ngFor="let source of availableSources" [value]="source">
-                    {{source}}
-                </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div class="sampleTimeField">
-          <mat-form-field class="fields" appearance="outline" floatLabel="always">
-            <mat-label>Sample Time</mat-label>
-            <input matInput type="number"
-              placeholder="Sample time in milliseconds"
-              formControlName="sampleTime"
-              required>
-          </mat-form-field>
-        </div>
-        <div class="unitField">
-          <mat-form-field *ngIf="formGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always">
-            <mat-label>Display Format</mat-label>
-            <mat-select
-                placeholder="Select unit"
-                formControlName="convertUnitTo"
-                required>
-                <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
-                  <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
-                    {{unit.description}}
-                  </mat-option>
-                </mat-optgroup>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
+    </div>
+    <div class="sampleTimeField">
+      <mat-form-field class="fields" appearance="outline" floatLabel="always">
+        <mat-label>Sample Time</mat-label>
+        <input matInput type="number"
+          placeholder="Sample time in milliseconds"
+          formControlName="sampleTime"
+          required>
+      </mat-form-field>
+    </div>
+    <div class="unitField">
+      <mat-form-field *ngIf="formGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always">
+        <mat-label>Display Format</mat-label>
+        <mat-select
+            placeholder="Select unit"
+            formControlName="convertUnitTo"
+            required>
+            <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
+              <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
+                {{unit.description}}
+              </mat-option>
+            </mat-optgroup>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
 </div>
