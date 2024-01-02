@@ -19,8 +19,8 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentValueLength = 0;
-  canvasCtx;
-  canvasBGCtx;
+  canvasCtx: CanvasRenderingContext2D;
+  canvasBGCtx: CanvasRenderingContext2D;
 
   labelColor: string = undefined;
   valueColor: string = undefined;

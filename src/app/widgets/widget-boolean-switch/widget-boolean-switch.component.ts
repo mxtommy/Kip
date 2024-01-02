@@ -1,21 +1,32 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { ResizedEvent } from 'angular-resize-event';
 
 import { SignalkRequestsService } from '../../signalk-requests.service';
 import { NotificationsService } from '../../notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { IDynamicControl } from '../../widgets-interface';
 
+
 @Component({
   selector: 'app-widget-boolean-switch',
   templateUrl: './widget-boolean-switch.component.html',
   styleUrls: ['./widget-boolean-switch.component.css']
 })
-export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnDestroy {
+export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
+  @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;
+  @ViewChild('widgetContainer', {static: true, read: ElementRef}) widgetContainerElement: ElementRef;
 
   public switchControls: IDynamicControl[] = [];
-
   private skRequestSub = new Subscription; // Request result observer
+
+  // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  private currentValueLength = 0;
+  private canvasLabelCtx: CanvasRenderingContext2D;
+  private labelColor: string = undefined;
+
+  private nbCtrl: number = null;
+  public ctrlDimensions: Object = {};
 
   constructor(
     private signalkRequestsService: SignalkRequestsService,
@@ -38,6 +49,11 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   ngOnInit(): void {
     this.validateConfig();
+    this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
+    this.getColors(this.widgetProperties.config.textColor);
+    this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
+    this.resizeWidget();
+
     // Build control array
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
         this.switchControls.push({...ctrlConfig});
@@ -53,6 +69,17 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     );
     // Listen to PUT response msg
     this.subscribeSKRequest();
+  }
+
+  ngAfterViewChecked() {
+    this.resizeWidget();
+  }
+
+  onResized(event: ResizedEvent) {
+    let calcH: number = event.newRect.height / this.nbCtrl; // divide by number of instantiated widget
+    let ctrlHeightProportion = (35 * event.newRect.width / 205); //check control height not over width proportions
+    let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
+    this.ctrlDimensions = {width: event.newRect.width, height: h}
   }
 
   private subscribeSKRequest(): void {
@@ -77,6 +104,72 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
       $event.value,
       this.widgetProperties.uuid
     );
+  }
+
+  private resizeWidget(): void {
+    const rect = this.canvasLabelElement.nativeElement.getBoundingClientRect();
+    if ((this.canvasLabelElement.nativeElement.width != Math.floor(rect.width)) || (this.canvasLabelElement.nativeElement.height != Math.floor(rect.height))) {
+      this.canvasLabelElement.nativeElement.width = Math.floor(rect.width);
+      this.canvasLabelElement.nativeElement.height = Math.floor(rect.height);
+      this.currentValueLength = 0; // will force resetting the font size
+      this.updateBtnCanvas();
+    }
+  }
+
+  private updateBtnCanvas() {
+    if (this.canvasLabelCtx) {
+      this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+      this.drawTitle();
+    }
+  }
+
+  drawTitle() {
+    const maxTextWidth = Math.floor(this.canvasLabelElement.nativeElement.width * 0.935);
+    const maxTextHeight = Math.floor(this.canvasLabelElement.nativeElement.height * 0.86 );
+    // set font small and make bigger until we hit a max.
+    if (this.widgetProperties.config.displayName === null) { return; }
+    let fontSize = 1;
+
+    this.canvasLabelCtx.font = 'bold ' + fontSize.toString() + 'px Arial'; // need to init it, so we do loop at least once :)
+    while ( (this.canvasLabelCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
+        fontSize++;
+        this.canvasLabelCtx.font = 'bold ' + fontSize.toString() + 'px Arial';
+    }
+
+    this.canvasLabelCtx.textAlign = 'left';
+    this.canvasLabelCtx.textBaseline = 'top';
+    this.canvasLabelCtx.fillStyle = this.labelColor;
+    this.canvasLabelCtx.fillText(
+      this.widgetProperties.config.displayName,
+      this.canvasLabelElement.nativeElement.width * 0.03,
+      this.canvasLabelElement.nativeElement.height * 0.25,
+      maxTextWidth
+    );
+
+  }
+
+  private getColors(color: string): void {
+    switch (color) {
+      case "text":
+        this.labelColor = this.theme.textDark;
+        break;
+
+      case "primary":
+        this.labelColor = this.theme.textPrimaryDark;
+        break;
+
+      case "accent":
+        this.labelColor = this.theme.textAccentDark;
+        break;
+
+      case "warn":
+        this.labelColor = this.theme.textWarnDark;
+        break;
+
+      default:
+        this.labelColor = this.theme.textDark;
+        break;
+    }
   }
 
   ngOnDestroy(): void {

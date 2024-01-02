@@ -1,6 +1,11 @@
 import { Component, DoCheck, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
 import { IDynamicControl, ITheme } from '../../widgets-interface';
 
+interface IDimensions {
+  height: number,
+  width: number
+}
+
 @Component({
   selector: 'app-svg-boolean-switch',
   templateUrl: './svg-boolean-switch.component.svg'
@@ -8,6 +13,7 @@ import { IDynamicControl, ITheme } from '../../widgets-interface';
 export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   @Input('controlData') data: IDynamicControl = null;
   @Input('theme') theme: ITheme = null;
+  @Input() dimensions!: IDimensions;
   @Output() toggleClick = new EventEmitter<IDynamicControl>();
 
   private toggleOff: string = "0 35 205 35";
