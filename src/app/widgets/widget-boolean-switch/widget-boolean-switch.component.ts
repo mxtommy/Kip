@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
@@ -13,7 +13,7 @@ import { IDynamicControl } from '../../widgets-interface';
   templateUrl: './widget-boolean-switch.component.html',
   styleUrls: ['./widget-boolean-switch.component.css']
 })
-export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;
   @ViewChild('widgetContainer', {static: true, read: ElementRef}) widgetContainerElement: ElementRef;
 
@@ -71,15 +71,12 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     this.subscribeSKRequest();
   }
 
-  ngAfterViewChecked() {
-    this.resizeWidget();
-  }
-
   onResized(event: ResizedEvent) {
     let calcH: number = event.newRect.height / this.nbCtrl; // divide by number of instantiated widget
     let ctrlHeightProportion = (35 * event.newRect.width / 205); //check control height not over width proportions
     let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
-    this.ctrlDimensions = {width: event.newRect.width, height: h}
+    this.ctrlDimensions = {width: event.newRect.width, height: h};
+    this.resizeWidget();
   }
 
   private subscribeSKRequest(): void {
