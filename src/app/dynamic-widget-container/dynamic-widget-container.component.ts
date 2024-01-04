@@ -10,7 +10,7 @@ import { cloneDeep } from "lodash-es";
 
 import { DynamicWidgetDirective } from '../dynamic-widget.directive';
 import { DynamicWidget, IWidget, ITheme } from '../widgets-interface';
-import { ModalWidgetConfigComponent } from '../modal-widget-config/modal-widget-config.component';
+import { ModalWidgetConfigComponent } from '../widget-config/modal-widget-config/modal-widget-config.component';
 import { AppSettingsService } from '../app-settings.service';
 import { WidgetManagerService } from '../widget-manager.service';
 import { WidgetListService, widgetList } from '../widget-list.service';
@@ -134,23 +134,13 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   public openWidgetSettings(): void {
     const dialogRef = this.dialog.open(ModalWidgetConfigComponent, {
-      width: '80%',
-      data: {...this.splitWidgetSettings.config}
+      data: cloneDeep(this.splitWidgetSettings.config)
     });
 
     dialogRef.afterClosed().subscribe(result => {
       // save new settings
       if (result) {
-        if (result.paths != undefined) {
-          var OrgPaths = {...this.splitWidgetSettings.config.paths}; // keep old paths to combine with results if some paths are missing
-          var CombPaths = {...OrgPaths, ...result.paths};
-          this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
-          this.splitWidgetSettings.config.paths = {...CombPaths};
-        } else {
-          this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
-        }
-
-        // this.dynamicWidgetContainerRef.clear();
+        this.splitWidgetSettings.config = cloneDeep(result); // copy all sub objects
         this.WidgetManagerService.updateWidgetConfig(this.splitWidgetSettings.uuid, this.splitWidgetSettings.config); // Push to storage
         this.instantiateWidget();
       }

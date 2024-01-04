@@ -1,11 +1,12 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 
-import { IUnitGroup } from '../units.service';
-import { SignalKService } from '../signalk.service';
-import { DataSetService, IDataSet } from '../data-set.service';
-import { IWidgetSvcConfig } from '../widgets-interface';
+import { IUnitGroup } from '../../units.service';
+import { SignalKService } from '../../signalk.service';
+import { DataSetService, IDataSet } from '../../data-set.service';
+import { IDynamicControl, IPathArray, IWidgetSvcConfig } from '../../widgets-interface';
+import { UUID } from '../../uuid';
 
 
 @Component({
@@ -22,7 +23,8 @@ export class ModalWidgetConfigComponent implements OnInit {
 
 
   constructor(
-    public dialogRef:MatDialogRef<ModalWidgetConfigComponent>,
+    public dialog: MatDialog,
+    public dialogRef: MatDialogRef<ModalWidgetConfigComponent>,
     private DataSetService: DataSetService,
     private signalKService: SignalKService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
@@ -72,6 +74,9 @@ export class ModalWidgetConfigComponent implements OnInit {
             case "dataTimeout": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
             break;
 
+            case "ctrlLabel": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            break;
+
             default: groups.addControl(key, new UntypedFormControl(formData[key]));
             break;
           }
@@ -81,7 +86,67 @@ export class ModalWidgetConfigComponent implements OnInit {
     return groups;
   }
 
+  public addDynamicControlGroup(ctrlLabel: string): void {
+    let pathUUID = UUID.create();
+    let ctrlCfg: IDynamicControl = {
+      ctrlLabel: ctrlLabel,
+      pathKeyName: pathUUID,
+      color: "text",
+      value: null
+    }
+    let pathCfg: IPathArray = {
+      [pathUUID]: {
+        description: ctrlLabel,
+        path: null,
+        source: null,
+        pathType: "boolean",
+        isPathConfigurable: true,
+        convertUnitTo: "unitless",
+        sampleTime: 500
+      }
+    }
+    this.widgetConfig.multiChildCtrls.push(ctrlCfg);
+    Object.assign(this.widgetConfig.paths, pathCfg);
+    this.formMaster = this.generateFormGroups(this.widgetConfig);
+  }
+
+  public ctrlLabelChange(e: any): void {
+    this.widgetConfig.multiChildCtrls[e.ctrlId].ctrlLabel = e.label;
+    Object.assign(this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e.ctrlId].pathKeyName], {description: e.label});
+    this.formMaster = this.generateFormGroups(this.widgetConfig);
+  }
+
+  public deleteControl(e: number) {
+    delete this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e].pathKeyName];
+    this.widgetConfig.multiChildCtrls.splice(e,1);
+    this.formMaster = this.generateFormGroups(this.widgetConfig);
+  }
+
+  public openAddCtrlDialog(): void {
+    let label: string = null;
+    const dialogRef = this.dialog.open(DialogAddMultiControl, {
+      data: label
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.addDynamicControlGroup(result);
+      }
+    });
+  }
+
   submitConfig() {
     this.dialogRef.close(this.formMaster.value);
   }
+}
+
+
+@Component({
+  selector: 'dialog-add-multi-control',
+  templateUrl: 'dialog-add-multi-control.html'
+})
+export class DialogAddMultiControl {
+  constructor (
+    @Inject(MAT_DIALOG_DATA) public data: string
+  ) {}
 }

@@ -1,0 +1,10 @@
+<div class="wrapper">
+  <canvas #canvasLabel class="canvas-label"></canvas>
+  <div class="widgets-container" #widgetContainer (resized)="onResized($event)">
+    <app-svg-boolean-switch class="svg-widget" *ngFor="let ctrl of switchControls" [controlData]="ctrl"
+      [theme]="theme"
+      [dimensions]="ctrlDimensions"
+      (toggleClick)="toggle($event)">
+    </app-svg-boolean-switch>
+  </div>
+</div>

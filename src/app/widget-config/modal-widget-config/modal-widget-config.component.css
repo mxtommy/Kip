@@ -1,0 +1,8 @@
+/* Common widget config/Options Tab Content styles should be located in
+   styles-common/settingsTabContent.scss for reusability.
+
+   Only add non-common/single case styles to this file */
+
+.warning {
+  color: red;
+}

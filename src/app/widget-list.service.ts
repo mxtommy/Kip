@@ -9,7 +9,7 @@ import { WidgetHistoricalComponent } from './widgets/widget-historical/widget-hi
 import { WidgetWindComponent } from './widgets/widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from './widgets/widget-gauge/widget-gauge.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
-import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component';
+import { WidgetBooleanSwitchComponent } from './widgets/widget-boolean-switch/widget-boolean-switch.component'
 import { WidgetIframeComponent } from './widgets/widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetGaugeNgLinearComponent} from './widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
@@ -45,66 +45,71 @@ export class WidgetListService {
       {
         name: 'WidgetNumeric',
         componentName: WidgetNumericComponent,
-        description: 'Numeric display',
+        description: 'Numeric',
       },
       {
         name: 'WidgetTextGeneric',
         componentName: WidgetTextGenericComponent,
-        description: 'Text display',
+        description: 'Text',
       },
       {
         name: 'WidgetDateGeneric',
         componentName: WidgetDateGenericComponent,
-        description: 'Date value display',
+        description: 'Date & Time',
       },
       {
         name: 'WidgetStateComponent',
         componentName: WidgetButtonComponent,
-        description: 'Button/Switch control',
+        description: 'Boolean Button/Switch',
       },
+      {
+        name: 'WidgetBooleanSwitch',
+        componentName: WidgetBooleanSwitchComponent,
+        description: 'Boolean Switches',
+      }
     ],
     'Gauge': [
       {
-        name: 'WidgetGaugeNgLinearComponent',
-        componentName: WidgetGaugeNgLinearComponent,
-        description: 'Linear Gauge'
-      },
-      {
         name: 'WidgetSimpleLinearComponent',
         componentName: WidgetSimpleLinearComponent,
-        description: "Linear Electrical Gauge"
+        description: "Simple Linear"
+      },
+      {
+        name: 'WidgetGaugeNgLinearComponent',
+        componentName: WidgetGaugeNgLinearComponent,
+        description: 'Linear'
       },
       {
         name: 'WidgetGaugeNgRadialComponent',
         componentName: WidgetGaugeNgRadialComponent,
-        description: 'Radial Gauge'
+        description: 'Radial'
       },
       {
         name: 'WidgetGaugeComponent',
         componentName: WidgetGaugeComponent,
-        description: "Radial & Linear Steel Gauges"
+        description: "Linear & Radial Steel Style"
       },
     ],
-    'Components': [
-      {
-        name: 'WidgetHistorical',
-        componentName: WidgetHistoricalComponent,
-        description: 'Historical Datagram chart',
-      },
+    'Component': [
       {
         name: 'WidgetWindComponent',
         componentName: WidgetWindComponent,
-        description: 'Wind Gauge',
+        description: 'Wind Steering Display',
+      },
+      {
+        name: 'WidgetHistorical',
+        componentName: WidgetHistoricalComponent,
+        description: 'Historical Datagram Chart',
       },
       {
         name: 'WidgetAutopilotComponent',
         componentName: WidgetAutopilotComponent,
-        description: 'N2k Autopilot head',
+        description: 'Autopilot Head',
       },
       {
           name: 'WidgetRaceTimerComponent',
           componentName: WidgetRaceTimerComponent,
-          description: "Race Timer display"
+          description: "Race Timer"
       },
       {
         name: 'WidgetIframeComponent',

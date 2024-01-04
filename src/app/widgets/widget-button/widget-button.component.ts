@@ -25,8 +25,8 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
   public lightColorOn: string = "";
   public lightColorOff: string = "";
 
-  public canvasButtonTxt;
-  private currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  public canvasButtonTxt: CanvasRenderingContext2D;
+  private currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   private valueFontSize: number = 1;
 
   public state: boolean = null;

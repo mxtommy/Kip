@@ -16,8 +16,8 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   dataTimestamp: number = Date.now();
   valueFontSize: number = 1;
   currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  canvasCtx;
-  canvasBGCtx;
+  canvasCtx: CanvasRenderingContext2D;
+  canvasBGCtx: CanvasRenderingContext2D;
   labelColor: string = undefined;
   valueColor: string = undefined;
 

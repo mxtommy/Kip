@@ -1,0 +1,22 @@
+.wrapper {
+  height: 100%;
+  width: 100%;
+}
+
+.canvas-label {
+  height: 12%;
+  width: 100%;
+}
+
+.widgets-container {
+  display: block;
+  position: relative;
+  left: 0;
+  right: 0;
+  height: 86%;
+  width: 100%;
+}
+
+.svg-widget {
+  display: flex;
+}

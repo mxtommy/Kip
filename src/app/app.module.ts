@@ -12,7 +12,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatInputModule } from '@angular/material/input';
@@ -78,9 +78,9 @@ import { GaugeSteelComponent } from './widgets/gauge-steel/gauge-steel.component
 import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
-import { ModalWidgetConfigComponent } from './modal-widget-config/modal-widget-config.component';
+import { ModalWidgetConfigComponent, DialogAddMultiControl } from './widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
-import { ModalPathSelectorComponent } from './modal-path-selector/modal-path-selector.component';
+import { ModalPathSelectorComponent } from './widget-config/modal-path-selector/modal-path-selector.component';
 import { SettingsUnitsComponent } from './settings/units/units.component';
 import { SettingsZonesComponent, DialogNewZone, DialogEditZone } from './settings/zones/zones.component';
 import { WidgetIframeComponent } from './widgets/widget-iframe/widget-iframe.component';
@@ -98,6 +98,9 @@ import { DataBrowserRowComponent, DialogUnitSelect } from './data-browser-row/da
 import { ModalUserCredentialComponent } from './modal-user-credential/modal-user-credential.component';
 import { WidgetRaceTimerComponent } from './widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
+import { WidgetBooleanSwitchComponent } from './widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { SvgBooleanSwitchComponent } from './widgets/svg-boolean-switch/svg-boolean-switch.component';
+import { BooleanMultiControlConfigComponent } from './widget-config/boolean-multicontrol-config/boolean-multicontrol-config.component';
 
 
 const appRoutes: Routes = [
@@ -188,12 +191,16 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     LayoutSplitComponent,
     ResetConfigComponent,
     ModalWidgetConfigComponent,
+    DialogAddMultiControl,
     ModalPathSelectorComponent,
     ModalUserCredentialComponent,
     AlarmMenuComponent,
     SettingsGeneralComponent,
     DataBrowserComponent,
-    DataBrowserRowComponent
+    DataBrowserRowComponent,
+    WidgetBooleanSwitchComponent,
+    SvgBooleanSwitchComponent,
+    BooleanMultiControlConfigComponent
   ],
   imports: [
     BrowserModule,
@@ -252,6 +259,16 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     {
       provide: HAMMER_GESTURE_CONFIG,
       useClass: kipHammerConfig
+    },
+    {provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: {
+      panelClass: 'mat-dialog-panel',
+      backdropClass: 'mat-dialog-backdrop',
+      minWidth: '60%',
+      maxWidth: '95%',
+      minHeight: '50%',
+      maxHeight: '95%',
+      autoFocus: 'first-tabbable'
+      }
     },
     AuthenticationService,
     SignalKService,

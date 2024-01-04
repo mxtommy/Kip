@@ -23,16 +23,6 @@
   width: 50%;
 }
 
-.flex-container {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: stretch;
-  gap: 10px 10px;
-}
-
 .flex-item-detail {
   flex: 0 0 290px;
 }

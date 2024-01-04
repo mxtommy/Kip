@@ -64,12 +64,12 @@
           </div>
           <!-- sailgauge stuff -->
           <div class="flex-container">
-            <div class="flex-checkbox" *ngIf="(widgetConfig.laylineEnable !== undefined)">
+            <div class="flex-checkbox-30" *ngIf="(widgetConfig.laylineEnable !== undefined)">
               <mat-checkbox class="fields" name="laylineEnable" formControlName="laylineEnable">
                 Show Close-hauled Lines
               </mat-checkbox>
             </div>
-            <div class="flex-field" *ngIf="(widgetConfig.laylineEnable !== undefined)">
+            <div class="flex-field-65" *ngIf="(widgetConfig.laylineEnable !== undefined)">
               <mat-form-field class="fields" appearance="outline" floatLabel="always">
                 <mat-label>Vessel Close-hauled Angle</mat-label>
                 <input type="number" min="10" max="90" matInput placeholder="Select angle..." name="laylineAngle"  formControlName="laylineAngle">
@@ -77,12 +77,12 @@
             </div>
           </div>
           <div class="flex-container">
-            <div class="flex-checkbox" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
+            <div class="flex-checkbox-30" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
               <mat-checkbox class="fields" name="windSectorEnable" formControlName="windSectorEnable">
                 Show Wind Sectors
               </mat-checkbox>
             </div>
-            <div class="flex-field" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
+            <div class="flex-field-65" *ngIf="(widgetConfig.windSectorEnable !== undefined)">
               <mat-form-field class="fields" appearance="outline" floatLabel="always">
                 <mat-label>Wind Sector Duration</mat-label>
                 <input type="number" min="1" max="90" matInput placeholder="Select or enter duration..." name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
@@ -90,21 +90,20 @@
             </div>
           </div>
           <div class="flex-container">
-            <div class="flex-checkbox" *ngIf="(widgetConfig.courseOverGroundEnable !== undefined)">
+            <div class="flex-checkbox-30" *ngIf="(widgetConfig.courseOverGroundEnable !== undefined)">
               <mat-checkbox class="fields" name="courseOverGroundEnable" formControlName="courseOverGroundEnable">
                 Show Course Over Ground
               </mat-checkbox>
             </div>
           </div>
           <div class="flex-container">
-            <div class="flex-checkbox" *ngIf="(widgetConfig.waypointEnable !== undefined)">
+            <div class="flex-checkbox-30" *ngIf="(widgetConfig.waypointEnable !== undefined)">
               <mat-checkbox class="fields" name="waypointEnable" formControlName="waypointEnable">
                 Show Next Waypoint
               </mat-checkbox>
             </div>
           </div>
           <!-- end sailgague -->
-
           <div class="full-width" *ngIf="(widgetConfig.minValue !== undefined)">
               <mat-form-field class="minField" appearance="outline" floatLabel="always">
                 <mat-label>Minimum Value</mat-label>
@@ -180,23 +179,41 @@
           <!-- end Gauge stuff-->
           </div>
       </mat-tab>
+<!-- Boolean Multi Child Control Config Panel -->
+      <mat-tab label="Controls" *ngIf="(widgetConfig.multiChildCtrls !== undefined)">
+        <div class="tab-content">
+          <div>
+            <ng-template mat-tab-label>
+              <span [style]="formMaster.controls.multiChildCtrls.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Controls
+            </ng-template>
+          </div>
+          <button type="button" mat-raised-button color="primary" (click)="openAddCtrlDialog()">Add Control</button>
+          <app-boolean-multicontrol-config class="full-width"
+            *ngFor="let ctrlForm of formMaster['controls'].multiChildCtrls['controls'] | objectKeys; index as i"
+            [formGroup]="formMaster.controls.multiChildCtrls.get(ctrlForm)"
+            [controlIndex]="i"
+            (ctrlLabelChange)="ctrlLabelChange($event)"
+            (deleteCtrl)="deleteControl($event)">
+          </app-boolean-multicontrol-config>
+        </div>
+      </mat-tab>
 <!-- Paths stuff -->
       <mat-tab label="Paths" *ngIf="(widgetConfig.paths !== undefined)">
         <div class="tab-content">
-          <div *ngIf="!formMaster.controls.paths.valid">
+          <div>
             <ng-template mat-tab-label>
-              <span class="warning fa fa-exclamation-circle"></span>&nbsp;Paths
+              <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Paths
             </ng-template>
           </div>
           <div class="flex-container">
-            <div class="flex-checkbox">
+            <div class="flex-checkbox-30">
               <mat-checkbox class="fields"
                 name="enableTimeout"
                 formControlName="enableTimeout">
                   Enable Widget Data TTL
               </mat-checkbox>
             </div>
-            <div class="flex-field">
+            <div class="flex-field-65">
               <mat-form-field class="fields" appearance="outline" floatLabel="always">
                 <mat-label>TTL Timeout For Paths</mat-label>
                 <input type="number" matNativeControl placeholder="Time in seconds..." name="dataTimeout"
@@ -311,7 +328,7 @@
 <!-- end Gauge stuff-->
 
 <!-- PUT Requests -->
-      <mat-tab label="Put Request" *ngIf="(widgetConfig.putEnable !== undefined)">
+      <mat-tab label="Put Request" *ngIf="(widgetConfig.putEnable !== undefined) && (widgetConfig.multiChildCtrls === undefined)">
           <div class="tab-content">
             <p>
               <mat-checkbox
@@ -407,9 +424,11 @@
 <!-- end Historical -->
 
     </mat-tab-group>
+
   </mat-dialog-content>
+  <mat-divider></mat-divider>
   <mat-dialog-actions>
-      <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
-      <button mat-raised-button color="accent" type="submit" [disabled]="!formMaster.valid" >Save</button>
+    <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
+    <button mat-raised-button color="accent" type="submit" [disabled]="!formMaster.valid" >Save</button>
   </mat-dialog-actions>
 </form>
