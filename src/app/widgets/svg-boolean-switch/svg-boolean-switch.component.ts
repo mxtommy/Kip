@@ -16,8 +16,8 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   @Input() dimensions!: IDimensions;
   @Output() toggleClick = new EventEmitter<IDynamicControl>();
 
-  private toggleOff: string = "0 35 205 35";
-  private toggleOn: string = "0 0 205 35";
+  private toggleOff: string = "0 35 180 35";
+  private toggleOn: string = "0 0 180 35";
   private ctrlState: boolean = null;
   private oldTheme: ITheme = null;
 

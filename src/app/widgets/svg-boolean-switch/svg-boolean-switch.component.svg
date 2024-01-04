@@ -9,18 +9,22 @@
   <defs id="defs9" />
   <g id="disabled" transform="translate(0,35)" (click)="toggle(true)">
     <rect
-       width="205"
+       width="180"
        height="35"
        id="rect1-5"
        x="0"
        y="0"
        style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1" />
-    <text
-       id="text1-5"
-       [attr.fill]="labelColor"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
-       x="47.083984"
-       y="22.636719">{{ data.ctrlLabel }}</text>
+    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
+      <text
+        id="text1-5"
+        [attr.fill]="labelColor"
+        style="text-align:center;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        x="47.083984"
+        y="22.636719">
+        {{ data.ctrlLabel }}
+      </text>
+    </svg>
     <g transform="translate(6,2)" id="disabledToogleControl">
       <rect
          width="37.714306"
@@ -41,24 +45,22 @@
   </g>
   <g id="enabled" (click)="toggle(false)">
     <rect
-      width="205"
+      width="180"
       height="35"
       id="rect1"
       x="0"
       y="0"
       style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"
     />
-
-
-
+    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
       <text
         id="text1"
         [attr.fill]="valueColor"
         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         x="47.083984"
-        y="22.636719">{{ data.ctrlLabel }}</text>
-
-
+        y="22.636719">{{ data.ctrlLabel }}
+      </text>
+    </svg>
     <g transform="translate(6,2)" id="enabledToogleControl">
       <rect
          width="37.714306"

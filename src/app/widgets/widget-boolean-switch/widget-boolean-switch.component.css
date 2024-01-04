@@ -13,10 +13,10 @@
   position: relative;
   left: 0;
   right: 0;
-  height: 82%;
+  height: 86%;
   width: 100%;
 }
 
 .svg-widget {
-  display: block;
+  display: flex;
 }

@@ -73,7 +73,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   onResized(event: ResizedEvent) {
     let calcH: number = event.newRect.height / this.nbCtrl; // divide by number of instantiated widget
-    let ctrlHeightProportion = (35 * event.newRect.width / 205); //check control height not over width proportions
+    let ctrlHeightProportion = (35 * event.newRect.width / 180); //check control height not over width proportions
     let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
     this.ctrlDimensions = {width: event.newRect.width, height: h};
     this.resizeWidget();
