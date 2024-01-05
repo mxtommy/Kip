@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 
 @mixin dynamic-widget-container-theme($theme) {

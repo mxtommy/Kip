@@ -1,4 +1,6 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
+
 @mixin theme-settings-config($theme) {
 
   $background: map-get($theme, background);
@@ -21,7 +23,7 @@
   .flex-item {
     flex: 1 1 29%;
     background-color: mat.get-color-from-palette($foreground, dividers);
-    padding: 20px;
+    padding: 10px 20px 10px 20px;
     border-radius: 4px;
   }
 

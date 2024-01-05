@@ -1,11 +1,8 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 
 @mixin widget-numeric-theme($theme) {
-  $primary: map-get($theme, primary);
   $warn: map-get($theme, warn);
-  $background: map-get($theme, background);
-  $foreground: map-get($theme, foreground);
-  $wind: map-get($theme, wind);
 
   .warn {
     color: mat.get-color-from-palette($warn, 500);
@@ -14,16 +11,16 @@
   .warn-contrast {
     color: mat.get-contrast-color-from-palette($warn, 500);
   }
+}
 
-  .textGenericWrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
+.textGenericWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
 
-  .canvas-size {
-      position: absolute;
-      top: 0;
-      left: 0;
-  }
+.canvas-size {
+  position: absolute;
+  top: 0;
+  left: 0;
 }

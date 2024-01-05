@@ -1,12 +1,6 @@
-@mixin layout-split-theme($theme) {
-
-    $accent: map-get($theme, accent);
-
-    .as-split-gutter { //Added on all gutters.
-      background-color: transparent !important;
-    }
+.as-split-gutter { //Added on all gutters.
+  background-color: transparent !important;
 }
-
 
 as-split-area { // Added on all areas.
   overflow-y: hidden !important;

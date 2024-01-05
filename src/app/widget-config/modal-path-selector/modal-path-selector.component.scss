@@ -1,12 +1,13 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 
 @mixin modal-path-selector-theme($theme) {
 
   $themeForeground: map-get($theme, foreground);
 
-    .pathMetaDescription {
-      font: small-caption;
-      color: mat.get-color-from-palette($themeForeground, disabled-text);
+  .pathMetaDescription {
+    font: small-caption;
+    color: mat.get-color-from-palette($themeForeground, disabled-text);
   }
 }
 
