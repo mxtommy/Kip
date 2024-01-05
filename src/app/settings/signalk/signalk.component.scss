@@ -1,13 +1,9 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 
 @mixin theme-settings-sk($theme) {
-  $primary: map-get($theme, primary);
-  $accent: map-get($theme, accent);
-  $warn: map-get($theme, warn);
-  $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
 
-  // mat.get-color-from-palette($foreground, dividers);
   .serverStatus {
     background-color: mat.get-color-from-palette($foreground, dividers);
     margin-top: 20px;

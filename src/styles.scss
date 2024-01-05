@@ -120,12 +120,9 @@
   @include dynamic-widget-container-theme($theme);
   @include modal-path-selector-theme($theme);
   @include widget-numeric-theme($theme);
-
   @include widget-autopilot-theme($theme);
   @include widget-wind-theme($theme);
-  @include alarm-menu-theme($theme);
   @include theme-settings-sk($theme);
-  @include theme-settings-data($theme);
   @include theme-settings-config($theme);
 }
 

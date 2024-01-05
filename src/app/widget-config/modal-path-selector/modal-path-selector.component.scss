@@ -1,3 +1,6 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
 @mixin modal-path-selector-theme($theme) {
 
   $themeForeground: map-get($theme, foreground);

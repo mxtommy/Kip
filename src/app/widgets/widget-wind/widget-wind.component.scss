@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 
 @mixin widget-wind-theme($theme) {
@@ -90,11 +91,11 @@
 
   .simpleLinear-text {
     fill: mat.get-color-from-palette($foreground, text);
+  }
 }
 
-  .windWrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
+.windWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }

@@ -1,5 +1,5 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
-
 
 @mixin widget-autopilot-theme($theme) {
 
@@ -20,31 +20,6 @@
     background-color: mat.get-color-from-palette($foreground, dividers);
   }
 
-  .apScreen .apCompass {
-    position: relative;
-    width: 360px;
-    height: 202px;
-    margin: auto;
-    border-radius: 5px;
-  }
-
-  .apStatusBar {
-    width: 360px;
-    height: 18.5px;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    background-color: black;
-  }
-
-  .apStatusBar, .apStatusBar DIV {
-    display: inline-block;
-    position: relative;
-  }
-
-  .apStatusBar DIV {
-
-  }
-
   .apScreen .apStencil {
     position: absolute;
     top: 0px;
@@ -58,16 +33,6 @@
     background-color: mat.get-color-from-palette($background, background);
   }
 
-  .apStencil.confirmCommand {
-    z-index: 5;
-    visibility: hidden;
-  }
-
-  .apStencil.error {
-    z-index: 6;
-    visibility: hidden;
-  }
-
   .apText {
     fill: mat.get-color-from-palette($foreground, text);
   }
@@ -76,6 +41,37 @@
     fill: mat.get-color-from-palette($wind, heading-background);
     stroke: mat.get-color-from-palette($wind, heading-background);
   }
+}
+
+.apStencil.confirmCommand {
+  z-index: 5;
+  visibility: hidden;
+}
+
+.apStencil.error {
+  z-index: 6;
+  visibility: hidden;
+}
+
+.apScreen .apCompass {
+  position: relative;
+  width: 360px;
+  height: 202px;
+  margin: auto;
+  border-radius: 5px;
+}
+
+.apStatusBar {
+  width: 360px;
+  height: 18.5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  background-color: black;
+}
+
+.apStatusBar, .apStatusBar DIV {
+  display: inline-block;
+  position: relative;
 }
 
 div.autopilotWidget {

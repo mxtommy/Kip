@@ -1,3 +1,6 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
 @mixin widget-numeric-theme($theme) {
   $warn: map-get($theme, warn);
 

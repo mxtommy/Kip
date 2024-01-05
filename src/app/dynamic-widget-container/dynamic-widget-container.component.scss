@@ -1,3 +1,6 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
 @mixin dynamic-widget-container-theme($theme) {
   $textThemeEmitter: map-get($theme, widgetTexts);
   $gaugeThemeEmitter: map-get($theme, ngGauge);
