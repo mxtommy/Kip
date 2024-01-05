@@ -1,5 +1,6 @@
-import { Component, OnInit, OnDestroy,ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { ResizedEvent } from 'angular-resize-event';
 
 import { TimersService } from '../../timers.service';
 import { IZoneState } from "../../app-settings.interfaces";
@@ -10,7 +11,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss']
 })
-export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
 
@@ -45,6 +46,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     this.subscribeTimer();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    // this.resizeWidget();
   }
 
   ngOnDestroy() {
@@ -55,7 +57,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
   }
 
-  ngAfterViewChecked() {
+  onResized(event: ResizedEvent) {
     this.resizeWidget();
   }
 
@@ -296,6 +298,6 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
-    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
+    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height * 0.45)+(this.valueFontSize/15), maxTextWidth);
   }
 }
