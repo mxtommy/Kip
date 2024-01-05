@@ -13,17 +13,17 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
-  @ViewChild('raceTimerWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
-  @ViewChild('warn', {static: true, read: ElementRef}) private warnElement: ElementRef;
-  @ViewChild('warncontrast', {static: true, read: ElementRef}) private warnContrastElement: ElementRef;
 
   dataValue: number = null;
   IZoneState: IZoneState = null;
-  currentValueLength: number = 0; // length (in charaters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   valueFontSize: number = 1;
   flashOn: boolean = false;
   flashInterval;
   timerRunning: boolean = false;
+  private warnColor: string = null;
+  private warmContrast: string = null;
+  private textColor: string = null;
 
   timerSub: Subscription = null;
 
@@ -34,12 +34,14 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     super();
 
     this.defaultConfig = {
-      timerLength: 300
+      timerLength: 300,
+      textColor: 'text',
     };
   }
 
   ngOnInit(): void {
     this.validateConfig();
+    this.getColors(this.widgetProperties.config.textColor);
     this.subscribeTimer();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
@@ -58,7 +60,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   resizeWidget() {
-    let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
+    let rect = this.canvasEl.nativeElement.getBoundingClientRect();
 
     if (rect.height < 50) { return; }
     if (rect.width < 50) { return; }
@@ -163,6 +165,40 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       this.TimersService.setTimer("race", this.dataValue - 600);
   }
 
+  private getColors(themeColor: string) {
+    switch (themeColor) {
+      case "text":
+        this.textColor = this.theme.text;
+        this.warnColor = this.theme.warn;
+        this.warmContrast = this.theme.warnDark;
+        break;
+
+      case "primary":
+        this.textColor = this.theme.textPrimaryLight;
+        this.warnColor = this.theme.warn;
+        this.warmContrast = this.theme.warnDark;
+        break;
+
+      case "accent":
+        this.textColor = this.theme.textAccentLight;
+        this.warnColor = this.theme.warn;
+        this.warmContrast = this.theme.warnDark;
+        break;
+
+      case "warn":
+        this.textColor = this.theme.textWarnLight;
+        this.warnColor = this.theme.text;
+        this.warmContrast = this.theme.text;
+        break;
+
+      default:
+        this.textColor = this.theme.text;
+        this.warnColor = this.theme.warn;
+        this.warmContrast = this.theme.warnDark;
+        break;
+    }
+  }
+
 /* ******************************************************************************************* */
 /* ******************************************************************************************* */
 /* ******************************************************************************************* */
@@ -186,8 +222,6 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
   }
 
-  strTypeHelper
-
   drawValue() {
     let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
     let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
@@ -196,7 +230,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     if (this.dataValue != null) {
 
       let v = this.dataValue;
-      if (this.dataValue < 0) { v = v *-1} // always positive
+      if (this.dataValue < 0) { v = v * -1} // always positive
 
       var m = Math.floor(v / 600);
       var s = Math.floor(v % 600 / 10);
@@ -241,22 +275,22 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       case IZoneState.alarm:
 
         if (this.flashOn) {
-          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+          this.canvasCtx.fillStyle = this.textColor;
         } else {
-          // draw warn background
-          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+          // draw background
+          this.canvasCtx.fillStyle = this.warnColor;
           this.canvasCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
           // text color
-          this.canvasCtx.fillStyle = window.getComputedStyle(this.warnContrastElement.nativeElement).color;
+          this.canvasCtx.fillStyle = this.textColor;
         }
         break;
 
       case IZoneState.warning:
-        this.canvasCtx.fillStyle = window.getComputedStyle(this.warnElement.nativeElement).color;
+        this.canvasCtx.fillStyle = this.warnColor;
         break;
 
       default:
-        this.canvasCtx.fillStyle = window.getComputedStyle(this.wrapperDiv.nativeElement).color;
+        this.canvasCtx.fillStyle = this.textColor;
     }
 
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
