@@ -37,8 +37,8 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.formMaster.updateValueAndValidity();
   }
 
-  generateFormGroups(formData: Object, objectType?: string): UntypedFormGroup {
-    let groups = new UntypedFormGroup({});
+  private generateFormGroups(formData: Object, objectType?: string): UntypedFormGroup {
+    const groups = new UntypedFormGroup({});
     Object.keys(formData).forEach (key => {
       // handle Objects
       if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
@@ -87,17 +87,17 @@ export class ModalWidgetConfigComponent implements OnInit {
   }
 
   public addDynamicControlGroup(ctrlLabel: string): void {
-    let pathUUID = UUID.create();
-    let ctrlCfg: IDynamicControl = {
+    const pathUUID = UUID.create();
+    const ctrlCfg: IDynamicControl = {
       ctrlLabel: ctrlLabel,
       pathKeyName: pathUUID,
       color: "text",
       value: null
     }
-    let pathCfg: IPathArray = {
+    const pathCfg: IPathArray = {
       [pathUUID]: {
         description: ctrlLabel,
-        path: null,
+        path: 'self.red.boolean1.state',
         source: null,
         pathType: "boolean",
         isPathConfigurable: true,
