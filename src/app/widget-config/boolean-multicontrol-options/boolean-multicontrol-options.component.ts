@@ -9,11 +9,11 @@ interface ctrlUpdate {
 }
 
 @Component({
-  selector: 'boolean-multicontrol-config',
-  templateUrl: './boolean-multicontrol-config.component.html',
-  styleUrls: ['./boolean-multicontrol-config.component.css'],
+  selector: 'boolean-multicontrol-options',
+  templateUrl: './boolean-multicontrol-options.component.html',
+  styleUrls: ['./boolean-multicontrol-options.component.css'],
 })
-export class BooleanMultiControlConfigComponent implements OnInit {
+export class BooleanMultiControlOptionsComponent implements OnInit {
   @Input() multiCtrlArray!: UntypedFormArray;
   @Output() private addPath = new EventEmitter<ctrlUpdate>();
   // @Output() private deleteCtrl = new EventEmitter<number>();

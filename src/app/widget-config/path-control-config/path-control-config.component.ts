@@ -14,11 +14,11 @@ function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
 }
 
 @Component({
-  selector: 'modal-path-selector',
-  templateUrl: './modal-path-selector.component.html',
-  styleUrls: ['./modal-path-selector.component.scss']
+  selector: 'path-control-config',
+  templateUrl: './path-control-config.component.html',
+  styleUrls: ['./path-control-config.component.scss']
 })
-export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy {
+export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   @Input() pathFormGroup!: UntypedFormGroup;
   @Input() filterSelfPaths!: boolean;
 
@@ -70,27 +70,18 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
         } else {
           this.disablePathFields();
         }
-        console.error("field change:" + pathValue);
-      }
-    );
-
-    this.pathFormGroup.valueChanges.subscribe(val => {
-        console.error("field change:" + val);
       }
     );
   }
 
   ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
-    //subscribe to filterSelfPaths formControl changes
+    //subscribe to filterSelfPaths parent formControl changes
     if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
       this.getPaths(this.filterSelfPaths);
-      this.pathFormGroup.controls['path'].patchValue("");
     } else if (changes['pathFormGroup'] && !changes['pathFormGroup'].firstChange) {
-      console.log('NOTFIRST: pathgroup OnChanges');
       this.pathFormGroup.updateValueAndValidity();
     }
     else if (changes['pathFormGroup']) {
-      console.log('FIRST: pathgroup OnChanges')
       this.pathFormGroup.updateValueAndValidity();
     } else {
       console.error('[modal-path-selector] Unmapped OnChange event')
@@ -102,7 +93,6 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   private filterPaths( value: string ): IPathMetaData[] {
-    console.error('filter: ' + value);
     const filterValue = value.toLowerCase();
     return this.availablePaths.filter(pathAndMetaObj => pathAndMetaObj.path.toLowerCase().includes(filterValue)).slice(0,50);
   }

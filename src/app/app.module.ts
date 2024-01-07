@@ -80,7 +80,7 @@ import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
 import { ModalWidgetConfigComponent } from './widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
-import { ModalPathSelectorComponent } from './widget-config/modal-path-selector/modal-path-selector.component';
+import { ModalPathControlConfigComponent } from './widget-config/path-control-config/path-control-config.component';
 import { SettingsUnitsComponent } from './settings/units/units.component';
 import { SettingsZonesComponent, DialogNewZone, DialogEditZone } from './settings/zones/zones.component';
 import { WidgetIframeComponent } from './widgets/widget-iframe/widget-iframe.component';
@@ -100,8 +100,9 @@ import { WidgetRaceTimerComponent } from './widgets/widget-race-timer/widget-rac
 import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
 import { WidgetBooleanSwitchComponent } from './widgets/widget-boolean-switch/widget-boolean-switch.component';
 import { SvgBooleanSwitchComponent } from './widgets/svg-boolean-switch/svg-boolean-switch.component';
-import { BooleanMultiControlConfigComponent } from './widget-config/boolean-multicontrol-config/boolean-multicontrol-config.component';
+import { BooleanMultiControlOptionsComponent } from './widget-config/boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { BooleanControlConfigComponent } from './widget-config/boolean-control-config/boolean-control-config.component';
+import { PathsOptionsComponent } from './widget-config/paths-options/paths-options.component';
 
 
 const appRoutes: Routes = [
@@ -192,7 +193,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     LayoutSplitComponent,
     ResetConfigComponent,
     ModalWidgetConfigComponent,
-    ModalPathSelectorComponent,
+    ModalPathControlConfigComponent,
     ModalUserCredentialComponent,
     AlarmMenuComponent,
     SettingsGeneralComponent,
@@ -200,8 +201,9 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     DataBrowserRowComponent,
     WidgetBooleanSwitchComponent,
     SvgBooleanSwitchComponent,
-    BooleanMultiControlConfigComponent,
-    BooleanControlConfigComponent
+    BooleanMultiControlOptionsComponent,
+    BooleanControlConfigComponent,
+    PathsOptionsComponent
   ],
   imports: [
     BrowserModule,
