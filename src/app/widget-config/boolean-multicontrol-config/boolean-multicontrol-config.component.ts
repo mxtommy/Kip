@@ -1,36 +1,53 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
+
+import { UUID } from '../../uuid';
 
 interface ctrlUpdate {
-  ctrlId: number,
-  label: string
+  pathUUID: string,
+  // label: string
 }
 
 @Component({
-  selector: 'app-boolean-multicontrol-config',
+  selector: 'boolean-multicontrol-config',
   templateUrl: './boolean-multicontrol-config.component.html',
   styleUrls: ['./boolean-multicontrol-config.component.css'],
 })
 export class BooleanMultiControlConfigComponent implements OnInit {
-  @Input() formGroup!: UntypedFormGroup;
-  @Input() controlIndex: number;
-  @Output() private ctrlLabelChange = new EventEmitter<ctrlUpdate>();
-  @Output() private deleteCtrl = new EventEmitter<number>();
+  @Input() multiCtrlArray!: UntypedFormArray;
+  @Output() private addPath = new EventEmitter<ctrlUpdate>();
+  // @Output() private deleteCtrl = new EventEmitter<number>();
 
-  constructor() { }
+  constructor(
+    private fb : UntypedFormBuilder
+  ) { }
 
   ngOnInit(): void {
   }
 
-  public labelChange(inputValue: string): void {
-    let update: ctrlUpdate = {
-      ctrlId: this.controlIndex,
-      label: inputValue
-    }
-    this.ctrlLabelChange.emit(update);
+  public addCtrlGroup() {
+    const newUUID = UUID.create();
+    this.multiCtrlArray.push(
+      this.fb.group({
+        ctrlLabel: [null, Validators.required],
+        pathKeyName:[newUUID],
+        color:['text'],
+        value:[null]
+      }
+    ));
+
+    this.addPath.emit({pathUUID: newUUID});
   }
 
-  public deleteControl(): void {
-    this.deleteCtrl.emit(this.controlIndex);
-  }
+  // public ctrlLabelChange(e: any): void {
+  //   this.widgetConfig.multiChildCtrls[e.ctrlId].ctrlLabel = e.label;
+  //   Object.assign(this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e.ctrlId].pathKeyName], {description: e.label});
+  //   this.formMaster = this.generateFormGroups(this.widgetConfig);
+  // }
+
+  // public deleteControl(e: number) {
+  //   delete this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e].pathKeyName];
+  //   this.widgetConfig.multiChildCtrls.splice(e,1);
+  //   this.formMaster = this.generateFormGroups(this.widgetConfig);
+  // }
 }

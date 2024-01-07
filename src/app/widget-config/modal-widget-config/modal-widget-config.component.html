@@ -187,14 +187,10 @@
               <span [style]="formMaster.controls.multiChildCtrls.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Controls
             </ng-template>
           </div>
-          <button type="button" mat-raised-button color="primary" (click)="openAddCtrlDialog()">Add Control</button>
-          <app-boolean-multicontrol-config class="full-width"
-            *ngFor="let ctrlForm of formMaster['controls'].multiChildCtrls['controls'] | objectKeys; index as i"
-            [formGroup]="formMaster.controls.multiChildCtrls.get(ctrlForm)"
-            [controlIndex]="i"
-            (ctrlLabelChange)="ctrlLabelChange($event)"
-            (deleteCtrl)="deleteControl($event)">
-          </app-boolean-multicontrol-config>
+            <boolean-multicontrol-config
+              [multiCtrlArray]="formMaster.get('multiChildCtrls')"
+              (addPath)="addPathGroup($event)">
+            </boolean-multicontrol-config>
         </div>
       </mat-tab>
 <!-- Paths stuff -->
@@ -224,12 +220,15 @@
               </mat-form-field>
             </div>
           </div>
-          <modal-path-selector class="full-width"
-            *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
-            [formGroup]="formMaster.controls.paths.get(pathForm)"
+          <modal-path-selector style="display: block;"
+            *ngFor="let pathFormGroup of formMaster['controls'].paths['controls'] | objectKeys"
+            [pathFormGroup]="formMaster.controls.paths.get(pathFormGroup)"
             [filterSelfPaths]="formMaster.value.filterSelfPaths">
           </modal-path-selector>
-          <mat-checkbox name="filterSelfPaths" formControlName="filterSelfPaths">Restrict to own vessel</mat-checkbox>
+          <mat-checkbox
+            name="filterSelfPaths"
+            formControlName="filterSelfPaths">Restrict to own vessel
+          </mat-checkbox>
         </div>
       </mat-tab>
 <!-- Gauge stuff -->

@@ -1,38 +1,8 @@
-<div [formGroup]="formGroup" class="flex-container rounded-card">
-
-  <div class="flex-field-100">
-    <span>Control #{{controlIndex}}</span>
-  </div>
-  <div class="flex-field-50">
-
-    <mat-form-field class="fields" appearance="outline" floatLabel="always">
-      <mat-label>Label</mat-label>
-      <input matInput
-        #labelInput
-        type="string"
-        placeholder="Enter a display label..."
-        formControlName="ctrlLabel"
-        (change)="labelChange(labelInput.value)">
-    </mat-form-field>
-  </div>
-
-  <div class="flex-field-50">
-    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-      <mat-label>Color</mat-label>
-      <mat-select
-      placeholder="Select Color..."
-      formControlName="color"
-      name="color">
-        <mat-option value='text'>Font</mat-option>
-        <mat-option value='primary'>Primary</mat-option>
-        <mat-option value='accent'>Accent</mat-option>
-        <mat-option value='warn'>Warn</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-
-  <div class="flex-field-100">
-    <button class="float-right" type="button" mat-raised-button color="primary" (click)="deleteControl()">Delete</button>
-  </div>
+<div [formGroup]="multiCtrlArray">
+  <button type="button" mat-raised-button color="primary" (click)="addCtrlGroup()">Add Control</button>
+  <boolean-control-config class="full-width"
+  *ngFor="let ctrl of multiCtrlArray.controls; index as i"
+    [ctrlFormGroup]="ctrl"
+    [controlIndex]="i">
+  </boolean-control-config>
 </div>
-

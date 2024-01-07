@@ -19,7 +19,7 @@ function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
   styleUrls: ['./modal-path-selector.component.scss']
 })
 export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy {
-  @Input() formGroup!: UntypedFormGroup;
+  @Input() pathFormGroup!: UntypedFormGroup;
   @Input() filterSelfPaths!: boolean;
 
   public availablePaths: IPathMetaData[];
@@ -42,13 +42,13 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
     this.getPaths(this.filterSelfPaths);
 
     // add path validator fn and validate
-    this.formGroup.controls['path'].setValidators([Validators.required, requirePathMatch(this.availablePaths)]);
-    this.formGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
+    this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(this.availablePaths)]);
+    this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
 
     // If SampleTime control is not present because the path property is missing, add it.
-    if (!this.formGroup.controls['sampleTime']) {
-      this.formGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
-      this.formGroup.controls['sampleTime'].updateValueAndValidity();
+    if (!this.pathFormGroup.controls['sampleTime']) {
+      this.pathFormGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
+      this.pathFormGroup.controls['sampleTime'].updateValueAndValidity();
     }
 
     //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
@@ -57,24 +57,25 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
     // this.formGroup.updateValueAndValidity();
 
     // add autocomplete filtering
-    this.filteredPaths = this.formGroup.controls['path'].valueChanges.pipe(
+    this.filteredPaths = this.pathFormGroup.controls['path'].valueChanges.pipe(
       debounceTime(500),
       startWith(''),
       map(value => this.filterPaths(value || ''))
     );
 
     //subscribe to path formControl changes
-    this.pathValueChange$ = this.filteredPaths.subscribe({
-        next:  pathValue => {
-          if (this.formGroup.controls['path'].valid) {
-            this.enableFormFields(true);
-          } else {
-            this.disablePathFields();
-          }
-        },
-        error: () => { console.error("Filtered path Observer error") },
-        complete: () => { console.error("Filtered path Observer completed")
+    this.pathValueChange$ = this.pathFormGroup.controls['path'].valueChanges.subscribe( pathValue => {
+        if (this.pathFormGroup.controls['path'].valid) {
+          this.enableFormFields(true);
+        } else {
+          this.disablePathFields();
         }
+        console.error("field change:" + pathValue);
+      }
+    );
+
+    this.pathFormGroup.valueChanges.subscribe(val => {
+        console.error("field change:" + val);
       }
     );
   }
@@ -83,12 +84,21 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
     //subscribe to filterSelfPaths formControl changes
     if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
       this.getPaths(this.filterSelfPaths);
-      this.formGroup.controls['path'].patchValue("");
+      this.pathFormGroup.controls['path'].patchValue("");
+    } else if (changes['pathFormGroup'] && !changes['pathFormGroup'].firstChange) {
+      console.log('NOTFIRST: pathgroup OnChanges');
+      this.pathFormGroup.updateValueAndValidity();
+    }
+    else if (changes['pathFormGroup']) {
+      console.log('FIRST: pathgroup OnChanges')
+      this.pathFormGroup.updateValueAndValidity();
+    } else {
+      console.error('[modal-path-selector] Unmapped OnChange event')
     }
  }
 
   private getPaths(isOnlySef: boolean) {
-    this.availablePaths = this.signalKService.getPathsAndMetaByType(this.formGroup.value.pathType, isOnlySef).sort();
+    this.availablePaths = this.signalKService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
   }
 
   private filterPaths( value: string ): IPathMetaData[] {
@@ -98,7 +108,7 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   private updateSourcesAndUnits() {
-    if ((!this.formGroup.value.path) || (this.formGroup.value.path == '') || (!this.formGroup.controls['path'].valid)) {
+    if ((!this.pathFormGroup.value.path) || (this.pathFormGroup.value.path == '') || (!this.pathFormGroup.controls['path'].valid)) {
       this.disablePathFields();
     } else {
       this.enableFormFields();
@@ -106,31 +116,31 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   private enableFormFields(setValues?: boolean): void {
-    let pathObject = this.signalKService.getPathObject(this.formGroup.controls['path'].value);
+    let pathObject = this.signalKService.getPathObject(this.pathFormGroup.controls['path'].value);
     if (pathObject != null) {
-      this.formGroup.controls['sampleTime'].enable({onlySelf: true});
-      if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-        this.unitList = this.signalKService.getConversionsForPath(this.formGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+      this.pathFormGroup.controls['sampleTime'].enable({onlySelf: true});
+      if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+        this.unitList = this.signalKService.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
         if (setValues) {
-          this.formGroup.controls['convertUnitTo'].setValue(this.unitList.default, {onlySelf: true});
+          this.pathFormGroup.controls['convertUnitTo'].setValue(this.unitList.default, {onlySelf: true});
         }
-        this.formGroup.controls['convertUnitTo'].enable({onlySelf: true});
+        this.pathFormGroup.controls['convertUnitTo'].enable({onlySelf: true});
       }
 
       if (Object.keys(pathObject.sources).length == 1) {
         this.availableSources = ['default'];
         if (setValues) {
-          if (this.formGroup.controls['source'].value != 'default') {
-            this.formGroup.controls['source'].setValue('default', {onlySelf: true});
+          if (this.pathFormGroup.controls['source'].value != 'default') {
+            this.pathFormGroup.controls['source'].setValue('default', {onlySelf: true});
           }
         }
       } else if (Object.keys(pathObject.sources).length > 1) {
         this.availableSources = Object.keys(pathObject.sources);
-        if (this.formGroup.controls['source'].value == 'default') {
-          this.formGroup.controls['source'].reset();
+        if (this.pathFormGroup.controls['source'].value == 'default') {
+          this.pathFormGroup.controls['source'].reset();
         }
       }
-      this.formGroup.controls['source'].enable({onlySelf: true});
+      this.pathFormGroup.controls['source'].enable({onlySelf: true});
     } else {
       // we don't know this path. Maybe and old saved path...
       this.disablePathFields();
@@ -138,12 +148,12 @@ export class ModalPathSelectorComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   private disablePathFields(): void {
-    this.formGroup.controls['source'].reset('', {onlySelf: true});
-    this.formGroup.controls['source'].disable({onlySelf: true});
-    this.formGroup.controls['sampleTime'].disable({onlySelf: true});
-    if (this.formGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-      this.formGroup.controls['convertUnitTo'].reset('', {onlySelf: true});
-      this.formGroup.controls['convertUnitTo'].disable({onlySelf: true});
+    this.pathFormGroup.controls['source'].reset('', {onlySelf: true});
+    this.pathFormGroup.controls['source'].disable({onlySelf: true});
+    this.pathFormGroup.controls['sampleTime'].disable({onlySelf: true});
+    if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
+      this.pathFormGroup.controls['convertUnitTo'].reset('', {onlySelf: true});
+      this.pathFormGroup.controls['convertUnitTo'].disable({onlySelf: true});
     }
   }
 

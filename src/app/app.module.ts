@@ -78,7 +78,7 @@ import { GaugeSteelComponent } from './widgets/gauge-steel/gauge-steel.component
 import { WidgetTutorialComponent } from './widgets/widget-tutorial/widget-tutorial.component';
 import { ResetConfigComponent } from './reset-config/reset-config.component';
 import { WidgetButtonComponent } from './widgets/widget-button/widget-button.component';
-import { ModalWidgetConfigComponent, DialogAddMultiControl } from './widget-config/modal-widget-config/modal-widget-config.component';
+import { ModalWidgetConfigComponent } from './widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetSwitchComponent } from './widgets/widget-switch/widget-switch.component'
 import { ModalPathSelectorComponent } from './widget-config/modal-path-selector/modal-path-selector.component';
 import { SettingsUnitsComponent } from './settings/units/units.component';
@@ -101,6 +101,7 @@ import { WidgetLoginComponent } from './widgets/widget-login/widget-login.compon
 import { WidgetBooleanSwitchComponent } from './widgets/widget-boolean-switch/widget-boolean-switch.component';
 import { SvgBooleanSwitchComponent } from './widgets/svg-boolean-switch/svg-boolean-switch.component';
 import { BooleanMultiControlConfigComponent } from './widget-config/boolean-multicontrol-config/boolean-multicontrol-config.component';
+import { BooleanControlConfigComponent } from './widget-config/boolean-control-config/boolean-control-config.component';
 
 
 const appRoutes: Routes = [
@@ -191,7 +192,6 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     LayoutSplitComponent,
     ResetConfigComponent,
     ModalWidgetConfigComponent,
-    DialogAddMultiControl,
     ModalPathSelectorComponent,
     ModalUserCredentialComponent,
     AlarmMenuComponent,
@@ -200,7 +200,8 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     DataBrowserRowComponent,
     WidgetBooleanSwitchComponent,
     SvgBooleanSwitchComponent,
-    BooleanMultiControlConfigComponent
+    BooleanMultiControlConfigComponent,
+    BooleanControlConfigComponent
   ],
   imports: [
     BrowserModule,
