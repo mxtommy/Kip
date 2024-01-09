@@ -14,7 +14,7 @@ export interface DynamicWidget {
 }
 
 /**
- * Description of standard Angualr Material Theme colors.
+ * Description of standard Angular Material Theme colors.
  *
  * @export
  * @interface ITheme
@@ -78,8 +78,8 @@ export interface IWidgetSvcConfig {
   displayName?: string;
   /** Set to True to limit all Widget's data paths selection of the configuration UI Paths panel to Self. ie. the user's vessel. Value of True will prevent listing of all Signal K known paths that come from buoy, towers, other vessels, etc. Else all Signal K know data will be listed for selection. Should be set to True unless you need non-self data paths such as monitoring remote vessels, etc. */
   filterSelfPaths?: boolean;
-  /** An [key:string] Array of Signal K paths configuration. Used to name/identifie the path IWidgetPath object. Used for Observable setup*/
-  paths?:IPathArray;
+  /** The widget's path configuration property used for Observable setup. This property can be either contain an object with one key:string per path with it's value as a IWidgetPath object, or an Array of IWidgetPaths. Array is used by multi-control widgets where key:strings Objects are not appropriate. The Key:string Object should be used for typical widgets. */
+  paths?: IPathArray | IWidgetPath[];
   /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
   usage?: {
     [key: string]: string[];
@@ -156,19 +156,19 @@ export interface IWidgetSvcConfig {
   /** Used by multiple gauge Widget: Use cardinal points or angle numbers as direction labels */
   compassUseNumbers?: boolean;
 
-  /** Used by historicaldata Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
+  /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;
-  /** Used by historicaldata Widget */
+  /** Used by historical data Widget */
   dataSetUUID?: string;
-  /** Used by historicaldata Widget */
+  /** Used by historical data Widget */
   invertData?: boolean;
-  /** Used by historicaldata Widget */
+  /** Used by historical data Widget */
   displayMinMax?: boolean;
-  /** Used by historicaldata Widget */
+  /** Used by historical data Widget */
   animateGraph?: boolean;
-  /** Used by historicaldata Widget */
+  /** Used by historical data Widget */
   includeZero?: boolean;
-  /** Used by historicaldata Widget */
+  /** Used by historical data Widget */
   verticalGraph?: boolean;
 
   /** Option for widget that supports Signal K PUT command */
@@ -195,7 +195,7 @@ export interface IDynamicControl {
   /** Label of the control */
   ctrlLabel: string;
   /** The path key name linked to the control */
-  pathKeyName: string;
+  pathID: string;
   /** The value of the control */
   value: any;
   /** The color of the control */
@@ -236,26 +236,28 @@ export interface IDataHighlight extends Array<{
 export interface IWidgetPath {
   /** Required: Path description label used in the Widget settings UI */
   description: string | null | '';
-  /** Required: Signal K path (ie. self.environment.wind.angleTrueWater) of the data to be received or null value. See KIP's Data Browser or Signal K's Data Browser UI to identified possible available paths. NOTE: Not all setup will have the same paths. Path availabiltiy depends on network components and Signal K configuration that exists on each vessel. */
+  /** Required: Signal K path (ie. self.environment.wind.angleTrueWater) of the data to be received or null value. See KIP's Data Browser or Signal K's Data Browser UI to identified possible available paths. NOTE: Not all setup will have the same paths. Path availability depends on network components and Signal K configuration that exists on each vessel. */
   path: string | null;
-  /** Required: Enforce a prefered Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thruhulls, wind vanes, engines, fuel tanks, ect.). Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K. */
+  /** Required: Enforce a preferred Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thru hulls, wind vanes, engines, fuel tanks, ect.). Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K. */
   source: string | null;
   /** Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from. Format can be: number, string, boolean or null to list all types */
   pathType: string  | null;
   /** NOT IMPLEMENTED - Used by the Widget Options UI to filter path list ie. self.navigation.* or *.navigation.* */
-  pathFilter?: string; //TODO: to implment in the future to facilitate sub path selection
+  pathFilter?: string; //TODO: to implement in the future to facilitate sub path selection
   /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
   convertUnitTo?: string;
   /** Used by the Widget Options UI to hide the path in the POaths configuration panel went it should not be modified */
   isPathConfigurable: boolean;
-  /** Required: Used to throttle/limit the path's Observer emited values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
+  /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
   sampleTime: number;
-  /** NOT IMPLEMENTED -Signal K - period=[millisecs] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000 */
+  /** Used as a reference ID when path is an Array and array index is not appropriate. */
+  pathID?: string | null | '';
+  /** NOT IMPLEMENTED -Signal K - period=[milliseconds] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000 */
   period?: number;
   /** NOT IMPLEMENTED -Signal K - format=[delta|full] specifies delta or full format. Default: delta */
   format?: Format;
   /** NOT IMPLEMENTED -Signal K - policy=[instant|ideal|fixed]. Default: ideal */
   policy?: Policy;
-  /** NOT IMPLEMENTED -Signal K - minPeriod=[millisecs] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
+  /** NOT IMPLEMENTED -Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
   minPeriod?: number;
 }

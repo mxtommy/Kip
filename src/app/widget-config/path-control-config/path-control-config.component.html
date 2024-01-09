@@ -1,7 +1,6 @@
 <div [formGroup]="pathFormGroup" class="flex-container rounded-card" *ngIf="pathFormGroup.value.isPathConfigurable">
   <div class="flex-field-100">
     <span>{{pathFormGroup.value.description}}</span>
-    <span> - {{pathFormGroup.status}}</span>
   </div>
   <div class="flex-field-100">
     <mat-form-field class="pathField" appearance="outline" floatLabel="always">

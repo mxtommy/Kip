@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 
-interface ctrlUpdate {
-  ctrlId: number,
-  label: string
+export interface IDeleteEventObj {
+  ctrlIndex: number,
+  pathID: string
 }
 
 @Component({
@@ -14,24 +14,15 @@ interface ctrlUpdate {
 export class BooleanControlConfigComponent implements OnInit {
   @Input() ctrlFormGroup!: UntypedFormGroup;
   @Input() controlIndex: number;
-  @Output() private ctrlLabelChange = new EventEmitter<ctrlUpdate>();
-  @Output() private deleteCtrl = new EventEmitter<number>();
+  @Output() private deleteCtrl = new EventEmitter<IDeleteEventObj>();
 
   constructor() { }
 
   ngOnInit(): void {
-    // console.log()
   }
 
-  public labelChange(inputValue: string): void {
-    let update: ctrlUpdate = {
-      ctrlId: this.controlIndex,
-      label: inputValue
-    }
-    this.ctrlLabelChange.emit(update);
-  }
-
-  public deleteControl(): void {
-    this.deleteCtrl.emit(this.controlIndex);
+  public deleteControl() {
+    const delEvent: IDeleteEventObj = {ctrlIndex: this.controlIndex, pathID: this.ctrlFormGroup.get('pathID').value};
+    this.deleteCtrl.emit(delEvent);
   }
 }

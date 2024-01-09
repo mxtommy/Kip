@@ -18,11 +18,22 @@
     </mat-form-field>
   </div>
 </div>
-<path-control-config style="display: block;"
-  *ngFor="let group of pathFormGroups.controls | objectKeys; index as i"
-  [pathFormGroup]="pathFormGroups.controls[group]"
-  [filterSelfPaths]="filterSelfPaths.value">
-</path-control-config>
+<ng-container [formGroup]="pathsFormGroup">
+  <ng-container *ngIf="isArray">
+    <path-control-config style="display: block;"
+      *ngFor="let group of pathsFormGroup.controls"
+      [pathFormGroup]="group"
+      [filterSelfPaths]="filterSelfPaths.value">
+    </path-control-config>
+  </ng-container>
+  <ng-container *ngIf="!isArray">
+    <path-control-config style="display: block;"
+      *ngFor="let group of pathsFormGroup.controls | objectKeys"
+      [pathFormGroup]="pathsFormGroup.get(group)"
+      [filterSelfPaths]="filterSelfPaths.value">
+    </path-control-config>
+  </ng-container>
+</ng-container>
 <mat-checkbox
   name="filterSelfPaths"
   [formControl]="filterSelfPaths">

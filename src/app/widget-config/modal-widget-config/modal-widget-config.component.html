@@ -189,7 +189,9 @@
           </div>
             <boolean-multicontrol-options
               [multiCtrlArray]="formMaster.get('multiChildCtrls')"
-              (addPath)="addPathGroup($event)">
+              (addPath)="addPathGroup($event)"
+              (updatePath)="updatePath($event)"
+              (delPath)="deletePath($event)">
             </boolean-multicontrol-options>
         </div>
       </mat-tab>
@@ -202,10 +204,12 @@
             </ng-template>
           </div>
           <paths-options
+            formGroupName="paths"
+            [isArray]="isPathArray"
             [enableTimeout]="formMaster.get('enableTimeout')"
             [dataTimeout]="formMaster.get('dataTimeout')"
-            [pathFormGroups]="formMaster.get('paths')"
-            [filterSelfPaths]="formMaster.get('filterSelfPaths')">
+            [filterSelfPaths]="formMaster.get('filterSelfPaths')"
+            [addPathEvent]="addPathEvent">
           </paths-options>
         </div>
       </mat-tab>

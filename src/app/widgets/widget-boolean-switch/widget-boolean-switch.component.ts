@@ -5,7 +5,7 @@ import { ResizedEvent } from 'angular-resize-event';
 import { SignalkRequestsService } from '../../signalk-requests.service';
 import { NotificationsService } from '../../notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { IDynamicControl } from '../../widgets-interface';
+import { IDynamicControl, IWidgetPath } from '../../widgets-interface';
 
 
 @Component({
@@ -37,7 +37,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
       this.defaultConfig = {
         displayName: 'Switch Panel Label',
         filterSelfPaths: true,
-        paths: {},
+        paths: [],
         enableTimeout: false,
         dataTimeout: 5,
         textColor: "text",
@@ -59,14 +59,18 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         this.switchControls.push({...ctrlConfig});
       }
     );
-    // Start Observers
-    this.switchControls.forEach(ctrl => {
-        this.observeDataStream(ctrl.pathKeyName, newValue => {
-            ctrl.value = newValue.value;
+
+    // Start Observers as path Array
+    for (const key in this.switchControls) {
+      if (Object.prototype.hasOwnProperty.call(this.switchControls, key)) {
+        const path = this.switchControls[key];
+        this.observeDataStream(key, newValue => {
+            path.value = newValue.value;
           }
         );
       }
-    );
+    }
+
     // Listen to PUT response msg
     this.subscribeSKRequest();
   }
@@ -96,8 +100,10 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   public toggle($event: IDynamicControl): void {
+    const paths = <Array<IWidgetPath>>this.widgetProperties.config.paths;
+    const i = paths.findIndex((path: IWidgetPath) => path.pathID == $event.pathID);
     this.signalkRequestsService.putRequest(
-      this.widgetProperties.config.paths[$event.pathKeyName].path,
+      this.widgetProperties.config.paths[i].path,
       $event.value,
       this.widgetProperties.uuid
     );

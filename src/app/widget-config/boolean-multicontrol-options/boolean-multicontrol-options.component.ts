@@ -1,12 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
+import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
+import { IDynamicControl, IWidgetPath } from '../../widgets-interface';
 import { UUID } from '../../uuid';
 
-interface ctrlUpdate {
-  pathUUID: string,
-  // label: string
-}
 
 @Component({
   selector: 'boolean-multicontrol-options',
@@ -15,39 +13,49 @@ interface ctrlUpdate {
 })
 export class BooleanMultiControlOptionsComponent implements OnInit {
   @Input() multiCtrlArray!: UntypedFormArray;
-  @Output() private addPath = new EventEmitter<ctrlUpdate>();
-  // @Output() private deleteCtrl = new EventEmitter<number>();
+  @Output() private addPath = new EventEmitter<IWidgetPath>();
+  @Output() private updatePath = new EventEmitter<IDynamicControl>();
+  @Output() private delPath = new EventEmitter<string>();
 
   constructor(
-    private fb : UntypedFormBuilder
+    private fb: UntypedFormBuilder
   ) { }
 
   ngOnInit(): void {
+    this.multiCtrlArray.valueChanges.pipe(debounceTime(350)).subscribe(values => {
+      this.updatePath.emit(values);
+    })
   }
 
   public addCtrlGroup() {
     const newUUID = UUID.create();
+
+    // create new control
     this.multiCtrlArray.push(
       this.fb.group({
         ctrlLabel: [null, Validators.required],
-        pathKeyName:[newUUID],
+        pathID:[newUUID],
         color:['text'],
         value:[null]
       }
     ));
 
-    this.addPath.emit({pathUUID: newUUID});
+    // Create corresponding path group
+    const newPathObj: IWidgetPath = {
+      description: null,
+      path: null,
+      pathID: newUUID,
+      source: 'default',
+      pathType: 'boolean',
+      isPathConfigurable: true,
+      convertUnitTo: 'unitless',
+      sampleTime: 500
+    }
+
+    this.addPath.emit(newPathObj);
   }
 
-  // public ctrlLabelChange(e: any): void {
-  //   this.widgetConfig.multiChildCtrls[e.ctrlId].ctrlLabel = e.label;
-  //   Object.assign(this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e.ctrlId].pathKeyName], {description: e.label});
-  //   this.formMaster = this.generateFormGroups(this.widgetConfig);
-  // }
-
-  // public deleteControl(e: number) {
-  //   delete this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e].pathKeyName];
-  //   this.widgetConfig.multiChildCtrls.splice(e,1);
-  //   this.formMaster = this.generateFormGroups(this.widgetConfig);
-  // }
+  public deletePath(e): void {
+    this.delPath.emit(e)
+  }
 }

@@ -3,6 +3,7 @@
   <boolean-control-config class="full-width"
   *ngFor="let ctrl of multiCtrlArray.controls; index as i"
     [ctrlFormGroup]="ctrl"
-    [controlIndex]="i">
+    [controlIndex]="i"
+    (deleteCtrl)="deletePath($event)">
   </boolean-control-config>
 </div>
