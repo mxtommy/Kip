@@ -187,14 +187,12 @@
               <span [style]="formMaster.controls.multiChildCtrls.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Controls
             </ng-template>
           </div>
-          <button type="button" mat-raised-button color="primary" (click)="openAddCtrlDialog()">Add Control</button>
-          <app-boolean-multicontrol-config class="full-width"
-            *ngFor="let ctrlForm of formMaster['controls'].multiChildCtrls['controls'] | objectKeys; index as i"
-            [formGroup]="formMaster.controls.multiChildCtrls.get(ctrlForm)"
-            [controlIndex]="i"
-            (ctrlLabelChange)="ctrlLabelChange($event)"
-            (deleteCtrl)="deleteControl($event)">
-          </app-boolean-multicontrol-config>
+            <boolean-multicontrol-options
+              [multiCtrlArray]="formMaster.get('multiChildCtrls')"
+              (addPath)="addPathGroup($event)"
+              (updatePath)="updatePath($event)"
+              (delPath)="deletePath($event)">
+            </boolean-multicontrol-options>
         </div>
       </mat-tab>
 <!-- Paths stuff -->
@@ -205,31 +203,14 @@
               <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Paths
             </ng-template>
           </div>
-          <div class="flex-container">
-            <div class="flex-checkbox-30">
-              <mat-checkbox class="fields"
-                name="enableTimeout"
-                formControlName="enableTimeout">
-                  Enable Widget Data TTL
-              </mat-checkbox>
-            </div>
-            <div class="flex-field-65">
-              <mat-form-field class="fields" appearance="outline" floatLabel="always">
-                <mat-label>TTL Timeout For Paths</mat-label>
-                <input type="number" matNativeControl placeholder="Time in seconds..." name="dataTimeout"
-                formControlName="dataTimeout"
-                min="2"
-                required>
-                <span matSuffix>Seconds</span>
-              </mat-form-field>
-            </div>
-          </div>
-          <modal-path-selector class="full-width"
-            *ngFor="let pathForm of formMaster['controls'].paths['controls'] | objectKeys"
-            [formGroup]="formMaster.controls.paths.get(pathForm)"
-            [filterSelfPaths]="formMaster.value.filterSelfPaths">
-          </modal-path-selector>
-          <mat-checkbox name="filterSelfPaths" formControlName="filterSelfPaths">Restrict to own vessel</mat-checkbox>
+          <paths-options
+            formGroupName="paths"
+            [isArray]="isPathArray"
+            [enableTimeout]="formMaster.get('enableTimeout')"
+            [dataTimeout]="formMaster.get('dataTimeout')"
+            [filterSelfPaths]="formMaster.get('filterSelfPaths')"
+            [addPathEvent]="addPathEvent">
+          </paths-options>
         </div>
       </mat-tab>
 <!-- Gauge stuff -->

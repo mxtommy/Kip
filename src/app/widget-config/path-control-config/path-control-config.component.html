@@ -1,6 +1,6 @@
-<div [formGroup]="formGroup" class="flex-container rounded-card" *ngIf="formGroup.value.isPathConfigurable">
+<div [formGroup]="pathFormGroup" class="flex-container rounded-card" *ngIf="pathFormGroup.value.isPathConfigurable">
   <div class="flex-field-100">
-    <span>{{formGroup.value.description}}</span>
+    <span>{{pathFormGroup.value.description}}</span>
   </div>
   <div class="flex-field-100">
     <mat-form-field class="pathField" appearance="outline" floatLabel="always">
@@ -10,7 +10,7 @@
         formControlName="path"
         required
         [matAutocomplete]="pathAutoComplete">
-      <button style="top:-8px" mat-button *ngIf="formGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="formGroup.controls['path'].setValue('')">
+      <button style="top:-8px" mat-button *ngIf="pathFormGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
         <span class="fa-solid fa-close"></span>
       </button>
       <mat-autocomplete #pathAutoComplete="matAutocomplete">
@@ -25,10 +25,10 @@
           </ng-container>
         </mat-option>
       </mat-autocomplete>
-      <mat-error *ngIf="formGroup.controls['path'].errors?.['required']">
+      <mat-error *ngIf="pathFormGroup.controls['path'].errors?.['required']">
         Path required
       </mat-error>
-      <mat-error *ngIf="formGroup.controls['path'].errors?.['requireMatch'] && !formGroup.controls['path'].errors?.['required']">
+      <mat-error *ngIf="pathFormGroup.controls['path'].errors?.['requireMatch'] && !pathFormGroup.controls['path'].errors?.['required']">
         Path does not match any known valid path
       </mat-error>
     </mat-form-field>
@@ -57,7 +57,7 @@
       </mat-form-field>
     </div>
     <div class="unitField">
-      <mat-form-field *ngIf="formGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always">
+      <mat-form-field *ngIf="pathFormGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always">
         <mat-label>Display Format</mat-label>
         <mat-select
             placeholder="Select unit"

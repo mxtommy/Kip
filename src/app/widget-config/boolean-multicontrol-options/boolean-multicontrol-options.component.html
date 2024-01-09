@@ -1,0 +1,9 @@
+<div [formGroup]="multiCtrlArray">
+  <button type="button" mat-raised-button color="primary" (click)="addCtrlGroup()">Add Control</button>
+  <boolean-control-config class="full-width"
+  *ngFor="let ctrl of multiCtrlArray.controls; index as i"
+    [ctrlFormGroup]="ctrl"
+    [controlIndex]="i"
+    (deleteCtrl)="deletePath($event)">
+  </boolean-control-config>
+</div>

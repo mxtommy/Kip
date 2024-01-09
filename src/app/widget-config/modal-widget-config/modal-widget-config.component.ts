@@ -1,13 +1,13 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormGroup, AbstractControl }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 
 import { IUnitGroup } from '../../units.service';
 import { SignalKService } from '../../signalk.service';
 import { DataSetService, IDataSet } from '../../data-set.service';
-import { IDynamicControl, IPathArray, IWidgetSvcConfig } from '../../widgets-interface';
-import { UUID } from '../../uuid';
-
+import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../widgets-interface';
+import { IAddNewPath } from '../paths-options/paths-options.component';
+import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 
 @Component({
   selector: 'modal-widget-config',
@@ -16,15 +16,17 @@ import { UUID } from '../../uuid';
 })
 export class ModalWidgetConfigComponent implements OnInit {
 
-  titleDialog: string = "Widget Options";
-  formMaster: UntypedFormGroup;
-  availableDataSets: IDataSet[];
-  unitList: {default?: string, conversions?: IUnitGroup[] } = {};
-
+  public titleDialog: string = "Widget Options";
+  public formMaster: UntypedFormGroup;
+  public availableDataSets: IDataSet[];
+  public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
+  public isPathArray: boolean = false;
+  public addPathEvent: IAddNewPath;
 
   constructor(
     public dialog: MatDialog,
     public dialogRef: MatDialogRef<ModalWidgetConfigComponent>,
+    private fb : UntypedFormBuilder,
     private DataSetService: DataSetService,
     private signalKService: SignalKService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
@@ -34,28 +36,46 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.availableDataSets = this.DataSetService.getDataSets().sort();
     this.unitList = this.signalKService.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
-    this.formMaster.updateValueAndValidity();
   }
 
-  generateFormGroups(formData: Object, objectType?: string): UntypedFormGroup {
-    let groups = new UntypedFormGroup({});
-    Object.keys(formData).forEach (key => {
+  private generateFormGroups(formData: Object, parent?: string): UntypedFormGroup {
+    const groups = this.fb.group({});
+
+    Object.keys(formData).forEach(key => {
       // handle Objects
       if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
-        switch (objectType) {
-          case "paths":
-            //if we are building Paths sub formGroups, skip none configurable
-            if (this.widgetConfig.paths[key].isPathConfigurable) {
-              groups.addControl(key, this.generateFormGroups(formData[key], key));
-            }
-            break;
 
-          default: groups.addControl(key, this.generateFormGroups(formData[key], key));
-            break;
+        if (key == "multiChildCtrls") {
+          groups.addControl(key, this.fb.array([]));
+          const fa = groups.get(key) as UntypedFormArray;
+
+          formData[key].forEach((ctrl: IDynamicControl) => {
+            fa.push(this.generateCtrlArray(ctrl));
+          });
+
+        } else if (key == "paths") {
+          if (this.widgetConfig.multiChildCtrls !== undefined) { // build as formArray if multi control type widget only
+            this.isPathArray = true;
+            groups.addControl(key, this.fb.array([]));
+            const fa = groups.get(key) as UntypedFormArray;
+            Object.keys(formData[key]).forEach(pathKey => {
+              fa.push(this.generatePathArray(pathKey, this.widgetConfig.paths[pathKey]));
+            });
+          } else {
+            groups.addControl(key, this.generateFormGroups(formData[key], key));
+          }
         }
+
+        if (parent == 'paths') {
+          //if we are building Paths sub object formGroups, skip non configurable paths
+          if (this.widgetConfig.paths[key].isPathConfigurable) {
+            groups.addControl(key, this.generateFormGroups(formData[key], key));
+          }
+        }
+
       } else {
       // Handle Primitives - property values
-        if (objectType == "convertUnitTo") {
+        if (parent == "convertUnitTo") {
           // If we are building units list
           let unitConfig = this.widgetConfig.paths[key];
           if ( (unitConfig.pathType == "number") || ('datasetUUID' in this.widgetConfig)) {
@@ -74,9 +94,6 @@ export class ModalWidgetConfigComponent implements OnInit {
             case "dataTimeout": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
             break;
 
-            case "ctrlLabel": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
-            break;
-
             default: groups.addControl(key, new UntypedFormControl(formData[key]));
             break;
           }
@@ -86,67 +103,76 @@ export class ModalWidgetConfigComponent implements OnInit {
     return groups;
   }
 
-  public addDynamicControlGroup(ctrlLabel: string): void {
-    let pathUUID = UUID.create();
-    let ctrlCfg: IDynamicControl = {
-      ctrlLabel: ctrlLabel,
-      pathKeyName: pathUUID,
-      color: "text",
-      value: null
+  private generatePathArray(pathKey: string, formData: IWidgetPath): UntypedFormGroup {
+    // use addControl for formGroup and addControl for formControl
+    const fg = new UntypedFormGroup({});
+    Object.keys(formData).forEach(key => {
+      fg.addControl(key, this.generatePathFields(key, formData[key]));
+    });
+    return fg;
+  }
+
+  private generatePathFields(key: string, value: any): UntypedFormControl {
+    let ctrl: UntypedFormControl = null;
+
+    switch (key) {
+      case "path": ctrl = new UntypedFormControl(value, Validators.required);
+      break;
+
+      case "source": ctrl = new UntypedFormControl(value, Validators.required);
+      break;
+
+      case "sampleTime": ctrl = new UntypedFormControl(value, Validators.required);
+      break;
+
+      default: ctrl = new UntypedFormControl(value);
+      break;
     }
-    let pathCfg: IPathArray = {
-      [pathUUID]: {
-        description: ctrlLabel,
-        path: null,
-        source: null,
-        pathType: "boolean",
-        isPathConfigurable: true,
-        convertUnitTo: "unitless",
-        sampleTime: 500
+    return ctrl;
+  }
+
+  private generateCtrlArray(formData: IDynamicControl): UntypedFormGroup {
+    const fg = this.fb.group(formData);
+    const ctrlLabel = fg.get('ctrlLabel');
+    ctrlLabel.addValidators(Validators.required);
+    return fg;
+  }
+
+  public addPathGroup(e: IAddNewPath): void {
+    this.addPathEvent = e;
+  }
+
+  public updatePath(ctrlUpdates: IDynamicControl[]): void {
+    ctrlUpdates.forEach(ctrl => {
+      const pathsFormArray = this.formMaster.get('paths') as UntypedFormArray;
+
+      pathsFormArray.controls.forEach((fg: UntypedFormGroup) => {
+        const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
+        if (pathIDCtrl.value == ctrl.pathID) {
+          fg.controls['description'].setValue(ctrl.ctrlLabel);
+        }
+      });
+    });
+  }
+
+  public deletePath(e: IDeleteEventObj): void {
+    const pathsFormArray = this.formMaster.get('paths') as UntypedFormArray;
+    let i = 0;
+    pathsFormArray.controls.forEach((fg: UntypedFormGroup) => {
+      const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
+      if (pathIDCtrl.value == e.pathID) {
+        const del = pathsFormArray.controls['']
+         pathsFormArray.removeAt(i);
+      } else {
+        i++
       }
-    }
-    this.widgetConfig.multiChildCtrls.push(ctrlCfg);
-    Object.assign(this.widgetConfig.paths, pathCfg);
-    this.formMaster = this.generateFormGroups(this.widgetConfig);
-  }
-
-  public ctrlLabelChange(e: any): void {
-    this.widgetConfig.multiChildCtrls[e.ctrlId].ctrlLabel = e.label;
-    Object.assign(this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e.ctrlId].pathKeyName], {description: e.label});
-    this.formMaster = this.generateFormGroups(this.widgetConfig);
-  }
-
-  public deleteControl(e: number) {
-    delete this.widgetConfig.paths[this.widgetConfig.multiChildCtrls[e].pathKeyName];
-    this.widgetConfig.multiChildCtrls.splice(e,1);
-    this.formMaster = this.generateFormGroups(this.widgetConfig);
-  }
-
-  public openAddCtrlDialog(): void {
-    let label: string = null;
-    const dialogRef = this.dialog.open(DialogAddMultiControl, {
-      data: label
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.addDynamicControlGroup(result);
-      }
-    });
+    const multiCtrlFormArray = this.formMaster.get('multiChildCtrls') as UntypedFormArray;
+    multiCtrlFormArray.removeAt(e.ctrlIndex);
   }
 
   submitConfig() {
     this.dialogRef.close(this.formMaster.value);
   }
-}
-
-
-@Component({
-  selector: 'dialog-add-multi-control',
-  templateUrl: 'dialog-add-multi-control.html'
-})
-export class DialogAddMultiControl {
-  constructor (
-    @Inject(MAT_DIALOG_DATA) public data: string
-  ) {}
 }

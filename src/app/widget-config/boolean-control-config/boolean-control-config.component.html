@@ -1,21 +1,13 @@
-<div [formGroup]="formGroup" class="flex-container rounded-card">
-
-  <div class="flex-field-100">
-    <span>Control #{{controlIndex}}</span>
-  </div>
+<div [formGroup]="ctrlFormGroup" class="flex-container rounded-card">
   <div class="flex-field-50">
-
     <mat-form-field class="fields" appearance="outline" floatLabel="always">
       <mat-label>Label</mat-label>
       <input matInput
-        #labelInput
         type="string"
         placeholder="Enter a display label..."
-        formControlName="ctrlLabel"
-        (change)="labelChange(labelInput.value)">
+        formControlName="ctrlLabel">
     </mat-form-field>
   </div>
-
   <div class="flex-field-50">
     <mat-form-field class="full-width" appearance="outline" floatLabel="always">
       <mat-label>Color</mat-label>
