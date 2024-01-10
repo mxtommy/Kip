@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 export interface IUnitGroup {
   group: string;
   units: IUnit[];
+  skUnit: string;
 }[]
 
 /**
@@ -44,25 +45,25 @@ export class UnitsService {
   conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
       { measure: 'unitless', description: "As-Is numeric value" }
-    ] },
+    ],skUnit: null},
     { group: 'Speed', units: [
       { measure: 'knots', description: "Knots - Nautical miles per hour"},
       { measure: 'kph', description: "kph - Kilometers per hour"},
       { measure: 'mph', description: "mph - Miles per hour"},
       { measure: 'm/s', description: "m/s - Meters per second (default)"}
-    ] },
+    ],skUnit: 'm/s'},
     { group: 'Flow', units: [
       { measure: 'm3/s', description: "Cubic meters per second (default)"},
       { measure: 'l/min', description: "Liters per minute"},
       { measure: 'l/h', description: "Liters per hour"},
       { measure: 'g/min', description: "Gallons per minute"},
       { measure: 'g/h', description: "Gallons per hour"}
-    ] },
+    ],skUnit: 'm3/s'},
     { group: 'Temperature', units: [
       { measure: 'K', description: "Kelvin (default)"},
       { measure: 'celsius', description: "Celsius"},
       { measure: 'fahrenheit', description: "Fahrenheit"}
-     ] },
+    ],skUnit: 'K'},
     { group: 'Length', units: [
       { measure: 'm', description: "Metres (default)"},
       { measure: 'fathom', description: "Fathoms"},
@@ -70,32 +71,32 @@ export class UnitsService {
       { measure: 'km', description: "Kilometers"},
       { measure: 'nm', description: "Nautical Miles"},
       { measure: 'mi', description: "Miles"},
-    ] },
+    ],skUnit: 'm'},
     { group: 'Volume', units: [
       { measure: 'liter', description: "Liters (default)"},
       { measure: 'm3', description: "Cubic Meters"},
       { measure: 'gallon', description: "Gallons"},
-     ] },
+    ],skUnit: 'm3'},
     { group: 'Current', units: [
       { measure: 'A', description: "Amperes"},
       { measure: 'mA', description: "Milliamperes"}
-    ] },
+    ],skUnit: 'A'},
     { group: 'Potential', units: [
       { measure: 'V', description: "Volts"},
       { measure: 'mV', description: "Millivolts"}
-    ] },
+    ],skUnit: 'V'},
     { group: 'Charge', units: [
       { measure: 'C', description: "Coulomb"},
       { measure: 'Ah', description: "Ampere*Hours"},
-    ] },
+    ],skUnit: 'C'},
     { group: 'Power', units: [
       { measure: 'W', description: "Watts"},
       { measure: 'mW', description: "Milliwatts"},
-    ] },
+    ],skUnit: 'W'},
     { group: 'Energy', units: [
       { measure: 'J', description: "Joules"},
       { measure: 'kWh', description: "Kilo-Watt*Hours"},
-    ] },
+    ],skUnit: 'J'},
     { group: 'Pressure', units: [
       { measure: 'Pa', description: "Pascal (default)" },
       { measure: 'bar', description: "Bars" },
@@ -104,43 +105,45 @@ export class UnitsService {
       { measure: 'inHg', description: "inHg" },
       { measure: 'hPa', description: "hPa" },
       { measure: 'mbar', description: "mbar" },
-    ] },
-    { group: 'Density', units: [ { measure: 'kg/m3', description: "Air density - kg/cubic meter"} ] },
+    ],skUnit: 'Pa'},
+    { group: 'Density', units: [
+      { measure: 'kg/m3', description: "Air density - kg/cubic meter"}
+    ],skUnit: 'kg/m3'},
     { group: 'Time', units: [
       { measure: 's', description: "Seconds (default)" },
       { measure: 'Minutes', description: "Minutes" },
       { measure: 'Hours', description: "Hours" },
       { measure: 'Days', description: "Days" },
       { measure: 'HH:MM:SS', description: "Hours:Minute:seconds"}
-    ] },
+    ],skUnit: 's'},
     { group: 'Angular Velocity', units: [
       { measure: 'rad/s', description: "Radians per second" },
       { measure: 'deg/s', description: "Degrees per second" },
       { measure: 'deg/min', description: "Degrees per minute" },
-    ] },
-    { group: 'Angle', units: [
-      { measure: 'rad', description: "Radians" },
-      { measure: 'deg', description: "Degrees" },
-      { measure: 'grad', description: "Gradians" },
-    ] },
+    ],skUnit: 'rad/s'},
     { group: 'Frequency', units: [
       { measure: 'rpm', description: "RPM - Rotations per minute" },
       { measure: 'Hz', description: "Hz - Hertz (default)" },
       { measure: 'KHz', description: "KHz - KiloHertz" },
       { measure: 'MHz', description: "MHz - MegaHertz" },
       { measure: 'GHz', description: "GHz - GigaHertz" },
-    ] },
+    ],skUnit: 'Hz' },
     { group: 'Ratio', units: [
       { measure: 'percent', description: "As percentage value" },
       { measure: 'percentraw', description: "As ratio 0-1 with % sign" },
       { measure: 'ratio', description: "Ratio 0-1 (default)" }
-    ] },
+    ],skUnit: 'ratio'},
+    { group: 'Angle', units: [
+      { measure: 'rad', description: "Radians" },
+      { measure: 'deg', description: "Degrees" },
+      { measure: 'grad', description: "Gradians" },
+    ],skUnit: 'rad'},
     { group: 'Position', units: [
       { measure: 'latitudeMin', description: "Latitude in minutes" },
       { measure: 'latitudeSec', description: "Latitude in seconds" },
       { measure: 'longitudeMin', description: "Longitude in minutes" },
       { measure: 'longitudeSec', description: "Longitude in seconds" },
-    ] },
+    ],skUnit: 'rad'},
   ];
 
 
@@ -299,5 +302,37 @@ export class UnitsService {
   getConversions(): IUnitGroup[] {
     return this.conversionList;
   }
-
+  getSkUnit(groupId: string):string {
+    let skUnit = null
+    for (const unitGroup of this.conversionList){
+      if (unitGroup.group === groupId){
+        skUnit = unitGroup.skUnit;
+        break;
+      }
+    }
+    return skUnit;
+  }
+  getGroupOfUnit(unit: string) :string{
+    let groupId = 'Unitless';
+    loop1:
+    for (const unitGroup of this.conversionList){
+      for (const ugUnit of unitGroup.units){
+        if (ugUnit.measure === unit){
+          groupId = unitGroup.group;
+          break loop1;
+        }
+      }
+    }
+    return groupId;
+  }
+  getUnitGroup(groupId: string) :IUnitGroup{
+    let group = null;
+    for (const unitGroup of this.conversionList){
+      if (unitGroup.group == groupId){
+        group = unitGroup;
+        break;
+      }
+    }
+    return group;
+  }
 }

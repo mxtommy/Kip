@@ -47,7 +47,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "unitless",
-          sampleTime: 500
+          sampleTime: 500,
+          unitGroup: "Unitless"
         }
       },
       showMax: false,

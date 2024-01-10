@@ -28,7 +28,8 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "V",
-          sampleTime: 500
+          sampleTime: 500,
+          unitGroup: "Unitless"
         }
       },
       minValue: 0,

@@ -260,4 +260,6 @@ export interface IWidgetPath {
   policy?: Policy;
   /** NOT IMPLEMENTED -Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
   minPeriod?: number;
+  /**If pathType is number unitGroup most be included. Path is filtered  on unit group(ex Speed) if more groups is possible use Unitless .*/
+  unitGroup?: string
 }

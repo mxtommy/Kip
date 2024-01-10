@@ -9,6 +9,7 @@
         placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
         formControlName="path"
         required
+        spellcheck="false"
         [matAutocomplete]="pathAutoComplete">
       <button style="top:-8px" mat-button *ngIf="pathFormGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
         <span class="fa-solid fa-close"></span>
@@ -63,7 +64,7 @@
             placeholder="Select unit"
             formControlName="convertUnitTo"
             required>
-            <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
+            <mat-optgroup *ngFor="let group of unitCtrl.conversions" [label]="group.group">
               <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
                 {{unit.description}}
               </mat-option>

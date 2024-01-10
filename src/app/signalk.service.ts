@@ -408,10 +408,10 @@ export class SignalKService {
     return this.skDataObservable.asObservable();
   }
 
-  getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
+  getPathsAndMetaByType(valueType: string, selfOnly?: boolean, unit?: string): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
     let pathsMeta: IPathMetaData[] = [];
     for (let i = 0; i < this.skData.length;  i++) {
-       if (this.skData[i].type == valueType) {
+      if ((this.skData[i].type == valueType) && (this.unitFilter(this.skData[i],unit))) {
          if (selfOnly) {
           if (this.skData[i].path.startsWith("self")) {
             let p:IPathMetaData = {
@@ -430,6 +430,19 @@ export class SignalKService {
       }
     }
     return pathsMeta; // copy it....
+  }
+  // A weak filter only test if skData and unit have unit data
+  // return true if units match
+  private unitFilter(skData, unit: string): boolean{
+    let isOk=true;
+    if (unit){
+      if ((unit!='unitless') && (skData.type == 'number')){
+        if (('meta' in skData) && ('units' in skData.meta)){
+          isOk = (skData.meta.units == unit)
+        }
+      }
+    }
+    return isOk
   }
 
   getPathObject(path): IPathData {
