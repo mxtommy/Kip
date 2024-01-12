@@ -36,6 +36,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.availableDataSets = this.DataSetService.getDataSets().sort();
     this.unitList = this.signalKService.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
+    this.setFormOptions();
   }
 
   private generateFormGroups(formData: Object, parent?: string): UntypedFormGroup {
@@ -170,6 +171,25 @@ export class ModalWidgetConfigComponent implements OnInit {
 
     const multiCtrlFormArray = this.formMaster.get('multiChildCtrls') as UntypedFormArray;
     multiCtrlFormArray.removeAt(e.ctrlIndex);
+  }
+
+  /**
+   * EnablePaths
+   */
+  public setPaths() {
+    this.setFormOptions();
+  }
+
+  private setFormOptions(): void {
+    if (this.formMaster.contains('waypointEnable')) {
+      const ctrlGrp = this.formMaster.get('paths.nextWaypointBearing');
+      this.formMaster.controls['waypointEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable()
+    }
+
+    if (this.formMaster.contains('courseOverGroundEnable')) {
+      const ctrlGrp = this.formMaster.get('paths.courseOverGround');
+      this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
+    }
   }
 
   submitConfig() {
