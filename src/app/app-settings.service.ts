@@ -8,7 +8,7 @@ import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from './units.service';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "./app-settings.interfaces";
-import { DefaultAppConfig, DefaultConectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from './config.blank.const';
+import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from './config.blank.const';
 import { DefaultUnitsConfig } from './config.blank.units.const'
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
@@ -218,7 +218,7 @@ public loadConfigFromLocalStorage(type: string) {
 
     if(type === 'connectionConfig') {
       if (config.configVersion !== configVersion) {
-        console.log(`[AppSettings Service] Invalide ${type} version. Force loading defaults`);
+        console.log(`[AppSettings Service] Invalid ${type} version. Force loading defaults`);
 
         switch (type) {
           case "connectionConfig":
@@ -574,7 +574,7 @@ public loadConfigFromLocalStorage(type: string) {
     return storageObject;
   }
 
-  // Calls build methodes and saves to LocalStorage
+  // Calls build methods and saves to LocalStorage
   private saveAppConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Application config to LocalStorage");
     localStorage.setItem('appConfig', JSON.stringify(this.buildAppStorageObject()));
@@ -616,8 +616,9 @@ public loadConfigFromLocalStorage(type: string) {
   }
 
   private getDefaultConnectionConfig(): IConnectionConfig {
-    let config: IConnectionConfig = DefaultConectionConfig;
+    let config: IConnectionConfig = DefaultConnectionConfig;
     config.kipUUID = this.newUuid();
+    config.signalKUrl = window.location.origin;
     localStorage.setItem('connectionConfig', JSON.stringify(config));
     return config;
   }

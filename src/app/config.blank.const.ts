@@ -55,7 +55,7 @@ export const defaultConfig: IConfig = {
   "zones": DefaultZonesConfig,
 }
 
-export const DefaultConectionConfig: IConnectionConfig = {
+export const DefaultConnectionConfig: IConnectionConfig = {
   "configVersion": 9,
   "kipUUID": newUuid(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()

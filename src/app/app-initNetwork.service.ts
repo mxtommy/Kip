@@ -10,9 +10,11 @@ import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { IConnectionConfig, ISignalKUrl } from "./app-settings.interfaces";
+import { IConnectionConfig } from "./app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
+import { DefaultConnectionConfig } from './config.blank.const';
+import { UUID } from './uuid';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 
@@ -56,7 +58,7 @@ export class AppNetworkInitService {
       }
 
     } catch (error) {
-      console.warn("[AppInit Network Service] Services loaded. Connection is not configured");
+      console.warn("[AppInit Network Service] Services loaded. Connection attempt unsuccessful");
       console.error(error);
       return Promise.reject("[AppInit Network Service] Services loaded. Connection not configured");
     } finally {
@@ -82,10 +84,16 @@ export class AppNetworkInitService {
     this.config = JSON.parse(localStorage.getItem('connectionConfig'));
 
     if (!this.config) {
-      console.log("[AppInit Network Service] No Connection Config found in LocalStorage. Maybe a first time app start");
+      this.config = DefaultConnectionConfig;
+      this.config.kipUUID = UUID.create();
+      this.config.signalKUrl = window.location.origin;
+      console.log(`[AppInit Network Service] Connection Configuration not found. Creating configuration using Auto-Discovery URL: ${this.config.signalKUrl}`);
+      localStorage.setItem('connectionConfig', JSON.stringify(this.config));
 
     } else if (!this.config.signalKUrl) {
-      console.warn("[AppInit Network Service] Config found but no server URL is present");
+      this.config.signalKUrl = window.location.origin;
+      localStorage.setItem('connectionConfig', JSON.stringify(this.config));
+      console.log(`[AppInit Network Service] Config found with no server URL. Setting Auto-Discovery URL: ${this.config.signalKUrl}`);
     }
   }
 }
