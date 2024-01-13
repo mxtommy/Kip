@@ -12,7 +12,7 @@ const deltaStatusCodes = {
   202: "The request is awaiting authorization.",
   400: "Bad Client request format.",
   401: "Login failed. Your User ID or Password is incorrect.",
-  403: "DENIED: You must be authenticated to send commands. Configure server connection authentication or requets a Device Authorization token.",
+  403: "DENIED: Authentication required with R/W or Admin permission level to send commands. Configure server connection authentication or request a Device Authorization token.",
   405: "The server does not support the request.",
   500: "The request failed.",
   502: "Something went wrong carrying out the request on the server side.",
@@ -84,7 +84,7 @@ export class SignalkRequestsService {
   * Required to use the Signal K User Storage feature (ie. to store Config by users)
   * and if you need to submit data to Signal K.
   *
-  * An alternative to user authentification is to use requestDeviceAccessToken method
+  * An alternative to user authentication is to use requestDeviceAccessToken method
   * removing the need for usr/pwd but this will limit Kip's automatic Config sharing feature.
   *
   * Once approved, the user authorization Token will be saved in the Config and sent with every
@@ -164,7 +164,7 @@ export class SignalkRequestsService {
 
       const currentStatusCode = deltaStatusCodes[delta.statusCode];
 
-      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401 || this.requests[index].statusCode == 405)) {
+      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401 || this.requests[index].statusCode == 403 || this.requests[index].statusCode == 405)) {
         this.requests[index].statusCodeDescription = currentStatusCode;
 
         if (this.requests[index].statusCode == 202) {
@@ -172,8 +172,12 @@ export class SignalkRequestsService {
           return;
         }
 
+        if (this.requests[index].statusCode == 403) {
+          console.warn("[Request Service] Status Code: " + this.requests[index].statusCode + " - " + this.requests[index].statusCodeDescription);
+        }
+
         if (this.requests[index].statusCode == 405) {
-          console.log("[Request Service] Status Code: " + this.requests[index].statusCode + " - " + this.requests[index].message);
+          console.error("[Request Service] Status Code: " + this.requests[index].statusCode + " - " + this.requests[index].message);
         }
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
@@ -183,7 +187,7 @@ export class SignalkRequestsService {
 
         } else if (delta.login !== undefined) {
           // Delta (WebSocket) login not implemented. Use REST login from
-          // Authetification service to obtain Session token
+          // Authentication service to obtain Session token
           if (delta.login.token !== undefined) {
             // Do logic
           }
