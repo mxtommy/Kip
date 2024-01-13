@@ -1,3 +1,16 @@
+# V 2.6.0
+## New features
+* New Boolean Switches Widget. The first addition to a new series of multi-paths boolean Widgets
+* Automatic server URL discovery simplifying basic KIP configuration 
+## Improvements
+* Request/Response 403 Status Code message improving end user troubleshooting when using PUT operations. Applies to Boolean and AP widgets. 
+* Sass styles cleanup reducing css files size
+* Dependency cleanup reducing install time and removing unnecessary package installation
+* KIP dependency version update 
+## Fixes
+* Can't save Widget Options with Widgets that have optional configuration features when paths are not available/supplied from Signal K
+* Widget Options/Paths form UI validation issues providing cleaner user feedback
+* AP compass dial numbers not visible in all themes. Special thanks to @rezder
 # V 2.5.0
 ## New features
 * Course Over Ground indicator added to Wind Widget 
@@ -46,7 +59,7 @@
 # V 2.2.0
 ## New features
 * Option to enable automatic day and night modes activation based on sun phases 
-* Path data throttling feature added to Widget Options Paths providing greater flexibilty and UI experience
+* Path data throttling feature added to Widget Options Paths providing greater flexibility and UI experience
 # V 2.1.3
 ## Improvements
 * automatic upgrade of older KIP v6 configuration
@@ -64,7 +77,7 @@
 * Latitude and Longitude format by @godind in https://github.com/mxtommy/Kip/pull/204
 * numeric with decimal and long/lat by @godind in https://github.com/mxtommy/Kip/pull/205
 * West Longitudes show negatives by @godind in https://github.com/mxtommy/Kip/pull/206
-* App-help-styiling-to-Angular by @godind in https://github.com/mxtommy/Kip/pull/207
+* App-help-styling-to-Angular by @godind in https://github.com/mxtommy/Kip/pull/207
 * Bump @babel/traverse from 7.23.0 to 7.23.2 by @dependabot in https://github.com/mxtommy/Kip/pull/194
 # V 2.0.1
 ## Improvements
@@ -80,7 +93,7 @@
 * Data/time Widget. Special thanks to techgardeners
 * Ah and kWh units support. Special thanks to amirlanesman
 * New Storage Service
-* New Authentification Service
+* New Authentication Service
 * New App bootstrap Init Service
 ## Improvements
 * Button/Switch Widget UI improvement to On/Off status indicator 
@@ -89,7 +102,7 @@
 * Reduced bundle size
 * Streamlined Widget framework to facilitate Widget contribution and creation
 * Migration to RxJS WebSocket
-* Improved JavaScript Web Token (JWT) management using HTTP Intreceptor
+* Improved JavaScript Web Token (JWT) management using HTTP Interceptor
 * Improved management of Signal K communications reducing server buffer overflow and server-side termination exceptions handling.
 * Support for Signal K Delta Metadata updates
 * Retirement of full.service in favor of the Delta service for improved performance, reduced CPU load and code simplification
@@ -102,7 +115,7 @@
 ## Fixes
 * widget-numeric.component.html code typo preventing proper theme rendering. Special thanks to mhaberler
 * Issue where simple linear gauge assumes min value=0. Special thanks to amirlanesman
-* Fix spelling in datasets configuration. Special tahnks to philipa 
+* Fix spelling in datasets configuration. Special thanks to philipa 
 # V 1.3.1
 * Angular production build script update
 * fixed historical widget axis and label theming color, thanks VibroAxe
@@ -110,11 +123,11 @@
 * Platform update to Node 14, Angular and Angular Material 12
 * Upgrade to Awesomefont6 with new icon style classes update
 * Retired old node-sass in favor of new Sass module
-* Dependecies updated to latest
+* Dependencies updated to latest
 * App manifest added, thanks VibroAxe
 * Added new ng server dev configuration with map files enabling debugger breakpoints. Use: ng server --configuration=dev to enable VS Code debugger map file and inline break points.
-* Fixed issue: Latest Master doesn't build #111 - NG-Canvas-Gauge package dependecy
-* Fix Kip N2K Autopilot gauge buttons layout and modes feature. AP Gauge should work with Raymarine Seatalk, N2K APs and SmartPilots connected to Seatalk-STNG-Converter device. Latest n2k-signalk (2.5.2+) and signalk-autopitot (v1.2.5+) plugin are required.
+* Fixed issue: Latest Master doesn't build #111 - NG-Canvas-Gauge package dependency
+* Fix Kip N2K Autopilot gauge buttons layout and modes feature. AP Gauge should work with Raymarine Seatalk, N2K APs and SmartPilots connected to Seatalk-STNG-Converter device. Latest n2k-signalk (2.5.2+) and signalk-autopilot (v1.2.5+) plugin are required.
 
 # V 1.2.3
 * Fix bug in ng-Gauges initialization
@@ -141,7 +154,7 @@
 * Allow paths that do not exist in path input.
 * Added percent unit
 * Optimize font size calculations by up to 50x on numeric widget
-* Added a new color option on linear gauges (No Progress). Makes it just the needle, usefull for example rudder position
+* Added a new color option on linear gauges (No Progress). Makes it just the needle, useful for example rudder position
 
 ## Bugfix/Other
 * Refactor alarms/notification service.
@@ -178,7 +191,7 @@
 * Work on ng gauges
  
 ### V1.0.2
-* Tooltip for long messages, and hide badge when 0 unacked alarms 
+* Tooltip for long messages, and hide badge when 0 unacknowledged alarms 
 
 ### V1.0.1
 * Respect methods for alarms! 
@@ -220,7 +233,7 @@
 ### V0.1.7
 Note, Any configs stored in browser will be lost as config format has changed.
 * Performance gain in Numeric widget in large fonts
-* Sailgauge updates (laylines, windsectors, general refactor)
+* Sailgauge updates (laylines, wind sectors, general refactor)
 * Simplified source selection in the code
 * Removed Derived Data
 * Added Percentage unit, and stopped showing "no unit" on numeric
