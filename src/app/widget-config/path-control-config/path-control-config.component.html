@@ -64,12 +64,29 @@
             placeholder="Select unit"
             formControlName="convertUnitTo"
             required>
-            <mat-optgroup *ngFor="let group of unitCtrl.conversions" [label]="group.group">
+            <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
               <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
                 {{unit.description}}
               </mat-option>
             </mat-optgroup>
         </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="unitGrpFilter">
+      <mat-form-field *ngIf="pathFormGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always" >
+        <mat-label>Filter path results</mat-label>
+        <mat-form-field class="fields" appearance="outline" floatLabel="always">
+          <mat-label>Unit Types</mat-label>
+          <mat-select
+          placeholder="Select unit type"
+          formControlName="unitGrpFilter"
+          required>
+            <mat-option *ngFor="let group of unitGrpsCtrl.conversions" [value]="group.group">
+              {{group.group}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button *ngIf="unitGrpsCtrl.conversions.length != 1" mat-flat-button type="button" color ="accent" (click)="clearUnitGrpFilter()" class="filterButton">Clear filter</button>
       </mat-form-field>
     </div>
   </div>

@@ -29,7 +29,8 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
           isPathConfigurable: true,
           convertUnitTo: "V",
           sampleTime: 500,
-          unitGroup: "Unitless"
+          isFilterFixed: false,
+          unitGrpFilter: "Unitless"
         }
       },
       minValue: 0,

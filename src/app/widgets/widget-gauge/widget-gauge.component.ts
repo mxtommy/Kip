@@ -24,7 +24,8 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
           isPathConfigurable: true,
           convertUnitTo: "unitless",
           sampleTime: 500,
-          unitGroup: "Unitless"
+          isFilterFixed: false,
+          unitGrpFilter: "Unitless"
         }
       },
       gaugeType: 'linear',

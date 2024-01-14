@@ -48,7 +48,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           isPathConfigurable: true,
           convertUnitTo: "unitless",
           sampleTime: 500,
-          unitGroup: 'Unitless'
+          isFilterFixed: false,
+          unitGrpFilter: "Unitless"
         }
       },
       gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal

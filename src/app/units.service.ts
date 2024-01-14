@@ -143,7 +143,7 @@ export class UnitsService {
       { measure: 'latitudeSec', description: "Latitude in seconds" },
       { measure: 'longitudeMin', description: "Longitude in minutes" },
       { measure: 'longitudeSec', description: "Longitude in seconds" },
-    ],skUnit: 'rad'},
+    ],skUnit: 'rad'},// Postion data stream data can be both deg and rad but we only handle rad
   ];
 
 
