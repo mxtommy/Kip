@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
 import { SignalKService } from './signalk.service';
 import { Observable } from 'rxjs';
 
-const sunPath: string = 'self.environment.sun';
+const modePath: string = 'self.environment.mode';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +37,7 @@ export class AppService {
           autoNightMode.subscribe(mode => {
             this.autoNightMode = mode;
             if (mode) {
-              if (this.sk.getPathObject(sunPath) !== null) {
+              if (this.sk.getPathObject(modePath) !== null) {
 
                 // capture none nightMode theme name changes
                 this.settings.getThemeNameAsO().subscribe(theme => {
@@ -47,12 +47,12 @@ export class AppService {
 
                 const connConf: IConnectionConfig = this.settings.getConnectionConfig(); // get app UUUID
 
-                this.sk.subscribePath(connConf.kipUUID, sunPath, 'default').subscribe(sun => {
-                  if (sun.value == 'night' && this.sunValue != sun.value) {
-                    this.sunValue = sun.value;
+                this.sk.subscribePath(connConf.kipUUID, modePath, 'default').subscribe(mode => {
+                  if (mode.value == 'night' && this.sunValue != mode.value) {
+                    this.sunValue = mode.value;
                     this.settings.setThemName('nightMode');
-                  } else if (sun.value == 'day' && this.sunValue != sun.value) {
-                    this.sunValue = sun.value;
+                  } else if (mode.value == 'day' && this.sunValue != mode.value) {
+                    this.sunValue = mode.value;
                     this.settings.setThemName(this.dayTheme);
                   }
                 });
@@ -65,8 +65,8 @@ export class AppService {
   }
 
   public validateAutoNighModeSupported(): boolean {
-    if (this.sk.getPathObject(sunPath) == null) {
-      this.notification.sendSnackbarNotification("Dependency Error: self.environment.sun path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
+    if (this.sk.getPathObject(modePath) == null) {
+      this.notification.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
       return false;
     }
     return true;
