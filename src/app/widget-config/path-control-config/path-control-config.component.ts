@@ -54,8 +54,6 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     //populate sources and units for this path (or just the current or default setting if we know nothing about the path)
     this.updateSourcesAndUnits();
 
-    // this.formGroup.updateValueAndValidity();
-
     // add autocomplete filtering
     this.filteredPaths = this.pathFormGroup.controls['path'].valueChanges.pipe(
       debounceTime(500),
