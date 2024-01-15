@@ -1,0 +1,31 @@
+<div class="flex-container">
+  <div class="flex-field-50">
+    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+      <mat-label>Date & Time Format</mat-label>
+      <input matInput
+        placeholder="dd/MM/yyyy HH:mm:ss"
+        name="dateFormat"
+        [formControl]="dateFormat"
+        required>
+    </mat-form-field>
+  </div>
+  <div class="flex-field-50">
+    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+      <mat-label>Adjust Value to Time Zone</mat-label>
+      <input type="text" matInput
+        placeholder="Type to use autocomplete (limited to 50)"
+        name="dateTimezone"
+        [formControl]="dateTimezone"
+        required
+        [matAutocomplete]="timeZoneAutoComplete">
+      <button style="top:-8px" mat-button *ngIf="dateTimezone.value" matSuffix mat-icon-button aria-label="Clear" (click)="dateTimezone.setValue('')">
+        <span class="fa-solid fa-close"></span>
+      </button>
+      <mat-autocomplete #timeZoneAutoComplete="matAutocomplete">
+        <mat-option *ngFor="let timeZone of filteredTZ | async" [value]="timeZone">
+          {{timeZone}}
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+  </div>
+</div>
