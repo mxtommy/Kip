@@ -31,7 +31,7 @@ interface ISignalKEndpointResponse {
 export interface IEndpointStatus {
   operation: Number;
   message: string;
-  serverDescrption: string;
+  serverDescription: string;
   httpServiceUrl: string;
   WsServiceUrl: string;
 }
@@ -45,7 +45,7 @@ export class SignalKConnectionService {
   public serverServiceEndpoints: IEndpointStatus = {
     operation: 0,
     message: "Not connected",
-    serverDescrption: null,
+    serverDescription: null,
     httpServiceUrl: null,
     WsServiceUrl: null,
   };
@@ -66,7 +66,7 @@ export class SignalKConnectionService {
   }
 
   /**
-   * Retreives and publishes target server information and supported service
+   * Retrieves and publishes target server information and supported service
    * endpoint addresses.
    *
    * @UsageNote Resetting connection is a trigger for many
@@ -98,18 +98,18 @@ export class SignalKConnectionService {
       console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
       const endpointResponse = await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}));
 
-      console.debug("[Connection Service] SignalK HTTP Endpoints retreived");
+      console.debug("[Connection Service] SignalK HTTP Endpoints retrieved");
       this.serverVersion$.next(endpointResponse.body.server.version);
 
       this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
       this.serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
       this.serverServiceEndpoints.operation = 2;
       this.serverServiceEndpoints.message = endpointResponse.status.toString();
-      this.serverServiceEndpoints.serverDescrption = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;
+      this.serverServiceEndpoints.serverDescription = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;
     } catch (error) {
       this.serverServiceEndpoints.operation = 3;
       this.serverServiceEndpoints.message = error.message;
-      this.serverServiceEndpoints.serverDescrption = null;
+      this.serverServiceEndpoints.serverDescription = null;
       this.handleError(error);
     } finally {
       this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
@@ -119,8 +119,7 @@ export class SignalKConnectionService {
   private handleError(error: HttpErrorResponse) {
     if (error.status === 0) {
       // A client-side or network error occurred. Handle it accordingly
-      console.error('[Connection Service] HTTP Endpoint connection error occurred:', error.error.message);
-      console.error('[Connection Service] An error occurred:', error.error);
+      console.error(`[Connection Service] ${error.name}: ${error.message}`);
     } else {
       // The backend returned an unsuccessful response code.
       // The response body may contain clues as to what went wrong.
@@ -130,7 +129,7 @@ export class SignalKConnectionService {
     throw error;
   }
 
-  // Endpoint status and adrdresses observable
+  // Endpoint status and address observable
   public getServiceEndpointStatusAsO() {
     return this.serverServiceEndpoint$.asObservable();
   }
