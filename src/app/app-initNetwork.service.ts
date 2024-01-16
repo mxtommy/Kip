@@ -60,7 +60,7 @@ export class AppNetworkInitService {
     } catch (error) {
       console.warn("[AppInit Network Service] Services loaded. Connection attempt unsuccessful");
       console.error(error);
-      return Promise.reject("[AppInit Network Service] Services loaded. Connection not configured");
+      return Promise.reject("[AppInit Network Service] Services loaded. Connection issue");
     } finally {
       console.log("[AppInit Network Service] Initialization completed");
     }

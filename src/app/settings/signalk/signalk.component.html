@@ -1,7 +1,7 @@
 <div class="mat-typography">
   <form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
     <h1>Connection</h1>
-    <p class="mat-card-subtitle">Set server connection properties, Sign in credential and manage Device Authorisation token.</p>
+    <p class="mat-card-subtitle">Set server connection properties, Sign in credential and manage Device Authorization token.</p>
     <mat-form-field class="connectUrlInput">
       <mat-label>Signal K URL</mat-label>
       <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
@@ -26,7 +26,7 @@
           </button>
         </span>
         <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
-          <button mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANNATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotly. USAGE: Once a Devive Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
+          <button mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotely. USAGE: Once a Device Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
             Request Token
           </button>
         </span>
@@ -48,7 +48,7 @@
               Version:
             </td>
             <td class="mat-card-subtitle tableCellData">
-              {{ endpointServiceStatus.serverDescrption }}
+              {{ endpointServiceStatus.serverDescription }}
             </td>
           </tr>
           <tr>

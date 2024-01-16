@@ -34,7 +34,6 @@ import { GaugesModule } from './gauges-module/gauges.module';
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizeEventModule } from 'angular-resize-event';
 // Modules Pipes & Directives
-// import { HammerGestureConfig, HAMMER_GESTURE_CONFIG } from '@angular/platform-browser'
 import { FilterSelfPipe } from './filter-self.pipe';
 import { ObjectKeysPipe } from './object-keys.pipe';
 import { SafePipe } from './safe.pipe';
@@ -265,6 +264,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
       provide: HAMMER_GESTURE_CONFIG,
       useClass: kipHammerConfig
     },
+    // MatDialog App wide default config
     {provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: {
       panelClass: 'mat-dialog-panel',
       backdropClass: 'mat-dialog-backdrop',
