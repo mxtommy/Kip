@@ -72,22 +72,20 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="unitGrpFilter">
-      <mat-form-field *ngIf="pathFormGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always" >
-        <mat-label>Filter path results</mat-label>
-        <mat-form-field class="fields" appearance="outline" floatLabel="always">
-          <mat-label>Unit Types</mat-label>
-          <mat-select
-          placeholder="Select unit type"
-          formControlName="unitGrpFilter"
-          required>
-            <mat-option *ngFor="let group of unitGrpsCtrl.conversions" [value]="group.group">
-              {{group.group}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <button *ngIf="unitGrpsCtrl.conversions.length != 1" mat-flat-button type="button" color ="accent" (click)="clearUnitGrpFilter()" class="filterButton">Clear filter</button>
+    <div *ngIf="pathFormGroup.value.pathType == 'number'" class="unitGrpFilter">
+      <mat-label>Filter Path Results</mat-label>
+      <mat-form-field class="fields" appearance="outline" floatLabel="always">
+        <mat-label>Unit Types</mat-label>
+        <mat-select
+        placeholder="Select unit type"
+        formControlName="unitGrpFilter"
+        required>
+          <mat-option *ngFor="let group of unitGrpsCtrl.conversions" [value]="group.group">
+            {{group.group}}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
+      <button *ngIf="unitGrpsCtrl.conversions.length != 1" mat-flat-button type="button" color ="accent" (click)="clearUnitGrpFilter()" class="filterButton">Clear filter</button>
     </div>
   </div>
 </div>
