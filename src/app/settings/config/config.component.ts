@@ -8,6 +8,7 @@ import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, I
 import { NotificationsService } from '../../notifications.service';
 import { StorageService } from '../../storage.service';
 import { cloneDeep, forEach } from 'lodash-es';
+import { HttpErrorResponse } from '@angular/common/http';
 
 interface IRemoteConfig {
   scope: string,
@@ -107,8 +108,17 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
           this.serverConfigList = configs;
         }
       })
-      .catch(error => {
-        this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+      .catch((error: HttpErrorResponse) => {
+        let errMsg: string = null;
+
+        switch (error.status) {
+          case 401:
+            this.notificationsService.sendSnackbarNotification("Application Storage Error: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false);
+            break;
+
+          default: this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+            break;
+        }
       });
     }
   }
