@@ -148,7 +148,7 @@
         <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
         <h3>Copy</h3>
         <p style="margin-bottom: 16px;">Create, duplicate and overwrite configurations.</p>
-          <div class="config-row">
+          <div class="config-row" *ngIf="hasToken; else elseBlock">
             <div class="config-column">
               <label id="sources-radio-group-label">Source</label>
               <mat-radio-group
@@ -203,6 +203,11 @@
               </mat-form-field>
             </div>
           </div>
+          <ng-template #elseBlock>
+            <div class="no-token-notice">
+              <p>Authentication or Device Token required</p>
+            </div>
+          </ng-template>
           <div class="formActionFooter">
             <mat-divider class="formActionDivider"></mat-divider>
             <button
