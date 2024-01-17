@@ -34,6 +34,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit {
     this.multiCtrlArray.push(
       this.fb.group({
         ctrlLabel: [null, Validators.required],
+        type: ['1', Validators.required],
         pathID:[newUUID],
         color:['text'],
         value:[null]

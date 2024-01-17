@@ -22,7 +22,8 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   private oldTheme: ITheme = null;
 
   public viewBox: string = this.toggleOff;
-  public labelColor = null;
+  public labelColorEnabled = null;
+  public labelColorDisabled = null;
   public valueColor = null;
 
   constructor() { }
@@ -51,28 +52,30 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   private getColors(color: string): void {
     switch (color) {
       case "text":
-        this.labelColor = this.theme.textDark;
+        this.labelColorEnabled = "black";
+        this.labelColorDisabled = this.theme.text;
         this.valueColor = this.theme.text;
         break;
 
       case "primary":
-        this.labelColor = this.theme.textPrimaryDark;
+        this.labelColorEnabled = this.theme.text;
+        this.labelColorDisabled = this.theme.textPrimaryLight;
         this.valueColor = this.theme.textPrimaryLight;
         break;
 
       case "accent":
-        this.labelColor = this.theme.textAccentDark;
+        this.labelColorEnabled = this.theme.text;
+        this.labelColorDisabled = this.theme.textAccentLight;
         this.valueColor = this.theme.textAccentLight;
         break;
 
       case "warn":
-        this.labelColor = this.theme.textWarnDark;
+        this.labelColorEnabled = this.theme.text;
+        this.labelColorDisabled = this.theme.textWarnLight;
         this.valueColor = this.theme.textWarnLight;
         break;
 
       default:
-        this.labelColor = this.theme.textDark;
-        this.valueColor = this.theme.text;
         break;
     }
   }

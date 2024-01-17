@@ -1,5 +1,11 @@
 import { Format, Policy } from './signalk-interfaces';
 
+export enum ControlType {
+  toggle = 0,
+  button = 1,
+  light = 2,
+}
+
 /**
  * KIP Dynamic Widgets interface.
  *
@@ -192,14 +198,18 @@ export interface IWidgetSvcConfig {
  * @interface IDynamicControl
  */
 export interface IDynamicControl {
-  /** Label of the control */
+
+  /** Display label of the control */
   ctrlLabel: string;
-  /** The path key name linked to the control */
+  /** The type of control: 1 = toggle, 2 = button, 3 = light */
+  type: ControlType;
+  /** A unique UUID to match against the path key name to link the control/path */
   pathID: string;
   /** The value of the control */
-  value: any;
+  value?: any;
   /** The color of the control */
   color: string;
+
 }
 
 /**

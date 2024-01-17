@@ -10,11 +10,25 @@
   </div>
   <div class="flex-field-50">
     <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+      <mat-label>Type</mat-label>
+      <mat-select
+        placeholder="Select Type..."
+        formControlName="type"
+        name="type">
+        <mat-option value=1>Toggle</mat-option>
+        <mat-option value=2>Button</mat-option>
+        <mat-option value=3>Light</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="flex-field-50">
+    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
       <mat-label>Color</mat-label>
       <mat-select
-      placeholder="Select Color..."
-      formControlName="color"
-      name="color">
+        placeholder="Select Color..."
+        formControlName="color"
+        name="color"
+        required>
         <mat-option value='text'>Font</mat-option>
         <mat-option value='primary'>Primary</mat-option>
         <mat-option value='accent'>Accent</mat-option>
