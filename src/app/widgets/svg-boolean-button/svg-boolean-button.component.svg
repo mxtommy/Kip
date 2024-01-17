@@ -1,0 +1,66 @@
+<svg
+   [attr.height]="dimensions.height"
+   [attr.width]="dimensions.width"
+   [attr.viewBox]="viewBox"
+   version="1.1"
+   id="svg9"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs id="defs9" />
+  <g id="disabled" transform="translate(0,35)" (click)="toggle(true)">
+    <rect
+       id="clickRecDisabled"
+       width="180"
+       height="35"
+       x="0"
+       y="0"
+       style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       id="buttonDisabled"
+       width="165.02518"
+       height="25.025183"
+       rx="3.6672263"
+       x="7.4874101"
+       y="4.9874086"
+       [attr.fill]="valueColor"
+       style="display:inline;mix-blend-mode:normal;fill-opacity:0.972549;stroke:#ffffff;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:0.2" />
+    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
+      <text
+       id="textDisabled"
+       [attr.fill]="valueColor"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="26.132458"
+       y="23.589869">
+        {{ data.ctrlLabel }}
+      </text>
+    </svg>
+  </g>
+  <g id="enabled" (click)="toggle(false)">
+    <rect
+      width="180"
+      height="35"
+      id="rect1"
+      x="0"
+      y="0"
+      style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"/>
+    <rect
+       id="buttonEnabled"
+       width="165.02518"
+       height="25.025183"
+       rx="3.6672263"
+       x="5.9874086"
+       y="4.9874086"
+       [attr.fill]="valueColor"
+       style="display:inline;opacity:1;mix-blend-mode:normal;stroke:#000000;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:0.2"
+       transform="translate(1.5)" />
+    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
+      <text
+        id="textEnabled"
+        [attr.fill]="valueColor"
+        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        x="47.083984"
+        y="22.636719">{{ data.ctrlLabel }}
+      </text>
+    </svg>
+  </g>
+</svg>

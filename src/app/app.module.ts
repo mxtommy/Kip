@@ -103,6 +103,8 @@ import { BooleanMultiControlOptionsComponent } from './widget-config/boolean-mul
 import { BooleanControlConfigComponent } from './widget-config/boolean-control-config/boolean-control-config.component';
 import { PathsOptionsComponent } from './widget-config/paths-options/paths-options.component';
 import { DisplayDatetimeComponent } from './widget-config/display-datetime/display-datetime.component';
+import { SvgBooleanButtonComponent } from './widgets/svg-boolean-button/svg-boolean-button.component';
+import { SvgBooleanLightComponent } from './widgets/svg-boolean-light/svg-boolean-light.component';
 
 
 const appRoutes: Routes = [
@@ -204,7 +206,9 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     BooleanMultiControlOptionsComponent,
     BooleanControlConfigComponent,
     PathsOptionsComponent,
-    DisplayDatetimeComponent
+    DisplayDatetimeComponent,
+    SvgBooleanButtonComponent,
+    SvgBooleanLightComponent
   ],
   imports: [
     BrowserModule,
