@@ -17,11 +17,14 @@ export class BooleanMultiControlOptionsComponent implements OnInit {
   @Output() private updatePath = new EventEmitter<IDynamicControl>();
   @Output() private delPath = new EventEmitter<string>();
 
+  public arrayLength: number = null;
+
   constructor(
     private fb: UntypedFormBuilder
   ) { }
 
   ngOnInit(): void {
+    this.arrayLength = this.multiCtrlArray.length;
     this.multiCtrlArray.valueChanges.pipe(debounceTime(350)).subscribe(values => {
       this.updatePath.emit(values);
     })
@@ -40,6 +43,8 @@ export class BooleanMultiControlOptionsComponent implements OnInit {
         value:[null]
       }
     ));
+    // update array length for child components
+    this.arrayLength = this.multiCtrlArray.length;
 
     // Create corresponding path group
     const newPathObj: IWidgetPath = {
@@ -56,7 +61,20 @@ export class BooleanMultiControlOptionsComponent implements OnInit {
     this.addPath.emit(newPathObj);
   }
 
+  public moveUp(index: number) {
+    const ctrlGrp = this.multiCtrlArray.at(index);
+    this.multiCtrlArray.removeAt(index, {emitEvent: false});
+    this.multiCtrlArray.insert(index - 1, ctrlGrp, {emitEvent: false});
+  }
+
+  public moveDown(index: number) {
+    const ctrlGrp = this.multiCtrlArray.at(index);
+    this.multiCtrlArray.removeAt(index, {emitEvent: false});
+    this.multiCtrlArray.insert(index + 1, ctrlGrp, {emitEvent: false});
+  }
+
   public deletePath(e): void {
-    this.delPath.emit(e)
+    this.delPath.emit(e);
+    this.arrayLength = this.multiCtrlArray.length;
   }
 }
