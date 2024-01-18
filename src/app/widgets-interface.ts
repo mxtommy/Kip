@@ -2,8 +2,8 @@ import { Format, Policy } from './signalk-interfaces';
 
 export enum ControlType {
   toggle = 0,
-  button = 1,
-  light = 2,
+  push = 1,
+  indicator = 2,
 }
 
 /**
