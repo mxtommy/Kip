@@ -58,14 +58,14 @@ export class WidgetListService {
         description: 'Date & Time',
       },
       {
+        name: 'WidgetBooleanSwitch',
+        componentName: WidgetBooleanSwitchComponent,
+        description: 'Boolean Control Panel',
+      },
+      {
         name: 'WidgetStateComponent',
         componentName: WidgetButtonComponent,
         description: 'Boolean Button/Switch',
-      },
-      {
-        name: 'WidgetBooleanSwitch',
-        componentName: WidgetBooleanSwitchComponent,
-        description: 'Boolean Switches',
       }
     ],
     'Gauge': [

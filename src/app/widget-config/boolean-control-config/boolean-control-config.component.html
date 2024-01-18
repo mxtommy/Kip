@@ -1,30 +1,58 @@
-<div [formGroup]="ctrlFormGroup" class="flex-container rounded-card">
-  <div class="flex-field-50">
-    <mat-form-field class="fields" appearance="outline" floatLabel="always">
-      <mat-label>Label</mat-label>
-      <input matInput
-        type="string"
-        placeholder="Enter a display label..."
-        formControlName="ctrlLabel">
-    </mat-form-field>
+<div [formGroup]="ctrlFormGroup" class="ctrl-grid rounded-card">
+  <div class="controls flex-container">
+    <div class="flex-label">
+      <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+        <mat-label>Label</mat-label>
+        <input matInput
+          type="string"
+          placeholder="Enter a display label..."
+          formControlName="ctrlLabel">
+      </mat-form-field>
+    </div>
+    <div class="flex-settings">
+      <mat-form-field class="settings" appearance="outline" floatLabel="always">
+        <mat-label>Type</mat-label>
+        <mat-select
+          placeholder="Select Type..."
+          formControlName="type"
+          name="type"
+          required>
+          <mat-option value=1>Toggle</mat-option>
+          <mat-option value=2>Push</mat-option>
+          <mat-option value=3>Indicator</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="flex-settings">
+      <mat-form-field class="settings" appearance="outline" floatLabel="always">
+        <mat-label>Color</mat-label>
+        <mat-select
+          placeholder="Select Color..."
+          formControlName="color"
+          name="color"
+          required>
+          <mat-option value='text'>Font</mat-option>
+          <mat-option value='primary'>Primary</mat-option>
+          <mat-option value='accent'>Accent</mat-option>
+          <mat-option value='warn'>Warn</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
-  <div class="flex-field-50">
-    <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-      <mat-label>Color</mat-label>
-      <mat-select
-      placeholder="Select Color..."
-      formControlName="color"
-      name="color">
-        <mat-option value='text'>Font</mat-option>
-        <mat-option value='primary'>Primary</mat-option>
-        <mat-option value='accent'>Accent</mat-option>
-        <mat-option value='warn'>Warn</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-
-  <div class="flex-field-100">
-    <button class="float-right" type="button" mat-raised-button color="primary" (click)="deleteControl()">Delete</button>
+  <div class="actions">
+    <div class="flex-actions">
+      <div class="btn-grid">
+        <button class="up" type="button" mat-icon-button color="primary" *ngIf="controlIndex !== 0" (click)="moveCtrlUp()" aria-label="Move control up in the list">
+          <i class="fa-solid fa-caret-up fa-2xl"></i>
+        </button>
+        <button class="down" type="button" mat-icon-button color="primary" *ngIf="controlIndex !== arrayLength - 1" (click)="moveCtrlDown()" aria-label="Move control down in the list">
+          <i class="fa-solid fa-caret-down fa-2xl"></i>
+        </button>
+        <button class="delete" type="button" mat-icon-button color="primary" (click)="deleteControl()" aria-label="Delete control">
+          <i class="fa-solid fa-trash-can fa-2xl"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 

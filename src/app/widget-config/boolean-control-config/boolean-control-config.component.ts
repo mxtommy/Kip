@@ -14,7 +14,10 @@ export interface IDeleteEventObj {
 export class BooleanControlConfigComponent implements OnInit {
   @Input() ctrlFormGroup!: UntypedFormGroup;
   @Input() controlIndex: number;
+  @Input() arrayLength: number;
   @Output() private deleteCtrl = new EventEmitter<IDeleteEventObj>();
+  @Output() private moveUp = new EventEmitter<number>();
+  @Output() private moveDown = new EventEmitter<number>();
 
   constructor() { }
 
@@ -24,5 +27,13 @@ export class BooleanControlConfigComponent implements OnInit {
   public deleteControl() {
     const delEvent: IDeleteEventObj = {ctrlIndex: this.controlIndex, pathID: this.ctrlFormGroup.get('pathID').value};
     this.deleteCtrl.emit(delEvent);
+  }
+
+  public moveCtrlUp() {
+    this.moveUp.emit(this.controlIndex);
+  }
+
+  public moveCtrlDown() {
+    this.moveDown.emit(this.controlIndex);
   }
 }

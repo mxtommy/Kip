@@ -1,3 +1,73 @@
-.float-right {
-  float: right;
+.ctrl-grid {
+  display: grid;
+  width: auto;
+  height: auto;
+  margin: 0px;
+  grid-template-columns: [col-start] calc(100% - 90px) [col1-end] 80px [col2-end];
+  grid-template-areas: "controls actions";
+  row-gap: 0px;
+  column-gap: 10px;
+  justify-items: center;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  margin-bottom: 10px;
+}
+
+.controls {
+  grid-area: controls;
+  width: 100%;
+}
+
+.actions {
+  grid-area: actions;
+}
+
+.btn-grid {
+  display: grid;
+  width: 80px;
+  height: 80px;
+  margin: 0px;
+  grid-template-columns: [col-start] 50% [col1-end] 50% [col2-end];
+  grid-template-rows: [row-start] 50% [row1-end] 50% [row2-end];
+  grid-template-areas:
+    "up delete"
+    "down delete";
+  row-gap: 0px;
+  column-gap: 0px;
+  justify-items: center;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+}
+
+.up {
+  grid-area: up;
+}
+
+.down {
+  grid-area: down;
+}
+
+.delete {
+  grid-area: delete;
+}
+
+.flex-label {
+  flex-grow: 2;
+  flex-shrink: 2;
+}
+
+.flex-settings {
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.settings {
+  min-width: 100px;
+}
+
+.flex-actions {
+  flex-grow: 0;
+  flex-shrink: 0;
 }

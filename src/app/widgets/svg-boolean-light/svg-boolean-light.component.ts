@@ -6,11 +6,12 @@ interface IDimensions {
   width: number
 }
 
+
 @Component({
-  selector: 'app-svg-boolean-switch',
-  templateUrl: './svg-boolean-switch.component.svg'
+  selector: 'app-svg-boolean-light',
+  templateUrl: './svg-boolean-light.component.svg'
 })
-export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
+export class SvgBooleanLightComponent implements OnInit, DoCheck {
   @Input('controlData') data: IDynamicControl = null;
   @Input('theme') theme: ITheme = null;
   @Input() dimensions!: IDimensions;
