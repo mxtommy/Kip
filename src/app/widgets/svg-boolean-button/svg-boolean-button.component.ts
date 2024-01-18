@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash-es';
 import { Component, DoCheck, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { IDynamicControl, ITheme } from '../../widgets-interface';
 
@@ -18,8 +19,10 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
 
   private toggleOff: string = "0 35 180 35";
   private toggleOn: string = "0 0 180 35";
-  private ctrlState: boolean = null;
   private oldTheme: ITheme = null;
+
+  private timeoutHandler = null;
+  private pressed: boolean = false;
 
   public viewBox: string = this.toggleOff;
   public labelColorEnabled = null;
@@ -32,10 +35,7 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   }
 
   ngDoCheck(): void {
-    if (this.data.value != this.ctrlState) {
-      this.ctrlState = this.data.value;
-      this.viewBox = this.data.value ? this.toggleOn : this.toggleOff;
-    }
+    this.viewBox = this.pressed ? this.toggleOn : this.toggleOff;
 
     if (this.oldTheme != this.theme) {
       this.oldTheme = this.theme
@@ -43,10 +43,26 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
     }
   }
 
+  public handleClickDown() {
+      // momentary mode
+      this.pressed = true;
+      const state: IDynamicControl = cloneDeep(this.data);
+      state.value = this.pressed;
 
-  public toggle(state: boolean): void {
-    this.data.value = state;
-    this.toggleClick.emit(this.data);
+      // send it once to start
+      this.toggleClick.emit(state);
+
+      //send it again every 100ms
+      this.timeoutHandler = setInterval(() => {
+        this.toggleClick.emit(state);
+      }, 100);
+  }
+
+  public handleClickUp() {
+    this.pressed = false;
+    if (this.timeoutHandler) {
+      clearInterval(this.timeoutHandler);
+    }
   }
 
   private getColors(color: string): void {
