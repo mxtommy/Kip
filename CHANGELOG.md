@@ -1,3 +1,13 @@
+# V 2.7.0
+## New features
+* Boolean Control Panel Widget: Added Push button and Light indicator controls
+* Application loading spinner animation during KIP startup replacing the blank screen visible on slow network/devices improving user experience
+## Improvements
+* Boolean Control Panel Widget Options: Ability to change control position, layout clean up and enhanced responsive design 
+* Date & Time Widget Options: Added pre populated selection list of available Time Zones enhancing usability
+* Auto Night Mode feature now based on environment.mode path aligning to latest Signal K specifications. The change is backward compatible
+## Fixes
+* Improved Settings / Storage tab [object Object] error message when Signal K server's Application Storage service is not accessible from KIP   
 # V 2.6.0
 ## New features
 * New Boolean Switches Widget. The first addition to a new series of multi-paths boolean Widgets
