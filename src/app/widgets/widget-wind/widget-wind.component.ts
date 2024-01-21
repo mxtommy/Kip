@@ -38,7 +38,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Angle"
         },
         "courseOverGround": {
           description: "Course Over Ground",
@@ -47,7 +49,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Angle"
         },
         "trueWindAngle": {
           description: "True Wind Angle",
@@ -56,7 +60,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Angle"
         },
         "trueWindSpeed": {
           description: "True Wind Speed",
@@ -65,7 +71,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Speed"
         },
         "appWindAngle": {
           description: "Apparent Wind Angle",
@@ -74,7 +82,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Angle"
         },
         "appWindSpeed": {
           description: "Apparent Wind Speed",
@@ -83,7 +93,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Speed"
         },
         "nextWaypointBearing": {
           description: "Next Waypoint Bearing",
@@ -92,7 +104,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathType: "number",
           isPathConfigurable: true,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 500,
+          isFilterFixed: true,
+          unitGrpFilter: "Angle"
         },
       },
       windSectorEnable: true,

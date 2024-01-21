@@ -110,7 +110,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
           "apTargetWindAngleApp": {
             description: "Autopilot Target Wind Angle Apparent",
@@ -119,7 +121,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
           "apNotifications": {
             description: "Autopilot Notifications",
@@ -137,7 +141,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
           "headingTrue": {
             description: "Heading True",
@@ -146,7 +152,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
           "windAngleApparent": {
             description: "Wind Angle Apparent",
@@ -155,7 +163,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
           "windAngleTrueWater": {
             description: "Wind Angle True Water",
@@ -164,7 +174,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
           "rudderAngle": {
             description: "Rudder Angle",
@@ -173,7 +185,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             pathType: "number",
             convertUnitTo: "deg",
             isPathConfigurable: true,
-            sampleTime: 500
+            sampleTime: 500,
+            isFilterFixed: true,
+            unitGrpFilter: "Angle"
           },
         },
         usage: {

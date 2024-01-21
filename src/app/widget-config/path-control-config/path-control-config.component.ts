@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
 import { SignalKService } from '../../signalk.service';
 import { IPathMetaData } from "../../app-interfaces";
-import { IUnitGroup } from '../../units.service';
+import { UnitsService, IUnitGroup } from '../../units.service';
 import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { Observable, Subscription } from 'rxjs'
@@ -25,25 +25,25 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public availablePaths: IPathMetaData[];
   public filteredPaths: Observable<IPathMetaData[]>;
   private pathValueChange$: Subscription = null;
+  private unitGrpValChange$: Subscription = null;
 
   // Sources control
   public availableSources: Array<string>;
 
   // Units control
   public unitList: {default?: string, conversions?: IUnitGroup[] };
+  public unitGrpsCtrl: {conversions: IUnitGroup[],curGrpId: string};
 
   constructor(
-    private signalKService: SignalKService
+    private signalKService: SignalKService,
+    private unitService: UnitsService
     ) { }
 
   ngOnInit() {
     this.unitList = {};
-    //populate available paths
-    this.getPaths(this.filterSelfPaths);
-
-    // add path validator fn and validate
-    this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(this.availablePaths)]);
-    this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
+    this.initUnitGrp();
+        //populate available paths
+    this.getPaths(this.filterSelfPaths,false);
 
     // If SampleTime control is not present because the path property is missing, add it.
     if (!this.pathFormGroup.controls['sampleTime']) {
@@ -86,8 +86,22 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     }
  }
 
-  private getPaths(isOnlySef: boolean) {
-    this.availablePaths = this.signalKService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
+  private getPaths(isOnlySef: boolean, emitEvent=true) {
+    if (this.pathFormGroup.controls['pathType'].value == 'number'){
+      const grpId = this.pathFormGroup.controls['unitGrpFilter'].value
+      if (grpId == 'Unitless'){
+        this.availablePaths = this.signalKService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
+      }else{
+      let skUnit = this.unitService.getSkUnit(grpId)
+      this.availablePaths = this.signalKService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef, skUnit).sort();
+      }
+    }else{
+      this.availablePaths = this.signalKService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
+    }
+    // add path validator fn and validate
+    this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(this.availablePaths)]);
+    this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true,emitEvent: emitEvent});
+
   }
 
   private filterPaths( value: string ): IPathMetaData[] {
@@ -108,9 +122,12 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     if (pathObject != null) {
       this.pathFormGroup.controls['sampleTime'].enable({onlySelf: true});
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-        this.unitList = this.signalKService.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+        if (!this.pathFormGroup.controls['isFilterFixed'].value) {
+          this.unitList = this.signalKService.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+        }
         if (setValues) {
           this.pathFormGroup.controls['convertUnitTo'].setValue(this.unitList.default, {onlySelf: true});
+          this.unitGrpPathChg()
         }
         this.pathFormGroup.controls['convertUnitTo'].enable({onlySelf: true});
       }
@@ -146,6 +163,67 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   ngOnDestroy(): void {
+    if (this.unitGrpValChange$){
+      this.unitGrpValChange$.unsubscribe()
+    }
     this.pathValueChange$.unsubscribe();
+  }
+  clearUnitGrpFilter(): void{
+    const newGrpId = 'Unitless'
+    this.pathFormGroup.controls['unitGrpFilter'].setValue(newGrpId, {onlySelf: true,emitEvent: false});
+    this.unitGrpUpd(newGrpId,false);
+  }
+
+  private initUnitGrp(): void{
+    if (this.pathFormGroup.controls['pathType'].value == 'number'){
+      let cfGroupId = this.pathFormGroup.controls['unitGrpFilter'].value;
+      if (this.pathFormGroup.controls['isFilterFixed'].value) {
+        this.unitList={
+          default: this.unitService.getDefaults()[cfGroupId],
+          conversions: [this.unitService.getUnitGroup(cfGroupId)]
+        };
+        this.unitGrpsCtrl={conversions: [this.unitService.getUnitGroup(cfGroupId)],curGrpId:cfGroupId};
+      }else{
+        this.unitGrpValChange$ = this.pathFormGroup.controls['unitGrpFilter'].valueChanges.subscribe({
+          next:  newGrpId => {
+            this.unitGrpUpd(newGrpId,true);
+          },
+        });
+        const curUnit = this.pathFormGroup.controls['convertUnitTo'].value;
+        if ( curUnit!=="unitless"){
+          const unitGrpId = this.unitService.getGroupOfUnit(curUnit);
+          if ( unitGrpId!== cfGroupId){
+            this.pathFormGroup.controls['unitGrpFilter'].setValue(unitGrpId, {onlySelf: true,emitEvent: false});
+            cfGroupId = unitGrpId;
+          }
+        }
+        this.unitGrpsCtrl={conversions: this.unitService.getConversions(),curGrpId:cfGroupId};
+      }
+    }
+  }
+
+  private unitGrpPathChg(){
+    if (this.unitList.conversions.length == 1){
+      const newGrpId=this.unitList.conversions[0].group
+      if (newGrpId != this.unitGrpsCtrl.curGrpId){
+        this.pathFormGroup.controls['unitGrpFilter'].setValue(newGrpId, {onlySelf: true,emitEvent: false});
+        this.unitGrpUpd(newGrpId,false)
+      }
+    }else{
+      //Position returns two groups and default on deg from Angle
+      //Position is the only group that do not have a default setting.
+      //Position skUnit is rad signal k path definition is deg but the conversion function is rad.
+      //The data in signal k test is rad but the meta data have units sat to deg.
+      //Setting widget default config (unitGrpFilter) to position and fixed would be a problem
+      //when meta data dont match.
+      //I have seen both deg and rad data on positions paths.
+      this.pathFormGroup.controls['unitGrpFilter'].setValue('Unitless', {onlySelf: true});
+    }
+  }
+  private unitGrpUpd(newGrpId: string,emitPathEvent: boolean){
+    if (this.unitGrpsCtrl.curGrpId !== newGrpId){// It is easy to tricker a loop stop it here
+      this.unitGrpsCtrl.curGrpId = newGrpId;
+      this.getPaths(this.filterSelfPaths,emitPathEvent);
+    }
   }
 }
