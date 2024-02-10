@@ -1,6 +1,7 @@
 import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, IZonesConfig } from "./app-settings.interfaces"
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DefaultUnitsConfig } from "./config.blank.units.const";
+import { UUID } from "./uuid";
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 9,
@@ -57,18 +58,12 @@ export const defaultConfig: IConfig = {
 
 export const DefaultConnectionConfig: IConnectionConfig = {
   "configVersion": 9,
-  "kipUUID": newUuid(),
+  "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
+  "proxyEnabled": false,
   "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,
   "useSharedConfig": false,
   "sharedConfigName": "default"
-}
-
-function newUuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-      return v.toString(16);
-  });
 }

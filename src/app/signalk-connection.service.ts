@@ -75,7 +75,7 @@ export class SignalKConnectionService {
    * @return {*}  {Promise<void>}
    * @memberof SignalKConnectionService
    */
-  public async resetSignalK(skUrl: ISignalKUrl): Promise<void> {
+  public async resetSignalK(skUrl: ISignalKUrl, proxyEnabled?: boolean): Promise<void> {
     if (skUrl.url === null) {
       console.log("[Connection Service] Connection reset called with null or empty URL value");
       return;
@@ -98,11 +98,26 @@ export class SignalKConnectionService {
       console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
       const endpointResponse = await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}));
 
-      console.debug("[Connection Service] SignalK HTTP Endpoints retrieved");
+      console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
       this.serverVersion$.next(endpointResponse.body.server.version);
 
-      this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
-      this.serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+      if (proxyEnabled) {
+        console.debug("[Connection Service] Proxy Mode Enabled");
+        const skHttpUrl = new URL(endpointResponse.body.endpoints.v1["signalk-http"]);
+        const skWsUrl = new URL(endpointResponse.body.endpoints.v1["signalk-ws"]);
+
+        this.serverServiceEndpoints.httpServiceUrl =  window.location.origin + skHttpUrl.pathname;
+        console.debug("[Connection Service] Proxy HTTP URI: " +this.serverServiceEndpoints.httpServiceUrl);
+
+        this.serverServiceEndpoints.WsServiceUrl =  window.location.protocol == 'https:' ? 'wss:' : 'ws:' + window.location.host + skWsUrl.pathname;
+        console.debug("[Connection Service] Proxy WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
+      } else {
+        this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
+        console.debug("[Connection Service] HTTP URI: " +this.serverServiceEndpoints.httpServiceUrl);
+        this.serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+        console.debug("[Connection Service] WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
+      }
+
       this.serverServiceEndpoints.operation = 2;
       this.serverServiceEndpoints.message = endpointResponse.status.toString();
       this.serverServiceEndpoints.serverDescription = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;

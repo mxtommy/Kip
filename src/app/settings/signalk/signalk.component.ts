@@ -14,6 +14,7 @@ import { NotificationsService } from '../../notifications.service';
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 
 
 @Component({
@@ -32,6 +33,7 @@ export class SettingsSignalkComponent implements OnInit {
   authToken: IAuthorizationToken;
   isLoggedInSub: Subscription;
   isLoggedIn: boolean;
+  public proxyEnabled: boolean = false;
 
   endpointServiceStatus: IEndpointStatus;
   skEndpointServiceStatusSub: Subscription;
@@ -136,7 +138,7 @@ export class SettingsSignalkComponent implements OnInit {
       return;
     }
 
-    if (this.connectionConfig.signalKUrl != this.appSettingsService.signalkUrl.url) {
+    if ((this.connectionConfig.signalKUrl !== this.appSettingsService.signalkUrl.url) || (this.connectionConfig.proxyEnabled !== this.appSettingsService.proxyEnabled )) {
       this.appSettingsService.setConnectionConfig(this.connectionConfig);
 
       if (this.connectionConfig.useSharedConfig) {

@@ -6,6 +6,7 @@ import { ISignalKDeltaMessage } from './signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
 import { AuthenticationService } from './authentication.service';
+import { UUID } from './uuid'
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
@@ -57,7 +58,7 @@ export class SignalkRequestsService {
    * The Device authorization is a manual process done on the server.
    */
   public requestDeviceAccessToken() {
-    let requestId = this.newUuid();
+    let requestId = UUID.create();
     let deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
@@ -96,7 +97,7 @@ export class SignalkRequestsService {
   * @memberof SignalkRequestsService
   */
   public requestUserLogin(userId: string, userPassword: string): string {
-    let requestId = this.newUuid();
+    let requestId = UUID.create();
     let loginRequest = {
       requestId: requestId,
       login: {
@@ -126,7 +127,7 @@ export class SignalkRequestsService {
   * @return requestId Identifier for this specific request. Enables Request specific filtering.
   */
   public putRequest(path: string, value: any, widgetUUID: string): string {
-    let requestId = this.newUuid();
+    let requestId = UUID.create();
     let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
     let selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
     let message = {
@@ -221,12 +222,5 @@ export class SignalkRequestsService {
    */
   public subscribeRequest(): Observable<skRequest> {
     return this.requestStatus$.asObservable();
-  }
-
-  private newUuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-    });
   }
 }

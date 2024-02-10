@@ -6,6 +6,7 @@ import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from './units.service';
+import { UUID } from './uuid';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "./app-settings.interfaces";
 import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from './config.blank.const';
@@ -30,6 +31,7 @@ export class AppSettingsService {
   private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
   private autoNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
+  public proxyEnabled: boolean = false;
   private useDeviceToken: boolean = false;
   private loginName: string;
   private loginPassword: string;
@@ -39,12 +41,11 @@ export class AppSettingsService {
 
   private kipUUID: string;
   public signalkUrl: ISignalKUrl;
-  widgets: Array<IWidget>;
-  splitSets: ISplitSet[] = [];
-  rootSplits: string[] = [];
-  dataSets: IDataSet[] = [];
-  zones: BehaviorSubject<Array<IZone>> = new BehaviorSubject<Array<IZone>>([]);
-  root
+  private widgets: Array<IWidget>;
+  private splitSets: ISplitSet[] = [];
+  private rootSplits: string[] = [];
+  private dataSets: IDataSet[] = [];
+  private zones: BehaviorSubject<Array<IZone>> = new BehaviorSubject<Array<IZone>>([]);
 
   constructor(
     private storage: StorageService
@@ -96,6 +97,7 @@ export class AppSettingsService {
       this.resetConnection();
     } else {
       this.signalkUrl = {url: config.signalKUrl, new: false};
+      this.proxyEnabled = config.proxyEnabled;
       this.useDeviceToken = config.useDeviceToken;
       this.loginName = config.loginName;
       this.loginPassword = config.loginPassword;
@@ -176,6 +178,7 @@ export class AppSettingsService {
       this.replaceConfig('appConfig', upgradedConfig, true);
     }
   }
+
 /**
  * Get configuration from local browser storage rather then in
  * memory running config.
@@ -277,6 +280,7 @@ public loadConfigFromLocalStorage(type: string) {
     this.loginName = value.loginName;
     this.loginPassword = value.loginPassword;
     this.useSharedConfig = value.useSharedConfig;
+    this.proxyEnabled = value.proxyEnabled;
     this.signalkUrl.url = value.signalKUrl;
     if (!value.useSharedConfig) {
       this.useDeviceToken = true;
@@ -536,6 +540,7 @@ public loadConfigFromLocalStorage(type: string) {
       configVersion: configVersion,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl.url,
+      proxyEnabled: this.proxyEnabled,
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
       loginPassword: this.loginPassword,
@@ -617,7 +622,7 @@ public loadConfigFromLocalStorage(type: string) {
 
   private getDefaultConnectionConfig(): IConnectionConfig {
     let config: IConnectionConfig = DefaultConnectionConfig;
-    config.kipUUID = this.newUuid();
+    config.kipUUID = UUID.create();
     config.signalKUrl = window.location.origin;
     localStorage.setItem('connectionConfig', JSON.stringify(config));
     return config;
@@ -646,12 +651,4 @@ public loadConfigFromLocalStorage(type: string) {
     localStorage.setItem("zonesConfig", JSON.stringify(config));
     return config;
   }
-
-  private newUuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-    });
-  }
-
 }

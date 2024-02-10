@@ -2,6 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Subscription, BehaviorSubject, sampleTime, pipe, UnaryFunction, filter, OperatorFunction, Observable, interval } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
+import { UUID } from'./uuid'
 
 
 export interface dataPoint {
@@ -68,13 +69,6 @@ export class DataSetService {
     for (let i = 0; i < this.dataSets.length; i++) {
       this.startDataSet(this.dataSets[i].uuid);
     }
-  }
-
-  private newUuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-    });
   }
 
   public subscribeDataSet(uuid, dataSetUuid) {
@@ -173,7 +167,7 @@ export class DataSetService {
   }
 
   public addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {
-    let uuid = this.newUuid();
+    let uuid = UUID.create();
 
     let newSub: IDataSet = {
       uuid: uuid,

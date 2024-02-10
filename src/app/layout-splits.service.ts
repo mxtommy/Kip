@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
+import { UUID } from './uuid'
 
 
 interface ISplitArea {
@@ -43,13 +44,6 @@ export class LayoutSplitsService {
     }
 
     this.rootUUIDs = this.AppSettingsService.getRootSplits();
-  }
-
-  private newUuid() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-            return v.toString(16);
-        });
   }
 
   getActiveRootSub() {
@@ -101,7 +95,7 @@ export class LayoutSplitsService {
    //should only ever be called when changing directions. widgetUUID of area we're splitting
    // becomes first area of new split
   newSplit(parentUUID: string, direction: string, widget1UUID: string, widget2UUID) {
-    let uuid = this.newUuid();
+    let uuid = UUID.create();
     let newSplit: ISplitSet = {
       uuid: uuid,
       parentUUID: parentUUID,
@@ -126,7 +120,7 @@ export class LayoutSplitsService {
 
   newRootSplit() {
     //create new root split
-    let uuid = this.newUuid();
+    let uuid = UUID.create();
     let newWidget = this.WidgetManagerService.newWidget();
     let newRootSplit: ISplitSet = {
       uuid: uuid,
