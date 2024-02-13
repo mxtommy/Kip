@@ -1,6 +1,6 @@
 import { ViewChild, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatButton } from '@angular/material/button';
+import { MatLegacyButton as MatButton } from '@angular/material/legacy-button';
 
 import { SignalkRequestsService, skRequest } from '../../signalk-requests.service';
 import { WidgetManagerService} from '../../widget-manager.service';
