@@ -1,7 +1,7 @@
 import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 
 import { AppSettingsService } from '../../app-settings.service';
 import { IConnectionConfig } from "../../app-settings.interfaces";
