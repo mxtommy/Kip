@@ -14,7 +14,6 @@ import { IConnectionConfig } from "./app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from './config.blank.const';
-import { UUID } from './uuid';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 
@@ -40,7 +39,7 @@ export class AppNetworkInitService {
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
-        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false});
+        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled);
       }
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
@@ -85,7 +84,6 @@ export class AppNetworkInitService {
 
     if (!this.config) {
       this.config = DefaultConnectionConfig;
-      this.config.kipUUID = UUID.create();
       this.config.signalKUrl = window.location.origin;
       console.log(`[AppInit Network Service] Connection Configuration not found. Creating configuration using Auto-Discovery URL: ${this.config.signalKUrl}`);
       localStorage.setItem('connectionConfig', JSON.stringify(this.config));

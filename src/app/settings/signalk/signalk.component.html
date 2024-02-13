@@ -10,6 +10,10 @@
       </mat-error>
     </mat-form-field>
     <br/>
+    <mat-checkbox [(ngModel)]="connectionConfig.proxyEnabled" [ngModelOptions]="{standalone: false}" name="isProxyEnabled">Signal K server is behind a Proxy</mat-checkbox>
+    <br/>
+    <br/>
+    <br/>
     <mat-slide-toggle name="useSharedConfigToggle" matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser." #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
       Signal K Authentication
     </mat-slide-toggle>
@@ -18,6 +22,7 @@
     <button mat-raised-button type="button" color="primary" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
       Set Credentials
     </button>
+    <br/>
     <div class="formActionFooter">
       <mat-divider class="formActionDivider"></mat-divider>
         <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">

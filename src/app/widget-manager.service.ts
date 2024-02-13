@@ -5,6 +5,7 @@
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
 import { IWidget } from './widgets-interface';
+import { UUID } from './uuid'
 
 @Injectable()
 export class WidgetManagerService {
@@ -17,19 +18,12 @@ export class WidgetManagerService {
     this.widgets = this.AppSettingsService.getWidgets();
   }
 
-  private newUuid() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-  }
-
   getWidget(uuid: string) {
       return this.widgets.find(w => w.uuid == uuid);
   }
 
   newWidget() {
-    const uuid = this.newUuid();
+    const uuid = UUID.create();
     this.widgets.push({ uuid: uuid, type: 'WidgetBlank', config: null });
     this.saveWidgets();
     return uuid;

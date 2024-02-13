@@ -7,6 +7,7 @@ export interface IConnectionConfig {
   configVersion: number;
   kipUUID: string;
   signalKUrl: string;
+  proxyEnabled: boolean;
   useDeviceToken: boolean;
   loginName: string;
   loginPassword: string;

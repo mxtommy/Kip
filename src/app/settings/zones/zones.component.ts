@@ -9,6 +9,7 @@ import { MatSort } from '@angular/material/sort';
 import { AppSettingsService } from '../../app-settings.service';
 import { IPathMetaData } from "../../app-interfaces";
 import { IZone } from "../../app-settings.interfaces";
+import { UUID } from './../../uuid';
 
 @Component({
   selector: 'settings-zones',
@@ -83,7 +84,7 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
         if (zone.uuid) {
           this.editZone(zone);
         } else {
-          zone.uuid = this.newUuid();
+          zone.uuid = UUID.create();
           this.addZone(zone);
         }
       }
@@ -117,17 +118,10 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
       this.appSettingsService.saveZones(zones);
     }
   }
-
-  private newUuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-    });
-  }
 }
 
 
-// Add zone compoment
+// Add zone component
 @Component({
   selector: 'dialog-new-zone',
   templateUrl: 'new-zone.modal.html',
@@ -179,7 +173,7 @@ export class DialogNewZone {
 }
 
 
-// Edit zone compoment
+// Edit zone component
 @Component({
   selector: 'dialog-edit-zone',
   templateUrl: 'edit-zone.modal.html',

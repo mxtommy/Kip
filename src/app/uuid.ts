@@ -1,6 +1,6 @@
 export class UUID {
   /**
-   * Generates a new UUID
+   * Generates a new UUID using UUID.create()
    *
    * @static
    * @return {*}  {string} UUID
