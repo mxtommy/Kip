@@ -114,7 +114,17 @@ export class SignalKConnectionService {
         console.debug("[Connection Service] host: " + window.location.host);
         console.debug("[Connection Service] path: " + skWsUrl.pathname);
 
-        this.serverServiceEndpoints.WsServiceUrl =  window.location.protocol == 'https:' ? 'wss:' : 'ws:' + "//" + window.location.host + skWsUrl.pathname;
+        let proto: string = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
+        console.debug("[Connection Service] selected Proto: " + proto);
+
+        proto += window.location.host;
+        console.debug("[Connection Service] selected Proto + host: " + proto);
+
+        proto += skWsUrl.pathname;
+        console.debug("[Connection Service] selected Proto + host + path: " + proto);
+
+        this.serverServiceEndpoints.WsServiceUrl = proto
+
         console.debug("[Connection Service] Proxy WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
       } else {
         this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
