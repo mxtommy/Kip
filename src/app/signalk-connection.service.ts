@@ -109,7 +109,7 @@ export class SignalKConnectionService {
         this.serverServiceEndpoints.httpServiceUrl =  window.location.origin + skHttpUrl.pathname;
         console.debug("[Connection Service] Proxy HTTP URI: " +this.serverServiceEndpoints.httpServiceUrl);
 
-        this.serverServiceEndpoints.WsServiceUrl =  window.location.protocol == 'https:' ? 'wss:' : 'ws:' + window.location.host + skWsUrl.pathname;
+        this.serverServiceEndpoints.WsServiceUrl =  window.location.protocol == 'https:' ? 'wss:' : 'ws:' + "//" + window.location.host + skWsUrl.pathname;
         console.debug("[Connection Service] Proxy WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
       } else {
         this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
