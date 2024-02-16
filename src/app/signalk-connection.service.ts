@@ -109,21 +109,10 @@ export class SignalKConnectionService {
         this.serverServiceEndpoints.httpServiceUrl =  window.location.origin + skHttpUrl.pathname;
         console.debug("[Connection Service] Proxy HTTP URI: " +this.serverServiceEndpoints.httpServiceUrl);
 
-
-        console.debug("[Connection Service] protocol: " + window.location.protocol);
-        console.debug("[Connection Service] host: " + window.location.host);
-        console.debug("[Connection Service] path: " + skWsUrl.pathname);
-
-        let proto: string = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
-        console.debug("[Connection Service] selected Proto: " + proto);
-
-        proto += window.location.host;
-        console.debug("[Connection Service] selected Proto + host: " + proto);
-
-        proto += skWsUrl.pathname;
-        console.debug("[Connection Service] selected Proto + host + path: " + proto);
-
-        this.serverServiceEndpoints.WsServiceUrl = proto
+        let uri: string = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
+        uri += window.location.host;
+        uri += skWsUrl.pathname;
+        this.serverServiceEndpoints.WsServiceUrl = uri;
 
         console.debug("[Connection Service] Proxy WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
       } else {
