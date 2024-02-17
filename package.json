@@ -67,7 +67,7 @@
     "@types/js-quantities": "^1.6.4",
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^20.8.6",
-    "angular-resize-event": "^3.2.0",
+    "angular-resize-event": "git+https://git@github.com/dereekb/angular-resize-event#ab642793288541c6093ef24f979c9815443cf565",
     "angular-split": "^14.1.0",
     "canvas-gauges": "^2.1.7",
     "chart.js": "^3.5.1",
