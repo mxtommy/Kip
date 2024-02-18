@@ -149,6 +149,11 @@ Once done with your work, from your fork's working branch, make a GitHub pull re
 **Communication and Collaboration**
 Join us on Slack -> Signalk-dev / Kip channel. We will hook up and assist as best we can.
 
+# Support
+KIP has it's own Discord Signal K channel to get in touch ![Join the KIP Channel](https://discord.gg/qJRCh59F)
+Join us on Discord -> Signalk-dev / Kip channel. We will hook up and assist as best we can.
+https://discord.gg/qJRCh59F
+
 # Feature Ideas
  * AIS Widget - Help Wanted
  * Light indicator Widget for Boolean paths
