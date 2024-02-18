@@ -8,6 +8,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 // Angular Material components
+import {MAT_FORM_FIELD_DEFAULT_OPTIONS} from '@angular/material/form-field';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -30,6 +31,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
+
 import { GaugesModule } from './gauges-module/gauges.module';
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizeEventModule } from 'angular-resize-event';
@@ -278,6 +280,15 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
         minHeight: '50%',
         autoFocus: 'first-tabbable'
       }
+    },
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: {
+        appearance: 'outline',
+        floatLabel: "always",
+        subscriptSizing: "dynamic"
+      }
+
     },
     AuthenticationService,
     SignalKService,

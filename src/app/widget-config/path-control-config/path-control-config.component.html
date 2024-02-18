@@ -3,14 +3,15 @@
     <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
   </div>
   <div class="flex-field-100">
-    <mat-form-field class="pathField" appearance="outline" floatLabel="always">
+    <mat-form-field class="pathField" appearance="outline" floatLabel="always" subscriptSizing="dynamic">
       <mat-label>Signal K Path</mat-label>
       <input type="text" matInput
         placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
         formControlName="path"
         required
-        [matAutocomplete]="pathAutoComplete">
-      <button style="top:-8px" mat-button *ngIf="pathFormGroup.value.path" matSuffix mat-icon-button aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
+        [matAutocomplete]="pathAutoComplete"
+        >
+      <button mat-icon-button matSuffix *ngIf="pathFormGroup.value.path" aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
         <span class="fa-solid fa-close"></span>
       </button>
       <mat-autocomplete #pathAutoComplete="matAutocomplete">
