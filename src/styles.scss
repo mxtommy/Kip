@@ -1,20 +1,11 @@
-// Custom Theming for Angular Material
 @use '@angular/material' as mat;
 // For more information: https://material.angular.io/guide/theming
 
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
-// **Be sure that you only ever include this mixin once!**
-// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
-//  The following line adds:
-//    1. Default typography styles for all components
-//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
-//  If you specify typography styles for the components you use elsewhere, you should delete this line.
-//  If you don't need the default component typographies but still want the hierarchy styles,
-//  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
-@include mat.all-legacy-component-typographies();
-@include mat.legacy-core();
+// ** Be sure that you only ever include this mixin once!**
+@include mat.all-component-typographies();
+@include mat.core();
 
 // custom foreground/background functions // takes rgba color
 @function custom-theme-light-foreground($color) {
@@ -123,7 +114,7 @@
 
 
 @mixin theme-components($theme) {
-  @include mat.all-legacy-component-themes($theme);
+  @include mat.all-component-themes($theme);
   @include app-theme($theme);
   @include dialog-panel-styles($theme);
   @include dynamic-widget-container-theme($theme);
