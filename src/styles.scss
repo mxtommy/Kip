@@ -1,9 +1,8 @@
 @use '@angular/material' as mat;
 // For more information: https://material.angular.io/guide/theming
+// For customizations see https://material.angular.io/guide/theming-your-components
 
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// ** Be sure that you only ever include this mixin once!**
+// Include the common all common Materiel styles.
 @include mat.all-component-typographies();
 @include mat.core();
 

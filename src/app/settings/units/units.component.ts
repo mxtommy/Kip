@@ -8,7 +8,7 @@ import { IUnitDefaults, UnitsService, IUnit } from '../../units.service';
 @Component({
   selector: 'settings-units',
   templateUrl: './units.component.html',
-  styleUrls: ['./units.component.css']
+  styleUrls: ['./units.component.scss']
 })
 export class SettingsUnitsComponent implements OnInit {
 

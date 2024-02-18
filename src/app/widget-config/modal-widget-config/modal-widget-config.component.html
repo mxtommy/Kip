@@ -4,6 +4,7 @@
     <mat-tab-group>
       <mat-tab label="Display">
         <div class="tab-content">
+
           <mat-form-field class="full-width" *ngIf="(widgetConfig.widgetUrl !== undefined)" appearance="outline" floatLabel="always">
             <mat-label>URL</mat-label>
             <input type="url" matInput placeholder="Enter URL to page/resource" name="widgetUrl" formControlName="widgetUrl">
@@ -53,6 +54,7 @@
               </mat-select>
             </mat-form-field>
           </div>
+
           <!-- sailgauge stuff -->
           <div class="flex-container">
             <div class="flex-checkbox-30" *ngIf="(widgetConfig.laylineEnable !== undefined)">
@@ -170,6 +172,8 @@
           <!-- end Gauge stuff-->
           </div>
       </mat-tab>
+
+
 <!-- Boolean Multi Child Control Config Panel -->
       <mat-tab label="Controls" *ngIf="(widgetConfig.multiChildCtrls !== undefined)">
         <div class="tab-content">
