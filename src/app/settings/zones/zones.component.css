@@ -9,6 +9,10 @@
   width: 100%;
 }
 
+.filter {
+  margin-bottom: 10px;
+}
+
 .buttons {
   margin-right: 5px;
 }

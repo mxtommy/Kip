@@ -2,7 +2,7 @@
   <form name="existingDataSet" #existingDataSet="ngForm">
     <h1>Datasets Configuration</h1>
     <p class="mat-card-subtitle">Create historical datasets to record data values over time and display them on charts with the Historical DataSet widget.</p>
-    <mat-form-field>
+    <mat-form-field class="filter">
       <mat-label>Filter</mat-label>
       <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>
     </mat-form-field>

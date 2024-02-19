@@ -3,7 +3,7 @@
     <p class="mat-card-subtitle">Use Zones to define the state of the data KIP receives for each path. For example,
     zones can be used to indicate at what voltage a battery considered in normal, warn or critical state.
     Once configured, each path's zone states will enable a visual state indicator and audio notification.</p>
-    <mat-form-field>
+    <mat-form-field class="filter">
       <mat-label>Filter</mat-label>
       <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>
     </mat-form-field>

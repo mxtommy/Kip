@@ -2,22 +2,21 @@
 <mat-dialog-content>
   <form name="datasetForm" (ngSubmit)="closeForm()" #datasetForm="ngForm">
     <mat-horizontal-stepper>
-      <mat-step label="Source Data">
+      <mat-step>
+        <ng-template matStepLabel>Source Data</ng-template>
         <div class="tab-content">
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+          <mat-form-field class="full-width">
             <mat-label>Signal K Path</mat-label>
             <mat-select
               placeholder="Select data path"
               [(ngModel)]="formDataset.path"
               name="selectedPath"
               (ngModelChange)="changePath()"
-              required
-            >
+              required>
               <mat-option
                 *ngFor="let path of (availablePaths | filterSelf: filterSelfPaths)"
-                [value]="path"
-              >
-                {{path}}
+                [value]="path">
+                  {{path}}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -25,7 +24,7 @@
             Restrict to own vessel
           </mat-checkbox>
           <br/><br/>
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+          <mat-form-field class="full-width">
             <mat-label>Source</mat-label>
             <mat-select
               placeholder="Select data source"
@@ -42,30 +41,33 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <button
-          type="button"
-          mat-raised-button
-          color="accent"
-          matStepperNext
-          [disabled]="!formDataset.path"
-        >
-          Next
-        </button>
+        <mat-divider></mat-divider>
+        <div class="buttons">
+          <button
+            type="button"
+            mat-raised-button
+            color="accent"
+            matStepperNext
+            [disabled]="!formDataset.path"
+          >
+            Next
+          </button>
+        </div>
       </mat-step>
-      <mat-step label="Data Points">
+      <mat-step>
+        <ng-template matStepLabel>Data Points</ng-template>
         <div class="tab-content">
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+          <mat-form-field class="full-width" style="margin-bottom: 10px;">
             <mat-label>Set data capture interval (sec)</mat-label>
             <input
+              type="number"
               matInput
               placeholder="Interval(seconds)"
-              type="number"
               name="interval"
               [(ngModel)]="formDataset.updateTimer"
-              required
-            />
+              required/>
           </mat-form-field>
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+          <mat-form-field class="full-width" style="margin-bottom: 10px;">
             <mat-label>Total most recent data points that makes the dataset</mat-label>
             <input
               matInput
@@ -76,6 +78,9 @@
               required
             />
           </mat-form-field>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="buttons">
           <button
             type="button"
             mat-raised-button

@@ -48,6 +48,7 @@
       </mat-form-field>
     </div>
   </mat-dialog-content>
+  <mat-divider></mat-divider>
   <mat-dialog-actions>
     <button mat-raised-button mat-dialog-close>Cancel</button>
     <button
@@ -55,7 +56,7 @@
       color="accent"
       type="submit"
       [disabled]="!zoneForm.valid">
-      Add
+        Add
     </button>
     <mat-error style="padding-left: 10px;" *ngIf="zoneForm.hasError('needUpperLower')">
       At least one value is required (lower / upper)
