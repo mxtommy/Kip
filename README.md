@@ -48,19 +48,19 @@ KIP is now installed and available on your home screen
 ### Night Mode
   Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
 
-  ![Night mode](./src/images/KipNightMode-1024x488.png)
+  ![Night mode](./imagesKipNightMode-1024x488.png)
 
 ### Built-in Themes
   Apply your favorite style from the built-in themes gallery.
 
   Modern Dark Theme
-  ![Modern Dark Theme](./src/images/KipSample-1-1024x488.png)
+  ![Modern Dark Theme](./imagesKipSample-1-1024x488.png)
 
   Signal K Inspired Theme
-  ![Signal K Inspired Theme](./src/images/KipSample-2-1024x488.png)
+  ![Signal K Inspired Theme](./imagesKipSample-2-1024x488.png)
 
   Light Blue Theme
-  ![Light Blue Theme](./src/images/KipSample-3-1024x488.png)
+  ![Light Blue Theme](./imagesKipSample-3-1024x488.png)
 
   NOTE: Request a new theme by sending us inspirational/reference material (web sites, picture, etc.).
   If we fall in love, we will do it. Even better, branch and contribute yourself. We will assist and guide!
@@ -70,16 +70,16 @@ KIP is now installed and available on your home screen
   Meant to build purposeful screen(s) with however many widgets you want, where you want them. 
 
   Quickly split pages into multiple areas, resize and aligne to your liking, add the widget of your choosing to each area. Need more? Add as many additional pages as you whish to keep your display purposeful. Simply swipe left and right or use the bottom page navigation button to quickly cycle from page to page.
-  ![Layouts Configuration Image](./src/images/KipWidgetConfig-layout-1024x488.png)
+  ![Layouts Configuration Image](./imagesKipWidgetConfig-layout-1024x488.png)
   
   Easy basic widget configuration.
-  ![Gauges Configuration Image](./src/images/KipConfig-display-1024x488.png) 
+  ![Gauges Configuration Image](./imagesKipConfig-display-1024x488.png) 
   
   See what Signal K has to offer that you can leverage with widgets. Select it and tweak the display options your your purpose.
-  ![Paths Configuration Image](./src/images/KipWidgetConfig-paths-1024x488.png)
+  ![Paths Configuration Image](./imagesKipWidgetConfig-paths-1024x488.png)
   
   Many units are supported. Choose your preferred App defaults, than tweak it widget-by-widget as necessary. KIP will automatically convert the units for you.
-  ![Units Configuration Image](./src/images/KipConfig-Units-1024x488.png) 
+  ![Units Configuration Image](./imagesKipConfig-Units-1024x488.png) 
 
 ### Reusable Widget Library
   All KIP Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
@@ -100,13 +100,13 @@ KIP is now installed and available on your home screen
   Get the latest version of KIP to see what's new!
 
   Widget Types Sample
-  ![Sample Gauges Image](./src/images/KipGaugeSample1-1024x545.png)
+  ![Sample Gauges Image](./imagesKipGaugeSample1-1024x545.png)
   
   Electrical and Tank Monitoring Sample 
-  ![Electrical Concept Image](./src/images/KipGaugeSample2-1024x488.png)
+  ![Electrical Concept Image](./imagesKipGaugeSample2-1024x488.png)
 
   Grafana Embedded Webpage sample 
-  ![Embedded Webpage Concept Image](./src/images/KipGaugeSample3-1024x508.png)
+  ![Embedded Webpage Concept Image](./imagesKipGaugeSample3-1024x508.png)
 
   ### Harness The Power Of Data State Notifications
   Stay informed with notifications about the state of the data you are interested in.
