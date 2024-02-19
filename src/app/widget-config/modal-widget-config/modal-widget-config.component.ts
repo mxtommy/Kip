@@ -190,6 +190,36 @@ export class ModalWidgetConfigComponent implements OnInit {
       const ctrlGrp = this.formMaster.get('paths.courseOverGround');
       this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
     }
+
+    if (this.formMaster.contains('windSectorEnable')) {
+      const checkCtrl = this.formMaster.get('windSectorEnable');
+      const valCtrl = this.formMaster.get('windSectorWindowSeconds');
+
+      checkCtrl.value ? valCtrl.enable() : valCtrl.disable();
+
+      checkCtrl.valueChanges.subscribe(v => {
+        if (v) {
+          valCtrl.enable();
+        } else {
+          valCtrl.disable();
+        }
+      });
+    }
+
+    if (this.formMaster.contains('laylineEnable')) {
+      const checkCtrl = this.formMaster.get('laylineEnable');
+      const valCtrl = this.formMaster.get('laylineAngle');
+
+      checkCtrl.value ? valCtrl.enable() : valCtrl.disable();
+
+      checkCtrl.valueChanges.subscribe(v => {
+        if (v) {
+          valCtrl.enable();
+        } else {
+          valCtrl.disable();
+        }
+      });
+    }
   }
 
   submitConfig() {
