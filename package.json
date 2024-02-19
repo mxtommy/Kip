@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "2.7.1-beta.2",
+  "version": "2.7.1-beta.3",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.2.0",
     "@angular/animations": "17.2.1",
-    "@angular/cdk": "^16.2.14",
+    "@angular/cdk": "^17.2.0",
     "@angular/cli": "^17.2.0",
     "@angular/common": "17.2.1",
     "@angular/compiler": "17.2.1",
@@ -55,7 +55,7 @@
     "@angular/core": "17.2.1",
     "@angular/forms": "17.2.1",
     "@angular/language-service": "17.2.1",
-    "@angular/material": "^16.2.14",
+    "@angular/material": "^17.2.0",
     "@angular/platform-browser": "17.2.1",
     "@angular/platform-browser-dynamic": "17.2.1",
     "@angular/router": "17.2.1",
