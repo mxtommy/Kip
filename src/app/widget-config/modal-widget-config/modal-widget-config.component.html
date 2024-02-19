@@ -313,23 +313,26 @@
 
 <!-- Historical stuff -->
       <mat-tab label="Dataset" *ngIf="(widgetConfig.dataSetUUID !== undefined)">
-          <ng-template mat-tab-label>
-              <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> Dataset
-          </ng-template>
-          <div class="tab-content">
-            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+        <ng-template mat-tab-label>
+            <span *ngIf="!formMaster.controls.dataSetUUID.valid" class="warning fa fa-exclamation-circle"></span> Dataset
+        </ng-template>
+        <div class="tab-content">
+          <div class="widget-options-grid">
+
+            <mat-form-field class="options-grid-span2">
               <mat-label>Configured Datasets</mat-label>
               <mat-select
-                  placeholder="Select dataset to use..."
-                  formControlName="dataSetUUID"
-                  name="dataSetUUID"
-                  required>
-                  <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
-                      {{ds.name}}
-                  </mat-option>
-                </mat-select>
+                placeholder="Select dataset to use..."
+                formControlName="dataSetUUID"
+                name="dataSetUUID"
+                required>
+                <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
+                    {{ds.name}}
+                </mat-option>
+              </mat-select>
             </mat-form-field>
-            <mat-form-field class="unitField" appearance="outline" floatLabel="always">
+
+            <mat-form-field class="options-grid-span2">
               <mat-label>Display Format</mat-label>
               <mat-select
                   placeholder="Select unit"
@@ -343,35 +346,32 @@
                   </mat-optgroup>
               </mat-select>
             </mat-form-field>
-            <p>
-                <mat-checkbox
-                  formControlName="verticalGraph"
-                  name="verticalGraph">
-                    Show vertical graph
-                </mat-checkbox>
-            </p>
-            <p>
-                <mat-checkbox
-                  formControlName="invertData"
-                  name="invertData">
-                    Invert Data (multiply by -1)
-                </mat-checkbox>
-            </p>
-            <p>
-                <mat-checkbox
-                  formControlName="displayMinMax"
-                  name="displayMinMax">
-                    Display Min/Max value
-                </mat-checkbox>
-            </p>
-            <p>
-                <mat-checkbox
-                  formControlName="includeZero"
-                  name="includeZero">
-                    Y axis always start from zero
-                </mat-checkbox>
-            </p>
+
+            <mat-checkbox
+              formControlName="verticalGraph"
+              name="verticalGraph">
+                Show vertical graph
+            </mat-checkbox>
+
+            <mat-checkbox
+              formControlName="invertData"
+              name="invertData">
+                Invert Data (multiply by -1)
+            </mat-checkbox>
+
+            <mat-checkbox
+              formControlName="displayMinMax"
+              name="displayMinMax">
+                Display Min/Max value
+            </mat-checkbox>
+
+            <mat-checkbox
+              formControlName="includeZero"
+              name="includeZero">
+                Y axis always start from zero
+            </mat-checkbox>
           </div>
+        </div>
       </mat-tab>
 <!-- end Historical -->
 
