@@ -14,8 +14,15 @@
     <br/>
     <br/>
     <br/>
-    <mat-slide-toggle name="useSharedConfigToggle" matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser." #useSharedConfigToggle [(ngModel)]="connectionConfig.useSharedConfig" [ngModelOptions]="{standalone: true}" [disabled]="!connectionConfig.signalKUrl" (change)="useSharedConfigToggleClick($event)">
-      Signal K Authentication
+    <mat-slide-toggle #useSharedConfigToggle
+      name="useSharedConfigToggle"
+      matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
+      [(ngModel)]="connectionConfig.useSharedConfig"
+      [ngModelOptions]="{standalone: true}"
+      [disabled]="!connectionConfig.signalKUrl"
+      (change)="useSharedConfigToggleClick($event)"
+      color="primary">
+        Signal K Authentication
     </mat-slide-toggle>
     <br/>
     <br/>

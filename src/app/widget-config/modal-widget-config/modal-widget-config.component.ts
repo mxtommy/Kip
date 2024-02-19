@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormGroup, AbstractControl }    from '@angular/forms';
-import { MatLegacyDialogRef as MatDialogRef, MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 
 import { IUnitGroup } from '../../units.service';
 import { SignalKService } from '../../signalk.service';
@@ -189,6 +189,36 @@ export class ModalWidgetConfigComponent implements OnInit {
     if (this.formMaster.contains('courseOverGroundEnable')) {
       const ctrlGrp = this.formMaster.get('paths.courseOverGround');
       this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
+    }
+
+    if (this.formMaster.contains('windSectorEnable')) {
+      const checkCtrl = this.formMaster.get('windSectorEnable');
+      const valCtrl = this.formMaster.get('windSectorWindowSeconds');
+
+      checkCtrl.value ? valCtrl.enable() : valCtrl.disable();
+
+      checkCtrl.valueChanges.subscribe(v => {
+        if (v) {
+          valCtrl.enable();
+        } else {
+          valCtrl.disable();
+        }
+      });
+    }
+
+    if (this.formMaster.contains('laylineEnable')) {
+      const checkCtrl = this.formMaster.get('laylineEnable');
+      const valCtrl = this.formMaster.get('laylineAngle');
+
+      checkCtrl.value ? valCtrl.enable() : valCtrl.disable();
+
+      checkCtrl.valueChanges.subscribe(v => {
+        if (v) {
+          valCtrl.enable();
+        } else {
+          valCtrl.disable();
+        }
+      });
     }
   }
 

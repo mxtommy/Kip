@@ -2,7 +2,7 @@ import { AuthenticationService } from './authentication.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './layout-splits.service';
 import screenfull from 'screenfull';

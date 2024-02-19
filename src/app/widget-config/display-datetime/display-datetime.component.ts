@@ -397,6 +397,6 @@ export class DisplayDatetimeComponent implements OnInit {
 
   private filterTZ( value: string ): string[] {
     const filterValue = value.toLowerCase();
-    return this.tz.filter(val => val.toLowerCase().includes(filterValue)).slice(0,50);
+    return this.tz.filter(val => val.toLowerCase().includes(filterValue));
   }
 }

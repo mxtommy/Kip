@@ -42,6 +42,6 @@
   background: rgba(255, 255, 255, 0.04); // mat-list hover bug fixed in recent versions.
 }
 
-::ng-deep.mat-menu-panel {
+::ng-deep.mat-mdc-menu-panel {
   max-width:fit-content !important;
 }

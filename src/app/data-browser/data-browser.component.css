@@ -14,7 +14,7 @@
   flex: 0 0 50%;
   width: 50%;
 }
-.mat-table {
+.mat-mdc-table {
   overflow: auto;
 }
 
@@ -80,12 +80,12 @@
     margin-left: 24px;
   }
 
-  .mat-table .mat-row {
+  .mat-mdc-table .mat-mdc-row {
     flex-direction: row;
     flex-wrap: wrap;
   }
 
-  .mat-table .mat-cell:before {
+  .mat-mdc-table .mat-mdc-cell:before {
     content: attr(data-label);
     float: left;
     padding-right: 5px;

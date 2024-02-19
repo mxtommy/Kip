@@ -34,6 +34,14 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
     } else {
       this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName) as UntypedFormGroup;
     }
+    this.enableTimeout.value ? this.dataTimeout.enable() : this.dataTimeout.disable();
+    this.enableTimeout.valueChanges.subscribe(v => {
+      if (v) {
+        this.dataTimeout.enable();
+      } else {
+        this.dataTimeout.disable();
+      }
+    });
   }
 
   public addPath(newPath: IWidgetPath): void {

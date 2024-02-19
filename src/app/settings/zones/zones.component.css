@@ -9,6 +9,10 @@
   width: 100%;
 }
 
+.filter {
+  margin-bottom: 10px;
+}
+
 .buttons {
   margin-right: 5px;
 }
@@ -53,7 +57,7 @@
     display: none;
   }
 
-  .mat-table .mat-cell:before {
+  .mat-mdc-table .mat-mdc-cell:before {
     content: attr(data-label);
     float: left;
     padding-right: 5px;

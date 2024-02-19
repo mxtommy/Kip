@@ -10,4 +10,9 @@
   align-items: stretch;
   align-content: flex-start;
   gap: 10px 10px;
+  margin-top: 10px;
+}
+
+.zone-value-field {
+  flex-grow: 1;
 }

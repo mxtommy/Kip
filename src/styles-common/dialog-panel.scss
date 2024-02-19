@@ -5,7 +5,9 @@
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
 
-  .mat-dialog-panel mat-dialog-container { // used in app.modules.ts provider as global Dialog config
+  // Custom mat-dialog style class defined in app.modules.ts MAT_DIALOG_DEFAULT_OPTIONS
+  // provider as global Dialog settings
+  .mat-dialog-panel mat-dialog-container {
     background-color: mat.get-color-from-palette($background, background);
   }
 
@@ -17,6 +19,8 @@
   }
 }
 
-.mat-dialog-backdrop { // used in app.modules.ts provider as global Dialog config
+// Custom mat-dialog style class defined in app.modules.ts MAT_DIALOG_DEFAULT_OPTIONS
+// provider as global Dialog settings
+.mat-dialog-backdrop {
   background-color:rgba(0, 0, 0, 0.6);
 }

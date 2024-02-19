@@ -53,19 +53,18 @@
   flex-basis: 100%;
 }
 
-.mat-radio-button ~ .mat-radio-button {
+.mat-mdc-radio-button ~ .mat-radio-button {
   margin-left: 16px;
 }
 
-.minField {
-  display: inline-block;
-  width: calc(50% - 15px);
-  padding-right: 30px;
+.widget-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.maxField {
-  display: inline-block;
-  width: calc(50% - 15px);
+.options-grid-span2 {
+  grid-column: 1 / span 2;
 }
 
 .radio-group {

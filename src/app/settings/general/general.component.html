@@ -7,7 +7,12 @@
     <p class="mat-card-subtitle">Notifications are a special type of data sent from Signal K and displayed in the
       notification menu. They are meant to alert or inform operators. Set server
       notification preferences such as types of messages to display and audio prompts.</p>
-    <mat-slide-toggle name="disableNotifications" [(ngModel)]="notificationConfig.disableNotifications" [ngModelOptions]="{standalone: true}">Disable All Notifications</mat-slide-toggle>
+    <mat-slide-toggle
+      name="disableNotifications"
+      [(ngModel)]="notificationConfig.disableNotifications"
+      [ngModelOptions]="{standalone: true}"
+      color="primary">
+        Disable All Notifications</mat-slide-toggle>
     <mat-accordion>
       <mat-expansion-panel expanded="true">
         <mat-expansion-panel-header>

@@ -59,7 +59,7 @@
     height: 100%;
 }
 
-.mat-card {
+.mat-mdc-card {
   display: block;
   position: absolute !important;
   width: calc(100% - 4px);
@@ -81,10 +81,6 @@
   bottom: 5%;
   left: 50%;
   transform: translate(-50%);
-}
-
-.mat-select-trigger {
-    min-width: 30px !important;
 }
 
 .full-width {
