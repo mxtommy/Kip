@@ -2,7 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Subscription, BehaviorSubject, sampleTime, pipe, UnaryFunction, filter, OperatorFunction, Observable, interval } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService } from './signalk.service';
-import { UUID } from'./uuid'
+import { UUID } from'../../utils/uuid'
 
 
 export interface dataPoint {

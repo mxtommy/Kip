@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
-import { ISignalKDeltaMessage } from './signalk-interfaces';
+import { ISignalKDeltaMessage } from '../interfaces/signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
 import { AuthenticationService } from './authentication.service';
-import { UUID } from './uuid'
+import { UUID } from '../../utils/uuid'
 
 const deltaStatusCodes = {
   200: "The request was successfully.",

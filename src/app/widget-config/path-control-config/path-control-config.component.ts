@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
-import { SignalKService } from '../../signalk.service';
-import { IPathMetaData } from "../../app-interfaces";
-import { IUnitGroup } from '../../units.service';
+import { SignalKService } from '../../core/services/signalk.service';
+import { IPathMetaData } from "../../core/interfaces/app-interfaces";
+import { IUnitGroup } from '../../core/services/units.service';
 import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { Observable, Subscription } from 'rxjs'

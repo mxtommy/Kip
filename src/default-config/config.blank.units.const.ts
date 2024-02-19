@@ -1,4 +1,4 @@
-import { IUnitDefaults } from './units.service';
+import { IUnitDefaults } from '../app/core/services/units.service';
 
 
 export const DefaultUnitsConfig: IUnitDefaults = {

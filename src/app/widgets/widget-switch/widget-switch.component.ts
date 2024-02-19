@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { SignalkRequestsService } from './../../signalk-requests.service';
+import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 
 @Component({
   selector: 'app-widget-switch',

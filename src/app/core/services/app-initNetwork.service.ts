@@ -10,10 +10,10 @@ import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { IConnectionConfig } from "./app-settings.interfaces";
+import { IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
-import { DefaultConnectionConfig } from './config.blank.const';
+import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 

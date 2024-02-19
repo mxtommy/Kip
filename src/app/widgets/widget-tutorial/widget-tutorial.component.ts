@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { IWidgetSvcConfig } from '../../widgets-interface';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({

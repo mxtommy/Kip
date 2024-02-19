@@ -4,15 +4,15 @@ import { cloneDeep } from "lodash-es";
 
 import { IDataSet } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
-import { IWidget } from './widgets-interface';
+import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
-import { UUID } from './uuid';
+import { UUID } from '../../utils/uuid';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "./app-settings.interfaces";
-import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from './config.blank.const';
-import { DefaultUnitsConfig } from './config.blank.units.const'
-import { DefaultNotificationConfig } from './config.blank.notification.const';
-import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from './config.demo.const';
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "../interfaces/app-settings.interfaces";
+import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from '../../../default-config/config.blank.const';
+import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
+import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
+import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from '../../../default-config/config.demo.const';
 
 import { StorageService } from './storage.service';
 import { IAuthorizationToken } from './authentication.service';

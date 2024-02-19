@@ -1,6 +1,6 @@
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { Injectable } from '@angular/core';
-import { IConfig } from "./app-settings.interfaces";
+import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';

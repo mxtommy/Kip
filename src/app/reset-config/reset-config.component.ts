@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService } from '../core/services/app-settings.service';
 
 
 

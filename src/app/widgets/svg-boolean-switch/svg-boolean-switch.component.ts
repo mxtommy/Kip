@@ -1,5 +1,5 @@
 import { Component, DoCheck, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IDynamicControl, ITheme } from '../../widgets-interface';
+import { IDynamicControl, ITheme } from '../../core/interfaces/widgets-interface';
 
 interface IDimensions {
   height: number,

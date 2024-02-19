@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, FormControl, Validators, NgForm }    from '@angular/forms';
 
-import { AuthenticationService, IAuthorizationToken } from '../../authentication.service';
-import { AppSettingsService } from '../../app-settings.service';
-import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../app-settings.interfaces';
-import { NotificationsService } from '../../notifications.service';
-import { StorageService } from '../../storage.service';
+import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../core/interfaces/app-settings.interfaces';
+import { NotificationsService } from '../../core/services/notifications.service';
+import { StorageService } from '../../core/services/storage.service';
 import { cloneDeep, forEach } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 

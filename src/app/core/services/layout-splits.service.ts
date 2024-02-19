@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 
 import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
-import { UUID } from './uuid'
+import { UUID } from '../../utils/uuid'
 
 
 interface ISplitArea {

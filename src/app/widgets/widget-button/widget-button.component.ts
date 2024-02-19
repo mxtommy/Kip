@@ -1,8 +1,8 @@
 import { Component, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { SignalkRequestsService } from '../../signalk-requests.service';
-import { NotificationsService } from '../../notifications.service';
+import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { NotificationsService } from '../../core/services/notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 

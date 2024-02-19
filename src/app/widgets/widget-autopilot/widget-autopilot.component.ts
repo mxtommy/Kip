@@ -2,8 +2,8 @@ import { ViewChild, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton } from '@angular/material/button';
 
-import { SignalkRequestsService, skRequest } from '../../signalk-requests.service';
-import { WidgetManagerService} from '../../widget-manager.service';
+import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
+import { WidgetManagerService} from '../../core/services/widget-manager.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 const defaultPpreferedDisplayMode = {

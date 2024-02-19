@@ -1,6 +1,6 @@
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { NotificationsService } from './notifications.service';
-import { IConnectionConfig } from './app-settings.interfaces';
+import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { Injectable } from '@angular/core';
 import { SignalKService } from './signalk.service';

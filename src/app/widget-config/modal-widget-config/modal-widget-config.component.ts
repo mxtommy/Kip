@@ -2,10 +2,10 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormGroup, AbstractControl }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 
-import { IUnitGroup } from '../../units.service';
-import { SignalKService } from '../../signalk.service';
-import { DataSetService, IDataSet } from '../../data-set.service';
-import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../widgets-interface';
+import { IUnitGroup } from '../../core/services/units.service';
+import { SignalKService } from '../../core/services/signalk.service';
+import { DataSetService, IDataSet } from '../../core/services/data-set.service';
+import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IAddNewPath } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 

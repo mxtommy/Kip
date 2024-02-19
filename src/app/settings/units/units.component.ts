@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl }    from '@angular/forms';
-import { AppSettingsService } from '../../app-settings.service';
-import { NotificationsService } from '../../notifications.service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { NotificationsService } from '../../core/services/notifications.service';
 
-import { IUnitDefaults, UnitsService, IUnit } from '../../units.service';
+import { IUnitDefaults, UnitsService, IUnit } from '../../core/services/units.service';
 
 @Component({
   selector: 'settings-units',

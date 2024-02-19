@@ -2,11 +2,11 @@ import { ViewChild, ElementRef, Component, OnInit, OnDestroy, OnChanges, SimpleC
 import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
-import { IZone, IZoneState } from '../../app-settings.interfaces';
-import { IDataHighlight } from '../../widgets-interface';
+import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
+import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 
 import { RadialGauge, RadialGaugeOptions } from '../../gauges-module/radial-gauge';
-import { AppSettingsService } from './../../app-settings.service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({

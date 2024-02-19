@@ -8,12 +8,12 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { UntypedFormControl } from '@angular/forms';
 import { cloneDeep } from "lodash-es";
 
-import { DynamicWidgetDirective } from '../dynamic-widget.directive';
-import { DynamicWidget, IWidget, ITheme } from '../widgets-interface';
+import { DynamicWidgetDirective } from '../core/directives/dynamic-widget.directive';
+import { DynamicWidget, IWidget, ITheme } from '../core/interfaces/widgets-interface';
 import { ModalWidgetConfigComponent } from '../widget-config/modal-widget-config/modal-widget-config.component';
-import { AppSettingsService } from '../app-settings.service';
-import { WidgetManagerService } from '../widget-manager.service';
-import { WidgetListService, widgetList } from '../widget-list.service';
+import { AppSettingsService } from '../core/services/app-settings.service';
+import { WidgetManagerService } from '../core/services/widget-manager.service';
+import { WidgetListService, widgetList } from '../core/services/widget-list.service';
 
 
 @Component({

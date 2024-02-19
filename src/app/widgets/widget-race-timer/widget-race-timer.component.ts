@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/cor
 import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
-import { TimersService } from '../../timers.service';
-import { IZoneState } from "../../app-settings.interfaces";
+import { TimersService } from '../../core/services/timers.service';
+import { IZoneState } from "../../core/interfaces/app-settings.interfaces";
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({

@@ -1,7 +1,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http'
-import { AuthenticationService, IAuthorizationToken } from './authentication.service';
+import { AuthenticationService, IAuthorizationToken } from '../services/authentication.service';
 
 @Injectable()
 export class AuthenticationInterceptor implements HttpInterceptor {
