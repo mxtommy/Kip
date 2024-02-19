@@ -2,10 +2,10 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
-import { SignalkRequestsService } from '../../signalk-requests.service';
-import { NotificationsService } from '../../notifications.service';
+import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { NotificationsService } from '../../core/services/notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { IDynamicControl, IWidgetPath } from '../../widgets-interface';
+import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 
 
 @Component({

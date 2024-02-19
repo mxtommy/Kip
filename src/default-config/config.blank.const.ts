@@ -1,7 +1,7 @@
-import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, IZonesConfig } from "./app-settings.interfaces"
+import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, IZonesConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DefaultUnitsConfig } from "./config.blank.units.const";
-import { UUID } from "./uuid";
+import { UUID } from "../app/utils/uuid";
 
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 9,

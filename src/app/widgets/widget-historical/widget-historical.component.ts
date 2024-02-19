@@ -7,7 +7,7 @@ import 'chartjs-adapter-date-fns';
 Chart.register();
 
 
-import { DataSetService } from '../../data-set.service';
+import { DataSetService } from '../../core/services/data-set.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 interface IDataSetOptions {

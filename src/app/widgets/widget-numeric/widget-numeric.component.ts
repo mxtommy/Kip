@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 
-import { IZoneState } from "../../app-settings.interfaces";
+import { IZoneState } from "../../core/interfaces/app-settings.interfaces";
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({

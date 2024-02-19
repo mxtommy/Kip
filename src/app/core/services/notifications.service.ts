@@ -5,10 +5,10 @@ import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
-import { INotificationConfig } from './app-settings.interfaces';
-import { DefaultNotificationConfig } from './config.blank.notification.const';
+import { INotificationConfig } from '../interfaces/app-settings.interfaces';
+import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { SignalKDeltaService, INotificationDelta, IStreamStatus } from './signalk-delta.service';
-import { INotification } from "./app-interfaces";
+import { INotification } from "../interfaces/app-interfaces";
 import { Howl } from 'howler';
 
 const alarmTrack = {

@@ -1,8 +1,8 @@
 import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { SignalKService } from '../signalk.service';
-import { UnitsService } from '../units.service';
+import { SignalKService } from '../core/services/signalk.service';
+import { UnitsService } from '../core/services/units.service';
 
 
 @Component({

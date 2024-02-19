@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
-import { IDynamicControl, IWidgetPath } from '../../widgets-interface';
-import { UUID } from '../../uuid';
+import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
+import { UUID } from '../../utils/uuid';
 
 
 @Component({

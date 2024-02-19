@@ -1,17 +1,17 @@
-import { AuthenticationService } from './authentication.service';
+import { AuthenticationService } from './core/services/authentication.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
-import { LayoutSplitsService } from './layout-splits.service';
+import { LayoutSplitsService } from './core/services/layout-splits.service';
 import screenfull from 'screenfull';
 
-import { AppSettingsService } from './app-settings.service';
-import { DataSetService } from './data-set.service';
-import { NotificationsService } from './notifications.service';
-import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
-import { AppService } from './app.service';
+import { AppSettingsService } from './core/services/app-settings.service';
+import { DataSetService } from './core/services/data-set.service';
+import { NotificationsService } from './core/services/notifications.service';
+import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
+import { AppService } from './core/services/app-service';
 import { HAMMER_GESTURE_CONFIG } from '@angular/platform-browser';
 
 declare var NoSleep: any; //3rd party

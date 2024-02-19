@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { IWidgetPath } from '../../widgets-interface';
+import { IWidgetPath } from '../../core/interfaces/widgets-interface';
 
 export interface IAddNewPath {
   groupName: string,

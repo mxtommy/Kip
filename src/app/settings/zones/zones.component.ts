@@ -6,10 +6,10 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
-import { AppSettingsService } from '../../app-settings.service';
-import { IPathMetaData } from "../../app-interfaces";
-import { IZone } from "../../app-settings.interfaces";
-import { UUID } from './../../uuid';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { IPathMetaData } from "../../core/interfaces/app-interfaces";
+import { IZone } from "../../core/interfaces/app-settings.interfaces";
+import { UUID } from '../../utils/uuid';
 
 @Component({
   selector: 'settings-zones',

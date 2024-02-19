@@ -1,8 +1,8 @@
 import { cloneDeep } from 'lodash-es';
 import { Injectable } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription } from 'rxjs';
-import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "./app-interfaces";
-import { IZone, IZoneState } from './app-settings.interfaces';
+import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "../interfaces/app-interfaces";
+import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';

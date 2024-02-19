@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
-import { AppSettingsService } from '../app-settings.service';
-import { LayoutSplitsService } from '../layout-splits.service';
+import { AppSettingsService } from '../core/services/app-settings.service';
+import { LayoutSplitsService } from '../core/services/layout-splits.service';
 
 
 @Component({

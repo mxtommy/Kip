@@ -1,7 +1,7 @@
-import { IDataSet } from './data-set.service';
-import { ISplitSet } from './layout-splits.service';
+import { IDataSet } from '../services/data-set.service';
+import { ISplitSet } from '../services/layout-splits.service';
 import { IWidget } from './widgets-interface';
-import { IUnitDefaults } from './units.service';
+import { IUnitDefaults } from '../services/units.service';
 
 export interface IConnectionConfig {
   configVersion: number;

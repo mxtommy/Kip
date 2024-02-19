@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ISplitSet, LayoutSplitsService } from '../layout-splits.service';
+import { ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.service';
 
 @Component({
   selector: 'layout-split',

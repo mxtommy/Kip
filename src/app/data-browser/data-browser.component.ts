@@ -4,8 +4,8 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
-import { SignalKService } from '../signalk.service';
-import { IPathData } from "../app-interfaces";
+import { SignalKService } from '../core/services/signalk.service';
+import { IPathData } from "../core/interfaces/app-interfaces";
 
 
 @Component({

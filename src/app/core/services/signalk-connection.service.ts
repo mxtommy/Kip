@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { ISignalKUrl } from './app-settings.interfaces';
+import { ISignalKUrl } from '../interfaces/app-settings.interfaces';
 
 interface ISignalKEndpointResponse {
     endpoints: {

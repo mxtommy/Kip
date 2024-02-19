@@ -1,5 +1,5 @@
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig, IZonesConfig } from "./app-settings.interfaces"
-import { UUID } from "./uuid"
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig, IZonesConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { UUID } from "../app/utils/uuid"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {

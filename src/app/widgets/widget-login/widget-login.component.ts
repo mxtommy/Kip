@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { AuthenticationService } from "../../authentication.service";
-import { AppSettingsService } from '../../app-settings.service';
-import { NotificationsService } from '../../notifications.service';
+import { AuthenticationService } from "../../core/services/authentication.service";
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { NotificationsService } from '../../core/services/notifications.service';
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
-import { IConnectionConfig } from "../../app-settings.interfaces";
+import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { HttpErrorResponse } from '@angular/common/http';
 
 

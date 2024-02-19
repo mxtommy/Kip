@@ -4,8 +4,8 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 
-import { SignalKService } from '../../signalk.service';
-import { DataSetService, IDataSet } from '../../data-set.service';
+import { SignalKService } from '../../core/services/signalk.service';
+import { DataSetService, IDataSet } from '../../core/services/data-set.service';
 
 interface settingsForm {
   selectedPath: string;

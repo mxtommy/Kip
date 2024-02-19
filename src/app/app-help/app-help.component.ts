@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { AppSettingsService } from '../app-settings.service';
+import { AppSettingsService } from '../core/services/app-settings.service';
 
 
 

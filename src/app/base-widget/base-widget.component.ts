@@ -1,8 +1,8 @@
 import { Component, Input, inject } from '@angular/core';
 import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, delayWhen, filter, map, pipe, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
-import { SignalKService, pathRegistrationValue } from '../signalk.service';
-import { UnitsService } from '../units.service';
-import { ITheme, IWidget, IWidgetSvcConfig } from '../widgets-interface';
+import { SignalKService, pathRegistrationValue } from '../core/services/signalk.service';
+import { UnitsService } from '../core/services/units.service';
+import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
 import { cloneDeep, merge } from 'lodash-es';
 
 

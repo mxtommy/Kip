@@ -4,8 +4,8 @@
  */
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
-import { IWidget } from './widgets-interface';
-import { UUID } from './uuid'
+import { IWidget } from '../interfaces/widgets-interface';
+import { UUID } from '../../utils/uuid'
 
 @Injectable()
 export class WidgetManagerService {

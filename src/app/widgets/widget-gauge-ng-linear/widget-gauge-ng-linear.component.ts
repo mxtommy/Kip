@@ -2,11 +2,11 @@ import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, SimpleC
 import { Subscription } from 'rxjs';
 import { ResizedEvent } from 'angular-resize-event';
 
-import { IZone, IZoneState } from '../../app-settings.interfaces';
-import { IDataHighlight } from '../../widgets-interface';
+import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
+import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGauge, LinearGaugeOptions } from '../../gauges-module/linear-gauge';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { AppSettingsService } from './../../app-settings.service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-widget-gauge-ng-linear',

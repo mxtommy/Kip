@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { INotificationConfig } from '../../app-settings.interfaces';
-import { AppService } from '../../app.service';
-import { AppSettingsService } from '../../app-settings.service';
-import { NotificationsService } from '../../notifications.service';
+import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
+import { AppService } from '../../core/services/app-service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { NotificationsService } from '../../core/services/notifications.service';
 
 
 @Component({
