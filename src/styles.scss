@@ -1,101 +1,105 @@
 @use '@angular/material' as mat;
+@use 'sass:map';
 // For more information: https://material.angular.io/guide/theming
 // For customizations see https://material.angular.io/guide/theming-your-components
 
-// Include the common all common Materiel styles.
-@include mat.all-component-typographies();
-@include mat.core();
-
 // custom foreground/background functions // takes rgba color
 @function custom-theme-light-foreground($color) {
-    @return (
-        base:              $color,
-        divider:           rgba(black, 0.12),
-        dividers:          rgba(black, 0.12),
-        disabled:          rgba($color, 0.38),
-        disabled-button:   rgba($color, 0.38),
-        disabled-text:     rgba($color, 0.38),
-        hint-text:         rgba($color, 0.38),
-        secondary-text:    rgba($color, 0.54),
-        icon:              rgba($color, 0.54),
-        icons:             rgba($color, 0.54),
-        text:              rgba($color, 0.87),
-        slider-min:        rgba($color, 0.87),
-        slider-off:        rgba($color, 0.26),
-        slider-off-active: rgba($color, 0.38),
-    );
-};
-@function custom-theme-dark-foreground($color) {
-    @return (
-        base:              $color,
-        divider:           rgba(white, 0.12),
-        dividers:          rgba(white, 0.12),
-        disabled:          rgba($color, 0.3),
-        disabled-button:   rgba($color, 0.3),
-        disabled-text:     rgba($color, 0.3),
-        hint-text:         rgba($color, 0.3),
-        secondary-text:    rgba($color, 0.7),
-        icon:              $color,
-        icons:             $color,
-        text:              $color,
-        slider-min:        $color,
-        slider-off:        rgba($color, 0.3),
-        slider-off-active: rgba($color, 0.3),
-    );
+  @return (
+      base:              $color,
+      divider:           rgba(black, 0.12),
+      dividers:          rgba(black, 0.12),
+      disabled:          rgba($color, 0.38),
+      disabled-button:   rgba($color, 0.38),
+      disabled-text:     rgba($color, 0.38),
+      hint-text:         rgba($color, 0.38),
+      secondary-text:    rgba($color, 0.54),
+      icon:              rgba($color, 0.54),
+      icons:             rgba($color, 0.54),
+      text:              rgba($color, 0.87),
+      slider-min:        rgba($color, 0.87),
+      slider-off:        rgba($color, 0.26),
+      slider-off-active: rgba($color, 0.38),
+  );
 };
 
-// Custom Background functions. takes full pallet
+@function custom-theme-dark-foreground($color) {
+  @return (
+      base:              $color,
+      divider:           rgba(white, 0.12),
+      dividers:          rgba(white, 0.12),
+      disabled:          rgba($color, 0.3),
+      disabled-button:   rgba($color, 0.3),
+      disabled-text:     rgba($color, 0.3),
+      hint-text:         rgba($color, 0.3),
+      secondary-text:    rgba($color, 0.7),
+      icon:              $color,
+      icons:             $color,
+      text:              $color,
+      slider-min:        $color,
+      slider-off:        rgba($color, 0.3),
+      slider-off-active: rgba($color, 0.3),
+  );
+};
+
+// Custom Background functions.
 @function custom-theme-light-background($pallet, $bgcolor: 900) {
-    @return (
-      status-bar: map_get($pallet, 300),
-      app-bar:    map_get($pallet, 100),
-      background: map_get($pallet, $bgcolor),
-      hover:      rgba(black, 0.04),
-      card:       map_get($pallet, 200),
-      dialog:     map_get($pallet, 200),
-      disabled-button: rgba(black, 0.12),
-      raised-button: map_get($pallet, 200),
-      focused-button: rgba(black, 0.06),
-      selected-button: map_get($pallet, 300),
-      selected-disabled-button: map_get($pallet, 400),
-      disabled-button-toggle: map_get($pallet, 200),
-      unselected-chip: map_get($pallet, 300),
-      disabled-list-option: map_get($pallet, 200),
-    );
+  @return (
+    status-bar: map_get($pallet, 300),
+    app-bar:    map_get($pallet, 100),
+    background: map_get($pallet, $bgcolor),
+    hover:      rgba(black, 0.04),
+    card:       map_get($pallet, 200),
+    dialog:     map_get($pallet, 200),
+    disabled-button: rgba(black, 0.12),
+    raised-button: map_get($pallet, 200),
+    focused-button: rgba(black, 0.06),
+    selected-button: map_get($pallet, 300),
+    selected-disabled-button: map_get($pallet, 400),
+    disabled-button-toggle: map_get($pallet, 200),
+    unselected-chip: map_get($pallet, 300),
+    disabled-list-option: map_get($pallet, 200),
+  );
 };
 
 @function custom-theme-dark-background($pallet, $bgcolor: 900) {
-    @return (
-      status-bar: black,
-      app-bar:    map_get($pallet, 800),
-      background: map_get($pallet, $bgcolor),
-      hover:      rgba(white, 0.04),
-      card:       map_get($pallet, 800),
-      dialog:     map_get($pallet, 800),
-      disabled-button: rgba(white, 0.12),
-      raised-button: map-get($pallet, 800),
-      focused-button: rgba(white, 0.06),
-      selected-button: map_get($pallet, 900),
-      selected-disabled-button: map_get($pallet, 800),
-      disabled-button-toggle: black,
-      unselected-chip: map_get($pallet, 700),
-      disabled-list-option: black,
-    );
+  @return (
+    status-bar: black,
+    app-bar:    map_get($pallet, 800),
+    background: map_get($pallet, $bgcolor),
+    hover:      rgba(white, 0.04),
+    card:       map_get($pallet, 800),
+    dialog:     map_get($pallet, 800),
+    disabled-button: rgba(white, 0.12),
+    raised-button: map-get($pallet, 800),
+    focused-button: rgba(white, 0.06),
+    selected-button: map_get($pallet, 900),
+    selected-disabled-button: map_get($pallet, 800),
+    disabled-button-toggle: black,
+    unselected-chip: map_get($pallet, 700),
+    disabled-list-option: black,
+  );
 };
+
+//Import themes
+// @import 'themes/defaultTheme.scss';
+// @import 'themes/signalkTheme.scss';
+// @import 'themes/platypusTheme.scss';
+// @import 'themes/highContrastTheme.scss';
+// @import 'themes/darkBlueTheme.scss';
+@import 'themes/modernTheme.scss';
+@import 'themes/nightMode.scss';
+
+// Include the common all common Materiel styles.
+
+@include mat.all-component-typographies();
+@include mat.core();
 
 //Import common/shared styles
 @import 'styles-common/settingsTabContent.scss';
 @import 'styles-common/tabs.scss';
 @import 'styles-common/dialog-panel.scss';
 
-//Import themes
-@import 'themes/defaultTheme.scss';
-@import 'themes/signalkTheme.scss';
-@import 'themes/platypusTheme.scss';
-@import 'themes/highContrastTheme.scss';
-@import 'themes/darkBlueTheme.scss';
-@import 'themes/modernTheme.scss';
-@import 'themes/nightMode.scss';
 
 // import Components themes
 @import 'app/app.component.scss';
@@ -112,8 +116,7 @@
 @import 'app/widgets/widget-wind/widget-wind.component.scss';
 
 
-@mixin theme-components($theme) {
-  @include mat.all-component-themes($theme);
+@mixin theme-kip-components($theme) {
   @include app-theme($theme);
   @include dialog-panel-styles($theme);
   @include dynamic-widget-container-theme($theme);
@@ -125,32 +128,33 @@
   @include theme-settings-config($theme);
 }
 
-@include theme-components($defaultTheme-light);
-
-.signalk-light {
-  @include theme-components($signalKTheme-light);
-}
-
-.high-contrast-light {
-  @include theme-components($highContrast-light);
-}
-
-.platypus-light {
-  @include theme-components($platypusTheme-light);
-}
-
-.darkBlue-dark {
-  @include theme-components($darkBlueTheme-dark);
-}
-
-.modern-dark {
-  @include theme-components($modernTheme-dark);
-}
+@include mat.all-component-themes($theme);
+@include theme-kip-components($theme);
 
 .nightMode {
-  @include theme-components($nightMode-dark);
+  @include mat.all-component-colors($nightMode);
+  @include theme-kip-components($nightMode);
 }
 
+// .signalk-light {
+//   @include theme-components($signalKTheme-light);
+// }
+
+// .high-contrast-light {
+//   @include theme-components($highContrast-light);
+// }
+
+// .platypus-light {
+//   @include theme-components($platypusTheme-light);
+// }
+
+// .darkBlue-dark {
+//   @include theme-components($darkBlueTheme-dark);
+// }
+
+// .modern-dark {
+  // @include mat.all-component-themes($modernTheme-dark);
+// }
 
 /* You can add global styles to this file, and also import other style files */
 html,

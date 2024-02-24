@@ -1,5 +1,7 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
 @use '@angular/material' as mat;
+@use 'sass:map';
+
 $nightMode-primary: (
     50 : #ecf5fb,
     100 : #520000,
@@ -11,10 +13,10 @@ $nightMode-primary: (
     700 : #520000,
     800 : #4796d2,
     900 : #520000,
-    A100 : #ffffff,
-    A200 : #e0f0ff,
-    A400 : #add8ff,
-    A700 : #93cbff,
+    A100 : #520000,
+    A200 : #520000,
+    A400 : #520000,
+    A700 : #520000,
     contrast: (
         50 : #000000,
         100 : #000000,
@@ -44,7 +46,7 @@ $nightMode-accent: (
     700 : #520000,
     800 : #e9b71f,
     900 : #520000,
-    A100 : #ffffff,
+    A100 : blue,
     A200 : #121212, // Menubar original value #fff6e0 000000 1E1E1E
     A400 : #ffe6ad,
     A700 : #ffdf94,
@@ -138,11 +140,11 @@ $nightMode-special: (
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
 
-$nightMode-theme-primary: mat.define-palette($nightMode-primary);
+$nightMode-theme-primary: mat.define-palette($nightMode-primary, A200, A100, A400);
 $nightMode-theme-accent:  mat.define-palette($nightMode-accent, A200, A100, A400);
 $nightMode-theme-warn:  mat.define-palette($nightMode-warn);
 
-$nightMode-theme-special:  mat.define-palette($nightMode-special); // Used to override MAterial Dark Theme colors and make it really black!
+$nightMode-theme-special:  mat.define-palette($nightMode-special); // Used to override Material Dark Theme colors and make it really black!
 
 // Palettes for custom Components
 
@@ -185,11 +187,84 @@ $mat-texts: (
 
 // Make temp theme using default palettes
 // * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$nightMode-temp: mat.define-dark-theme($nightMode-theme-primary, $nightMode-theme-accent, $nightMode-theme-warn);
+$nightMode: mat.define-dark-theme((
+  color: (
+    primary: $nightMode-theme-primary,
+    accent: $nightMode-theme-accent,
+    warn: $nightMode-theme-warn
+  ),
+));
+
+// @debug $nightMode;
+
+@function custom-nightMode-foreground($color) {
+  @return (
+      base:              $color,
+      divider:           rgba(white, 0.12),
+      dividers:          rgba(white, 0.12),
+      disabled:          rgba($color, 0.3),
+      disabled-button:   rgba($color, 0.3),
+      disabled-text:     rgba($color, 0.3),
+      hint-text:         rgba($color, 0.3),
+      secondary-text:    rgba($color, 0.7),
+      icon:              $color,
+      icons:             $color,
+      text:              $color,
+      slider-min:        $color,
+      slider-off:        rgba($color, 0.3),
+      slider-off-active: rgba($color, 0.3),
+  );
+};
+
+@function custom-nightMode-background($pallet, $bgcolor) {
+  @return (
+    status-bar: black,
+    app-bar:    map_get($pallet, 800),
+    background: map_get($pallet, $bgcolor),
+    hover:      rgba(white, 0.04),
+    card:       map_get($pallet, 800),
+    dialog:     map_get($pallet, 800),
+    disabled-button: rgba(white, 0.12),
+    raised-button: map-get($pallet, 800),
+    focused-button: rgba(white, 0.06),
+    selected-button: map_get($pallet, 900),
+    selected-disabled-button: map_get($pallet, 800),
+    disabled-button-toggle: black,
+    unselected-chip: map_get($pallet, 700),
+    disabled-list-option: black,
+  );
+};
+
+$color-map: map.get($nightMode, color);
+// @debug $foreground-map;
+$foreground-map: map.get($color-map, foreground);
+// @debug $foreground-map;
 
 
-// Customer Material Dark-theme black background
-$nightMode-background: custom-theme-dark-background($nightMode-theme-special, 500);
-$nightMode-foreground: custom-theme-dark-foreground(#520000);
+// Custom Material Dark-theme black background
+$nightMode-background: custom-nightMode-background($nightMode-theme-special, 500);
+$nightMode-foreground: custom-nightMode-foreground(#520000);
+
+$color-map: map.merge($color-map, (foreground: $nightMode-foreground, background: $nightMode-background));
+
+$app-defaults: (
+  app-background: #0e0d0d
+);
+
 // Merge our mat-theme with component specific palettes
-$nightMode-dark: map-merge($nightMode-temp, (background: $nightMode-background, foreground: $nightMode-foreground, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));
+$nightMode: map.merge($nightMode, (color: $color-map));
+// @debug $nightMode;
+$nightMode: map.merge($nightMode, (foreground: $nightMode-foreground));
+// @debug $nightMode;
+
+// $aa: map.get($nightMode, foreground);
+// $bbb: map.get($nightMode, color);
+// $bb: map.get($bbb, foreground);
+// @debug $bb;
+// @debug $aa;
+
+
+
+
+$nightMode: map.merge($nightMode, (app-defaults: $app-defaults, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));
+// @debug $nightMode;
