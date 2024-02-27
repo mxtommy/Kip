@@ -110,8 +110,9 @@ $modern-theme-primary: mat.define-palette($modern-primary);
 $modern-theme-accent:  mat.define-palette($modern-accent, A200, A100, A400);
 $modern-theme-warn:  mat.define-palette($modern-warn);
 
-// widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// custom component color maps
+
+// widget-gauge-ng-linear and widget-gauge-ng-radial instruments map
 $mat-ngGauge: (
   primary-gaugeFaceLight: #92c7e9,
   primary-gaugeFaceDark: #3586ca,
@@ -121,8 +122,7 @@ $mat-ngGauge: (
   warn-gaugeFaceDark: #940303,
 );
 
-// Palette for widget-wind - wind instrument Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// Map for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 $mat-wind: (
   boat-background: #ffffff,
   heading-background: #1E1E1E,
@@ -134,9 +134,12 @@ $mat-wind: (
   port: #d52626,
   starboard: #389c19,
   rudder-port: #d52626,
-  rudder-starboard: #389c19
+  rudder-starboard: #389c19,
+  courseOverGround: #e600ff,
+  nextWaypoint: #45ad36
 );
 
+// custom test and label color maps used in widgets
 $mat-texts: (
   text-dark: #ffffff37,
   primary-light: #3586ca,
@@ -147,12 +150,12 @@ $mat-texts: (
   warn-dark: #db1a1a8b,
 );
 
+// Palettes for custom app.component.scss
 $app-defaults: (
   app-background: #303030
 );
 
 // Make temp theme using default palettes
-// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
 $theme: mat.define-dark-theme((
   color: (
     primary: $modern-theme-primary,
@@ -161,8 +164,5 @@ $theme: mat.define-dark-theme((
   ),
 ));
 
-// Get theme default background map
-
-
-// Merge our mat-theme with component specific palettes
+// merge our component maps into theme
 $theme: map-merge($theme, (app-defaults: $app-defaults, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

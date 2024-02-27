@@ -68,10 +68,10 @@
   }
 
   .port {
-      stroke: mat.get-color-from-palette($wind, port);
+      stop-color: mat.get-color-from-palette($wind, port);
   }
   .starboard  {
-      stroke: mat.get-color-from-palette($wind, starboard);
+    stop-color: mat.get-color-from-palette($wind, starboard);
   }
 
   .rudderPort {
@@ -81,6 +81,13 @@
     fill: mat.get-color-from-palette($wind, rudder-starboard);
   }
 
+  .course-over-ground {
+    fill: mat.get-color-from-palette($wind, courseOverGround);
+  }
+
+  .next-waypoint {
+    stroke: mat.get-color-from-palette($wind, nextWaypoint);
+  }
   .true-wind {
       fill: mat.get-color-from-palette($wind, true-wind-background)
   }

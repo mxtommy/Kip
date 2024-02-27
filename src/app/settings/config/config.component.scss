@@ -22,14 +22,14 @@
 
   .flex-item {
     flex: 1 1 29%;
-    background-color: mat.get-color-from-palette($foreground, dividers);
+    background-color: mat.get-color-from-palette($background, card);
     padding: 10px 20px 10px 20px;
     border-radius: 4px;
   }
 
   .flex-item-copy {
     flex: 2 1 40%;
-    background-color: mat.get-color-from-palette($foreground, dividers);
+    background-color: mat.get-color-from-palette($background, card);
     padding: 10px 20px 10px 20px;
     border-radius: 4px;
   }
