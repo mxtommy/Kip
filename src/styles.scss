@@ -1,101 +1,27 @@
 @use '@angular/material' as mat;
+@use 'sass:map';
 // For more information: https://material.angular.io/guide/theming
 // For customizations see https://material.angular.io/guide/theming-your-components
 
+//Import themes
+// @import 'themes/defaultTheme.scss';
+// @import 'themes/signalkTheme.scss';
+// @import 'themes/platypusTheme.scss';
+// @import 'themes/highContrastTheme.scss';
+// @import 'themes/darkBlueTheme.scss';
+@import 'themes/modernTheme.scss';
+@import 'themes/nightMode.scss';
+
 // Include the common all common Materiel styles.
+
 @include mat.all-component-typographies();
 @include mat.core();
-
-// custom foreground/background functions // takes rgba color
-@function custom-theme-light-foreground($color) {
-    @return (
-        base:              $color,
-        divider:           rgba(black, 0.12),
-        dividers:          rgba(black, 0.12),
-        disabled:          rgba($color, 0.38),
-        disabled-button:   rgba($color, 0.38),
-        disabled-text:     rgba($color, 0.38),
-        hint-text:         rgba($color, 0.38),
-        secondary-text:    rgba($color, 0.54),
-        icon:              rgba($color, 0.54),
-        icons:             rgba($color, 0.54),
-        text:              rgba($color, 0.87),
-        slider-min:        rgba($color, 0.87),
-        slider-off:        rgba($color, 0.26),
-        slider-off-active: rgba($color, 0.38),
-    );
-};
-@function custom-theme-dark-foreground($color) {
-    @return (
-        base:              $color,
-        divider:           rgba(white, 0.12),
-        dividers:          rgba(white, 0.12),
-        disabled:          rgba($color, 0.3),
-        disabled-button:   rgba($color, 0.3),
-        disabled-text:     rgba($color, 0.3),
-        hint-text:         rgba($color, 0.3),
-        secondary-text:    rgba($color, 0.7),
-        icon:              $color,
-        icons:             $color,
-        text:              $color,
-        slider-min:        $color,
-        slider-off:        rgba($color, 0.3),
-        slider-off-active: rgba($color, 0.3),
-    );
-};
-
-// Custom Background functions. takes full pallet
-@function custom-theme-light-background($pallet, $bgcolor: 900) {
-    @return (
-      status-bar: map_get($pallet, 300),
-      app-bar:    map_get($pallet, 100),
-      background: map_get($pallet, $bgcolor),
-      hover:      rgba(black, 0.04),
-      card:       map_get($pallet, 200),
-      dialog:     map_get($pallet, 200),
-      disabled-button: rgba(black, 0.12),
-      raised-button: map_get($pallet, 200),
-      focused-button: rgba(black, 0.06),
-      selected-button: map_get($pallet, 300),
-      selected-disabled-button: map_get($pallet, 400),
-      disabled-button-toggle: map_get($pallet, 200),
-      unselected-chip: map_get($pallet, 300),
-      disabled-list-option: map_get($pallet, 200),
-    );
-};
-
-@function custom-theme-dark-background($pallet, $bgcolor: 900) {
-    @return (
-      status-bar: black,
-      app-bar:    map_get($pallet, 800),
-      background: map_get($pallet, $bgcolor),
-      hover:      rgba(white, 0.04),
-      card:       map_get($pallet, 800),
-      dialog:     map_get($pallet, 800),
-      disabled-button: rgba(white, 0.12),
-      raised-button: map-get($pallet, 800),
-      focused-button: rgba(white, 0.06),
-      selected-button: map_get($pallet, 900),
-      selected-disabled-button: map_get($pallet, 800),
-      disabled-button-toggle: black,
-      unselected-chip: map_get($pallet, 700),
-      disabled-list-option: black,
-    );
-};
 
 //Import common/shared styles
 @import 'styles-common/settingsTabContent.scss';
 @import 'styles-common/tabs.scss';
 @import 'styles-common/dialog-panel.scss';
 
-//Import themes
-@import 'themes/defaultTheme.scss';
-@import 'themes/signalkTheme.scss';
-@import 'themes/platypusTheme.scss';
-@import 'themes/highContrastTheme.scss';
-@import 'themes/darkBlueTheme.scss';
-@import 'themes/modernTheme.scss';
-@import 'themes/nightMode.scss';
 
 // import Components themes
 @import 'app/app.component.scss';
@@ -112,8 +38,7 @@
 @import 'app/widgets/widget-wind/widget-wind.component.scss';
 
 
-@mixin theme-components($theme) {
-  @include mat.all-component-themes($theme);
+@mixin theme-kip-components($theme) {
   @include app-theme($theme);
   @include dialog-panel-styles($theme);
   @include dynamic-widget-container-theme($theme);
@@ -125,29 +50,220 @@
   @include theme-settings-config($theme);
 }
 
-@include theme-components($defaultTheme-light);
-
-.signalk-light {
-  @include theme-components($signalKTheme-light);
-}
-
-.high-contrast-light {
-  @include theme-components($highContrast-light);
-}
-
-.platypus-light {
-  @include theme-components($platypusTheme-light);
-}
-
-.darkBlue-dark {
-  @include theme-components($darkBlueTheme-dark);
-}
-
-.modern-dark {
-  @include theme-components($modernTheme-dark);
-}
+@include mat.all-component-themes($theme);
+@include theme-kip-components($theme);
 
 .nightMode {
-  @include theme-components($nightMode-dark);
+  @include mat.all-component-colors($nightMode);
+  @include theme-kip-components($nightMode);
 }
 
+// .signalk-light {
+//   @include theme-components($signalKTheme-light);
+// }
+
+// .high-contrast-light {
+//   @include theme-components($highContrast-light);
+// }
+
+// .platypus-light {
+//   @include theme-components($platypusTheme-light);
+// }
+
+// .darkBlue-dark {
+//   @include theme-components($darkBlueTheme-dark);
+// }
+
+// .modern-dark {
+  // @include mat.all-component-themes($modernTheme-dark);
+// }
+
+/* You can add global styles to this file, and also import other style files */
+html,
+body,
+app-root {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+  touch-action: none;
+}
+
+
+.ng-valid[required], .ng-valid.required  {
+    border-left: 5px solid #42A948; /* green */
+  }
+
+  .ng-invalid:not(form)  {
+    border-left: 5px solid #a94442; /* red */
+  }
+
+
+
+.verticalCenter {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
+.flexContainer {
+
+    display: flex;
+    /*flex-direction: column; */
+     align-items: stretch;
+
+    height: 100%;
+
+}
+
+.flowRow {
+    flex-direction: row;
+}
+
+.flexCol {
+    flex-direction: column;
+}
+
+/*
+  Loading Spinner styles. Used during app bootstrap process (while
+  executing app-initNetwork.service but before Angular has fully loaded)
+*/
+
+.loader-container {
+  height: 100%;
+  width: 100%;
+  background-color: #424242;
+}
+
+#loader {
+  bottom: 0;
+  height: 175px;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 175px;
+}
+
+#loader .dot {
+  bottom: 0;
+  height: 100%;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 87.5px;
+}
+
+#loader .dot::before {
+  border-radius: 100%;
+  content: "";
+  height: 87.5px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: scale(0);
+  width: 87.5px;
+}
+
+#loader .dot:nth-child(7n+1) {
+  transform: rotate(45deg);
+}
+
+#loader .dot:nth-child(7n+1)::before {
+  animation: 0.8s linear 0.1s normal none infinite running load;
+  background: #e5ab13 none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+2) {
+  transform: rotate(90deg);
+}
+
+#loader .dot:nth-child(7n+2)::before {
+  animation: 0.8s linear 0.2s normal none infinite running load;
+  background: #f0ca31 none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+3) {
+  transform: rotate(135deg);
+}
+
+#loader .dot:nth-child(7n+3)::before {
+  animation: 0.8s linear 0.3s normal none infinite running load;
+  background: #92c7e9 none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+4) {
+  transform: rotate(180deg);
+}
+
+#loader .dot:nth-child(7n+4)::before {
+  animation: 0.8s linear 0.4s normal none infinite running load;
+  background: #63afdf none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+5) {
+  transform: rotate(225deg);
+}
+
+#loader .dot:nth-child(7n+5)::before {
+  animation: 0.8s linear 0.5s normal none infinite running load;
+  background: #3586ca none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+6) {
+  transform: rotate(270deg);
+}
+
+#loader .dot:nth-child(7n+6)::before {
+  animation: 0.8s linear 0.6s normal none infinite running load;
+  background: #d52626 none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+7) {
+  transform: rotate(315deg);
+}
+
+#loader .dot:nth-child(7n+7)::before {
+  animation: 0.8s linear 0.7s normal none infinite running load;
+  background: #e26767 none repeat scroll 0 0;
+}
+
+#loader .dot:nth-child(7n+8) {
+  transform: rotate(360deg);
+}
+
+#loader .dot:nth-child(7n+8)::before {
+  animation: 0.8s linear 0.8s normal none infinite running load;
+  background: #f8e598 none repeat scroll 0 0;
+}
+
+#loader .loading {
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  bottom: -40px;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  width: 180px;
+}
+
+@keyframes load {
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes load {
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}

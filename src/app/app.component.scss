@@ -5,9 +5,10 @@
   $accent: map-get($theme, accent);
   $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
+  $app-defaults: map-get($theme, app-defaults);
 
   .app-defaults {
-    background-color: mat.get-color-from-palette($background, background);
+    background-color: mat.get-color-from-palette($app-defaults, app-background);
     color: mat.get-color-from-palette($foreground, text);
   }
 
@@ -18,6 +19,23 @@
   .menuBarButtonGroup {
     background-color: mat.get-color-from-palette($foreground, divider);
   }
+
+  button.mat-mdc-button-base {
+    color: mat.get-color-from-palette($foreground, text);
+  }
+
+  mat-select.mat-mdc-select {
+    color: mat.get-color-from-palette($foreground, text);
+  }
+
+  input.mat-mdc-input-element.mdc-text-field__input.cdk-text-field-autofill-monitored {
+    color: mat.get-color-from-palette($foreground, text);
+  }
+
+  span.mat-mdc-dialog-title.mdc-dialog__title {
+    color: mat.get-color-from-palette($foreground, text);
+  }
+
 
 }
 

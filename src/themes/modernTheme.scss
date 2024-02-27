@@ -1,5 +1,7 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
 @use '@angular/material' as mat;
+@use 'sass:map';
+
 $modern-primary: (
     50 : #ecf5fb,
     100 : #d0e7f5,
@@ -108,46 +110,59 @@ $modern-theme-primary: mat.define-palette($modern-primary);
 $modern-theme-accent:  mat.define-palette($modern-accent, A200, A100, A400);
 $modern-theme-warn:  mat.define-palette($modern-warn);
 
-// widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// custom component color maps
+
+// widget-gauge-ng-linear and widget-gauge-ng-radial instruments map
 $mat-ngGauge: (
-    primary-gaugeFaceLight: #92c7e9,
-    primary-gaugeFaceDark: #3586ca,
-    accent-gaugeFaceLight: #e5ab13,
-    accent-gaugeFaceDark: #D38006,
-    warn-gaugeFaceLight: #ba0d0d,
-    warn-gaugeFaceDark: #940303,
+  primary-gaugeFaceLight: #92c7e9,
+  primary-gaugeFaceDark: #3586ca,
+  accent-gaugeFaceLight: #e5ab13,
+  accent-gaugeFaceDark: #D38006,
+  warn-gaugeFaceLight: #ba0d0d,
+  warn-gaugeFaceDark: #940303,
 );
 
-// Palette for widget-wind - wind instrument Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// Map for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 $mat-wind: (
-    boat-background: #ffffff,
-    heading-background: #1E1E1E,
-    true-wind-background: #f0ca31,
-    app-wind-background: #3586ca,
-    compass-dark: #3f3f3f,
-    compass-light: #ffffff,
-    wind-rose-background: #ffffff,
-    port: #d52626,
-    starboard: #389c19,
-    rudder-port: #d52626,
-    rudder-starboard: #389c19
+  boat-background: #ffffff,
+  heading-background: #1E1E1E,
+  true-wind-background: #f0ca31,
+  app-wind-background: #3586ca,
+  compass-dark: #3f3f3f,
+  compass-light: #ffffff,
+  wind-rose-background: #ffffff,
+  port: #d52626,
+  starboard: #389c19,
+  rudder-port: #d52626,
+  rudder-starboard: #389c19,
+  courseOverGround: #e600ff,
+  nextWaypoint: #45ad36
 );
 
+// custom test and label color maps used in widgets
 $mat-texts: (
-    text-dark: #ffffff37,
-    primary-light: #3586ca,
-    primary-dark: #175ebab5,
-    accent-light: #e5ab13,
-    accent-dark: #d29b1195,
-    warn-light: #d64040,
-    warn-dark: #db1a1a8b,
+  text-dark: #ffffff37,
+  primary-light: #3586ca,
+  primary-dark: #175ebab5,
+  accent-light: #e5ab13,
+  accent-dark: #d29b1195,
+  warn-light: #d64040,
+  warn-dark: #db1a1a8b,
+);
+
+// Palettes for custom app.component.scss
+$app-defaults: (
+  app-background: #303030
 );
 
 // Make temp theme using default palettes
-// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$modernTheme-temp: mat.define-dark-theme($modern-theme-primary, $modern-theme-accent, $modern-theme-warn);
+$theme: mat.define-dark-theme((
+  color: (
+    primary: $modern-theme-primary,
+    accent: $modern-theme-accent,
+    warn: $modern-theme-warn
+  ),
+));
 
-// Merge our mat-theme with component specific palettes
-$modernTheme-dark: map-merge($modernTheme-temp, (widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));
+// merge our component maps into theme
+$theme: map-merge($theme, (app-defaults: $app-defaults, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

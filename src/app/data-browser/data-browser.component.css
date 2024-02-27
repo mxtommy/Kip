@@ -30,8 +30,8 @@
 }
 
 .filter-field {
-  padding-left: 10px;
-  padding-top: 10px;
+  padding: 15px 20px;
+  width: calc(100% - 40px);
 }
 
 .flex-container {

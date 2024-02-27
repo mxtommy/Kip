@@ -1,5 +1,7 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
 @use '@angular/material' as mat;
+@use 'sass:map';
+
 $nightMode-primary: (
     50 : #ecf5fb,
     100 : #520000,
@@ -7,14 +9,14 @@ $nightMode-primary: (
     300 : #520000,
     400 : #7abbe4,
     500 : #520000,
-    600 : #5ba8db,
+    600 : #520000,
     700 : #520000,
     800 : #4796d2,
     900 : #520000,
-    A100 : #ffffff,
-    A200 : #e0f0ff,
-    A400 : #add8ff,
-    A700 : #93cbff,
+    A100 : #520000,
+    A200 : #520000,
+    A400 : #520000,
+    A700 : #520000,
     contrast: (
         50 : #000000,
         100 : #000000,
@@ -34,20 +36,20 @@ $nightMode-primary: (
 );
 
 $nightMode-accent: (
-    50 : #fdf9e6,
-    100 : #520000,
-    200 : #f8e598,
-    300 : #520000,
-    400 : #f2d250,
-    500 : #520000,
-    600 : #eec52c,
-    700 : #520000,
-    800 : #e9b71f,
-    900 : #520000,
-    A100 : #ffffff,
+  50 : #ecf5fb,
+  100 : #520000,
+  200 : #b1d7ef,
+  300 : #520000,
+  400 : #7abbe4,
+  500 : #520000,
+  600 : #5ba8db,
+  700 : #520000,
+  800 : #4796d2,
+  900 : #520000,
+  A100 : #520000,
     A200 : #121212, // Menubar original value #fff6e0 000000 1E1E1E
-    A400 : #ffe6ad,
-    A700 : #ffdf94,
+    A400 : #520000,
+    A700 : #520000,
     contrast: (
         50 : #000000,
         100 : #000000,
@@ -60,7 +62,7 @@ $nightMode-accent: (
         800 : #000000,
         900 : #000000,
         A100 : #000000,
-        A200 : #520000,
+        A200 : #000000,
         A400 : #000000,
         A700 : #000000,
     )
@@ -72,7 +74,7 @@ $nightMode-warn: (
     200 : #ea9393,
     300 : #e26767,
     400 : #db4747,
-    500 : #520000,
+    500 : #1d0000,
     600 : #d02222,
     700 : #520000,
     800 : #c41717,
@@ -132,22 +134,20 @@ $nightMode-special: (
     )
 );
 
-//////////////////////////////////////////////////////////////////////////////////////////
 // Generate mat-material default theme palettes. Generate now so we call pull if necessary
-// palette color later in this scss file.
-//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
-//    used for error and warning.
-
-$nightMode-theme-primary: mat.define-palette($nightMode-primary);
+$nightMode-theme-primary: mat.define-palette($nightMode-primary, A200, A100, A400);
 $nightMode-theme-accent:  mat.define-palette($nightMode-accent, A200, A100, A400);
 $nightMode-theme-warn:  mat.define-palette($nightMode-warn);
 
-$nightMode-theme-special:  mat.define-palette($nightMode-special); // Used to override MAterial Dark Theme colors and make it really black!
+$nightMode-theme-special:  mat.define-palette($nightMode-special); // Used to override Material Dark Theme colors and make it really black!
 
-// Palettes for custom Components
+// custom component color maps
 
-// widget-gauge-ng-linear and widget-gauge-ng-radial instruments Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// Palettes for custom app.component.scss
+$app-defaults: (
+  app-background: #0e0d0d
+);
+// widget-gauge-ng-linear and widget-gauge-ng-radial instruments map
 $mat-ngGauge: (
     primary-gaugeFaceLight: #520000,
     primary-gaugeFaceDark: #520000,
@@ -157,8 +157,7 @@ $mat-ngGauge: (
     warn-gaugeFaceDark: #520000,
 );
 
-// Palette for widget Wind and Autopilot - see svg-wind svg-autopilot Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// Map for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 $mat-wind: (
     boat-background: #520000,
     heading-background: #1E1E1E,
@@ -167,12 +166,15 @@ $mat-wind: (
     compass-dark: #2c1515,
     compass-light: #462121,
     wind-rose-background: #2c1a1a,
-    port: #520000,
+    port: #750000,
     starboard: #17420a,
     rudder-port: #520000,
     rudder-starboard: #389c19,
+    courseOverGround: #62006c,
+    nextWaypoint: #1e4b18
 );
 
+// custom test and label color maps used in widgets
 $mat-texts: (
     text-dark: #520000,
     primary-light: #520000,
@@ -184,12 +186,72 @@ $mat-texts: (
 );
 
 // Make temp theme using default palettes
-// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$nightMode-temp: mat.define-dark-theme($nightMode-theme-primary, $nightMode-theme-accent, $nightMode-theme-warn);
+$nightMode: mat.define-dark-theme((
+  color: (
+    primary: $nightMode-theme-primary,
+    accent: $nightMode-theme-accent,
+    warn: $nightMode-theme-warn
+  ),
+));
+
+// custom theme overrides for Night Mode
+@function custom-nightMode-foreground($color) {
+  @return (
+      base:              $color,
+      divider:           rgba(white, 0.12),
+      dividers:          rgba(white, 0.12),
+      disabled:          rgba($color, 0.3),
+      disabled-button:   rgba($color, 0.3),
+      disabled-text:     rgba($color, 0.3),
+      elevation: $color,
+      hint-text:         rgba($color, 0.3),
+      secondary-text:    rgba($color, 0.7),
+      icon:              $color,
+      icons:             $color,
+      text:              $color,
+      slider-min:        $color,
+      slider-off:        rgba($color, 0.3),
+      slider-off-active: rgba($color, 0.3),
+  );
+};
+
+@function custom-nightMode-background($pallet, $bgcolor) {
+  @return (
+    status-bar: black,
+    app-bar:    map_get($pallet, 800),
+    background: map_get($pallet, $bgcolor),
+    hover:      rgba(white, 0.04),
+    card:       map_get($pallet, 800),
+    dialog:     map_get($pallet, 800),
+    disabled-button: rgba(white, 0.12),
+    raised-button: map-get($pallet, 800),
+    focused-button: rgba(white, 0.06),
+    selected-button: map_get($pallet, 900),
+    selected-disabled-button: map_get($pallet, 800),
+    disabled-button-toggle: black,
+    unselected-chip: map_get($pallet, 700),
+    disabled-list-option: black,
+    tooltip: map_get($pallet, 600),
+  );
+};
+
+// get theme color map
+$color-map: map.get($nightMode, color);
+// get color map foreground and background map
+$color-foreground-map: map.get($color-map, foreground);
+$color-background-map: map.get($color-map, background);
 
 
-// Customer Material Dark-theme black background
-$nightMode-background: custom-theme-dark-background($nightMode-theme-special, 500);
-$nightMode-foreground: custom-theme-dark-foreground(#520000);
-// Merge our mat-theme with component specific palettes
-$nightMode-dark: map-merge($nightMode-temp, (background: $nightMode-background, foreground: $nightMode-foreground, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));
+// Call custom Material Dark-theme override functions
+$nightMode-background: custom-nightMode-background($nightMode-theme-special, 500);
+$nightMode-foreground: custom-nightMode-foreground(#520000);
+
+// merge back into color map
+$color-map: map.merge($color-map, (foreground: $nightMode-foreground, background: $nightMode-background));
+
+// Merge our maps back into theme with component specific maps
+$nightMode: map.merge($nightMode, (color: $color-map));
+// copy duplicate foreground and background map to theme root - not sure why this duplicate exists...not explained in material Theming guides
+$nightMode: map.merge($nightMode, (foreground: $nightMode-foreground, background: $nightMode-background));
+// merge our component maps into theme
+$nightMode: map.merge($nightMode, (app-defaults: $app-defaults, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

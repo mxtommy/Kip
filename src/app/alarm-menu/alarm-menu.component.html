@@ -1,4 +1,4 @@
-<button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton"
+<button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
         [class.alarmCrit]="blinkCrit"
         [class.alarmWarning]="blinkWarn"
         [disabled]="alarmCount == 0 || notificationConfig.disableNotifications">
@@ -8,7 +8,7 @@
         matBadgePosition="after"
         matBadgeOverlap="false"
         matBadgeColor="warn"
-        class="fa-solid fa-envelope fa-2x matBadge">
+        class="fa-solid fa-envelope fa-2x">
   </span>
   <span *ngIf="notificationConfig.disableNotifications" class="fa-stack fa-lg">
     <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
