@@ -34,7 +34,8 @@ export { RadialGaugeOptions } from 'canvas-gauges';
 @Component({
     // tslint:disable-next-line:component-selector
     selector: 'radial-gauge',
-    template: '<canvas #gauge></canvas>'
+    template: '<canvas #gauge></canvas>',
+    standalone: true
 })
 // tslint:disable-next-line:component-class-suffix
 export class RadialGauge extends BaseGauge<CanvasGauges.RadialGauge, CanvasGauges.RadialGaugeOptions> implements OnInit {

@@ -1,5 +1,5 @@
 import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
-import { ResizedEvent } from 'angular-resize-event';
+import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 declare var steelseries: any; // 3rd party
 
@@ -40,9 +40,11 @@ export const SteelFrameColors = {
 
 
 @Component({
-  selector: 'gauge-steel',
-  templateUrl: './gauge-steel.component.html',
-  styleUrls: ['./gauge-steel.component.css']
+    selector: 'gauge-steel',
+    templateUrl: './gauge-steel.component.html',
+    styleUrls: ['./gauge-steel.component.css'],
+    standalone: true,
+    imports: [AngularResizeEventModule]
 })
 export class GaugeSteelComponent implements AfterViewInit, OnChanges {
 

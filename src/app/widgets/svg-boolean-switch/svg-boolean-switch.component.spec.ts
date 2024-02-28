@@ -8,8 +8,8 @@ describe('SvgBooleanToggleComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SvgBooleanSwitchComponent ]
-    })
+    imports: [SvgBooleanSwitchComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(SvgBooleanSwitchComponent);

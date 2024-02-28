@@ -8,8 +8,8 @@ describe('PathsOptionsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ PathsOptionsComponent ]
-    })
+    imports: [PathsOptionsComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(PathsOptionsComponent);

@@ -34,7 +34,8 @@ export { LinearGaugeOptions } from 'canvas-gauges';
 @Component({
     // tslint:disable-next-line:component-selector
     selector: 'linear-gauge',
-    template: '<canvas #gauge></canvas>'
+    template: '<canvas #gauge></canvas>',
+    standalone: true
 })
 // tslint:disable-next-line:component-class-suffix
 export class LinearGauge extends BaseGauge<CanvasGauges.LinearGauge, CanvasGauges.LinearGaugeOptions> implements OnInit {

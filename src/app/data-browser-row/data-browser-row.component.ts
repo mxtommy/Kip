@@ -1,15 +1,23 @@
 import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { SignalKService } from '../core/services/signalk.service';
 import { UnitsService } from '../core/services/units.service';
+import { MatCell } from '@angular/material/table';
+import { MatButton } from '@angular/material/button';
+import { MatOptgroup, MatOption } from '@angular/material/core';
+import { NgFor } from '@angular/common';
+import { MatSelect } from '@angular/material/select';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
 
 
 @Component({
-  selector: 'data-browser-row',
-  templateUrl: './data-browser-row.component.html',
-  styleUrls: ['./data-browser-row.component.css'],
-  encapsulation: ViewEncapsulation.None,
+    selector: 'data-browser-row',
+    templateUrl: './data-browser-row.component.html',
+    styleUrls: ['./data-browser-row.component.css'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [MatCell, MatButton],
 })
 export class DataBrowserRowComponent implements OnInit {
 
@@ -58,8 +66,22 @@ export class DataBrowserRowComponent implements OnInit {
 
 
 @Component({
-  selector: 'dialog-unit-selector',
-  templateUrl: 'data-browser-row-unit-modal.html',
+    selector: 'dialog-unit-selector',
+    templateUrl: 'data-browser-row-unit-modal.html',
+    standalone: true,
+    imports: [
+        MatDialogTitle,
+        MatDialogContent,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        NgFor,
+        MatOptgroup,
+        MatOption,
+        MatDialogActions,
+        MatButton,
+        MatDialogClose,
+    ],
 })
 export class DialogUnitSelect {
 

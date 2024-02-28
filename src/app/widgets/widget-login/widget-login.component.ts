@@ -9,9 +9,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 
 @Component({
-  selector: 'app-widget-login',
-  templateUrl: './widget-login.component.html',
-  styleUrls: ['./widget-login.component.css']
+    selector: 'app-widget-login',
+    templateUrl: './widget-login.component.html',
+    styleUrls: ['./widget-login.component.css'],
+    standalone: true
 })
 export class WidgetLoginComponent implements OnInit {
   public connectionConfig: IConnectionConfig = null;

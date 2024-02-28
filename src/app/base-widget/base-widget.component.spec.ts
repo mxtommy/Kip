@@ -8,8 +8,8 @@ describe('BaseWidgetComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BaseWidgetComponent ]
-    })
+    declarations: [BaseWidgetComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(BaseWidgetComponent);

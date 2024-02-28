@@ -8,8 +8,9 @@ interface IDimensions {
 
 
 @Component({
-  selector: 'app-svg-boolean-light',
-  templateUrl: './svg-boolean-light.component.svg'
+    selector: 'app-svg-boolean-light',
+    templateUrl: './svg-boolean-light.component.svg',
+    standalone: true
 })
 export class SvgBooleanLightComponent implements OnInit, DoCheck {
   @Input('controlData') data: IDynamicControl = null;

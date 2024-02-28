@@ -1,11 +1,22 @@
 import { Component, OnInit, Inject, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatTableDataSource } from '@angular/material/table';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
+import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { SignalKService } from '../../core/services/signalk.service';
 import { DataSetService, IDataSet } from '../../core/services/data-set.service';
+import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatOption } from '@angular/material/core';
+import { NgFor } from '@angular/common';
+import { MatSelect } from '@angular/material/select';
+import { MatStepper, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
+import { MatDivider } from '@angular/material/divider';
+import { MatButton } from '@angular/material/button';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { FormsModule } from '@angular/forms';
 
 interface settingsForm {
   selectedPath: string;
@@ -15,9 +26,11 @@ interface settingsForm {
 };
 
 @Component({
-  selector: 'settings-datasets',
-  templateUrl: './datasets.component.html',
-  styleUrls: ['./datasets.component.scss']
+    selector: 'settings-datasets',
+    templateUrl: './datasets.component.html',
+    styleUrls: ['./datasets.component.scss'],
+    standalone: true,
+    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider]
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
@@ -113,9 +126,11 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 }
 
 @Component({
-  selector: 'settings-datasets-modal',
-  templateUrl: './datasets.modal.html',
-  styleUrls: ['./datasets.component.scss']
+    selector: 'settings-datasets-modal',
+    templateUrl: './datasets.modal.html',
+    styleUrls: ['./datasets.component.scss'],
+    standalone: true,
+    imports: [MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
 })
 export class SettingsDatasetsModalComponent implements OnInit {
   public titleDialog: string = null;

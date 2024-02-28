@@ -8,8 +8,8 @@ describe('LayoutSplitComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ LayoutSplitComponent ]
-    })
+    imports: [LayoutSplitComponent]
+})
     .compileComponents();
   }));
 

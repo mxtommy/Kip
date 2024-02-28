@@ -8,8 +8,8 @@ describe('WidgetNumericComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetNumericComponent ]
-    })
+    imports: [WidgetNumericComponent]
+})
     .compileComponents();
   }));
 

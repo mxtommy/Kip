@@ -8,8 +8,8 @@ describe('BooleanControlConfigComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BooleanControlConfigComponent ]
-    })
+    imports: [BooleanControlConfigComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(BooleanControlConfigComponent);

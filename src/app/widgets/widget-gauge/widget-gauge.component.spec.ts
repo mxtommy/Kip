@@ -8,8 +8,8 @@ describe('WidgetGaugeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetGaugeComponent ]
-    })
+    imports: [WidgetGaugeComponent]
+})
     .compileComponents();
   }));
 

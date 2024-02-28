@@ -8,8 +8,8 @@ describe('WidgetRaceTimerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ WidgetRaceTimerComponent ]
-    })
+    imports: [WidgetRaceTimerComponent]
+})
     .compileComponents();
   });
 

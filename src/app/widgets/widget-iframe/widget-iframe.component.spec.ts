@@ -8,8 +8,8 @@ describe('WidgetIframeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetIframeComponent ]
-    })
+    imports: [WidgetIframeComponent]
+})
     .compileComponents();
   }));
 

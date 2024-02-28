@@ -4,9 +4,10 @@ import { IZoneState } from "../../core/interfaces/app-settings.interfaces";
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
-  selector: 'app-widget-numeric',
-  templateUrl: './widget-numeric.component.html',
-  styleUrls: ['./widget-numeric.component.scss']
+    selector: 'app-widget-numeric',
+    templateUrl: './widget-numeric.component.html',
+    styleUrls: ['./widget-numeric.component.scss'],
+    standalone: true
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;

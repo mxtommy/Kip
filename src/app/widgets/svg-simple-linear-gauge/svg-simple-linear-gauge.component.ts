@@ -1,8 +1,9 @@
 import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges } from '@angular/core';
 
 @Component({
-  selector: 'svg-simple-linear-gauge',
-  templateUrl: './svg-simple-linear-gauge.component.html'
+    selector: 'svg-simple-linear-gauge',
+    templateUrl: './svg-simple-linear-gauge.component.html',
+    standalone: true
 })
 export class SvgSimpleLinearGaugeComponent implements OnChanges {
   @ViewChild('gaugeBarAnimate', {static: true}) gaugeBarAnimate: ElementRef;

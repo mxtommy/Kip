@@ -8,8 +8,8 @@ describe('RootDisplayComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ RootDisplayComponent ]
-    })
+    imports: [RootDisplayComponent]
+})
     .compileComponents();
   }));
 

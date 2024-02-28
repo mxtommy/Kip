@@ -8,8 +8,8 @@ describe('GaugeSteelComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ GaugeSteelComponent ]
-    })
+    imports: [GaugeSteelComponent]
+})
     .compileComponents();
   }));
 

@@ -1,5 +1,6 @@
 import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { NgIf } from '@angular/common';
 
 interface ISVGRotationObject {
   oldDegreeIndicator: string,
@@ -8,24 +9,26 @@ interface ISVGRotationObject {
 }
 
 @Component({
-  selector: 'app-svg-autopilot',
-  templateUrl: './svg-autopilot.component.html',
-  animations: [
-    trigger('fadeInOut', [
-      state('connected', style({
-        opacity: 0,
-      })),
-      state('disconnected', style({
-        opacity: 1,
-      })),
-      transition('connected => disconnected', [
-        animate('.3s')
-      ]),
-      transition('disconnected => connected', [
-        animate('1s')
-      ]),
-    ]),
-  ]
+    selector: 'app-svg-autopilot',
+    templateUrl: './svg-autopilot.component.html',
+    animations: [
+        trigger('fadeInOut', [
+            state('connected', style({
+                opacity: 0,
+            })),
+            state('disconnected', style({
+                opacity: 1,
+            })),
+            transition('connected => disconnected', [
+                animate('.3s')
+            ]),
+            transition('disconnected => connected', [
+                animate('1s')
+            ]),
+        ]),
+    ],
+    standalone: true,
+    imports: [NgIf]
 })
 
 export class SvgAutopilotComponent implements AfterViewInit {

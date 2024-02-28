@@ -4,9 +4,10 @@ import { formatDate } from '@angular/common';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
-  selector: 'app-widget-date-generic',
-  templateUrl: './widget-date-generic.component.html',
-  styleUrls: ['./widget-date-generic.component.css']
+    selector: 'app-widget-date-generic',
+    templateUrl: './widget-date-generic.component.html',
+    styleUrls: ['./widget-date-generic.component.css'],
+    standalone: true
 })
 export class WidgetDateGenericComponent extends BaseWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;

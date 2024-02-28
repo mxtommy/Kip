@@ -8,8 +8,8 @@ describe('AlarmMenuComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ AlarmMenuComponent ]
-    })
+    imports: [AlarmMenuComponent]
+})
     .compileComponents();
   }));
 

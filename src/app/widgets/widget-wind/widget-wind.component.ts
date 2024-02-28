@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { SvgWindComponent } from '../svg-wind/svg-wind.component';
 
 
 @Component({
-  selector: 'app-widget-wind',
-  templateUrl: './widget-wind.component.html'
+    selector: 'app-widget-wind',
+    templateUrl: './widget-wind.component.html',
+    standalone: true,
+    imports: [SvgWindComponent]
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   currentHeading: number = 0;

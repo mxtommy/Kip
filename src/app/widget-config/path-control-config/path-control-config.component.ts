@@ -2,9 +2,16 @@ import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@a
 import { SignalKService } from '../../core/services/signalk.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IUnitGroup } from '../../core/services/units.service';
-import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { Observable, Subscription } from 'rxjs'
+import { MatSelect } from '@angular/material/select';
+import { MatOption, MatOptgroup } from '@angular/material/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatAutocompleteTrigger, MatAutocomplete } from '@angular/material/autocomplete';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
+import { NgIf, NgFor, AsyncPipe } from '@angular/common';
 
 function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -14,9 +21,11 @@ function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
 }
 
 @Component({
-  selector: 'path-control-config',
-  templateUrl: './path-control-config.component.html',
-  styleUrls: ['./path-control-config.component.scss']
+    selector: 'path-control-config',
+    templateUrl: './path-control-config.component.html',
+    styleUrls: ['./path-control-config.component.scss'],
+    standalone: true,
+    imports: [NgIf, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe]
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   @Input() pathFormGroup!: UntypedFormGroup;

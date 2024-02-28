@@ -8,8 +8,8 @@ describe('WidgetBlankComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetBlankComponent ]
-    })
+    imports: [WidgetBlankComponent]
+})
     .compileComponents();
   }));
 

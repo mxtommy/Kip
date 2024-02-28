@@ -8,8 +8,8 @@ describe('WidgetSimpleLinearComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetSimpleLinearComponent ]
-    })
+    imports: [WidgetSimpleLinearComponent]
+})
     .compileComponents();
   }));
 

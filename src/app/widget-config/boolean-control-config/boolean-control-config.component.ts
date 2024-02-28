@@ -1,5 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatIconButton } from '@angular/material/button';
+import { NgIf } from '@angular/common';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
 
 export interface IDeleteEventObj {
   ctrlIndex: number,
@@ -7,9 +13,11 @@ export interface IDeleteEventObj {
 }
 
 @Component({
-  selector: 'boolean-control-config',
-  templateUrl: './boolean-control-config.component.html',
-  styleUrls: ['./boolean-control-config.component.css']
+    selector: 'boolean-control-config',
+    templateUrl: './boolean-control-config.component.html',
+    styleUrls: ['./boolean-control-config.component.css'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, NgIf, MatIconButton]
 })
 export class BooleanControlConfigComponent implements OnInit {
   @Input() ctrlFormGroup!: UntypedFormGroup;

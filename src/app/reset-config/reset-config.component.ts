@@ -7,9 +7,10 @@ import { AppSettingsService } from '../core/services/app-settings.service';
 
 
 @Component({
-  selector: 'app-reset-config',
-  templateUrl: './reset-config.component.html',
-  styleUrls: ['./reset-config.component.css']
+    selector: 'app-reset-config',
+    templateUrl: './reset-config.component.html',
+    styleUrls: ['./reset-config.component.css'],
+    standalone: true
 })
 export class ResetConfigComponent implements OnInit {
 

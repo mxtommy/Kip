@@ -8,8 +8,8 @@ describe('SettingsSignalkComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SettingsSignalkComponent ]
-    })
+    imports: [SettingsSignalkComponent]
+})
     .compileComponents();
   }));
 

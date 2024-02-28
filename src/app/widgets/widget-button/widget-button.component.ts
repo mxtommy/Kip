@@ -7,9 +7,10 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 
 @Component({
-  selector: 'app-widget-button',
-  templateUrl: './widget-button.component.html',
-  styleUrls: ['./widget-button.component.css']
+    selector: 'app-widget-button',
+    templateUrl: './widget-button.component.html',
+    styleUrls: ['./widget-button.component.css'],
+    standalone: true
 })
 export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @ViewChild('btnDiv', {static: true, read: ElementRef}) divBtnElement: ElementRef;

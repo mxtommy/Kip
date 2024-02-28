@@ -8,8 +8,8 @@ describe('WidgetSwitchComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetSwitchComponent ]
-    })
+    imports: [WidgetSwitchComponent]
+})
     .compileComponents();
   }));
 

@@ -8,8 +8,8 @@ describe('DataBrowserComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DataBrowserComponent ]
-    })
+    imports: [DataBrowserComponent]
+})
     .compileComponents();
   }));
 

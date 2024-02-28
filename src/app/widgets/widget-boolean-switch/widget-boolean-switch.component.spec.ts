@@ -8,8 +8,8 @@ describe('WidgetBooleanSwitchComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ WidgetBooleanSwitchComponent ]
-    })
+    imports: [WidgetBooleanSwitchComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(WidgetBooleanSwitchComponent);

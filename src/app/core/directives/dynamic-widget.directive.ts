@@ -1,7 +1,8 @@
 import { Directive, ViewContainerRef } from '@angular/core';
 
 @Directive({
-  selector: '[dynamic-widget]'
+    selector: '[dynamic-widget]',
+    standalone: true
 })
 export class DynamicWidgetDirective {
   constructor(public viewContainerRef: ViewContainerRef) {

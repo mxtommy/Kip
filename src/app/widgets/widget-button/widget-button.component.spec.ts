@@ -8,8 +8,8 @@ describe('WidgetButtonComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetButtonComponent ]
-    })
+    imports: [WidgetButtonComponent]
+})
     .compileComponents();
   }));
 

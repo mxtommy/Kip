@@ -8,8 +8,8 @@ describe('WidgetHistoricalComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetHistoricalComponent ]
-    })
+    imports: [WidgetHistoricalComponent]
+})
     .compileComponents();
   }));
 

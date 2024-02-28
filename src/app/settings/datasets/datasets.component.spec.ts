@@ -8,8 +8,8 @@ describe('SettingsDatasetsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SettingsDatasetsComponent ]
-    })
+    imports: [SettingsDatasetsComponent]
+})
     .compileComponents();
   }));
 
