@@ -22,7 +22,7 @@
         <p>To dive right in and see what KIP can do!
           Load the demo configuration with simulated data from demo.signalk.org. Note that an
           internet connection is required.</p>
-        <button mat-raised-button routerLink="/demo">Load Demo</button>
+        <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
         <br/><br/>
       </li>
       <li>Connect to a Signal K server, then start configuring instruments

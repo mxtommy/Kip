@@ -27,7 +27,6 @@ import { NgChartsModule } from 'ng2-charts';
 import { AngularResizeEventModule } from 'angular-resize-event';
 import { AngularSplitModule } from 'angular-split';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
-import { ResetConfigComponent } from './app/reset-config/reset-config.component';
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
 import { AppHelpComponent } from './app/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
@@ -75,9 +74,7 @@ const appRoutes: Routes = [
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data',  component: DataBrowserComponent },
-  { path: 'reset', component: ResetConfigComponent },
-  { path: 'login', component: WidgetLoginComponent },
-  { path: 'demo', component: ResetConfigComponent }
+  { path: 'login', component: WidgetLoginComponent }
 ];
 
 /**
