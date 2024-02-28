@@ -35,6 +35,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { GaugesModule } from './gauges-module/gauges.module';
 import { AngularSplitModule } from 'angular-split';
 import { AngularResizeEventModule } from 'angular-resize-event';
+import { NgChartsModule } from 'ng2-charts';
 // Modules Pipes & Directives
 import { FilterSelfPipe } from './core/pipes/filter-self.pipe';
 import { ObjectKeysPipe } from './core/pipes/object-keys.pipe';
@@ -220,6 +221,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     RouterModule.forRoot(appRoutes, { useHash: true /*, enableTracing: true*/ } ),
     AngularSplitModule,
     AngularResizeEventModule,
+    NgChartsModule,
     BrowserAnimationsModule,
     MatMenuModule,
     MatButtonModule,
