@@ -8,8 +8,8 @@ describe('WidgetGaugeNgRadialComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetGaugeNgRadialComponent ]
-    })
+    imports: [WidgetGaugeNgRadialComponent]
+})
     .compileComponents();
   }));
 

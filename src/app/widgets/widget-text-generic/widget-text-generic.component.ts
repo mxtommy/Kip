@@ -3,9 +3,10 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 
 @Component({
-  selector: 'app-widget-text-generic',
-  templateUrl: './widget-text-generic.component.html',
-  styleUrls: ['./widget-text-generic.component.css']
+    selector: 'app-widget-text-generic',
+    templateUrl: './widget-text-generic.component.html',
+    styleUrls: ['./widget-text-generic.component.css'],
+    standalone: true
 })
 export class WidgetTextGenericComponent extends BaseWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;

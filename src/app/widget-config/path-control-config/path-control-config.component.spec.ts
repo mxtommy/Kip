@@ -8,8 +8,8 @@ describe('ModalPathSelectorComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ModalPathControlConfigComponent ]
-    })
+    imports: [ModalPathControlConfigComponent]
+})
     .compileComponents();
   }));
 

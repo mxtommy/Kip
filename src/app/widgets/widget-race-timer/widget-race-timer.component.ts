@@ -1,15 +1,19 @@
 import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent } from 'angular-resize-event';
+import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { TimersService } from '../../core/services/timers.service';
 import { IZoneState } from "../../core/interfaces/app-settings.interfaces";
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-widget-race-timer',
-  templateUrl: './widget-race-timer.component.html',
-  styleUrls: ['./widget-race-timer.component.scss']
+    selector: 'app-widget-race-timer',
+    templateUrl: './widget-race-timer.component.html',
+    styleUrls: ['./widget-race-timer.component.scss'],
+    standalone: true,
+    imports: [AngularResizeEventModule, MatButton, NgIf]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;

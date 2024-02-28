@@ -8,8 +8,8 @@ describe('WidgetLoginComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ WidgetLoginComponent ]
-    })
+    imports: [WidgetLoginComponent]
+})
     .compileComponents();
   });
 

@@ -14,13 +14,36 @@ import { NotificationsService } from '../../core/services/notifications.service'
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
-import { MatCheckboxChange } from '@angular/material/checkbox';
+import { MatCheckboxChange, MatCheckbox } from '@angular/material/checkbox';
+import { NgIf, SlicePipe } from '@angular/common';
+import { MatDivider } from '@angular/material/divider';
+import { MatButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
-  selector: 'settings-signalk',
-  templateUrl: './signalk.component.html',
-  styleUrls: ['./signalk.component.scss'],
+    selector: 'settings-signalk',
+    templateUrl: './signalk.component.html',
+    styleUrls: ['./signalk.component.scss'],
+    standalone: true,
+    imports: [
+        FormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatError,
+        MatCheckbox,
+        MatSlideToggle,
+        MatTooltip,
+        MatButton,
+        MatDivider,
+        NgIf,
+        SlicePipe,
+    ],
 })
 
 export class SettingsSignalkComponent implements OnInit {

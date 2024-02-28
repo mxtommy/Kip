@@ -8,8 +8,8 @@ describe('BooleanToggleConfigComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BooleanMultiControlOptionsComponent ]
-    })
+    imports: [BooleanMultiControlOptionsComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(BooleanMultiControlOptionsComponent);

@@ -3,12 +3,31 @@ import { INotificationConfig } from '../../core/interfaces/app-settings.interfac
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
-  selector: 'settings-general',
-  templateUrl: './general.component.html',
-  styleUrls: ['./general.component.css'],
+    selector: 'settings-general',
+    templateUrl: './general.component.html',
+    styleUrls: ['./general.component.css'],
+    standalone: true,
+    imports: [
+        FormsModule,
+        MatCheckbox,
+        MatSlideToggle,
+        MatAccordion,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelDescription,
+        MatDivider,
+        MatButton,
+    ],
 })
 export class SettingsGeneralComponent implements OnInit {
 

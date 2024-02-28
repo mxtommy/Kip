@@ -8,8 +8,8 @@ describe('WidgetAutopilotComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetAutopilotComponent ]
-    })
+    imports: [WidgetAutopilotComponent]
+})
     .compileComponents();
   }));
 

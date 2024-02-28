@@ -1,20 +1,31 @@
 import { Component, OnInit, Inject, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators }    from '@angular/forms';
-import { MatTableDataSource } from '@angular/material/table';
+import { UntypedFormGroup, UntypedFormControl, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
+import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { Subscription, Observable } from 'rxjs';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IZone } from "../../core/interfaces/app-settings.interfaces";
 import { UUID } from '../../utils/uuid';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
+import { ModalPathControlConfigComponent } from '../../widget-config/path-control-config/path-control-config.component';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatDivider } from '@angular/material/divider';
+import { MatButton } from '@angular/material/button';
+import { NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 
 @Component({
-  selector: 'settings-zones',
-  templateUrl: './zones.component.html',
-  styleUrls: ['./zones.component.css']
+    selector: 'settings-zones',
+    templateUrl: './zones.component.html',
+    styleUrls: ['./zones.component.css'],
+    standalone: true,
+    imports: [MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgSwitch, NgSwitchCase, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider]
 })
 export class SettingsZonesComponent implements OnInit, AfterViewInit {
 
@@ -123,9 +134,11 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
 
 // Add zone component
 @Component({
-  selector: 'dialog-new-zone',
-  templateUrl: 'new-zone.modal.html',
-  styleUrls: ['./new-zone.modal.css']
+    selector: 'dialog-new-zone',
+    templateUrl: 'new-zone.modal.html',
+    styleUrls: ['./new-zone.modal.css'],
+    standalone: true,
+    imports: [MatDialogTitle, FormsModule, ReactiveFormsModule, MatDialogContent, MatCheckbox, ModalPathControlConfigComponent, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, NgIf, MatError]
 })
 export class DialogNewZone {
 
@@ -175,9 +188,11 @@ export class DialogNewZone {
 
 // Edit zone component
 @Component({
-  selector: 'dialog-edit-zone',
-  templateUrl: 'edit-zone.modal.html',
-  styleUrls: ['./edit-zone.modal.css']
+    selector: 'dialog-edit-zone',
+    templateUrl: 'edit-zone.modal.html',
+    styleUrls: ['./edit-zone.modal.css'],
+    standalone: true,
+    imports: [FormsModule, MatDialogTitle, MatDialogContent, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, NgIf, MatError]
 })
 export class DialogEditZone {
 

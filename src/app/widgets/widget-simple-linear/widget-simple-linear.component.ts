@@ -1,10 +1,13 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 
 @Component({
-  selector: 'app-widget-simple-linear',
-  templateUrl: './widget-simple-linear.component.html',
-  styleUrls: ['./widget-simple-linear.component.css']
+    selector: 'app-widget-simple-linear',
+    templateUrl: './widget-simple-linear.component.html',
+    styleUrls: ['./widget-simple-linear.component.css'],
+    standalone: true,
+    imports: [SvgSimpleLinearGaugeComponent]
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
   public unitsLabel:string = "";

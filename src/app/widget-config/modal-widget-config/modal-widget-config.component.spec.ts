@@ -8,8 +8,8 @@ describe('ModalWidgetComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ModalWidgetConfigComponent ]
-    })
+    imports: [ModalWidgetConfigComponent]
+})
     .compileComponents();
   }));
 

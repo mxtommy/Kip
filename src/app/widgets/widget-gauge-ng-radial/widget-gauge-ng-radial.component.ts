@@ -1,6 +1,6 @@
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent } from 'angular-resize-event';
+import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
@@ -8,11 +8,14 @@ import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { RadialGauge, RadialGaugeOptions } from '../../gauges-module/radial-gauge';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { JsonPipe } from '@angular/common';
 
 @Component({
-  selector: 'app-widget-gauge-ng-radial',
-  templateUrl: './widget-gauge-ng-radial.component.html',
-  styleUrls: ['./widget-gauge-ng-radial.component.css']
+    selector: 'app-widget-gauge-ng-radial',
+    templateUrl: './widget-gauge-ng-radial.component.html',
+    styleUrls: ['./widget-gauge-ng-radial.component.css'],
+    standalone: true,
+    imports: [AngularResizeEventModule, RadialGauge, JsonPipe]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;

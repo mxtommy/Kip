@@ -1,17 +1,23 @@
 import { Component, OnInit, AfterViewInit, ViewChild,ChangeDetectorRef} from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatTableDataSource } from '@angular/material/table';
+import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { SignalKService } from '../core/services/signalk.service';
 import { IPathData } from "../core/interfaces/app-interfaces";
+import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
+import { NgFor, KeyValuePipe } from '@angular/common';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
 
 
 @Component({
-  selector: 'data-browser',
-  templateUrl: './data-browser.component.html',
-  styleUrls: ['./data-browser.component.css']
+    selector: 'data-browser',
+    templateUrl: './data-browser.component.html',
+    styleUrls: ['./data-browser.component.css'],
+    standalone: true,
+    imports: [MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgFor, DataBrowserRowComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, KeyValuePipe]
 })
 export class DataBrowserComponent implements OnInit, AfterViewInit {
 

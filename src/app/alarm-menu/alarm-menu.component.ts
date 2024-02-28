@@ -3,6 +3,13 @@ import { NotificationsService, Alarm, IAlarmInfo } from '../core/services/notifi
 import { AppSettingsService } from '../core/services/app-settings.service';
 import { Subscription } from 'rxjs';
 import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
+import { MatDivider } from '@angular/material/divider';
+import { MatActionList, MatListItem } from '@angular/material/list';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatBadge } from '@angular/material/badge';
+import { NgIf, NgFor, KeyValuePipe } from '@angular/common';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
 
 
 
@@ -19,9 +26,11 @@ interface IMenuItem {
 
 
 @Component({
-  selector: 'app-alarm-menu',
-  templateUrl: './alarm-menu.component.html',
-  styleUrls: ['./alarm-menu.component.scss']
+    selector: 'app-alarm-menu',
+    templateUrl: './alarm-menu.component.html',
+    styleUrls: ['./alarm-menu.component.scss'],
+    standalone: true,
+    imports: [MatButton, MatMenuTrigger, NgIf, MatBadge, MatMenu, NgFor, MatMenuItem, MatTooltip, MatActionList, MatDivider, MatListItem, KeyValuePipe]
 })
 export class AlarmMenuComponent implements OnInit, OnDestroy {
 

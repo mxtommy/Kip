@@ -2,13 +2,28 @@ import { Component, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { AppSettingsService } from '../core/services/app-settings.service';
+import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
+import { NgIf } from '@angular/common';
+import { MatTabGroup, MatTab, MatTabContent } from '@angular/material/tabs';
 
 
 
 @Component({
-  selector: 'app-help',
-  templateUrl: './app-help.component.html',
-  encapsulation: ViewEncapsulation.None,
+    selector: 'app-help',
+    templateUrl: './app-help.component.html',
+    encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [
+        MatTabGroup,
+        MatTab,
+        NgIf,
+        MatTabContent,
+        MatAccordion,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelDescription,
+    ],
 })
 export class AppHelpComponent implements OnInit {
 

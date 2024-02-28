@@ -8,8 +8,8 @@ describe('ResetConfigComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ResetConfigComponent ]
-    })
+    imports: [ResetConfigComponent]
+})
     .compileComponents();
   }));
 

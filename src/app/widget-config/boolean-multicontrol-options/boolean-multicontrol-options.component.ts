@@ -1,15 +1,26 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { UUID } from '../../utils/uuid';
+import { MatMiniFabButton } from '@angular/material/button';
+import { BooleanControlConfigComponent } from '../boolean-control-config/boolean-control-config.component';
+import { NgFor } from '@angular/common';
 
 
 @Component({
-  selector: 'boolean-multicontrol-options',
-  templateUrl: './boolean-multicontrol-options.component.html',
-  styleUrls: ['./boolean-multicontrol-options.component.css'],
+    selector: 'boolean-multicontrol-options',
+    templateUrl: './boolean-multicontrol-options.component.html',
+    styleUrls: ['./boolean-multicontrol-options.component.css'],
+    standalone: true,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        NgFor,
+        BooleanControlConfigComponent,
+        MatMiniFabButton,
+    ],
 })
 export class BooleanMultiControlOptionsComponent implements OnInit {
   @Input() multiCtrlArray!: UntypedFormArray;

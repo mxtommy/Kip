@@ -1,11 +1,18 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.service';
+import { MatMiniFabButton } from '@angular/material/button';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { DynamicWidgetContainerComponent } from '../dynamic-widget-container/dynamic-widget-container.component';
+import { NgFor, NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
+import { AngularSplitModule } from 'angular-split';
 
 @Component({
-  selector: 'layout-split',
-  templateUrl: './layout-split.component.html',
-  styleUrls: ['./layout-split.component.scss']
+    selector: 'layout-split',
+    templateUrl: './layout-split.component.html',
+    styleUrls: ['./layout-split.component.scss'],
+    standalone: true,
+    imports: [AngularSplitModule, NgFor, NgSwitch, NgSwitchCase, DynamicWidgetContainerComponent, NgIf, MatMenu, MatMenuItem, MatMiniFabButton, MatMenuTrigger]
 })
 export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
 

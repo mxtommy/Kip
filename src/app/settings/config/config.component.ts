@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { UntypedFormBuilder, UntypedFormGroup, FormControl, Validators, NgForm }    from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, FormControl, Validators, NgForm, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -9,6 +9,17 @@ import { NotificationsService } from '../../core/services/notifications.service'
 import { StorageService } from '../../core/services/storage.service';
 import { cloneDeep, forEach } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
+import { MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow } from '@angular/material/expansion';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { MatInput } from '@angular/material/input';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { NgIf, NgFor } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 interface IRemoteConfig {
   scope: string,
@@ -16,9 +27,11 @@ interface IRemoteConfig {
 }
 
 @Component({
-  selector: 'settings-config',
-  templateUrl: './config.component.html',
-  styleUrls: ['./config.component.scss']
+    selector: 'settings-config',
+    templateUrl: './config.component.html',
+    styleUrls: ['./config.component.scss'],
+    standalone: true,
+    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, MatRadioGroup, MatRadioButton, MatCheckbox, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy{
 

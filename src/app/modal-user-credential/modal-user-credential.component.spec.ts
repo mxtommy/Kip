@@ -8,8 +8,8 @@ describe('ModalUserCredentialComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ModalUserCredentialComponent ]
-    })
+    imports: [ModalUserCredentialComponent]
+})
     .compileComponents();
   });
 

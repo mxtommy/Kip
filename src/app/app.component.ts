@@ -12,14 +12,20 @@ import { DataSetService } from './core/services/data-set.service';
 import { NotificationsService } from './core/services/notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
 import { AppService } from './core/services/app-service';
-import { HAMMER_GESTURE_CONFIG } from '@angular/platform-browser';
+import { NgIf } from '@angular/common';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
+import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
+import { RouterOutlet, RouterLink } from '@angular/router';
 
 declare var NoSleep: any; //3rd party
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: true,
+    imports: [RouterOutlet, AlarmMenuComponent, MatButton, MatMenuTrigger, MatMenu, MatMenuItem, RouterLink, NgIf]
 })
 export class AppComponent implements OnInit, OnDestroy {
 

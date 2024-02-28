@@ -1,14 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl }    from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 
 import { IUnitDefaults, UnitsService, IUnit } from '../../core/services/units.service';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { NgFor, KeyValuePipe } from '@angular/common';
 
 @Component({
-  selector: 'settings-units',
-  templateUrl: './units.component.html',
-  styleUrls: ['./units.component.scss']
+    selector: 'settings-units',
+    templateUrl: './units.component.html',
+    styleUrls: ['./units.component.scss'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, NgFor, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatButton, KeyValuePipe]
 })
 export class SettingsUnitsComponent implements OnInit {
 

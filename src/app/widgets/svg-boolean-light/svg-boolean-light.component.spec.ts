@@ -8,8 +8,8 @@ describe('SvgBooleanLightComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SvgBooleanLightComponent ]
-    })
+    imports: [SvgBooleanLightComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(SvgBooleanLightComponent);

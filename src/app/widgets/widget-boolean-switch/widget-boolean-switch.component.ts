@@ -1,17 +1,23 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent } from 'angular-resize-event';
+import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
+import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
+import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
+import { SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
+import { NgFor, NgIf } from '@angular/common';
 
 
 @Component({
-  selector: 'app-widget-boolean-switch',
-  templateUrl: './widget-boolean-switch.component.html',
-  styleUrls: ['./widget-boolean-switch.component.css']
+    selector: 'app-widget-boolean-switch',
+    templateUrl: './widget-boolean-switch.component.html',
+    styleUrls: ['./widget-boolean-switch.component.css'],
+    standalone: true,
+    imports: [AngularResizeEventModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;

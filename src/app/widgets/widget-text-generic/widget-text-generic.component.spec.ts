@@ -8,8 +8,8 @@ describe('WidgetTextGenericComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetTextGenericComponent ]
-    })
+    imports: [WidgetTextGenericComponent]
+})
     .compileComponents();
   }));
 

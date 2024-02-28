@@ -1,18 +1,32 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormGroup, AbstractControl }    from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormGroup, AbstractControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { IUnitGroup } from '../../core/services/units.service';
 import { SignalKService } from '../../core/services/signalk.service';
 import { DataSetService, IDataSet } from '../../core/services/data-set.service';
 import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { IAddNewPath } from '../paths-options/paths-options.component';
+import { IAddNewPath, PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
+import { MatOption, MatOptgroup } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
+import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { NgIf, NgFor } from '@angular/common';
+import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
 
 @Component({
-  selector: 'modal-widget-config',
-  templateUrl: './modal-widget-config.component.html',
-  styleUrls: ['./modal-widget-config.component.css']
+    selector: 'modal-widget-config',
+    templateUrl: './modal-widget-config.component.html',
+    styleUrls: ['./modal-widget-config.component.css'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, NgIf, MatFormField, MatLabel, MatInput, MatCheckbox, DisplayDatetimeComponent, MatSelect, MatOption, MatTabLabel, BooleanMultiControlOptionsComponent, PathsOptionsComponent, MatRadioGroup, MatRadioButton, NgFor, MatOptgroup, MatDivider, MatDialogActions, MatButton, MatDialogClose]
 })
 export class ModalWidgetConfigComponent implements OnInit {
 

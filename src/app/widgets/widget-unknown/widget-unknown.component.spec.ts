@@ -8,8 +8,8 @@ describe('WidgetUnknownComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetUnknownComponent ]
-    })
+    imports: [WidgetUnknownComponent]
+})
     .compileComponents();
   }));
 

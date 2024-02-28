@@ -4,8 +4,8 @@
  */
 import { Component, OnInit, OnDestroy, Input, Inject, ViewChild, ViewContainerRef, ElementRef, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { UntypedFormControl } from '@angular/forms';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
+import { UntypedFormControl, FormsModule } from '@angular/forms';
 import { cloneDeep } from "lodash-es";
 
 import { DynamicWidgetDirective } from '../core/directives/dynamic-widget.directive';
@@ -14,12 +14,22 @@ import { ModalWidgetConfigComponent } from '../widget-config/modal-widget-config
 import { AppSettingsService } from '../core/services/app-settings.service';
 import { WidgetManagerService } from '../core/services/widget-manager.service';
 import { WidgetListService, widgetList } from '../core/services/widget-list.service';
+import { MatDivider } from '@angular/material/divider';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { MatMiniFabButton, MatButton } from '@angular/material/button';
+import { NgIf, NgFor, KeyValuePipe } from '@angular/common';
+import { MatCard } from '@angular/material/card';
 
 
 @Component({
-  selector: 'app-dynamic-widget-container',
-  templateUrl: './dynamic-widget-container.component.html',
-  styleUrls: ['./dynamic-widget-container.component.scss']
+    selector: 'app-dynamic-widget-container',
+    templateUrl: './dynamic-widget-container.component.html',
+    styleUrls: ['./dynamic-widget-container.component.scss'],
+    standalone: true,
+    imports: [MatCard, DynamicWidgetDirective, NgIf, MatMiniFabButton]
 })
 export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   @Input('splitUUID') splitUUID: string;   // Get UUID from layout-split. We use it as the widgetUUID later for the widget
@@ -172,9 +182,11 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
 
 @Component({
-  selector: 'app-dynamic-widget-container-modal',
-  templateUrl: './dynamic-widget-container.modal.html',
-  styleUrls: ['./dynamic-widget-container.component.scss']
+    selector: 'app-dynamic-widget-container-modal',
+    templateUrl: './dynamic-widget-container.modal.html',
+    styleUrls: ['./dynamic-widget-container.component.scss'],
+    standalone: true,
+    imports: [FormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, NgFor, MatTab, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, KeyValuePipe]
 })
 export class DynamicWidgetContainerModalComponent implements OnInit {
 

@@ -1,7 +1,8 @@
 import {Directive, ElementRef, Input, AfterViewInit, HostListener} from '@angular/core';
 
 @Directive({
-  selector: '[fit-text]'
+    selector: '[fit-text]',
+    standalone: true
 })
 export class FitTextDirective {
 

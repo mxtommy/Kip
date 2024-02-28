@@ -8,8 +8,8 @@ describe('SvgAutopilotComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SvgAutopilotComponent ]
-    })
+    imports: [SvgAutopilotComponent]
+})
     .compileComponents();
   }));
 

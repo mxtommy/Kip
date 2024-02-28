@@ -8,8 +8,8 @@ describe('WidgetDateGenericComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetDateGenericComponent ]
-    })
+    imports: [WidgetDateGenericComponent]
+})
     .compileComponents();
   }));
 

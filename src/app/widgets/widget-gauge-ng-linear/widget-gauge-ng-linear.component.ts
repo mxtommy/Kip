@@ -1,17 +1,20 @@
 import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent } from 'angular-resize-event';
+import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGauge, LinearGaugeOptions } from '../../gauges-module/linear-gauge';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
+import { JsonPipe } from '@angular/common';
 
 @Component({
-  selector: 'app-widget-gauge-ng-linear',
-  templateUrl: './widget-gauge-ng-linear.component.html',
-  styleUrls: ['./widget-gauge-ng-linear.component.scss']
+    selector: 'app-widget-gauge-ng-linear',
+    templateUrl: './widget-gauge-ng-linear.component.html',
+    styleUrls: ['./widget-gauge-ng-linear.component.scss'],
+    standalone: true,
+    imports: [AngularResizeEventModule, LinearGauge, JsonPipe]
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {

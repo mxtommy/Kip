@@ -8,8 +8,8 @@ describe('SvgSimpleLinearGaugeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SvgSimpleLinearGaugeComponent ]
-    })
+    imports: [SvgSimpleLinearGaugeComponent]
+})
     .compileComponents();
   }));
 

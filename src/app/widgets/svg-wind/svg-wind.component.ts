@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit } from '@angular/core';
+import { NgIf } from '@angular/common';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
 
@@ -9,8 +10,10 @@ interface ISVGRotationObject {
 }
 
 @Component({
-  selector: 'app-svg-wind',
-  templateUrl: './svg-wind.component.html'
+    selector: 'app-svg-wind',
+    templateUrl: './svg-wind.component.html',
+    standalone: true,
+    imports: [NgIf]
 })
 export class SvgWindComponent implements AfterViewInit {
   @ViewChild('compassAnimate', { static: true, read: ElementRef }) compassAnimate!: ElementRef;

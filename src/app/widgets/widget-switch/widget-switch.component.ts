@@ -5,9 +5,10 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 
 @Component({
-  selector: 'app-widget-switch',
-  templateUrl: './widget-switch.component.html',
-  styleUrls: ['./widget-switch.component.css']
+    selector: 'app-widget-switch',
+    templateUrl: './widget-switch.component.html',
+    styleUrls: ['./widget-switch.component.css'],
+    standalone: true
 })
 export class WidgetSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: number = null;

@@ -8,8 +8,8 @@ describe('UnitWindowComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DynamicWidgetContainerComponent ]
-    })
+    imports: [DynamicWidgetContainerComponent]
+})
     .compileComponents();
   }));
 

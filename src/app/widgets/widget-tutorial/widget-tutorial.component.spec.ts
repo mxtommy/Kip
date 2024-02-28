@@ -8,8 +8,8 @@ describe('WidgetTutorialComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetTutorialComponent ]
-    })
+    imports: [WidgetTutorialComponent]
+})
     .compileComponents();
   }));
 

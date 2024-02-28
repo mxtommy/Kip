@@ -1,10 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 
 @Component({
-  selector: 'app-widget-gauge',
-  templateUrl: './widget-gauge.component.html',
-  styleUrls: ['./widget-gauge.component.css']
+    selector: 'app-widget-gauge',
+    templateUrl: './widget-gauge.component.html',
+    styleUrls: ['./widget-gauge.component.css'],
+    standalone: true,
+    imports: [GaugeSteelComponent]
 })
 export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;

@@ -1,6 +1,12 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IWidgetPath } from '../../core/interfaces/widgets-interface';
+import { ObjectKeysPipe } from '../../core/pipes/object-keys.pipe';
+import { ModalPathControlConfigComponent } from '../path-control-config/path-control-config.component';
+import { NgIf, NgFor } from '@angular/common';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatCheckbox } from '@angular/material/checkbox';
 
 export interface IAddNewPath {
   groupName: string,
@@ -9,9 +15,11 @@ export interface IAddNewPath {
 
 
 @Component({
-  selector: 'paths-options',
-  templateUrl: './paths-options.component.html',
-  styleUrls: ['./paths-options.component.css']
+    selector: 'paths-options',
+    templateUrl: './paths-options.component.html',
+    styleUrls: ['./paths-options.component.css'],
+    standalone: true,
+    imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, NgIf, NgFor, ModalPathControlConfigComponent, ObjectKeysPipe]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {
   @Input() formGroupName!: string;

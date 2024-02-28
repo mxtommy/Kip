@@ -4,12 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 
 import { AppSettingsService } from '../core/services/app-settings.service';
 import { LayoutSplitsService } from '../core/services/layout-splits.service';
+import { LayoutSplitComponent } from '../layout-split/layout-split.component';
 
 
 @Component({
-  selector: 'app-root-display',
-  templateUrl: './root-display.component.html',
-  styleUrls: []
+    selector: 'app-root-display',
+    templateUrl: './root-display.component.html',
+    styleUrls: [],
+    standalone: true,
+    imports: [LayoutSplitComponent]
 })
 export class RootDisplayComponent implements OnInit, OnDestroy {
 
