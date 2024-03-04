@@ -3,7 +3,8 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDataset } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
-import { BaseChartDirective } from 'ng2-charts';
+// import { BaseChartDirective } from 'ng2-charts';
+// import Chart from 'chart.js/auto'
 import { Chart, ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
@@ -12,103 +13,11 @@ import 'chartjs-adapter-date-fns';
 @Component({
   selector: 'widget-data-chart',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [],
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss'
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
-  @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
-
-  public lineChartData: ChartData <'line', {timestamp: number, value?: number, sma?: number, seriesAverage?: number, seriesMinimum?: number, seriesMaximum?: number } []> = {
-    datasets: [
-      {
-        label: 'Value',
-        data: [],
-        parsing: {
-          yAxisKey: 'value',
-        },
-        tension: 0,
-      },
-      {
-        label: 'SMA',
-        data: [],
-        parsing: {
-          yAxisKey: 'sma'
-        }
-      },
-      {
-        label: 'seriesAverage',
-        data: [],
-        parsing: {
-          yAxisKey: 'seriesAverage'
-        }
-      },
-      {
-        label: 'seriesMinimum',
-        data: [],
-        parsing: {
-          yAxisKey: 'seriesMinimum'
-        }
-      },
-      {
-        label: 'seriesMaximum',
-        data: [],
-        parsing: {
-          yAxisKey: 'seriesMaximum'
-        }
-      }
-    ]
-  };
-  public lineChartOptions: ChartConfiguration['options'] = {
-    parsing: {
-      xAxisKey: 'timestamp',
-    },
-    datasets: {
-      line: {
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        tension:  0.4,
-      }
-    },
-    animations: {
-      tension: {
-        easing: "easeInOutCubic"
-      }
-    },
-    plugins: {
-      annotation: {
-        annotations: {
-          maximumLine: {
-            type: 'line',
-            scaleID: 'y',
-            value: 15,
-            borderColor: 'red',
-            drawTime: 'beforeDatasetsDraw',
-            label: {
-              display: true,
-              content: "Maximum"
-            }
-          },
-          meanLine: {
-            type: 'line',
-            scaleID: 'y',
-            value: 1,
-            borderColor: 'green',
-            drawTime: 'beforeDatasetsDraw',
-            label: {
-              display: true,
-              content: "Minimum"
-            }
-          }
-        }
-      },
-    }
-  }
-  public lineChartType: ChartType = 'line';
-  private dsServiceSub: Subscription = null;
-  private datasetConfig: IDatasetServiceDatasetConfig = null;
-
   private transformDataset = (rawDs: IDatasetServiceDataset[], datasetIndex: number) => {
     let newDs = [];
     rawDs.map(row => {
@@ -148,6 +57,100 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     return newRow;
   };
 
+  // @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+  @ViewChild('chartTrends', {static: true, read: ElementRef}) chartTrends: ElementRef;
+
+  public lineChartData: ChartData <'line', {timestamp: number, value?: number, sma?: number, seriesAverage?: number, seriesMinimum?: number, seriesMaximum?: number } []> = {
+    datasets: [
+      {
+        label: 'Value',
+        data: [],
+        parsing: {
+          yAxisKey: 'value',
+        },
+        tension: 0,
+      },
+      {
+        label: 'SMA',
+        data: [],
+        parsing: {
+          yAxisKey: 'sma'
+        }
+      },
+      {
+        label: 'seriesAverage',
+        data: [],
+        parsing: {
+          yAxisKey: 'seriesAverage'
+        }
+      },
+      {
+        label: 'seriesMinimum',
+        data: [],
+        parsing: {
+          yAxisKey: 'seriesMinimum'
+        },
+        hidden: true
+      },
+      {
+        label: 'seriesMaximum',
+        data: [],
+        parsing: {
+          yAxisKey: 'seriesMaximum'
+        },
+        hidden: true
+      }
+    ],
+  };
+  public lineChartOptions: ChartConfiguration['options'] = {
+    parsing: {
+      xAxisKey: 'timestamp',
+    },
+    datasets: {
+      line: {
+        pointRadius: 0, // disable for all `'line'` datasets
+        pointHoverRadius: 0, // disable for all `'line'` datasets
+        tension:  0.4,
+      }
+    },
+    animations: {
+      tension: {
+        easing: "easeInOutCubic"
+      }
+    },
+    plugins: {
+      annotation: {
+        annotations: {
+          maximumLine: {
+            type: 'line',
+            scaleID: 'y',
+            value: null,
+            drawTime: 'beforeDatasetsDraw',
+            label: {
+              display: true,
+              content: "Max: 10"
+            }
+          },
+          minimumLine: {
+            type: 'line',
+            scaleID: 'y',
+            value: null,
+            drawTime: 'beforeDatasetsDraw',
+            label: {
+              display: true,
+              content: "Min: 9"
+            }
+          }
+        }
+      },
+    }
+  }
+  public lineChartType: ChartType = 'line';
+  private chart;
+  private dsServiceSub: Subscription = null;
+  private datasetConfig: IDatasetServiceDatasetConfig = null;
+
+
   constructor(private dsService: DatasetService) {
     super();
 
@@ -170,6 +173,15 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   ngOnInit(): void {
     this.validateConfig();
     this.setChartOptions();
+
+    this.chart = new Chart(
+      this.chartTrends.nativeElement.getContext('2d'),
+      {
+        type: this.lineChartType,
+        data: this.lineChartData,
+        options: this.lineChartOptions,
+      }
+    );
 
     // Get dataset configuration
     this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.dataSetUUID);
@@ -216,8 +228,13 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           dataset.data.push(this.transformDatasetRow(dsDatasets, dsIndex));
         });
 
+        if (this.chart.options.plugins.annotation.annotations.minimumLine.value ! = (this.lineChartData.datasets[3].data[this.lineChartData.datasets[3].data.length - 1])) {
+          this.chart.options.plugins.annotation.annotations.minimumLine.value = this.lineChartData.datasets[3].data[this.lineChartData.datasets[3].data.length - 1].seriesMinimum;
+        }
+        if (this.chart.options.plugins.annotation.annotations.maximumLine.value ! = (this.lineChartData.datasets[4].data[this.lineChartData.datasets[4].data.length - 1])) {
+          this.chart.options.plugins.annotation.annotations.maximumLine.value = this.lineChartData.datasets[4].data[this.lineChartData.datasets[4].data.length - 1].seriesMaximum;
+        }
 
-        this.chart.options.plugins.annotation.annotations.meanLine.value = 100;
         this.chart?.update('none');
       }
     );
