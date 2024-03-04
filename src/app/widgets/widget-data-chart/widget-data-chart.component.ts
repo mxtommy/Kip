@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDataset } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ import 'chartjs-adapter-date-fns';
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+  @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
   public lineChartData: ChartData <'line', {timestamp: number, value?: number, sma?: number, seriesAverage?: number, seriesMinimum?: number, seriesMaximum?: number } []> = {
     datasets: [
@@ -89,7 +90,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               content: "Maximum"
             }
           },
-          minimumLine: {
+          meanLine: {
             type: 'line',
             scaleID: 'y',
             value: 1,
@@ -146,7 +147,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     }
     return newRow;
   };
-
 
   constructor(private dsService: DatasetService) {
     super();
@@ -216,6 +216,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           dataset.data.push(this.transformDatasetRow(dsDatasets, dsIndex));
         });
 
+
+        this.chart.options.plugins.annotation.annotations.meanLine.value = 100;
         this.chart?.update('none');
       }
     );
