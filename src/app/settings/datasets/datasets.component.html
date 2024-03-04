@@ -15,16 +15,16 @@
           <mat-cell class="pathCell" *matCellDef="let element" data-label="Path: "> {{element.path}} </mat-cell>
         </ng-container>
 
-        <!-- updateTimer Column -->
-        <ng-container matColumnDef="updateTimer">
+        <!-- sampleTime Column -->
+        <ng-container matColumnDef="sampleTime">
           <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Interval </mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Interval: ">every {{element.updateTimer}} sec</mat-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Interval: ">every {{element.sampleTime / 1000}} sec</mat-cell>
         </ng-container>
 
         <!-- dataPoints Column -->
         <ng-container matColumnDef="dataPoints">
           <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Data Points </mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Data Points: ">{{element.dataPoints}} times</mat-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Data Points: ">{{element.maxDataPoints}} times</mat-cell>
         </ng-container>
 
         <ng-container matColumnDef="actions">

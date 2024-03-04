@@ -1,46 +1,42 @@
-import { Injectable, NgZone } from '@angular/core';
-import { Subscription, BehaviorSubject, sampleTime, pipe, UnaryFunction, filter, OperatorFunction, Observable, interval } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { Subscription, BehaviorSubject, pipe, UnaryFunction, filter, OperatorFunction, Observable, sampleTime } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKService } from './signalk.service';
+import { SignalKService, pathRegistrationValue } from './signalk.service';
 import { UUID } from'../../utils/uuid'
+import { cloneDeep } from 'lodash-es';
 
-
-export interface dataPoint {
-  timestamp: number;
-  average: number;
-  minValue: number;
-  maxValue: number;
-}
-
-interface dataCache {
-  runningTotal: number;
-  numberOfPoints: number;
-  minValue: number;
-  maxValue: number;
-}
-
-export interface IDataSet {
-  uuid: string;
-  path: string;
-  signalKSource: string;
-  updateTimer: number; //number of seconds between new dataPoints
-  dataPoints: number; // how many datapoints do we keep?
-  name?:  string; // sometimes used for display purposes
-};
-
-
-interface DataSetSub {
+interface IDatasetServiceDataSource {
   uuid: string;
   pathSub: Subscription;
   updateTimerSub: Subscription;
-  data: dataPoint[];
-  dataCache: dataCache // running calculations
+  dataset: IDatasetServiceDataset[];
 };
 
-interface registration {
+export interface IDatasetServiceDataset {
+  timestamp: number;
+  data: {
+    value: number;
+    sma: number;
+    seriesAverage: number;
+    seriesMinimum: number;
+    seriesMaximum: number;
+  }
+}
+
+export interface IDatasetServiceDatasetConfig {
   uuid: string;
-  dataSetUuid: string;
-  observable: BehaviorSubject<Array<dataPoint>>;
+  path: string;
+  signalKSource: string;
+  sampleTime: number; // number of milliseconds between data capture
+  maxDataPoints: number; // how many data points do we keep
+  smaPeriod: number;  // number of previous plus current value to use as the moving average
+  label?:  string; // label of the dataset
+};
+
+interface IDatasetServiceObserverRegistration {
+  uuid: string;
+  datasetUuid: string;
+  rxjsSubject: BehaviorSubject<IDatasetServiceDataset>;
 }
 
 function filterNullish<T>(): UnaryFunction<Observable<T | null | undefined>, Observable<T>> {
@@ -50,245 +46,336 @@ function filterNullish<T>(): UnaryFunction<Observable<T | null | undefined>, Obs
 }
 
 @Injectable()
-export class DataSetService {
-
-  dataSets: IDataSet[] = [];
-  dataSetSub: DataSetSub[] = [];
-  dataSetRegister: registration[] = [];
+export class DatasetService {
+  private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
+  private _svcDataSource: IDatasetServiceDataSource[] = [];
+  private _svcObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
   constructor(
-    private AppSettingsService: AppSettingsService,
-    private SignalKService: SignalKService,
-    private zones: NgZone
+    private appSettings: AppSettingsService,
+    private signalk: SignalKService
   ) {
-      this.dataSets = AppSettingsService.getDataSets();
+      this._svcDatasetConfigs = appSettings.getDataSets();
   }
 
-  public startAllDataSets() {
-    console.log("[DataSet Service] Starting " + this.dataSets.length.toString() + " DataSets");
-    for (let i = 0; i < this.dataSets.length; i++) {
-      this.startDataSet(this.dataSets[i].uuid);
+  /**
+   * Start all Dataset service's _svcDatasetConfigs
+   *
+   * @memberof DataSetService
+   */
+  public startAll(): void {
+    console.log("[DataSet Service] Starting " + this._svcDatasetConfigs.length.toString() + " Dataset");
+    for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
+      this.start(this._svcDatasetConfigs[i].uuid);
     }
   }
 
-  public subscribeDataSet(uuid, dataSetUuid) {
-    //see if already subscribed, if yes return that...
-    let registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid == dataSetUuid));
-    if (registerIndex >= 0) { // exists
-      return this.dataSetRegister[registerIndex].observable.asObservable();
+  /**
+   * Starts a historical DataSource's dataset value recording process based on the requested
+   * DataSource UUID.
+   *
+   * @private
+   * @param {string} uuid The UUID of the DataSource to start
+   * @return {*}  {void}
+   * @memberof DataSetService
+   */
+  private start(uuid: string): void {
+    const dsDef: IDatasetServiceDatasetConfig = this._svcDatasetConfigs[this._svcDatasetConfigs.findIndex(dsDef => dsDef.uuid == uuid)];
+    if (!dsDef) {
+      console.warn(`[DataSet Service] Requested dataset UUID not found: ${uuid}`);
+      return;
     }
 
-
-    //find if we already have a value for this dataSet to return.
-    let currentDataSet: dataPoint[];
-    let dataIndex = this.dataSetSub.findIndex(dataSet => dataSet.uuid == dataSetUuid);
-    if (dataIndex >= 0) { // exists
-      currentDataSet = this.dataSetSub[dataIndex].data;
-    } else {
-      currentDataSet = null;
+    // Cleanup existing dataset if present.
+    const dsIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
+    if (dsIndex >= 0) {
+      this._svcDataSource.splice(dsIndex,1);
     }
 
-    //register
-    this.dataSetRegister.push({
-      uuid: uuid,
-      dataSetUuid: dataSetUuid,
-      observable: new BehaviorSubject<Array<dataPoint>>(currentDataSet)
-    });
-    // should be subscribed now, use search now as maybe someone else adds something and it's no longer last in array :P
-    registerIndex = this.dataSetRegister.findIndex(registration => (registration.uuid == uuid) && (registration.dataSetUuid == dataSetUuid));
-    return this.dataSetRegister[registerIndex].observable.asObservable();
+    // Add a fresh dataset
+    const dataSource: IDatasetServiceDataSource = this._svcDataSource[
+      this._svcDataSource.push({
+        uuid: uuid,
+        pathSub: null,
+        updateTimerSub: null,
+        dataset: []
+      }) - 1
+    ];
+
+    // Subscribe to path data and update dataset upon reception
+    dataSource.pathSub = this.signalk.subscribePath(dsDef.uuid, dsDef.path, dsDef.signalKSource).pipe(sampleTime(dsDef.sampleTime)).subscribe(
+      (newValue: pathRegistrationValue) => {
+        if (newValue.value === null) return; // we don't need null values
+
+        // Keep the array to specified size before adding new value
+        if (dsDef.maxDataPoints == dataSource.dataset.length) {
+          dataSource.dataset.shift();
+        }
+
+        // Add new data to dataset
+        const newDataPoint: IDatasetServiceDataset = this.updateDataset(dsDef.smaPeriod, dataSource.dataset, newValue.value as number)
+        dataSource.dataset.push(newDataPoint);
+
+        // Update Subject. All Subscribers are notified
+        this._svcObserverRegistry.forEach(
+          (registration :IDatasetServiceObserverRegistration) => {
+            if (registration.datasetUuid === dataSource.uuid) {
+              registration.rxjsSubject.next(newDataPoint);
+            }
+          }
+        );
+      }
+    );
   }
 
-  private stopDataSet(uuid: string) {
-    // stop any registrations to this dataset...
-    for (let i = this.dataSetRegister.length-1; i >= 0; i--) { //backwards because lengh will change...
-      if (this.dataSetRegister[i].uuid == uuid) {
-        this.dataSetRegister.splice(i,1);
+  /**
+   * Used to stops the recording process of DataSource, including all its
+   * related Observers.
+   *
+   * @private
+   * @param {string} uuid The UUID of the DataSource to stop
+   * @memberof DataSetService
+   */
+  private stop(uuid: string) {
+    // stop any registrations to this DataSource...
+    for (let i = this._svcObserverRegistry.length - 1; i >= 0; i--) { //backwards because length will change...
+      if (this._svcObserverRegistry[i].uuid == uuid) {
+        this._svcObserverRegistry.splice(i, 1);
       }
     }
 
-     //delete current DataSetSub if it exists...
-    let dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
+      //delete current DataSource if it exists...
+    let dataSubIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
     if (dataSubIndex >= 0) {
       // stop pathSub
-      this.dataSetSub[dataSubIndex].pathSub.unsubscribe();
-      //stop TimerSub
-      this.dataSetSub[dataSubIndex].updateTimerSub.unsubscribe();
+      this._svcDataSource[dataSubIndex].pathSub.unsubscribe();
       //delete DataSub
-      this.dataSetSub.splice(dataSubIndex,1);
-     }
+      this._svcDataSource.splice(dataSubIndex,1);
+      }
   }
 
-  private startDataSet(uuid: string) {
-    let dataIndex = this.dataSets.findIndex(dataSet => dataSet.uuid == uuid);
-    if (dataIndex < 0) { return; }//not found...
-
-    //delete current DataSetSub if it exists...
-    let dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
-    if (dataSubIndex >= 0) {
-      this.dataSetSub.splice(dataSubIndex,1);
+  /**
+   * Subscribes to a dataset and returns the Observable. If an Observable
+   * already exist, it will be returned, else a new Observable is created.
+   *
+   * @param {string} uuid The UUID is the subscriber/listener. Usually cal calling Widget's UUID
+   * @param {string} dataSetUuid The UUID is the dataset
+   * @return {*}  {Observable<dataset[]>} Observable of data point array
+   * @memberof DataSetService
+   */
+  public getDatasetObservable(uuid: string, dataSetUuid: string): Observable<IDatasetServiceDataset> {
+    // If already subscribed to, return it
+    let registerIndex = this._svcObserverRegistry.findIndex(registration => (registration.uuid == uuid) && (registration.datasetUuid == dataSetUuid));
+    if (registerIndex >= 0) { // exists
+      return this._svcObserverRegistry[registerIndex].rxjsSubject.asObservable();
     }
 
-    this.dataSetSub.push({
-      uuid: uuid,
-      pathSub: null,
-      updateTimerSub: null,
-      data: null,
-      dataCache: null,
-    });
-    dataSubIndex = this.dataSetSub.findIndex(dataSub => dataSub.uuid == uuid);
-
-
-    // initialize data
-    this.dataSetSub[dataSubIndex].data = [];
-
-    // initialize dataCache
-    this.dataSetSub[dataSubIndex].dataCache = {
-        runningTotal: 0,
-        numberOfPoints: 0,
-        minValue: null,
-        maxValue: null
-    }
-
-    //Subscribe to path data
-    this.dataSetSub[dataSubIndex].pathSub = this.SignalKService.subscribePath(this.dataSets[dataIndex].uuid, this.dataSets[dataIndex].path, this.dataSets[dataIndex].signalKSource).subscribe(
-      newValue => {
-        this.updateDataCache(uuid, newValue.value);
-    });
-
-    // start update timer out side of zones to remove change detection triggers. We observe the array data updates, not the data directly coming from SK
-    this.zones.runOutsideAngular(() => {
-      this.dataSetSub[dataSubIndex].updateTimerSub = interval(1000 * this.dataSets[dataIndex].updateTimer).pipe(
-        filterNullish()
-        ).subscribe(x => {
-          this.aggregateDataCache(uuid);
-        });
-    });
+    // Create new empty Subject and return Observable
+    return this._svcObserverRegistry[
+      this._svcObserverRegistry.push({
+        uuid: uuid,
+        datasetUuid: dataSetUuid,
+        rxjsSubject: new BehaviorSubject<IDatasetServiceDataset>(null)
+      }) - 1].rxjsSubject.asObservable();
   }
 
-  public addDataSet(path: string, source: string, updateTimer: number, dataPoints: number ) {
+  /**
+   * Creates a new Dataset and starts the data capture process.
+   *
+   * @param {string} path Signal K path of the data to record
+   * @param {string} source The path's chosen source
+   * @param {number} sampleTime Data sample time in secondes
+   * @param {number} dataPoints The number of data points entries to be kept. New data will push older data out of the data array
+   * @param {string} dataPoints Optional name of the Dataset
+   * @memberof DataSetService
+   */
+  public create(path: string, source: string, sampleTime: number, dataPoints: number, smaPeriod: number, label?: string ) {
     let uuid = UUID.create();
 
-    let newSub: IDataSet = {
+    let newSvcDataset: IDatasetServiceDatasetConfig = {
       uuid: uuid,
       path: path,
       signalKSource: source,
-      updateTimer: updateTimer,
-      dataPoints: dataPoints
+      sampleTime: sampleTime,
+      maxDataPoints: dataPoints,
+      smaPeriod: smaPeriod,
+      label: path + ', Interval: ' + sampleTime.toString() + ', DataPoints: ' + dataPoints?.toString()
     };
-    this.dataSets.push(newSub);
+    this._svcDatasetConfigs.push(newSvcDataset);
 
-    this.startDataSet(uuid);
-    this.AppSettingsService.saveDataSets(this.dataSets);
+    this.start(uuid);
+    this.appSettings.saveDataSets(this._svcDatasetConfigs);
   }
 
-  public updateDataset(dataset: IDataSet): void {
-    // index of sub and dataset can be different after updating datasets
+  /**
+   * Updates the dataset definition and persists it's configuration to application settings.
+   *
+   * @param {IDatasetServiceDatasetConfig} dataset Dataset configuration object of type IDatasetServiceDatasetConfig
+   * @memberof DataSetService
+   */
+  public edit(dataset: IDatasetServiceDatasetConfig): void {
+    // index of sub and dataset can be different after updating _svcDatasetConfigs
     // get sub index for this dataset
-    let datasetSubIndex = this.dataSetSub.findIndex(sub => sub.uuid === dataset.uuid);
-    if (datasetSubIndex >= 0) { // sub exist
-      this.stopDataSet(dataset.uuid);
+    let dsConfigIndex = this._svcDataSource.findIndex(sub => sub.uuid === dataset.uuid);
+    if (dsConfigIndex >= 0) { // sub exist
+      this.stop(dataset.uuid);
     }
 
     // get index for this dataset
-    let datasetIndex = this.dataSets.findIndex(dset => dset.uuid === dataset.uuid);
+    let datasetIndex = this._svcDatasetConfigs.findIndex(dset => dset.uuid === dataset.uuid);
     if (datasetIndex >= 0) { // dataset exist
-      this.dataSets.splice(datasetIndex, 1, dataset);
-      this.startDataSet(dataset.uuid);
+      this._svcDatasetConfigs.splice(datasetIndex, 1, dataset);
+      this.start(dataset.uuid);
     }
 
-    this.AppSettingsService.saveDataSets(this.dataSets);
+    this.appSettings.saveDataSets(this._svcDatasetConfigs);
   }
 
-  public deleteDataSet(uuid: string) {
-    // index of sub and dataset can be different after updating datasets
+  /**
+  * Stops and deletes both dataset definition and process.
+  *
+  * @param {string} uuid The dataset's UUID to delete
+  * @memberof DataSetService
+  */
+  public remove(uuid: string): void {
+    // index of sub and dataset can be different after updating _svcDatasetConfigs
     // get sub index
-    let datasetSubIndex = this.dataSetSub.findIndex(sub => sub.uuid === uuid);
-    if (datasetSubIndex >= 0) { // sub exist
-      this.stopDataSet(uuid);
+    let dsConfigIndex = this._svcDataSource.findIndex(sub => sub.uuid === uuid);
+    if (dsConfigIndex >= 0) { // sub exist
+      this.stop(uuid);
     }
 
-     // get index for this dataset
-    let datasetIndex = this.dataSets.findIndex(dset => dset.uuid === uuid);
+    // get index for this dataset
+    let datasetIndex = this._svcDatasetConfigs.findIndex(dset => dset.uuid === uuid);
     if (datasetIndex >= 0) { // dataset exist
-      this.dataSets.splice(datasetIndex,1);
+      this._svcDatasetConfigs.splice(datasetIndex,1);
     }
 
-    this.AppSettingsService.saveDataSets(this.dataSets);
+    this.appSettings.saveDataSets(this._svcDatasetConfigs);
   }
 
-  public getDataSets(): IDataSet[] {
-    let result: IDataSet[] = [];
-    for (let i=0;i<this.dataSets.length; i++) {
+  /**
+   * Get all of the recorded historical data (dataset arrays) from the service for a given DataSource.
+   *
+   * @param {string} dataSourceUUID The UUID string of the target DataSource
+   * @return {*}  {(IDatasetServiceDataset[] | null)} An of datasets containing all the recorded data, or null if not found.
+   * @memberof DatasetService
+   */
+  public getHistoricalData(dataSourceUUID: string): IDatasetServiceDataset[] | null {
+    const index = this._svcDataSource.findIndex(ds => ds.uuid === dataSourceUUID);
+    if (index >= 0) {
+      return cloneDeep(this._svcDataSource[index].dataset);
+    } else {
+      return null;
+    }
+  }
 
-      let name = this.dataSets[i].path + ' - Interval:' + this.dataSets[i].updateTimer.toString() + ' - DataPoints:' + this.dataSets[i].dataPoints.toString()
+  /**
+   * Returns all existing dataset configuration
+   *
+   * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all dataset configurations
+   * @memberof DataSetService
+   */
+  public list(): IDatasetServiceDatasetConfig[] {
+    let result: IDatasetServiceDatasetConfig[] = [];
+    for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
+
+      if (this._svcDatasetConfigs[i].label == "") {
+        this._svcDatasetConfigs[i].label = this._svcDatasetConfigs[i].path + ' - Interval:' + this._svcDatasetConfigs[i].sampleTime.toString() + ' - DataPoints:' + this._svcDatasetConfigs[i].maxDataPoints?.toString()
+      }
+
       result.push({
-        uuid: this.dataSets[i].uuid,
-        path: this.dataSets[i].path,
-        signalKSource: this.dataSets[i].signalKSource,
-        updateTimer: this.dataSets[i].updateTimer,
-        dataPoints: this.dataSets[i].dataPoints,
-        name: name
+        uuid: this._svcDatasetConfigs[i].uuid,
+        path: this._svcDatasetConfigs[i].path,
+        signalKSource: this._svcDatasetConfigs[i].signalKSource,
+        sampleTime: this._svcDatasetConfigs[i].sampleTime,
+        maxDataPoints: this._svcDatasetConfigs[i].maxDataPoints,
+        smaPeriod: this._svcDatasetConfigs[i].smaPeriod,
+        label: this._svcDatasetConfigs[i].label
       });
     }
     return result;
   }
 
-  private aggregateDataCache(uuid: string) {
-    let avg: number = null;
-
-    //get index
-    let dataSetIndex = this.dataSets.findIndex(sub => sub.uuid == uuid);
-    let dataSubIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
-
-    // update average
-    if (this.dataSetSub[dataSubIndex].dataCache.numberOfPoints > 0) { // if it's still 0, we had no update this timeperiod so leave it as null...
-      avg = this.dataSetSub[dataSubIndex].dataCache.runningTotal / this.dataSetSub[dataSubIndex].dataCache.numberOfPoints;
-    }
-
-    // remove first item if we have dataPoints points.
-    if (this.dataSetSub[dataSubIndex].data.length >= this.dataSets[dataSetIndex].dataPoints) {
-      this.dataSetSub[dataSubIndex].data.shift();
-    }
-
-    // add our new dataPoint to end of dataset.
-    let newDataPoint: dataPoint = {
-      timestamp: Date.now(),
-      average: avg,
-      minValue: this.dataSetSub[dataSubIndex].dataCache.minValue,
-      maxValue: this.dataSetSub[dataSubIndex].dataCache.maxValue
-    }
-    this.dataSetSub[dataSubIndex].data.push(newDataPoint);
-
-    // reset dataCache
-    this.dataSetSub[dataSubIndex].dataCache = {
-          runningTotal: 0,
-          numberOfPoints: 0,
-          minValue: null,
-          maxValue: null
-      }
-    // ... push to registered graphs...
-
-    for (let i = 0; i < this.dataSetRegister.length;  i++) {
-      if (this.dataSetRegister[i].dataSetUuid == uuid) {
-        this.dataSetRegister[i].observable.next(this.dataSetSub[dataSubIndex].data);
-      }
-    }
+  /**
+   * Returns the dataset configuration details for a specific dataset based on it's UUID.
+   *
+   * @param {string} uuid The UUID of the desired dataset
+   * @return {*}  {IDatasetServiceDatasetConfig} A dataset configuration object
+   * @memberof DatasetService
+   */
+  public getDatasetConfig(uuid: string): IDatasetServiceDatasetConfig {
+    return this._svcDatasetConfigs.find(config => config.uuid === uuid);
   }
 
-  private updateDataCache(uuid: string, newValue: number) {
-    //get index
-    let dsIndex = this.dataSetSub.findIndex(sub => sub.uuid == uuid);
+  /**
+   * Returns a new dataset object created from the provided value. The returned
+   * object will contain all information: timestamp, value, simple moving average
+   * and statistics, etc.
+   *
+   * The returned object can later be push into a data source's dataset array and made
+   * part of the dataset.
+   *
+   * @private
+   * @param {number} smaPeriod The amount of previous dataset rows used to calculate the SMA (Simple Moving Average). The SMA is the average of (current + (smaPeriod - 1)) value the average of the value and x number of previous values
+   * @param {IDatasetServiceDataset[]} ds The dataset object to update
+   * @param {number} value The value to add to the dataset
+   * @return {*}  {IDatasetServiceDataset} A new dataset object. Note: push() the object to the dataset to
+   * @memberof DatasetService
+   */
+  private updateDataset(smaPeriod: number, ds: IDatasetServiceDataset[], value: number): IDatasetServiceDataset {
+    const newDataset: IDatasetServiceDataset = {
+      timestamp: null,
+      data: {
+        value: null,
+        sma: null,
+        seriesAverage: null,
+        seriesMinimum: null,
+        seriesMaximum: null
+      }
+    };
 
-    this.dataSetSub[dsIndex].dataCache.runningTotal = this.dataSetSub[dsIndex].dataCache.runningTotal + newValue;
-    this.dataSetSub[dsIndex].dataCache.numberOfPoints = this.dataSetSub[dsIndex].dataCache.numberOfPoints + 1;
+    // Since new value should be counter in the SMA calculation, we only take the last 2 rows.
+    smaPeriod = smaPeriod - 1;
 
-    if ((this.dataSetSub[dsIndex].dataCache.minValue === null) || (this.dataSetSub[dsIndex].dataCache.minValue > newValue)) {
-      this.dataSetSub[dsIndex].dataCache.minValue = newValue;
+    // Timestamp
+    newDataset.timestamp = Date.now();
+    // Value
+    newDataset.data.value = value;
+
+    // TODO: Make derived calculations optional based on config setting
+    // SMA
+    if (ds.length >= smaPeriod) {
+      let smaSum: number = value;
+      for (let index = ds.length - 1; index >= (ds.length - smaPeriod); index--) {
+        smaSum += ds[index].data.value;
+      }
+      // Add new value to sum
+      newDataset.data.sma = smaSum / (smaPeriod + 1);
     }
-    if ((this.dataSetSub[dsIndex].dataCache.maxValue === null) || (this.dataSetSub[dsIndex].dataCache.maxValue < newValue)) {
-      this.dataSetSub[dsIndex].dataCache.maxValue = newValue;
+    else {
+      // If not enough datapoints
+      newDataset.data.sma = null;
     }
+
+    // Calculate sum
+    let seriesSum: number = 0;
+    let valArr: Array<number> = [];
+
+    for (let index = 0; index < ds.length; index++) {
+      seriesSum += ds[index].data.value;
+      valArr.push(ds[index].data.value);
+    }
+    // Add new value to stats
+    valArr.push(value);
+
+    // Update seriesAverage
+    newDataset.data.seriesAverage = (seriesSum + value) / (ds.length + 1);
+    // Update min/max
+
+    newDataset.data.seriesMinimum = Math.min(...valArr);
+    newDataset.data.seriesMaximum = Math.max(...valArr);
+
+    return newDataset;
   }
-
 }

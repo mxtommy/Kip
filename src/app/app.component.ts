@@ -8,7 +8,7 @@ import { LayoutSplitsService } from './core/services/layout-splits.service';
 import screenfull from 'screenfull';
 
 import { AppSettingsService } from './core/services/app-settings.service';
-import { DataSetService } from './core/services/data-set.service';
+import { DatasetService } from './core/services/data-set.service';
 import { NotificationsService } from './core/services/notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
 import { AppService } from './core/services/app-service';
@@ -53,7 +53,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
     public appSettingsService: AppSettingsService, // needs storage & AppInit
-    private DataSetService: DataSetService, // needs AppSettingsService & SignalKService
+    private DatasetService: DatasetService, // needs AppSettingsService & SignalKService
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
@@ -137,7 +137,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     );
 
-    this.DataSetService.startAllDataSets();
+    this.DatasetService.startAll();
   }
 
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {

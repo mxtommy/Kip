@@ -1,15 +1,13 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-
+import { DatasetService, IDatasetServiceDataset, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { Chart } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
 Chart.register();
 
-
-import { DataSetService } from '../../core/services/data-set.service';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-
+const seriesAverage = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
 interface IDataSetOptions {
     label: string;
     data: any;
@@ -31,14 +29,15 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
   chart = null;
 
   chartDataMin = [];
-  chartDataAvg = [];
+  chartDataValue = [];
   chartDataMax = [];
 
   textColor; // store the color of text for the graph...
 
+  datasetConfig: IDatasetServiceDatasetConfig = null;
   dataSetSub: Subscription = null;
 
-  constructor(private dataSetService: DataSetService) {
+  constructor(private dsService: DatasetService) {
     super();
 
     this.defaultConfig = {
@@ -53,27 +52,35 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
       maxValue: null,
       verticalGraph: false,
     };
-   }
+  }
 
   ngOnInit() {
     this.validateConfig();
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
 
-    this.startChart();
-    this.subscribeDataSet();
+    // Get dataset configuration
+    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.dataSetUUID);
+    if (this.datasetConfig) {
+      // Load historical data
+      const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.dataSetUUID);
+      this.chartDataValue = dsData;
+
+      this.startChart();
+      this.subscribeDataSource();
+    }
   }
 
   private startChart() {
-    if (this.chart !== null) {
+    if (this.chart) {
         this.chart.destroy();
     }
 
     // Setup DataSets
     let ds: IDataSetOptions[] = [
       {
-        label: `${this.widgetProperties.config.displayName}-Avg.`,
-        data: this.chartDataAvg,
+        label: `${this.widgetProperties.config.displayName}-Val`,
+        data: this.chartDataValue,
         fill: 'false',
         borderColor: this.textColor,
       }
@@ -130,8 +137,8 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
             position: this.widgetProperties.config.verticalGraph ? 'right': 'bottom',
             type: 'time',
             time: {
-                minUnit: 'second',
-                round: 'second',
+              minUnit: 'second',
+              round: 'second'
             },
             ticks: {
               color: this.textColor,
@@ -172,78 +179,69 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     }
   }
 
-  private subscribeDataSet() {
-      this.unsubscribeDataSet();
-      if (this.widgetProperties.config.dataSetUUID === null) { return } // nothing to sub to...
+  private subscribeDataSource() {
+    this.unsubscribeDataSource();
+    if (this.widgetProperties.config.dataSetUUID === null) { return } // nothing to sub to...
 
-      this.dataSetSub = this.dataSetService.subscribeDataSet(this.widgetProperties.uuid, this.widgetProperties.config.dataSetUUID).subscribe(
-          dataSet => {
-              if (dataSet === null) {
-                return; // we will get null back if we subscribe to a dataSet before the app has started it. When it learns about it we will get first value
-              }
-              let invert = 1;
-              if (this.widgetProperties.config.invertData) { invert = -1; }
-              //Avg
-              this.chartDataAvg = [];
-              for (let i=0;i<dataSet.length;i++){
-                if (dataSet[i].average === null) {
-                  this.chartDataAvg.push({x: dataSet[i].timestamp, y: null });
-                  continue;
-                }
-                this.chartDataAvg.push({
-                  x: dataSet[i].timestamp,
-            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].average) * invert)
-                });
-              }
-              this.chart.config.data.datasets[0].data = this.chartDataAvg;
+    this.dataSetSub = this.dsService.getDatasetObservable(this.widgetProperties.uuid, this.widgetProperties.config.dataSetUUID).subscribe(
+      (dsDatasets: IDatasetServiceDataset) => {
+        // console.log(this.chart);
+        if (!dsDatasets) {
+          // we will get null back if we subscribe to a dataset before the app
+          // has started it. No need to update until we have values
+          return;
+        }
 
-              //min/max
-              if (this.widgetProperties.config.displayMinMax) {
-                this.chartDataMin = [];
-                this.chartDataMax = [];
-                for (let i=0;i<dataSet.length;i++){
-                  //process datapoint and add it to our chart.
-                  if (dataSet[i].average === null) {
-                    this.chartDataMin.push({x: dataSet[i].timestamp, y: null });
-                  } else {
-                    this.chartDataMin.push({
-                        x: dataSet[i].timestamp,
-                y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].minValue) * invert)
-                    });
-                    this.chartDataMax.push({
-                        x: dataSet[i].timestamp,
-                y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dataSet[i].maxValue) * invert)
-                    });
-                  }
-                }
-                this.chart.config.data.datasets[1].data = this.chartDataMin;
-                this.chart.config.data.datasets[2].data = this.chartDataMax;
-              }
+        if (this.chartDataValue.length > this.datasetConfig.maxDataPoints) {
+          this.chartDataValue.shift();
+        }
 
-            const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
-              //if (this.widgetConfig.animateGraph) {
-              //  this.chart.update();
-              //} else {
-                // append the cumulated average to the label text
-            this.chart.data.datasets[0].label = this.widgetProperties.config.displayName + " [" + average(this.chartDataAvg.map(e => e.y)).toFixed(2) + "]";
-            if (this.widgetProperties.config.displayMinMax) {
-              this.chart.data.datasets[1].label = this.widgetProperties.config.displayName + " [" + average(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
-              this.chart.data.datasets[2].label = this.widgetProperties.config.displayName + " [" + average(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
-            }
-            this.chart.update('none');
-              //}
-          }
-      );
+        let invert = 1;
+        if (this.widgetProperties.config.invertData) { invert = -1; }
+
+        // Values
+          this.chartDataValue.push({
+            x: dsDatasets.timestamp,
+            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.value) * invert)
+          });
+
+        this.chart.config.data.datasets[0].data = this.chartDataValue;
+
+        //min/max
+        if (this.widgetProperties.config.displayMinMax) {
+          this.chartDataMin = [];
+          this.chartDataMax = [];
+
+          this.chartDataMin.push({
+            x: Date.now(),
+            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.seriesMinimum) * invert)
+          });
+
+          this.chartDataMax.push({
+            x: Date.now(),
+            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.seriesMaximum) * invert)
+          });
+
+          this.chart.config.data.datasets[1].data = this.chartDataMin;
+          this.chart.config.data.datasets[2].data = this.chartDataMax;
+        }
+
+        // append the cumulated seriesAverage to the label text
+        this.chart.data.datasets[0].label = this.widgetProperties.config.displayName + " [" + seriesAverage(this.chartDataValue.map(e => e.y)).toFixed(2) + "]";
+        if (this.widgetProperties.config.displayMinMax) {
+          this.chart.data.datasets[1].label = this.widgetProperties.config.displayName + " [" + seriesAverage(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
+          this.chart.data.datasets[2].label = this.widgetProperties.config.displayName + " [" + seriesAverage(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
+        }
+        this.chart.update('none');
+      }
+    );
   }
 
-  private unsubscribeDataSet() {
-    if (this.dataSetSub !== null) {
-      this.dataSetSub.unsubscribe();
-      this.dataSetSub = null;
-    }
+  private unsubscribeDataSource() {
+    this.dataSetSub?.unsubscribe();
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataSet();
+    this.unsubscribeDataSource();
   }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { cloneDeep } from "lodash-es";
 
-import { IDataSet } from './data-set.service';
+import { IDatasetServiceDatasetConfig } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
@@ -44,7 +44,7 @@ export class AppSettingsService {
   private widgets: Array<IWidget>;
   private splitSets: ISplitSet[] = [];
   private rootSplits: string[] = [];
-  private dataSets: IDataSet[] = [];
+  private dataSets: IDatasetServiceDatasetConfig[] = [];
   private zones: BehaviorSubject<Array<IZone>> = new BehaviorSubject<Array<IZone>>([]);
 
   constructor(
@@ -422,10 +422,10 @@ public loadConfigFromLocalStorage(type: string) {
   }
 
   // DataSets
-  public saveDataSets(dataSets: Array<IDataSet>) {
+  public saveDataSets(dataSets: Array<IDatasetServiceDatasetConfig>) {
     this.dataSets = dataSets;
     if (this.useSharedConfig) {
-      this.storage.patchConfig('Array<IDataSet>', dataSets);
+      this.storage.patchConfig('Array<IDatasetDef>', dataSets);
     } else {
       this.saveAppConfigToLocalStorage();
     }

@@ -17,6 +17,7 @@ import { WidgetGaugeNgRadialComponent} from '../../widgets/widget-gauge-ng-radia
 import { WidgetAutopilotComponent } from "../../widgets/widget-autopilot/widget-autopilot.component";
 import { WidgetSimpleLinearComponent } from "../../widgets/widget-simple-linear/widget-simple-linear.component";
 import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
+import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
 
 class widgetInfo {
   name: string;
@@ -100,6 +101,11 @@ export class WidgetListService {
         name: 'WidgetHistorical',
         componentName: WidgetHistoricalComponent,
         description: 'Historical Datagram Chart',
+      },
+      {
+        name: 'WidgetDataChart',
+        componentName: WidgetDataChartComponent,
+        description: 'Data Chart',
       },
       {
         name: 'WidgetAutopilotComponent',

@@ -64,7 +64,7 @@
               matInput
               placeholder="Interval(seconds)"
               name="interval"
-              [(ngModel)]="formDataset.updateTimer"
+              [(ngModel)]="formDataset.sampleTime"
               required/>
           </mat-form-field>
           <mat-form-field class="full-width" style="margin-bottom: 10px;">
@@ -74,7 +74,7 @@
               placeholder="Data Points"
               type="number"
               name="decimals"
-              [(ngModel)]="formDataset.dataPoints"
+              [(ngModel)]="formDataset.maxDataPoints"
               required
             />
           </mat-form-field>

@@ -1,6 +1,6 @@
 /*********************************************************************************
  * This file contains the most, but not all, common KIP App internal data types and
- * struture interfaces. They are used by various services, componenets and widgets.
+ * structure interfaces. They are used by various services, components and widgets.
  *
  * For external data interfaces, such as Signal K, see signalk-interfaces file.
  *********************************************************************************/
@@ -36,7 +36,7 @@ import { IZoneState } from './app-settings.interfaces';
  * erratic path value updates. This is by design.
  * To prevent this, users need to set Priority rules or select a specific source.
  *
- * Use by: data-browser (consumer) and Signal K services (internal datasource)
+ * Use by: data-browser (consumer) and Signal K services (internal data source)
  *
  * @memberof app-interfaces
  */
@@ -60,7 +60,7 @@ import { IZoneState } from './app-settings.interfaces';
  * as an interface to access meta data subset extracted from internal App
  * paths data source.
  *
- * Use by: modal-path-selection (consumer), setting-zones (consumer) and Signal K (internal datasource) service
+ * Use by: modal-path-selection (consumer), setting-zones (consumer) and Signal K (internal data source) service
  *
  * @memberof app-interfaces
  */
@@ -70,7 +70,7 @@ import { IZoneState } from './app-settings.interfaces';
 }
 
 /**
- * An App data structure that represents a resquest/response "ie. a notification"
+ * An App data structure that represents a request/response "ie. a notification"
  * message.
  *
  * Use by: Notification service (consumer), signalk-delta (parser)

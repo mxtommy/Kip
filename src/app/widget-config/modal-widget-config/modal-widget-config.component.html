@@ -327,7 +327,7 @@
                 name="dataSetUUID"
                 required>
                 <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
-                    {{ds.name}}
+                    {{ds.label}}
                 </mat-option>
               </mat-select>
             </mat-form-field>

@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialog, MatDialogTitle, MatDialogCont
 
 import { IUnitGroup } from '../../core/services/units.service';
 import { SignalKService } from '../../core/services/signalk.service';
-import { DataSetService, IDataSet } from '../../core/services/data-set.service';
+import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IAddNewPath, PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
@@ -32,7 +32,7 @@ export class ModalWidgetConfigComponent implements OnInit {
 
   public titleDialog: string = "Widget Options";
   public formMaster: UntypedFormGroup;
-  public availableDataSets: IDataSet[];
+  public availableDataSets: IDatasetServiceDatasetConfig[];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
   public isPathArray: boolean = false;
   public addPathEvent: IAddNewPath;
@@ -41,13 +41,13 @@ export class ModalWidgetConfigComponent implements OnInit {
     public dialog: MatDialog,
     public dialogRef: MatDialogRef<ModalWidgetConfigComponent>,
     private fb : UntypedFormBuilder,
-    private DataSetService: DataSetService,
+    private DatasetService: DatasetService,
     private signalKService: SignalKService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
   ) { }
 
   ngOnInit() {
-    this.availableDataSets = this.DataSetService.getDataSets().sort();
+    this.availableDataSets = this.DatasetService.list().sort();
     this.unitList = this.signalKService.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.setFormOptions();
