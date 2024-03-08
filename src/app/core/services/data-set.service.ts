@@ -1,3 +1,4 @@
+import { element } from 'protractor';
 import { Injectable } from '@angular/core';
 import { Subscription, BehaviorSubject, pipe, UnaryFunction, filter, OperatorFunction, Observable, sampleTime } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
@@ -16,33 +17,30 @@ export interface IDatasetServiceDataset {
   timestamp: number;
   data: {
     value: number;
-    sma: number;
-    seriesAverage: number;
-    seriesMinimum: number;
-    seriesMaximum: number;
+    ema?: number; // Exponential Moving Average - A better Moving Average calculation than Simple Moving Average
+    doubleEma?: number; // Double Exponential Moving Average - Moving Average that is even more reactive to data variation then EMA. Suitable for wind and angle average calculations
+    lastAngleAverage?: number;  // ** Last mean from the last data received. Not the whole dataset.
+    lastAverage?: number;
+    lastMinimum?: number;
+    lastMaximum?: number;
   }
 }
 
 export interface IDatasetServiceDatasetConfig {
+  label?:  string; // label of the dataset
   uuid: string;
   path: string;
   signalKSource: string;
   sampleTime: number; // number of milliseconds between data capture
   maxDataPoints: number; // how many data points do we keep
-  smaPeriod: number;  // number of previous plus current value to use as the moving average
-  label?:  string; // label of the dataset
+  periodFactor: number; // factor of maxDataPoints to automatically determine period
+  period?: number;  // number of previous plus current value to use as the moving average
 };
 
 interface IDatasetServiceObserverRegistration {
   uuid: string;
   datasetUuid: string;
   rxjsSubject: BehaviorSubject<IDatasetServiceDataset>;
-}
-
-function filterNullish<T>(): UnaryFunction<Observable<T | null | undefined>, Observable<T>> {
-  return pipe(
-    filter(x => x != null) as OperatorFunction<T | null |  undefined, T>
-  );
 }
 
 @Injectable()
@@ -64,7 +62,7 @@ export class DatasetService {
    * @memberof DataSetService
    */
   public startAll(): void {
-    console.log("[DataSet Service] Starting " + this._svcDatasetConfigs.length.toString() + " Dataset");
+    console.log("[DataSet Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
       this.start(this._svcDatasetConfigs[i].uuid);
     }
@@ -82,14 +80,15 @@ export class DatasetService {
   private start(uuid: string): void {
     const dsDef: IDatasetServiceDatasetConfig = this._svcDatasetConfigs[this._svcDatasetConfigs.findIndex(dsDef => dsDef.uuid == uuid)];
     if (!dsDef) {
-      console.warn(`[DataSet Service] Requested dataset UUID not found: ${uuid}`);
+      console.warn(`[DataSet Service] Dataset UUID not found: ${uuid}`);
       return;
     }
 
     // Cleanup existing dataset if present.
     const dsIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
     if (dsIndex >= 0) {
-      this._svcDataSource.splice(dsIndex,1);
+      // this._svcDataSource.splice(dsIndex,1);
+      this.stop(uuid);
     }
 
     // Add a fresh dataset
@@ -102,6 +101,11 @@ export class DatasetService {
       }) - 1
     ];
 
+    // Set EMA and DEMA period
+    dsDef.period = Math.floor(dsDef.maxDataPoints * dsDef.periodFactor);
+
+    console.log(`[DataSet Service] Staring Dataset ${uuid}, Datapoints: ${dsDef.maxDataPoints}, AvgPeriod: ${dsDef.period}`)
+
     // Subscribe to path data and update dataset upon reception
     dataSource.pathSub = this.signalk.subscribePath(dsDef.uuid, dsDef.path, dsDef.signalKSource).pipe(sampleTime(dsDef.sampleTime)).subscribe(
       (newValue: pathRegistrationValue) => {
@@ -113,7 +117,7 @@ export class DatasetService {
         }
 
         // Add new data to dataset
-        const newDataPoint: IDatasetServiceDataset = this.updateDataset(dsDef.smaPeriod, dataSource.dataset, newValue.value as number)
+        const newDataPoint: IDatasetServiceDataset = this.updateDataset(dsDef, dataSource.dataset, newValue.value as number)
         dataSource.dataset.push(newDataPoint);
 
         // Update Subject. All Subscribers are notified
@@ -137,20 +141,21 @@ export class DatasetService {
    * @memberof DataSetService
    */
   private stop(uuid: string) {
-    // stop any registrations to this DataSource...
+    // Remove any registrations to this DataSource...
     for (let i = this._svcObserverRegistry.length - 1; i >= 0; i--) { //backwards because length will change...
       if (this._svcObserverRegistry[i].uuid == uuid) {
         this._svcObserverRegistry.splice(i, 1);
       }
     }
 
-      //delete current DataSource if it exists...
-    let dataSubIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
+    // Stop subscription and delete current DataSource if it exists...
+    const dataSubIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
     if (dataSubIndex >= 0) {
       // stop pathSub
       this._svcDataSource[dataSubIndex].pathSub.unsubscribe();
       //delete DataSub
-      this._svcDataSource.splice(dataSubIndex,1);
+      this._svcDataSource.splice(dataSubIndex, 1);
+      console.log(`[DataSet Service] Stopping Dataset ${uuid}`);
       }
   }
 
@@ -186,10 +191,11 @@ export class DatasetService {
    * @param {string} source The path's chosen source
    * @param {number} sampleTime Data sample time in secondes
    * @param {number} dataPoints The number of data points entries to be kept. New data will push older data out of the data array
-   * @param {string} dataPoints Optional name of the Dataset
+   * @param {number} periodFactor The multiplying factor to use in determining the EMA & DEMA period length - should be between 0.1 and 0.3 for short term data used in KIP
+   * @param {string} label Name of the Dataset
    * @memberof DataSetService
    */
-  public create(path: string, source: string, sampleTime: number, dataPoints: number, smaPeriod: number, label?: string ) {
+  public create(path: string, source: string, sampleTime: number, dataPoints: number, periodFactor: number, label: string ) {
     let uuid = UUID.create();
 
     let newSvcDataset: IDatasetServiceDatasetConfig = {
@@ -198,8 +204,8 @@ export class DatasetService {
       signalKSource: source,
       sampleTime: sampleTime,
       maxDataPoints: dataPoints,
-      smaPeriod: smaPeriod,
-      label: path + ', Interval: ' + sampleTime.toString() + ', DataPoints: ' + dataPoints?.toString()
+      periodFactor: periodFactor,
+      label: label
     };
     this._svcDatasetConfigs.push(newSvcDataset);
 
@@ -213,19 +219,19 @@ export class DatasetService {
    * @param {IDatasetServiceDatasetConfig} dataset Dataset configuration object of type IDatasetServiceDatasetConfig
    * @memberof DataSetService
    */
-  public edit(dataset: IDatasetServiceDatasetConfig): void {
+  public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
     // index of sub and dataset can be different after updating _svcDatasetConfigs
     // get sub index for this dataset
-    let dsConfigIndex = this._svcDataSource.findIndex(sub => sub.uuid === dataset.uuid);
+    const dsConfigIndex = this._svcDataSource.findIndex(sub => sub.uuid === datasetConfig.uuid);
     if (dsConfigIndex >= 0) { // sub exist
-      this.stop(dataset.uuid);
+      this.stop(datasetConfig.uuid);
     }
 
     // get index for this dataset
-    let datasetIndex = this._svcDatasetConfigs.findIndex(dset => dset.uuid === dataset.uuid);
+    const datasetIndex = this._svcDatasetConfigs.findIndex(dset => dset.uuid === datasetConfig.uuid);
     if (datasetIndex >= 0) { // dataset exist
-      this._svcDatasetConfigs.splice(datasetIndex, 1, dataset);
-      this.start(dataset.uuid);
+      this._svcDatasetConfigs.splice(datasetIndex, 1, datasetConfig);
+      this.start(datasetConfig.uuid);
     }
 
     this.appSettings.saveDataSets(this._svcDatasetConfigs);
@@ -277,20 +283,15 @@ export class DatasetService {
    * @memberof DataSetService
    */
   public list(): IDatasetServiceDatasetConfig[] {
-    let result: IDatasetServiceDatasetConfig[] = [];
+    const result: IDatasetServiceDatasetConfig[] = [];
     for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
-
-      if (this._svcDatasetConfigs[i].label == "") {
-        this._svcDatasetConfigs[i].label = this._svcDatasetConfigs[i].path + ' - Interval:' + this._svcDatasetConfigs[i].sampleTime.toString() + ' - DataPoints:' + this._svcDatasetConfigs[i].maxDataPoints?.toString()
-      }
-
       result.push({
         uuid: this._svcDatasetConfigs[i].uuid,
         path: this._svcDatasetConfigs[i].path,
         signalKSource: this._svcDatasetConfigs[i].signalKSource,
         sampleTime: this._svcDatasetConfigs[i].sampleTime,
         maxDataPoints: this._svcDatasetConfigs[i].maxDataPoints,
-        smaPeriod: this._svcDatasetConfigs[i].smaPeriod,
+        periodFactor: this._svcDatasetConfigs[i].periodFactor,
         label: this._svcDatasetConfigs[i].label
       });
     }
@@ -317,45 +318,97 @@ export class DatasetService {
    * part of the dataset.
    *
    * @private
-   * @param {number} smaPeriod The amount of previous dataset rows used to calculate the SMA (Simple Moving Average). The SMA is the average of (current + (smaPeriod - 1)) value the average of the value and x number of previous values
+   * @param {number} period The amount of previous dataset rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (period - 1)) value the average of the value and x number of previous values
    * @param {IDatasetServiceDataset[]} ds The dataset object to update
    * @param {number} value The value to add to the dataset
    * @return {*}  {IDatasetServiceDataset} A new dataset object. Note: push() the object to the dataset to
    * @memberof DatasetService
    */
-  private updateDataset(smaPeriod: number, ds: IDatasetServiceDataset[], value: number): IDatasetServiceDataset {
+  private updateDataset(dsDef: IDatasetServiceDatasetConfig, ds: IDatasetServiceDataset[], value: number): IDatasetServiceDataset {
     const newDataset: IDatasetServiceDataset = {
       timestamp: null,
       data: {
         value: null,
-        sma: null,
-        seriesAverage: null,
-        seriesMinimum: null,
-        seriesMaximum: null
+        ema: null,
+        doubleEma: null,
+        lastAngleAverage: null,
+        lastAverage: null,
+        lastMinimum: null,
+        lastMaximum: null
       }
     };
 
-    // Since new value should be counter in the SMA calculation, we only take the last 2 rows.
-    smaPeriod = smaPeriod - 1;
+    /**
+     * Double Exponential Moving Average (DEMA) calculation
+     *
+     * @param {IDatasetServiceDataset[]} ds The current Dataset array
+     * @param {number} ema1 The new dataset's calculated ema
+     * @param {number} period The dataset configuration period
+     * @return {*}  {number} The DEMA value
+     */
+    function calculateDEMA(ds: IDatasetServiceDataset[], ema1: number, period: number): number {
+      //  Check for min available periods
+      if (ds.length < period) {
+        console.log("[Dataset Service] Insufficient data for the given period to calculate DEMA.");
+        return;
+      }
 
-    // Timestamp
+      const smoothingFactor = 2 / (1 + period);
+
+      // Calculate the second EMA (EMA2) of the EMA1 values
+      let ema2 = (ema1 * smoothingFactor) + (ds[ds.length - 2].data.doubleEma * (1 - smoothingFactor));
+
+      // Calculate and return the DEMA
+      return (2 * ema1) - ema2;
+    }
+
+    /**
+     * Exponential Moving Average (EMA) calculation
+     *
+     * @param {IDatasetServiceDataset[]} ds The new dataset's calculated ema
+     * @param {number} currentValue The new dataset's value
+     * @param {number} period The dataset configuration period
+     * @return {*}  {number} The EMA value
+     */
+    function calculateEMA(ds: IDatasetServiceDataset[], currentValue: number, period: number): number {
+      if (ds.length < period) {
+        console.log("[Dataset Service] Insufficient data for the given period to calculate EMA.");
+        return;
+      }
+      const smoothingFactor = 2 / (1 + period);
+
+      // Calculate and return EMA
+      return (currentValue * smoothingFactor) + (ds[ds.length - 2].data.ema * (1 - smoothingFactor));
+    }
+
+    // Set Timestamp
     newDataset.timestamp = Date.now();
-    // Value
+    // Set Value
     newDataset.data.value = value;
 
-    // TODO: Make derived calculations optional based on config setting
-    // SMA
-    if (ds.length >= smaPeriod) {
-      let smaSum: number = value;
-      for (let index = ds.length - 1; index >= (ds.length - smaPeriod); index--) {
+    // Check if we are doing the first period and use SMA calculations, else do EMA & DEMA
+    if (ds.length < dsDef.period) {
+      let smaPeriodCount = 0;
+      let smaSum: number = 0;
+
+      for (let index = ds.length - 1; index >= 0; index--) {
         smaSum += ds[index].data.value;
+        smaPeriodCount++;
       }
-      // Add new value to sum
-      newDataset.data.sma = smaSum / (smaPeriod + 1);
+
+      let sma = smaSum / smaPeriodCount;
+
+      // Prevent NaN with values of 0
+      if (!sma) {
+        newDataset.data.doubleEma = newDataset.data.ema = value;
+      } else {
+        newDataset.data.doubleEma = newDataset.data.ema = smaSum / smaPeriodCount;
+      }
     }
     else {
-      // If not enough datapoints
-      newDataset.data.sma = null;
+      // We have enough to start doing EMA & DEMA calculations
+      newDataset.data.ema = calculateEMA(ds, newDataset.data.value, dsDef.period);
+      newDataset.data.doubleEma = calculateDEMA(ds, newDataset.data.ema, dsDef.period);
     }
 
     // Calculate sum
@@ -369,12 +422,10 @@ export class DatasetService {
     // Add new value to stats
     valArr.push(value);
 
-    // Update seriesAverage
-    newDataset.data.seriesAverage = (seriesSum + value) / (ds.length + 1);
-    // Update min/max
-
-    newDataset.data.seriesMinimum = Math.min(...valArr);
-    newDataset.data.seriesMaximum = Math.max(...valArr);
+    // Set last dataset values
+    newDataset.data.lastAverage = (seriesSum + value) / (ds.length + 1);
+    newDataset.data.lastMinimum = Math.min(...valArr);
+    newDataset.data.lastMaximum = Math.max(...valArr);
 
     return newDataset;
   }

@@ -58,26 +58,45 @@
         <ng-template matStepLabel>Data Points</ng-template>
         <div class="tab-content">
           <mat-form-field class="full-width" style="margin-bottom: 10px;">
-            <mat-label>Set data capture interval (sec)</mat-label>
-            <input
-              type="number"
-              matInput
-              placeholder="Interval(seconds)"
-              name="interval"
-              [(ngModel)]="formDataset.sampleTime"
-              required/>
-          </mat-form-field>
-          <mat-form-field class="full-width" style="margin-bottom: 10px;">
             <mat-label>Total most recent data points that makes the dataset</mat-label>
             <input
               matInput
               placeholder="Data Points"
               type="number"
-              name="decimals"
+              min="3"
+              max="300"
+              inputmode="numeric"
+              step="1"
+              name="maxDataPoints"
               [(ngModel)]="formDataset.maxDataPoints"
               required
             />
           </mat-form-field>
+          <mat-form-field class="full-width" style="margin-bottom: 10px;">
+            <mat-label>Dataset data sample time</mat-label>
+            <input
+              type="number"
+              matInput
+              placeholder="seconds"
+              type="number"
+              min="0.25"
+              max="60"
+              inputmode="numeric"
+              step="any"
+              name="sampleTime"
+              [(ngModel)]="formDataset.sampleTime"
+              required/>
+          </mat-form-field>
+          <label id="periodFactor-radio-group-label">Moving average period:</label>
+          <mat-radio-group aria-labelledby="periodFactor-radio-group-label"
+            [(ngModel)]="formDataset.periodFactor"
+            placeholder="Smoothness"
+            name="Smoothness">
+            <mat-radio-button [value]="0.1">Short (best for quick average response)</mat-radio-button>
+            <mat-radio-button [value]="0.2">Medium</mat-radio-button>
+            <mat-radio-button [value]="0.3">Long (best for smoother average)</mat-radio-button>
+          </mat-radio-group>
+
         </div>
         <mat-divider></mat-divider>
         <div class="buttons">

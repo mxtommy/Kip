@@ -103,7 +103,7 @@ export class ModalWidgetConfigComponent implements OnInit {
             case "path": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
             break;
 
-            case "dataSetUUID": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            case "datasetUUID": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
             break;
 
             case "dataTimeout": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));

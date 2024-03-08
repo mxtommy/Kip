@@ -12,7 +12,7 @@ export const DemoAppConfig: IAppConfig = {
       "signalKSource": "default",
       "sampleTime": 1,
       "maxDataPoints": 15,
-      "smaPeriod": 3
+      "periodFactor": 0.1
     }
   ],
   "unitDefaults": {
@@ -267,10 +267,10 @@ export const DemoWidgetConfig: IWidgetConfig = {
         "convertUnitTo": "knots",
         "displayName": "WindSpeed True",
         "filterSelfPaths": true,
-        "dataSetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
+        "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
-        "displayMinMax": false,
-        "includeZero": true,
+        "displayDatasetMinimumValueLine": false,
+        "startScaleAtZero": true,
         "minValue": null,
         "maxValue": null,
         "verticalGraph": false

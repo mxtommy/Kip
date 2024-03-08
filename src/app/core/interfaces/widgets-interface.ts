@@ -165,15 +165,27 @@ export interface IWidgetSvcConfig {
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;
   /** Used by historical data Widget */
-  dataSetUUID?: string;
+  datasetUUID?: string;
   /** Used by historical data Widget */
   invertData?: boolean;
-  /** Used by historical data Widget */
-  displayMinMax?: boolean;
+  /** Display chart ENA dataset values */
+  displayEMADataset?: boolean;
+  /** Display chart DENA dataset values */
+  displayDEMADataset?: boolean;
+  /** Display chart dataset minimum value line */
+  displayDatasetMinimumValueLine?: boolean;
+  /** Display chart dataset maximum value line */
+  displayDatasetMaximumValueLine?: boolean;
+  /** Display chart dataset average value line */
+  displayDatasetAverageValueLine?: boolean;
+  /** Display chart dataset angle average value line */
+  displayDatasetAngleAverageValueLine?: boolean;
   /** Used by historical data Widget */
   animateGraph?: boolean;
-  /** Used by historical data Widget */
-  includeZero?: boolean;
+  /** Prevent chart value axis autoscaling. Always start scale from zero */
+  startScaleAtZero?: boolean;
+  /** Limit chart value axis scale to min and max value */
+  enableMinMaxScaleLimit?: boolean;
   /** Used by historical data Widget */
   verticalGraph?: boolean;
 

@@ -7,7 +7,7 @@ import 'chartjs-adapter-date-fns';
 
 Chart.register();
 
-const seriesAverage = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
+const lastAverage = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
 interface IDataSetOptions {
     label: string;
     data: any;
@@ -44,10 +44,10 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
       displayName: 'Display Label',
       filterSelfPaths: true,
       convertUnitTo: "unitless",
-      dataSetUUID: null,
+      datasetUUID: null,
       invertData: false,
-      displayMinMax: false,
-      includeZero: true,
+      displayDatasetMinimumValueLine: false,
+      startScaleAtZero: true,
       minValue: null,
       maxValue: null,
       verticalGraph: false,
@@ -60,10 +60,10 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
 
     // Get dataset configuration
-    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.dataSetUUID);
+    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
     if (this.datasetConfig) {
       // Load historical data
-      const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.dataSetUUID);
+      const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);
       this.chartDataValue = dsData;
 
       this.startChart();
@@ -87,7 +87,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     ];
 
     // Min / max display options
-    if (this.widgetProperties.config.displayMinMax) {
+    if (this.widgetProperties.config.displayDatasetMinimumValueLine) {
       ds.push(
         {
           label: `${this.widgetProperties.config.displayName}-Min`,
@@ -126,7 +126,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
             position: this.widgetProperties.config.verticalGraph ? 'top' : 'right',
             ...(this.widgetProperties.config.minValue !== null && {suggestedMin: this.widgetProperties.config.minValue}),
             ...(this.widgetProperties.config.maxValue !== null && {suggestedMax: this.widgetProperties.config.maxValue}),
-            ...(this.widgetProperties.config.includeZero && { beginAtZero: true}),
+            ...(this.widgetProperties.config.startScaleAtZero && { beginAtZero: true}),
             ticks: {
               color: this.textColor,
               autoSkip: true,
@@ -181,9 +181,9 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
 
   private subscribeDataSource() {
     this.unsubscribeDataSource();
-    if (this.widgetProperties.config.dataSetUUID === null) { return } // nothing to sub to...
+    if (this.widgetProperties.config.datasetUUID === null) { return } // nothing to sub to...
 
-    this.dataSetSub = this.dsService.getDatasetObservable(this.widgetProperties.uuid, this.widgetProperties.config.dataSetUUID).subscribe(
+    this.dataSetSub = this.dsService.getDatasetObservable(this.widgetProperties.uuid, this.widgetProperties.config.datasetUUID).subscribe(
       (dsDatasets: IDatasetServiceDataset) => {
         // console.log(this.chart);
         if (!dsDatasets) {
@@ -208,29 +208,29 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
         this.chart.config.data.datasets[0].data = this.chartDataValue;
 
         //min/max
-        if (this.widgetProperties.config.displayMinMax) {
+        if (this.widgetProperties.config.displayDatasetMinimumValueLine) {
           this.chartDataMin = [];
           this.chartDataMax = [];
 
           this.chartDataMin.push({
             x: Date.now(),
-            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.seriesMinimum) * invert)
+            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.lastMinimum) * invert)
           });
 
           this.chartDataMax.push({
             x: Date.now(),
-            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.seriesMaximum) * invert)
+            y: (this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsDatasets.data.lastMaximum) * invert)
           });
 
           this.chart.config.data.datasets[1].data = this.chartDataMin;
           this.chart.config.data.datasets[2].data = this.chartDataMax;
         }
 
-        // append the cumulated seriesAverage to the label text
-        this.chart.data.datasets[0].label = this.widgetProperties.config.displayName + " [" + seriesAverage(this.chartDataValue.map(e => e.y)).toFixed(2) + "]";
-        if (this.widgetProperties.config.displayMinMax) {
-          this.chart.data.datasets[1].label = this.widgetProperties.config.displayName + " [" + seriesAverage(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
-          this.chart.data.datasets[2].label = this.widgetProperties.config.displayName + " [" + seriesAverage(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
+        // append the cumulated lastAverage to the label text
+        this.chart.data.datasets[0].label = this.widgetProperties.config.displayName + " [" + lastAverage(this.chartDataValue.map(e => e.y)).toFixed(2) + "]";
+        if (this.widgetProperties.config.displayDatasetMinimumValueLine) {
+          this.chart.data.datasets[1].label = this.widgetProperties.config.displayName + " [" + lastAverage(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
+          this.chart.data.datasets[2].label = this.widgetProperties.config.displayName + " [" + lastAverage(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
         }
         this.chart.update('none');
       }
