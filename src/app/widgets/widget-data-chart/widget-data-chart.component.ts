@@ -114,7 +114,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.setChartOptions();
 
     // Get dataset configuration
-    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
+    this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
     if (this.datasetConfig) {
       // Get historical data
       const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);

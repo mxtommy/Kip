@@ -60,7 +60,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
 
     // Get dataset configuration
-    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
+    this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
     if (this.datasetConfig) {
       // Load historical data
       const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);

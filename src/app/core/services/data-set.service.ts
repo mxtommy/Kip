@@ -24,7 +24,6 @@ export interface IDatasetServiceDataset {
     lastMaximum?: number;
   }
 }
-
 export interface IDatasetServiceDatasetConfig {
   label:  string; // label of the dataset
   uuid: string;
@@ -35,7 +34,6 @@ export interface IDatasetServiceDatasetConfig {
   sampleTime: number; // number of milliseconds between data capture
   period: number;  // number of previous plus current value to use as the moving average
 };
-
 interface IDatasetServiceObserverRegistration {
   datasetUuid: string;
   rxjsSubject: BehaviorSubject<IDatasetServiceDataset>;
@@ -45,7 +43,7 @@ interface IDatasetServiceObserverRegistration {
 export class DatasetService {
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
-  private _svcObserverRegistry: IDatasetServiceObserverRegistration[] = [];
+  private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
   constructor(
     private appSettings: AppSettingsService,
@@ -60,11 +58,41 @@ export class DatasetService {
     this.startAll();
   }
 
-  public setupServiceRegistry(uuid: string) {
-    this._svcObserverRegistry.push({
+  private setupServiceRegistry(uuid: string): void {
+    this._svcSubjectObserverRegistry.push({
       datasetUuid: uuid,
       rxjsSubject: new BehaviorSubject(null)
     });
+  }
+
+  private setDatasetConfigurationOptions(ds: IDatasetServiceDatasetConfig ): void {
+    const periodFactor: number = 0.3;
+
+    switch (ds.timeScaleFormat) {
+      case "day":
+        ds.maxDataPoints = 96; // 1d * 24 * 4 (every 15 min)
+        ds.sampleTime = 900000; // 15 min
+        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        break;
+
+      case "hour":
+        ds.maxDataPoints = 240; // 1h = 60 min * 4 (every 15 sec)
+        ds.sampleTime = 15000; // 15 sec
+        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        break;
+
+      case "minute":
+        ds.maxDataPoints = 60; // 1m = 60 sec
+        ds.sampleTime = 1000; // 15 sec
+        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        break;
+
+      default: // 15 second period for quick gauges like wind speed and angle, heading and course in racing
+        ds.maxDataPoints = 40; // 1m * 60 sec * 2 (every 0.5 sec)
+        ds.sampleTime = 250; // go as fast as the sensor
+        ds.period = 10; // moving average points to use
+        break;
+    }
   }
 
   /**
@@ -72,7 +100,7 @@ export class DatasetService {
    *
    * @memberof DataSetService
    */
-  public startAll(): void {
+  private startAll(): void {
     console.log("[DataSet Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
       this.start(this._svcDatasetConfigs[i].uuid);
@@ -91,7 +119,7 @@ export class DatasetService {
   private start(uuid: string): void {
     const configuration = this._svcDatasetConfigs.find(configuration => configuration.uuid == uuid);
     if (!configuration) {
-      console.warn(`[DataSet Service] Dataset UUID not found: ${uuid}`);
+      console.warn(`[DataSet Service] Dataset UUID:${uuid} not found`);
       return;
     }
 
@@ -128,8 +156,8 @@ export class DatasetService {
         // Add new data to dataset
         const newDataPoint: IDatasetServiceDataset = this.updateDataset(configuration, dataSource.dataset, newValue.value as number)
         dataSource.dataset.push(newDataPoint);
-        // Push to Observer
-        this._svcObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(newDataPoint);
+        // Push to Observers
+        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(newDataPoint);
       }
     );
   }
@@ -145,6 +173,27 @@ export class DatasetService {
     const dataSource = this._svcDataSource.find(d => d.uuid == uuid);
 
     dataSource.pathSub.unsubscribe();
+  }
+
+  /**
+   * Returns a copy of all existing dataset configuration
+   *
+   * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all dataset configurations
+   * @memberof DataSetService
+   */
+  public list(): IDatasetServiceDatasetConfig[] {
+    return cloneDeep(this._svcDatasetConfigs);
+  }
+
+  /**
+   * Returns a copy of a dataset configuration details for a specific dataset based on it's UUID.
+   *
+   * @param {string} uuid The UUID of the desired dataset
+   * @return {*}  {IDatasetServiceDatasetConfig} A dataset configuration object copy
+   * @memberof DatasetService
+   */
+  public get(uuid: string): IDatasetServiceDatasetConfig {
+    return cloneDeep(this._svcDatasetConfigs.find(config => config.uuid === uuid));
   }
 
   /**
@@ -206,8 +255,8 @@ export class DatasetService {
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
     this._svcDataSource.splice(this._svcDataSource.findIndex(s => s.uuid === uuid), 1);
     // stop Subject Observers
-    this._svcObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
-    this._svcObserverRegistry.splice(this._svcObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
+    this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
+    this._svcSubjectObserverRegistry.splice(this._svcSubjectObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
 
     this.appSettings.saveDataSets(this._svcDatasetConfigs);
   }
@@ -229,40 +278,6 @@ export class DatasetService {
   }
 
   /**
-   * Returns all existing dataset configuration
-   *
-   * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all dataset configurations
-   * @memberof DataSetService
-   */
-  public list(): IDatasetServiceDatasetConfig[] {
-    const result: IDatasetServiceDatasetConfig[] = [];
-    for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
-      result.push({
-        uuid: this._svcDatasetConfigs[i].uuid,
-        path: this._svcDatasetConfigs[i].path,
-        signalKSource: this._svcDatasetConfigs[i].signalKSource,
-        timeScaleFormat: this._svcDatasetConfigs[i].timeScaleFormat,
-        sampleTime: this._svcDatasetConfigs[i].sampleTime,
-        maxDataPoints: this._svcDatasetConfigs[i].maxDataPoints,
-        period: this._svcDatasetConfigs[i].period,
-        label: this._svcDatasetConfigs[i].label
-      });
-    }
-    return result;
-  }
-
-  /**
-   * Returns the dataset configuration details for a specific dataset based on it's UUID.
-   *
-   * @param {string} uuid The UUID of the desired dataset
-   * @return {*}  {IDatasetServiceDatasetConfig} A dataset configuration object
-   * @memberof DatasetService
-   */
-  public getDatasetConfig(uuid: string): IDatasetServiceDatasetConfig {
-    return this._svcDatasetConfigs.find(config => config.uuid === uuid);
-  }
-
-  /**
    * Returns the dataset Subject corresponding to the dataset UUID as an Observable
    * or null if not found.
    *
@@ -271,7 +286,7 @@ export class DatasetService {
    * @memberof DataSetService
    */
   public getDatasetObservable(dataSetUuid: string): Observable<IDatasetServiceDataset> | null {
-    const registration = this._svcObserverRegistry.find(registration => registration.datasetUuid == dataSetUuid);
+    const registration = this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid == dataSetUuid);
 
     if (registration) {
       return registration.rxjsSubject.asObservable();
@@ -411,35 +426,5 @@ export class DatasetService {
     newDataset.data.lastMaximum = Math.max(...valArr);
 
     return newDataset;
-  }
-
-  private setDatasetConfigurationOptions(ds: IDatasetServiceDatasetConfig ): void {
-    const periodFactor: number = 0.3;
-
-    switch (ds.timeScaleFormat) {
-      case "day":
-        ds.maxDataPoints = 96; // 1d * 24 * 4 (every 15 min)
-        ds.sampleTime = 900000; // 15 min
-        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
-        break;
-
-      case "hour":
-        ds.maxDataPoints = 240; // 1h = 60 min * 4 (every 15 sec)
-        ds.sampleTime = 15000; // 15 sec
-        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
-        break;
-
-      case "minute":
-        ds.maxDataPoints = 60; // 1m = 60 sec
-        ds.sampleTime = 1000; // 15 sec
-        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
-        break;
-
-      default: // 15 second period for quick gauges like wind speed and angle, heading and course in racing
-        ds.maxDataPoints = 40; // 1m * 60 sec * 2 (every 0.5 sec)
-        ds.sampleTime = 250; // go as fast as the sensor
-        ds.period = 10; // moving average points to use
-        break;
-    }
   }
 }
