@@ -64,9 +64,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
   ngOnInit() {
-    // Start datasets
-    this.DatasetService.startAll();
-
     // Connection Status Notification sub
     this.connectionStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
       this.displayConnectionsStatusNotification(status);

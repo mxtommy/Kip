@@ -8,7 +8,6 @@ import { cloneDeep } from 'lodash-es';
 interface IDatasetServiceDataSource {
   uuid: string;
   pathSub: Subscription;
-  updateTimerSub: Subscription;
   dataset: IDatasetServiceDataset[];
 };
 
@@ -38,7 +37,6 @@ export interface IDatasetServiceDatasetConfig {
 };
 
 interface IDatasetServiceObserverRegistration {
-  uuid: string;
   datasetUuid: string;
   rxjsSubject: BehaviorSubject<IDatasetServiceDataset>;
 }
@@ -54,6 +52,7 @@ export class DatasetService {
     private signalk: SignalKService
   ) {
       this._svcDatasetConfigs = appSettings.getDataSets();
+      this.startAll();
   }
 
   /**
@@ -99,7 +98,6 @@ export class DatasetService {
       this._svcDataSource.push({
         uuid: uuid,
         pathSub: null,
-        updateTimerSub: null,
         dataset: []
       }) - 1
     ];
@@ -143,7 +141,7 @@ export class DatasetService {
   private stop(uuid: string) {
     // Remove any registrations to this DataSource...
     for (let i = this._svcObserverRegistry.length - 1; i >= 0; i--) { //backwards because length will change...
-      if (this._svcObserverRegistry[i].uuid == uuid) {
+      if (this._svcObserverRegistry[i].datasetUuid == uuid) {
         this._svcObserverRegistry.splice(i, 1);
       }
     }
@@ -298,7 +296,7 @@ export class DatasetService {
  */
   public getDatasetObservable(uuid: string, dataSetUuid: string): Observable<IDatasetServiceDataset> {
     // If already subscribed to, return it
-    let registerIndex = this._svcObserverRegistry.findIndex(registration => (registration.uuid == uuid) && (registration.datasetUuid == dataSetUuid));
+    let registerIndex = this._svcObserverRegistry.findIndex(registration => (registration.datasetUuid == uuid) && (registration.datasetUuid == dataSetUuid));
     if (registerIndex >= 0) { // exists
       return this._svcObserverRegistry[registerIndex].rxjsSubject.asObservable();
     }
@@ -306,7 +304,6 @@ export class DatasetService {
     // Create new empty Subject and return Observable
     return this._svcObserverRegistry[
       this._svcObserverRegistry.push({
-        uuid: uuid,
         datasetUuid: dataSetUuid,
         rxjsSubject: new BehaviorSubject<IDatasetServiceDataset>(null)
       }) - 1].rxjsSubject.asObservable();
