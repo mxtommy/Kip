@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subscription, BehaviorSubject, Observable, sampleTime } from 'rxjs';
+import { Subscription, BehaviorSubject, Observable, sampleTime, shareReplay, ReplaySubject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService, pathRegistrationValue } from './signalk.service';
 import { UUID } from'../../utils/uuid'
@@ -36,7 +36,7 @@ export interface IDatasetServiceDatasetConfig {
 };
 interface IDatasetServiceObserverRegistration {
   datasetUuid: string;
-  rxjsSubject: BehaviorSubject<IDatasetServiceDataset>;
+  rxjsSubject: ReplaySubject<IDatasetServiceDataset>;
 }
 
 @Injectable()
@@ -61,7 +61,7 @@ export class DatasetService {
   private setupServiceRegistry(uuid: string): void {
     this._svcSubjectObserverRegistry.push({
       datasetUuid: uuid,
-      rxjsSubject: new BehaviorSubject(null)
+      rxjsSubject: new ReplaySubject(this._svcDatasetConfigs.find(c => c.uuid === uuid).maxDataPoints)
     });
   }
 

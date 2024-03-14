@@ -25,13 +25,6 @@ interface IChartColors {
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('chartTrends', {static: true, read: ElementRef}) chartTrends: ElementRef;
 
-  private transformDataset = (rawDs: IDatasetServiceDataset[], datasetType: number) => {
-    let newDs = [];
-    rawDs.map(row => {
-      newDs.push(this.transformDatasetRow(row, datasetType));
-    });
-    return newDs;
-  };
   private transformDatasetRow = (row: IDatasetServiceDataset, datasetType) => {
     const newRow: {x: number, y: number} = {x: row.timestamp, y: null};
 
@@ -115,42 +108,13 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
     // Get dataset configuration
     this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
+
     if (this.datasetConfig) {
-      // Get historical data
-      const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);
-
-      if (dsData && dsData.length > 0) {
-        // Transform, convert to units data and load chart dataset data
-        this.lineChartData.datasets[0].data = this.transformDataset(dsData, 0);
-
-        if (this.widgetProperties.config.showAverageData) {
-          this.lineChartData.datasets[1].data = this.transformDataset(dsData, 1);
-        }
-
-        const lastAverage = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsData[dsData.length - 1].data.lastAverage);
-        const lastMinimum = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsData[dsData.length - 1].data.lastMinimum);
-        const lastMaximum = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsData[dsData.length - 1].data.lastMaximum);
-
         this.chart = new Chart(this.chartTrends.nativeElement.getContext('2d'), {
           type: this.lineChartType,
           data: this.lineChartData,
           options: this.lineChartOptions
         });
-
-        this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-        this.chart.options.plugins.annotation.annotations.averageLine.label.content = `Avg: ${Math.round(lastAverage)}`;
-        this.chart.options.plugins.annotation.annotations.minimumLine.value = lastMinimum;
-        this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `Min: ${Math.round(lastMinimum)}`;
-        this.chart.options.plugins.annotation.annotations.maximumLine.value = lastMaximum;
-        this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `Max: ${Math.round(lastMaximum)}`;
-        this.chart?.update('none');
-      } else {
-        this.chart = new Chart(this.chartTrends.nativeElement.getContext('2d'), {
-          type: this.lineChartType,
-          data: this.lineChartData,
-          options: this.lineChartOptions
-        });
-      }
 
       this.startStreaming();
     }
