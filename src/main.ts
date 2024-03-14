@@ -92,8 +92,6 @@ export class kipHammerConfig extends HammerGestureConfig {
   };
 }
 
-
-
 if (environment.production) {
   enableProdMode();
 }

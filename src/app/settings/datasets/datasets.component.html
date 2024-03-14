@@ -15,16 +15,16 @@
           <mat-cell class="pathCell" *matCellDef="let element" data-label="Path: "> {{element.path}} </mat-cell>
         </ng-container>
 
-        <!-- sampleTime Column -->
-        <ng-container matColumnDef="sampleTime">
-          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Sample Time </mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Sample Time: ">every {{element.sampleTime / 1000}} sec</mat-cell>
+        <!-- signalKSource Column -->
+        <ng-container matColumnDef="signalKSource">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source </mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Source: "> {{element.signalKSource}} </mat-cell>
         </ng-container>
 
-        <!-- dataPoints Column -->
-        <ng-container matColumnDef="dataPoints">
-          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Data Points </mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Data Points: ">{{element.maxDataPoints}}</mat-cell>
+        <!-- timeScaleFormat Column -->
+        <ng-container matColumnDef="timeScaleFormat">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Time Scale </mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Scale: "> {{element.timeScaleFormat}} </mat-cell>
         </ng-container>
 
         <ng-container matColumnDef="actions">

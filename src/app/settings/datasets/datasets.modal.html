@@ -55,48 +55,21 @@
         </div>
       </mat-step>
       <mat-step>
-        <ng-template matStepLabel>Data Points</ng-template>
+        <ng-template matStepLabel>Time Scale</ng-template>
         <div class="tab-content">
           <mat-form-field class="full-width" style="margin-bottom: 10px;">
-            <mat-label>Total most recent data points that makes the dataset</mat-label>
-            <input
-              matInput
-              placeholder="Data Points"
-              type="number"
-              min="3"
-              max="300"
-              inputmode="numeric"
-              step="1"
-              name="maxDataPoints"
-              [(ngModel)]="formDataset.maxDataPoints"
-              required
-            />
+            <mat-label>Time scale and duration and range</mat-label>
+            <mat-select
+              placeholder="Select dataset time duration and scale"
+              [(ngModel)]="formDataset.timeScaleFormat"
+              name="timeScaleFormat"
+              required>
+              <mat-option value="day">1 Day</mat-option>
+              <mat-option value="hour">1 Hour</mat-option>
+              <mat-option value="minute">1 Minute</mat-option>
+              <mat-option value="racing">Racing</mat-option>
+            </mat-select>
           </mat-form-field>
-          <mat-form-field class="full-width" style="margin-bottom: 10px;">
-            <mat-label>Dataset data sample time</mat-label>
-            <input
-              type="number"
-              matInput
-              placeholder="seconds"
-              type="number"
-              min="0.25"
-              max="60"
-              inputmode="numeric"
-              step="any"
-              name="sampleTime"
-              [(ngModel)]="formDataset.sampleTime"
-              required/>
-          </mat-form-field>
-          <label id="periodFactor-radio-group-label">Moving average period:</label>
-          <mat-radio-group aria-labelledby="periodFactor-radio-group-label"
-            [(ngModel)]="formDataset.periodFactor"
-            placeholder="Smoothness"
-            name="Smoothness">
-            <mat-radio-button [value]="0.1">Short (best for quick average response)</mat-radio-button>
-            <mat-radio-button [value]="0.2">Medium</mat-radio-button>
-            <mat-radio-button [value]="0.3">Long (best for smoother average)</mat-radio-button>
-          </mat-radio-group>
-
         </div>
         <mat-divider></mat-divider>
         <div class="buttons">

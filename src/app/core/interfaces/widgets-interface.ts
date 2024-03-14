@@ -132,7 +132,6 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-
   /** Used by multiple gauge Widget: defines the UI layout */
   gaugeType?: string;
   /** Used by multiple gauge Widget */
@@ -168,10 +167,10 @@ export interface IWidgetSvcConfig {
   datasetUUID?: string;
   /** Used by historical data Widget */
   invertData?: boolean;
-  /** Display chart ENA dataset values */
-  displayEMADataset?: boolean;
-  /** Display chart DENA dataset values */
-  displayDEMADataset?: boolean;
+  /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
+  datasetAverageArray?: string;
+  /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */
+  showAverageData?: boolean;
   /** Display chart dataset minimum value line */
   displayDatasetMinimumValueLine?: boolean;
   /** Display chart dataset maximum value line */
@@ -184,6 +183,8 @@ export interface IWidgetSvcConfig {
   animateGraph?: boolean;
   /** Prevent chart value axis autoscaling. Always start scale from zero */
   startScaleAtZero?: boolean;
+  /** Display chart time (x axis) scale */
+  showTimeScale?: boolean;
   /** Limit chart value axis scale to min and max value */
   enableMinMaxScaleLimit?: boolean;
   /** Used by historical data Widget */

@@ -41,7 +41,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
   selectedDataset: string;
   tableData = new MatTableDataSource([]);
-  displayedColumns: string[] = ['path', 'sampleTime', 'dataPoints', 'actions'];
+  displayedColumns: string[] = ['path', 'signalKSource', 'timeScaleFormat', 'actions'];
 
   constructor(
     public dialog: MatDialog,
@@ -78,7 +78,6 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
       );
 
       if (thisDataset) {
-        thisDataset.sampleTime = thisDataset.sampleTime / 1000; // data in ms but displayed in sec
         dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
           data: thisDataset
         });
@@ -92,9 +91,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
       if (dataset === undefined || !dataset) {
         return; //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
       } else {
-        dataset.sampleTime = dataset.sampleTime * 1000; // value needed in ms
-        dataset.label = dataset.path + ', Sample: ' + (dataset.sampleTime / 1000).toString() + ', Points: ' + dataset.maxDataPoints.toString() + ', Factor: ' + dataset.periodFactor.toString();
-        dataset.maxDataPoints = Math.floor(dataset.maxDataPoints);
+        dataset.label = `${dataset.path}, Source: ${dataset.signalKSource}, Scale: ${dataset.timeScaleFormat}`;
         if (dataset.uuid) {
           this.editDataset(dataset);
         } else {
@@ -103,11 +100,11 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
         this.loadDatasets();
       }
-      });
+    });
   }
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
-    this.dsService.create(dataset.path, dataset.signalKSource, dataset.sampleTime, dataset.maxDataPoints, dataset.periodFactor, dataset.label);
+    this.dsService.create(dataset.path, dataset.signalKSource, dataset.timeScaleFormat, dataset.label);
   }
 
   private editDataset(dataset: IDatasetServiceDatasetConfig) {
@@ -144,13 +141,14 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 export class SettingsDatasetsModalComponent implements OnInit {
   public titleDialog: string = null;
   public newDataset: IDatasetServiceDatasetConfig = {
+    label: null,
     uuid: null,
     path: null,
     signalKSource: null,
-    sampleTime: 1,
-    maxDataPoints: 30,
-    periodFactor: 0.1,
-    label: null,
+    timeScaleFormat: "minute",
+    sampleTime: null,
+    maxDataPoints: null,
+    period: null
   }
 
   public formDataset: IDatasetServiceDatasetConfig = null;

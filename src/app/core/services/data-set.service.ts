@@ -1,6 +1,5 @@
-import { element } from 'protractor';
 import { Injectable } from '@angular/core';
-import { Subscription, BehaviorSubject, pipe, UnaryFunction, filter, OperatorFunction, Observable, sampleTime } from 'rxjs';
+import { Subscription, BehaviorSubject, Observable, sampleTime } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService, pathRegistrationValue } from './signalk.service';
 import { UUID } from'../../utils/uuid'
@@ -17,24 +16,25 @@ export interface IDatasetServiceDataset {
   timestamp: number;
   data: {
     value: number;
+    sma?: number; // Simple Moving Average
     ema?: number; // Exponential Moving Average - A better Moving Average calculation than Simple Moving Average
     doubleEma?: number; // Double Exponential Moving Average - Moving Average that is even more reactive to data variation then EMA. Suitable for wind and angle average calculations
-    lastAngleAverage?: number;  // ** Last mean from the last data received. Not the whole dataset.
-    lastAverage?: number;
+    lastAngleAverage?: number;
+    lastAverage?: number; // Computed from the latest dataset.
     lastMinimum?: number;
     lastMaximum?: number;
   }
 }
 
 export interface IDatasetServiceDatasetConfig {
-  label?:  string; // label of the dataset
+  label:  string; // label of the dataset
   uuid: string;
   path: string;
   signalKSource: string;
+  timeScaleFormat: string; /** Dataset time scale measure. Can be: millisecond, second, minute, hour, day... */
+  maxDataPoints: number; // how many data points do we keep for that timescale
   sampleTime: number; // number of milliseconds between data capture
-  maxDataPoints: number; // how many data points do we keep
-  periodFactor: number; // factor of maxDataPoints to automatically determine period
-  period?: number;  // number of previous plus current value to use as the moving average
+  period: number;  // number of previous plus current value to use as the moving average
 };
 
 interface IDatasetServiceObserverRegistration {
@@ -84,6 +84,9 @@ export class DatasetService {
       return;
     }
 
+    // Get dataset data setup
+    this.setDsConfig(dsDef);
+
     // Cleanup existing dataset if present.
     const dsIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
     if (dsIndex >= 0) {
@@ -101,10 +104,7 @@ export class DatasetService {
       }) - 1
     ];
 
-    // Set EMA and DEMA period
-    dsDef.period = Math.floor(dsDef.maxDataPoints * dsDef.periodFactor);
-
-    console.log(`[DataSet Service] Staring Dataset ${uuid}, Datapoints: ${dsDef.maxDataPoints}, AvgPeriod: ${dsDef.period}`)
+    console.log(`[DataSet Service] Starting Dataset ${uuid} - Scale: ${dsDef.timeScaleFormat}, Datapoints: ${dsDef.maxDataPoints}, Period: ${dsDef.period}`)
 
     // Subscribe to path data and update dataset upon reception
     dataSource.pathSub = this.signalk.subscribePath(dsDef.uuid, dsDef.path, dsDef.signalKSource).pipe(sampleTime(dsDef.sampleTime)).subscribe(
@@ -120,7 +120,7 @@ export class DatasetService {
         const newDataPoint: IDatasetServiceDataset = this.updateDataset(dsDef, dataSource.dataset, newValue.value as number)
         dataSource.dataset.push(newDataPoint);
 
-        // Update Subject. All Subscribers are notified
+        // Update Subject to notify all Subscribers
         this._svcObserverRegistry.forEach(
           (registration :IDatasetServiceObserverRegistration) => {
             if (registration.datasetUuid === dataSource.uuid) {
@@ -160,31 +160,6 @@ export class DatasetService {
   }
 
   /**
-   * Subscribes to a dataset and returns the Observable. If an Observable
-   * already exist, it will be returned, else a new Observable is created.
-   *
-   * @param {string} uuid The UUID is the subscriber/listener. Usually cal calling Widget's UUID
-   * @param {string} dataSetUuid The UUID is the dataset
-   * @return {*}  {Observable<dataset[]>} Observable of data point array
-   * @memberof DataSetService
-   */
-  public getDatasetObservable(uuid: string, dataSetUuid: string): Observable<IDatasetServiceDataset> {
-    // If already subscribed to, return it
-    let registerIndex = this._svcObserverRegistry.findIndex(registration => (registration.uuid == uuid) && (registration.datasetUuid == dataSetUuid));
-    if (registerIndex >= 0) { // exists
-      return this._svcObserverRegistry[registerIndex].rxjsSubject.asObservable();
-    }
-
-    // Create new empty Subject and return Observable
-    return this._svcObserverRegistry[
-      this._svcObserverRegistry.push({
-        uuid: uuid,
-        datasetUuid: dataSetUuid,
-        rxjsSubject: new BehaviorSubject<IDatasetServiceDataset>(null)
-      }) - 1].rxjsSubject.asObservable();
-  }
-
-  /**
    * Creates a new Dataset and starts the data capture process.
    *
    * @param {string} path Signal K path of the data to record
@@ -195,18 +170,20 @@ export class DatasetService {
    * @param {string} label Name of the Dataset
    * @memberof DataSetService
    */
-  public create(path: string, source: string, sampleTime: number, dataPoints: number, periodFactor: number, label: string ) {
+  public create(path: string, source: string, timeScaleFormat: string, label: string ) {
     let uuid = UUID.create();
 
-    let newSvcDataset: IDatasetServiceDatasetConfig = {
+    const newSvcDataset: IDatasetServiceDatasetConfig = {
+      label: label,
       uuid: uuid,
       path: path,
       signalKSource: source,
-      sampleTime: sampleTime,
-      maxDataPoints: dataPoints,
-      periodFactor: periodFactor,
-      label: label
+      timeScaleFormat: timeScaleFormat,
+      sampleTime: null,
+      maxDataPoints: null,
+      period: null
     };
+
     this._svcDatasetConfigs.push(newSvcDataset);
 
     this.start(uuid);
@@ -289,9 +266,10 @@ export class DatasetService {
         uuid: this._svcDatasetConfigs[i].uuid,
         path: this._svcDatasetConfigs[i].path,
         signalKSource: this._svcDatasetConfigs[i].signalKSource,
+        timeScaleFormat: this._svcDatasetConfigs[i].timeScaleFormat,
         sampleTime: this._svcDatasetConfigs[i].sampleTime,
         maxDataPoints: this._svcDatasetConfigs[i].maxDataPoints,
-        periodFactor: this._svcDatasetConfigs[i].periodFactor,
+        period: this._svcDatasetConfigs[i].period,
         label: this._svcDatasetConfigs[i].label
       });
     }
@@ -307,6 +285,31 @@ export class DatasetService {
    */
   public getDatasetConfig(uuid: string): IDatasetServiceDatasetConfig {
     return this._svcDatasetConfigs.find(config => config.uuid === uuid);
+  }
+
+  /**
+ * Subscribes to a dataset and returns the Observable. If an Observable
+ * already exist, it will be returned, else a new Observable is created.
+ *
+ * @param {string} uuid The UUID is the subscriber/listener. Usually cal calling Widget's UUID
+ * @param {string} dataSetUuid The UUID is the dataset
+ * @return {*}  {Observable<dataset[]>} Observable of data point array
+ * @memberof DataSetService
+ */
+  public getDatasetObservable(uuid: string, dataSetUuid: string): Observable<IDatasetServiceDataset> {
+    // If already subscribed to, return it
+    let registerIndex = this._svcObserverRegistry.findIndex(registration => (registration.uuid == uuid) && (registration.datasetUuid == dataSetUuid));
+    if (registerIndex >= 0) { // exists
+      return this._svcObserverRegistry[registerIndex].rxjsSubject.asObservable();
+    }
+
+    // Create new empty Subject and return Observable
+    return this._svcObserverRegistry[
+      this._svcObserverRegistry.push({
+        uuid: uuid,
+        datasetUuid: dataSetUuid,
+        rxjsSubject: new BehaviorSubject<IDatasetServiceDataset>(null)
+      }) - 1].rxjsSubject.asObservable();
   }
 
   /**
@@ -329,9 +332,9 @@ export class DatasetService {
       timestamp: null,
       data: {
         value: null,
+        sma: null,
         ema: null,
         doubleEma: null,
-        lastAngleAverage: null,
         lastAverage: null,
         lastMinimum: null,
         lastMaximum: null
@@ -356,7 +359,7 @@ export class DatasetService {
       const smoothingFactor = 2 / (1 + period);
 
       // Calculate the second EMA (EMA2) of the EMA1 values
-      let ema2 = (ema1 * smoothingFactor) + (ds[ds.length - 2].data.doubleEma * (1 - smoothingFactor));
+      let ema2 = (ema1 * smoothingFactor) + (ds[ds.length - 1].data.ema * (1 - smoothingFactor));
 
       // Calculate and return the DEMA
       return (2 * ema1) - ema2;
@@ -378,7 +381,30 @@ export class DatasetService {
       const smoothingFactor = 2 / (1 + period);
 
       // Calculate and return EMA
-      return (currentValue * smoothingFactor) + (ds[ds.length - 2].data.ema * (1 - smoothingFactor));
+      return (currentValue * smoothingFactor) + (ds[ds.length - 1].data.sma * (1 - smoothingFactor));
+    }
+
+    function calculateSMA(ds: IDatasetServiceDataset[], currentValue: number, period: number): number {
+      let smaPeriodCount = 0;
+      let smaSum: number = 0;
+
+      // Load past period values
+      for (let index = ds.length - 1; index >= (ds.length - period); index--) {
+        smaSum += ds[index].data.value;
+        smaPeriodCount++;
+      }
+      // Add current period value
+      smaSum += currentValue;
+      smaPeriodCount++;
+
+      let sma = smaSum / smaPeriodCount;
+
+      // Prevent NaN with values of 0
+      if (!sma) {
+        console.log("NANANANANANANA")// sma = currentValue;
+      }
+
+      return sma;
     }
 
     // Set Timestamp
@@ -388,25 +414,14 @@ export class DatasetService {
 
     // Check if we are doing the first period and use SMA calculations, else do EMA & DEMA
     if (ds.length < dsDef.period) {
-      let smaPeriodCount = 0;
-      let smaSum: number = 0;
-
-      for (let index = ds.length - 1; index >= 0; index--) {
-        smaSum += ds[index].data.value;
-        smaPeriodCount++;
-      }
-
-      let sma = smaSum / smaPeriodCount;
-
-      // Prevent NaN with values of 0
-      if (!sma) {
-        newDataset.data.doubleEma = newDataset.data.ema = value;
+      if (ds.length === 0) {
+        newDataset.data.sma = newDataset.data.doubleEma = newDataset.data.ema = value;
       } else {
-        newDataset.data.doubleEma = newDataset.data.ema = smaSum / smaPeriodCount;
+        newDataset.data.sma = newDataset.data.doubleEma = newDataset.data.ema = calculateSMA(ds, newDataset.data.value, ds.length);
       }
-    }
-    else {
-      // We have enough to start doing EMA & DEMA calculations
+    } else {
+      // We have enough to start doing stats calculations
+      newDataset.data.sma = calculateSMA(ds, newDataset.data.value, dsDef.period);
       newDataset.data.ema = calculateEMA(ds, newDataset.data.value, dsDef.period);
       newDataset.data.doubleEma = calculateDEMA(ds, newDataset.data.ema, dsDef.period);
     }
@@ -428,5 +443,35 @@ export class DatasetService {
     newDataset.data.lastMaximum = Math.max(...valArr);
 
     return newDataset;
+  }
+
+  private setDsConfig(ds: IDatasetServiceDatasetConfig ): void {
+    const periodFactor: number = 0.3;
+
+    switch (ds.timeScaleFormat) {
+      case "day":
+        ds.maxDataPoints = 96; // 1d * 24 * 4 (every 15 min)
+        ds.sampleTime = 900000; // 15 min
+        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        break;
+
+      case "hour":
+        ds.maxDataPoints = 240; // 1h = 60 min * 4 (every 15 sec)
+        ds.sampleTime = 15000; // 15 sec
+        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        break;
+
+      case "minute":
+        ds.maxDataPoints = 60; // 1m = 60 sec
+        ds.sampleTime = 1000; // 15 sec
+        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        break;
+
+      default: // 15 second period for quick gauges like wind speed and angle, heading and course in racing
+        ds.maxDataPoints = 40; // 1m * 60 sec * 2 (every 0.5 sec)
+        ds.sampleTime = 250; // go as fast as the sensor
+        ds.period = 10; // moving average points to use
+        break;
+    }
   }
 }

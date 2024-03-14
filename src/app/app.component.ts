@@ -64,6 +64,15 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
   ngOnInit() {
+    // Start datasets
+    this.DatasetService.startAll();
+
+    // Connection Status Notification sub
+    this.connectionStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
+      this.displayConnectionsStatusNotification(status);
+      }
+    );
+
     // Page layout area operations sub
     this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
       status => { this.unlockStatus = status; }
@@ -130,14 +139,6 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       }
     );
-
-    // Connection Status Notification sub
-    this.connectionStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
-        this.displayConnectionsStatusNotification(status);
-      }
-    );
-
-    this.DatasetService.startAll();
   }
 
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {

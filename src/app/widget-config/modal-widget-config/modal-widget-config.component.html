@@ -3,7 +3,27 @@
   <mat-dialog-content>
     <mat-tab-group>
       <mat-tab label="Display">
-        <div class="tab-content">
+        <config-chart-options *ngIf="(widgetConfig.datasetUUID !== undefined)"
+          [displayName]="formMaster.get('displayName')"
+          [datasetUUID]="formMaster.get('datasetUUID')"
+          [convertUnitTo]="formMaster.get('convertUnitTo')"
+          [showAverageData]="formMaster.get('showAverageData')"
+          [datasetAverageArray]="formMaster.get('datasetAverageArray')"
+          [displayDatasetMinimumValueLine]="formMaster.get('displayDatasetMinimumValueLine')"
+          [displayDatasetMaximumValueLine]="formMaster.get('displayDatasetMaximumValueLine')"
+          [displayDatasetAverageValueLine]="formMaster.get('displayDatasetAverageValueLine')"
+          [displayDatasetAngleAverageValueLine]="formMaster.get('displayDatasetAngleAverageValueLine')"
+          [startScaleAtZero]="formMaster.get('startScaleAtZero')"
+          [showTimeScale]="formMaster.get('showTimeScale')"
+          [enableMinMaxScaleLimit]="formMaster.get('enableMinMaxScaleLimit')"
+          [minValue]="formMaster.get('minValue')"
+          [maxValue]="formMaster.get('maxValue')"
+          [verticalGraph]="formMaster.get('verticalGraph')"
+          [textColor]="formMaster.get('textColor')"
+          >
+        </config-chart-options>
+
+        <div class="tab-content" *ngIf="(widgetConfig.datasetUUID === undefined)">
           <div class="widget-options-grid">
             <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.widgetUrl !== undefined)">
               <mat-label>URL</mat-label>
@@ -311,7 +331,7 @@
       </mat-tab>
 <!-- End PUT Requests-->
 
-<!-- Historical stuff -->
+<!-- Charts -->
       <mat-tab label="Dataset" *ngIf="(widgetConfig.datasetUUID !== undefined)">
         <ng-template mat-tab-label>
             <span *ngIf="!formMaster.controls.datasetUUID.valid" class="warning fa fa-exclamation-circle"></span> Dataset
@@ -346,30 +366,6 @@
                   </mat-optgroup>
               </mat-select>
             </mat-form-field>
-
-            <mat-checkbox
-              formControlName="verticalGraph"
-              name="verticalGraph">
-                Show vertical graph
-            </mat-checkbox>
-
-            <mat-checkbox
-              formControlName="invertData"
-              name="invertData">
-                Invert Data (multiply by -1)
-            </mat-checkbox>
-
-            <mat-checkbox
-              formControlName="displayDatasetMinimumValueLine"
-              name="displayDatasetMinimumValueLine">
-                Display Min/Max value
-            </mat-checkbox>
-
-            <mat-checkbox
-              formControlName="startScaleAtZero"
-              name="startScaleAtZero">
-                Y axis always start from zero
-            </mat-checkbox>
           </div>
         </div>
       </mat-tab>
