@@ -183,7 +183,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     this.unsubscribeDataSource();
     if (this.widgetProperties.config.datasetUUID === null) { return } // nothing to sub to...
 
-    this.dataSetSub = this.dsService.getDatasetObservable(this.widgetProperties.uuid, this.widgetProperties.config.datasetUUID).subscribe(
+    this.dataSetSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
       (dsDatasets: IDatasetServiceDataset) => {
         // console.log(this.chart);
         if (!dsDatasets) {

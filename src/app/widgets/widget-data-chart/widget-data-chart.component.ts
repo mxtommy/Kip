@@ -300,7 +300,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private startStreaming(): void {
-    this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.uuid, this.widgetProperties.config.datasetUUID).subscribe(
+    this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
       (dsPoint: IDatasetServiceDataset) => {
         if (!dsPoint) return; // we will get null back if we subscribe to a dataset before the app has started it. No need to update until we have values
 
