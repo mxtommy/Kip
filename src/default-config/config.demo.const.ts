@@ -271,7 +271,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
         "filterSelfPaths": true,
         "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
-        "displayDatasetMinimumValueLine": false,
+        "showDatasetMinimumValueLine": false,
         "startScaleAtZero": true,
         "minValue": null,
         "maxValue": null,

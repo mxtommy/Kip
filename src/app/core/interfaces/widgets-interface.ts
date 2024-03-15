@@ -172,13 +172,17 @@ export interface IWidgetSvcConfig {
   /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */
   showAverageData?: boolean;
   /** Display chart dataset minimum value line */
-  displayDatasetMinimumValueLine?: boolean;
+  showDatasetMinimumValueLine?: boolean;
   /** Display chart dataset maximum value line */
-  displayDatasetMaximumValueLine?: boolean;
+  showDatasetMaximumValueLine?: boolean;
   /** Display chart dataset average value line */
-  displayDatasetAverageValueLine?: boolean;
+  showDatasetAverageValueLine?: boolean;
   /** Display chart dataset angle average value line */
-  displayDatasetAngleAverageValueLine?: boolean;
+  showDatasetAngleAverageValueLine?: boolean;
+  /** Display widget title */
+  showLabel?: boolean;
+  /** Display chart y scale */
+  showYScale?: boolean;
   /** Used by historical data Widget */
   animateGraph?: boolean;
   /** Prevent chart value axis autoscaling. Always start scale from zero */

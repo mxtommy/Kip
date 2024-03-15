@@ -22,16 +22,19 @@ export class ChartOptionsComponent implements OnInit {
   @Input () datasetUUID!: UntypedFormControl;
   @Input () showAverageData!: UntypedFormControl;
   @Input () datasetAverageArray!: UntypedFormControl;
-  @Input () displayDatasetMinimumValueLine!: UntypedFormControl;
-  @Input () displayDatasetMaximumValueLine!: UntypedFormControl;
-  @Input () displayDatasetAverageValueLine!: UntypedFormControl;
-  @Input () displayDatasetAngleAverageValueLine!: UntypedFormControl;
+  @Input () showDatasetMinimumValueLine!: UntypedFormControl;
+  @Input () showDatasetMaximumValueLine!: UntypedFormControl;
+  @Input () showDatasetAverageValueLine!: UntypedFormControl;
+  @Input () showDatasetAngleAverageValueLine!: UntypedFormControl;
   @Input () startScaleAtZero!: UntypedFormControl;
   @Input () verticalGraph!: UntypedFormControl;
+  @Input () showLabel!: UntypedFormControl;
+  @Input () showYScale!: UntypedFormControl;
   @Input () showTimeScale!: UntypedFormControl;
   @Input () enableMinMaxScaleLimit!: UntypedFormControl;
   @Input () minValue!: UntypedFormControl;
   @Input () maxValue!: UntypedFormControl;
+  @Input () numDecimal!: UntypedFormControl;
   @Input () textColor!: UntypedFormControl;
 
 
@@ -41,20 +44,20 @@ export class ChartOptionsComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.startScaleAtZero.value) {
-      this.displayDatasetMinimumValueLine.disable();
-      this.displayDatasetMaximumValueLine.disable();
+      this.showDatasetMinimumValueLine.disable();
+      this.showDatasetMaximumValueLine.disable();
     }
   }
 
   public disableMinMaxLines(e: MatCheckboxChange): void {
     if (e.checked) {
-      this.displayDatasetMinimumValueLine.setValue(!e.checked);
-      this.displayDatasetMaximumValueLine.setValue(!e.checked);
-      this.displayDatasetMinimumValueLine.disable();
-      this.displayDatasetMaximumValueLine.disable();
+      this.showDatasetMinimumValueLine.setValue(!e.checked);
+      this.showDatasetMaximumValueLine.setValue(!e.checked);
+      this.showDatasetMinimumValueLine.disable();
+      this.showDatasetMaximumValueLine.disable();
     } else {
-      this.displayDatasetMinimumValueLine.enable();
-      this.displayDatasetMaximumValueLine.enable();
+      this.showDatasetMinimumValueLine.enable();
+      this.showDatasetMaximumValueLine.enable();
     }
   }
 }

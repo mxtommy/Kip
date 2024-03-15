@@ -46,7 +46,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
       convertUnitTo: "unitless",
       datasetUUID: null,
       invertData: false,
-      displayDatasetMinimumValueLine: false,
+      showDatasetMinimumValueLine: false,
       startScaleAtZero: true,
       minValue: null,
       maxValue: null,
@@ -87,7 +87,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     ];
 
     // Min / max display options
-    if (this.widgetProperties.config.displayDatasetMinimumValueLine) {
+    if (this.widgetProperties.config.showDatasetMinimumValueLine) {
       ds.push(
         {
           label: `${this.widgetProperties.config.displayName}-Min`,
@@ -208,7 +208,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
         this.chart.config.data.datasets[0].data = this.chartDataValue;
 
         //min/max
-        if (this.widgetProperties.config.displayDatasetMinimumValueLine) {
+        if (this.widgetProperties.config.showDatasetMinimumValueLine) {
           this.chartDataMin = [];
           this.chartDataMax = [];
 
@@ -228,7 +228,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
 
         // append the cumulated lastAverage to the label text
         this.chart.data.datasets[0].label = this.widgetProperties.config.displayName + " [" + lastAverage(this.chartDataValue.map(e => e.y)).toFixed(2) + "]";
-        if (this.widgetProperties.config.displayDatasetMinimumValueLine) {
+        if (this.widgetProperties.config.showDatasetMinimumValueLine) {
           this.chart.data.datasets[1].label = this.widgetProperties.config.displayName + " [" + lastAverage(this.chartDataMin.map(e => e.y)).toFixed(2) + "]";
           this.chart.data.datasets[2].label = this.widgetProperties.config.displayName + " [" + lastAverage(this.chartDataMax.map(e => e.y)).toFixed(2) + "]";
         }
