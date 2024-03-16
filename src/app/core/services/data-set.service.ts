@@ -25,14 +25,15 @@ export interface IDatasetServiceDataset {
   }
 }
 export interface IDatasetServiceDatasetConfig {
-  label:  string; // label of the dataset
+  label:  string;           // label of the dataset
   uuid: string;
   path: string;
   signalKSource: string;
-  timeScaleFormat: string; /** Dataset time scale measure. Can be: millisecond, second, minute, hour, day... */
-  maxDataPoints: number; // how many data points do we keep for that timescale
-  sampleTime: number; // number of milliseconds between data capture
-  period: number;  // number of previous plus current value to use as the moving average
+  timeScaleFormat: string;  // Dataset time scale measure. Can be: millisecond, second, minute, hour
+  period: number;           // Number of datapoints to capture.
+  sampleTime: number;       // DataSource Observer's path value sampling rate in milliseconds. ie. How often we get data from Signal K.
+  maxDataPoints: number;    // How many data points do we keep for that timescale
+  smoothingPeriod: number;  // Number of previous plus current value to use as the moving average
 };
 interface IDatasetServiceObserverRegistration {
   datasetUuid: string;
@@ -66,31 +67,25 @@ export class DatasetService {
   }
 
   private setDatasetConfigurationOptions(ds: IDatasetServiceDatasetConfig ): void {
-    const periodFactor: number = 0.3;
+    const periodFactor: number = 0.25;
 
     switch (ds.timeScaleFormat) {
-      case "day":
-        ds.maxDataPoints = 96; // 1d * 24 * 4 (every 15 min)
-        ds.sampleTime = 900000; // 15 min
-        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
-        break;
-
       case "hour":
-        ds.maxDataPoints = 240; // 1h = 60 min * 4 (every 15 sec)
+        ds.maxDataPoints = ds.period * 60 * 4; // X hours * 60 min * 4 (every 15 sec)
         ds.sampleTime = 15000; // 15 sec
-        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
         break;
 
       case "minute":
-        ds.maxDataPoints = 60; // 1m = 60 sec
-        ds.sampleTime = 1000; // 15 sec
-        ds.period = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        ds.maxDataPoints = ds.period * 60 * 2; // x minutes * 60 sec * 2 (every half second)
+        ds.sampleTime = 500;
+        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
         break;
 
-      default: // 15 second period for quick gauges like wind speed and angle, heading and course in racing
-        ds.maxDataPoints = 40; // 1m * 60 sec * 2 (every 0.5 sec)
-        ds.sampleTime = 250; // go as fast as the sensor
-        ds.period = 10; // moving average points to use
+      default:
+        ds.maxDataPoints = ds.period * 4; // every quarter of a second
+        ds.sampleTime = 250;
+        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
         break;
     }
   }
@@ -141,7 +136,7 @@ export class DatasetService {
       }) - 1
     ];
 
-    console.log(`[DataSet Service] Starting Dataset ${uuid} - Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.period}`)
+    console.log(`[DataSet Service] Starting Dataset ${uuid} - Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.smoothingPeriod}`)
 
     // Subscribe to path data and update dataset upon reception
     dataSource.pathSub = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.signalKSource).pipe(sampleTime(configuration.sampleTime)).subscribe(
@@ -205,7 +200,7 @@ export class DatasetService {
    * @param {string} label Name of the Dataset
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: string, label: string ) {
+  public create(path: string, source: string, timeScaleFormat: string, period: number, label: string ) {
     let uuid = UUID.create();
 
     const newSvcDataset: IDatasetServiceDatasetConfig = {
@@ -214,9 +209,10 @@ export class DatasetService {
       path: path,
       signalKSource: source,
       timeScaleFormat: timeScaleFormat,
+      period: period,
       sampleTime: null,
       maxDataPoints: null,
-      period: null
+      smoothingPeriod: null
     };
 
     this._svcDatasetConfigs.push(newSvcDataset);
@@ -262,22 +258,6 @@ export class DatasetService {
   }
 
   /**
-   * Get all of the recorded historical data (dataset arrays) from the service for a given DataSource.
-   *
-   * @param {string} dataSourceUUID The UUID string of the target DataSource
-   * @return {*}  {(IDatasetServiceDataset[] | null)} An of datasets containing all the recorded data, or null if not found.
-   * @memberof DatasetService
-   */
-  public getHistoricalData(dataSourceUUID: string): IDatasetServiceDataset[] | null {
-    const index = this._svcDataSource.findIndex(ds => ds.uuid === dataSourceUUID);
-    if (index >= 0) {
-      return cloneDeep(this._svcDataSource[index].dataset);
-    } else {
-      return null;
-    }
-  }
-
-  /**
    * Returns the dataset Subject corresponding to the dataset UUID as an Observable
    * or null if not found.
    *
@@ -304,7 +284,7 @@ export class DatasetService {
    * part of the dataset.
    *
    * @private
-   * @param {number} period The amount of previous dataset rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (period - 1)) value the average of the value and x number of previous values
+   * @param {number} smoothingPeriod The amount of previous dataset rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (smoothingPeriod - 1)) value the average of the value and x number of previous values
    * @param {IDatasetServiceDataset[]} ds The dataset object to update
    * @param {number} value The value to add to the dataset
    * @return {*}  {IDatasetServiceDataset} A new dataset object. Note: push() the object to the dataset to
@@ -329,17 +309,17 @@ export class DatasetService {
      *
      * @param {IDatasetServiceDataset[]} ds The current Dataset array
      * @param {number} ema1 The new dataset's calculated ema
-     * @param {number} period The dataset configuration period
+     * @param {number} smoothingPeriod The dataset configuration smoothingPeriod
      * @return {*}  {number} The DEMA value
      */
-    function calculateDEMA(ds: IDatasetServiceDataset[], ema1: number, period: number): number {
+    function calculateDEMA(ds: IDatasetServiceDataset[], ema1: number, smoothingPeriod: number): number {
       //  Check for min available periods
-      if (ds.length < period) {
-        console.log("[Dataset Service] Insufficient data for the given period to calculate DEMA.");
+      if (ds.length < smoothingPeriod) {
+        console.log("[Dataset Service] Insufficient data for the given smoothingPeriod to calculate DEMA.");
         return;
       }
 
-      const smoothingFactor = 2 / (1 + period);
+      const smoothingFactor = 2 / (1 + smoothingPeriod);
 
       // Calculate the second EMA (EMA2) of the EMA1 values
       let ema2 = (ema1 * smoothingFactor) + (ds[ds.length - 1].data.ema * (1 - smoothingFactor));
@@ -353,30 +333,30 @@ export class DatasetService {
      *
      * @param {IDatasetServiceDataset[]} ds The new dataset's calculated ema
      * @param {number} currentValue The new dataset's value
-     * @param {number} period The dataset configuration period
+     * @param {number} smoothingPeriod The dataset configuration smoothingPeriod
      * @return {*}  {number} The EMA value
      */
-    function calculateEMA(ds: IDatasetServiceDataset[], currentValue: number, period: number): number {
-      if (ds.length < period) {
-        console.log("[Dataset Service] Insufficient data for the given period to calculate EMA.");
+    function calculateEMA(ds: IDatasetServiceDataset[], currentValue: number, smoothingPeriod: number): number {
+      if (ds.length < smoothingPeriod) {
+        console.log("[Dataset Service] Insufficient data for the given smoothingPeriod to calculate EMA.");
         return;
       }
-      const smoothingFactor = 2 / (1 + period);
+      const smoothingFactor = 2 / (1 + smoothingPeriod);
 
       // Calculate and return EMA
       return (currentValue * smoothingFactor) + (ds[ds.length - 1].data.sma * (1 - smoothingFactor));
     }
 
-    function calculateSMA(ds: IDatasetServiceDataset[], currentValue: number, period: number): number {
+    function calculateSMA(ds: IDatasetServiceDataset[], currentValue: number, smoothingPeriod: number): number {
       let smaPeriodCount = 0;
       let smaSum: number = 0;
 
-      // Load past period values
-      for (let index = ds.length - 1; index >= (ds.length - period); index--) {
+      // Load past smoothingPeriod values
+      for (let index = ds.length - 1; index >= (ds.length - smoothingPeriod); index--) {
         smaSum += ds[index].data.value;
         smaPeriodCount++;
       }
-      // Add current period value
+      // Add current smoothingPeriod value
       smaSum += currentValue;
       smaPeriodCount++;
 
@@ -395,8 +375,8 @@ export class DatasetService {
     // Set Value
     newDataset.data.value = value;
 
-    // Check if we are doing the first period and use SMA calculations, else do EMA & DEMA
-    if (ds.length < configuration.period) {
+    // Check if we are doing the first smoothingPeriod and use SMA calculations, else do EMA & DEMA
+    if (ds.length < configuration.smoothingPeriod) {
       if (ds.length === 0) {
         newDataset.data.sma = newDataset.data.doubleEma = newDataset.data.ema = value;
       } else {
@@ -404,9 +384,9 @@ export class DatasetService {
       }
     } else {
       // We have enough to start doing stats calculations
-      newDataset.data.sma = calculateSMA(ds, newDataset.data.value, configuration.period);
-      newDataset.data.ema = calculateEMA(ds, newDataset.data.value, configuration.period);
-      newDataset.data.doubleEma = calculateDEMA(ds, newDataset.data.ema, configuration.period);
+      newDataset.data.sma = calculateSMA(ds, newDataset.data.value, configuration.smoothingPeriod);
+      newDataset.data.ema = calculateEMA(ds, newDataset.data.value, configuration.smoothingPeriod);
+      newDataset.data.doubleEma = calculateDEMA(ds, newDataset.data.ema, configuration.smoothingPeriod);
     }
 
     // Calculate sum

@@ -1,9 +1,10 @@
+import { animate } from '@angular/animations';
 
 import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDataset } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
-import { Chart, ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
 
@@ -87,6 +88,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       invertData: false,
       datasetAverageArray: 'sma',
       showAverageData: true,
+      trackAgainstAverage: false,
       showDatasetMinimumValueLine: false,
       showDatasetMaximumValueLine: false,
       showDatasetAverageValueLine: true,
@@ -107,11 +109,9 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
    }
 
   ngOnInit(): void {
+    this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
     this.validateConfig();
     this.setChartOptions();
-
-    // Get dataset configuration
-    this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
 
     if (this.datasetConfig) {
         this.chart = new Chart(this.chartTrends.nativeElement.getContext('2d'), {
@@ -131,15 +131,16 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       {
         label: 'Value',
         data: [],
-        order: 2,
+        order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
         parsing: false,
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: 0,
-        backgroundColor: this.getThemeColors().averageFill,
-        fill: true
+        borderColor: this.getThemeColors().valueLine,
+        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 0 : 3,
+        fill: this.widgetProperties.config.trackAgainstAverage ? true : false,
+        backgroundColor: this.getThemeColors().valueFill,
       }
     );
 
@@ -147,28 +148,36 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       {
         label: 'Average',
         data: [],
-        order: 1,
+        order: this.widgetProperties.config.trackAgainstAverage ? 0 : 1,
         parsing: false,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderColor: this.getThemeColors().valueLine,
-        fill: false
+        borderColor: this.getThemeColors().averageLine,
+        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 3 : 0,
+        fill: this.widgetProperties.config.trackAgainstAverage ? false : true,
+        backgroundColor: this.getThemeColors().averageFill,
       }
     );
 
     this.lineChartOptions.scales = {
       x: {
-        type: "time",
+        type: "timeseries",
         display: this.widgetProperties.config.showTimeScale,
         time: {
-          unit: "second",
+          unit: this.datasetConfig.timeScaleFormat as TimeUnit,
           minUnit: "second",
           round: "second",
           displayFormats: {
-            second: "ss"
+            hour: "k:mm:ss",
+            minute: "mm:ss",
+            second: "s",
+            millisecond: "SSS"
           }
+        },
+        ticks: {
+          maxTicksLimit: 8
         },
         grid: {
           display: true
@@ -328,43 +337,77 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
     switch (widgetColor) {
       case "text":
-        colors.valueLine = this.theme.text;
-        colors.valueFill = this.theme.text;
-        colors.averageLine = this.theme.textDark;
-        colors.averageFill = this.theme.textDark;
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.textDark;
+          colors.valueFill = this.theme.textDark;
+          colors.averageLine = this.theme.text;
+          colors.averageFill = this.theme.text;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.text;
+          colors.valueFill = this.theme.text;
+          colors.averageLine = this.theme.textDark;
+          colors.averageFill = this.theme.textDark;
+          colors.chartValue = this.theme.text;
+        }
         colors.averageChartLine = this.theme.textDark;
         colors.chartLabel = this.theme.textDark;
-        colors.chartValue = this.theme.text;
+
         break;
 
       case "primary":
-        colors.valueLine = this.theme.textPrimaryLight;
-        colors.valueFill = this.theme.textPrimaryLight;
-        colors.averageLine = this.theme.textPrimaryDark;
-        colors.averageFill = this.theme.textPrimaryDark;
-        colors.averageChartLine = this.theme.primary;
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.textPrimaryDark;
+          colors.valueFill = this.theme.textPrimaryDark;
+          colors.averageLine = this.theme.textPrimaryLight;
+          colors.averageFill = this.theme.textPrimaryLight;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.textPrimaryLight;
+          colors.valueFill = this.theme.textPrimaryLight;
+          colors.averageLine = this.theme.textPrimaryDark;
+          colors.averageFill = this.theme.textPrimaryDark;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.textDark;
         colors.chartLabel = this.theme.textDark;
-        colors.chartValue = colors.valueFill;
         break;
 
       case "accent":
-        colors.valueLine = this.theme.textAccentLight;
-        colors.valueFill = this.theme.textAccentLight;
-        colors.averageLine = this.theme.textAccentDark;
-        colors.averageFill = this.theme.textAccentDark;
-        colors.averageChartLine = this.theme.accent;
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.textAccentDark;
+          colors.valueFill = this.theme.textAccentDark;
+          colors.averageLine = this.theme.textAccentLight;
+          colors.averageFill = this.theme.textAccentLight;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.textAccentLight;
+          colors.valueFill = this.theme.textAccentLight;
+          colors.averageLine = this.theme.textAccentDark;
+          colors.averageFill = this.theme.textAccentDark;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.textDark;
         colors.chartLabel = this.theme.textDark;
-        colors.chartValue = colors.valueFill;
         break;
 
       case "warn":
-        colors.valueLine = this.theme.textWarnLight;
-        colors.valueFill = this.theme.textWarnLight;
-        colors.averageLine = this.theme.textWarnDark;
-        colors.averageFill = this.theme.textWarnDark;
-        colors.averageChartLine = this.theme.warn;
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.textWarnDark;
+          colors.valueFill = this.theme.textWarnDark;
+          colors.averageLine = this.theme.textWarnLight;
+          colors.averageFill = this.theme.textWarnLight;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.textWarnLight;
+          colors.valueFill = this.theme.textWarnLight;
+          colors.averageLine = this.theme.textWarnDark;
+          colors.averageFill = this.theme.textWarnDark;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.textDark;
         colors.chartLabel = this.theme.textDark;
-        colors.chartValue = colors.valueFill;
+
         break;
     }
     return colors;
@@ -420,7 +463,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           this.lineChartData.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
         }
 
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.value).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
+        let trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPoint.data.sma : dsPoint.data.value;
+        this.chart.options.plugins.title.text =  `${this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
 
         const lastAverage = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastAverage);
         const lastMinimum = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMinimum);
@@ -428,15 +472,15 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
         if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
           this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `Avg: ${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
+          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
         if (this.chart.options.plugins.annotation.annotations.minimumLine.value != lastMinimum) {
           this.chart.options.plugins.annotation.annotations.minimumLine.value = lastMinimum;
-          this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `Min: ${lastMinimum.toFixed(this.widgetProperties.config.numDecimal)}`;
+          this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `${lastMinimum.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
         if (this.chart.options.plugins.annotation.annotations.maximumLine.value != lastMaximum) {
           this.chart.options.plugins.annotation.annotations.maximumLine.value = lastMaximum;
-          this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `Max: ${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
+          this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
 
         this.chart?.update('none');

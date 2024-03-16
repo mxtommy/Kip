@@ -63,7 +63,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
     if (this.datasetConfig) {
       // Load historical data
-      const dsData: IDatasetServiceDataset[] = this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);
+      const dsData: IDatasetServiceDataset[] = []//TODO: fox or flush this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);
       this.chartDataValue = dsData;
 
       this.startChart();

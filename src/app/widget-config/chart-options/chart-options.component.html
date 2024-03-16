@@ -52,8 +52,15 @@
 
         <mat-checkbox class="full-width" style="margin-top: 10px;"
           name="showAverageData"
-          [formControl]="showAverageData">
+          [formControl]="showAverageData"
+          (change)="enableTrackAgainstMovingAverage($event)">
             Display Moving Average
+        </mat-checkbox>
+
+        <mat-checkbox class="full-width" style="margin-left: 25px;"
+          name="trackAgainstAverage"
+          [formControl]="trackAgainstAverage">
+            Track Against Moving Average
         </mat-checkbox>
       </div>
     </div>

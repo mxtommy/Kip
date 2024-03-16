@@ -41,7 +41,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
   selectedDataset: string;
   tableData = new MatTableDataSource([]);
-  displayedColumns: string[] = ['path', 'signalKSource', 'timeScaleFormat', 'actions'];
+  displayedColumns: string[] = ['path', 'signalKSource', 'timeScaleFormat', 'period', 'actions'];
 
   constructor(
     public dialog: MatDialog,
@@ -89,9 +89,9 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe((dataset: IDatasetServiceDatasetConfig) => {
       if (dataset === undefined || !dataset) {
-        return; //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
+        return;   //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
       } else {
-        dataset.label = `${dataset.path}, Source: ${dataset.signalKSource}, Scale: ${dataset.timeScaleFormat}`;
+        dataset.label = `${dataset.path}, Source: ${dataset.signalKSource}, Scale: ${dataset.timeScaleFormat}, Period: ${dataset.period} `;
         if (dataset.uuid) {
           this.editDataset(dataset);
         } else {
@@ -104,7 +104,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
-    this.dsService.create(dataset.path, dataset.signalKSource, dataset.timeScaleFormat, dataset.label);
+    this.dsService.create(dataset.path, dataset.signalKSource, dataset.timeScaleFormat, dataset.period, dataset.label);
   }
 
   private editDataset(dataset: IDatasetServiceDatasetConfig) {
@@ -145,10 +145,11 @@ export class SettingsDatasetsModalComponent implements OnInit {
     uuid: null,
     path: null,
     signalKSource: null,
-    timeScaleFormat: "minute",
+    timeScaleFormat: "second",
+    period: 10,
     sampleTime: null,
     maxDataPoints: null,
-    period: null
+    smoothingPeriod: null
   }
 
   public formDataset: IDatasetServiceDatasetConfig = null;

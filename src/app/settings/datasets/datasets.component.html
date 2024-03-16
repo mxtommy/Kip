@@ -27,6 +27,12 @@
           <mat-cell class="dataCell" *matCellDef="let element" data-label="Scale: "> {{element.timeScaleFormat}} </mat-cell>
         </ng-container>
 
+        <!-- period Column -->
+        <ng-container matColumnDef="period">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Duration </mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Scale: "> {{element.period}} </mat-cell>
+        </ng-container>
+
         <ng-container matColumnDef="actions">
           <mat-header-cell class="actionHeader" *matHeaderCellDef mat-sort-header>  </mat-header-cell>
           <mat-cell class="actionCell" *matCellDef="let element">

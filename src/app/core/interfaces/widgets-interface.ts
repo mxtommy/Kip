@@ -97,7 +97,7 @@ export interface IWidgetSvcConfig {
   /** Array of sub/child component setting */
   multiChildCtrls?: IDynamicControl[];
 
-  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout period. See dataTimeout */
+  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */
   dataTimeout?: number;
@@ -165,10 +165,12 @@ export interface IWidgetSvcConfig {
   convertUnitTo?: string;
   /** Used by historical data Widget */
   datasetUUID?: string;
-  /** Used by historical data Widget */
+  /** NOTE: Retired property - Used by historical data Widget */
   invertData?: boolean;
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
+  /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
+  trackAgainstAverage?: boolean;
   /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */
   showAverageData?: boolean;
   /** Display chart dataset minimum value line */
@@ -279,8 +281,8 @@ export interface IWidgetPath {
   sampleTime: number;
   /** Used as a reference ID when path is an Array and array index is not appropriate. */
   pathID?: string | null | '';
-  /** NOT IMPLEMENTED -Signal K - period=[milliseconds] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000 */
-  period?: number;
+  /** NOT IMPLEMENTED -Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
+  smoothingPeriod?: number;
   /** NOT IMPLEMENTED -Signal K - format=[delta|full] specifies delta or full format. Default: delta */
   format?: Format;
   /** NOT IMPLEMENTED -Signal K - policy=[instant|ideal|fixed]. Default: ideal */

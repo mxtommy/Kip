@@ -10,11 +10,12 @@ export const DemoAppConfig: IAppConfig = {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
       "path": "self.environment.wind.speedTrue",
       "signalKSource": "default",
-      "sampleTime": 500,
-      "maxDataPoints": 120,
-      "period": 24,
-      "label": "self.environment.wind.speedTrue",
-      "timeScaleFormat": "minute"
+      "sampleTime": 250,
+      "period": 10,
+      "maxDataPoints": 40,
+      "smoothingPeriod": 10,
+      "label": "self.environment.wind.speedTrue , Source: default, Scale: second, Period: 10",
+      "timeScaleFormat": "second"
     }
   ],
   "unitDefaults": {

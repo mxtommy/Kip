@@ -21,6 +21,7 @@ export class ChartOptionsComponent implements OnInit {
   @Input () convertUnitTo!: UntypedFormControl;
   @Input () datasetUUID!: UntypedFormControl;
   @Input () showAverageData!: UntypedFormControl;
+  @Input () trackAgainstAverage!: UntypedFormControl;
   @Input () datasetAverageArray!: UntypedFormControl;
   @Input () showDatasetMinimumValueLine!: UntypedFormControl;
   @Input () showDatasetMaximumValueLine!: UntypedFormControl;
@@ -47,6 +48,10 @@ export class ChartOptionsComponent implements OnInit {
       this.showDatasetMinimumValueLine.disable();
       this.showDatasetMaximumValueLine.disable();
     }
+
+    if (!this.showAverageData.value) {
+      this.trackAgainstAverage.disable();
+    }
   }
 
   public disableMinMaxLines(e: MatCheckboxChange): void {
@@ -58,6 +63,15 @@ export class ChartOptionsComponent implements OnInit {
     } else {
       this.showDatasetMinimumValueLine.enable();
       this.showDatasetMaximumValueLine.enable();
+    }
+  }
+
+  public enableTrackAgainstMovingAverage(e: MatCheckboxChange): void {
+    if (e.checked) {
+      this.trackAgainstAverage.enable();
+    } else {
+      this.trackAgainstAverage.setValue(e.checked);
+      this.trackAgainstAverage.disable();
     }
   }
 }
