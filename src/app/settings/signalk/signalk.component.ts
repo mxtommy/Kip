@@ -14,7 +14,7 @@ import { NotificationsService } from '../../core/services/notifications.service'
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
-import { MatCheckboxChange, MatCheckbox } from '@angular/material/checkbox';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { NgIf, SlicePipe } from '@angular/common';
 import { MatDivider } from '@angular/material/divider';
 import { MatButton } from '@angular/material/button';

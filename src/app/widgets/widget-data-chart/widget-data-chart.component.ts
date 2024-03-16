@@ -1,8 +1,7 @@
-import { animate } from '@angular/animations';
-
 import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDataset } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
+import { differenceInSeconds } from "date-fns";
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -165,6 +164,11 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       x: {
         type: "timeseries",
         display: this.widgetProperties.config.showTimeScale,
+        title: {
+          display: true,
+          text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
+          align: "center"
+        },
         time: {
           unit: this.datasetConfig.timeScaleFormat as TimeUnit,
           minUnit: "second",
@@ -172,12 +176,19 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           displayFormats: {
             hour: "k:mm:ss",
             minute: "mm:ss",
-            second: "s",
+            second: "s' sec'",
             millisecond: "SSS"
           }
         },
         ticks: {
-          maxTicksLimit: 8
+          autoSkip: false,
+          // callback(tickValue, index, ticks) {
+          //   return differenceInSeconds(new Date(), tickValue as number);
+          // },
+          maxTicksLimit: 8,
+          major: {
+            enabled: true
+          }
         },
         grid: {
           display: true
@@ -232,41 +243,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       },
       annotation : {
         annotations: {
-          // labelValue: {
-          //   type: 'label',
-          //   textAlign: "start",
-          //   position: {
-          //     x: "end",
-          //     y: "center"
-          //   },
-          //   yAdjust(ctx, options) {
-          //     const {chart: {scales: {x, y}, data}} = ctx;
-
-          //     // console.warn(datasets[1].data[0]);
-
-
-          //     if (data.datasets[1].data.length < 1) {
-          //       return 10;
-          //     }
-          //     let c =  data.datasets[1].data[data.datasets[1].data.length - 1];
-          //     const yPosition = y.getPixelForValue(7);
-          //     return yPosition;
-          //   },
-          //   // xAdjust(ctx, options) {
-          //   //   const {chart: {chartArea: { top, bottom, left, right, height, width}}} = ctx;
-
-          //   //   return -((width / 2) - (ctx.element.width/2) - left - 10);
-          //   // },
-          //   // yAdjust(ctx, options) {
-          //   //   const {chart: {chartArea: { top, bottom, left, right, height, width}}} = ctx;
-          //   //   return -((ctx.chart.height / 2) - (ctx.element.height/2) +10);
-          //   // },
-          //   backgroundColor: 'rgba(245,245,245)',
-          //   content: ['My text', 'second line'],
-          //   font: {
-          //     size: 18
-          //   }
-          // },
           minimumLine: {
             type: 'line',
             scaleID: 'y',
@@ -317,9 +293,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       },
       legend: {
         display: false
-      },
-
-
+      }
     }
   }
 
