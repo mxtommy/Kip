@@ -1,11 +1,13 @@
 import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDataset } from '../../core/services/data-set.service';
+import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDatapoint } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 import { differenceInSeconds } from "date-fns";
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
+import ChartStreaming from '@robloche/chartjs-plugin-streaming';
+
 
 interface IChartColors {
     valueLine: string,
@@ -25,9 +27,9 @@ interface IChartColors {
   styleUrl: './widget-data-chart.component.scss'
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  @ViewChild('chartTrends', {static: true, read: ElementRef}) chartTrends: ElementRef;
+  @ViewChild('widgetDataChart', {static: true, read: ElementRef}) widgetDataChart: ElementRef;
 
-  private transformDatasetRow = (row: IDatasetServiceDataset, datasetType) => {
+  private transformDatasetRow = (row: IDatasetServiceDatapoint, datasetType) => {
     const newRow: {x: number, y: number} = {x: row.timestamp, y: null};
 
     // Check if its a value or an average row
@@ -104,7 +106,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       textColor: 'primary',
     };
 
-    Chart.register(annotationPlugin);
+    Chart.register(annotationPlugin, ChartStreaming);
    }
 
   ngOnInit(): void {
@@ -113,7 +115,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.setChartOptions();
 
     if (this.datasetConfig) {
-        this.chart = new Chart(this.chartTrends.nativeElement.getContext('2d'), {
+        this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
           type: this.lineChartType,
           data: this.lineChartData,
           options: this.lineChartOptions
@@ -125,6 +127,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
   private setChartOptions() {
     this.lineChartOptions.maintainAspectRatio = false;
+    this.lineChartOptions.animation = false;
 
     this.lineChartData.datasets.push(
       {
@@ -162,7 +165,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
     this.lineChartOptions.scales = {
       x: {
-        type: "timeseries",
+        type: "realtime",
         display: this.widgetProperties.config.showTimeScale,
         title: {
           display: true,
@@ -174,18 +177,18 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           minUnit: "second",
           round: "second",
           displayFormats: {
-            hour: "k:mm:ss",
-            minute: "mm:ss",
-            second: "s' sec'",
+            hour: `k:mm\''`,
+            minute: `mm\''`,
+            second: `ss"`,
             millisecond: "SSS"
           }
         },
         ticks: {
           autoSkip: false,
           // callback(tickValue, index, ticks) {
-          //   return differenceInSeconds(new Date(), tickValue as number);
+            // return differenceInSeconds(new Date.now(), tickValue as number);
           // },
-          maxTicksLimit: 8,
+          // maxTicksLimit: 8,
           major: {
             enabled: true
           }
@@ -293,7 +296,12 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       },
       legend: {
         display: false
-      }
+      },
+       streaming: {
+        duration: this.datasetConfig.maxDataPoints * this.datasetConfig.sampleTime,
+        delay: this.datasetConfig.sampleTime,
+        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+       }
     }
   }
 
@@ -423,18 +431,12 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
   private startStreaming(): void {
     this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
-      (dsPoint: IDatasetServiceDataset) => {
-        if (!dsPoint) return; // we will get null back if we subscribe to a dataset before the app has started it. No need to update until we have values
+      (dsPoint: IDatasetServiceDatapoint) => {
 
-        if (this.lineChartData.datasets[0].data.length >= this.datasetConfig.maxDataPoints) {
-          this.lineChartData.datasets.forEach(dataset => dataset.data.shift());
-        }
-
-        // Value datasets
-        this.lineChartData.datasets[0].data.push(this.transformDatasetRow(dsPoint, 0));
+        this.chart.data.datasets[0].data.push(this.transformDatasetRow(dsPoint, 0));
         // Average dataset
         if (this.widgetProperties.config.showAverageData) {
-          this.lineChartData.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
+          this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
         }
 
         let trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPoint.data.sma : dsPoint.data.value;
@@ -457,12 +459,14 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
 
-        this.chart?.update('none');
+        this.chart?.update('quiet');
       }
     );
   }
 
   ngOnDestroy(): void {
     this.dsServiceSub?.unsubscribe();
+    // we need to destroy when moving Pages to remove Chart Objects
+      this.chart?.destroy();
   }
 }

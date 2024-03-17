@@ -9,7 +9,7 @@ export const DemoAppConfig: IAppConfig = {
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
       "path": "self.environment.wind.speedTrue",
-      "signalKSource": "default",
+      "pathSource": "default",
       "sampleTime": 250,
       "period": 10,
       "maxDataPoints": 40,

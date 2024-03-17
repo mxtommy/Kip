@@ -1,6 +1,6 @@
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
-import { MatOption, MatOptionSelectionChange } from '@angular/material/core';
-import { MatSelect, MatSelectChange } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
 import { Component, Input, OnInit } from '@angular/core';
 import { DatasetService } from '../../core/services/data-set.service';
 import { MatFormField, MatLabel } from '@angular/material/form-field';

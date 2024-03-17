@@ -1,17 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Subscription, BehaviorSubject, Observable, sampleTime, shareReplay, ReplaySubject } from 'rxjs';
+import { Subscription, Observable, sampleTime,ReplaySubject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService, pathRegistrationValue } from './signalk.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
-interface IDatasetServiceDataSource {
-  uuid: string;
-  pathSub: Subscription;
-  dataset: IDatasetServiceDataset[];
-};
 
-export interface IDatasetServiceDataset {
+export interface IDatasetServiceDatapoint {
   timestamp: number;
   data: {
     value: number;
@@ -19,25 +14,30 @@ export interface IDatasetServiceDataset {
     ema?: number; // Exponential Moving Average - A better Moving Average calculation than Simple Moving Average
     doubleEma?: number; // Double Exponential Moving Average - Moving Average that is even more reactive to data variation then EMA. Suitable for wind and angle average calculations
     lastAngleAverage?: number;
-    lastAverage?: number; // Computed from the latest dataset.
+    lastAverage?: number; // Computed from the latest _historicalDataset.
     lastMinimum?: number;
     lastMaximum?: number;
   }
 }
 export interface IDatasetServiceDatasetConfig {
-  label:  string;           // label of the dataset
+  label:  string;           // label of the _historicalDataset
   uuid: string;
   path: string;
-  signalKSource: string;
+  pathSource: string;
   timeScaleFormat: string;  // Dataset time scale measure. Can be: millisecond, second, minute, hour
   period: number;           // Number of datapoints to capture.
   sampleTime: number;       // DataSource Observer's path value sampling rate in milliseconds. ie. How often we get data from Signal K.
   maxDataPoints: number;    // How many data points do we keep for that timescale
   smoothingPeriod: number;  // Number of previous plus current value to use as the moving average
 };
+interface IDatasetServiceDataSource {
+  uuid: string;
+  _pathObserverSubscription: Subscription;
+  _historicalDataset: IDatasetServiceDatapoint[];
+};
 interface IDatasetServiceObserverRegistration {
   datasetUuid: string;
-  rxjsSubject: ReplaySubject<IDatasetServiceDataset>;
+  rxjsSubject: ReplaySubject<IDatasetServiceDatapoint>;
 }
 
 @Injectable()
@@ -46,10 +46,7 @@ export class DatasetService {
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
-  constructor(
-    private appSettings: AppSettingsService,
-    private signalk: SignalKService
-  ) {
+  constructor(private appSettings: AppSettingsService, private signalk: SignalKService) {
     this._svcDatasetConfigs = appSettings.getDataSets();
 
     for (let index = 0; index < this._svcDatasetConfigs.length; index++) {
@@ -59,7 +56,16 @@ export class DatasetService {
     this.startAll();
   }
 
-  private setupServiceRegistry(uuid: string): void {
+  /**
+   * Registers the _historicalDataset Subject. To enable _historicalDataset subscribers to automatically receive all of the
+   * _historicalDataset's past recorded data, a ReplaySubject is used and configured to emit the latest
+   * _historicalDataset values.
+   *
+   * @private
+   * @param {string} uuid
+   * @memberof DatasetService
+   */
+private setupServiceRegistry(uuid: string): void {
     this._svcSubjectObserverRegistry.push({
       datasetUuid: uuid,
       rxjsSubject: new ReplaySubject(this._svcDatasetConfigs.find(c => c.uuid === uuid).maxDataPoints)
@@ -67,44 +73,53 @@ export class DatasetService {
   }
 
   private setDatasetConfigurationOptions(ds: IDatasetServiceDatasetConfig ): void {
-    const periodFactor: number = 0.25;
+    const smoothingPeriodFactor: number = 0.25;
 
     switch (ds.timeScaleFormat) {
       case "hour":
-        ds.maxDataPoints = ds.period * 60 * 4; // X hours * 60 min * 4 (every 15 sec)
-        ds.sampleTime = 15000; // 15 sec
-        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        ds.maxDataPoints = ds.period * 6; // hours * 60 min
+        ds.sampleTime = 60000; // 10 minute
+        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * smoothingPeriodFactor); // moving average points to use
         break;
 
       case "minute":
-        ds.maxDataPoints = ds.period * 60 * 2; // x minutes * 60 sec * 2 (every half second)
-        ds.sampleTime = 500;
-        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        ds.maxDataPoints = ds.period * 60; // minutes * 60 sec
+        ds.sampleTime = 1000;
+        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * smoothingPeriodFactor); // moving average points to use
         break;
 
       default:
-        ds.maxDataPoints = ds.period * 4; // every quarter of a second
-        ds.sampleTime = 250;
-        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * periodFactor); // moving average points to use
+        ds.maxDataPoints = ds.period * 5; // 5 times per second
+        ds.sampleTime = 200;
+        ds.smoothingPeriod = Math.floor(ds.maxDataPoints * smoothingPeriodFactor); // moving average points to use
         break;
     }
   }
 
   /**
-   * Start all Dataset service's _svcDatasetConfigs
+   * Start all Dataset Service's _svcDatasetConfigs
    *
    * @memberof DataSetService
    */
   private startAll(): void {
-    console.log("[DataSet Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
+    console.log("[Dataset Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
       this.start(this._svcDatasetConfigs[i].uuid);
     }
   }
 
   /**
-   * Starts a historical DataSource's dataset value recording process based on the requested
-   * DataSource UUID.
+   * Starts the recording process of a Data Source. It firsts reads the _historicalDataset configuration,
+   * then starts building the _historicalDataset values, and pushes them to the Subject.
+   *
+   * This method handles the process that takes SK data and feed the Subject. _historicalDataset "clients",
+   * ie. widgets, will use the getDatasetObservable() method to receive data from the Subject.
+   *
+   * Concept: SK_path_values -> datasource -> (ReplaySubject) <- Widget observers
+   *
+   * Once a datasource is started, ReplaySubject subscribers
+   * (widgets) will receive _historicalDataset data updates.
+   * .
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to start
@@ -114,51 +129,54 @@ export class DatasetService {
   private start(uuid: string): void {
     const configuration = this._svcDatasetConfigs.find(configuration => configuration.uuid == uuid);
     if (!configuration) {
-      console.warn(`[DataSet Service] Dataset UUID:${uuid} not found`);
+      console.warn(`[Dataset Service] Dataset UUID:${uuid} not found`);
       return;
     }
 
-    // Get dataset data setup
+    // Get _historicalDataset data setup
     this.setDatasetConfigurationOptions(configuration);
 
-    // Cleanup existing dataset if present.
+    // Cleanup existing _historicalDataset if present.
     const dsIndex = this._svcDataSource. findIndex(dataSub => dataSub.uuid == uuid);
     if (dsIndex >= 0) {
       this.stop(uuid);
     }
 
-    // Add a fresh dataset
+    // Add a fresh _historicalDataset
     const dataSource: IDatasetServiceDataSource = this._svcDataSource[
       this._svcDataSource.push({
         uuid: uuid,
-        pathSub: null,
-        dataset: []
+        _pathObserverSubscription: null,
+        _historicalDataset: []
       }) - 1
     ];
 
-    console.log(`[DataSet Service] Starting Dataset ${uuid} - Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.smoothingPeriod}`)
+    console.log(`[Dataset Service] Starting Dataset recording process: ${configuration.uuid}`);
+    console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.smoothingPeriod}`);
 
-    // Subscribe to path data and update dataset upon reception
-    dataSource.pathSub = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.signalKSource).pipe(sampleTime(configuration.sampleTime)).subscribe(
+    // Subscribe to path data and update _historicalDataset upon reception
+    dataSource._pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleTime(configuration.sampleTime)).subscribe(
       (newValue: pathRegistrationValue) => {
         if (newValue.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
-        if (configuration.maxDataPoints == dataSource.dataset.length) {
-          dataSource.dataset.shift();
+        if (configuration.maxDataPoints == dataSource._historicalDataset.length) {
+          dataSource._historicalDataset.shift();
         }
 
-        // Add new data to dataset
-        const newDataPoint: IDatasetServiceDataset = this.updateDataset(configuration, dataSource.dataset, newValue.value as number)
-        dataSource.dataset.push(newDataPoint);
-        // Push to Observers
-        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(newDataPoint);
+        // Add new datapoint to _historicalDataset
+        const newDataPoint: IDatasetServiceDatapoint = this.updateDataset(configuration, dataSource._historicalDataset, newValue.value as number)
+        dataSource._historicalDataset.push(newDataPoint);
+        // Copy object so it's not send by reference, then push to Subject so that Observers can receive
+        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(cloneDeep(newDataPoint));
       }
     );
   }
 
   /**
-   * Stops the recording process of a DataSource (unsubscribe to the Subject).
+   * Stops the recording process of a DataSource (unsubscribes from the Subject). This will stop
+   * the processing of SK path data into the _historicalDataset. Stop will not complete the Subject so that
+   * if the process is restarted, observers (widgets) will automatically start to receive data.
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to stop
@@ -166,14 +184,14 @@ export class DatasetService {
    */
   private stop(uuid: string) {
     const dataSource = this._svcDataSource.find(d => d.uuid == uuid);
-
-    dataSource.pathSub.unsubscribe();
+    console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
+    dataSource._pathObserverSubscription.unsubscribe();
   }
 
   /**
-   * Returns a copy of all existing dataset configuration
+   * Returns a copy of all existing _historicalDataset configuration
    *
-   * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all dataset configurations
+   * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all _historicalDataset configurations
    * @memberof DataSetService
    */
   public list(): IDatasetServiceDatasetConfig[] {
@@ -181,10 +199,10 @@ export class DatasetService {
   }
 
   /**
-   * Returns a copy of a dataset configuration details for a specific dataset based on it's UUID.
+   * Returns a copy of a _historicalDataset configuration details for a specific _historicalDataset based on it's UUID.
    *
-   * @param {string} uuid The UUID of the desired dataset
-   * @return {*}  {IDatasetServiceDatasetConfig} A dataset configuration object copy
+   * @param {string} uuid The UUID of the desired _historicalDataset
+   * @return {*}  {IDatasetServiceDatasetConfig} A _historicalDataset configuration object copy
    * @memberof DatasetService
    */
   public get(uuid: string): IDatasetServiceDatasetConfig {
@@ -192,12 +210,12 @@ export class DatasetService {
   }
 
   /**
-   * Creates a new Dataset and starts the data capture process.
+   * Creates a new _historicalDataset and starts the data capture process.
    *
    * @param {string} path Signal K path of the data to record
    * @param {string} source The path's chosen source
-   * @param {string} timeScaleFormat The the duration of the dataset: racing, minute, hour, day.
-   * @param {string} label Name of the Dataset
+   * @param {string} timeScaleFormat The the duration of the _historicalDataset: racing, minute, hour, day.
+   * @param {string} label Name of the _historicalDataset
    * @memberof DataSetService
    */
   public create(path: string, source: string, timeScaleFormat: string, period: number, label: string ) {
@@ -207,13 +225,15 @@ export class DatasetService {
       label: label,
       uuid: uuid,
       path: path,
-      signalKSource: source,
+      pathSource: source,
       timeScaleFormat: timeScaleFormat,
       period: period,
       sampleTime: null,
       maxDataPoints: null,
       smoothingPeriod: null
     };
+
+    console.log(`[Dataset Service] Creating new Dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
     this.setupServiceRegistry(uuid);
@@ -223,14 +243,14 @@ export class DatasetService {
   }
 
   /**
-   * Updates the dataset definition and persists it's configuration to application settings.
+   * Updates the _historicalDataset definition and persists it's configuration to application settings.
    *
-   * @param {IDatasetServiceDatasetConfig} dataset Dataset configuration object of type IDatasetServiceDatasetConfig
+   * @param {IDatasetServiceDatasetConfig} _historicalDataset _historicalDataset configuration object of type IDatasetServiceDatasetConfig
    * @memberof DataSetService
    */
   public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
     this.stop(datasetConfig.uuid);
-
+    console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
     this.start(datasetConfig.uuid);
@@ -238,15 +258,16 @@ export class DatasetService {
   }
 
   /**
-  * Stops Signal K path Observer, deletes both dataset definition and service registry entry,
-  * completes all Subject Subscribers and saves to storage.
+  * Stops DataSource recording process, deletes _historicalDataset configuration, service registry entry, and
+  * completes the Subject so that Observers (widgets) terminates their subscriptions and
+  * updates Dataset Service config to storage.
   *
-  * @param {string} uuid The dataset's UUID to delete
+  * @param {string} uuid The _historicalDataset's UUID to remote
   * @memberof DataSetService
   */
   public remove(uuid: string): void {
     this.stop(uuid);
-
+    console.log(`[Dataset Service] Removing Dataset: ${uuid}`);
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
     this._svcDataSource.splice(this._svcDataSource.findIndex(s => s.uuid === uuid), 1);
@@ -258,14 +279,14 @@ export class DatasetService {
   }
 
   /**
-   * Returns the dataset Subject corresponding to the dataset UUID as an Observable
-   * or null if not found.
+   * Returns an Observable for the _historicalDataset UUID or null if not found. Clients (widget) can use
+   * subscribe() to start receiving _historicalDataset data.
    *
-   * @param {string} dataSetUuid The UUID is the dataset
-   * @return {*}  {Observable<IDatasetServiceDataset> | null} Observable of data point array or null if not found
+   * @param {string} dataSetUuid The UUID is the _historicalDataset
+   * @return {*}  {Observable<IDatasetServiceDatapoint> | null} Observable of data point array or null if not found
    * @memberof DataSetService
    */
-  public getDatasetObservable(dataSetUuid: string): Observable<IDatasetServiceDataset> | null {
+  public getDatasetObservable(dataSetUuid: string): Observable<IDatasetServiceDatapoint> | null {
     const registration = this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid == dataSetUuid);
 
     if (registration) {
@@ -276,22 +297,22 @@ export class DatasetService {
   }
 
   /**
-   * Returns a new dataset object created from the provided value. The returned
+   * Returns a new _historicalDataset object created from the provided value. The returned
    * object will contain all information: timestamp, value, simple moving average
    * and statistics, etc.
    *
-   * The returned object can later be push into a data source's dataset array and made
-   * part of the dataset.
+   * The returned object can later be push into a data source's _historicalDataset array and made
+   * part of the _historicalDataset.
    *
    * @private
-   * @param {number} smoothingPeriod The amount of previous dataset rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (smoothingPeriod - 1)) value the average of the value and x number of previous values
-   * @param {IDatasetServiceDataset[]} ds The dataset object to update
-   * @param {number} value The value to add to the dataset
-   * @return {*}  {IDatasetServiceDataset} A new dataset object. Note: push() the object to the dataset to
+   * @param {number} smoothingPeriod The amount of previous _historicalDataset rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (smoothingPeriod - 1)) value the average of the value and x number of previous values
+   * @param {IDatasetServiceDatapoint[]} ds The _historicalDataset object to update
+   * @param {number} value The value to add to the _historicalDataset
+   * @return {*}  {IDatasetServiceDatapoint} A new _historicalDataset object. Note: push() the object to the _historicalDataset to
    * @memberof DatasetService
    */
-  private updateDataset(configuration: IDatasetServiceDatasetConfig, ds: IDatasetServiceDataset[], value: number): IDatasetServiceDataset {
-    const newDataset: IDatasetServiceDataset = {
+  private updateDataset(configuration: IDatasetServiceDatasetConfig, ds: IDatasetServiceDatapoint[], value: number): IDatasetServiceDatapoint {
+    const newDatapoint: IDatasetServiceDatapoint = {
       timestamp: null,
       data: {
         value: null,
@@ -307,12 +328,12 @@ export class DatasetService {
     /**
      * Double Exponential Moving Average (DEMA) calculation
      *
-     * @param {IDatasetServiceDataset[]} ds The current Dataset array
-     * @param {number} ema1 The new dataset's calculated ema
-     * @param {number} smoothingPeriod The dataset configuration smoothingPeriod
+     * @param {IDatasetServiceDatapoint[]} ds The current _historicalDataset array
+     * @param {number} ema1 The new _historicalDataset's calculated ema
+     * @param {number} smoothingPeriod The _historicalDataset configuration smoothingPeriod
      * @return {*}  {number} The DEMA value
      */
-    function calculateDEMA(ds: IDatasetServiceDataset[], ema1: number, smoothingPeriod: number): number {
+    function calculateDEMA(ds: IDatasetServiceDatapoint[], ema1: number, smoothingPeriod: number): number {
       //  Check for min available periods
       if (ds.length < smoothingPeriod) {
         console.log("[Dataset Service] Insufficient data for the given smoothingPeriod to calculate DEMA.");
@@ -331,12 +352,12 @@ export class DatasetService {
     /**
      * Exponential Moving Average (EMA) calculation
      *
-     * @param {IDatasetServiceDataset[]} ds The new dataset's calculated ema
-     * @param {number} currentValue The new dataset's value
-     * @param {number} smoothingPeriod The dataset configuration smoothingPeriod
+     * @param {IDatasetServiceDatapoint[]} ds The new _historicalDataset's calculated ema
+     * @param {number} currentValue The new _historicalDataset's value
+     * @param {number} smoothingPeriod The _historicalDataset configuration smoothingPeriod
      * @return {*}  {number} The EMA value
      */
-    function calculateEMA(ds: IDatasetServiceDataset[], currentValue: number, smoothingPeriod: number): number {
+    function calculateEMA(ds: IDatasetServiceDatapoint[], currentValue: number, smoothingPeriod: number): number {
       if (ds.length < smoothingPeriod) {
         console.log("[Dataset Service] Insufficient data for the given smoothingPeriod to calculate EMA.");
         return;
@@ -347,7 +368,7 @@ export class DatasetService {
       return (currentValue * smoothingFactor) + (ds[ds.length - 1].data.sma * (1 - smoothingFactor));
     }
 
-    function calculateSMA(ds: IDatasetServiceDataset[], currentValue: number, smoothingPeriod: number): number {
+    function calculateSMA(ds: IDatasetServiceDatapoint[], currentValue: number, smoothingPeriod: number): number {
       let smaPeriodCount = 0;
       let smaSum: number = 0;
 
@@ -371,22 +392,22 @@ export class DatasetService {
     }
 
     // Set Timestamp
-    newDataset.timestamp = Date.now();
+    newDatapoint.timestamp = Date.now();
     // Set Value
-    newDataset.data.value = value;
+    newDatapoint.data.value = value;
 
     // Check if we are doing the first smoothingPeriod and use SMA calculations, else do EMA & DEMA
     if (ds.length < configuration.smoothingPeriod) {
       if (ds.length === 0) {
-        newDataset.data.sma = newDataset.data.doubleEma = newDataset.data.ema = value;
+        newDatapoint.data.sma = newDatapoint.data.doubleEma = newDatapoint.data.ema = value;
       } else {
-        newDataset.data.sma = newDataset.data.doubleEma = newDataset.data.ema = calculateSMA(ds, newDataset.data.value, ds.length);
+        newDatapoint.data.sma = newDatapoint.data.doubleEma = newDatapoint.data.ema = calculateSMA(ds, newDatapoint.data.value, ds.length);
       }
     } else {
       // We have enough to start doing stats calculations
-      newDataset.data.sma = calculateSMA(ds, newDataset.data.value, configuration.smoothingPeriod);
-      newDataset.data.ema = calculateEMA(ds, newDataset.data.value, configuration.smoothingPeriod);
-      newDataset.data.doubleEma = calculateDEMA(ds, newDataset.data.ema, configuration.smoothingPeriod);
+      newDatapoint.data.sma = calculateSMA(ds, newDatapoint.data.value, configuration.smoothingPeriod);
+      newDatapoint.data.ema = calculateEMA(ds, newDatapoint.data.value, configuration.smoothingPeriod);
+      newDatapoint.data.doubleEma = calculateDEMA(ds, newDatapoint.data.ema, configuration.smoothingPeriod);
     }
 
     // Calculate sum
@@ -400,11 +421,11 @@ export class DatasetService {
     // Add new value to stats
     valArr.push(value);
 
-    // Set last dataset values
-    newDataset.data.lastAverage = (seriesSum + value) / (ds.length + 1);
-    newDataset.data.lastMinimum = Math.min(...valArr);
-    newDataset.data.lastMaximum = Math.max(...valArr);
+    // Set last _historicalDataset values
+    newDatapoint.data.lastAverage = (seriesSum + value) / (ds.length + 1);
+    newDatapoint.data.lastMinimum = Math.min(...valArr);
+    newDatapoint.data.lastMaximum = Math.max(...valArr);
 
-    return newDataset;
+    return newDatapoint;
   }
 }

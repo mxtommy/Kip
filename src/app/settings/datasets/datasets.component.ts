@@ -41,7 +41,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
   selectedDataset: string;
   tableData = new MatTableDataSource([]);
-  displayedColumns: string[] = ['path', 'signalKSource', 'timeScaleFormat', 'period', 'actions'];
+  displayedColumns: string[] = ['path', 'pathSource', 'timeScaleFormat', 'period', 'actions'];
 
   constructor(
     public dialog: MatDialog,
@@ -91,7 +91,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
       if (dataset === undefined || !dataset) {
         return;   //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
       } else {
-        dataset.label = `${dataset.path}, Source: ${dataset.signalKSource}, Scale: ${dataset.timeScaleFormat}, Period: ${dataset.period} `;
+        dataset.label = `${dataset.path}, Source: ${dataset.pathSource}, Scale: ${dataset.timeScaleFormat}, Period: ${dataset.period} `;
         if (dataset.uuid) {
           this.editDataset(dataset);
         } else {
@@ -104,7 +104,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
-    this.dsService.create(dataset.path, dataset.signalKSource, dataset.timeScaleFormat, dataset.period, dataset.label);
+    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label);
   }
 
   private editDataset(dataset: IDatasetServiceDatasetConfig) {
@@ -144,7 +144,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
     label: null,
     uuid: null,
     path: null,
-    signalKSource: null,
+    pathSource: null,
     timeScaleFormat: "second",
     period: 10,
     sampleTime: null,
@@ -186,7 +186,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
     let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.formDataset.signalKSource = 'default';
+    this.formDataset.pathSource = 'default';
   }
 
   public closeForm() {

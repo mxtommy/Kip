@@ -275,7 +275,7 @@ export interface IWidgetPath {
   pathFilter?: string; //TODO: to implement in the future to facilitate sub path selection
   /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
   convertUnitTo?: string;
-  /** Used by the Widget Options UI to hide the path in the POaths configuration panel went it should not be modified */
+  /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
   isPathConfigurable: boolean;
   /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
   sampleTime: number;

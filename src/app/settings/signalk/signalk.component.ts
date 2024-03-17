@@ -1,8 +1,5 @@
-import { ViewChild, ElementRef, Component, OnInit } from '@angular/core';
+import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import Chart from 'chart.js/auto';
-import { MatDialog } from '@angular/material/dialog';
-
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
@@ -23,6 +20,8 @@ import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import Chart from 'chart.js/auto';
 
 
 @Component({
@@ -46,7 +45,7 @@ import { FormsModule } from '@angular/forms';
     ],
 })
 
-export class SettingsSignalkComponent implements OnInit {
+export class SettingsSignalkComponent implements OnInit, OnDestroy {
 
   @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
 
@@ -69,7 +68,6 @@ export class SettingsSignalkComponent implements OnInit {
   lastSecondsUpdate: number; //number of updates from server in last second
   updatesSeconds: number[]  = [];
 
-  chartCtx;
   chart = null;
   textColor; // store the color of text for the graph...
 
@@ -133,9 +131,9 @@ export class SettingsSignalkComponent implements OnInit {
     });
 
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-    this.chartCtx = this.lineGraph.nativeElement.getContext('2d');
+
     this.startChart();
-    this.subscribeTheme();
+
   }
 
   public openUserCredentialModal(errorMsg: string) {
@@ -221,11 +219,7 @@ export class SettingsSignalkComponent implements OnInit {
   }
 
   private startChart() {
-    if (this.chart !== null) {
-        this.chart.destroy();
-    }
-
-    this.chart = new Chart(this.chartCtx,{
+    this.chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
       type: 'line',
       data: {
           labels: Array.from(Array(60).keys()).reverse(),
@@ -266,17 +260,6 @@ export class SettingsSignalkComponent implements OnInit {
     });
   }
 
-  // Subscribe to theme event
-  private subscribeTheme() {
-    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
-      themeChange => {
-      setTimeout(() => {   // need a delay so browser getComputedStyles has time to complete theme application.
-        this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-        this.startChart()
-      }, 100);
-    })
-  }
-
   public useSharedConfigToggleClick(e) {
     if(e.checked) {
       let version = this.signalKConnectionService.serverVersion$.getValue();
@@ -294,8 +277,7 @@ export class SettingsSignalkComponent implements OnInit {
     this.skStreamStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();
     this.isLoggedInSub.unsubscribe();
-    // this.updatesMinutesSub.unsubscribe();
     this.updatesSecondSub.unsubscribe();
-    this.themeNameSub.unsubscribe();
+    this.chart?.destroy();
   }
 }

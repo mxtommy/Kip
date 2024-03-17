@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { DatasetService, IDatasetServiceDataset, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { Chart } from 'chart.js';
 import 'chartjs-adapter-date-fns';
@@ -63,7 +63,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
     if (this.datasetConfig) {
       // Load historical data
-      const dsData: IDatasetServiceDataset[] = []//TODO: fox or flush this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);
+      const dsData: IDatasetServiceDatapoint[] = []//TODO: fox or flush this.dsService.getHistoricalData(this.widgetProperties.config.datasetUUID);
       this.chartDataValue = dsData;
 
       this.startChart();
@@ -72,10 +72,6 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
   }
 
   private startChart() {
-    if (this.chart) {
-        this.chart.destroy();
-    }
-
     // Setup DataSets
     let ds: IDataSetOptions[] = [
       {
@@ -184,7 +180,7 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
     if (this.widgetProperties.config.datasetUUID === null) { return } // nothing to sub to...
 
     this.dataSetSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
-      (dsDatasets: IDatasetServiceDataset) => {
+      (dsDatasets: IDatasetServiceDatapoint) => {
         // console.log(this.chart);
         if (!dsDatasets) {
           // we will get null back if we subscribe to a dataset before the app
@@ -243,5 +239,6 @@ export class WidgetHistoricalComponent extends BaseWidgetComponent implements On
 
   ngOnDestroy() {
     this.unsubscribeDataSource();
+    this.chart?.destroy();
   }
 }
