@@ -321,7 +321,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       case "text":
         if (this.widgetProperties.config.trackAgainstAverage) {
           colors.valueLine = this.theme.textDark;
-          colors.valueFill = this.theme.textDark;
+          colors.valueFill = this.theme.textDark.replace(/[\d\.]+\)$/g, '0.15)');
           colors.averageLine = this.theme.text;
           colors.averageFill = this.theme.text;
           colors.chartValue = colors.averageLine;
@@ -329,7 +329,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.valueLine = this.theme.text;
           colors.valueFill = this.theme.text;
           colors.averageLine = this.theme.textDark;
-          colors.averageFill = this.theme.textDark;
+          colors.averageFill = this.theme.textDark.replace(/[\d\.]+\)$/g, '0.15)');
           colors.chartValue = this.theme.text;
         }
         colors.averageChartLine = this.theme.textDark;
@@ -340,7 +340,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       case "primary":
         if (this.widgetProperties.config.trackAgainstAverage) {
           colors.valueLine = this.theme.textPrimaryDark;
-          colors.valueFill = this.theme.textPrimaryDark;
+          colors.valueFill = this.theme.textPrimaryDark.replace(/[\d\.]+\)$/g, '0.25)');
           colors.averageLine = this.theme.textPrimaryLight;
           colors.averageFill = this.theme.textPrimaryLight;
           colors.chartValue = colors.averageLine;
@@ -348,7 +348,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.valueLine = this.theme.textPrimaryLight;
           colors.valueFill = this.theme.textPrimaryLight;
           colors.averageLine = this.theme.textPrimaryDark;
-          colors.averageFill = this.theme.textPrimaryDark;
+          colors.averageFill = this.theme.textPrimaryDark.replace(/[\d\.]+\)$/g, '0.25)');
           colors.chartValue = colors.valueFill;
         }
         colors.averageChartLine = this.theme.textDark;
@@ -358,7 +358,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       case "accent":
         if (this.widgetProperties.config.trackAgainstAverage) {
           colors.valueLine = this.theme.textAccentDark;
-          colors.valueFill = this.theme.textAccentDark;
+          colors.valueFill = this.theme.textAccentDark.replace(/[\d\.]+\)$/g, '0.25)');
           colors.averageLine = this.theme.textAccentLight;
           colors.averageFill = this.theme.textAccentLight;
           colors.chartValue = colors.averageLine;
@@ -366,7 +366,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.valueLine = this.theme.textAccentLight;
           colors.valueFill = this.theme.textAccentLight;
           colors.averageLine = this.theme.textAccentDark;
-          colors.averageFill = this.theme.textAccentDark;
+          colors.averageFill = this.theme.textAccentDark.replace(/[\d\.]+\)$/g, '0.25)');
           colors.chartValue = colors.valueFill;
         }
         colors.averageChartLine = this.theme.textDark;
@@ -376,7 +376,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       case "warn":
         if (this.widgetProperties.config.trackAgainstAverage) {
           colors.valueLine = this.theme.textWarnDark;
-          colors.valueFill = this.theme.textWarnDark;
+          colors.valueFill = this.theme.textWarnDark.replace(/[\d\.]+\)$/g, '0.25)');
           colors.averageLine = this.theme.textWarnLight;
           colors.averageFill = this.theme.textWarnLight;
           colors.chartValue = colors.averageLine;
@@ -384,7 +384,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.valueLine = this.theme.textWarnLight;
           colors.valueFill = this.theme.textWarnLight;
           colors.averageLine = this.theme.textWarnDark;
-          colors.averageFill = this.theme.textWarnDark;
+          colors.averageFill = this.theme.textWarnDark.replace(/[\d\.]+\)$/g, '0.25)');
           colors.chartValue = colors.valueFill;
         }
         colors.averageChartLine = this.theme.textDark;
