@@ -93,5 +93,11 @@ export class AppNetworkInitService {
       localStorage.setItem('connectionConfig', JSON.stringify(this.config));
       console.log(`[AppInit Network Service] Config found with no server URL. Setting Auto-Discovery URL: ${this.config.signalKUrl}`);
     }
+
+    if (this.config.configVersion == 9) {
+      this.config.configVersion = 10;
+      localStorage.setItem('connectionConfig', JSON.stringify(this.config));
+      console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
+    }
   }
 }
