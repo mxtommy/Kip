@@ -45,3 +45,9 @@
 ::ng-deep.mat-mdc-menu-panel {
   max-width:fit-content !important;
 }
+
+.menu-items-with-icons {
+  display: flex;
+  align-items: center;
+  width: max-content;
+}
