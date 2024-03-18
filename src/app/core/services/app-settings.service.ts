@@ -96,7 +96,7 @@ export class AppSettingsService {
       case 9:
         // Upgrade to v10. No change required. Only AppConfig changes.
         config.configVersion = 10;
-        localStorage.setItem("connectionConfig", JSON.stringify(this.getDefaultConnectionConfig()));
+        localStorage.setItem("connectionConfig", JSON.stringify(config));
         break;
 
       case 10:
