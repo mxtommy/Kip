@@ -50,10 +50,10 @@ export class AppService {
                 this.sk.subscribePath(connConf.kipUUID, modePath, 'default').subscribe(mode => {
                   if (mode.value == 'night' && this.sunValue != mode.value) {
                     this.sunValue = mode.value;
-                    this.settings.setThemName('nightMode');
+                    this.settings.setThemeName('nightMode');
                   } else if (mode.value == 'day' && this.sunValue != mode.value) {
                     this.sunValue = mode.value;
-                    this.settings.setThemName(this.dayTheme);
+                    this.settings.setThemeName(this.dayTheme);
                   }
                 });
               }
