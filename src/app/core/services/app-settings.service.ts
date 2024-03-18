@@ -90,21 +90,32 @@ export class AppSettingsService {
   }
 
   private loadConnectionConfig(): void {
-    let config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
+    const config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
-    if (config.configVersion <= 9) {
-      console.error("[AppSettings Service] Invalid connectionConfig version. Resetting and loading connection configuration default");
-      this.resetConnection();
-    } else {
-      this.signalkUrl = {url: config.signalKUrl, new: false};
-      this.proxyEnabled = config.proxyEnabled;
-      this.useDeviceToken = config.useDeviceToken;
-      this.loginName = config.loginName;
-      this.loginPassword = config.loginPassword;
-      this.useSharedConfig = config.useSharedConfig;
-      this.sharedConfigName = config.sharedConfigName;
-      this.kipUUID = config.kipUUID;
+    switch (config.configVersion) {
+      case 9:
+        // Upgrade to v10. No change required. Only AppConfig changes.
+        config.configVersion = 10;
+        localStorage.setItem("connectionConfig", JSON.stringify(this.getDefaultConnectionConfig()));
+        break;
+
+      case 10:
+        break;
+
+      default:
+        console.error("[AppSettings Service] Invalid connectionConfig version. Resetting and loading connection configuration default");
+        this.resetConnection();
+        break;
     }
+
+    this.signalkUrl = {url: config.signalKUrl, new: false};
+    this.proxyEnabled = config.proxyEnabled;
+    this.useDeviceToken = config.useDeviceToken;
+    this.loginName = config.loginName;
+    this.loginPassword = config.loginPassword;
+    this.useSharedConfig = config.useSharedConfig;
+    this.sharedConfigName = config.sharedConfigName;
+    this.kipUUID = config.kipUUID;
   }
 
   public resetConnection() {
@@ -166,10 +177,11 @@ export class AppSettingsService {
 
       console.log("[AppSettings Service] Writing upgraded connectionConfig to LocalStorage");
       this.replaceConfig('connectionConfig', conConf);
+      config.app.configVersion = 9;
     }
 
     // dataset and data Chart Widget changes
-    if (config.app.configVersion === 9) {
+    if (config.app.configVersion == 9) {
       config.app.dataSets.forEach(oldDS => {
         const upgradedDS: IDatasetServiceDatasetConfig = {
           uuid: oldDS.uuid,
@@ -187,24 +199,27 @@ export class AppSettingsService {
         upgradedAppConfig.dataSets.shift();
       });
 
-    const historicalWidget: IWidget[] = config.widget.widgets.filter(widget => widget.type === "WidgetHistorical");
-    historicalWidget.forEach(widget => {
-      widget.type = "WidgetDataChart";
-    });
+      const historicalWidget: any[] = config.widget.widgets.filter(widget => widget.type === "WidgetHistorical");
+      historicalWidget.forEach(widget => {
+        widget.type = "WidgetDataChart";
+        widget.config.datasetUUID = widget.config.dataSetUUID;
+        widget.config.startScaleAtZero = widget.config.includeZero;
+      });
 
       upgradedAppConfig.configVersion = 10;
-      this.storage.patchConfig('IWidgetConfig',config.widget);
     }
 
     // save upgraded app Config
     if (this.useSharedConfig) {
       // Config came from remote storage Scope User, name default. Push it back
       console.log("[AppSettings Service] Writing upgraded AppConfig to remote storage default config");
+      this.storage.patchConfig('IWidgetConfig',config.widget);
       this.storage.patchConfig('IAppConfig',upgradedAppConfig);
       this.reloadApp();
     } else {
       // Config came from local storage. Save it back
       console.log("[AppSettings Service] Writing upgraded AppConfig to LocalStorage default config");
+      this.replaceConfig('widgetConfig',config.widget, true);
       this.replaceConfig('appConfig', upgradedAppConfig, true);
     }
   }
