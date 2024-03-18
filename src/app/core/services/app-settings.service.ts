@@ -103,7 +103,7 @@ export class AppSettingsService {
         break;
 
       default:
-        console.error("[AppSettings Service] Invalid connectionConfig version. Resetting and loading connection configuration default");
+        console.error(`[AppSettings Service] Invalid connectionConfig version ${config.configVersion}. Resetting and loading connection configuration default`);
         this.resetConnection();
         break;
     }
