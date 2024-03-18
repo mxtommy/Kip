@@ -23,7 +23,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 - Swipe left and right to cycle trough your Widget layouts.
 - Double tap to toggle night mode.
 
-### KIP Mobille App
+### KIP Mobile App
 Run KIP in full screen, with no browser controls visible, just like regular mobile apps. This feature is supported on most mobile OS. Each browser has it's own way of handling PWA deployments.
 
 To install KIP as an App, first load KIP in the browser. Then follow the steps below:
@@ -50,26 +50,11 @@ KIP is now installed and available on your home screen
 
   ![Night mode](./images/KipNightMode-1024x488.png)
 
-### Built-in Themes
-  Apply your favorite style from the built-in themes gallery.
-
-  Modern Dark Theme
-  ![Modern Dark Theme](./images/KipSample-1-1024x488.png)
-
-  Signal K Inspired Theme
-  ![Signal K Inspired Theme](./images/KipSample-2-1024x488.png)
-
-  Light Blue Theme
-  ![Light Blue Theme](./images/KipSample-3-1024x488.png)
-
-  NOTE: Request a new theme by sending us inspirational/reference material (web sites, picture, etc.).
-  If we fall in love, we will do it. Even better, branch and contribute yourself. We will assist and guide!
-
 ## Page Layouts and Configuration
 ### Flexible and Easy
   Meant to build purposeful screen(s) with however many widgets you want, where you want them. 
 
-  Quickly split pages into multiple areas, resize and aligne to your liking, add the widget of your choosing to each area. Need more? Add as many additional pages as you whish to keep your display purposeful. Simply swipe left and right or use the bottom page navigation button to quickly cycle from page to page.
+  Quickly split pages into multiple areas, resize and align to your liking, add the widget of your choosing to each area. Need more? Add as many additional pages as you whish to keep your display purposeful. Simply swipe left and right or use the bottom page navigation button to quickly cycle from page to page.
   ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024x488.png)
   
   Easy basic widget configuration.
@@ -157,7 +142,7 @@ KIP has it's own Discord Signal K channel to get in touch. Join us at https://di
  * Light indicator Widget for Boolean paths
  * Fuel Consumption Widget
  * GPS information Widget - Help Wanted
- * Improve Metadate/Zones support
+ * Improve Metadata/Zones support
  * Add a KIP Widget CLI Schematic to automate new Widget creation and facilitate app contributions
  * Improved error logging
  * Retire outdated SteelGauges
