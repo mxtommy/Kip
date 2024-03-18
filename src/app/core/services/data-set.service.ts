@@ -152,7 +152,7 @@ private setupServiceRegistry(uuid: string): void {
     ];
 
     console.log(`[Dataset Service] Starting Dataset recording process: ${configuration.uuid}`);
-    console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.smoothingPeriod}`);
+    console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.period}`);
 
     // Subscribe to path data and update _historicalDataset upon reception
     dataSource._pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleTime(configuration.sampleTime)).subscribe(

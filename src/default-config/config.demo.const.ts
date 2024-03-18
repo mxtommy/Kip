@@ -8,15 +8,15 @@ export const DemoAppConfig: IAppConfig = {
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-      "path": "self.environment.wind.speedTrue",
+      "path": "self.environment.wind.speedApparent",
       "pathSource": "default",
-      "sampleTime": 250,
-      "period": 10,
-      "maxDataPoints": 40,
-      "smoothingPeriod": 10,
-      "label": "self.environment.wind.speedTrue , Source: default, Scale: second, Period: 10",
-      "timeScaleFormat": "second"
-    }
+      "sampleTime": 1000,
+      "period": 1,
+      "maxDataPoints": 60,
+      "smoothingPeriod": 12,
+      "label": "self.environment.wind.speedApparent, Source: default, Scale: second, Period: 10 ",
+      "timeScaleFormat": "minute"
+  }
   ],
   "unitDefaults": {
     "Unitless": 'unitless',
@@ -265,18 +265,28 @@ export const DemoWidgetConfig: IWidgetConfig = {
     },
     {
       "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
-      "type": "WidgetHistorical",
+      "type": "WidgetDataChart",
       "config": {
-        "convertUnitTo": "knots",
-        "displayName": "WindSpeed True",
+        "displayName": "AWS",
         "filterSelfPaths": true,
+        "convertUnitTo": "knots",
         "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
-        "showDatasetMinimumValueLine": false,
+        "datasetAverageArray": "sma",
+        "showAverageData": true,
+        "trackAgainstAverage": false,
+        "showDatasetAverageValueLine": false,
+        "showDatasetAngleAverageValueLine": false,
+        "showLabel": true,
+        "showYScale": true,
+        "showTimeScale": true,
         "startScaleAtZero": true,
+        "verticalGraph": false,
+        "enableMinMaxScaleLimit": false,
         "minValue": null,
         "maxValue": null,
-        "verticalGraph": false
+        "numDecimal": 1,
+        "textColor": "text"
       }
     },
     {
