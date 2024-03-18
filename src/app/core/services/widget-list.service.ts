@@ -98,11 +98,6 @@ export class WidgetListService {
         description: 'Wind Steering Display',
       },
       {
-        name: 'WidgetHistorical',
-        componentName: WidgetHistoricalComponent,
-        description: 'Historical Datagram Chart',
-      },
-      {
         name: 'WidgetDataChart',
         componentName: WidgetDataChartComponent,
         description: 'Data Chart',

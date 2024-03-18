@@ -112,14 +112,16 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   ngOnInit(): void {
     this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
     this.validateConfig();
-    this.setChartOptions();
+
 
     if (this.datasetConfig) {
-        this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
-          type: this.lineChartType,
-          data: this.lineChartData,
-          options: this.lineChartOptions
-        });
+      this.setChartOptions();
+
+      this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
+        type: this.lineChartType,
+        data: this.lineChartData,
+        options: this.lineChartOptions
+      });
 
       this.startStreaming();
     }

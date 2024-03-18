@@ -18,8 +18,8 @@ import { StorageService } from './storage.service';
 import { IAuthorizationToken } from './authentication.service';
 
 const defaultTheme = 'modern-dark';
-const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
-const configVersion = 9; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
+const configFileVersion: number = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+const configVersion: number = 10; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
 
 @Injectable({
   providedIn: 'root'
@@ -52,7 +52,7 @@ export class AppSettingsService {
     )
   {
     console.log("[AppSettings Service] Service startup...");
-    this.storage.activeConfigFileVersion = configVersion;
+    this.storage.activeConfigFileVersion = configFileVersion;
 
     if (!window.localStorage) {
       // REQUIRED BY APP - localStorage support
@@ -92,7 +92,7 @@ export class AppSettingsService {
   private loadConnectionConfig(): void {
     let config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
-    if ((typeof config.configVersion !== 'number') || (config.configVersion !== configVersion)) {
+    if (config.configVersion <= 9) {
       console.error("[AppSettings Service] Invalid connectionConfig version. Resetting and loading connection configuration default");
       this.resetConnection();
     } else {
@@ -114,9 +114,9 @@ export class AppSettingsService {
 
   private validateAppConfig(config: IConfig): IConfig {
     if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
-      if (config.app.configVersion == 6) {
+      if (config.app.configVersion === 6 || config.app.configVersion === 9) {
         // we need to upgrade config
-        this.upgradeAppConfig(config.app);
+        this.upgradeAppConfig(config);
       } else {
         // unknown version - delete and load defaults
         if (this.useSharedConfig) {
@@ -137,45 +137,75 @@ export class AppSettingsService {
     return config;
   }
 
-  private upgradeAppConfig(appConfig: any): void {
-    let upgradedConfig: IAppConfig = {
+  private upgradeAppConfig(config: any): void {
+
+    let upgradedAppConfig: IAppConfig = {
       configVersion: 9,
       autoNightMode: this.autoNightMode.getValue(),
-      dataSets: cloneDeep(appConfig.dataSets),
-      notificationConfig: cloneDeep(appConfig.notificationConfig),
-      unitDefaults: cloneDeep(appConfig.unitDefaults)
+      dataSets: cloneDeep(config.app.dataSets),
+      notificationConfig: cloneDeep(config.app.notificationConfig),
+      unitDefaults: cloneDeep(config.app.unitDefaults)
     };
 
-    // Update local storage connection info with old config data
-    let conConf :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
-    conConf.signalKUrl = this.signalkUrl = appConfig.signalKUrl;
-    conConf.kipUUID = this.kipUUID = appConfig.kipUUID;
+    if (config.app.configVersion === 6) {
+      // Update local storage connection info with old config data
+      let conConf :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
+      conConf.signalKUrl = this.signalkUrl = config.app.signalKUrl;
+      conConf.kipUUID = this.kipUUID = config.app.kipUUID;
 
-    if (appConfig.signalKToken != "" && appConfig.signalKToken != undefined && appConfig.signalKToken != null) {
-      console.log("[AppSettings Service] Migrating Device Token to LocalStorage");
-      let tokenSettings: IAuthorizationToken = {
-        token: appConfig.signalKToken,
-        expiry: null,
-        isDeviceAccessToken: true
-      };
-      localStorage.setItem('authorization_token', JSON.stringify(tokenSettings));
-      conConf.useDeviceToken = true;
+      if (config.app.signalKToken != "" && config.app.signalKToken != undefined && config.app.signalKToken != null) {
+        console.log("[AppSettings Service] Migrating Device Token to LocalStorage");
+        let tokenSettings: IAuthorizationToken = {
+          token: config.app.signalKToken,
+          expiry: null,
+          isDeviceAccessToken: true
+        };
+        localStorage.setItem('authorization_token', JSON.stringify(tokenSettings));
+        conConf.useDeviceToken = true;
+      }
+
+      console.log("[AppSettings Service] Writing upgraded connectionConfig to LocalStorage");
+      this.replaceConfig('connectionConfig', conConf);
     }
-    console.log("[AppSettings Service] Writing upgraded connectionConfig to LocalStorage");
-    this.replaceConfig('connectionConfig', conConf);
 
+    // dataset and data Chart Widget changes
+    if (config.app.configVersion === 9) {
+      config.app.dataSets.forEach(oldDS => {
+        const upgradedDS: IDatasetServiceDatasetConfig = {
+          uuid: oldDS.uuid,
+          path: oldDS.path,
+          pathSource: oldDS.signalKSource,
+          timeScaleFormat: 'second',
+          period: oldDS.dataPoints,
+          maxDataPoints: null,
+          sampleTime: null,
+          smoothingPeriod: null,
+          label: `${oldDS.path}, Source: ${oldDS.signalKSource}, Scale: second, Period: ${oldDS.dataPoints}`
+        };
 
+        upgradedAppConfig.dataSets.push(upgradedDS);
+        upgradedAppConfig.dataSets.shift();
+      });
+
+    const historicalWidget: IWidget[] = config.widget.widgets.filter(widget => widget.type === "WidgetHistorical");
+    historicalWidget.forEach(widget => {
+      widget.type = "WidgetDataChart";
+    });
+
+      upgradedAppConfig.configVersion = 10;
+      this.storage.patchConfig('IWidgetConfig',config.widget);
+    }
 
     // save upgraded app Config
     if (this.useSharedConfig) {
       // Config came from remote storage Scope User, name default. Push it back
       console.log("[AppSettings Service] Writing upgraded AppConfig to remote storage default config");
-      this.storage.patchConfig('IAppConfig',upgradedConfig);
+      this.storage.patchConfig('IAppConfig',upgradedAppConfig);
       this.reloadApp();
     } else {
       // Config came from local storage. Save it back
       console.log("[AppSettings Service] Writing upgraded AppConfig to LocalStorage default config");
-      this.replaceConfig('appConfig', upgradedConfig, true);
+      this.replaceConfig('appConfig', upgradedAppConfig, true);
     }
   }
 

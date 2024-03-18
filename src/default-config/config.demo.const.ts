@@ -3,7 +3,7 @@ import { UUID } from "../app/utils/uuid"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 9,
+  "configVersion": 10,
   "autoNightMode": false,
   "dataSets": [
     {
@@ -434,7 +434,7 @@ export const DemoConfig: IConfig = {
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "configVersion": 9,
+  "configVersion": 10,
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,
