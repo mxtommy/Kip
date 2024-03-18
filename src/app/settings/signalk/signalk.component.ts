@@ -251,9 +251,14 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
         },
         plugins:{
           legend: {
+            display: false,
             labels: {
               color: this.textColor,
             }
+          },
+          title: {
+            text: "Updates Per Seconds",
+            display: true
           }
         }
       }
