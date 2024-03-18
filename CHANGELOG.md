@@ -3,7 +3,7 @@
 * New Data Chart Widget replacing Historical Widget. Data Chart supports data streaming and Simple Moving Average Series and min, max and average lines over dataset duration. 
 * KIP compatibility for remote access using Victron's VRM Portal.
 ## Retirements
-* Removal of theming engine. KIP only uses what was previously labeled as the Modern Dark them.
+* Removal of theming engine. KIP only uses what was previously labeled as the Modern Dark theme.
 ## Improvements
 * Upgraded to Node.js v18+.
 * Upgrade to Angular 17.2
