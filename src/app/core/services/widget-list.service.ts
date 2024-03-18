@@ -5,7 +5,6 @@ import { WidgetUnknownComponent } from '../../widgets/widget-unknown/widget-unkn
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
 import { WidgetTextGenericComponent } from '../../widgets/widget-text-generic/widget-text-generic.component';
 import { WidgetDateGenericComponent } from '../../widgets/widget-date-generic/widget-date-generic.component';
-import { WidgetHistoricalComponent } from '../../widgets/widget-historical/widget-historical.component';
 import { WidgetWindComponent } from '../../widgets/widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from '../../widgets/widget-gauge/widget-gauge.component';
 import { WidgetButtonComponent } from '../../widgets/widget-button/widget-button.component';

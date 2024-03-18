@@ -18,15 +18,6 @@ export class FitTextDirective {
 
     private setFontSize = (): void => {
         if (this.fitText) {
- /*           let containerWidth, fontSize;
-
-            const windowWidth = window.screen.width;
-            const parentWidth = this.container.parentElement.clientWidth;
-            console.log(this.el.nativeElement.parentElement.clientWidth);
-            console.log(this.el.nativeElement.parentElement.clientHeight);
-            parentWidth > windowWidth ? containerWidth = windowWidth : containerWidth = parentWidth;
-            fontSize = Math.max(Math.min(containerWidth / (this.compression * 10), this.maxFontSize), this.minFontSize); */
-
             let fontSize;
             let width = this.el.nativeElement.parentElement.clientWidth;
             let height = this.el.nativeElement.parentElement.clientHeight;
