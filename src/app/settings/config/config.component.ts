@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { UntypedFormBuilder, UntypedFormGroup, FormControl, Validators, NgForm, FormsModule, ReactiveFormsModule }    from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../core/interfaces/app-settings.interfaces';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { StorageService } from '../../core/services/storage.service';
-import { cloneDeep, forEach } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow } from '@angular/material/expansion';
 import { MatCheckbox } from '@angular/material/checkbox';

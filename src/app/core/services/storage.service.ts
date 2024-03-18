@@ -244,7 +244,7 @@ export class StorageService {
           }]
         break;
 
-      case "Array<IDataSet>":
+      case "Array<IDatasetDef>":
         document =
           [{
             "op": "replace",

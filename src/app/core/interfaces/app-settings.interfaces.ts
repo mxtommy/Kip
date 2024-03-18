@@ -1,4 +1,4 @@
-import { IDataSet } from '../services/data-set.service';
+import { IDatasetServiceDatasetConfig } from '../services/data-set.service';
 import { ISplitSet } from '../services/layout-splits.service';
 import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from '../services/units.service';
@@ -25,7 +25,7 @@ export interface IConfig {
 export interface IAppConfig {
   configVersion: number;
   autoNightMode: boolean;
-  dataSets: IDataSet[];
+  dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;
 }

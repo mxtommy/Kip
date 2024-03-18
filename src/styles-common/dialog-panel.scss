@@ -2,13 +2,13 @@
 @use '@angular/material' as mat;
 
 @mixin dialog-panel-styles($theme) {
-  $background: map-get($theme, background);
   $foreground: map-get($theme, foreground);
+  $app-defaults: map-get($theme, app-defaults);
 
   // Custom mat-dialog style class defined in app.modules.ts MAT_DIALOG_DEFAULT_OPTIONS
   // provider as global Dialog settings
-  .mat-dialog-panel mat-dialog-container {
-    background-color: mat.get-color-from-palette($background, background);
+  .mat-mdc-dialog-panel mat-dialog-container > div > div.mat-mdc-dialog-surface {
+    background-color: mat.get-color-from-palette($app-defaults, app-background);
   }
 
   .rounded-card {

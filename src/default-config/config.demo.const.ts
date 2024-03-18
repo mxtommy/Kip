@@ -3,16 +3,20 @@ import { UUID } from "../app/utils/uuid"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 9,
+  "configVersion": 10,
   "autoNightMode": false,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-      "path": "self.environment.wind.speedTrue",
-      "signalKSource": "default",
-      "updateTimer": 1,
-      "dataPoints": 15
-    }
+      "path": "self.environment.wind.speedApparent",
+      "pathSource": "default",
+      "sampleTime": 1000,
+      "period": 1,
+      "maxDataPoints": 60,
+      "smoothingPeriod": 12,
+      "label": "self.environment.wind.speedApparent, Source: default, Scale: second, Period: 10 ",
+      "timeScaleFormat": "minute"
+  }
   ],
   "unitDefaults": {
     "Unitless": 'unitless',
@@ -261,18 +265,28 @@ export const DemoWidgetConfig: IWidgetConfig = {
     },
     {
       "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
-      "type": "WidgetHistorical",
+      "type": "WidgetDataChart",
       "config": {
-        "convertUnitTo": "knots",
-        "displayName": "WindSpeed True",
+        "displayName": "AWS",
         "filterSelfPaths": true,
-        "dataSetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
+        "convertUnitTo": "knots",
+        "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
         "invertData": false,
-        "displayMinMax": false,
-        "includeZero": true,
+        "datasetAverageArray": "sma",
+        "showAverageData": true,
+        "trackAgainstAverage": false,
+        "showDatasetAverageValueLine": false,
+        "showDatasetAngleAverageValueLine": false,
+        "showLabel": true,
+        "showYScale": true,
+        "showTimeScale": true,
+        "startScaleAtZero": true,
+        "verticalGraph": false,
+        "enableMinMaxScaleLimit": false,
         "minValue": null,
         "maxValue": null,
-        "verticalGraph": false
+        "numDecimal": 1,
+        "textColor": "text"
       }
     },
     {
@@ -420,7 +434,7 @@ export const DemoConfig: IConfig = {
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "configVersion": 9,
+  "configVersion": 10,
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,
