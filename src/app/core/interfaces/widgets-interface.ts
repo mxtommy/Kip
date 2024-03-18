@@ -97,7 +97,7 @@ export interface IWidgetSvcConfig {
   /** Array of sub/child component setting */
   multiChildCtrls?: IDynamicControl[];
 
-  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout period. See dataTimeout */
+  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */
   dataTimeout?: number;
@@ -132,7 +132,6 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-
   /** Used by multiple gauge Widget: defines the UI layout */
   gaugeType?: string;
   /** Used by multiple gauge Widget */
@@ -165,15 +164,35 @@ export interface IWidgetSvcConfig {
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;
   /** Used by historical data Widget */
-  dataSetUUID?: string;
-  /** Used by historical data Widget */
+  datasetUUID?: string;
+  /** NOTE: Retired property - Used by historical data Widget */
   invertData?: boolean;
-  /** Used by historical data Widget */
-  displayMinMax?: boolean;
+  /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
+  datasetAverageArray?: string;
+  /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
+  trackAgainstAverage?: boolean;
+  /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */
+  showAverageData?: boolean;
+  /** Display chart dataset minimum value line */
+  showDatasetMinimumValueLine?: boolean;
+  /** Display chart dataset maximum value line */
+  showDatasetMaximumValueLine?: boolean;
+  /** Display chart dataset average value line */
+  showDatasetAverageValueLine?: boolean;
+  /** Display chart dataset angle average value line */
+  showDatasetAngleAverageValueLine?: boolean;
+  /** Display widget title */
+  showLabel?: boolean;
+  /** Display chart y scale */
+  showYScale?: boolean;
   /** Used by historical data Widget */
   animateGraph?: boolean;
-  /** Used by historical data Widget */
-  includeZero?: boolean;
+  /** Prevent chart value axis autoscaling. Always start scale from zero */
+  startScaleAtZero?: boolean;
+  /** Display chart time (x axis) scale */
+  showTimeScale?: boolean;
+  /** Limit chart value axis scale to min and max value */
+  enableMinMaxScaleLimit?: boolean;
   /** Used by historical data Widget */
   verticalGraph?: boolean;
 
@@ -256,14 +275,14 @@ export interface IWidgetPath {
   pathFilter?: string; //TODO: to implement in the future to facilitate sub path selection
   /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
   convertUnitTo?: string;
-  /** Used by the Widget Options UI to hide the path in the POaths configuration panel went it should not be modified */
+  /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
   isPathConfigurable: boolean;
   /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
   sampleTime: number;
   /** Used as a reference ID when path is an Array and array index is not appropriate. */
   pathID?: string | null | '';
-  /** NOT IMPLEMENTED -Signal K - period=[milliseconds] becomes the transmission rate, e.g. every period/1000 seconds. Default: 1000 */
-  period?: number;
+  /** NOT IMPLEMENTED -Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
+  smoothingPeriod?: number;
   /** NOT IMPLEMENTED -Signal K - format=[delta|full] specifies delta or full format. Default: delta */
   format?: Format;
   /** NOT IMPLEMENTED -Signal K - policy=[instant|ideal|fixed]. Default: ideal */

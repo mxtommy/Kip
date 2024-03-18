@@ -23,11 +23,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { NgChartsModule } from 'ng2-charts';
 import { AngularResizeEventModule } from 'angular-resize-event';
 import { AngularSplitModule } from 'angular-split';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
-import { ResetConfigComponent } from './app/reset-config/reset-config.component';
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
 import { AppHelpComponent } from './app/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
@@ -42,7 +41,7 @@ import { UnitsService } from './app/core/services/units.service';
 import { WidgetManagerService } from './app/core/services/widget-manager.service';
 import { WidgetListService } from './app/core/services/widget-list.service';
 import { LayoutSplitsService } from './app/core/services/layout-splits.service';
-import { DataSetService } from './app/core/services/data-set.service';
+import { DatasetService } from './app/core/services/data-set.service';
 import { SignalKDeltaService } from './app/core/services/signalk-delta.service';
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
 import { SignalKService } from './app/core/services/signalk.service';
@@ -75,9 +74,7 @@ const appRoutes: Routes = [
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data',  component: DataBrowserComponent },
-  { path: 'reset', component: ResetConfigComponent },
-  { path: 'login', component: WidgetLoginComponent },
-  { path: 'demo', component: ResetConfigComponent }
+  { path: 'login', component: WidgetLoginComponent }
 ];
 
 /**
@@ -95,15 +92,13 @@ export class kipHammerConfig extends HammerGestureConfig {
   };
 }
 
-
-
 if (environment.production) {
   enableProdMode();
 }
 
 bootstrapApplication(AppComponent, {
     providers: [
-        importProvidersFrom(BrowserModule, FormsModule, ReactiveFormsModule, AngularSplitModule, AngularResizeEventModule, NgChartsModule, MatMenuModule, MatButtonModule, MatTooltipModule, MatDialogModule, MatSelectModule, MatToolbarModule, MatCheckboxModule, MatGridListModule, MatRadioModule, MatTabsModule, MatCardModule, MatSnackBarModule, MatStepperModule, MatInputModule, MatExpansionModule, MatBadgeModule, MatSlideToggleModule, MatListModule, MatAutocompleteModule, MatTableModule, MatPaginatorModule, MatSortModule, HammerModule),
+        importProvidersFrom(BrowserModule, FormsModule, ReactiveFormsModule, AngularSplitModule, AngularResizeEventModule, MatMenuModule, MatButtonModule, MatTooltipModule, MatDialogModule, MatSelectModule, MatToolbarModule, MatCheckboxModule, MatGridListModule, MatRadioModule, MatTabsModule, MatCardModule, MatSnackBarModule, MatStepperModule, MatInputModule, MatExpansionModule, MatBadgeModule, MatSlideToggleModule, MatListModule, MatAutocompleteModule, MatTableModule, MatPaginatorModule, MatSortModule, HammerModule),
         // Imports Interceptor that capture http requests and inserts authorization
         // Token automatically in every httpClient outbound calls.
         // NOTE: it does not work for WebSockets. Only http/REST calls
@@ -150,7 +145,7 @@ bootstrapApplication(AppComponent, {
         SignalKService,
         SignalKConnectionService,
         SignalKDeltaService,
-        DataSetService,
+        DatasetService,
         LayoutSplitsService,
         WidgetListService,
         WidgetManagerService,
@@ -161,6 +156,7 @@ bootstrapApplication(AppComponent, {
         StorageService,
         provideHttpClient(withInterceptorsFromDi()),
         provideRouter(appRoutes, withHashLocation()),
-        provideAnimations()
+        provideAnimations(),
+        provideCharts(withDefaultRegisterables()),
     ]
 });

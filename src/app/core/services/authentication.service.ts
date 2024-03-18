@@ -57,7 +57,7 @@ export class AuthenticationService {
       }
    }
 
-    // Token Subject subcription to handle token expiration and renewal
+    // Token Subject subscription to handle token expiration and renewal
     this._authToken$.pipe(
       filter((token: IAuthorizationToken) => (!!token && token.expiry !== null)),
         map((token: IAuthorizationToken) => token.expiry),
@@ -158,9 +158,14 @@ export class AuthenticationService {
         'token' : null, 'expiry' : null, 'isDeviceAccessToken' : false
       };
 
-      if (this.isTokenExpired(expiry)) {
+      if(expiry === undefined) {
+        authorizationToken.token = token;
+        console.log("[Authentication Service] User Session Token received. Token Expiration: NEVER");
+        this._IsLoggedIn$.next(true);
+        this._authToken$.next(authorizationToken);
+        localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
+      } else if (this.isTokenExpired(expiry)) {
         console.log("[Authentication Service] Received expired Session Token from server");
-
       } else {
         authorizationToken.token = token;
         authorizationToken.expiry = expiry;

@@ -28,7 +28,7 @@
             <mat-label>Source</mat-label>
             <mat-select
               placeholder="Select data source"
-              [(ngModel)]="formDataset.signalKSource"
+              [(ngModel)]="formDataset.pathSource"
               name="selectedSource"
               required
             >
@@ -55,28 +55,29 @@
         </div>
       </mat-step>
       <mat-step>
-        <ng-template matStepLabel>Data Points</ng-template>
+        <ng-template matStepLabel>Time Scale</ng-template>
         <div class="tab-content">
           <mat-form-field class="full-width" style="margin-bottom: 10px;">
-            <mat-label>Set data capture interval (sec)</mat-label>
-            <input
-              type="number"
-              matInput
-              placeholder="Interval(seconds)"
-              name="interval"
-              [(ngModel)]="formDataset.updateTimer"
-              required/>
+            <mat-label>Time Scale</mat-label>
+            <mat-select
+              placeholder="Select dataset time scale"
+              [(ngModel)]="formDataset.timeScaleFormat"
+              name="timeScaleFormat"
+              required>
+              <mat-option value="hour">Hours</mat-option>
+              <mat-option value="minute">Minutes</mat-option>
+              <mat-option value="second">Seconds</mat-option>
+            </mat-select>
           </mat-form-field>
-          <mat-form-field class="full-width" style="margin-bottom: 10px;">
-            <mat-label>Total most recent data points that makes the dataset</mat-label>
-            <input
-              matInput
-              placeholder="Data Points"
-              type="number"
-              name="decimals"
-              [(ngModel)]="formDataset.dataPoints"
-              required
-            />
+
+          <mat-form-field style="margin-bottom: 10px;">
+            <mat-label>Duration</mat-label>
+            <input matInput type="number"
+              min="1" max="60" step="1"
+              placeholder="Enter or select number..."
+              name="period"
+              [(ngModel)]="formDataset.period"
+              required>
           </mat-form-field>
         </div>
         <mat-divider></mat-divider>

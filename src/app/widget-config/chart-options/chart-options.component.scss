@@ -1,0 +1,19 @@
+.flex-container {
+  display: flex;
+  margin: 15px 0px 15px 0px;
+  gap: 15px;
+  align-items: stretch;
+}
+
+.panel-group {
+  min-width: 250px;
+  flex-grow: 1;
+}
+
+.panel-group-label {
+  width: 100%;
+}
+
+.no-margin {
+  margin: 0px;
+}

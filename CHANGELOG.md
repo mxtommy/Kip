@@ -1,3 +1,17 @@
+# V 2.8.0
+## New features
+* New Data Chart Widget replacing Historical Widget. Data Chart supports data streaming and Simple Moving Average Series and min, max and average lines over dataset duration. 
+* KIP compatibility for remote access using Victron's VRM Portal.
+## Retirements
+* Removal of theming engine. KIP only uses what was previously labeled as the Modern Dark theme.
+## Improvements
+* Upgraded to Node.js v18+.
+* Upgrade to Angular 17.2
+* Migration to Angular MDC components 
+* Migration to Standalone components
+* New Dataset Service architecture for future support of Signal K Playback and History APIs
+* Upgrade to latest Chart.js
+* Package dependency updates
 # V 2.7.0
 ## New features
 * Boolean Control Panel Widget: Added Push button and Light indicator controls

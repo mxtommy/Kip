@@ -57,7 +57,7 @@ export const defaultConfig: IConfig = {
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {
-  "configVersion": 9,
+  "configVersion": 10,
   "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,

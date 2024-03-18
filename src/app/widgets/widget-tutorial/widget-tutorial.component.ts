@@ -4,6 +4,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { NgIf } from '@angular/common';
+import { AppSettingsService } from '../../core/services/app-settings.service';
 
 @Component({
     selector: 'app-widget-tutorial',
@@ -15,8 +16,11 @@ export class WidgetTutorialComponent extends BaseWidgetComponent {
   @Input() unlockStatus: boolean;
 
   defaultConfig: IWidgetSvcConfig = {};
-  constructor() {
+  constructor( private appSettings: AppSettingsService,) {
     super();
    }
 
+   public loadDemoConfig() {
+    this.appSettings.loadDemoConfig();
+  }
 }

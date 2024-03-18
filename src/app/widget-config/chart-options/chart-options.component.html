@@ -1,0 +1,112 @@
+<div class="tab-content mat-typography">
+  <div class="flex-container">
+
+    <div class="panel-group">
+      <mat-form-field class="full-width">
+        <mat-label>Widget Label</mat-label>
+        <input matInput placeholder="Enter a label to display"
+          name="displayName"
+          [formControl]="displayName">
+      </mat-form-field>
+    </div>
+
+    <div class="panel-group">
+      <mat-checkbox class="full-width"
+        name="showLabel"
+        [formControl]="showLabel">
+          Show Label
+      </mat-checkbox>
+    </div>
+  </div>
+
+  <div class="flex-container">
+    <mat-form-field class="full-width">
+      <mat-label>Color</mat-label>
+      <mat-select
+        placeholder="Select Color..."
+        name="textColor"
+        [formControl]="textColor"
+        required>
+        <mat-option value='text'>Font</mat-option>
+        <mat-option value='primary'>Primary</mat-option>
+        <mat-option value='accent'>Accent</mat-option>
+        <mat-option value='warn'>Warn</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="flex-container">
+
+    <div class="flex-item">
+      <div>
+        <p>Chart Data</p>
+        <mat-form-field style="margin-left: 10px;">
+          <mat-label>Value Decimal Places</mat-label>
+          <input matInput type="number"
+            min="0" max="5"
+            placeholder="Enter or select number..."
+            name="numDecimal"
+            [formControl]="numDecimal"
+            required>
+        </mat-form-field>
+
+        <mat-checkbox class="full-width" style="margin-top: 10px;"
+          name="showAverageData"
+          [formControl]="showAverageData"
+          (change)="enableTrackAgainstMovingAverage($event)">
+            Display Moving Average
+        </mat-checkbox>
+
+        <mat-checkbox class="full-width" style="margin-left: 25px;"
+          name="trackAgainstAverage"
+          [formControl]="trackAgainstAverage">
+            Track Against Moving Average
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <div class="flex-item">
+      <div>
+        <p class="no-margin">Chart Scale</p>
+        <mat-checkbox class="full-width"
+          name="startScaleAtZero"
+          [formControl]="startScaleAtZero"
+          (change)="disableMinMaxLines($event)">
+            Auto Scale
+        </mat-checkbox>
+        <mat-checkbox class="full-width"
+          name="showYScale"
+          [formControl]="showYScale">
+            Show Value Axis
+        </mat-checkbox>
+        <mat-checkbox class="full-width"
+          name="showTimeScale"
+          [formControl]="showTimeScale">
+            Show Time Axis
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <div class="flex-item">
+      <div>
+        <p class="no-margin">Dataset Indicators</p>
+        <mat-checkbox class="full-width"
+          name="showDatasetMaximumValueLine"
+          [formControl]="showDatasetMaximumValueLine">
+            Maximum Line
+        </mat-checkbox>
+        <mat-checkbox class="full-width"
+          name="showDatasetAverageValueLine"
+          [formControl]="showDatasetAverageValueLine">
+            Average Line
+        </mat-checkbox>
+        <mat-checkbox class="full-width" #minLine
+          name="showDatasetMinimumValueLine"
+          [formControl]="showDatasetMinimumValueLine">
+            Minimum Line
+        </mat-checkbox>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -95,3 +95,9 @@
 .menuBarButtonGroups .menuBarSettingsButton {
   width: 25%;
 }
+
+.menu-items-with-icons {
+  display: flex;
+  align-items: center;
+  width: max-content;
+}

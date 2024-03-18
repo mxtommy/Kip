@@ -15,16 +15,22 @@
           <mat-cell class="pathCell" *matCellDef="let element" data-label="Path: "> {{element.path}} </mat-cell>
         </ng-container>
 
-        <!-- updateTimer Column -->
-        <ng-container matColumnDef="updateTimer">
-          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Interval </mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Interval: ">every {{element.updateTimer}} sec</mat-cell>
+        <!-- pathSource Column -->
+        <ng-container matColumnDef="pathSource">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source </mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Source: "> {{element.pathSource}} </mat-cell>
         </ng-container>
 
-        <!-- dataPoints Column -->
-        <ng-container matColumnDef="dataPoints">
-          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Data Points </mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Data Points: ">{{element.dataPoints}} times</mat-cell>
+        <!-- timeScaleFormat Column -->
+        <ng-container matColumnDef="timeScaleFormat">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Time Scale </mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Scale: "> {{element.timeScaleFormat}} </mat-cell>
+        </ng-container>
+
+        <!-- period Column -->
+        <ng-container matColumnDef="period">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Duration </mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Scale: "> {{element.period}} </mat-cell>
         </ng-container>
 
         <ng-container matColumnDef="actions">

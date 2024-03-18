@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash-es';
 import { Component, OnInit, Inject, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
@@ -5,7 +6,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { SignalKService } from '../../core/services/signalk.service';
-import { DataSetService, IDataSet } from '../../core/services/data-set.service';
+import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
@@ -17,6 +18,7 @@ import { MatButton } from '@angular/material/button';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
+import { MatRadioModule } from '@angular/material/radio';
 
 interface settingsForm {
   selectedPath: string;
@@ -37,24 +39,22 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
-  selectedDataSet: string;
-  dataSets: IDataSet[];
+  selectedDataset: string;
   tableData = new MatTableDataSource([]);
-  displayedColumns: string[] = ['path', 'updateTimer', 'dataPoints', 'actions'];
+  displayedColumns: string[] = ['path', 'pathSource', 'timeScaleFormat', 'period', 'actions'];
 
   constructor(
     public dialog: MatDialog,
     private cdRef: ChangeDetectorRef,
-    private SignalKService: SignalKService,
-    private DataSetService: DataSetService
+    private dsService: DatasetService
     ) { }
 
   ngOnInit() {
-    this.loadDataSets();
+    this.loadDatasets();
   }
 
-  private loadDataSets() {
-    this.tableData.data = this.DataSetService.getDataSets();
+  private loadDatasets() {
+    this.tableData.data = this.dsService.list();
   }
 
   ngAfterViewInit() {
@@ -68,9 +68,14 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     let dialogRef;
 
     if (uuid) {
-      const thisDataset: IDataSet = this.tableData.data.find((dataset: IDataSet) => {
-        return dataset.uuid === uuid;
-        });
+      const thisDataset: IDatasetServiceDatasetConfig = cloneDeep(
+        this.tableData.data.find(
+          (dataset: IDatasetServiceDatasetConfig) =>
+          {
+            return dataset.uuid === uuid;
+          }
+        )
+      );
 
       if (thisDataset) {
         dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
@@ -82,35 +87,36 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
         });
     }
 
-    dialogRef.afterClosed().subscribe((dataset: IDataSet) => {
+    dialogRef.afterClosed().subscribe((dataset: IDatasetServiceDatasetConfig) => {
       if (dataset === undefined || !dataset) {
-        return; //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
+        return;   //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
       } else {
+        dataset.label = `${dataset.path}, Source: ${dataset.pathSource}, Scale: ${dataset.timeScaleFormat}, Period: ${dataset.period} `;
         if (dataset.uuid) {
           this.editDataset(dataset);
         } else {
           this.addDataset(dataset);
         }
 
-        this.loadDataSets();
+        this.loadDatasets();
       }
-      });
+    });
   }
 
-  private addDataset(dataset: IDataSet) {
-    this.DataSetService.addDataSet(dataset.path, dataset.signalKSource, dataset.updateTimer, dataset.dataPoints);
+  private addDataset(dataset: IDatasetServiceDatasetConfig) {
+    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label);
   }
 
-  private editDataset(dataset: IDataSet) {
-    this.DataSetService.updateDataset(dataset);
+  private editDataset(dataset: IDatasetServiceDatasetConfig) {
+    this.dsService.edit(dataset);
   }
 
   public deleteDataset(uuid: string) {
-    this.DataSetService.deleteDataSet(uuid); //TODO, bit bruteforce, can cause errors cause dataset deleted before subscrioptions canceled
-    this.loadDataSets();
+    this.dsService.remove(uuid);
+    this.loadDatasets();
   }
 
-  public trackByUuid(index: number, item: IDataSet): string {
+  public trackByUuid(index: number, item: IDatasetServiceDatasetConfig): string {
     return `${item.uuid}`;
   }
 
@@ -130,20 +136,23 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     templateUrl: './datasets.modal.html',
     styleUrls: ['./datasets.component.scss'],
     standalone: true,
-    imports: [MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
+    imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
 })
 export class SettingsDatasetsModalComponent implements OnInit {
   public titleDialog: string = null;
-  public newDataset: IDataSet = {
+  public newDataset: IDatasetServiceDatasetConfig = {
+    label: null,
     uuid: null,
     path: null,
-    signalKSource: null,
-    updateTimer: 1,
-    dataPoints: 30,
-    name: null,
+    pathSource: null,
+    timeScaleFormat: "second",
+    period: 10,
+    sampleTime: null,
+    maxDataPoints: null,
+    smoothingPeriod: null
   }
 
-  public formDataset: IDataSet = null;
+  public formDataset: IDatasetServiceDatasetConfig = null;
 
   public availablePaths: string[] = [];
   public availableSources: string[] = [];
@@ -152,12 +161,12 @@ export class SettingsDatasetsModalComponent implements OnInit {
   constructor(
     private SignalKService: SignalKService,
     public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public dataset: IDataSet
+    @Inject(MAT_DIALOG_DATA) public dataset: IDatasetServiceDatasetConfig
     ) { }
 
   ngOnInit() {
     if (this.dataset) {
-      this.titleDialog = "Edit Dataset";
+      this.titleDialog = "Edit dataset";
       this.formDataset = this.dataset;
 
       let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
@@ -166,7 +175,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
       }
 
     } else {
-      this.titleDialog = "Add Dataset";
+      this.titleDialog = "Add dataset";
       this.formDataset = this.newDataset;
     }
 
@@ -177,7 +186,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
     let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
-    this.formDataset.signalKSource = 'default';
+    this.formDataset.pathSource = 'default';
   }
 
   public closeForm() {
