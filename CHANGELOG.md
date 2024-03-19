@@ -1,3 +1,7 @@
+# V 2.8.1
+## Fixes
+* Prevent endless login loop by adding support for NEVER expires user sessions token.
+* Update left over Historical Data tab descriptions to reference Datasets and Data Chart widget.
 # V 2.8.0
 ## New features
 * New Data Chart Widget replacing Historical Widget. Data Chart supports data streaming and Simple Moving Average Series and min, max and average lines over dataset duration. 
