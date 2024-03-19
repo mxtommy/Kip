@@ -17,6 +17,7 @@ import { WidgetAutopilotComponent } from "../../widgets/widget-autopilot/widget-
 import { WidgetSimpleLinearComponent } from "../../widgets/widget-simple-linear/widget-simple-linear.component";
 import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
+import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
 
 class widgetInfo {
   name: string;
@@ -110,6 +111,11 @@ export class WidgetListService {
           name: 'WidgetRaceTimerComponent',
           componentName: WidgetRaceTimerComponent,
           description: "Race Timer"
+      },
+      {
+        name: 'WidgetIframeComponent',
+        componentName: WidgetFreeboardskComponent,
+        description: 'FreeboardSK',
       },
       {
         name: 'WidgetIframeComponent',
