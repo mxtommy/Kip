@@ -30,7 +30,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
       token = AuthServiceToken.token;
     });
 
-    this.widgetUrl = `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?authToken=${token}`;
+    this.widgetUrl = `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${token}`;
     console.log(this.widgetUrl);
   }
 }
