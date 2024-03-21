@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subscription, Observable, sampleTime,ReplaySubject, MonoTypeOperatorFunction, interval, map, switchMap, pipe, withLatestFrom, tap } from 'rxjs';
+import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService, pathRegistrationValue } from './signalk.service';
 import { UUID } from'../../utils/uuid'
@@ -112,14 +112,13 @@ private setupServiceRegistry(uuid: string): void {
    * Starts the recording process of a Data Source. It firsts reads the _historicalDataset configuration,
    * then starts building the _historicalDataset values, and pushes them to the Subject.
    *
-   * This method handles the process that takes SK data and feed the Subject. _historicalDataset "clients",
-   * ie. widgets, will use the getDatasetObservable() method to receive data from the Subject.
+   * This method handles the process that takes SK data and feeds the Subject. Clients/Observers,
+   * (widgets mostly), will use the getDatasetObservable() method to receive data from the Subject.
    *
    * Concept: SK_path_values -> datasource -> (ReplaySubject) <- Widget observers
    *
-   * Once a datasource is started, ReplaySubject subscribers
-   * (widgets) will receive _historicalDataset data updates.
-   * .
+   * Once a datasource is started, subscribers will receive historical data (equal to the
+   * length of the dataset)pushed to the Subject, as as future data.
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to start
@@ -135,8 +134,6 @@ private setupServiceRegistry(uuid: string): void {
 
     // Get _historicalDataset data setup
     this.setDatasetConfigurationOptions(configuration);
-
-
     let dataSource: IDatasetServiceDataSource = null;
 
     // Check if dataSource is already present
@@ -157,9 +154,8 @@ private setupServiceRegistry(uuid: string): void {
     console.log(`[Dataset Service] Starting Dataset recording process: ${configuration.uuid}`);
     console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.period}`);
 
+    // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
     function sampleInterval<pathRegistrationValue>(period: number): MonoTypeOperatorFunction<pathRegistrationValue> {
-      // return switchMap((value) => {
-        // console.log(source);
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
@@ -167,8 +163,6 @@ private setupServiceRegistry(uuid: string): void {
     // Subscribe to path data and update _historicalDataset upon reception
     dataSource._pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleInterval(configuration.sampleTime)).subscribe(
       (newValue: pathRegistrationValue) => {
-        let d = new Date();
-        console.log(`value = ${newValue.value} - ${d.getSeconds()}' ${d.getMilliseconds()}"`)
         if (newValue.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
