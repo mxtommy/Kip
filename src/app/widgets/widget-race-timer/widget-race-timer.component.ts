@@ -26,6 +26,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   flashOn: boolean = false;
   flashInterval;
   timerRunning: boolean = false;
+  readonly timeName: string = "race";
   private warnColor: string = null;
   private warmContrast: string = null;
   private textColor: string = null;
@@ -53,19 +54,11 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     // this.resizeWidget();
   }
 
-  ngOnDestroy() {
-    this.unsubscribeTimer();
-    if (this.flashInterval) {
-      clearInterval(this.flashInterval);
-      this.flashInterval = null;
-    }
-  }
-
   onResized(event: ResizedEvent) {
     this.resizeWidget();
   }
 
-  resizeWidget() {
+  private resizeWidget() {
     let rect = this.canvasEl.nativeElement.getBoundingClientRect();
 
     if (rect.height < 50) { return; }
@@ -82,12 +75,11 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   }
 
-  subscribeTimer() {
-    this.unsubscribeTimer();
+  private subscribeTimer() {
+    this.timerRunning = this.TimersService.isRunning(this.timeName);
+    const length = (this.widgetProperties.config.timerLength * -1) * 10;
 
-    let length = (this.widgetProperties.config.timerLength*-1)*10;
-
-    this.timerSub = this.TimersService.createTimer("race", -3000, 100).subscribe(
+    this.timerSub = this.TimersService.createTimer(this.timeName, -3000, 100).subscribe(
       newValue => {
         this.dataValue = newValue;
 
@@ -119,56 +111,49 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     );
   }
 
-  unsubscribeTimer() {
-    if (this.timerSub !== null) {
-      this.timerSub.unsubscribe();
-      this.timerSub = null;
-    }
-  }
-
-  startTimer() {
-    this.TimersService.startTimer("race");
+  public startTimer() {
+    this.TimersService.startTimer(this.timeName);
     this.timerRunning = true;
   }
 
-  resetTimer() {
+  public resetTimer() {
     this.unsubscribeTimer();
-    this.TimersService.deleteTimer("race");
+    this.TimersService.deleteTimer(this.timeName);
     this.timerRunning = false;
     this.subscribeTimer();
   }
 
-  pauseTimer() {
-    this.TimersService.stopTimer("race");
+  public pauseTimer() {
+    this.TimersService.stopTimer(this.timeName);
     this.timerRunning = false;
   }
 
-  roundToMin() {
+  public roundToMin() {
     let v = this.dataValue;
-    if (this.dataValue < 0) { v = v *-1} // always positive
+    if (this.dataValue < 0) { v = v * -1} // always positive
     var seconds = v % 600;
 
     if (this.dataValue > 0) {
       if (seconds > 300) {
-        this.TimersService.setTimer("race", this.dataValue + (600 - seconds));
+        this.TimersService.setTimer(this.timeName, this.dataValue + (600 - seconds));
       } else {
-        this.TimersService.setTimer("race", this.dataValue - seconds);
+        this.TimersService.setTimer(this.timeName, this.dataValue - seconds);
       }
     } else {
       if (seconds > 300) {
-        this.TimersService.setTimer("race", this.dataValue - (600 - seconds));
+        this.TimersService.setTimer(this.timeName, this.dataValue - (600 - seconds));
       } else {
-        this.TimersService.setTimer("race", this.dataValue + seconds);
+        this.TimersService.setTimer(this.timeName, this.dataValue + seconds);
       }
     }
   }
 
   addOneMin() {
-      this.TimersService.setTimer("race", this.dataValue + 600);
+      this.TimersService.setTimer(this.timeName, this.dataValue + 600);
   }
 
   remOneMin() {
-      this.TimersService.setTimer("race", this.dataValue - 600);
+      this.TimersService.setTimer(this.timeName, this.dataValue - 600);
   }
 
   private getColors(themeColor: string) {
@@ -202,6 +187,20 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         this.warnColor = this.theme.warn;
         this.warmContrast = this.theme.warnDark;
         break;
+    }
+  }
+
+  private unsubscribeTimer() {
+    if (!this.timerSub?.closed) {
+      this.timerSub.unsubscribe();
+    }
+  }
+
+  ngOnDestroy() {
+    this.unsubscribeTimer();
+    if (this.flashInterval) {
+      clearInterval(this.flashInterval);
+      this.flashInterval = null;
     }
   }
 
