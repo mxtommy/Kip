@@ -136,20 +136,23 @@ private setupServiceRegistry(uuid: string): void {
     // Get _historicalDataset data setup
     this.setDatasetConfigurationOptions(configuration);
 
-    // Cleanup existing _historicalDataset if present.
-    const dsIndex = this._svcDataSource. findIndex(dataSub => dataSub.uuid == uuid);
-    if (dsIndex >= 0) {
-      this.stop(uuid);
-    }
 
-    // Add a fresh _historicalDataset
-    const dataSource: IDatasetServiceDataSource = this._svcDataSource[
-      this._svcDataSource.push({
-        uuid: uuid,
-        _pathObserverSubscription: null,
-        _historicalDataset: []
-      }) - 1
-    ];
+    let dataSource: IDatasetServiceDataSource = null;
+
+    // Check if dataSource is already present
+    const dsIndex = this._svcDataSource.findIndex(dataSub => dataSub.uuid == uuid);
+    if (dsIndex >= 0) {
+      dataSource = this._svcDataSource[dsIndex];
+    } else {
+      // Add a new DataSource
+      dataSource = this._svcDataSource[
+        this._svcDataSource.push({
+          uuid: uuid,
+          _pathObserverSubscription: null,
+          _historicalDataset: []
+        }) - 1
+      ];
+    }
 
     console.log(`[Dataset Service] Starting Dataset recording process: ${configuration.uuid}`);
     console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.period}`);
@@ -157,6 +160,8 @@ private setupServiceRegistry(uuid: string): void {
     // Subscribe to path data and update _historicalDataset upon reception
     dataSource._pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleTime(configuration.sampleTime)).subscribe(
       (newValue: pathRegistrationValue) => {
+        let d = new Date();
+        console.warn(`value = ${newValue.value} - ${d.getSeconds()}' ${d.getMilliseconds()}"`)
         if (newValue.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
@@ -186,6 +191,7 @@ private setupServiceRegistry(uuid: string): void {
     const dataSource = this._svcDataSource.find(d => d.uuid == uuid);
     console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
     dataSource._pathObserverSubscription.unsubscribe();
+    dataSource._historicalDataset = [];
   }
 
   /**
