@@ -273,8 +273,21 @@ export class SignalKService {
     let state: IZoneState = IZoneState.normal;
     this.zones.forEach(zone => {
       if (zone.path != updatePath) { return; }
-      let lower = zone.lower || -Infinity;
-      let upper = zone.upper || Infinity;
+      let lower: number = null;
+      let upper: number = null;
+
+      if (zone.lower !== null) {
+        lower = zone.lower;
+      } else {
+        lower = -Infinity;
+      }
+
+      if (zone.upper !== null) {
+        upper = zone.upper;
+      } else {
+        upper = Infinity;
+      }
+
       let convertedValue = this.unitService.convertUnit(zone.unit, dataPath.value);
       if (convertedValue >= lower && convertedValue <= upper) {
         //in zone
