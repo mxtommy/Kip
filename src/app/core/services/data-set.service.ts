@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subscription, Observable, sampleTime,ReplaySubject } from 'rxjs';
+import { Subscription, Observable, sampleTime,ReplaySubject, MonoTypeOperatorFunction, interval, map, switchMap, pipe, withLatestFrom, tap } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKService, pathRegistrationValue } from './signalk.service';
 import { UUID } from'../../utils/uuid'
@@ -157,11 +157,18 @@ private setupServiceRegistry(uuid: string): void {
     console.log(`[Dataset Service] Starting Dataset recording process: ${configuration.uuid}`);
     console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Datapoints: ${configuration.maxDataPoints}, Period: ${configuration.period}`);
 
+    function sampleInterval<pathRegistrationValue>(period: number): MonoTypeOperatorFunction<pathRegistrationValue> {
+      // return switchMap((value) => {
+        // console.log(source);
+      return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
+    };
+
+
     // Subscribe to path data and update _historicalDataset upon reception
-    dataSource._pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleTime(configuration.sampleTime)).subscribe(
+    dataSource._pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleInterval(configuration.sampleTime)).subscribe(
       (newValue: pathRegistrationValue) => {
         let d = new Date();
-        console.warn(`value = ${newValue.value} - ${d.getSeconds()}' ${d.getMilliseconds()}"`)
+        console.log(`value = ${newValue.value} - ${d.getSeconds()}' ${d.getMilliseconds()}"`)
         if (newValue.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
