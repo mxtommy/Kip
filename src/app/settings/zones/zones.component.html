@@ -50,7 +50,7 @@
         <ng-container matColumnDef="actions">
           <mat-header-cell class="actionHeader" *matHeaderCellDef mat-sort-header>  </mat-header-cell>
           <mat-cell class="actionCell" *matCellDef="let element">
-            <button mat-raised-button class="buttons" color="accent" (click)="openZoneDialog(element.uuid)">Edit</button>
+            <button mat-raised-button class="action-buttons" color="accent" (click)="openZoneDialog(element.uuid)">Edit</button>
             <button mat-raised-button color="accent" (click)="deleteZone(element.uuid)">Delete</button>
           </mat-cell>
         </ng-container>
