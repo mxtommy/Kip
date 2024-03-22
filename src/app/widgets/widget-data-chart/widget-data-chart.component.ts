@@ -1,7 +1,7 @@
-import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDatapoint } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
-import { differenceInSeconds } from "date-fns";
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -187,10 +187,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         },
         ticks: {
           autoSkip: false,
-          // callback(tickValue, index, ticks) {
-            // return differenceInSeconds(new Date.now(), tickValue as number);
-          // },
-          // maxTicksLimit: 8,
           major: {
             enabled: true
           }
@@ -469,6 +465,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy(): void {
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
-      this.chart?.destroy();
+    this.chart?.destroy();
   }
 }

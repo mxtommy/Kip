@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash-es';
 import { Injectable } from '@angular/core';
-import { Observable , BehaviorSubject, Subscription } from 'rxjs';
+import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "../interfaces/app-interfaces";
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
@@ -45,13 +45,6 @@ interface pathRegistration {
   subject: BehaviorSubject<pathRegistrationValue>;
 }
 
-export interface updateStatistics {
-  currentSecond: number; // number up updates in the last second
-  secondsUpdates: number[]; // number of updates received for each of the last 60 seconds
-  minutesUpdates: number[]; // number of updates received for each of the last 60 minutes
-
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -69,13 +62,8 @@ export class SignalKService {
   skDataObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
 
   // Performance stats
-  updateStatistics: updateStatistics = {
-    currentSecond: 0,
-    secondsUpdates: [],
-    minutesUpdates:  [],
-  }
-  secondsUpdatesBehaviorSubject: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
-  minutesUpdatesBehaviorSubject: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
+  private _deltaUpdatesCounter: number = null;
+  private _deltaUpdatesSubject: ReplaySubject<number> = new ReplaySubject(60);
 
   defaultUnits: IUnitDefaults;
   defaultUnitsSub: Subscription;
@@ -84,36 +72,20 @@ export class SignalKService {
   zones: Array<IZone> = [];
 
   constructor(
-    private appSettingsService: AppSettingsService,
-    private deltaService: SignalKDeltaService,
-    private notificationsService: NotificationsService,
-    private unitService: UnitsService,
-  )
-  {
-    //every second update the stats for seconds array
-    setInterval(() => {
+      private appSettingsService: AppSettingsService,
+      private deltaService: SignalKDeltaService,
+      private notificationsService: NotificationsService,
+      private unitService: UnitsService) {
 
-      // if seconds is more than 60 long, remove item
-      if (this.updateStatistics.secondsUpdates.length >= 60) {
-        this.updateStatistics.secondsUpdates.shift() //removes first item
-      }
-      this.updateStatistics.secondsUpdates.push(this.updateStatistics.currentSecond);
-      this.updateStatistics.currentSecond = 0;
-      this.secondsUpdatesBehaviorSubject.next(this.updateStatistics.secondsUpdates);
+    // Emit Delta message update counter every second
+    setInterval(() => {
+      if (this._deltaUpdatesCounter !== null) {
+        this._deltaUpdatesSubject.next(this._deltaUpdatesCounter);
+        this._deltaUpdatesCounter = 0;
+      };
     }, 1000);
 
-    // every minute update status for minute array
-    setInterval(() => {
-
-      // if seconds is more than 60 long, remove item
-      if (this.updateStatistics.minutesUpdates.length >= 60) {
-        this.updateStatistics.minutesUpdates.shift() //removes first item
-      }
-      this.updateStatistics.minutesUpdates.push(this.updateStatistics.secondsUpdates.reduce((a, b) => a + b, 0)); //sums the second array
-      this.minutesUpdatesBehaviorSubject.next(this.updateStatistics.minutesUpdates)
-
-    }, 60000);
-
+    // Subscribe to application default units configuration settings
     this.defaultUnitsSub = this.appSettingsService.getDefaultUnitsAsO().subscribe(
       newDefaults => {
         this.defaultUnits = newDefaults;
@@ -142,12 +114,17 @@ export class SignalKService {
     });
   }
 
-  getupdateStatsSecond() {
-    return this.secondsUpdatesBehaviorSubject.asObservable();
-  }
-
-  getupdateStatMinute() {
-    return this.minutesUpdatesBehaviorSubject.asObservable();
+  /**
+   * Returns an Observable emitting the total amount of the Signal K Delta messages received
+   * every second. Upon subscription, the Observable will automatically return
+   * the last 60 seconds of captured data, followed by live data updates every seconds.
+   *
+   *
+   * @return {*}  {Observable<number>} Count of delta messages received in the last second.
+   * @memberof SignalKService
+   */
+  public getSignalkDeltaUpdateStatistics(): Observable<number> {
+    return this._deltaUpdatesSubject.asObservable();
   }
 
   resetSignalKData() {
@@ -207,7 +184,7 @@ export class SignalKService {
   }
 
   private updatePathData(dataPath: IPathValueData): void {
-    this.updateStatistics.currentSecond++; // update connection msg stats
+    this._deltaUpdatesCounter++; // Increase delta updates stat counter
     let updatePath = this.setPathContext(dataPath.context, dataPath.path);
 
     // position data is sent as degrees. KIP expects everything to be in SI, so rad.
