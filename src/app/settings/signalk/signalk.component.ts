@@ -1,9 +1,9 @@
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription, pipe, timestamp } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
-import { SignalKService } from '../../core/services/signalk.service';
+import { IDeltaUpdate, SignalKService } from '../../core/services/signalk.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
@@ -49,7 +49,7 @@ import ChartStreaming from '@robloche/chartjs-plugin-streaming';
 
 export class SettingsSignalkComponent implements OnInit, OnDestroy {
 
-  @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
+  @ViewChild('lineGraph', {static: true}) lineGraph: ElementRef<HTMLCanvasElement>;
 
   connectionConfig: IConnectionConfig;
 
@@ -65,12 +65,12 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
   skStreamStatusSub: Subscription;
 
 
-  updatesSecondSub: Subscription;
+  signalkDeltaUpdatesStatsSubscription: Subscription;
 
   lastSecondsUpdate: number; //number of updates from server in last second
   updatesSeconds: number[]  = [];
 
-  chart = null;
+  _chart: Chart = null;
   textColor; // store the color of text for the graph...
 
   // dynamics theme support
@@ -86,7 +86,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     private deltaService: SignalKDeltaService,
     public auth: AuthenticationService)
   {
-    Chart.register(ChartStreaming);
+    // Chart.register(ChartStreaming);
   }
 
   ngOnInit() {
@@ -125,12 +125,16 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     });
 
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
+    this._chart?.destroy();
     this.startChart();
 
-    //get WebSocket Stream performance update
-    this.updatesSecondSub = this.signalKService.getSignalkDeltaUpdateStatistics().pipe(timestamp()).subscribe((update: {value: number, timestamp: number}) => {
-      this.chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
-      this.chart?.update("quiet");
+    // Get WebSocket Delta update per seconds stats
+    this.signalkDeltaUpdatesStatsSubscription = this.signalKService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
+      this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
+      if (this._chart.data.datasets[0].data.length > 60) {
+        this._chart.data.datasets[0].data.shift();
+      }
+      this._chart?.update("none");
     });
   }
 
@@ -217,7 +221,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
   }
 
   private startChart() {
-    this.chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
+    this._chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
       type: 'line',
       data: {
           datasets: [
@@ -234,7 +238,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
         parsing: false,
         scales: {
           x: {
-            type: "realtime",
+            type: "time",
             time: {
               unit: "minute",
               minUnit: "second",
@@ -279,11 +283,11 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
               color: this.textColor,
             }
           },
-          streaming: {
-            duration: 60000,
-            delay: 1000,
-            frameRate: 15,
-           }
+          // streaming: {
+          //   duration: 60000,
+          //   delay: 1000,
+          //   frameRate: 15,
+          //  }
         }
       }
     });
@@ -306,7 +310,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     this.skStreamStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();
     this.isLoggedInSub.unsubscribe();
-    this.updatesSecondSub.unsubscribe();
-    this.chart?.destroy();
+    this.signalkDeltaUpdatesStatsSubscription.unsubscribe();
+    this._chart?.destroy();
   }
 }
