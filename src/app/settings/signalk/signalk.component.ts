@@ -1,5 +1,5 @@
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, pipe, timestamp } from 'rxjs';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
@@ -22,6 +22,8 @@ import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import Chart from 'chart.js/auto';
+import 'chartjs-adapter-date-fns';
+import ChartStreaming from '@robloche/chartjs-plugin-streaming';
 
 
 @Component({
@@ -83,7 +85,9 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     private signalkRequestsService: SignalkRequestsService,
     private deltaService: SignalKDeltaService,
     public auth: AuthenticationService)
-  { }
+  {
+    Chart.register(ChartStreaming);
+  }
 
   ngOnInit() {
     // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old
@@ -120,20 +124,14 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
       this.streamStatus = status;
     });
 
-    //get WebSocket Stream performance update
-    this.updatesSecondSub = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
-      this.lastSecondsUpdate = newSecondsData[newSecondsData.length-1];
-      this.updatesSeconds = newSecondsData;
-      if (this.chart !== null) {
-        this.chart.config.data.datasets[0].data = newSecondsData;
-        this.chart.update('none');
-      }
-    });
-
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-
     this.startChart();
 
+    //get WebSocket Stream performance update
+    this.updatesSecondSub = this.signalKService.getSignalkDeltaUpdateStatistics().pipe(timestamp()).subscribe((update: {value: number, timestamp: number}) => {
+      this.chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
+      this.chart?.update("quiet");
+    });
   }
 
   public openUserCredentialModal(errorMsg: string) {
@@ -222,32 +220,57 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     this.chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
       type: 'line',
       data: {
-          labels: Array.from(Array(60).keys()).reverse(),
           datasets: [
             {
-              label: "Updates Per Second",
-              data: this.updatesSeconds,
-              //fill: 'false',
+              data: [],
+              fill: true,
               borderColor: this.textColor
             },
           ]
       },
       options: {
         maintainAspectRatio: false,
+        animation: false,
+        parsing: false,
         scales: {
           x: {
-            beginAtZero: true,
+            type: "realtime",
+            time: {
+              unit: "minute",
+              minUnit: "second",
+              round: "second",
+              displayFormats: {
+                hour: `k:mm\''`,
+                minute: `mm\''`,
+                second: `mm ss"`,
+                millisecond: "SSS"
+              }
+            },
             position: 'bottom',
             ticks: {
-              autoSkip: true,
-              autoSkipPadding: 30
+              display: false,
+              major: {
+                enabled: true
+              },
+              autoSkip: false
+            },
+            title: {
+              text: "1 Minute",
+              display: true
+            },
+            grid: {
+              display: false
             }
           },
           y: {
             beginAtZero: true,
             type: 'linear',
-            position: 'left',
-          },
+            position: 'right',
+            title: {
+              text: "Delta / Sec",
+              display: true
+            }
+          }
         },
         plugins:{
           legend: {
@@ -256,10 +279,11 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
               color: this.textColor,
             }
           },
-          title: {
-            text: "Updates Per Seconds",
-            display: true
-          }
+          streaming: {
+            duration: 60000,
+            delay: 1000,
+            frameRate: 15,
+           }
         }
       }
     });
