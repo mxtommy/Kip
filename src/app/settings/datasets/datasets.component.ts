@@ -166,7 +166,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   ngOnInit() {
     if (this.dataset) {
-      this.titleDialog = "Edit dataset";
+      this.titleDialog = "Edit Dataset";
       this.formDataset = this.dataset;
 
       let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
@@ -175,7 +175,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
       }
 
     } else {
-      this.titleDialog = "Add dataset";
+      this.titleDialog = "Add Dataset";
       this.formDataset = this.newDataset;
     }
 

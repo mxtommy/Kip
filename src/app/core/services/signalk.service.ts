@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash-es';
 import { Injectable } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
-import { IPathData, IPathValueData, IPathMetaData, IDefaultSource, IMeta } from "../interfaces/app-interfaces";
+import { IPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -45,6 +45,11 @@ interface pathRegistration {
   subject: BehaviorSubject<pathRegistrationValue>;
 }
 
+export interface IDeltaUpdate {
+  value: number;
+  timestamp: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -63,7 +68,7 @@ export class SignalKService {
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;
-  private _deltaUpdatesSubject: ReplaySubject<number> = new ReplaySubject(60);
+  private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
 
   defaultUnits: IUnitDefaults;
   defaultUnitsSub: Subscription;
@@ -80,7 +85,8 @@ export class SignalKService {
     // Emit Delta message update counter every second
     setInterval(() => {
       if (this._deltaUpdatesCounter !== null) {
-        this._deltaUpdatesSubject.next(this._deltaUpdatesCounter);
+        let update: IDeltaUpdate = {timestamp: Date.now(), value: this._deltaUpdatesCounter}
+        this._deltaUpdatesSubject.next(update);
         this._deltaUpdatesCounter = 0;
       };
     }, 1000);
@@ -123,7 +129,7 @@ export class SignalKService {
    * @return {*}  {Observable<number>} Count of delta messages received in the last second.
    * @memberof SignalKService
    */
-  public getSignalkDeltaUpdateStatistics(): Observable<number> {
+  public getSignalkDeltaUpdateStatistics(): Observable<IDeltaUpdate> {
     return this._deltaUpdatesSubject.asObservable();
   }
 
