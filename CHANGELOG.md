@@ -1,3 +1,8 @@
+# V 2.8.3
+## Improvements
+* Exposed the ability to set Value scale range in Data Chart widget 
+## Fixes
+* Invalid "request pending authorization" message displayed after toggling Switch control using the Boolean Control Panel.
 # V 2.8.2
 ## Improvements
 * Added Dataset configuration guidance to UI.
