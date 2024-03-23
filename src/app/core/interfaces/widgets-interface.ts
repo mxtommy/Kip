@@ -107,10 +107,14 @@ export interface IWidgetSvcConfig {
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */
   numInt?: number;
-  /** Used by numeric data Widget: Show minimum registered value since started */
+  /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
-  /** Used by numeric data Widget: Show maximum registered value since started */
+  /** Used by numeric data Widget: Display maximum registered value since started */
   showMax?: boolean;
+  /** Used by multiple Widget to filter minimum data range to display. */
+  minValue?: number;
+  /** Used by multiple Widget to filter maximum data range to display. */
+  maxValue?: number;
 
   /** Used by date Widget: configurable display format of the date/time value */
   dateFormat?: string;
@@ -150,10 +154,6 @@ export interface IWidgetSvcConfig {
   textColor?: string;
   /** Used by multiple gauge Widget */
   radialSize?: string;
-  /** Used by multiple Widget to set minimum data range to display. */
-  minValue?: number;
-  /** Used by multiple Widget to set maximum data range to display. */
-  maxValue?: number;
   /** Used by multiple gauge Widget: Should the needle or the faceplate rotate */
   rotateFace?: boolean;
   /** Used by Autopilot Widget: Should the Widget start automatically on load or should the user press Power/On. */
@@ -183,16 +183,24 @@ export interface IWidgetSvcConfig {
   showDatasetAngleAverageValueLine?: boolean;
   /** Display widget title */
   showLabel?: boolean;
-  /** Display chart y scale */
-  showYScale?: boolean;
   /** Used by historical data Widget */
   animateGraph?: boolean;
-  /** Prevent chart value axis autoscaling. Always start scale from zero */
-  startScaleAtZero?: boolean;
   /** Display chart time (x axis) scale */
   showTimeScale?: boolean;
-  /** Limit chart value axis scale to min and max value */
+  /** Display chart y scale */
+  showYScale?: boolean;
+  /** Chart y scale suggested minimum. Scale will extend beyond this number automatically if values are below */
+  yScaleSuggestedMin?: number;
+  /** Chart y scale suggested maximum. Scale will extend beyond this number automatically if values are above */
+  yScaleSuggestedMax?: number;
+  /** Chart y scale suggested minimum is zero */
+  startScaleAtZero?: boolean;
+  /** Limit chart value axis (y) scale to min and max value */
   enableMinMaxScaleLimit?: boolean;
+  /** Chart y scale minimum */
+  yScaleMin?: number;
+  /** Chart y scale maximum */
+  yScaleMax?: number;
   /** Used by historical data Widget */
   verticalGraph?: boolean;
 

@@ -17,3 +17,35 @@
 .no-margin {
   margin: 0px;
 }
+
+.chart-option-radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 0px;
+  align-items: flex-start;
+}
+
+.chart-option-radio-button {
+  margin: 0px;
+}
+
+.chart-option-radio-button-config {
+  margin-left: 35px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+
+}
+
+.chart-option-radio-button-config-item {
+  flex-grow: 0;
+  flex-shrink: 1;
+  min-width: 50px;
+}
+
+.chart-option-radio-button-config-form-field {
+  display: block;
+  max-width: 118px;
+}
