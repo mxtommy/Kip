@@ -39,7 +39,7 @@
 
     <div class="flex-item">
       <div>
-        <p>Chart Data</p>
+        <p>Series</p>
         <mat-form-field style="margin-left: 10px;">
           <mat-label>Value Decimal Places</mat-label>
           <input matInput type="number"
@@ -67,43 +67,94 @@
 
     <div class="flex-item">
       <div>
-        <p class="no-margin">Chart Scale</p>
-        <mat-checkbox class="full-width"
-          name="startScaleAtZero"
-          [formControl]="startScaleAtZero"
-          (change)="disableMinMaxLines($event)">
-            Auto Scale
-        </mat-checkbox>
+        <p class="no-margin">Data Scale</p>
+        <span class="mat-caption">(Default node is automatic scale)</span>
+
+        <mat-radio-group class="chart-option-radio-group" aria-label="Select an option"
+          name="enableMinMaxScaleLimit"
+          [formControl]="enableMinMaxScaleLimit">
+          <mat-radio-button class="chart-option-radio-button"
+          (change)="setScaleControls($event)"
+          [value]="false">Auto Scale</mat-radio-button>
+
+          <div class="chart-option-radio-button-config">
+            <mat-form-field class="chart-option-radio-button-config-form-field">
+              <mat-label>Suggested Min</mat-label>
+              <input matInput type="number"
+                name="yScaleSuggestedMin"
+                [formControl]="yScaleSuggestedMin">
+            </mat-form-field>
+
+            <mat-form-field class="chart-option-radio-button-config-form-field">
+              <mat-label>Suggested Max</mat-label>
+              <input matInput type="number"
+                name="yScaleSuggestedMax"
+                [formControl]="yScaleSuggestedMax">
+            </mat-form-field>
+          </div>
+
+          <mat-radio-button class="chart-option-radio-button"
+          (change)="setScaleControls($event)"
+          [value]="true">Fixed Scale</mat-radio-button>
+
+          <div class="chart-option-radio-button-config">
+            <div class="chart-option-radio-button-config-item">
+              <mat-form-field class="chart-option-radio-button-config-form-field">
+                <mat-label>Min</mat-label>
+                <input matInput type="number"
+                  name="yScaleMin"
+                  [formControl]="yScaleMin"
+                  required>
+              </mat-form-field>
+            </div>
+            <div class="chart-option-radio-button-config-item">
+              <mat-form-field class="chart-option-radio-button-config-form-field">
+                <mat-label>Max</mat-label>
+                <input matInput type="number"
+                  name="yScaleMax"
+                  [formControl]="yScaleMax"
+                  required>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-radio-group>
+
         <mat-checkbox class="full-width"
           name="showYScale"
           [formControl]="showYScale">
-            Show Value Axis
-        </mat-checkbox>
-        <mat-checkbox class="full-width"
-          name="showTimeScale"
-          [formControl]="showTimeScale">
-            Show Time Axis
+            Show Scale Ticks
         </mat-checkbox>
       </div>
     </div>
 
     <div class="flex-item">
       <div>
-        <p class="no-margin">Dataset Indicators</p>
+        <p class="no-margin">Time Scale</p>
+        <mat-checkbox class="full-width"
+          name="showTimeScale"
+          [formControl]="showTimeScale">
+            Show Scale Ticks
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <div class="flex-item">
+      <div>
+        <p class="no-margin">Dataset</p>
         <mat-checkbox class="full-width"
           name="showDatasetMaximumValueLine"
           [formControl]="showDatasetMaximumValueLine">
-            Maximum Line
+            Show Maximum Line
         </mat-checkbox>
         <mat-checkbox class="full-width"
           name="showDatasetAverageValueLine"
           [formControl]="showDatasetAverageValueLine">
-            Average Line
+            Show Average Line
         </mat-checkbox>
         <mat-checkbox class="full-width" #minLine
           name="showDatasetMinimumValueLine"
           [formControl]="showDatasetMinimumValueLine">
-            Minimum Line
+            Show Minimum Line
         </mat-checkbox>
       </div>
     </div>
