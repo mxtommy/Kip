@@ -10,8 +10,8 @@ import { UUID } from '../../utils/uuid'
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
-  202: "The request is awaiting authorization.",
-  400: "Bad Client request format.",
+  202: "Request accepted and pending completion.",
+  400: "Bad client request.",
   401: "Login failed. Your User ID or Password is incorrect.",
   403: "DENIED: Authentication required with R/W or Admin permission level to send commands. Configure server connection authentication or request a Device Authorization token.",
   405: "The server does not support the request.",
@@ -57,13 +57,13 @@ export class SignalkRequestsService {
    *
    * The Device authorization is a manual process done on the server.
    */
-  public requestDeviceAccessToken() {
+  public requestDeviceAccessToken(): string {
     let requestId = UUID.create();
     let deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
         clientId: this.appSettingsService.KipUUID,
-        description: "Kip web app",
+        description: "KIP Instrument MDF",
         permissions: "admin"
       }
     }
@@ -78,6 +78,7 @@ export class SignalkRequestsService {
     }
 
     this.requests.push(request);
+    return requestId;
   }
 
   /**
@@ -165,12 +166,18 @@ export class SignalkRequestsService {
 
       const currentStatusCode = deltaStatusCodes[delta.statusCode];
 
-      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 401 || this.requests[index].statusCode == 403 || this.requests[index].statusCode == 405)) {
+      if ((typeof currentStatusCode != 'undefined') && (this.requests[index].statusCode == 200 || this.requests[index].statusCode == 202 || this.requests[index].statusCode == 400 || this.requests[index].statusCode == 401 || this.requests[index].statusCode == 403 || this.requests[index].statusCode == 405)) {
         this.requests[index].statusCodeDescription = currentStatusCode;
 
         if (this.requests[index].statusCode == 202) {
-          this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
+          console.log("[Request Service] Async 202 response received");
+          // this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
           return;
+        }
+
+        if (this.requests[index].statusCode == 400) {
+          this.NotificationsService.sendSnackbarNotification(this.requests[index].message);
+          console.log("[Request Service] " + this.requests[index].message );
         }
 
         if (this.requests[index].statusCode == 403) {
