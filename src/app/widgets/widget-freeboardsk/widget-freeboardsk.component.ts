@@ -1,8 +1,9 @@
 import { AuthenticationService } from './../../core/services/authentication.service';
 import { AppSettingsService } from './../../core/services/app-settings.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { SafePipe } from "../../core/pipes/safe.pipe";
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-widget-freeboardsk',
@@ -11,26 +12,24 @@ import { SafePipe } from "../../core/pipes/safe.pipe";
     styleUrl: './widget-freeboardsk.component.scss',
     imports: [SafePipe]
 })
-export class WidgetFreeboardskComponent extends BaseWidgetComponent implements OnInit {
+export class WidgetFreeboardskComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   public widgetUrl: string = null;
+  private authTokenSubscription: Subscription = null;
 
   constructor(private appSettings: AppSettingsService, private auth: AuthenticationService) {
     super();
-
-    this.defaultConfig = {
-      widgetUrl: null
-    };
   }
 
   ngOnInit(): void {
-    this.validateConfig();
+    let loginToken: string = null;
+    this.authTokenSubscription = this.auth.authToken$.subscribe(AuthServiceToken => {
+        loginToken = AuthServiceToken.token;
+      });
 
-    let token: string = null;
-    this.auth.authToken$.subscribe(AuthServiceToken => {
-      token = AuthServiceToken.token;
-    });
+    this.widgetUrl = `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`;
+  }
 
-    this.widgetUrl = `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${token}`;
-    console.log(this.widgetUrl);
+  ngOnDestroy(): void {
+    this.authTokenSubscription?.unsubscribe();
   }
 }

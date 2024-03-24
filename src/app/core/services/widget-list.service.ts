@@ -39,11 +39,6 @@ export class WidgetListService {
   widgetList: widgetList = {
     'Basic': [
       {
-        name: 'WidgetBlank',
-        componentName: WidgetBlankComponent,
-        description: 'Blank',
-      },
-      {
         name: 'WidgetNumeric',
         componentName: WidgetNumericComponent,
         description: 'Numeric',
@@ -64,9 +59,14 @@ export class WidgetListService {
         description: 'Boolean Control Panel',
       },
       {
+        name: 'WidgetBlank',
+        componentName: WidgetBlankComponent,
+        description: 'Blank',
+      },
+      {
         name: 'WidgetStateComponent',
         componentName: WidgetButtonComponent,
-        description: 'Boolean Button/Switch',
+        description: '(Deprecated) Boolean Button/Switch',
       }
     ],
     'Gauge': [
@@ -89,7 +89,7 @@ export class WidgetListService {
         name: 'WidgetGaugeComponent',
         componentName: WidgetGaugeComponent,
         description: "Linear & Radial Steel Style"
-      },
+      }
     ],
     'Component': [
       {
@@ -98,14 +98,19 @@ export class WidgetListService {
         description: 'Wind Steering Display',
       },
       {
-        name: 'WidgetDataChart',
-        componentName: WidgetDataChartComponent,
-        description: 'Data Chart',
+        name: 'WidgetFreeboardskComponent',
+        componentName: WidgetFreeboardskComponent,
+        description: 'Freeboard-SK Chart Plotter',
       },
       {
         name: 'WidgetAutopilotComponent',
         componentName: WidgetAutopilotComponent,
         description: 'Autopilot Head',
+      },
+      {
+        name: 'WidgetDataChart',
+        componentName: WidgetDataChartComponent,
+        description: 'Data Chart',
       },
       {
           name: 'WidgetRaceTimerComponent',
@@ -114,18 +119,8 @@ export class WidgetListService {
       },
       {
         name: 'WidgetIframeComponent',
-        componentName: WidgetFreeboardskComponent,
-        description: 'FreeboardSK',
-      },
-      {
-        name: 'WidgetIframeComponent',
         componentName: WidgetIframeComponent,
         description: 'Embed Webpage',
-      },
-      {
-        name: 'WidgetTutorial',
-        componentName: WidgetTutorialComponent,
-        description: 'Tutorial'
       }
     ]
   };

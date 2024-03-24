@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "2.8.4",
+  "version": "2.8.4-beta.1",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
