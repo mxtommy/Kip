@@ -1,7 +1,7 @@
-import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDatapoint } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
-import { differenceInSeconds } from "date-fns";
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -95,13 +95,15 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       showDatasetAverageValueLine: true,
       showDatasetAngleAverageValueLine: false,
       showLabel: false,
-      showYScale: false,
       showTimeScale: false,
       startScaleAtZero: true,
       verticalGraph: false,
+      showYScale: false,
+      yScaleSuggestedMin: null,
+      yScaleSuggestedMax: null,
       enableMinMaxScaleLimit: false,
-      minValue: null,
-      maxValue: null,
+      yScaleMin: null,
+      yScaleMax: null,
       numDecimal: 1,
       textColor: 'primary',
     };
@@ -187,10 +189,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         },
         ticks: {
           autoSkip: false,
-          // callback(tickValue, index, ticks) {
-            // return differenceInSeconds(new Date.now(), tickValue as number);
-          // },
-          // maxTicksLimit: 8,
           major: {
             enabled: true
           }
@@ -202,7 +200,10 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       y: {
         display: this.widgetProperties.config.showYScale,
         position: "right",
-        beginAtZero: !this.widgetProperties.config.startScaleAtZero,
+        suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
+        suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
+        min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
+        max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
         grace: "5%",
         title: {
           display: false,
@@ -469,6 +470,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy(): void {
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
-      this.chart?.destroy();
+    this.chart?.destroy();
   }
 }

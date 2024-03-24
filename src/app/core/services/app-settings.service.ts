@@ -372,7 +372,7 @@ public loadConfigFromLocalStorage(type: string) {
     return this.themeName.asObservable();
   }
 
-  public setThemName(newTheme: string) {
+  public setThemeName(newTheme: string) {
     this.themeName.next(newTheme);
     if (newTheme != "nightMode") { // don't save NightMode, only temporary
       if (this.useSharedConfig) {

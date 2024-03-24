@@ -1,3 +1,20 @@
+# V 2.8.3
+## Improvements
+* Exposed the ability to set Value scale range in Data Chart widget 
+## Fixes
+* Invalid "request pending authorization" message displayed after toggling Switch control using the Boolean Control Panel.
+# V 2.8.2
+## Improvements
+* Added Dataset configuration guidance to UI.
+## Fixes
+* Chromium menu icon layout issues.
+* Data Chart empty datapoint when no value received within sample period.
+* Race Timer Start/Pause state when switching day/night modes.  
+* Zone alarms triggers incorrectly when using both 0 and undefined in a zone scales.
+# V 2.8.1
+## Fixes
+* Prevent endless login loop by adding support for NEVER expires user session token.
+* Update left over Historical Data tab descriptions to reference Datasets and Data Chart widget.
 # V 2.8.0
 ## New features
 * New Data Chart Widget replacing Historical Widget. Data Chart supports data streaming and Simple Moving Average Series and min, max and average lines over dataset duration. 

@@ -8,7 +8,7 @@
   .serverStatus {
     background-color: mat.get-color-from-palette($background, card);
     margin-top: 20px;
-    margin: 7% 5% 0% 5%;
+    margin: 5% 5% 0% 5%;
     padding: 10px 20px 20px 20px;
   }
 
@@ -16,22 +16,35 @@
     flex: 1 1 350px;
     position: relative;
     margin: 0px;
-    height: 130px;
+    height: 150px;
     width: 100%;
     border: 2px inset;
     border-color: mat.get-color-from-palette($foreground, text);
   }
 }
 
+.connect-table {
+  width: 100%;
+  vertical-align: middle;
+}
 .connectUrlInput {
   width: 100%;
+}
+
+.url-cell {
+  width: 100%;
+}
+
+.connect-cell {
+  width: fit-content;
+  vertical-align: middle;
 }
 
 .flex-item-detail {
   flex: 0 0 290px;
 }
 
-table {
+.fit {
   width: fit-content;
 }
 

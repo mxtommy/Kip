@@ -55,30 +55,54 @@
         </div>
       </mat-step>
       <mat-step>
-        <ng-template matStepLabel>Time Scale</ng-template>
+        <ng-template matStepLabel>Sampling</ng-template>
         <div class="tab-content">
-          <mat-form-field class="full-width" style="margin-bottom: 10px;">
-            <mat-label>Time Scale</mat-label>
-            <mat-select
-              placeholder="Select dataset time scale"
-              [(ngModel)]="formDataset.timeScaleFormat"
-              name="timeScaleFormat"
-              required>
-              <mat-option value="hour">Hours</mat-option>
-              <mat-option value="minute">Minutes</mat-option>
-              <mat-option value="second">Seconds</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field style="margin-bottom: 10px;">
-            <mat-label>Duration</mat-label>
-            <input matInput type="number"
-              min="1" max="60" step="1"
-              placeholder="Enter or select number..."
-              name="period"
-              [(ngModel)]="formDataset.period"
-              required>
-          </mat-form-field>
+          <span class="mat-subtitle-1">Time Scales</span>
+          <div class="flex-container" style="margin-top: 10px;">
+            <div class="flex-field-50">
+              <mat-form-field class="full-width">
+                <mat-label>Scale</mat-label>
+                <mat-select
+                  placeholder="Select dataset time scale"
+                  [(ngModel)]="formDataset.timeScaleFormat"
+                  name="timeScaleFormat"
+                  required>
+                  <mat-option value="hour">Hours</mat-option>
+                  <mat-option value="minute">Minutes</mat-option>
+                  <mat-option value="second">Seconds</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="flex-field-50">
+              <mat-form-field class="full-width">
+                <mat-label>Duration</mat-label>
+                <input matInput type="number"
+                  min="1" max="60" step="1"
+                  placeholder="Enter or select number..."
+                  name="period"
+                  [(ngModel)]="formDataset.period"
+                  required>
+              </mat-form-field>
+            </div>
+          </div>
+          <p class="mat-caption">Time scales define the data sampling rate and overall Dataset level
+            of precision. Chose a Time Scale that is targeted to you intended usage.
+            Shorter Time Scales have higher system resources
+            costs, for both the data capture and widget rendering process.
+          </p>
+          <ul class="mat-caption">
+            <li>Hours: per minute sampling rate. Intended for long sampling periods when slow
+              refresh rate is acceptable and system resource usage should be minimized. Grafana is
+              the perfect alternative to this Time Scale.
+            </li>
+            <li>Minutes: per second sampling rate. Meant for trends observations such wind
+              speed, depth, solar power, voltage, etc., when up to the second realtime updates are
+              not required.
+            </li>
+            <li>Secondes: 200ms sampling rate. Intended for use cases where user may act upon realtime
+              information such as when racing.
+            </li>
+          </ul>
         </div>
         <mat-divider></mat-divider>
         <div class="buttons">

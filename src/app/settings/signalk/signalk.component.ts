@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
-import { SignalKService } from '../../core/services/signalk.service';
+import { IDeltaUpdate, SignalKService } from '../../core/services/signalk.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
@@ -22,6 +22,8 @@ import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import Chart from 'chart.js/auto';
+import 'chartjs-adapter-date-fns';
+import ChartStreaming from '@robloche/chartjs-plugin-streaming';
 
 
 @Component({
@@ -47,7 +49,7 @@ import Chart from 'chart.js/auto';
 
 export class SettingsSignalkComponent implements OnInit, OnDestroy {
 
-  @ViewChild('lineGraph', {static: true, read: ElementRef}) lineGraph: ElementRef;
+  @ViewChild('lineGraph', {static: true}) lineGraph: ElementRef<HTMLCanvasElement>;
 
   connectionConfig: IConnectionConfig;
 
@@ -63,12 +65,12 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
   skStreamStatusSub: Subscription;
 
 
-  updatesSecondSub: Subscription;
+  signalkDeltaUpdatesStatsSubscription: Subscription;
 
   lastSecondsUpdate: number; //number of updates from server in last second
   updatesSeconds: number[]  = [];
 
-  chart = null;
+  _chart: Chart = null;
   textColor; // store the color of text for the graph...
 
   // dynamics theme support
@@ -83,7 +85,9 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     private signalkRequestsService: SignalkRequestsService,
     private deltaService: SignalKDeltaService,
     public auth: AuthenticationService)
-  { }
+  {
+    // Chart.register(ChartStreaming);
+  }
 
   ngOnInit() {
     // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old
@@ -120,20 +124,18 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
       this.streamStatus = status;
     });
 
-    //get WebSocket Stream performance update
-    this.updatesSecondSub = this.signalKService.getupdateStatsSecond().subscribe(newSecondsData => {
-      this.lastSecondsUpdate = newSecondsData[newSecondsData.length-1];
-      this.updatesSeconds = newSecondsData;
-      if (this.chart !== null) {
-        this.chart.config.data.datasets[0].data = newSecondsData;
-        this.chart.update('none');
-      }
-    });
-
     this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-
+    this._chart?.destroy();
     this.startChart();
 
+    // Get WebSocket Delta update per seconds stats
+    this.signalkDeltaUpdatesStatsSubscription = this.signalKService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
+      this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
+      if (this._chart.data.datasets[0].data.length > 60) {
+        this._chart.data.datasets[0].data.shift();
+      }
+      this._chart?.update("none");
+    });
   }
 
   public openUserCredentialModal(errorMsg: string) {
@@ -219,35 +221,60 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
   }
 
   private startChart() {
-    this.chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
+    this._chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
       type: 'line',
       data: {
-          labels: Array.from(Array(60).keys()).reverse(),
           datasets: [
             {
-              label: "Updates Per Second",
-              data: this.updatesSeconds,
-              //fill: 'false',
+              data: [],
+              fill: true,
               borderColor: this.textColor
             },
           ]
       },
       options: {
         maintainAspectRatio: false,
+        animation: false,
+        parsing: false,
         scales: {
           x: {
-            beginAtZero: true,
+            type: "time",
+            time: {
+              unit: "minute",
+              minUnit: "second",
+              round: "second",
+              displayFormats: {
+                hour: `k:mm\''`,
+                minute: `mm\''`,
+                second: `mm ss"`,
+                millisecond: "SSS"
+              }
+            },
             position: 'bottom',
             ticks: {
-              autoSkip: true,
-              autoSkipPadding: 30
+              display: false,
+              major: {
+                enabled: true
+              },
+              autoSkip: false
+            },
+            title: {
+              text: "1 Minute",
+              display: true
+            },
+            grid: {
+              display: false
             }
           },
           y: {
             beginAtZero: true,
             type: 'linear',
-            position: 'left',
-          },
+            position: 'right',
+            title: {
+              text: "Delta / Sec",
+              display: true
+            }
+          }
         },
         plugins:{
           legend: {
@@ -256,10 +283,11 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
               color: this.textColor,
             }
           },
-          title: {
-            text: "Updates Per Seconds",
-            display: true
-          }
+          // streaming: {
+          //   duration: 60000,
+          //   delay: 1000,
+          //   frameRate: 15,
+          //  }
         }
       }
     });
@@ -282,7 +310,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     this.skStreamStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();
     this.isLoggedInSub.unsubscribe();
-    this.updatesSecondSub.unsubscribe();
-    this.chart?.destroy();
+    this.signalkDeltaUpdatesStatsSubscription.unsubscribe();
+    this._chart?.destroy();
   }
 }
