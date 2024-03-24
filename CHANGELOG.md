@@ -1,3 +1,9 @@
+# V 2.9.0
+## New features
+* Dedicated Freeboard-SK Chart Plotter widget. The widget automatically loads the app and supports single sign on using the same user as defined in KIP. Special thanks to Adrian!
+## Fixes
+* Removed Data Chart's scale grace-factor improving scale definition control.
+* Updated demo configuration to reflect latest text color feature and include Freeboard-SK widget on page 2.
 # V 2.8.3
 ## Improvements
 * Exposed the ability to set Value scale range in Data Chart widget 
