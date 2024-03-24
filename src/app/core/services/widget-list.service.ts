@@ -121,17 +121,14 @@ export class WidgetListService {
         name: 'WidgetIframeComponent',
         componentName: WidgetIframeComponent,
         description: 'Embed Webpage',
+      },
+      {
+        name: 'WidgetTutorial',
+        componentName: WidgetTutorialComponent,
+        description: 'Tutorial'
       }
     ]
   };
-
-/*
-    {
-      name: 'WidgetSwitchComponent',
-      componentName: WidgetSwitchComponent,
-      description: 'Switch Input',
-    },  */
-
 
   getComponentName(typeName: string) {
     for (let [group, widgetList] of Object.entries(this.widgetList)) {
