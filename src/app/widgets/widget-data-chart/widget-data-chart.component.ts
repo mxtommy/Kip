@@ -96,7 +96,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       showDatasetAngleAverageValueLine: false,
       showLabel: false,
       showTimeScale: false,
-      startScaleAtZero: true,
+      startScaleAtZero: false,
       verticalGraph: false,
       showYScale: false,
       yScaleSuggestedMin: null,
@@ -204,17 +204,22 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
         min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
         max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
-        grace: "5%",
+        beginAtZero: this.widgetProperties.config.startScaleAtZero,
+        // grace: "5%",
         title: {
           display: false,
           text: "Value Axis",
           align: "center"
         },
         ticks: {
-          maxTicksLimit: 6
+          maxTicksLimit: 8,
+          precision: this.widgetProperties.config.numDecimal,
+          major: {
+            enabled: true,
+          }
         },
         grid: {
-          display: true
+          display: true,
         }
       }
     }
@@ -252,7 +257,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           minimumLine: {
             type: 'line',
             scaleID: 'y',
-            display: this.widgetProperties.config.startScaleAtZero ? false : this.widgetProperties.config.showDatasetMinimumValueLine,
+            display: this.widgetProperties.config.showDatasetMinimumValueLine,
             value: null,
             drawTime: 'afterDatasetsDraw',
             label: {

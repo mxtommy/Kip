@@ -50,11 +50,6 @@ export class ChartOptionsComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    if (this.startScaleAtZero.value) {
-      this.showDatasetMinimumValueLine.disable();
-      this.showDatasetMaximumValueLine.disable();
-    }
-
     if (!this.showAverageData.value) {
       this.trackAgainstAverage.disable();
     }
@@ -78,18 +73,6 @@ export class ChartOptionsComponent implements OnInit {
 
   public setScaleControls(e: MatRadioChange) {
     this.setValueScaleOptionsControls(e.value);
-  }
-
-  public disableMinMaxLines(e: MatCheckboxChange): void {
-    if (e.checked) {
-      this.showDatasetMinimumValueLine.setValue(!e.checked);
-      this.showDatasetMaximumValueLine.setValue(!e.checked);
-      this.showDatasetMinimumValueLine.disable();
-      this.showDatasetMaximumValueLine.disable();
-    } else {
-      this.showDatasetMinimumValueLine.enable();
-      this.showDatasetMaximumValueLine.enable();
-    }
   }
 
   public enableTrackAgainstMovingAverage(e: MatCheckboxChange): void {
