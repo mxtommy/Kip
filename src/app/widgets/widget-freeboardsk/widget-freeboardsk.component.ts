@@ -23,10 +23,11 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
   ngOnInit(): void {
     let loginToken: string = null;
     this.authTokenSubscription = this.auth.authToken$.subscribe(AuthServiceToken => {
-        loginToken = AuthServiceToken.token;
-      });
+        loginToken = AuthServiceToken?.token;
+      }
+    );
 
-    this.widgetUrl = `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`;
+    this.widgetUrl = loginToken ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}` : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
   }
 
   ngOnDestroy(): void {
