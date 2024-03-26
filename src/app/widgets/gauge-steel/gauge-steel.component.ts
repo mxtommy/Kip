@@ -1,7 +1,7 @@
-import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, Renderer2 } from '@angular/core';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
-declare var steelseries: any; // 3rd party
+declare let steelseries: any; // 3rd party
 
 export const SteelBackgroundColors = {
   'darkGray': steelseries.BackgroundColor.DARK_GRAY,
@@ -38,7 +38,6 @@ export const SteelFrameColors = {
 'glossyMetal': steelseries.FrameDesign.GLOSSY_METAL
 }
 
-
 @Component({
     selector: 'gauge-steel',
     templateUrl: './gauge-steel.component.html',
@@ -46,42 +45,35 @@ export const SteelFrameColors = {
     standalone: true,
     imports: [AngularResizeEventModule]
 })
-export class GaugeSteelComponent implements AfterViewInit, OnChanges {
-
+export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
-
   @Input('widgetUUID') widgetUUID: string;
   @Input('gaugeType') gaugeType: string; // linear or radial
   @Input('barGauge') barGauge: boolean;
-
   @Input('radialSize') radialSize?: string;
-
   @Input('backgroundColor') backgroundColor?: string;
   @Input('frameColor') frameColor: string;
-
   @Input('minValue') minValue: number;
   @Input('maxValue') maxValue: number;
-
   @Input('zones') zones: Array<{ low: number; high: number; state: string}>;
-
   @Input('title') title: string;
   @Input('units') units: string;
-
   @Input('value') value: number;
+
+
   gaugeWidth: number = 0;
   gaugeHeight: number = 0;
   isInResizeWindow: boolean = false;
   gaugeStarted: boolean = false;
-
-  constructor() { }
-
   gauge;
-
   gaugeOptions = {};
+  private resizeTimer = null;
 
   // common options for both radial and linear
 
   sections;
+
+  constructor() { }
 
   ngAfterViewInit() {
     if (!this.gaugeType) { this.gaugeType = 'radial'; }
@@ -198,7 +190,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges {
     if (!this.isInResizeWindow) {
       this.isInResizeWindow = true;
 
-      setTimeout(() => {
+      this.resizeTimer = setTimeout(() => {
         let rect = this.sgWrapperDiv.nativeElement.getBoundingClientRect();
         this.gaugeWidth = rect.width;
         this.gaugeHeight = rect.height;
@@ -268,5 +260,9 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges {
         this.startGauge();//reset
       }
     }
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.resizeTimer);
   }
 }
