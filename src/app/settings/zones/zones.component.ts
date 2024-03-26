@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Inject, Input, ViewChild, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { Subscription, Observable } from 'rxjs';
@@ -27,7 +27,7 @@ import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
     standalone: true,
     imports: [MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgSwitch, NgSwitchCase, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider]
 })
-export class SettingsZonesComponent implements OnInit, AfterViewInit {
+export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -128,6 +128,10 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit {
       zones.splice(index, 1);
       this.appSettingsService.saveZones(zones);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.zonesSub?.unsubscribe();
   }
 }
 

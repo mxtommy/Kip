@@ -28,7 +28,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   valueFontSize: number = 1;
   minMaxFontSize: number = 1;
   flashOn: boolean = false;
-  flashInterval;
+  flashInterval = null;
 
   canvasValCtx: CanvasRenderingContext2D;
   canvasMMCtx: CanvasRenderingContext2D;
@@ -85,10 +85,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           }, 350); // used to flash stuff in alarm
         } else if (this.IZoneState == IZoneState.normal) {
           // stop alarming if not in alarm state
-          if (this.flashInterval) {
-            clearInterval(this.flashInterval);
-            this.flashInterval = null;
-          }
+          clearInterval(this.flashInterval);
         }
 
         this.updateCanvas();

@@ -56,5 +56,6 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.rootUUIDSub.unsubscribe();
     this.unlockStatusSub.unsubscribe();
+    this.pageNumberSub.unsubscribe();
   }
 }

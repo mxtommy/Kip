@@ -48,7 +48,7 @@ export const SteelFrameColors = {
 })
 export class GaugeSteelComponent implements AfterViewInit, OnChanges {
 
-  @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef;
+  @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
 
   @Input('widgetUUID') widgetUUID: string;
   @Input('gaugeType') gaugeType: string; // linear or radial
@@ -172,7 +172,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges {
   startGauge() {
     this.gaugeStarted = true;
     this.buildOptions();
-        // Initialzing gauges
+        // Initializing gauges
     if (this.gaugeType == 'radial') {
       if (this.barGauge) {
         this.gauge = new steelseries.RadialBargraph(this.widgetUUID, this.gaugeOptions);
@@ -268,7 +268,5 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges {
         this.startGauge();//reset
       }
     }
-
   }
-
 }

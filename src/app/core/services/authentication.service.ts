@@ -1,7 +1,7 @@
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, timer, lastValueFrom } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, timer, lastValueFrom, Subscription } from 'rxjs';
 import { filter, map, switchMap } from "rxjs/operators";
 
 export interface IAuthorizationToken {
@@ -19,11 +19,12 @@ const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
 @Injectable({
   providedIn: 'root'
 })
-export class AuthenticationService {
+export class AuthenticationService implements OnDestroy {
   private _IsLoggedIn$ = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
   public authToken$ = this._authToken$.asObservable();
+  private connectionEndpointSubscription: Subscription = null;
 
   // Network connection
   private loginUrl = null;
@@ -84,7 +85,7 @@ export class AuthenticationService {
     );
 
     // Endpoint connection observer
-    this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
+    this.connectionEndpointSubscription =  this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
       if (endpoint.operation === 2) {
         let httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
         this.loginUrl = httpApiUrl + loginEndpoint;
@@ -276,5 +277,9 @@ export class AuthenticationService {
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
       }
     }
+  }
+
+  ngOnDestroy(): void {
+    this.connectionEndpointSubscription?.unsubscribe();
   }
 }

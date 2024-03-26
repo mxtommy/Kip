@@ -191,7 +191,7 @@ private setupServiceRegistry(uuid: string): void {
   private stop(uuid: string) {
     const dataSource = this._svcDataSource.find(d => d.uuid == uuid);
     console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
-    dataSource._pathObserverSubscription.unsubscribe();
+    dataSource._pathObserverSubscription?.unsubscribe();
     dataSource._historicalDataset = [];
   }
 

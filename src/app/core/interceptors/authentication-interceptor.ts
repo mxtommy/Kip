@@ -1,15 +1,17 @@
 
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http'
 import { AuthenticationService, IAuthorizationToken } from '../services/authentication.service';
+import { Subscription } from 'rxjs';
 
 @Injectable()
-export class AuthenticationInterceptor implements HttpInterceptor {
+export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
   private authToken: IAuthorizationToken = null;
+  private authTokenSubscription: Subscription = null;
 
   constructor(private auth: AuthenticationService) {
     // Observe the auth token from the Auth service.
-    this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
+    this.authTokenSubscription = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
       this.authToken = token;
     });
   }
@@ -26,5 +28,9 @@ export class AuthenticationInterceptor implements HttpInterceptor {
     }
     // send cloned request with header to the next handler.
     return next.handle(authReq);
+  }
+
+  ngOnDestroy(): void {
+    this.authTokenSubscription?.unsubscribe();
   }
 }
