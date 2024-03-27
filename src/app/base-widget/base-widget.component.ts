@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, delayWhen, filter, map, pipe, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
+import { Observable, Observer, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
 import { SignalKDataService, pathRegistrationValue } from '../core/services/signalk-data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
@@ -10,12 +10,6 @@ interface IWidgetDataStream {
   pathName: string;
   observable: Observable<pathRegistrationValue>;
 };
-
-function filterNullish<T>(): UnaryFunction<Observable<T | null | undefined>, Observable<T>> {
-  return pipe(
-    filter(x => x != null) as OperatorFunction<T | null |  undefined, T>
-  );
-}
 
 @Component({
   template: ''
