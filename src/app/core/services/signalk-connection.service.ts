@@ -41,15 +41,14 @@ export interface IEndpointStatus {
 })
 export class SignalKConnectionService {
 
-  // Connections status initialization values for behavior Observer
-  public serverServiceEndpoints: IEndpointStatus = {
+
+  public serverServiceEndpoint$: BehaviorSubject<IEndpointStatus> = new BehaviorSubject<IEndpointStatus>({
     operation: 0,
     message: "Not connected",
     serverDescription: null,
     httpServiceUrl: null,
     WsServiceUrl: null,
-  };
-  public serverServiceEndpoint$: BehaviorSubject<IEndpointStatus> = new BehaviorSubject<IEndpointStatus>(this.serverServiceEndpoints);
+  });
 
   // Server information
   public signalKURL: ISignalKUrl;
@@ -80,13 +79,18 @@ export class SignalKConnectionService {
       console.log("[Connection Service] Connection reset called with null or empty URL value");
       return;
     }
+
+    // Connections status initialization values for behavior Observer
+    const serverServiceEndpoints: IEndpointStatus = {
+      operation: 1,
+      message: "Connecting...",
+      serverDescription: null,
+      httpServiceUrl: null,
+      WsServiceUrl: null,
+    };
     this.signalKURL = skUrl;
 
-    this.serverServiceEndpoints.message = "Connecting..."
-    this.serverServiceEndpoints.operation = 1;
-    this.serverServiceEndpoints.httpServiceUrl = null;
-    this.serverServiceEndpoints.WsServiceUrl = null;
-    this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
+    this.serverServiceEndpoint$.next(serverServiceEndpoints);
 
     let fullURL = this.signalKURL.url;
     let re = new RegExp("signalk/?$");
@@ -106,32 +110,32 @@ export class SignalKConnectionService {
         const skHttpUrl = new URL(endpointResponse.body.endpoints.v1["signalk-http"]);
         const skWsUrl = new URL(endpointResponse.body.endpoints.v1["signalk-ws"]);
 
-        this.serverServiceEndpoints.httpServiceUrl =  window.location.origin + skHttpUrl.pathname;
-        console.debug("[Connection Service] Proxy HTTP URI: " +this.serverServiceEndpoints.httpServiceUrl);
+        serverServiceEndpoints.httpServiceUrl =  window.location.origin + skHttpUrl.pathname;
+        console.debug("[Connection Service] Proxy HTTP URI: " +serverServiceEndpoints.httpServiceUrl);
 
         let uri: string = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
         uri += window.location.host;
         uri += skWsUrl.pathname;
-        this.serverServiceEndpoints.WsServiceUrl = uri;
+        serverServiceEndpoints.WsServiceUrl = uri;
 
-        console.debug("[Connection Service] Proxy WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
+        console.debug("[Connection Service] Proxy WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
       } else {
-        this.serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
-        console.debug("[Connection Service] HTTP URI: " +this.serverServiceEndpoints.httpServiceUrl);
-        this.serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
-        console.debug("[Connection Service] WebSocket URI: " + this.serverServiceEndpoints.WsServiceUrl);
+        serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
+        console.debug("[Connection Service] HTTP URI: " +serverServiceEndpoints.httpServiceUrl);
+        serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+        console.debug("[Connection Service] WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
       }
 
-      this.serverServiceEndpoints.operation = 2;
-      this.serverServiceEndpoints.message = endpointResponse.status.toString();
-      this.serverServiceEndpoints.serverDescription = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;
+      serverServiceEndpoints.operation = 2;
+      serverServiceEndpoints.message = endpointResponse.status.toString();
+      serverServiceEndpoints.serverDescription = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;
     } catch (error) {
-      this.serverServiceEndpoints.operation = 3;
-      this.serverServiceEndpoints.message = error.message;
-      this.serverServiceEndpoints.serverDescription = null;
+      serverServiceEndpoints.operation = 3;
+      serverServiceEndpoints.message = error.message;
+      serverServiceEndpoints.serverDescription = null;
       this.handleError(error);
     } finally {
-      this.serverServiceEndpoint$.next(this.serverServiceEndpoints);
+      this.serverServiceEndpoint$.next(serverServiceEndpoints);
     }
   }
 

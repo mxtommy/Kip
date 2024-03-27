@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
@@ -19,7 +19,7 @@ export interface pathRegistrationValue {
 // Validation of Signal K RFC3339S datetype format
 const isRfc3339StringDate = (date: Date | string): boolean => {
   if (isFinite(+(date instanceof Date ? date : new Date(date)))) {
-    let rfc3339 = new RegExp("^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$");
+    const rfc3339 = new RegExp("^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$");
     if (rfc3339.test(date as string)) {
       return true;
     } else {
@@ -53,28 +53,30 @@ export interface IDeltaUpdate {
 @Injectable({
   providedIn: 'root'
 })
-export class SignalKService {
-
-  degToRad = Qty.swiftConverter('deg', 'rad');
-  selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
+export class SignalKService implements OnDestroy {
+  private selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received Signal K Data and used to source Observers
-  skData: IPathData[] = [];
+  private skData: IPathData[] = [];
   // List of paths used by Kip (Widgets or App (Notifications and such))
-  pathRegister: pathRegistration[] = [];
+  private pathRegister: pathRegistration[] = [];
 
   // path Observable
-  skDataObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
+  private skDataObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
+  private deltaServiceSelfUrnSubscription: Subscription = null;
+  private deltaServiceMetaSubscription: Subscription = null;
+  private deltaServicePathSubscription: Subscription = null;
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;
   private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
+  private _deltaUpdatesCounterTimer = null;
 
-  defaultUnits: IUnitDefaults;
-  defaultUnitsSub: Subscription;
-  conversionList: IUnitGroup[];
-  zonesSub: Subscription;
-  zones: Array<IZone> = [];
+  private defaultUnits: IUnitDefaults = null;
+  private defaultUnitsSub: Subscription = null;
+  private conversionList: IUnitGroup[] = [];
+  private zonesSub: Subscription = null;
+  private zones: Array<IZone> = [];
 
   constructor(
       private appSettingsService: AppSettingsService,
@@ -105,17 +107,17 @@ export class SignalKService {
     });
 
     // Observer of Delta service data path updates
-    this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
+    this.deltaServicePathSubscription = this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
       this.updatePathData(dataPath);
     });
 
     // Observer of Delta service Metadata updates
-    this.deltaService.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
+    this.deltaServiceMetaSubscription = this.deltaService.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
       this.setMeta(deltaMeta);
     })
 
     // Observer of vessel Self URN updates
-    this.deltaService.subscribeSelfUpdates().subscribe(self => {
+    this.deltaServiceSelfUrnSubscription = this.deltaService.subscribeSelfUpdates().subscribe(self => {
       this.setSelfUrn(self);
     });
   }
@@ -195,7 +197,8 @@ export class SignalKService {
 
     // position data is sent as degrees. KIP expects everything to be in SI, so rad.
     if (updatePath.includes('position.latitude') || updatePath.includes('position.longitude')) {
-      dataPath.value = this.degToRad(dataPath.value);
+      const degToRad = Qty.swiftConverter('deg', 'rad');
+      dataPath.value =  degToRad(dataPath.value);
     }
 
     // See if path key exists
@@ -410,7 +413,7 @@ export class SignalKService {
        if (this.skData[i].type == valueType) {
          if (selfOnly) {
           if (this.skData[i].path.startsWith("self")) {
-            let p:IPathMetaData = {
+            let p: IPathMetaData = {
               path: this.skData[i].path,
               meta: this.skData[i].meta,
             };
@@ -527,4 +530,13 @@ export class SignalKService {
     return { default: 'unitless', conversions: this.conversionList };
   }
 
+  ngOnDestroy(): void {
+    this.defaultUnitsSub?.unsubscribe();
+    this._deltaUpdatesSubject?.unsubscribe();
+    this.zonesSub?.unsubscribe();
+    this.deltaServiceSelfUrnSubscription?.unsubscribe();
+    this.deltaServiceMetaSubscription?.unsubscribe();
+    this.deltaServicePathSubscription?.unsubscribe();
+    clearInterval(this._deltaUpdatesCounterTimer);
+  }
 }
