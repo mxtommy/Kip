@@ -3,7 +3,7 @@ import { NotificationsService } from './notifications.service';
 import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { Injectable, OnDestroy } from '@angular/core';
-import { SignalKService } from './signalk.service';
+import { SignalKDataService } from './signalk-data.service';
 import { Observable, Subscription } from 'rxjs';
 
 const modePath: string = 'self.environment.mode';
@@ -24,7 +24,7 @@ export class AppService implements OnDestroy {
   constructor(
     private settings: AppSettingsService,
     private delta: SignalKDeltaService,
-    private sk: SignalKService,
+    private sk: SignalKDataService,
     private notification: NotificationsService
   ) {
     this.autoNightMode = this.settings.getAutoNightMode();

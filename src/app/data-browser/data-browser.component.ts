@@ -4,7 +4,7 @@ import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeader
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { SignalKService } from '../core/services/signalk.service';
+import { SignalKDataService } from '../core/services/signalk-data.service';
 import { IPathData } from "../core/interfaces/app-interfaces";
 import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
 import { NgFor, KeyValuePipe } from '@angular/common';
@@ -32,7 +32,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
   public displayedColumns: string[] = ['path', 'defaultSource'];
 
   constructor(
-    private SignalKService: SignalKService,
+    private signalKDataService: SignalKDataService,
     private cdRef: ChangeDetectorRef) { }
 
   public onResize(event) {
@@ -41,7 +41,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     setTimeout(()=>{
-      this.pathsSubscription = this.SignalKService.getSkDataObservable().subscribe(paths => {
+      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe(paths => {
         this.tableData.data = paths;
       })}, 0); // set timeout to make it async otherwise delays page load
   }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKService, pathRegistrationValue } from './signalk.service';
+import { SignalKDataService, pathRegistrationValue } from './signalk-data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
@@ -46,7 +46,7 @@ export class DatasetService {
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
-  constructor(private appSettings: AppSettingsService, private signalk: SignalKService) {
+  constructor(private appSettings: AppSettingsService, private signalk: SignalKDataService) {
     this._svcDatasetConfigs = appSettings.getDataSets();
 
     for (let index = 0; index < this._svcDatasetConfigs.length; index++) {

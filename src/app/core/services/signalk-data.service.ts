@@ -53,7 +53,7 @@ export interface IDeltaUpdate {
 @Injectable({
   providedIn: 'root'
 })
-export class SignalKService implements OnDestroy {
+export class SignalKDataService implements OnDestroy {
   private selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
 
   // Local array of paths containing received Signal K Data and used to source Observers
@@ -129,7 +129,7 @@ export class SignalKService implements OnDestroy {
    *
    *
    * @return {*}  {Observable<number>} Count of delta messages received in the last second.
-   * @memberof SignalKService
+   * @memberof SignalKDataService
    */
   public getSignalkDeltaUpdateStatistics(): Observable<IDeltaUpdate> {
     return this._deltaUpdatesSubject.asObservable();

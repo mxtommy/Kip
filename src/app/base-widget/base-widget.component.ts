@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Observable, Observer, OperatorFunction, Subscription, UnaryFunction, delayWhen, filter, map, pipe, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
-import { SignalKService, pathRegistrationValue } from '../core/services/signalk.service';
+import { SignalKDataService, pathRegistrationValue } from '../core/services/signalk-data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
 import { cloneDeep, merge } from 'lodash-es';
@@ -31,7 +31,7 @@ export abstract class BaseWidgetComponent {
   /** Single Observable Subscription object for all data paths */
   private dataSubscription: Subscription = undefined;
   /** Signal K data stream service to obtain/observe server data */
-  protected signalKService = inject(SignalKService);
+  protected signalKDataService = inject(SignalKDataService);
   /** Unit conversion service to convert a wide range of numerical data formats */
   protected unitsService = inject(UnitsService);
 
@@ -87,7 +87,7 @@ export abstract class BaseWidgetComponent {
       } else {
         this.dataStream.push({
           pathName: pathKey,
-          observable: this.signalKService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path, this.widgetProperties.config.paths[pathKey].source)
+          observable: this.signalKDataService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path, this.widgetProperties.config.paths[pathKey].source)
         });
       }
     })
@@ -146,7 +146,7 @@ export abstract class BaseWidgetComponent {
             with: () =>
               throwError(() => {
                   console.log(timeoutErrorMsg + path);
-                  this.signalKService.timeoutPathObservable(path, pathType)
+                  this.signalKDataService.timeoutPathObservable(path, pathType)
                 }
               )
           }),
@@ -177,7 +177,7 @@ export abstract class BaseWidgetComponent {
             with: () =>
               throwError(() => {
                   console.log(timeoutErrorMsg + path);
-                  this.signalKService.timeoutPathObservable(path, pathType)
+                  this.signalKDataService.timeoutPathObservable(path, pathType)
                 }
               )
           }),
@@ -255,7 +255,7 @@ export abstract class BaseWidgetComponent {
       this.dataSubscription.unsubscribe();
       // Cleanup KIP's pathRegister
       Object.keys(this.widgetProperties.config.paths).forEach(pathKey => {
-        this.signalKService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path);
+        this.signalKDataService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path);
         }
       );
       this.dataSubscription = undefined;
