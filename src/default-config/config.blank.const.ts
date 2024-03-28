@@ -4,7 +4,7 @@ import { DefaultUnitsConfig } from "./config.blank.units.const";
 import { UUID } from "../app/utils/uuid";
 
 export const DefaultAppConfig: IAppConfig = {
-  "configVersion": 9,
+  "configVersion": 10,
   "autoNightMode": false,
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,

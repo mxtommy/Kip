@@ -149,6 +149,7 @@ export class AppSettingsService {
   }
 
   private upgradeAppConfig(config: any): void {
+    console.warn("[AppSettings Service] Configuration upgrade required");
 
     let upgradedAppConfig: IAppConfig = {
       configVersion: 9,
@@ -192,7 +193,7 @@ export class AppSettingsService {
           maxDataPoints: null,
           sampleTime: null,
           smoothingPeriod: null,
-          label: `${oldDS.path}, Source: ${oldDS.signalKSource}, Scale: second, Period: ${oldDS.dataPoints}`
+          label: `${oldDS.path}, Source: ${oldDS.signalKSource}, Scale: Needs upgrade, Period: ${oldDS.dataPoints}`
         };
 
         upgradedAppConfig.dataSets.push(upgradedDS);
