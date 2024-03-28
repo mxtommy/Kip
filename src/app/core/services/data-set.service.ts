@@ -174,7 +174,7 @@ private setupServiceRegistry(uuid: string): void {
         const newDataPoint: IDatasetServiceDatapoint = this.updateDataset(configuration, dataSource._historicalDataset, newValue.value as number)
         dataSource._historicalDataset.push(newDataPoint);
         // Copy object so it's not send by reference, then push to Subject so that Observers can receive
-        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(cloneDeep(newDataPoint));
+        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(newDataPoint);
       }
     );
   }

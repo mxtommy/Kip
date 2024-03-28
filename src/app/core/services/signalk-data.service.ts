@@ -1,7 +1,8 @@
 import { cloneDeep } from 'lodash-es';
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
-import { IPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
+import { IPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
+import { Method, State } from '../interfaces/signalk-interfaces'
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -31,6 +32,10 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
 };
 
 /**
+ * A path registration is an object used to track a path's Subjects. Each registration
+ * is used to share the same Subject to multiple Observers using subscribePath()
+ * and unsubscribePath() methods which returns the registration's subject as an
+ * Observable.
  *
  * @param {string} uuid The UUID for the widget registering the path
  * @param {string} path A Signal K path
@@ -148,15 +153,16 @@ export class SignalKDataService implements OnDestroy {
   }
 
   subscribePath(uuid: string, path: string, source: string) {
-    // see if already subscribed, if yes return that...
+    // See if already have a Subject for this path and return it.
     let registerIndex = this.pathRegister.findIndex(registration => (registration.path == path) && (registration.uuid == uuid));
     if (registerIndex >= 0) { // exists
       return this.pathRegister[registerIndex].subject.asObservable();
     }
 
-    // find if we already have a value for this path to return.
     let currentValue = null;
     let state = IZoneState.normal;
+
+    // Check if we already have this path. If so, return it's values
     let pathIndex = this.skData.findIndex(pathObject => pathObject.path == path);
     if (pathIndex >= 0) { // exists
       if (source == 'default') {
@@ -222,7 +228,30 @@ export class SignalKDataService implements OnDestroy {
           }
         }
       }
-      this.skData[pathIndex].pathValue = dataPath.value; // we always push to both pat and source values
+
+      /**
+       * IMPORTANT: We should always push to both pathValue and source's sourceValue. This is required
+       * as per SK specifications. By default, KIP uses the source "default". This
+       * means, read from the pathValue property, and not the sourceValue. In KIP's
+       * path selection component, users can also choose a specific source. This will
+       * force KIP to read data from the sourceValue and disregard pathValue.
+       *
+       * If we have multiple sources for a path and KIP's source is configured to use
+       * "default", KIP will read data from pathValue. In this case, this means that
+       * KIP's pathValue will be overwritten overwritten by both sources, potentially
+       * cause erratic widget behaviors!
+       *
+       * This is, as per SK specifications, by design. Source priority must/should
+       * be configured in Signal K server to prevent this. Once configured, only one
+       * source will update at a time following priority settings making the pathValue
+       * (KIP's "default" source setting) behave accordingly. Else, user should select
+       * a specific source to read from. This feature allows configurations where multiple
+       * source can collaborate to a single path based on priority. Such as if you have
+       * multiple GPS, and one goes down: SK priority will switch sources, and KIP
+       * (configured with "default" source) will continue reading as if nothing ever
+       * happened.
+      */
+      this.skData[pathIndex].pathValue = dataPath.value;
       this.skData[pathIndex].sources[dataPath.source] = {
         timestamp: dataPath.timestamp,
         sourceValue: dataPath.value,
@@ -280,11 +309,11 @@ export class SignalKDataService implements OnDestroy {
         state = Math.max(state, zone.state);
       }
     });
+
     // if we're not in alarm, and new state is alarm, sound the alarm!
-    // @ts-ignore
     if (state != IZoneState.normal && state != this.skData[pathIndex].state) {
-      let stateString; // notification service needs string....
-      let methods;
+      let stateString: State; // notification service needs string....
+      let methods: Method[] = null;
       switch (state) {
         // @ts-ignore
         case IZoneState.alarm:
@@ -300,8 +329,7 @@ export class SignalKDataService implements OnDestroy {
 
       }
 
-
-      //start
+      // start
       this.notificationsService.addAlarm(updatePath, {
         method: methods,
         state: stateString,
@@ -311,7 +339,6 @@ export class SignalKDataService implements OnDestroy {
     }
 
     // if we're in alarm, and new state is not alarm, stop the alarm
-    // @ts-ignore
     if (this.skData[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
       this.notificationsService.deleteAlarm(updatePath);
     }
@@ -323,16 +350,16 @@ export class SignalKDataService implements OnDestroy {
       pathRegister => {
         /**
          * Source of value 'default' is use to support SK path Priority feature by taking the pathValue
-         * rather than the direct sourceValue. With Priority configured source can change over time
+         * rather than the direct sourceValue. With Priority configured sources can change over time
          * based on priority.
          *
          * Source of value of 'default' should only be selectable in the Widget Options -> Paths -> Data Source
-         * UI control if only one source exists. Having a single source or using 'default' has no impact as
+         * component if only one source exists. Having a single source or using 'default' has no impact as
          * as pathValue is always taken.
          *
          * If multiple sources are present, either Priorities have not been properly configured, or the
          * user does not want Priorities for the path. In this case individual sources must be selected
-         * and 'default' should not be visible.
+         * and 'default' should not be visible (hidden in the path selection component).
          */
         if (pathRegister.source == 'default') {
           pathRegister.subject.next({
@@ -345,8 +372,8 @@ export class SignalKDataService implements OnDestroy {
             state: this.skData[pathIndex].state
           });
         } else {
-          //we're looking for a source we don't know of... do nothing I guess?
-          console.warn(`Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
+          //we're looking for a source we don't know about. Error out to console
+          console.error(`Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
         }
       }
     );

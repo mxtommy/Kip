@@ -161,6 +161,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
+//TODO: Better canvas scaling see https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
   private updateCanvas() {
     if (this.canvasValCtx) {
       this.canvasValCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
