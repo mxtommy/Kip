@@ -14,7 +14,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
 
 import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
-import { ChartOptionsComponent } from '../chart-options/chart-options.component';
+import { ChartDisplayOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { IUnitGroup } from '../../core/services/units.service';
 import { SignalKService } from '../../core/services/signalk.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
@@ -30,7 +30,7 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     standalone: true,
     imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, NgIf, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatRadioGroup, MatRadioButton, NgFor, MatOptgroup, MatDivider, MatDialogActions, MatButton, MatDialogClose,
       DisplayDatetimeComponent,
-      ChartOptionsComponent,
+      ChartDisplayOptionsComponent,
       BooleanMultiControlOptionsComponent,
       PathsOptionsComponent
     ]

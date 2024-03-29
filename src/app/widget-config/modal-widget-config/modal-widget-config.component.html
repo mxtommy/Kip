@@ -3,7 +3,7 @@
   <mat-dialog-content>
     <mat-tab-group>
       <mat-tab label="Display">
-        <config-chart-options *ngIf="(widgetConfig.datasetUUID !== undefined)"
+        <config-chart-display-options *ngIf="(widgetConfig.datasetUUID !== undefined)"
           [displayName]="formMaster.get('displayName')"
           [datasetUUID]="formMaster.get('datasetUUID')"
           [convertUnitTo]="formMaster.get('convertUnitTo')"
@@ -27,7 +27,7 @@
           [verticalGraph]="formMaster.get('verticalGraph')"
           [textColor]="formMaster.get('textColor')"
           >
-        </config-chart-options>
+        </config-chart-display-options>
 
         <div class="tab-content" *ngIf="(widgetConfig.datasetUUID === undefined)">
           <div class="widget-options-grid">
