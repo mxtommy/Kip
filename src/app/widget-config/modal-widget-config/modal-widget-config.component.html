@@ -3,7 +3,7 @@
   <mat-dialog-content>
     <mat-tab-group>
       <mat-tab label="Display">
-        <config-chart-display-options *ngIf="(widgetConfig.datasetUUID !== undefined)"
+        <config-display-chart-options *ngIf="(widgetConfig.datasetUUID !== undefined)"
           [displayName]="formMaster.get('displayName')"
           [datasetUUID]="formMaster.get('datasetUUID')"
           [convertUnitTo]="formMaster.get('convertUnitTo')"
@@ -27,7 +27,7 @@
           [verticalGraph]="formMaster.get('verticalGraph')"
           [textColor]="formMaster.get('textColor')"
           >
-        </config-chart-display-options>
+        </config-display-chart-options>
 
         <div class="tab-content" *ngIf="(widgetConfig.datasetUUID === undefined)">
           <div class="widget-options-grid">
@@ -342,40 +342,12 @@
         <ng-template mat-tab-label>
             <span *ngIf="!formMaster.controls.datasetUUID.valid" class="warning fa fa-exclamation-circle"></span> Dataset
         </ng-template>
-        <div class="tab-content">
-          <div class="widget-options-grid">
-
-            <mat-form-field class="options-grid-span2">
-              <mat-label>Configured Datasets</mat-label>
-              <mat-select
-                placeholder="Select dataset to use..."
-                formControlName="datasetUUID"
-                name="datasetUUID"
-                required>
-                <mat-option *ngFor="let ds of availableDataSets" [value]="ds.uuid">
-                    {{ds.label}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field class="options-grid-span2">
-              <mat-label>Display Format</mat-label>
-              <mat-select
-                  placeholder="Select unit"
-                  formControlName="convertUnitTo"
-                  disableRipple
-                  required>
-                  <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
-                    <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
-                      {{unit.description}}
-                    </mat-option>
-                  </mat-optgroup>
-              </mat-select>
-            </mat-form-field>
-          </div>
-        </div>
+        <config-dataset-chart-options
+          [datasetUUID]="formMaster.get('datasetUUID')"
+          [convertUnitTo]="formMaster.get('convertUnitTo')">
+        </config-dataset-chart-options>
       </mat-tab>
-<!-- end Historical -->
+<!-- end Chart -->
 
     </mat-tab-group>
 

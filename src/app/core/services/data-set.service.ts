@@ -196,7 +196,7 @@ private setupServiceRegistry(uuid: string): void {
   }
 
   /**
-   * Returns a copy of all existing _historicalDataset configuration
+   * Returns a copy of all existing dataset configurations
    *
    * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all _historicalDataset configurations
    * @memberof DataSetService
@@ -206,7 +206,7 @@ private setupServiceRegistry(uuid: string): void {
   }
 
   /**
-   * Returns a copy of a _historicalDataset configuration details for a specific _historicalDataset based on it's UUID.
+   * Returns a copy of a dataset configuration.
    *
    * @param {string} uuid The UUID of the desired _historicalDataset
    * @return {*}  {IDatasetServiceDatasetConfig} A _historicalDataset configuration object copy

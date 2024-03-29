@@ -11,13 +11,13 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
 
 @Component({
-  selector: 'config-chart-display-options',
+  selector: 'config-display-chart-options',
   standalone: true,
   templateUrl: './display-chart-options.component.html',
   styleUrl: './display-chart-options.component.scss',
   imports: [MatCardModule, MatFormFieldModule, MatCheckboxModule, MatSelectModule, MatOptionModule, MatLabel, MatInputModule, MatRadioModule, ReactiveFormsModule]
 })
-export class ChartDisplayOptionsComponent implements OnInit {
+export class DisplayChartOptionsComponent implements OnInit {
   @Input () displayName!: UntypedFormControl;
   @Input () showLabel!: UntypedFormControl;
   @Input () convertUnitTo!: UntypedFormControl;
