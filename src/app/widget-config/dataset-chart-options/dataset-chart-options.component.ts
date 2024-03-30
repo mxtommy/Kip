@@ -35,7 +35,7 @@ export class DatasetChartOptionsComponent implements OnInit {
     private setPathUnits(uuid: string): void {
       this.convertUnitTo.enable();
       if (uuid) {
-        this.unitList = this.signalk.getConversionsForPath(this.datasetService.get(uuid).path);
+        this.unitList = this.signalk.getConversionsForPath(this.datasetService.getDatasetConfig(uuid).path);
       } else {
         this.unitList = this.signalk.getConversionsForPath('');
       }

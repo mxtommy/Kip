@@ -10,10 +10,8 @@ export const DemoAppConfig: IAppConfig = {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
       "path": "self.environment.wind.speedApparent",
       "pathSource": "default",
-      "sampleTime": 1000,
       "period": 1,
-      "maxDataPoints": 60,
-      "smoothingPeriod": 12,
+      "baseUnit": "m/s",
       "label": "self.environment.wind.speedApparent, Source: default, Scale: second, Period: 10 ",
       "timeScaleFormat": "minute"
   }
