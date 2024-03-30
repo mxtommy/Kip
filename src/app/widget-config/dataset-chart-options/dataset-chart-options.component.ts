@@ -3,7 +3,7 @@ import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { DatasetService, IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { SignalKService } from './../../core/services/signalk.service';
+import { SignalKDataService } from './../../core/services/signalk-data.service';
 import { IUnitGroup } from '../../core/services/units.service';
 
 @Component({
@@ -20,7 +20,7 @@ export class DatasetChartOptionsComponent implements OnInit {
   public availableDataSets: IDatasetServiceDatasetConfig[] = [];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
-  constructor(private datasetService: DatasetService, private signalk: SignalKService) {}
+  constructor(private datasetService: DatasetService, private signalk: SignalKDataService) {}
 
     ngOnInit(): void {
       this.availableDataSets = this.datasetService.list().sort();
