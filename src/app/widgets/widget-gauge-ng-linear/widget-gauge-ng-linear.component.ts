@@ -1,5 +1,5 @@
 import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, sampleTime } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
@@ -24,7 +24,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   // main gauge value variable
   public dataValue = 0;
   public dataValueTrimmed = 0;
-  private sample: number = 500;
 
   // Gauge options
   public gaugeOptions = {} as LinearGaugeOptions;
@@ -203,7 +202,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
 
-    this.gaugeOptions.animationDuration = this.sample - 25; // prevent data/amnimation collisions
+    this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 25; // prevent data/amnimation collisions
 
     if (this.widgetProperties.config.gaugeTicks) {
       this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = this.gaugeOptions.colorTitle;

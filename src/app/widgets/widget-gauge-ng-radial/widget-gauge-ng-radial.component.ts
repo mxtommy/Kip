@@ -1,5 +1,5 @@
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, sampleTime } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
@@ -24,7 +24,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   // main gauge value variable
   public dataValue = 0;
   private valueSub$: Subscription = null;
-  private sample: number = 500;
+  private sample: number = 200;
 
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
@@ -193,7 +193,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
 
-    this.gaugeOptions.animationDuration = this.sample - 25; // prevent data and amnimation delay collisions
+    this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 25; // prevent data and animation delay collisions
 
     // Radial gauge type
     switch(this.widgetProperties.config.radialSize) {
