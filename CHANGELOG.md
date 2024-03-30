@@ -1,3 +1,13 @@
+# V 2.9.1
+## Improvements
+* Dataset meta units support for 'rad' as directional angles
+* Dataset direction with wrap-around support
+* Dataset directional simple moving average support
+* Improved Data Chart path units format selection
+## Fixes
+* Radial and linear gauge animation timing with data sample rate
+* Timers and Observable object clean up
+* Dependency bump
 # V 2.9.0
 ## New features
 * Dedicated Freeboard-SK Chart Plotter widget. The widget automatically loads the app and supports single sign on using the same user as defined in KIP. Special thanks to Adrian!
