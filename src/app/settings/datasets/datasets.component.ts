@@ -141,15 +141,13 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 export class SettingsDatasetsModalComponent implements OnInit {
   public titleDialog: string = null;
   public newDataset: IDatasetServiceDatasetConfig = {
-    label: null,
     uuid: null,
     path: null,
     pathSource: null,
+    baseUnit: null,
     timeScaleFormat: "second",
     period: 10,
-    sampleTime: null,
-    maxDataPoints: null,
-    smoothingPeriod: null
+    label: null
   }
 
   public formDataset: IDatasetServiceDatasetConfig = null;

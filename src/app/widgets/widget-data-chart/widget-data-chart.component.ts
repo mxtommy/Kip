@@ -1,6 +1,7 @@
+import { IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
 import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { DatasetService, IDatasetServiceDatasetConfig, IDatasetServiceDatapoint } from '../../core/services/data-set.service';
+import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit } from 'chart.js';
@@ -56,6 +57,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   private chart;
   private dsServiceSub: Subscription = null;
   private datasetConfig: IDatasetServiceDatasetConfig = null;
+  private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
   constructor(private dsService: DatasetService) {
     super();
@@ -91,7 +93,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
    }
 
   ngOnInit(): void {
-    this.datasetConfig = this.dsService.get(this.widgetProperties.config.datasetUUID);
+    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
+    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
     this.validateConfig();
 
 
@@ -285,8 +288,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         display: false
       },
        streaming: {
-        duration: this.datasetConfig.maxDataPoints * this.datasetConfig.sampleTime,
-        delay: this.datasetConfig.sampleTime,
+        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
+        delay: this.dataSourceInfo.sampleTime,
         frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
        }
     }

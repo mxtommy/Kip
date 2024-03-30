@@ -1,0 +1,39 @@
+<div class="tab-content">
+  <div class="widget-options-grid">
+
+    <mat-form-field class="options-grid-span2">
+      <mat-label>Dataset</mat-label>
+      <mat-select
+        placeholder="Select dataset..."
+        [formControl]="datasetUUID"
+        name="datasetUUID"
+        (selectionChange)="datasetChanged($event)"
+        required>
+        @for (ds of availableDataSets; track ds) {
+          <mat-option [value]="ds.uuid">
+            {{ds.label}}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="options-grid-span2">
+      <mat-label>Display Format</mat-label>
+      <mat-select
+          placeholder="Select unit..."
+          [formControl]="convertUnitTo"
+          name="convertUnitTo"
+          required>
+          @for (group of unitList.conversions; track group) {
+            <mat-optgroup [label]="group.group">
+              @for (unit of group.units; track unit) {
+                <mat-option [value]="unit.measure">
+                  {{unit.description}}
+                </mat-option>
+              }
+            </mat-optgroup>
+          }
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>

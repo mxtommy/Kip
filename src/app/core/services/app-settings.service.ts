@@ -188,11 +188,9 @@ export class AppSettingsService {
           uuid: oldDS.uuid,
           path: oldDS.path,
           pathSource: oldDS.signalKSource,
+          baseUnit: null,
           timeScaleFormat: 'second',
           period: oldDS.dataPoints,
-          maxDataPoints: null,
-          sampleTime: null,
-          smoothingPeriod: null,
           label: `${oldDS.path}, Source: ${oldDS.signalKSource}, Scale: Needs upgrade, Period: ${oldDS.dataPoints}`
         };
 
