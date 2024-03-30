@@ -24,7 +24,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   valueFontSize: number = 1;
   flashOn: boolean = false;
-  flashInterval;
+  flashInterval = null;
   timerRunning: boolean = false;
   readonly timeName: string = "race";
   private warnColor: string = null;
@@ -101,10 +101,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         }, 500); // used to flash stuff in alarm
       } else if (this.IZoneState != IZoneState.alarm) {
         // stop alarming if not in alarm state
-        if (this.flashInterval) {
-          clearInterval(this.flashInterval);
-          this.flashInterval = null;
-        }
+        clearInterval(this.flashInterval);
       }
         this.updateCanvas();
       }
@@ -131,7 +128,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   public roundToMin() {
     let v = this.dataValue;
     if (this.dataValue < 0) { v = v * -1} // always positive
-    var seconds = v % 600;
+    let seconds = v % 600;
 
     if (this.dataValue > 0) {
       if (seconds > 300) {
@@ -191,17 +188,12 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   private unsubscribeTimer() {
-    if (!this.timerSub?.closed) {
-      this.timerSub.unsubscribe();
-    }
+      this.timerSub?.unsubscribe();
   }
 
   ngOnDestroy() {
-    this.unsubscribeTimer();
-    if (this.flashInterval) {
-      clearInterval(this.flashInterval);
-      this.flashInterval = null;
-    }
+    this.timerSub?.unsubscribe();
+    clearInterval(this.flashInterval);
   }
 
 /* ******************************************************************************************* */
@@ -237,9 +229,9 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       let v = this.dataValue;
       if (this.dataValue < 0) { v = v * -1} // always positive
 
-      var m = Math.floor(v / 600);
-      var s = Math.floor(v % 600 / 10);
-      var d = Math.floor(v % 600 % 10);
+      let m = Math.floor(v / 600);
+      let s = Math.floor(v % 600 / 10);
+      let d = Math.floor(v % 600 % 10);
       valueText = m + ":" + ('0' + s).slice(-2) + "." + d;
 
       if (this.dataValue < 0) {

@@ -97,7 +97,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
-    this.unsubscribeZones();
+    this.zonesSub?.unsubscribe();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -115,12 +115,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       });
   }
 
-  unsubscribeZones(){
-    if (this.zonesSub !== null) {
-      this.zonesSub.unsubscribe();
-      this.zonesSub = null;
-    }
-  }
 
   updateGaugeConfig(){
     //// Hack to get Theme colors using hidden mixin, DIV and @ViewChild

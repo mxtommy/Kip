@@ -26,7 +26,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   trueWindMidHistoric: number;
   trueWindMaxHistoric: number;
 
-  windSectorObservableSub: Subscription = null;
+  private windSectorObservableSub: Subscription = null;
 
   constructor(private zones: NgZone) {
     super();
@@ -233,7 +233,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   historicalCleanup() {
     let n = Date.now()-(this.widgetProperties.config.windSectorWindowSeconds*1000);
-    for (var i = this.trueWindHistoric.length - 1; i >= 0; --i) {
+    for (let i = this.trueWindHistoric.length - 1; i >= 0; --i) {
       if (this.trueWindHistoric[i].timestamp < n) {
         this.trueWindHistoric.splice(i,1);
       }
@@ -241,11 +241,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   stopWindSectors() {
-    if (this.windSectorObservableSub !== null) {
-      this.windSectorObservableSub.unsubscribe();
-      this.windSectorObservableSub = null;
-    }
 
+      this.windSectorObservableSub?.unsubscribe();
   }
 
   addHeading(h1: number, h2: number) {

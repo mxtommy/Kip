@@ -1,6 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormControl, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Observable, debounceTime, map, startWith } from 'rxjs';
+import { Observable, Subscription, debounceTime, map, startWith } from 'rxjs';
 import { MatOption } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
 import { NgIf, NgFor, AsyncPipe } from '@angular/common';
@@ -22,11 +22,12 @@ function requireMatch(tz: string[]): ValidatorFn {
     standalone: true,
     imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, NgIf, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, AsyncPipe]
 })
-export class DisplayDatetimeComponent implements OnInit {
+export class DisplayDatetimeComponent implements OnInit, OnDestroy {
   @Input () dateFormat: UntypedFormControl;
   @Input () dateTimezone: UntypedFormControl;
   private tz: string[] = [];
   public filteredTZ: Observable<string[]>;
+  private filteredTZSubscription: Subscription = null;
 
   constructor() { }
 
@@ -400,11 +401,15 @@ export class DisplayDatetimeComponent implements OnInit {
       map(value => this.filterTZ(value || ''))
     );
 
-    this.filteredTZ.subscribe();
+    this.filteredTZSubscription = this.filteredTZ.subscribe();
   }
 
   private filterTZ( value: string ): string[] {
     const filterValue = value.toLowerCase();
     return this.tz.filter(val => val.toLowerCase().includes(filterValue));
+  }
+
+  ngOnDestroy(): void {
+    this.filteredTZSubscription?.unsubscribe();
   }
 }

@@ -94,7 +94,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
-    this.unsubscribeZones();
+    this.zonesSub?.unsubscribe();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -110,13 +110,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.zones = zones;
         this.updateGaugeConfig();
       });
-  }
-
-  unsubscribeZones(){
-    if (this.zonesSub !== null) {
-      this.zonesSub.unsubscribe();
-      this.zonesSub = null;
-    }
   }
 
   updateGaugeConfig(){

@@ -20,6 +20,11 @@ interface IChartColors {
     chartValue: string
 }
 
+interface IDataSetRow {
+  x: number,
+  y: number
+}
+
 @Component({
   selector: 'widget-data-chart',
   standalone: true,
@@ -29,6 +34,7 @@ interface IChartColors {
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('widgetDataChart', {static: true, read: ElementRef}) widgetDataChart: ElementRef;
+
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
   };
@@ -448,8 +454,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     );
   }
 
-  private transformDatasetRow = (row: IDatasetServiceDatapoint, datasetType) => {
-    const newRow: {x: number, y: number} = {x: row.timestamp, y: null};
+  private transformDatasetRow(row: IDatasetServiceDatapoint, datasetType): IDataSetRow  {
+    const newRow: IDataSetRow = {x: row.timestamp, y: null};
 
     // Check if its a value or an average row
     if (datasetType === 0) {

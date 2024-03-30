@@ -1,12 +1,10 @@
-import { Component, OnInit, ViewEncapsulation, Inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Inject, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { AppSettingsService } from '../core/services/app-settings.service';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
 import { NgIf } from '@angular/common';
 import { MatTabGroup, MatTab, MatTabContent } from '@angular/material/tabs';
-
-
 
 @Component({
     selector: 'app-help',
@@ -25,13 +23,12 @@ import { MatTabGroup, MatTab, MatTabContent } from '@angular/material/tabs';
         MatExpansionPanelDescription,
     ],
 })
-export class AppHelpComponent implements OnInit {
+export class AppHelpComponent implements OnInit, OnDestroy {
 
   unlockStatusSub: Subscription;
   unlockStatus: boolean;
 
-  step = -1;
-
+  step: number = -1;
 
   constructor(  private AppSettingsService: AppSettingsService,) {
 
@@ -46,14 +43,12 @@ export class AppHelpComponent implements OnInit {
     );
   }
 
-  ngOnDestroy() {
-    this.unlockStatusSub.unsubscribe();
-  }
-
   setStep(index: number) {
     this.step = index;
   }
 
-
+  ngOnDestroy() {
+    this.unlockStatusSub?.unsubscribe();
+  }
 }
 

@@ -178,7 +178,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
     // set font small and make bigger until we hit a max.
     if (this.widgetProperties.config.displayName === null) { return; }
-    var fontSize = 1;
+    let fontSize = 1;
 
     this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
     while ( (this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {

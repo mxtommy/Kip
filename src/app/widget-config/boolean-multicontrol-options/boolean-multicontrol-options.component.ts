@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
@@ -7,6 +7,7 @@ import { UUID } from '../../utils/uuid';
 import { MatMiniFabButton } from '@angular/material/button';
 import { BooleanControlConfigComponent } from '../boolean-control-config/boolean-control-config.component';
 import { NgFor } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 
 @Component({
@@ -22,13 +23,14 @@ import { NgFor } from '@angular/common';
         MatMiniFabButton,
     ],
 })
-export class BooleanMultiControlOptionsComponent implements OnInit {
+export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   @Input() multiCtrlArray!: UntypedFormArray;
   @Output() private addPath = new EventEmitter<IWidgetPath>();
   @Output() private updatePath = new EventEmitter<IDynamicControl>();
   @Output() private delPath = new EventEmitter<string>();
 
   public arrayLength: number = null;
+  private multiCtrlArraySubscription: Subscription = null;
 
   constructor(
     private fb: UntypedFormBuilder
@@ -36,7 +38,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.arrayLength = this.multiCtrlArray.length;
-    this.multiCtrlArray.valueChanges.pipe(debounceTime(350)).subscribe(values => {
+    this.multiCtrlArraySubscription = this.multiCtrlArray.valueChanges.pipe(debounceTime(350)).subscribe(values => {
       this.updatePath.emit(values);
     })
   }
@@ -87,5 +89,9 @@ export class BooleanMultiControlOptionsComponent implements OnInit {
   public deletePath(e): void {
     this.delPath.emit(e);
     this.arrayLength = this.multiCtrlArray.length;
+  }
+
+  ngOnDestroy(): void {
+    this.multiCtrlArraySubscription?.unsubscribe();
   }
 }

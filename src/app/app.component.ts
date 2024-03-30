@@ -53,13 +53,13 @@ export class AppComponent implements OnInit, OnDestroy {
     private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
     public appSettingsService: AppSettingsService, // needs storage & AppInit
-    private DatasetService: DatasetService, // needs AppSettingsService & SignalKService
+    private DatasetService: DatasetService, // needs AppSettingsService & SignalKDataService
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
     // below services are needed: first service instantiation after Init Service
-    private signalKDeltaService: SignalKDeltaService, // needs SignalKService & NotificationsService & SignalKConnectionService
+    private signalKDeltaService: SignalKDeltaService, // needs SignalKDataService & NotificationsService & SignalKConnectionService
     ) {}
 
 

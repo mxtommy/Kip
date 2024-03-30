@@ -7,20 +7,22 @@ import { StorageService } from './storage.service';
 * @usage must return a Promise in all cases or will block app from loading.
 * All execution in this service delays app start. Keep code small and simple.
 **/
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
+import { Subscription } from 'rxjs';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 
 @Injectable()
-export class AppNetworkInitService {
+export class AppNetworkInitService implements OnDestroy {
   private config: IConnectionConfig;
   private isLoggedIn;
+  private loggedInSubscription: Subscription = null;
 
   constructor (
     private connection: SignalKConnectionService,
@@ -29,7 +31,7 @@ export class AppNetworkInitService {
     private storage: StorageService, // early boot up for AppSetting svc
   )
   {
-    this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
+    this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
       this.isLoggedIn = isLoggedIn;
     })
   }
@@ -99,5 +101,9 @@ export class AppNetworkInitService {
       localStorage.setItem('connectionConfig', JSON.stringify(this.config));
       console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.loggedInSubscription?.unsubscribe();
   }
 }

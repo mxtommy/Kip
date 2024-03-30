@@ -54,6 +54,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   @ViewChild('textWarnDark', {static: true, read: ElementRef}) private textWarnDark: ElementRef;
 
   private themeNameSub: Subscription = null;
+  private themeChangeTimer = null;
   private splitWidgetSettings: IWidget;
   private themeColor: ITheme = {primary: '', accent: '', warn: '', primaryDark: '', accentDark: '', warnDark: '', background: '', text: '', textDark: '', textPrimaryLight: '', textPrimaryDark: '', textAccentLight:'', textAccentDark:'', textWarnLight:'', textWarnDark:''};
   public widgetInstance;
@@ -99,7 +100,8 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unsubscribeTheme();
+    this.themeNameSub?.unsubscribe();
+    clearTimeout(this.themeChangeTimer);
   }
 
   private instantiateWidget(): void {
@@ -165,18 +167,11 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   private subscribeTheme() {
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
       themeChange => {
-        setTimeout(() => {   // delay so browser getComputedStyles has time to complete Material Theme style changes.
+        this.themeChangeTimer = setTimeout(() => {   // delay so browser getComputedStyles has time to complete Material Theme style changes.
           this.loadTheme();
           this.instantiateWidget();
          }, 50);
     })
-  }
-
-  private unsubscribeTheme(){
-    if (this.themeNameSub !== null) {
-      this.themeNameSub.unsubscribe();
-      this.themeNameSub = null;
-    }
   }
 }
 

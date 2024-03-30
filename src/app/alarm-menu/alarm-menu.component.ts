@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NotificationsService, Alarm, IAlarmInfo } from '../core/services/notifications.service';
-import { AppSettingsService } from '../core/services/app-settings.service';
+import { NotificationsService, Alarm } from '../core/services/notifications.service';
 import { Subscription } from 'rxjs';
 import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
 import { MatDivider } from '@angular/material/divider';
@@ -34,8 +33,9 @@ interface IMenuItem {
 })
 export class AlarmMenuComponent implements OnInit, OnDestroy {
 
-  private alarmSub: Subscription;
-  private notificationServiceSettings: Subscription;
+  private alarmSubscription: Subscription = null;
+  private notificationServiceSettingsSubscription: Subscription = null;
+  private alarmInfoSubscription: Subscription = null;
 
   alarms: { [path: string]: Alarm };
   notificationAlarms: { [path: string]: Alarm };
@@ -54,14 +54,14 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   constructor(
     private notificationsService: NotificationsService,
   ) {
-    this.notificationServiceSettings = this.notificationsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
+    this.notificationServiceSettingsSubscription = this.notificationsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
     });
   }
 
   ngOnInit() {
     // init Alarm stream
-    this.alarmSub = this.notificationsService.getAlarms().subscribe(
+    this.alarmSubscription = this.notificationsService.getAlarms().subscribe(
       message => {
         this.notificationAlarms = message;
         // Disabling notifications is done at the service level. No need to handle it here
@@ -70,7 +70,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     );
 
     // init alarm info
-    this.notificationsService.getAlarmInfoAsO().subscribe(info => {
+    this.alarmInfoSubscription = this.notificationsService.getAlarmInfoAsO().subscribe(info => {
       this.unAckAlarms = info.unackCount;
       this.isMuted = info.isMuted;
       this.alarmCount = info.alarmCount;
@@ -188,8 +188,9 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.notificationServiceSettings.unsubscribe();
-    this.alarmSub.unsubscribe();
+    this.notificationServiceSettingsSubscription?.unsubscribe();
+    this.alarmSubscription?.unsubscribe();
+    this.alarmInfoSubscription?.unsubscribe();
   }
 
 }

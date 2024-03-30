@@ -12,7 +12,7 @@ export const DemoAppConfig: IAppConfig = {
       "pathSource": "default",
       "period": 1,
       "baseUnit": "m/s",
-      "label": "self.environment.wind.speedApparent, Source: default, Scale: second, Period: 10 ",
+      "label": "self.environment.wind.speedApparent, Source: default, Scale: minute, Period: 1",
       "timeScaleFormat": "minute"
   }
   ],
