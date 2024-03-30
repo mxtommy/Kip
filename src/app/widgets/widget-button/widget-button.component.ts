@@ -32,7 +32,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
 
   public state: boolean = null;
   pressed = false;
-  timeoutHandler;
+  private timeoutHandler = null;
 
   skRequestSub = new Subscription; // Request result observer
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKService, pathRegistrationValue } from './signalk.service';
+import { SignalKDataService, pathRegistrationValue } from './signalk-data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
@@ -46,7 +46,7 @@ export class DatasetService {
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
-  constructor(private appSettings: AppSettingsService, private signalk: SignalKService) {
+  constructor(private appSettings: AppSettingsService, private signalk: SignalKDataService) {
     this._svcDatasetConfigs = appSettings.getDataSets();
 
     for (let index = 0; index < this._svcDatasetConfigs.length; index++) {
@@ -174,7 +174,7 @@ private setupServiceRegistry(uuid: string): void {
         const newDataPoint: IDatasetServiceDatapoint = this.updateDataset(configuration, dataSource._historicalDataset, newValue.value as number)
         dataSource._historicalDataset.push(newDataPoint);
         // Copy object so it's not send by reference, then push to Subject so that Observers can receive
-        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(cloneDeep(newDataPoint));
+        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(newDataPoint);
       }
     );
   }
@@ -191,7 +191,7 @@ private setupServiceRegistry(uuid: string): void {
   private stop(uuid: string) {
     const dataSource = this._svcDataSource.find(d => d.uuid == uuid);
     console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
-    dataSource._pathObserverSubscription.unsubscribe();
+    dataSource._pathObserverSubscription?.unsubscribe();
     dataSource._historicalDataset = [];
   }
 

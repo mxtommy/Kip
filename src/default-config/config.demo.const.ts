@@ -14,7 +14,7 @@ export const DemoAppConfig: IAppConfig = {
       "period": 1,
       "maxDataPoints": 60,
       "smoothingPeriod": 12,
-      "label": "self.environment.wind.speedApparent, Source: default, Scale: second, Period: 10 ",
+      "label": "self.environment.wind.speedApparent, Source: default, Scale: minute, Period: 1",
       "timeScaleFormat": "minute"
   }
   ],

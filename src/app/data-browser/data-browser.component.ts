@@ -1,10 +1,10 @@
-import { Component, OnInit, AfterViewInit, ViewChild,ChangeDetectorRef} from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild,ChangeDetectorRef, OnDestroy} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { SignalKService } from '../core/services/signalk.service';
+import { SignalKDataService } from '../core/services/signalk-data.service';
 import { IPathData } from "../core/interfaces/app-interfaces";
 import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
 import { NgFor, KeyValuePipe } from '@angular/common';
@@ -19,25 +19,21 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
     standalone: true,
     imports: [MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgFor, DataBrowserRowComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, KeyValuePipe]
 })
-export class DataBrowserComponent implements OnInit, AfterViewInit {
+export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
-  pathsSub: Subscription;
-  pageSize = 10;
+  private pathsSubscription: Subscription = null;
+  private dataTableTimer = null;
 
-
-  tableData = new MatTableDataSource<IPathData>([]);
-
-  displayedColumns: string[] = ['path', 'defaultSource'];
+  public pageSize: number = 10;
+  public tableData = new MatTableDataSource<IPathData>([]);
+  public displayedColumns: string[] = ['path', 'defaultSource'];
 
   constructor(
-    private SignalKService: SignalKService,
-    private cdRef: ChangeDetectorRef,
-  ) {
-
-  }
+    private signalKDataService: SignalKDataService,
+    private cdRef: ChangeDetectorRef) { }
 
   public onResize(event) {
     this.setNumPerPage(event.target.innerHeight, event.target.innerWidth);
@@ -45,9 +41,9 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     setTimeout(()=>{
-      this.pathsSub = this.SignalKService.getSkDataObservable().subscribe(paths => {
+      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe(paths => {
         this.tableData.data = paths;
-      })},0); // set timeout to make it async otherwise delays page load
+      })}, 0); // set timeout to make it async otherwise delays page load
   }
 
   ngAfterViewInit() {
@@ -85,5 +81,10 @@ export class DataBrowserComponent implements OnInit, AfterViewInit {
     } else {
       this.pageSize = 5;
     }
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.dataTableTimer);
+    this.pathsSubscription?.unsubscribe();
   }
 }

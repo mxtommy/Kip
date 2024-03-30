@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit } from '@angular/core';
+import { Component, Input, ViewChild, SimpleChanges, AfterViewInit, ElementRef } from '@angular/core';
 import { NgIf } from '@angular/common';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
@@ -6,7 +6,7 @@ const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*
 interface ISVGRotationObject {
   oldDegreeIndicator: string,
   newDegreeIndicator: string,
-  animationElement: ElementRef
+  animationElement: ElementRef<SVGAnimateTransformElement>
 }
 
 @Component({
@@ -16,13 +16,13 @@ interface ISVGRotationObject {
     imports: [NgIf]
 })
 export class SvgWindComponent implements AfterViewInit {
-  @ViewChild('compassAnimate', { static: true, read: ElementRef }) compassAnimate!: ElementRef;
-  @ViewChild('appWindAnimate', { static: true, read: ElementRef }) appWindAnimate!: ElementRef;
-  @ViewChild('trueWindAnimate', { static: true, read: ElementRef }) trueWindAnimate!: ElementRef;
-  @ViewChild('appWindValueAnimate', { static: true, read: ElementRef }) appWindValueAnimate!: ElementRef;
-  @ViewChild('trueWindValueAnimate', { static: true, read: ElementRef }) trueWindValueAnimate!: ElementRef;
-  @ViewChild('waypointAnimate', { static: true, read: ElementRef }) waypointAnimate!: ElementRef;
-  @ViewChild('courseOverGroundAnimate', { static: true, read: ElementRef }) courseOverGroundAnimate!: ElementRef;
+  @ViewChild('compassAnimate', { static: true, read: ElementRef }) compassAnimate!: ElementRef<SVGAnimateTransformElement>;
+  @ViewChild('appWindAnimate', { static: true, read: ElementRef }) appWindAnimate!: ElementRef<SVGAnimateTransformElement>;
+  @ViewChild('trueWindAnimate', { static: true, read: ElementRef }) trueWindAnimate!: ElementRef<SVGAnimateTransformElement>;
+  @ViewChild('appWindValueAnimate', { static: true, read: ElementRef }) appWindValueAnimate!: ElementRef<SVGAnimateTransformElement>;
+  @ViewChild('trueWindValueAnimate', { static: true, read: ElementRef }) trueWindValueAnimate!: ElementRef<SVGAnimateTransformElement>;
+  @ViewChild('waypointAnimate', { static: true, read: ElementRef }) waypointAnimate!: ElementRef<SVGAnimateTransformElement>;
+  @ViewChild('courseOverGroundAnimate', { static: true, read: ElementRef }) courseOverGroundAnimate!: ElementRef<SVGAnimateTransformElement>;
 
   @Input('compassHeading') compassHeading: number;
   @Input('courseOverGroundAngle') courseOverGroundAngle: number;

@@ -216,9 +216,9 @@ export class UnitsService {
       v = parseInt(v, 10);
       if (v < 0) { v = v *-1} // always positive
 
-      var h = Math.floor(v / 3600);
-      var m = Math.floor(v % 3600 / 60);
-      var s = Math.floor(v % 3600 % 60);
+      let h = Math.floor(v / 3600);
+      let m = Math.floor(v % 3600 / 60);
+      let s = Math.floor(v % 3600 % 60);
       return ('0' + h).slice(-2) + ":" + ('0' + m).slice(-2) + ":" + ('0' + s).slice(-2);
     },
 //  angularVelocity

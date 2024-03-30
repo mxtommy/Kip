@@ -1,4 +1,4 @@
-import { Injectable, ɵisComponentDefPendingResolution } from '@angular/core';
+import { Injectable } from '@angular/core';
 
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -79,6 +79,7 @@ export class TimersService {
   public deleteTimer(timerName: string) {
     if (!this.kipTimers.hasOwnProperty(timerName)) { return; }
     this.stopTimer(timerName);
+    this.kipTimers[timerName].currentValue.complete();
     delete this.kipTimers[timerName];
   }
 

@@ -267,7 +267,7 @@ export class SignalKDeltaService {
 
           //TODO: notifications have evolved with the specs. Need to update at some point...
           if (/^notifications./.test(item.path)) {  // It's is a notification message, pass to notification service
-            let notification: INotificationDelta = {
+            const notification: INotificationDelta = {
               path: item.path,
               notification: item.value,
             };
@@ -277,9 +277,9 @@ export class SignalKDeltaService {
             // It's a path value source update. Check if it's an Object. NOTE: null represents an undefined object and so is an object it's self, but in SK it should be handled as a value to mean: the path/source exists, but no value can ge generated. Ie. a depth sensor that can't read bottom depth in very deep water will send null.
             if ((typeof(item.value) == 'object') && (item.value !== null)) {
 
-              let keys = Object.keys(item.value);
+              const keys = Object.keys(item.value);
               for (let i = 0; i < keys.length; i++) {
-                let dataPath: IPathValueData = {
+                const dataPath: IPathValueData = {
                   context: context,
                   path: `${item.path}.${keys[i]}`,
                   source: update.$source,
@@ -300,7 +300,7 @@ export class SignalKDeltaService {
               }
             } else {
               // It's a Primitive type or a null value
-              let dataPath: IPathValueData = {
+              const dataPath: IPathValueData = {
                 context: context,
                 path: item.path,
                 source: update.$source,
@@ -316,7 +316,7 @@ export class SignalKDeltaService {
   }
 
   private parseMeta(metadata: ISignalKMeta, context: string) {
-    let meta: IMeta;
+    let meta: IMeta = null;
     // does meta have one with properties for each one?
     if (metadata.value.properties !== undefined) {
       Object.keys(metadata.value.properties).forEach(key => {

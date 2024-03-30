@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
-import { SignalKService } from '../../core/services/signalk.service';
+import { SignalKDataService } from '../../core/services/signalk-data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IUnitGroup } from '../../core/services/units.service';
 import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -42,7 +42,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public unitList: {default?: string, conversions?: IUnitGroup[] };
 
   constructor(
-    private signalKService: SignalKService
+    private signalKDataService: SignalKDataService
     ) { }
 
   ngOnInit() {
@@ -96,7 +96,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
  }
 
   private getPaths(isOnlySef: boolean) {
-    this.availablePaths = this.signalKService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
+    this.availablePaths = this.signalKDataService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
   }
 
   private filterPaths( value: string ): IPathMetaData[] {
@@ -113,11 +113,11 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private enableFormFields(setValues?: boolean): void {
-    let pathObject = this.signalKService.getPathObject(this.pathFormGroup.controls['path'].value);
+    let pathObject = this.signalKDataService.getPathObject(this.pathFormGroup.controls['path'].value);
     if (pathObject != null) {
       this.pathFormGroup.controls['sampleTime'].enable({onlySelf: true});
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-        this.unitList = this.signalKService.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+        this.unitList = this.signalKDataService.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
         if (setValues) {
           this.pathFormGroup.controls['convertUnitTo'].setValue(this.unitList.default, {onlySelf: true});
         }

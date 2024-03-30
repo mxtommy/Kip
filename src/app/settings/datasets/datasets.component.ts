@@ -5,7 +5,7 @@ import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeader
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { SignalKService } from '../../core/services/signalk.service';
+import { SignalKDataService } from '../../core/services/signalk-data.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -159,7 +159,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
   public filterSelfPaths:boolean = true;
 
   constructor(
-    private SignalKService: SignalKService,
+    private SignalKDataService: SignalKDataService,
     public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
     @Inject(MAT_DIALOG_DATA) public dataset: IDatasetServiceDatasetConfig
     ) { }
@@ -169,7 +169,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
       this.titleDialog = "Edit Dataset";
       this.formDataset = this.dataset;
 
-      let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
+      let pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
       if (pathObject !== null) {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       }
@@ -179,11 +179,11 @@ export class SettingsDatasetsModalComponent implements OnInit {
       this.formDataset = this.newDataset;
     }
 
-    this.availablePaths = this.SignalKService.getPathsByType('number').sort();
+    this.availablePaths = this.SignalKDataService.getPathsByType('number').sort();
   }
 
   public changePath() { // called when we choose a new path. Resets the form old value with default info of this path
-    let pathObject = this.SignalKService.getPathObject(this.formDataset.path);
+    let pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     this.formDataset.pathSource = 'default';
