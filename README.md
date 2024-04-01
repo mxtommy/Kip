@@ -44,9 +44,6 @@ KIP is now installed and available on your home screen
 3. Press the "Add" button in the popup
 KIP is now installed and available on your home screen
 
-## Multiple User Profiles
-  If you have different roles on board; captain, skipper, tactician, navigator, engineers or simply different people with different needs, each can tailor as they wish. The use of profiles can also offer the ability to tie specific configuration arrangements to use case or device form factors.
-
 ## User Experience
 
 ### Flexible and Easy
@@ -106,6 +103,9 @@ KIP is now installed and available on your home screen
   Stay informed with notifications about the state of the data you are interested in.
   As an example, KIP will notify you (inform, warn, alert) when a water depth or temperature sensors reaches certain levels. In addition to KIP's centralized basic visual and audio notification feature, each Widget offers a tailored visual representation appropriate
   to their design objectives providing an optimal user experience.
+
+  ## Multiple User Profiles
+  If you have different roles on board; captain, skipper, tactician, navigator, engineers or simply different people with different needs, each can tailor as they wish. The use of profiles can also offer the ability to tie specific configuration arrangements to use case or device form factors.
 
 # How To Contribute
 
