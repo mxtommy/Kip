@@ -2,7 +2,7 @@
 
 KIP is powerful marine instrumentation package to display Signal K data. KIP, much like modern expensive MFDs, is very flexible and can be split up in any arrangements and display all kinds of data available to Signal K server.
 
-![KIP](./images/kip1024.png)
+![KIP](./images/kip-1024.png)
 
 # Design Goal
 
