@@ -107,12 +107,12 @@ KIP is now installed and available on your home screen
   ## Multiple User Profiles
   If you have different roles on board; captain, skipper, tactician, navigator, engineers or simply different people with different needs, each can tailor as they wish. The use of profiles can also offer the ability to tie specific configuration arrangements to use case or device form factors.
 
-# Connect, Share and Get Support
+# Connect & Share
 KIP has it's own Discord Signal K channel to get in touch. Join us at https://discord.gg/AMDYT2DQga
 
-# Feature Ideas
-See KIP GitHub project for latest feature request.
-https://github.com/mxtommy/Kip/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement
+# Feature, Ideas, Support
+See KIP's GitHub project for latest feature request.
+https://github.com/mxtommy/Kip/issues
 
 
 # How To Contribute
