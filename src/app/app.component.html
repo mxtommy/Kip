@@ -52,41 +52,11 @@
   <button mat-menu-item routerLink="/settings">
     <div class="menu-items-with-icons"><i class="fa-solid fa-sliders" aria-hidden="true"></i>&nbsp;Settings</div>
   </button>
-  <!-- <button mat-menu-item [disabled]="isNightMode" [matMenuTriggerFor]="themesMenu"> -->
-    <!-- <span><i class="fa-solid fa-paint-brush"></i> Themes</span> -->
-  <!-- </button> -->
   <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
     <div class="menu-items-with-icons"><i class="fa-solid fa-plus-square" aria-hidden="true"></i>&nbsp;Add Page</div>
   </button>
   <button mat-menu-item (click)="unlockPage()">
     <div class="menu-items-with-icons" *ngIf="!unlockStatus"><i class="fa-solid fa-columns" aria-hidden="true"></i>&nbsp;Edit Layout</div>
     <div class="menu-items-with-icons" *ngIf="unlockStatus"><i class="fa-solid fa-lock" aria-hidden="true"></i>&nbsp;Lock Layout</div>
-  </button>
-</mat-menu>
-
-<mat-menu #themesMenu="matMenu" xPosition="before">
-  <button mat-menu-item (click)="setTheme('default-light')">
-    <span><i *ngIf="themeName == 'default-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i>&nbsp;Light Blue</span>
-      <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
-  </button>
-  <button mat-menu-item (click)="setTheme('signalk-light')">
-    <span><i *ngIf="themeName == 'signalk-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i>&nbsp;Signal K</span>
-      <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
-  </button>
-  <button mat-menu-item (click)="setTheme('high-contrast-light')">
-    <span><i *ngIf="themeName == 'high-contrast-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i>&nbsp;High Contrast</span>
-      <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
-  </button>
-  <button mat-menu-item (click)="setTheme('platypus-light')">
-    <span><i *ngIf="themeName == 'platypus-light' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i>&nbsp;Platypus</span>
-    <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
-  </button>
-  <button mat-menu-item (click)="setTheme('darkBlue-dark')">
-    <span><i *ngIf="themeName == 'darkBlue-dark' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i>&nbsp;Dark Blue</span>
-    <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
-  </button>
-  <button mat-menu-item (click)="setTheme('modern-dark')">
-    <span><i *ngIf="themeName == 'modern-dark' else elseBlock" class="fa-solid fa-circle" aria-hidden="true"></i>&nbsp;Modern Dark</span>
-    <ng-template #elseBlock><i class="fa-solid fa-circle-o" aria-hidden="true"></i></ng-template>
   </button>
 </mat-menu>

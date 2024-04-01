@@ -1,57 +1,257 @@
 // Create theme palettes. We need Primary, Accent and Warn as defined by Angular Material theming
 @use '@angular/material' as mat;
+@use 'sass:map';
 
-// We use Mat predefined palettes
+$highContrast-primary: (
+    50 : #ffffff,
+    100 : #ffffff,
+    200 : #ffffff,
+    300 : #ffffff,
+    400 : #ffffff,
+    500 : #ffffff,
+    600 : #ffffff,
+    700 : #ffffff,
+    800 : #ffffff,
+    900 : #ffffff,
+    A100 : #ffffff,
+    A200 : #939393,
+    A400 : #ffffff,
+    A700 : #ffffff,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #000000,
+        600 : #000000,
+        700 : #000000,
+        800 : #000000,
+        900 : #000000,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
 
-//////////////////////////////////////////////////////////////////////////////////////////
+$highContrast-accent: (
+  50 : #ffffff,
+  100 : #ffffff,
+  200 : #ffffff,
+  300 : #ffffff,
+  400 : #ffffff,
+  500 : #ffffff,
+  600 : #ffffff,
+  700 : #ffffff,
+  800 : #ffffff,
+  900 : #ffffff,
+  A100 : #ffffff,
+    A200 : #000000, // Menubar original value #fff6e0 000000 1E1E1E
+    A400 : #ffffff,
+    A700 : #ffffff,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #000000,
+        600 : #000000,
+        700 : #000000,
+        800 : #000000,
+        900 : #000000,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+$highContrast-warn: (
+    50 : #ffffff,
+    100 : #ffffff,
+    200 : #ffffff,
+    300 : #ffffff,
+    400 : #ffffff,
+    500 : rgb(131, 131, 131),
+    600 : #ffffff,
+    700 : #ffffff,
+    800 : #ffffff,
+    900 : #ffffff,
+    A100 : #ffffff,
+    A200 : #ffffff,
+    A400 : #ffffff,
+    A700 : #ffffff,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #000000,
+        600 : #000000,
+        700 : #000000,
+        800 : #000000,
+        900 : #000000,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+$highContrast-special: (
+    50 : #fae5e5,
+    100 : #f2bebe,
+    200 : #ea9393,
+    300 : #e26767,
+    400 : #389c19,
+    500 : #ffffff, // background
+    600 : #000000,
+    700 : #ff0000, // mat cards 1e1e1e
+    800 : rgb(0, 0, 0),
+    900 : #121212, // 000000
+    A100 : #ffe7e7,
+    A200 : #ffb4b4,
+    A400 : #ff8181,
+    A700 : #ff6868,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
 // Generate mat-material default theme palettes. Generate now so we call pull if necessary
-// palette color later in this scss file.
-//  * The warn palette is optional (defaults to $mat-red). This is the palette that should
-//    used for error and warning.
-$highContrast-primary: mat.define-palette(mat.$grey-palette);
-$highContrast-accent:  mat.define-palette(mat.$grey-palette, A200, A100, A400);
-$highContrast-warn:    mat.define-palette(mat.$red-palette);
+$highContrast-theme-primary: mat.define-palette($highContrast-primary, A200, A100, A400);
+$highContrast-theme-accent:  mat.define-palette($highContrast-accent, A200, A100, A400);
+$highContrast-theme-warn:  mat.define-palette($highContrast-warn);
 
-// Palette for widget-gauge-ng-linear and widget-gauge-ng-radial instruments
-// Pull from mat-palettes or use custom color ie. #e3ff43
+$highContrast-theme-special:  mat.define-palette($highContrast-special); // Used to override Material Dark Theme colors and make it really black!
+
+// custom component color maps
+
+// Palettes for custom app.component.scss
+$app-defaults: (
+  app-background: #000000
+);
+// widget-gauge-ng-linear and widget-gauge-ng-radial instruments map
 $mat-ngGauge: (
-    primary-gaugeFaceLight: mat.get-color-from-palette($highContrast-primary, 400),
-    primary-gaugeFaceDark: mat.get-color-from-palette($highContrast-primary, 900),
-    accent-gaugeFaceLight: mat.get-color-from-palette($highContrast-accent, 500),
-    accent-gaugeFaceDark: mat.get-color-from-palette($highContrast-accent, 900),
-    warn-gaugeFaceLight: mat.get-color-from-palette($highContrast-warn, 300),
-    warn-gaugeFaceDark: mat.get-color-from-palette($highContrast-warn, 900),
+    primary-gaugeFaceLight: #ffffff,
+    primary-gaugeFaceDark: #ffffff,
+    accent-gaugeFaceLight: rgba(255, 255, 255, 0.6),
+    accent-gaugeFaceDark: #ffffff,
+    warn-gaugeFaceLight: rgba(255, 255, 255, 0.3),
+    warn-gaugeFaceDark: #ffffff,
 );
 
-// Palette for widget-wind - wind instrument Component
-// * You can pull from other mat-palettes or use custom color ie. #e3ff43
+// Map for widget Wind and Autopilot - see svg-wind svg-autopilot Component
 $mat-wind: (
-    boat-background: #c7c7c7,
-    heading-background: #000000,
-    true-wind-background: #068dfb,
-    app-wind-background: #06fb06,
-    compass-dark: #757575,
-    compass-light: #afafaf,
-    wind-rose-background: #8a8a8a,
-    port: #ff0000,
-    starboard: #1fce04,
-    rudder-port: #d52626,
+    boat-background: #ffffff,
+    heading-background: #1E1E1E,
+    true-wind-background: #ffcc00,
+    app-wind-background: #009dff,
+    compass-dark: #fa0101,
+    compass-light: #ffffff,
+    wind-rose-background: #ff0000,
+    port: #750000,
+    starboard: #17420a,
+    rudder-port: #ffffff,
     rudder-starboard: #389c19,
+    courseOverGround: #62006c,
+    nextWaypoint: #1e4b18
 );
 
+// custom test and label color maps used in widgets
 $mat-texts: (
-    text-dark: #797979,
-    primary-light: #3586ca,
-    primary-dark: #1656AB,
-    accent-light: #f5da6f,
-    accent-dark: #e5ab13,
-    warn-light: #e26767,
-    warn-dark: #ba0d0d,
+    text-dark: rgb(255, 255, 255, 1),
+    primary-light: rgba(255, 255, 255, 1),
+    primary-dark: rgba(255, 255, 255, 0.6),
+    accent-light: rgba(255, 255, 255, 0.6),
+    accent-dark: rgba(255, 255, 255, 1),
+    warn-light: rgba(255, 255, 255, 0.6),
+    warn-dark: rgba(255, 255, 255, 0.6),
 );
 
 // Make temp theme using default palettes
-// * to change from Light and Dark Angular Material theming mode: mat-dark-theme() or mat-light-theme()
-$highContrast-temp-light: mat.define-light-theme($highContrast-primary, $highContrast-accent, $highContrast-warn);
+$highContrast: mat.define-dark-theme((
+  color: (
+    primary: $highContrast-theme-primary,
+    accent: $highContrast-theme-accent,
+    warn: $highContrast-theme-warn
+  ),
+));
 
-// Merge our mat-theme with component specific palettes
-$highContrast-light: map-merge($highContrast-temp-light, (widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));
+// custom theme overrides for Night Mode
+@function custom-highContrast-foreground($color) {
+  @return (
+      base:              $color,
+      divider:           rgba($color, 0.12),
+      dividers:          rgba($color, 0.12),
+      disabled:          rgba($color, 0.3),
+      disabled-button:   rgba($color, 0.1),
+      disabled-text:     rgba($color, 0.3),
+      elevation:         $color,
+      hint-text:         rgba($color, 0.3),
+      secondary-text:    rgba($color, 0.7),
+      icon:              $color,
+      icons:             $color,
+      text:              $color,
+      slider-min:        $color,
+      slider-off:        rgba($color, 0.3),
+      slider-off-active: rgba($color, 0.3),
+  );
+};
+
+@function custom-highContrast-background($pallet, $bgcolor) {
+  @return (
+    status-bar: black,
+    app-bar:    map_get($pallet, 800),
+    background: map_get($pallet, $bgcolor),
+    hover:      rgba(white, 0.04),
+    card:       map_get($pallet, 800),
+    dialog:     map_get($pallet, 800),
+    disabled-button: rgba(white, 0.1),
+    raised-button: rgba(white, 0.2),
+    focused-button: rgba(white, 0.06),
+    selected-button: map_get($pallet, 900),
+    selected-disabled-button: map_get($pallet, 800),
+    disabled-button-toggle: black,
+    unselected-chip: map_get($pallet, 700),
+    disabled-list-option: black,
+    tooltip: map_get($pallet, 600),
+  );
+};
+
+// get theme color map
+$color-map: map.get($highContrast, color);
+// get color map foreground and background map
+$color-foreground-map: map.get($color-map, foreground);
+$color-background-map: map.get($color-map, background);
+
+
+// Call custom Material Dark-theme override functions
+$highContrast-background: custom-highContrast-background($highContrast-theme-special, 500);
+$highContrast-foreground: custom-highContrast-foreground(#ffffff);
+
+// merge back into color map
+$color-map: map.merge($color-map, (foreground: $highContrast-foreground, background: $highContrast-background));
+
+// Merge our maps back into theme with component specific maps
+$highContrast: map.merge($highContrast, (color: $color-map));
+// copy duplicate foreground and background map to theme root - not sure why this duplicate exists...not explained in material Theming guides
+$highContrast: map.merge($highContrast, (foreground: $highContrast-foreground, background: $highContrast-background));
+// merge our component maps into theme
+$highContrast: map.merge($highContrast, (app-defaults: $app-defaults, widgetTexts: $mat-texts, wind: $mat-wind, ngGauge: $mat-ngGauge));

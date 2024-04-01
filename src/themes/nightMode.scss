@@ -14,7 +14,7 @@ $nightMode-primary: (
     800 : #4796d2,
     900 : #520000,
     A100 : #520000,
-    A200 : #520000,
+    A200 : #121212,
     A400 : #520000,
     A700 : #520000,
     contrast: (
@@ -80,7 +80,7 @@ $nightMode-warn: (
     800 : #c41717,
     900 : #520000,
     A100 : #ffe7e7,
-    A200 : #ffb4b4,
+    A200 : #121212,
     A400 : #ff8181,
     A700 : #ff6868,
     contrast: (
@@ -107,11 +107,11 @@ $nightMode-special: (
     200 : #ea9393,
     300 : #e26767,
     400 : #389c19,
-    500 : #0e0d0d, // background
+    500 : #520000, // background
     600 : #3f3f3f,
     700 : #000000, // mat cards 1e1e1e
     800 : #000000, // 121212
-    900 : #121212, // 000000
+    900 : #2e0202, // 000000
     A100 : #ffe7e7,
     A200 : #ffb4b4,
     A400 : #ff8181,
@@ -198,12 +198,12 @@ $nightMode: mat.define-dark-theme((
 @function custom-nightMode-foreground($color) {
   @return (
       base:              $color,
-      divider:           rgba(white, 0.12),
-      dividers:          rgba(white, 0.12),
+      divider:           rgba($color, 0.7),
+      dividers:          rgba($color, 0.7),
       disabled:          rgba($color, 0.3),
       disabled-button:   rgba($color, 0.3),
       disabled-text:     rgba($color, 0.3),
-      elevation: $color,
+      elevation:         $color,
       hint-text:         rgba($color, 0.3),
       secondary-text:    rgba($color, 0.7),
       icon:              $color,
@@ -228,7 +228,7 @@ $nightMode: mat.define-dark-theme((
     focused-button: rgba(white, 0.06),
     selected-button: map_get($pallet, 900),
     selected-disabled-button: map_get($pallet, 800),
-    disabled-button-toggle: black,
+    disabled-button-toggle: #520000,
     unselected-chip: map_get($pallet, 700),
     disabled-list-option: black,
     tooltip: map_get($pallet, 600),
