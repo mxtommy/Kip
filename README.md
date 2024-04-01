@@ -57,7 +57,7 @@ KIP is now installed and available on your home screen
   Meant to build purposeful screen(s) with however many widgets you want, where you want them. 
 
   Quickly split pages into multiple areas, resize and align to your liking, add the widget of your choosing to each area. Need more? Add as many additional pages as you whish to keep your display purposeful. Simply swipe left and right or use the bottom page navigation button to quickly cycle from page to page.
-  ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024x488.png)
+  ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
   
   Easy basic widget configuration.
   ![Gauges Configuration Image](./images/KipConfig-display-1024x488.png) 
@@ -66,7 +66,7 @@ KIP is now installed and available on your home screen
   ![Paths Configuration Image](./images/KipWidgetConfig-paths-1024x488.png)
   
   Many units are supported. Choose your preferred App defaults, than tweak it widget-by-widget as necessary. KIP will automatically convert the units for you.
-  ![Units Configuration Image](./images/KipConfig-Units-1024x488.png) 
+  ![Units Configuration Image](./images/KipConfig-Units-1024.png) 
 
 ### Reusable Widget Library
   All KIP Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
