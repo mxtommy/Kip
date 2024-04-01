@@ -410,13 +410,13 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   // Method to calculate nice values for min, max and range for the gaugeOptions.majorTicks
-  calculateMajorTicks(minValue: number, maxValue: number): string[]|number[] {
+  private calculateMajorTicks(minValue: number, maxValue: number): number[] {
     let niceMinValue = minValue;
     let niceMaxValue = maxValue;
     let niceRange = maxValue - minValue;
     let majorTickSpacing = 0;
     let maxNoOfMajorTicks = 10;
-    let tickArray = [] as Array<number>;
+    const tickArray = [] as Array<number>;
 
     niceRange = this.calcNiceNumber(maxValue - minValue, false);
     majorTickSpacing = this.calcNiceNumber(niceRange / (maxNoOfMajorTicks - 1), true);
@@ -425,18 +425,22 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
     tickArray.push(niceMinValue);
 
-    for (let index = 0; index < (niceRange / majorTickSpacing); index++) {
+    const range: number = niceRange / majorTickSpacing;
+
+    for (let index = 0; index < range; index++) {
       if (tickArray[index] < niceMaxValue) {
-        tickArray.push(tickArray[index] + majorTickSpacing);
+        // need to do some trick here to account for JavaScript fraction issues else when scale ticks are smaller than 1, nice numbers can't be produced ie. tick of 0.3 will be 0.30000000004 (see: https://flaviocopes.com/javascript-decimal-arithmetics/)
+        let tick = (Number(tickArray[index].toFixed(2)) * 100 + Number(majorTickSpacing.toFixed(2)) * 100) / 100;
+        tickArray.push(tick);
       }
     }
     return tickArray;
   }
 
-  calcNiceNumber(range: number, round: boolean): number {
-    let exponent = Math.floor(Math.log10(range)),   // exponent of range
-        fraction = range / Math.pow(10, exponent),  // fractional part of range
-        niceFraction: number;                               // nice, rounded fraction
+  private calcNiceNumber(range: number, round: boolean): number {
+    const exponent = Math.floor(Math.log10(range));   // exponent of range
+    const fraction = range / Math.pow(10, exponent);  // fractional part of range
+    let niceFraction: number = null;                       // nice, rounded fraction
 
     if (round) {
         if (1.5 > fraction) {
