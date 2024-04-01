@@ -135,7 +135,8 @@ Linux, Mac, Pi or Windows dev platform supported
 *You also need a running Signal K server for KIP to connect to and receive data.*
 
 **Apple PWA Icon Generation**
-Use the following tool and command line: npx pwa-asset-generator ./src/svg-templates/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src/manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%
+Use the following tool and command line:
+`npx pwa-asset-generator ./src/svg-templates/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src/manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%`
 
 **Share**
 Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
@@ -147,16 +148,5 @@ Join us on Slack -> Signalk-dev / Kip channel. We will hook up and assist as bes
 KIP has it's own Discord Signal K channel to get in touch. Join us at https://discord.gg/AMDYT2DQga
 
 # Feature Ideas
- * AIS Widget - Help Wanted
- * Light indicator Widget for Boolean paths
- * Fuel Consumption Widget
- * GPS information Widget - Help Wanted
- * Improve Metadata/Zones support
- * Add a KIP Widget CLI Schematic to automate new Widget creation and facilitate app contributions
- * Improved error logging
- * Retire outdated SteelGauges
- * Upgrade notifications and navigation API to new Signal K Specifications
- * Attitude Indicator Widget - Help Wanted
- * Sailing Polars Widget - Help Wanted
- * More customization options for radial/linear Gauges
- * Pre-created Widgets for commonly used displays
+See KIP GitHub project for latest feature request.
+https://github.com/mxtommy/Kip/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement
