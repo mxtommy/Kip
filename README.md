@@ -92,7 +92,10 @@ KIP is now installed and available on your home screen
   Electrical and Tank Monitoring Sample 
   ![Electrical Concept Image](./images/KipGaugeSample2-1024x488.png)
 
-  Grafana Embedded Webpage sample 
+  Freeboard-SK Integration
+   ![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
+
+  Grafana Integration 
   ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
   ### Harness The Power Of Data State Notifications
