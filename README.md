@@ -28,6 +28,8 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 ### KIP Mobile App
 Run KIP in full screen, with no browser controls visible, just like regular mobile apps. This feature is supported on most mobile OS. Each browser has it's own way of handling PWA deployments.
 
+![KIP PWA](./images/kip-phone.png)
+
 To install KIP as an App, first load KIP in the browser. Then follow the steps below:
 
 **iOS**
