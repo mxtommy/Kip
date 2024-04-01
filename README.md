@@ -61,7 +61,7 @@ KIP is now installed and available on your home screen
   Many units are supported. Choose your preferred App defaults, than tweak it widget-by-widget as necessary. KIP will automatically convert the units for you.
   ![Units Configuration Image](./images/KipConfig-Units-1024.png) 
 
-### Reusable Widget Library
+## Reusable Widget Library
   All KIP Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
   - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
   - Text display: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
@@ -81,8 +81,8 @@ KIP is now installed and available on your home screen
   - Embedded Webpage: A powerful way of integrating any web based content or application within with your KIP layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
 
   Get the latest version of KIP to see what's new!
-
-  Widget Types Sample
+### Widget Samples
+  Various
   ![Sample Gauges Image](./images/KipGaugeSample1-1024x545.png)
   
   Electrical and Tank Monitoring Sample 
@@ -94,7 +94,7 @@ KIP is now installed and available on your home screen
   Grafana Integration 
   ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
-  ### Night Mode
+  ## Night Mode
   Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
 
   ![Night mode](./images/KipNightMode-1024.png)
