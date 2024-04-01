@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
-import { MatCheckbox } from '@angular/material/checkbox';
+import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 
 
@@ -33,6 +33,7 @@ export class SettingsGeneralComponent implements OnInit {
 
   public notificationConfig: INotificationConfig;
   public autoNightModeConfig: boolean;
+  public enableHighContrast: boolean = null;
 
   constructor(
     private notifications: NotificationsService,
@@ -43,6 +44,7 @@ export class SettingsGeneralComponent implements OnInit {
   ngOnInit() {
     this.notificationConfig = this.settings.getNotificationConfig();
     this.autoNightModeConfig = this.app.autoNightMode;
+    this.enableHighContrast = (this.settings.getThemeName() == "high-contrast") ? true : false;
   }
 
   public saveAllSettings():void {
@@ -50,6 +52,8 @@ export class SettingsGeneralComponent implements OnInit {
       this.saveNotificationsSettings();
       this.saveAutoNightMode();
       this.notifications.sendSnackbarNotification("General settings saved", 5000, false);
+      this.enableHighContrast ? this.settings.setThemeName("high-contrast") : this.settings.setThemeName("modernDark")
+
     } catch (error) {
       this.notifications.sendSnackbarNotification("Error saving settings: " + error, 5000, false);
     }
@@ -70,5 +74,9 @@ export class SettingsGeneralComponent implements OnInit {
         this.autoNightModeConfig = false;
       }
     }
+  }
+
+  setTheme(e: MatCheckboxChange) {
+    this.enableHighContrast = e.checked;
   }
 }

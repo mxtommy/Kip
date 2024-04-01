@@ -182,10 +182,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  setTheme(theme: string) {
-    this.appSettingsService.setThemeName(theme);
-  }
-
   setNightMode(nightMode: boolean) {
     this.isNightMode = nightMode;
     if (this.isNightMode) {

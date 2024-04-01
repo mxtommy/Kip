@@ -4,13 +4,9 @@
 // For customizations see https://material.angular.io/guide/theming-your-components
 
 //Import themes
-// @import 'themes/defaultTheme.scss';
-// @import 'themes/signalkTheme.scss';
-// @import 'themes/platypusTheme.scss';
-// @import 'themes/highContrastTheme.scss';
-// @import 'themes/darkBlueTheme.scss';
 @import 'themes/modernTheme.scss';
 @import 'themes/nightMode.scss';
+@import 'themes/highContrastTheme.scss';
 
 // Include the common all common Materiel styles.
 
@@ -58,25 +54,10 @@
   @include theme-kip-components($nightMode);
 }
 
-// .signalk-light {
-//   @include theme-components($signalKTheme-light);
-// }
-
-// .high-contrast-light {
-//   @include theme-components($highContrast-light);
-// }
-
-// .platypus-light {
-//   @include theme-components($platypusTheme-light);
-// }
-
-// .darkBlue-dark {
-//   @include theme-components($darkBlueTheme-dark);
-// }
-
-// .modern-dark {
-  // @include mat.all-component-themes($modernTheme-dark);
-// }
+.high-contrast {
+  @include mat.all-component-colors($highContrast);
+  @include theme-kip-components($highContrast);
+}
 
 /* You can add global styles to this file, and also import other style files */
 html,
@@ -95,27 +76,20 @@ body {
     border-left: 5px solid #42A948; /* green */
   }
 
-  .ng-invalid:not(form)  {
-    border-left: 5px solid #a94442; /* red */
-  }
-
-
-
-.verticalCenter {
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
+.ng-invalid:not(form)  {
+  border-left: 5px solid #a94442; /* red */
 }
 
+.verticalCenter {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
 
 .flexContainer {
-
-    display: flex;
-    /*flex-direction: column; */
-     align-items: stretch;
-
-    height: 100%;
-
+  display: flex;
+  align-items: stretch;
+  height: 100%;
 }
 
 .flowRow {
