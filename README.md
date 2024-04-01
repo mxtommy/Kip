@@ -92,15 +92,15 @@ KIP is now installed and available on your home screen
   ![Electrical Concept Image](./images/KipGaugeSample2-1024x488.png)
 
   Freeboard-SK Integration
-   ![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
+  ![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
 
   Grafana Integration 
   ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
   ### Night Mode
-    Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
+  Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
 
-    ![Night mode](./images/KipNightMode-1024.png)
+  ![Night mode](./images/KipNightMode-1024.png)
 
   ## Harness The Power Of Data State Notifications
   Stay informed with notifications about the state of the data you are interested in.
