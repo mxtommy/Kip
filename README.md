@@ -72,18 +72,21 @@ KIP is now installed and available on your home screen
 
 ### Reusable Widget Library
   All KIP Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
-  - Text display: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
   - Numeric display: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
-  - Wind gauge: Your typical sailboat wind gauge
-  - Autopilot: Operate your autopilot from any device remotely 
+  - Text display: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
+  - Date display: a timezone aware control with flexible presentation formatting support.
+  - Boolean Control Panel: A switch board to configure and operate remote devices - light switches, bilge pump, solenoid, any Signal K path that support boolean PUT operations.
+
   - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery remaining capacity, etc.
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
   - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
-  - Radial and linear Steel gauge: Old school look & fell gauges
-  - Button and Switch control: Operate remote devices - light switches, bilge pump, solenoid, any Signal K path that support boolean PUT operations
-  - Date display: a timezone aware control with flexible presentation formatting support 
-  - Race Timer: Track regatta start sequence
-  - Historical datagram chart: Display numerical data over time on a chart
+  - Radial and linear Steel gauge: Old school look & fell gauges.
+
+  - Wind Steering Display: Your typical sailboat wind gauge.
+  - Freeboard-SK Chart Plotter: A high quality Signal K implementation of Freeboard.
+  - Autopilot Head: Operate your autopilot from any device remotely.
+  - Data Chart: Visualize data trends over time.
+  - Race Timer: Track regatta start sequence.
   - Embedded Webpage: A powerful way of integrating any web based content or application within with your KIP layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
 
   Get the latest version of KIP to see what's new!
