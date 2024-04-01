@@ -49,12 +49,6 @@ KIP is now installed and available on your home screen
 
 ## User Experience
 
-### Night Mode
-  Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
-
-  ![Night mode](./images/KipNightMode-1024.png)
-
-## Page Layouts and Configuration
 ### Flexible and Easy
   Meant to build purposeful screen(s) with however many widgets you want, where you want them. 
 
@@ -103,7 +97,12 @@ KIP is now installed and available on your home screen
   Grafana Integration 
   ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
-  ### Harness The Power Of Data State Notifications
+  ### Night Mode
+    Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
+
+    ![Night mode](./images/KipNightMode-1024.png)
+
+  ## Harness The Power Of Data State Notifications
   Stay informed with notifications about the state of the data you are interested in.
   As an example, KIP will notify you (inform, warn, alert) when a water depth or temperature sensors reaches certain levels. In addition to KIP's centralized basic visual and audio notification feature, each Widget offers a tailored visual representation appropriate
   to their design objectives providing an optimal user experience.
