@@ -90,7 +90,6 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.6.0",
     "lodash-es": "^4.17.21",
-    "ng2-charts": "^6.0.0",
     "protractor": "~7.0.0",
     "pwa-asset-generator": "^6.3.1",
     "rx-dom-html": "^7.0.3",

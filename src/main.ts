@@ -25,7 +25,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { AngularResizeEventModule } from 'angular-resize-event';
 import { AngularSplitModule } from 'angular-split';
-import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
 import { AppHelpComponent } from './app/app-help/app-help.component';
@@ -157,6 +156,5 @@ bootstrapApplication(AppComponent, {
         provideHttpClient(withInterceptorsFromDi()),
         provideRouter(appRoutes, withHashLocation()),
         provideAnimations(),
-        provideCharts(withDefaultRegisterables()),
     ]
 });
