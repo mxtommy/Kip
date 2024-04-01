@@ -107,12 +107,18 @@ KIP is now installed and available on your home screen
   ## Multiple User Profiles
   If you have different roles on board; captain, skipper, tactician, navigator, engineers or simply different people with different needs, each can tailor as they wish. The use of profiles can also offer the ability to tie specific configuration arrangements to use case or device form factors.
 
-# How To Contribute
+# Connect, Share and Get Support
+KIP has it's own Discord Signal K channel to get in touch. Join us at https://discord.gg/AMDYT2DQga
 
+# Feature Ideas
+See KIP GitHub project for latest feature request.
+https://github.com/mxtommy/Kip/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement
+
+
+# How To Contribute
 KIP is under MIT license and is built with Nodes and Angular using various open-source assets. All free!
 
 **Tools**
-
 Linux, Mac, Pi or Windows dev platform supported
 1. Install the latest Node version (v16+, v18 recommended)
 2. Download your favorite coding IDE (we use the free Visual Code)
@@ -128,7 +134,7 @@ Linux, Mac, Pi or Windows dev platform supported
 
 **Setup**
 1. Fire up your local dev instance with `npm run dev`.
-2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`
+2. Hit Run/Start Debugging in Visual Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`. Alternatively to start the dev server and connect using remote devices use such as your phone: `ng serve --configuration=dev --serve-path=/@mxtommy/kip/ --host=<your computer's IP> --port=4200 --disable-host-check`
 3. Voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*
@@ -143,10 +149,3 @@ Once done with your work, from your fork's working branch, make a GitHub pull re
 
 **Communication and Collaboration**
 Join us on Slack -> Signalk-dev / Kip channel. We will hook up and assist as best we can.
-
-# Support
-KIP has it's own Discord Signal K channel to get in touch. Join us at https://discord.gg/AMDYT2DQga
-
-# Feature Ideas
-See KIP GitHub project for latest feature request.
-https://github.com/mxtommy/Kip/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement
