@@ -64,9 +64,9 @@ export class UnitsService {
       { measure: 'fahrenheit', description: "Fahrenheit"}
      ] },
     { group: 'Length', units: [
-      { measure: 'm', description: "Metres (default)"},
+      { measure: 'm', description: "Meters (default)"},
       { measure: 'fathom', description: "Fathoms"},
-      { measure: 'feet', description: "Feets"},
+      { measure: 'feet', description: "Feet"},
       { measure: 'km', description: "Kilometers"},
       { measure: 'nm', description: "Nautical Miles"},
       { measure: 'mi', description: "Miles"},
@@ -94,7 +94,7 @@ export class UnitsService {
     ] },
     { group: 'Energy', units: [
       { measure: 'J', description: "Joules"},
-      { measure: 'kWh', description: "Kilo-Watt*Hours"},
+      { measure: 'kWh', description: "Kilowatt*Hours"},
     ] },
     { group: 'Pressure', units: [
       { measure: 'Pa', description: "Pascal (default)" },
@@ -126,9 +126,9 @@ export class UnitsService {
     { group: 'Frequency', units: [
       { measure: 'rpm', description: "RPM - Rotations per minute" },
       { measure: 'Hz', description: "Hz - Hertz (default)" },
-      { measure: 'KHz', description: "KHz - KiloHertz" },
-      { measure: 'MHz', description: "MHz - MegaHertz" },
-      { measure: 'GHz', description: "GHz - GigaHertz" },
+      { measure: 'KHz', description: "KHz - Kilohertz" },
+      { measure: 'MHz', description: "MHz - Megahertz" },
+      { measure: 'GHz', description: "GHz - Gigahertz" },
     ] },
     { group: 'Ratio', units: [
       { measure: 'percent', description: "As percentage value" },
