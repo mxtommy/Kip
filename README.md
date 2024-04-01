@@ -2,6 +2,8 @@
 
 KIP is powerful marine instrumentation package to display Signal K data. KIP, much like modern expensive MFDs, is very flexible and can be split up in any arrangements and display all kinds of data available to Signal K server.
 
+![KIP](./images/kip1024.png)
+
 # Design Goal
 
 The idea is to replicate the functionality of MFDs such as the B&G Triton, Raymarine i70, or Garmin GMI20.
@@ -20,8 +22,8 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
   KIP adjusts to the device type and form factor for the best possible user experience.
 
 ### Touch Devices
-- Swipe left and right to cycle trough your Widget layouts.
-- Double tap to toggle night mode.
+- Swipe left and right to cycle trough your Page layouts.
+- Double tap to toggle Night / Day modes.
 
 ### KIP Mobile App
 Run KIP in full screen, with no browser controls visible, just like regular mobile apps. This feature is supported on most mobile OS. Each browser has it's own way of handling PWA deployments.
