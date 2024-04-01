@@ -50,7 +50,7 @@ KIP is now installed and available on your home screen
 ### Night Mode
   Keep your night vision with a simple double tap. The below image looks very dark, but at night...it's perfect!
 
-  ![Night mode](./images/KipNightMode-1024x488.png)
+  ![Night mode](./images/KipNightMode-1024.png)
 
 ## Page Layouts and Configuration
 ### Flexible and Easy
