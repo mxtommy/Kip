@@ -72,6 +72,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
 
     this.setGaugeConfig();
+    this.setHighlights();
 
     this.observeDataStream('gaugePath', newValue => {
         if (newValue.value === null) {newValue.value = 0}
@@ -122,7 +123,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     let themePaletteDarkColor = "";
 
     // Set static gauge colors
-    this.gaugeOptions.title = this.widgetProperties.config.displayName;
+    this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
     this.gaugeOptions.colorTitle = this.theme.text;
     this.gaugeOptions.colorUnits = this.theme.text;
     this.gaugeOptions.colorValueText = this.theme.text;
@@ -376,6 +377,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setHighlights(): void {
+    if (!this.zones.length) {return};
     if (this.widgetProperties.config.radialSize == "marineCompass" || this.widgetProperties.config.radialSize == "baseplateCompass") {
       this.gaugeOptions.highlights = [];
       this.gaugeOptions.highlightsWidth = 0;
@@ -402,7 +404,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         }
       });
       //@ts-ignore - bug in property definition
-      this.gaugeOptions.highlights = JSON.stringify(myZones, null, 2);
+      this.gaugeOptions.highlights = JSON.stringify(myZones, null, 1);
       this.gaugeOptions.highlightsWidth = 6;
     }
   }
