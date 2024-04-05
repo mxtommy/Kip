@@ -124,6 +124,8 @@ Linux, Mac, Pi or Windows dev platform supported
 2. Download your favorite coding IDE (we use the free Visual Code)
 3. Create your own GitHub KIP fork.
 4. Configure your IDE's source control to point to your forked KIP instance (With Visual Code, GitHub support is built-in) and get the fork's Master branch locally.
+5. Install `npm` and `node`. On macOS, you can use `brew install node` if you have homebrew.
+6. Install the Angular CLI using `npm install -g @angular/cli`
 
 **Coding**
 1. From your fork's Master branch, create working branch with a name such as: New-Widget-abc or fix-issue-abc, etc.
