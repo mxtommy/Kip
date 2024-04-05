@@ -1,10 +1,10 @@
 import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { Subscription, sampleTime } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
-import { LinearGauge, LinearGaugeOptions } from '../../gauges-module/linear-gauge';
+import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@biacsics/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
@@ -14,12 +14,12 @@ import { JsonPipe } from '@angular/common';
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
     standalone: true,
-    imports: [AngularResizeEventModule, LinearGauge, JsonPipe]
+    imports: [AngularResizeEventModule, GaugesModule, JsonPipe]
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('linearWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
-  @ViewChild('linearGauge', {static: true, read: ElementRef}) protected linearGauge: ElementRef;
+  @ViewChild('linearGauge', {static: true, read: LinearGauge}) protected linearGauge: LinearGauge;
 
   // main gauge value variable
   public dataValue = 0;
@@ -177,14 +177,14 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           let upper = zone.upper || this.widgetProperties.config.maxValue;
           let color: string;
           switch (zone.state) {
-            case 1:
+            case IZoneState.warning:
               color = this.theme.warn;
               break;
             case IZoneState.alarm:
               color = this.theme.warnDark;
               break;
             default:
-              color = this.theme.primary;
+              color = "rgba(0,0,0,0)";
           }
           myZones.push({from: lower, to: upper, color: color});
         }
@@ -202,6 +202,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
 
+    this.gaugeOptions.animateOnInit = false;
+    this.gaugeOptions.animatedValue = false;
     this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 25; // prevent data/amnimation collisions
 
     if (this.widgetProperties.config.gaugeTicks) {
@@ -248,7 +250,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.gaugeOptions.minorTicks = 10;
         this.gaugeOptions.ticksWidthMinor = 4;
 
-        this.gaugeOptions.highlightsWidth = 15;
+        this.gaugeOptions.highlightsWidth = 6;
       }
       else {
         // Vertical No ticks
