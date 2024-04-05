@@ -1,3 +1,17 @@
+# V 2.9.2
+## Improvements
+* Reintroduced High Contrast mode in Settings > General options panel
+* Correct misspellings for units description by @mshulman
+* Tutorial and Help improvements by @mshulman
+* README.md file refresh to reflect latest KIP capabilities
+* README.md file updates improving How To Contribute instructions by @mshulman
+## Fixes
+* Radial Gauge tick value label displayed incorrectly with fractional numbers
+* Radial Gauge automatic range scaling feature creating value indicator position discrepancies
+* Radial and Linear Gauges zone indicators not converted to gauge units settings
+* Steel Style Radial Gauge not displaying zones
+## New Contributors
+* @mshulman made their first contribution
 # V 2.9.1
 ## Improvements
 * Dataset meta units support for 'rad' as directional angles

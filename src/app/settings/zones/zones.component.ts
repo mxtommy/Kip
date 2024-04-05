@@ -19,6 +19,7 @@ import { MatButton } from '@angular/material/button';
 import { NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
+import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'settings-zones',
@@ -74,9 +75,11 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
     let dialogRef;
 
     if (uuid) {
-      const thisZone: IZone = this.tableData.data.find((zone: IZone) => {
-        return zone.uuid === uuid;
-        });
+      const thisZone: IZone = cloneDeep(
+          this.tableData.data.find((zone: IZone) => {
+          return zone.uuid === uuid;
+          })
+        );
 
       if (thisZone) {
         dialogRef = this.dialog.open(DialogEditZone, {
