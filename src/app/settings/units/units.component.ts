@@ -28,7 +28,7 @@ export class SettingsUnitsComponent implements OnInit {
 
 
   constructor(
-    private UnitsService: UnitsService,
+    private units: UnitsService,
     private appSettingsService: AppSettingsService,
     private notificationsService: NotificationsService,
     ) { }
@@ -38,7 +38,7 @@ export class SettingsUnitsComponent implements OnInit {
     this.defaultUnits = this.appSettingsService.getDefaultUnits();
 
     //format unit group data a bit better for consumption in template
-    let unitGroupsRaw = this.UnitsService.getConversions();
+    let unitGroupsRaw = this.units.getConversions();
 
     for (let gindex = 0; gindex < unitGroupsRaw.length; gindex++) {
       const unitGroup = unitGroupsRaw[gindex];
