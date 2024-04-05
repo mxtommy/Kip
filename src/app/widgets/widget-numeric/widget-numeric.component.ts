@@ -23,7 +23,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   labelColor: string = undefined;
   valueColor: string = undefined;
   dataTimestamp: number = Date.now();
-  currentValueLength: number = 0; // length (in charters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentMinMaxLength: number = 0;
   valueFontSize: number = 1;
   minMaxFontSize: number = 1;

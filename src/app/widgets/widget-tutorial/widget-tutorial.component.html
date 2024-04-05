@@ -1,7 +1,7 @@
 <div class="tabGroupPanel mat-typography">
   <div *ngIf="!unlockStatus">
     <h3>Kip Installation Notes</h3>
-    <p>For complete functionality, certain Signal K plugin should be installed on the server
+    <p>For complete functionality, certain Signal K plugins should be installed on the server
       you are connecting to:
     </p>
     <ul>
@@ -29,7 +29,9 @@
         <p>
           Configure KIP's Signal K server URL connection and connect to receive data. Use the
           "Set Sign In credentials" button to authenticate to the server with a pre existing
-          Signal K user/password and enable KIP configuration to be shared by any device. See
+          Signal K user/password. This setting also tells KIP to save the widget configuration
+          on the Signal K server under your user profile, so your widget configuration is shared 
+          by all devices that you log in from. See
           <a routerLink="/help">Configuration Management Help</a> for more instructions.
         </p>
         <button mat-raised-button routerLink="/settings">Configure</button>
