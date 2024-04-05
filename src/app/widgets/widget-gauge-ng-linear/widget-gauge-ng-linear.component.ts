@@ -8,6 +8,7 @@ import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@biacsics/ng-canv
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
+import Qty from 'js-quantities';
 
 @Component({
     selector: 'app-widget-gauge-ng-linear',
@@ -173,8 +174,13 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.zones.forEach(zone => {
         // get zones for our path
         if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
-          let lower = zone.lower || this.widgetProperties.config.minValue;
-          let upper = zone.upper || this.widgetProperties.config.maxValue;
+          // Perform Units conversion
+          const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
+          let lower = convert(zone.lower);
+          let upper = convert(zone.upper);
+
+          lower = lower || this.widgetProperties.config.minValue;
+          upper = upper || this.widgetProperties.config.maxValue;
           let color: string;
           switch (zone.state) {
             case IZoneState.warning:
