@@ -378,7 +378,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setHighlights(): void {
-    if (!this.zones.length) {return};
+    if (!this.zones.length) {
+      this.gaugeOptions.highlights = [];
+      return};
     if (this.widgetProperties.config.radialSize == "marineCompass" || this.widgetProperties.config.radialSize == "baseplateCompass") {
       this.gaugeOptions.highlights = [];
       this.gaugeOptions.highlightsWidth = 0;
