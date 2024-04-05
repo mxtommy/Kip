@@ -1,8 +1,19 @@
 <div class="mat-typography">
   <form #general="ngForm" name="GeneraSetting">
     <h2>Display Modes</h2>
-    <mat-checkbox class="full-width" [(ngModel)]="autoNightModeConfig" [ngModelOptions]="{standalone: false}" name="autoNightMode" (change)="isAutoNightPathSupported($event)">Automatically change between Day and Night Modes based on sun phases preserving your night vision</mat-checkbox>
-    <mat-checkbox class="full-width" [(ngModel)]="enableHighContrast" [ngModelOptions]="{standalone: false}" name="enableHighContrast" (change)="setTheme($event)">Enable full sunlight High Contrast, black and white display</mat-checkbox>
+    <mat-checkbox class="full-width" [(ngModel)]="autoNightModeConfig" [ngModelOptions]="{standalone: false}" name="autoNightMode" (change)="isAutoNightPathSupported($event)">
+      Automatically change between Day and Night Modes based on sun phases preserving your night vision
+    </mat-checkbox>
+    <p class="mat-card-subtitle">
+      Requires:
+    </p>
+      <ul>
+        <li>The Derived Data plugin must be installed and enabled.</li>
+        <li>The Derived Data plugin must have "Sun:Sets environment.sun" parameter enabled.</li>
+      </ul>
+    <mat-checkbox class="full-width" [(ngModel)]="enableHighContrast" [ngModelOptions]="{standalone: false}" name="enableHighContrast" (change)="setTheme($event)">
+      Enable full sunlight High Contrast, black and white display
+    </mat-checkbox>
     <h2>Notifications</h2>
     <p class="mat-card-subtitle">Notifications are a special type of data sent from Signal K and displayed in the
       notification menu. They are meant to alert or inform operators. Set server
