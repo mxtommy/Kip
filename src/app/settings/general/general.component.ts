@@ -70,7 +70,7 @@ export class SettingsGeneralComponent implements OnInit {
 
   public isAutoNightPathSupported(event):void {
     if (event.checked) {
-      if (!this.app.validateAutoNighModeSupported()) {
+      if (!this.app.validateAutoNightModeSupported()) {
         this.autoNightModeConfig = false;
       }
     }
