@@ -24,6 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { AngularResizeEventModule } from 'angular-resize-event';
+import { GaugesModule } from '@biacsics/ng-canvas-gauges';
 import { AngularSplitModule } from 'angular-split';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
@@ -64,15 +65,15 @@ import 'hammerjs';
  */
 const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
   return () => appNetInitSvc.initNetworkServices()
-  .then(res => {})
-  .catch(res => {})
+    .then(res => { })
+    .catch(res => { })
 };
 const appRoutes: Routes = [
   { path: '', redirectTo: 'page/0', pathMatch: 'full' },
   { path: 'page/:id', component: RootDisplayComponent },
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
-  { path: 'data',  component: DataBrowserComponent },
+  { path: 'data', component: DataBrowserComponent },
   { path: 'login', component: WidgetLoginComponent }
 ];
 
@@ -96,65 +97,95 @@ if (environment.production) {
 }
 
 bootstrapApplication(AppComponent, {
-    providers: [
-        importProvidersFrom(BrowserModule, FormsModule, ReactiveFormsModule, AngularSplitModule, AngularResizeEventModule, MatMenuModule, MatButtonModule, MatTooltipModule, MatDialogModule, MatSelectModule, MatToolbarModule, MatCheckboxModule, MatGridListModule, MatRadioModule, MatTabsModule, MatCardModule, MatSnackBarModule, MatStepperModule, MatInputModule, MatExpansionModule, MatBadgeModule, MatSlideToggleModule, MatListModule, MatAutocompleteModule, MatTableModule, MatPaginatorModule, MatSortModule, HammerModule),
-        // Imports Interceptor that capture http requests and inserts authorization
-        // Token automatically in every httpClient outbound calls.
-        // NOTE: it does not work for WebSockets. Only http/REST calls
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: AuthenticationInterceptor,
-            multi: true
-        },
-        // Imports AppInitService which executes function appInitializerFn()
-        // during the application initialization process (bootstrapping) to
-        // get app config from server storage before starting AppSettings service.
-        AppNetworkInitService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: appNetworkInitializerFn,
-            deps: [AppNetworkInitService],
-            multi: true,
-        },
-        // Binds KIP's Hammerjs configuration overrides to a provider
-        {
-            provide: HAMMER_GESTURE_CONFIG,
-            useClass: kipHammerConfig
-        },
-        // MatDialog App wide default config
-        {
-            provide: MAT_DIALOG_DEFAULT_OPTIONS,
-            useValue: {
-                panelClass: 'mat-dialog-panel',
-                backdropClass: 'mat-dialog-backdrop',
-                minWidth: '60%',
-                minHeight: '50%',
-                autoFocus: 'first-tabbable'
-            }
-        },
-        {
-            provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-            useValue: {
-                appearance: 'outline',
-                floatLabel: "always",
-                subscriptSizing: "dynamic"
-            }
-        },
-        AuthenticationService,
-        SignalKDataService,
-        SignalKConnectionService,
-        SignalKDeltaService,
-        DatasetService,
-        LayoutSplitsService,
-        WidgetListService,
-        WidgetManagerService,
-        UnitsService,
-        AppSettingsService,
-        NotificationsService,
-        TimersService,
-        StorageService,
-        provideHttpClient(withInterceptorsFromDi()),
-        provideRouter(appRoutes, withHashLocation()),
-        provideAnimations(),
-    ]
+  providers: [
+    importProvidersFrom(
+      BrowserModule,
+      FormsModule,
+      ReactiveFormsModule,
+      AngularSplitModule,
+      AngularResizeEventModule,
+      GaugesModule,
+      MatMenuModule,
+      MatButtonModule,
+      MatTooltipModule,
+      MatDialogModule,
+      MatSelectModule,
+      MatToolbarModule,
+      MatCheckboxModule,
+      MatGridListModule,
+      MatRadioModule,
+      MatTabsModule,
+      MatCardModule,
+      MatSnackBarModule,
+      MatStepperModule,
+      MatInputModule,
+      MatExpansionModule,
+      MatBadgeModule,
+      MatSlideToggleModule,
+      MatListModule,
+      MatAutocompleteModule,
+      MatTableModule,
+      MatPaginatorModule,
+      MatSortModule,
+      HammerModule
+    ),
+    // Imports Interceptor that capture http requests and inserts authorization
+    // Token automatically in every httpClient outbound calls.
+    // NOTE: it does not work for WebSockets. Only http/REST calls
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthenticationInterceptor,
+      multi: true,
+    },
+    // Imports AppInitService which executes function appInitializerFn()
+    // during the application initialization process (bootstrapping) to
+    // get app config from server storage before starting AppSettings service.
+    AppNetworkInitService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: appNetworkInitializerFn,
+      deps: [AppNetworkInitService],
+      multi: true,
+    },
+    // Binds KIP's Hammerjs configuration overrides to a provider
+    {
+      provide: HAMMER_GESTURE_CONFIG,
+      useClass: kipHammerConfig,
+    },
+    // MatDialog App wide default config
+    {
+      provide: MAT_DIALOG_DEFAULT_OPTIONS,
+      useValue: {
+        panelClass: "mat-dialog-panel",
+        backdropClass: "mat-dialog-backdrop",
+        minWidth: "60%",
+        minHeight: "50%",
+        autoFocus: "first-tabbable",
+      },
+    },
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: {
+        appearance: "outline",
+        floatLabel: "always",
+        subscriptSizing: "dynamic",
+      },
+    },
+    AuthenticationService,
+    SignalKDataService,
+    SignalKConnectionService,
+    SignalKDeltaService,
+    DatasetService,
+    LayoutSplitsService,
+    WidgetListService,
+    WidgetManagerService,
+    UnitsService,
+    AppSettingsService,
+    NotificationsService,
+    TimersService,
+    StorageService,
+    provideHttpClient(withInterceptorsFromDi()),
+    provideRouter(appRoutes, withHashLocation()),
+    provideAnimations(),
+  ],
 });
