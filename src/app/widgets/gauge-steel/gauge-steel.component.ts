@@ -1,5 +1,8 @@
 import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, Renderer2 } from '@angular/core';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
+import Qty from 'js-quantities';
+import { ITheme } from '../../core/interfaces/widgets-interface';
 
 declare let steelseries: any; // 3rd party
 
@@ -55,10 +58,11 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   @Input('frameColor') frameColor: string;
   @Input('minValue') minValue: number;
   @Input('maxValue') maxValue: number;
-  @Input('zones') zones: Array<{ low: number; high: number; state: string}>;
+  @Input('zones') zones: IZone[];
   @Input('title') title: string;
   @Input('units') units: string;
   @Input('value') value: number;
+  @Input('themeColors') theme: ITheme;
 
 
   gaugeWidth: number = 0;
@@ -119,24 +123,32 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
     // Zones
     // Define some sections
     if (this.zones) {
+
       let sections = [];
-      let areas = []
-      for (let i=0;i < this.zones.length; i++) {
-        switch (this.zones[i].state) {
-          case 'good':
-            sections.push(steelseries.Section(this.zones[i].low, this.zones[i].high, 'rgba(0, 220, 0, 0.3)'));
+      let areas = [];
+
+      this.zones.forEach(zone => {
+        // Perform Units conversion
+        const convert = Qty.swiftConverter(zone.unit, this.units);
+        let lower = convert(zone.lower);
+        let upper = convert(zone.upper);
+
+        lower = lower || this.minValue;
+        upper = upper || this.maxValue;
+        let color: string;
+        switch (zone.state) {
+          case IZoneState.warning:
+            color = this.theme.warn;
             break;
-          case 'warn':
-            sections.push(steelseries.Section(this.zones[i].low, this.zones[i].high, 'rgba(220, 220, 0, 0.3)'));
+          case IZoneState.alarm:
+            color = this.theme.warnDark;
             break;
-          case 'alert':
-            if (this.gaugeType == 'radial' && (!this.barGauge)) {
-              areas.push(steelseries.Section(this.zones[i].low, this.zones[i].high, 'rgba(220, 0, 0, 0.3)'));
-            } else {
-              sections.push(steelseries.Section(this.zones[i].low, this.zones[i].high, 'rgba(220, 0, 0, 0.3)'));
-            }
+          default:
+            color = "rgba(0,0,0,0)";
         }
-      }
+
+        sections.push(steelseries.Section(lower, upper, color));
+      });
 
       this.gaugeOptions['section'] = sections;
       this.gaugeOptions['area'] = areas;
@@ -204,7 +216,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
     if (!this.gaugeStarted) { return; }
 
     if (changes.value) {
-      if (! changes.value.firstChange) {
+      if (!changes.value.firstChange) {
         this.gauge.setValueAnimated(changes.value.currentValue);
       }
     }
@@ -259,6 +271,10 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
       if ( !changes.frameColor.firstChange) {
         this.startGauge();//reset
       }
+    }
+
+    if (changes.zones) {
+      this.startGauge(); //reset
     }
   }
 

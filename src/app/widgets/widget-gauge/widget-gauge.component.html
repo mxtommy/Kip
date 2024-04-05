@@ -12,9 +12,10 @@
     [minValue]="widgetProperties.config.minValue"
     [maxValue]="widgetProperties.config.maxValue"
 
-    [zones]=""
+    [zones]="this.zones"
     [title]="widgetProperties.config.displayName"
     [units]="widgetProperties.config.paths['gaugePath'].convertUnitTo"
     [value]="dataValue"
+    [themeColors]="this.theme"
   ></gauge-steel>
 </div>

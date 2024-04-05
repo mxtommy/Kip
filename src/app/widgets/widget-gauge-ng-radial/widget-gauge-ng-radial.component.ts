@@ -8,6 +8,7 @@ import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import Qty from 'js-quantities';
 
 @Component({
     selector: 'app-widget-gauge-ng-radial',
@@ -386,8 +387,14 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       this.zones.forEach(zone => {
         // get zones for our path
         if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
-          let lower = zone.lower || this.widgetProperties.config.minValue;
-          let upper = zone.upper || this.widgetProperties.config.maxValue;
+
+          // Perform Units conversion
+          const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
+          let lower = convert(zone.lower);
+          let upper = convert(zone.upper);
+
+          lower = lower || this.widgetProperties.config.minValue;
+          upper = upper || this.widgetProperties.config.maxValue;
           let color: string;
           switch (zone.state) {
             case IZoneState.warning:
@@ -403,7 +410,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           myZones.push({from: lower, to: upper, color: color});
         }
       });
-      //@ts-ignore - bug in property definition
+      //@ts-ignore - bug in highlights property definition
       this.gaugeOptions.highlights = JSON.stringify(myZones, null, 1);
       this.gaugeOptions.highlightsWidth = 6;
     }
