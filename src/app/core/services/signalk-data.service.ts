@@ -192,7 +192,7 @@ export class SignalKDataService implements OnDestroy {
 
   private setSelfUrn(value: string) {
     if ((value != "" || value != null) && value != this.selfUrn) {
-      console.debug('[SignalK Service] Setting self to: ' + value);
+      console.debug('[Signal K Data Service] Setting self to: ' + value);
       this.selfUrn = value;
     }
   }
@@ -303,7 +303,7 @@ export class SignalKDataService implements OnDestroy {
         upper = Infinity;
       }
 
-      let convertedValue = this.unitService.convertUnit(zone.unit, dataPath.value);
+      let convertedValue = this.unitService.convertToUnit(zone.unit, dataPath.value);
       if (convertedValue >= lower && convertedValue <= upper) {
         //in zone
         state = Math.max(state, zone.state);
@@ -373,7 +373,7 @@ export class SignalKDataService implements OnDestroy {
           });
         } else {
           //we're looking for a source we don't know about. Error out to console
-          console.error(`Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
+          console.error(`[Signal K Data Service] Failed updating zone state. Source unknown or not defined for path: ${pathRegister.source}`);
         }
       }
     );

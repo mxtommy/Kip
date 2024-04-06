@@ -45,7 +45,7 @@ export class DataBrowserRowComponent implements OnInit {
     if (typeof(value) != "number") {
       return value; //is a string or bool or ??
     }
-    let converted = this.unitsService.convertUnit(this.selectedUnit, value);
+    let converted = this.unitsService.convertToUnit(this.selectedUnit, value);
 
     return converted;
   }

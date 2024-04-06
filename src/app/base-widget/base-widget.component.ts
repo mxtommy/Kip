@@ -131,7 +131,7 @@ export abstract class BaseWidgetComponent {
         dataPipe$ = pathObs.observable.pipe(
           // filterNullish(),
           map(x => ({
-            value: this.unitsService.convertUnit(convert, x.value),
+            value: this.unitsService.convertToUnit(convert, x.value),
             state: x.state
           })),
           sampleTime(widgetSample),
@@ -155,7 +155,7 @@ export abstract class BaseWidgetComponent {
         dataPipe$ = pathObs.observable.pipe(
           // filterNullish(),
           map(x => ({
-            value: this.unitsService.convertUnit(convert, x.value),
+            value: this.unitsService.convertToUnit(convert, x.value),
             state: x.state
           })),
           sampleTime(widgetSample),
