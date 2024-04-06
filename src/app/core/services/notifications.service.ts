@@ -1,5 +1,6 @@
 /**
- * This class handles both App notifications Snackbar and SignalK Notifications
+ * This Angular Service handles both app notifications to the Snackbar and Signal K
+ * Alert Notifications
  */
 import { Injectable, OnDestroy } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
@@ -63,7 +64,8 @@ export class NotificationsService implements OnDestroy {
   private notificationConfig: INotificationConfig;
   public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
-  private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
+  
+  // private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
   private activeAlarmsSubject = new BehaviorSubject<any>({});
   private alarmsInfo: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({
     audioSev: 0,
@@ -335,12 +337,13 @@ export class NotificationsService implements OnDestroy {
    */
   public processNotificationDelta(notificationDelta: INotificationDelta) {
     if (this.notificationConfig.disableNotifications) {
+      notificationDelta = null;
       return;
     }
 
     if (notificationDelta.notification === null) {
       // Alarm removed/cleared on server.
-      if (this.deleteAlarm(notificationDelta.path)) {};
+      this.deleteAlarm(notificationDelta.path);
     } else {
       if (notificationDelta.path in this.alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
