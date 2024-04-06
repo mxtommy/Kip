@@ -1,3 +1,5 @@
+vandalism
+
 # V 2.9.2
 ## Improvements
 * Reintroduced High Contrast mode in Settings > General options panel
