@@ -148,6 +148,3 @@ Use the following tool and command line:
 
 **Share**
 Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
-
-**Communication and Collaboration**
-Join us on Slack -> Signalk-dev / Kip channel. We will hook up and assist as best we can.
