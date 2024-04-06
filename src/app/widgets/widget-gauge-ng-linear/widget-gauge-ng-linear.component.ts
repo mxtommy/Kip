@@ -174,10 +174,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.zones.forEach(zone => {
         // get zones for our path
         if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
-          // Perform Units conversion
-          const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
-          let lower = convert(zone.lower);
-          let upper = convert(zone.upper);
+          // Perform Units conversions on zone range
+          let lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
+          let upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
 
           lower = lower || this.widgetProperties.config.minValue;
           upper = upper || this.widgetProperties.config.maxValue;

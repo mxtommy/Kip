@@ -1,7 +1,7 @@
+import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, Renderer2 } from '@angular/core';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
-import Qty from 'js-quantities';
 import { ITheme } from '../../core/interfaces/widgets-interface';
 
 declare let steelseries: any; // 3rd party
@@ -77,7 +77,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
 
   sections;
 
-  constructor() { }
+  constructor(private unitsSvc: UnitsService) { }
 
   ngAfterViewInit() {
     if (!this.gaugeType) { this.gaugeType = 'radial'; }
@@ -128,10 +128,11 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
       let areas = [];
 
       this.zones.forEach(zone => {
-        // Perform Units conversion
-        const convert = Qty.swiftConverter(zone.unit, this.units);
-        let lower = convert(zone.lower);
-        let upper = convert(zone.upper);
+        // Perform Units conversions on zone range
+        let lower = this.unitsSvc.convertToUnit(this.units, zone.lower);
+        let upper = this.unitsSvc.convertToUnit(this.units, zone.upper);
+
+
 
         lower = lower || this.minValue;
         upper = upper || this.maxValue;

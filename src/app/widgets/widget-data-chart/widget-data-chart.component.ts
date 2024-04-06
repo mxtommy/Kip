@@ -430,11 +430,11 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         }
 
         let trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPoint.data.sma : dsPoint.data.value;
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
+        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
 
-        const lastAverage = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastAverage);
-        const lastMinimum = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMinimum);
-        const lastMaximum = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMaximum);
+        const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastAverage);
+        const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMinimum);
+        const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMaximum);
 
         if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
           this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
@@ -459,22 +459,22 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
     // Check if its a value or an average row
     if (datasetType === 0) {
-      newRow.y = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, row.data.value);
+      newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.value);
     } else {
       switch (this.widgetProperties.config.datasetAverageArray) {
         case "sma":
-          newRow.y = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, row.data.sma);
+          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.sma);
           break;
         case "ema":
-          newRow.y = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, row.data.ema);
+          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.ema);
           break;
 
         case "dema":
-          newRow.y = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, row.data.doubleEma);
+          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.doubleEma);
           break;
 
         case "avg":
-          newRow.y = this.unitsService.convertUnit(this.widgetProperties.config.convertUnitTo, row.data.lastAverage);
+          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.lastAverage);
           break;
       }
     }

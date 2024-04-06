@@ -30,9 +30,6 @@ export interface IUnitDefaults {
 @Injectable()
 
 export class UnitsService {
-
-
-
   defaultUnits: IUnitDefaults;
   defaultUnitsSub: Subscription;
 
@@ -143,7 +140,6 @@ export class UnitsService {
     ] },
   ];
 
-
   constructor(  private AppSettingsService: AppSettingsService,
     ) {
       this.defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
@@ -153,8 +149,7 @@ export class UnitsService {
       );
   }
 
-
-  unitConversionFunctions = {
+  private unitConversionFunctions = {
     'unitless': function(v) { return v; },
 //  speed
     'knots': Qty.swiftConverter("m/s", "kn"),
@@ -284,20 +279,48 @@ export class UnitsService {
     },
   }
 
-
-
-  convertUnit(unit: string, value: number): number {
+  /**
+   * Converts any number to the specified unit. The function does not validate if
+   * source and destination units are compatible, ie. kph to degrees will be converted
+   * but will return meaningless results.
+   *
+   * If the unit is not know, or or the value is null, Null will be returned.
+   *
+   * @param {string} unit The conversion type unit
+   * @param {number} value The source value
+   * @return {*}  {number} The result of the conversion
+   * @memberof UnitsService
+   */
+  public convertToUnit(unit: string, value: number): number {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
     let num: number = +value; // sometime we get strings here. Weird! Lazy patch.
     return this.unitConversionFunctions[unit](num);
   }
-
-  getDefaults(): IUnitDefaults {
+  /**
+   * Returns the list KIP default unit conversion settings applied before presentation.
+   * See KIP's Units Settings configuration.
+   *
+   * Ex: If a Signal K path's meta Units is set to 'm/s', could KIP automatically
+   * convert to say, 'knots' before presentation. Received Signal K data is always
+   * kept in native format.
+   *
+   * @return {*}  {IUnitDefaults}
+   * @memberof UnitsService
+   */
+  public getDefaults(): IUnitDefaults {
     return this.defaultUnits;
   }
-  getConversions(): IUnitGroup[] {
+
+  /**
+   * Return the list of possible conversions matrix by unit groups. Useful
+   * to present possible conversion or select a conversation units that are
+   * related.
+   *
+   * @return {*}  {IUnitGroup[]} an array of units by groups
+   * @memberof UnitsService
+   */
+  public getConversions(): IUnitGroup[] {
     return this.conversionList;
   }
-
 }
