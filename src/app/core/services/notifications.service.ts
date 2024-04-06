@@ -1,7 +1,7 @@
 /**
  * This class handles both App notifications Snackbar and SignalK Notifications
  */
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
@@ -57,8 +57,9 @@ export interface IAlarmInfo {
 @Injectable({
   providedIn: 'root'
 })
-export class NotificationsService {
-  private notificationServiceSettings: Subscription;
+export class NotificationsService implements OnDestroy {
+  private notificationSettingsSubscription: Subscription = null;
+  private notificationStreamSubscription: Subscription = null;
   private notificationConfig: INotificationConfig;
   public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
@@ -74,22 +75,25 @@ export class NotificationsService {
   public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
 
   // sounds properties
-  howlPlayer: Howl;
-  activeAlarmSoundtrack: number;
-  activeHowlId: number;
-  isHowlIdMuted: boolean = false;
+  private howlPlayer: Howl;
+  private activeAlarmSoundtrack: number = null;
+  private activeHowlId: number = null;
+  private isHowlIdMuted: boolean = false;
 
 
   constructor(
     private appSettingsService: AppSettingsService,
     private deltaService: SignalKDeltaService,
     ) {
-    // Observer of Notification Servicer configuration
-    this.notificationServiceSettings = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
+    // Observer of Notification Service configuration changes
+    this.notificationSettingsSubscription = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
-      this.notificationConfig$.next(config); // push to alrm menu
-      if (this.notificationConfig.disableNotifications) {
-        this.resetAlarms();
+      this.notificationConfig$.next(config); // push to alarm menu
+      if (this.notificationConfig.disableNotifications && !this.notificationStreamSubscription?.closed) {
+        this.stopNotificationStream();
+      }
+      if (!this.notificationConfig.disableNotifications && (this.notificationStreamSubscription === null || this.notificationStreamSubscription?.closed)) {
+          this.startNotificationStream();
       }
       if (this.notificationConfig.sound.disableSound) {
         this.playAlarm(1000); // will stop any playing track if any
@@ -98,20 +102,27 @@ export class NotificationsService {
       }
     });
 
-    //Observer of server connection status
+    // Observer of server connection status to reset notifications on SK reconnect
     this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
       if (streamStatus.operation === 2) {
         this.resetAlarms();
       }
     });
 
+    // Init alarm audio player
+    this.howlPlayer = this.getPlayer(1000);
+   }
+
+   private startNotificationStream() {
     // Observer of Delta Service Notification message
-    this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotificationDelta) => {
+    this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotificationDelta) => {
       this.processNotificationDelta(notification);
     });
+   }
 
-    // init alarm player
-    this.howlPlayer = this.getPlayer(1000);
+   private stopNotificationStream() {
+    this.notificationStreamSubscription?.unsubscribe();
+    this.resetAlarms();
    }
 
   /**
@@ -208,7 +219,7 @@ export class NotificationsService {
   /**
    * Set Acknowledgement and send to other observers so they can react accordingly
    * @param path alarm to acknowledge
-   * @param timeout if set will unacknowledge in this time
+   * @param timeout if set will unacknowledged in this time
    * @return true if alarms found, else false
    */
   public acknowledgeAlarm(path: string, timeout: number = 0): boolean {
@@ -216,6 +227,7 @@ export class NotificationsService {
       this.alarms[path].isAck = true;
       this.activeAlarmsSubject.next(this.alarms);
       if (timeout > 0) {
+        //TODO: check this timeout expiration!
         setTimeout(()=>{
           console.log("unack: "+ path);
           if (path in this.alarms) {
@@ -238,14 +250,13 @@ export class NotificationsService {
     let unAckAlarms = 0;
     let audioSev = 0;
     let visualSev = 0;
-    for (const [path, alarm] of Object.entries(this.alarms))
-    {
+    for (const [path, alarm] of Object.entries(this.alarms)) {
       if (alarm.isAck) { continue; }
       unAckAlarms++;
       let aSev = 0;
       let vSev = 0;
 
-      //seems INotification can sometimes not have method set. (Problem from server?)
+      // It appears INotification have no method set. (Problem from server?)
       if (!('method' in alarm.notification)) {
         continue; // if there's no method, don't alarm...
       }
@@ -405,5 +416,10 @@ export class NotificationsService {
 
   public getNotificationServiceConfigAsO(): Observable<INotificationConfig> {
     return this.notificationConfig$.asObservable();
+  }
+
+  ngOnDestroy(): void {
+    this.notificationSettingsSubscription?.unsubscribe();
+    this.notificationStreamSubscription?.unsubscribe();
   }
 }
