@@ -1,4 +1,4 @@
-# V 2.9.2
+# V 2.9.3
 ## Improvements
 * Reintroduced High Contrast mode in Settings > General options panel
 * Correct misspellings for units description by @mshulman
@@ -12,6 +12,7 @@
 * Steel Style Radial Gauge not displaying zones
 ## New Contributors
 * @mshulman made their first contribution
+# V 2.9.2 - retracted due to build issues. Republished as 2.9.3
 # V 2.9.1
 ## Improvements
 * Dataset meta units support for 'rad' as directional angles
