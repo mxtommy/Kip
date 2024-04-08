@@ -15,32 +15,41 @@
     <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
   </div>
 </button>
+
 <mat-menu #alarmMenu="matMenu" focusFirstItem>
-  <div *ngFor="let alarm of alarms | keyvalue; index as i; trackBy:trackAlarmPath">
-    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.notification.message">
-      <div class="menu-items-with-icons" *ngIf="alarm.value.isAck" class="fa-solid fa-lg fa-check"></div>
-      <div class="menu-items-with-icons" *ngIf="!alarm.value.isAck" class="fa-solid fa-lg fa-exclamation"></div>
-      {{ alarm.value.notification.message.replace("self.", "") }}
-    </button>
-    <mat-menu #actions="matMenu">
-      <button
-        mat-menu-item
-        (click)="ackAlarm(alarm.key)"
 
-        matTooltip="Silence Alarm (until state change)"
-        >
-        Acknowledge
+  @for (alarm of alarm$ | async; track alarm.path) {
+    <ng-template matMenuContent>
+      <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.alarm.notification.message">
+        <div class="menu-items-with-icons" *ngIf="alarm.alarm.isAck" class="fa-solid fa-lg fa-check"></div>
+        <div class="menu-items-with-icons" *ngIf="!alarm.alarm.isAck" class="fa-solid fa-lg fa-exclamation"></div>
+        {{ alarm.alarm.notification.message.replace("self.", "") }}
       </button>
-      <button
-        mat-menu-item
-        (click)="ackAlarm(alarm.key, 300000)"
+      <mat-menu #actions="matMenu">
+        <button
+          mat-menu-item
+          (click)="ackAlarm(alarm.path)"
 
-        matTooltip="Silence Alarm for 5 minutes(state change can re-trigger)"
-        >
-        Acknowledge (5 Min)
-      </button>
-    </mat-menu>
-  </div>
+          matTooltip="Silence Alarm (until state change)"
+          >
+          Acknowledge
+        </button>
+        <button
+          mat-menu-item
+          (click)="ackAlarm(alarm.path, 300000)"
+
+          matTooltip="Silence Alarm for 5 minutes(state change can re-trigger)"
+          >
+          Acknowledge (5 Min)
+        </button>
+      </mat-menu>
+    </ng-template>
+  }
+
+
+
+
+
   <mat-action-list>
     <mat-divider></mat-divider>
     <button mat-list-item class="muteSoundButton" matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">

@@ -37,12 +37,16 @@ export interface AppNotification {
  * @ack Optional Alarm acknowledgment property
  * @notification Native Signal K Notification message as Object INotification
  */
-export interface Alarm {
+export interface IAlarm {
   path: string;
-  type: string;
   isAck: boolean;
   notification: INotification;
 }
+
+export interface IAlarmMsg {
+  path: string;
+  alarm: IAlarm;
+  }
 
 /**
  * Alarm information, some stats used
@@ -64,10 +68,9 @@ export class NotificationsService implements OnDestroy {
   private notificationConfig: INotificationConfig;
   public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
-  
-  // private alarms: { [path: string]: Alarm } = {}; // local array of Alarms with path as index key
-  private activeAlarmsSubject = new BehaviorSubject<any>({});
-  private alarmsInfo: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({
+  private _alarms: IAlarmMsg[] = []; // local array of Alarms with path as index key
+  private alarm$ = new BehaviorSubject<IAlarmMsg[] | null>(null);
+  private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({
     audioSev: 0,
     visualSev: 0,
     alarmCount: 0,
@@ -152,8 +155,8 @@ export class NotificationsService implements OnDestroy {
    * @usageNotes Internal function - Do not use.
    */
   public resetAlarms() {
-    this.alarms = {};
-    this.activeAlarmsSubject.next(this.alarms);
+    this._alarms = [];
+    this.alarm$.next(null);
   }
 
   /**
@@ -161,7 +164,7 @@ export class NotificationsService implements OnDestroy {
    * by observers whom are interested in Alarms such as Widgets and Alarm menu.
    */
   public getAlarms(): Observable<any> {
-    return this.activeAlarmsSubject.asObservable();
+    return this.alarm$.asObservable();
   }
 
   /**
@@ -177,19 +180,22 @@ export class NotificationsService implements OnDestroy {
 
     if (this.notificationConfig.disableNotifications) { return; }
 
-    if (path in this.alarms) {
-      this.alarms[path].notification = notification;
+    let newAlarm: IAlarm = null;
+
+    if (path in this._alarms) {
+      this._alarms[path].notification = notification;
     } else {
-      let newAlarm: Alarm = {
+      newAlarm = {
         path: path,         // duplicate from Alarm Object key index for added scope from individual alarm context
-        type: "device",
         isAck: false,
         notification: notification,
       };
-      this.alarms[path] = newAlarm;
+
+      this._alarms[path] = newAlarm;
     }
     this.checkAlarms();
-    this.activeAlarmsSubject.next(this.alarms);
+    const msg: IAlarmMsg[] = [{path, alarm: newAlarm}];
+    this.alarm$.next(this._alarms);
   }
 
   /**
@@ -198,9 +204,10 @@ export class NotificationsService implements OnDestroy {
    * @param notification
    */
   public updateAlarm(path: string, notification: INotification) {
-    this.alarms[path].notification = notification;
+    this._alarms[path].notification = notification;
     this.checkAlarms();
-    this.activeAlarmsSubject.next(this.alarms);
+    const msg: IAlarmMsg[] = [{path, alarm: this._alarms[path].notification}];
+    this.alarm$.next(this._alarms);
   }
 
   /**
@@ -209,10 +216,11 @@ export class NotificationsService implements OnDestroy {
   * @return True If path exists, false if not found.
   */
   public deleteAlarm(path: string): boolean {
-    if (path in this.alarms) {
-      delete this.alarms[path];
+    if (path in this._alarms) {
+      delete this._alarms[path];
       this.checkAlarms();
-      this.activeAlarmsSubject.next(this.alarms);
+      const msg: IAlarmMsg[] = [{path, alarm: this._alarms[path].notification}];
+      this.alarm$.next(this._alarms);
       return true;
     }
     return false;
@@ -225,16 +233,17 @@ export class NotificationsService implements OnDestroy {
    * @return true if alarms found, else false
    */
   public acknowledgeAlarm(path: string, timeout: number = 0): boolean {
-    if (path in this.alarms) {
-      this.alarms[path].isAck = true;
-      this.activeAlarmsSubject.next(this.alarms);
+    if (path in this._alarms) {
+      this._alarms[path].isAck = true;
+      const msg: IAlarmMsg[] = [{path, alarm: this._alarms[path].notification}];
+      this.alarm$.next(this._alarms);
       if (timeout > 0) {
         //TODO: check this timeout expiration!
         setTimeout(()=>{
           console.log("unack: "+ path);
-          if (path in this.alarms) {
-            this.alarms[path].isAck = false;
-            this.activeAlarmsSubject.next(this.alarms);
+          if (path in this._alarms) {
+            this._alarms[path].isAck = false;
+            this.alarm$.next(this._alarms);
           }
         }, timeout);
       }
@@ -252,7 +261,10 @@ export class NotificationsService implements OnDestroy {
     let unAckAlarms = 0;
     let audioSev = 0;
     let visualSev = 0;
-    for (const [path, alarm] of Object.entries(this.alarms)) {
+
+    for (let index = 0; index < this._alarms.length; index++) {
+      const alarm = this._alarms[index].alarm;
+
       if (alarm.isAck) { continue; }
       unAckAlarms++;
       let aSev = 0;
@@ -300,20 +312,21 @@ export class NotificationsService implements OnDestroy {
       visualSev = Math.max(visualSev, vSev);
     }
 
+
     if (!this.notificationConfig.sound.disableSound) {
       this.playAlarm(1000 + audioSev);
     }
-    this.alarmsInfo.next({
+    this.alarmsInfo$.next({
       audioSev: audioSev,
       visualSev: visualSev,
-      alarmCount: Object.keys(this.alarms).length,
+      alarmCount: Object.keys(this._alarms).length,
       unackCount: unAckAlarms,
       isMuted: this.isHowlIdMuted
     });
   }
 
-  getAlarmInfoAsO() {
-    return this.alarmsInfo.asObservable();
+  public getAlarmInfo() {
+    return this.alarmsInfo$.asObservable();
   }
 
   /**
@@ -345,11 +358,11 @@ export class NotificationsService implements OnDestroy {
       // Alarm removed/cleared on server.
       this.deleteAlarm(notificationDelta.path);
     } else {
-      if (notificationDelta.path in this.alarms) {
+      if (notificationDelta.path in this._alarms) {
         //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this.alarms[notificationDelta.path].notification['state'] !== notificationDelta.notification['state'])
-              ||(this.alarms[notificationDelta.path].notification['message'] !== notificationDelta.notification['message'])
-              ||(JSON.stringify(this.alarms[notificationDelta.path].notification['method']) !== JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
+        if (    (this._alarms[notificationDelta.path].notification['state'] !== notificationDelta.notification['state'])
+              ||(this._alarms[notificationDelta.path].notification['message'] !== notificationDelta.notification['message'])
+              ||(JSON.stringify(this._alarms[notificationDelta.path].notification['method']) !== JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
           this.updateAlarm(notificationDelta.path, notificationDelta.notification);
         }
       } else {

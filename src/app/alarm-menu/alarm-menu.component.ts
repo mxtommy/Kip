@@ -1,16 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NotificationsService, Alarm } from '../core/services/notifications.service';
-import { Subscription } from 'rxjs';
+import { NotificationsService, IAlarm, IAlarmMsg } from '../core/services/notifications.service';
+import { BehaviorSubject, Subscription, filter, tap } from 'rxjs';
 import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
 import { MatDivider } from '@angular/material/divider';
 import { MatActionList, MatListItem } from '@angular/material/list';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatBadge } from '@angular/material/badge';
-import { NgIf, NgFor, KeyValuePipe } from '@angular/common';
+import { NgIf, AsyncPipe } from '@angular/common';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
-
-
 
 interface IMenuNode {
   [key: string]: any;
@@ -20,7 +18,7 @@ interface IMenuNode {
 interface IMenuItem {
   [key: string]: any;
   label: string;
-  Alarm?: Alarm;
+  Alarm?: IAlarm;
 }
 
 
@@ -29,7 +27,7 @@ interface IMenuItem {
     templateUrl: './alarm-menu.component.html',
     styleUrls: ['./alarm-menu.component.scss'],
     standalone: true,
-    imports: [MatButton, MatMenuTrigger, NgIf, MatBadge, MatMenu, NgFor, MatMenuItem, MatTooltip, MatActionList, MatDivider, MatListItem, KeyValuePipe]
+    imports: [MatButton, MatMenuTrigger, NgIf, MatBadge, MatMenu, MatMenuItem, MatTooltip, MatActionList, MatDivider, MatListItem, AsyncPipe]
 })
 export class AlarmMenuComponent implements OnInit, OnDestroy {
 
@@ -37,8 +35,9 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   private notificationServiceSettingsSubscription: Subscription = null;
   private alarmInfoSubscription: Subscription = null;
 
-  alarms: { [path: string]: Alarm };
-  notificationAlarms: { [path: string]: Alarm };
+  private msg$ = this.notificationsService.getAlarms().pipe(filter(messages => messages !== null));
+  public alarm$ = this.msg$.pipe(/* tap(x => console.warn(x)),*/ filter((msgs: IAlarmMsg[]) => (msgs?.every(msg => msg.alarm.notification.state == "normal") && !this.notificationConfig.devices.showNormalState)))
+
   alarmMenu: { [key: string]: string | IMenuItem | IMenuItem } = {}; // local menu array with string key
 
   // Menu properties
@@ -48,29 +47,21 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
   blinkCrit: boolean = false;
 
   isMuted: boolean = false;
-
   notificationConfig: INotificationConfig;
 
-  constructor(
-    private notificationsService: NotificationsService,
-  ) {
+  constructor(private notificationsService: NotificationsService) {
     this.notificationServiceSettingsSubscription = this.notificationsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
     });
   }
 
   ngOnInit() {
-    // init Alarm stream
-    this.alarmSubscription = this.notificationsService.getAlarms().subscribe(
-      message => {
-        this.notificationAlarms = message;
-        // Disabling notifications is done at the service level. No need to handle it here
-        this.buildAlarmMenu();
-      }
-    );
+        // this.alarm$.subscribe(msg => {
+        //   console.log(msg);
+        // })
 
     // init alarm info
-    this.alarmInfoSubscription = this.notificationsService.getAlarmInfoAsO().subscribe(info => {
+    this.alarmInfoSubscription = this.notificationsService.getAlarmInfo().subscribe(info => {
       this.unAckAlarms = info.unackCount;
       this.isMuted = info.isMuted;
       this.alarmCount = info.alarmCount;
@@ -94,22 +85,6 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     this.notificationsService.mutePlayer(state);
   }
 
-  // we use this as a staging area to limit menu update events we build the menu from Alarms record
-  buildAlarmMenu() {
-    // clean notificationAlarms based on App Notification settings
-    if (!this.notificationConfig.devices.showNormalState) {
-      for (const [path, thealarm] of Object.entries(this.notificationAlarms)) {
-        let alarm = this.notificationAlarms[path];
-
-        if (alarm.notification['state'] == 'normal' && alarm['type'] == 'device') {
-          delete this.notificationAlarms[path];
-          break;
-        }
-      }
-    }
-    this.alarms = this.notificationAlarms;
-  }
-
   createMenuRootItem(itemLabel: string): IMenuNode | null {
     let item: IMenuNode = {
       label: itemLabel
@@ -130,7 +105,7 @@ export class AlarmMenuComponent implements OnInit, OnDestroy {
     return item;
   }
 
-  createMenuChildItem(itemLabel: string, pathPositionIndex: number, pathArray: string[], alarm: Alarm): IMenuItem | IMenuNode {
+  createMenuChildItem(itemLabel: string, pathPositionIndex: number, pathArray: string[], alarm: IAlarm): IMenuItem | IMenuNode {
     let item;
 
     const lastPosition = pathArray.length - 1;

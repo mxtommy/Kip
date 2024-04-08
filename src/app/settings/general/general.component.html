@@ -25,7 +25,7 @@
             Enable notification messages per severity level
           </mat-panel-description>
         </mat-expansion-panel-header>
-        <mat-checkbox [(ngModel)]="notificationConfig.devices.showNormalState" [ngModelOptions]="{standalone: true}">Show Devices Informational notifications</mat-checkbox>
+        <mat-checkbox [(ngModel)]="notificationConfig.devices.showNormalState" [ngModelOptions]="{standalone: true}">Show <b>Normal</b> state notifications</mat-checkbox>
       </mat-expansion-panel>
       <mat-expansion-panel expanded="false">
         <mat-expansion-panel-header>
@@ -38,7 +38,7 @@
         </mat-expansion-panel-header>
         <mat-checkbox [(ngModel)]="notificationConfig.sound.disableSound" [ngModelOptions]="{standalone: true}">Disable <b>All Audio</b> prompts</mat-checkbox>
         <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteNormal" [ngModelOptions]="{standalone: true}">Disable <b>Information</b> severity</mat-checkbox>
+        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteNormal" [ngModelOptions]="{standalone: true}">Disable <b>Normal</b> severity</mat-checkbox>
         <br/>
         <mat-checkbox [(ngModel)]="notificationConfig.sound.muteAlert" [ngModelOptions]="{standalone: true}">Disable <b>Alert</b> severity</mat-checkbox>
         <br/>
