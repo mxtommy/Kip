@@ -1,64 +1,73 @@
-<button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
-        [class.alarmCrit]="blinkCrit"
-        [class.alarmWarning]="blinkWarn"
-        [disabled]="alarmCount == 0 || notificationConfig.disableNotifications">
-  <div class="menu-items-with-icons" *ngIf="!notificationConfig.disableNotifications" [matBadgeHidden]="!unAckAlarms"
-        [matBadge]="unAckAlarms"
-        matBadgeSize="medium"
-        matBadgePosition="after"
-        matBadgeOverlap="false"
-        matBadgeColor="warn"
-        class="fa-solid fa-envelope fa-2x">
-  </div>
-  <div class="menu-items-with-icons" *ngIf="notificationConfig.disableNotifications" class="fa-stack fa-lg">
-    <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
-    <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
-  </div>
-</button>
-
-<mat-menu #alarmMenu="matMenu" focusFirstItem>
-
-  @for (alarm of alarm$ | async; track alarm.path) {
-    <ng-template matMenuContent>
-      <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.alarm.notification.message">
-        <div class="menu-items-with-icons" *ngIf="alarm.alarm.isAck" class="fa-solid fa-lg fa-check"></div>
-        <div class="menu-items-with-icons" *ngIf="!alarm.alarm.isAck" class="fa-solid fa-lg fa-exclamation"></div>
-        {{ alarm.alarm.notification.message.replace("self.", "") }}
-      </button>
-      <mat-menu #actions="matMenu">
-        <button
-          mat-menu-item
-          (click)="ackAlarm(alarm.path)"
-
-          matTooltip="Silence Alarm (until state change)"
-          >
-          Acknowledge
-        </button>
-        <button
-          mat-menu-item
-          (click)="ackAlarm(alarm.path, 300000)"
-
-          matTooltip="Silence Alarm for 5 minutes(state change can re-trigger)"
-          >
-          Acknowledge (5 Min)
-        </button>
-      </mat-menu>
-    </ng-template>
-  }
+@if(notificationInfo$ | async; as notificationInfo) {
+    <mat-menu #actions="matMenu">
+      <!-- <ng-template matMenuContent let-name="item" matTooltip="Silence Alarm (until state change)"> -->
+       <button mat-menu-item
+         (click)="ackAlarm(null)">
+         Acknowledge
+       </button>
+       <button mat-menu-item  matTooltip="Silence notification for 5 minutes, unless state changes"
+         (click)="ackAlarm(null, 300000)">
+         Acknowledge (5 Min)
+       </button>
+      <!-- </ng-template> -->
+    </mat-menu>
 
 
+  <mat-menu #alarmMenu="matMenu" focusFirstItem>
+    <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
+      [mat-menu-trigger-for]="actions"
+      [matMenuTriggerData]="menuItem"
+      (click)="ackAlarm(menuItem)">
+      <div  class="menu-items-with-icons" *ngIf="menuItem.isAck" class="fa-solid fa-lg fa-check"></div>
+      <div class="menu-items-with-icons" *ngIf="!menuItem.isAck" class="fa-solid fa-lg fa-exclamation"></div>
+      {{ menuItem.notification.message }}
+    </button>
 
 
-
-  <mat-action-list>
     <mat-divider></mat-divider>
-    <button mat-list-item class="muteSoundButton" matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">
-      <div class="menu-items-with-icons" class="mute-unmte-alarm" *ngIf="!isMuted">
+    <button *ngIf="notificationInfo$ | async as notificationInfo"  mat-menu-item class="muteSoundButton" matTooltip="Mute notification sounds"
+      (click)="mutePlayer(notificationInfo.isMuted ? false : true)">
+      <div class="menu-items-with-icons mute-unumte-alarm" *ngIf="!notificationInfo.isMuted">
         <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Alarm Audio
       </div>
-      <div class="menu-items-with-icons" class="mute-unmte-alarm" *ngIf="isMuted">
+      <div class="menu-items-with-icons mute-unmute-alarm" *ngIf="notificationInfo.isMuted">
         <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
       </div>
     </button>
-  </mat-action-list>
-</mat-menu>
+
+  </mat-menu>
+
+
+  <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
+    [class.alarmCrit]="notificationInfo.blinkCrit"
+    [class.alarmWarning]="notificationInfo.blinkWarn"
+    [disabled]="notificationInfo.alarmCount == 0 || notificationConfig.disableNotifications">
+
+  @if(notificationConfig.disableNotifications) {
+    <div class="menu-items-with-icons" [matBadgeHidden]="!notificationInfo.unackCount"
+      [matBadge]="notificationInfo.unackCount"
+      matBadgeSize="medium"
+      matBadgePosition="after"
+      matBadgeOverlap="false"
+      matBadgeColor="warn"
+      class="fa-solid fa-envelope fa-2x">
+    </div>
+  } @else {
+    <div class="menu-items-with-icons" [matBadgeHidden]="!notificationInfo.unackCount"
+      [matBadge]="notificationInfo.unackCount"
+      matBadgeSize="medium"
+      matBadgePosition="after"
+      matBadgeOverlap="false"
+      matBadgeColor="warn"
+      class="fa-solid fa-envelope fa-2x">
+    </div>
+  }
+
+  @if(notificationConfig.disableNotifications) {
+    <div class="menu-items-with-icons fa-stack fa-lg">
+      <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
+      <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
+    </div>
+  }
+  </button>
+}

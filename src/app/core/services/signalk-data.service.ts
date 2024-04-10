@@ -5,7 +5,7 @@ import { IPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/ap
 import { Method, State } from '../interfaces/signalk-interfaces'
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDeltaService } from './signalk-delta.service';
+import { INotification, SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import { NotificationsService } from './notifications.service';
 import Qty from 'js-quantities';
@@ -311,7 +311,7 @@ export class SignalKDataService implements OnDestroy {
     });
 
     // if we're not in alarm, and new state is alarm, sound the alarm!
-    if (state != IZoneState.normal && state != this.skData[pathIndex].state) {
+    if (state != this.skData[pathIndex].state) {
       let stateString: State; // notification service needs string....
       let methods: Method[] = null;
       switch (state) {
@@ -327,20 +327,24 @@ export class SignalKDataService implements OnDestroy {
             methods = [ 'visual','sound' ];
             break;
 
+        // @ts-ignore
+        case IZoneState.normal:
+          stateString = "normal"
+          methods = [ 'visual','sound' ];
+          break;
       }
 
       // start
-      this.notificationsService.addAlarm(updatePath, {
-        method: methods,
-        state: stateString,
-        message: updatePath + ' value in ' + stateString,
-        timestamp: Date.now().toString(),
-      })
-    }
-
-    // if we're in alarm, and new state is not alarm, stop the alarm
-    if (this.skData[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
-      this.notificationsService.deleteAlarm(updatePath);
+      const zoneNotification: INotification = {
+        path: updatePath,
+        notification: {
+          method: methods,
+          state: stateString,
+          message: updatePath + ' value in ' + stateString,
+          timestamp: Date.now().toString()
+        }
+      }
+      this.notificationsService.processNotificationDelta(zoneNotification);
     }
 
     this.skData[pathIndex].state = state;

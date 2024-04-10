@@ -8,9 +8,9 @@ import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { SignalKDeltaService, INotificationDelta, IStreamStatus } from './signalk-delta.service';
-import { INotification } from "../interfaces/app-interfaces";
+import { SignalKDeltaService, INotification, IStreamStatus } from './signalk-delta.service';
 import { Howl } from 'howler';
+import { isEqual } from 'lodash-es';
 
 const alarmTrack = {
   1000 : 'notification', //filler
@@ -37,16 +37,9 @@ export interface AppNotification {
  * @ack Optional Alarm acknowledgment property
  * @notification Native Signal K Notification message as Object INotification
  */
-export interface IAlarm {
-  path: string;
+export interface INotificationMessage extends INotification {
   isAck: boolean;
-  notification: INotification;
 }
-
-export interface IAlarmMsg {
-  path: string;
-  alarm: IAlarm;
-  }
 
 /**
  * Alarm information, some stats used
@@ -59,24 +52,35 @@ export interface IAlarmInfo {
   isMuted: boolean;
 }
 
+interface ISeverityLevel {
+  sound: number;
+  visual: number;
+}
+
+interface IAlarmSeverities {
+  [key: string]: ISeverityLevel;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationsService implements OnDestroy {
+  private static readonly ALARM_SEVERITIES: IAlarmSeverities = {
+    normal: { sound: 0, visual: 0 },
+    alert: { sound: 1, visual: 1 },
+    warn: { sound: 2, visual: 1 },
+    alarm: { sound: 3, visual: 2 },
+    emergency: { sound: 4, visual: 2 },
+  };
   private notificationSettingsSubscription: Subscription = null;
   private notificationStreamSubscription: Subscription = null;
-  private notificationConfig: INotificationConfig;
+  private _notificationConfig: INotificationConfig;
   public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
-  private _alarms: IAlarmMsg[] = []; // local array of Alarms with path as index key
-  private alarm$ = new BehaviorSubject<IAlarmMsg[] | null>(null);
-  private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({
-    audioSev: 0,
-    visualSev: 0,
-    alarmCount: 0,
-    unackCount: 0,
-    isMuted: false
-  });
+  private _notifications: INotificationMessage[] = []; // local array of Alarms with path as index key
+  private notifications$ = new BehaviorSubject<INotificationMessage[] | null>(null);
+  private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, unackCount: 0, isMuted: false});
   public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
 
   // sounds properties
@@ -85,6 +89,9 @@ export class NotificationsService implements OnDestroy {
   private activeHowlId: number = null;
   private isHowlIdMuted: boolean = false;
 
+  // Notification acknowledge timeouts references
+  private timeoutIds: { [key: string]: NodeJS.Timeout | null } = {};
+  private lastEmittedValue: IAlarmInfo = null;
 
   constructor(
     private appSettingsService: AppSettingsService,
@@ -92,43 +99,239 @@ export class NotificationsService implements OnDestroy {
     ) {
     // Observer of Notification Service configuration changes
     this.notificationSettingsSubscription = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
-      this.notificationConfig = config;
+      this._notificationConfig = config;
+      this.reset();
       this.notificationConfig$.next(config); // push to alarm menu
-      if (this.notificationConfig.disableNotifications && !this.notificationStreamSubscription?.closed) {
+      if (this._notificationConfig.disableNotifications && !this.notificationStreamSubscription?.closed) {
         this.stopNotificationStream();
       }
-      if (!this.notificationConfig.disableNotifications && (this.notificationStreamSubscription === null || this.notificationStreamSubscription?.closed)) {
+      if (!this._notificationConfig.disableNotifications && (this.notificationStreamSubscription === null || this.notificationStreamSubscription?.closed)) {
           this.startNotificationStream();
       }
-      if (this.notificationConfig.sound.disableSound) {
+      if (this._notificationConfig.sound.disableSound) {
         this.playAlarm(1000); // will stop any playing track if any
       } else {
-        this.checkAlarms(); //see if any we need to start playing again
+        this.updateNotificationsState(); //see if any we need to start playing again
       }
     });
 
     // Observer of server connection status to reset notifications on SK reconnect
     this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
       if (streamStatus.operation === 2) {
-        this.resetAlarms();
+        this.reset();
       }
     });
 
-    // Init alarm audio player
+    // Init audio player
     this.howlPlayer = this.getPlayer(1000);
    }
 
    private startNotificationStream() {
     // Observer of Delta Service Notification message
-    this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotificationDelta) => {
+    this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotification) => {
       this.processNotificationDelta(notification);
     });
    }
 
    private stopNotificationStream() {
     this.notificationStreamSubscription?.unsubscribe();
-    this.resetAlarms();
+    this.reset();
    }
+
+  /**
+   * Reset the notifications array and send empty notifications array to observers
+   */
+  private reset() {
+    this._notifications = [];
+    this.notifications$.next([]);
+  }
+
+  /**
+   * Returns an Observable of type alarms containing alarms. Used
+   * by observers whom are interested in Alarms such as Widgets and Alarm menu.
+   */
+  public observe(): Observable<any> {
+    return this.notifications$.asObservable();
+  }
+
+  /**
+   * Add notification to the notifications array
+   * @param msg Signal K notification message
+   */
+  private add(msg: INotification) {
+    const newNotificationMsg: INotificationMessage = {
+      path: msg.path,
+      isAck: false,
+      notification: msg.notification
+    };
+    this._notifications.push(newNotificationMsg);
+    this.updateNotificationsState();
+    this.notifications$.next(this._notifications);
+  }
+
+  /**
+   * Update notification data received from SignalK. ie. alarm.notification
+   * @param notification
+   */
+  private update(msg: INotification) {
+    let notificationToUpdate: INotificationMessage = this._notifications.find(notification => notification.path == msg.path);
+    if (notificationToUpdate) {
+      notificationToUpdate.notification = {...msg.notification};
+      notificationToUpdate.isAck = notificationToUpdate?.isAck || false;
+      this.updateNotificationsState();
+      this.notifications$.next(this._notifications);
+    } else {
+      console.log("[Notification Service] Notification to update not found: " + msg.path);
+    }
+  }
+
+  /**
+   * Delete alarm by path
+   * @param path
+   */
+  private delete(path: string): void {
+    const index = this._notifications.findIndex(notification => notification.path == path);
+    if (index > -1) {
+      this._notifications.splice(index, 1);
+      this.updateNotificationsState();
+      this.notifications$.next(this._notifications);
+    } else {
+      console.log("[Notification Service] Notification to delete not found: " + path);
+    }
+  }
+
+  /**
+   * Set Acknowledgement and send to other observers so they can react accordingly
+   * @param path alarm to acknowledge
+   * @param timeout if set will unacknowledged in this time
+   * @return true if alarms found, else false
+   */
+  public acknowledge(path: string, timeout: number = 0): boolean {
+    const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
+    if (existingNotification) {
+      existingNotification.isAck = true;
+      this.notifications$.next(this._notifications);
+
+      // Clear any existing timeout for this path
+      if (this.timeoutIds[path]) {
+        clearTimeout(this.timeoutIds[path]!);
+        this.timeoutIds[path] = null;
+      }
+
+      if (timeout > 0) {
+        this.timeoutIds[path] = setTimeout(() => {
+          console.log("unack: " + path);
+          const timeoutNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
+          if (timeoutNotification) {
+            timeoutNotification.isAck = false;
+            this.notifications$.next(this._notifications);
+          }
+        }, timeout);
+      }
+
+      this.updateNotificationsState();
+      return true;
+    }
+    return false
+  }
+
+  /**
+   * Process Notification Delta received from Signal K server.
+   * @param notificationDelta Notification Delta object received from Signal K server.
+   */
+  public processNotificationDelta(notificationDelta: INotification) {
+    if (/^notifications.security./.test(notificationDelta.path)) {
+      return; // as per sbender this part is not ready in the spec - Don't add to alarms
+    }
+
+    if (notificationDelta.notification === null) {
+      // Notification has been removed/cleared on server
+      this.delete(notificationDelta.path);
+    } else {
+      const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == notificationDelta.path);
+      if (existingNotification) {
+        if ( (existingNotification.notification['state'] !== notificationDelta.notification['state'])
+              || (existingNotification.notification['message'] !== notificationDelta.notification['message'])
+              || isEqual(existingNotification.notification['method'], notificationDelta.notification['method']) ) {
+          this.update(notificationDelta);
+        }
+      } else {
+        this.add(notificationDelta);
+      }
+    }
+  }
+
+   /**
+   * Checks all alarms for worst state, and sets any visual and Audio notification severity.
+   */
+   private updateNotificationsState() {
+    let unAckAlarms = 0;
+    let audioSev = 0;
+    let visualSev = 0;
+
+    for (const alarm of this._notifications) {
+      if (alarm.isAck || !('method' in alarm.notification)) {
+        continue;
+      }
+
+      unAckAlarms++;
+      const { aSev, vSev } = this.getNotificationSeverity(alarm);
+      audioSev = Math.max(audioSev, aSev);
+      visualSev = Math.max(visualSev, vSev);
+    }
+
+    if (!this._notificationConfig.sound.disableSound) {
+      this.playAlarm(1000 + audioSev);
+    }
+
+    const newValue: IAlarmInfo = {
+      audioSev: audioSev,
+      visualSev: visualSev,
+      alarmCount: this._notifications.length,
+      unackCount: unAckAlarms,
+      isMuted: this.isHowlIdMuted
+    };
+
+    if (!isEqual(newValue, this.lastEmittedValue)) {
+      this.alarmsInfo$.next(newValue);
+      this.lastEmittedValue = newValue;
+    }
+  }
+
+  /**
+   * Returns visual and audio severity levels based on
+   * the Notification State and Method.
+   *
+   * @private
+   * @param {*} message Notification message
+   * @return {*}  {{ aSev: any; vSev: any; }} Audio and Visual severity levels
+   * @memberof NotificationsService
+   */
+  private getNotificationSeverity(message: INotificationMessage): { aSev: number; vSev: number; } {
+    const state = message.notification['state'];
+    const severity: ISeverityLevel = NotificationsService.ALARM_SEVERITIES[state];
+    if (!severity) {
+      this.sendSnackbarNotification("Unknown Notification State received from Signal K", 0, false);
+      console.log("Unknown Notification State received from Signal K\n" + JSON.stringify(message));
+      return { aSev: 0, vSev: 0 };
+    }
+
+    let aSev = severity.sound;
+    let vSev = severity.visual;
+
+    if (message.notification['method'].includes('sound') && this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`]) {
+      aSev = 0;
+    }
+    if (!message.notification['method'].includes('visual')) {
+      vSev = 0;
+    }
+
+    return { aSev, vSev };
+  }
+
+  public observerNotificationInfo() {
+    return this.alarmsInfo$.asObservable();
+  }
 
   /**
    * Display Kip Snackbar notification.
@@ -144,191 +347,6 @@ export class NotificationsService implements OnDestroy {
     this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
   }
 
-  public subscribeAlarms() {}
-  public unsubscribeAlarms() {}
-  public listAlarms() {}
-
-  /**
-   * Clears all Kip internal Notification Alarm system/array.
-   * Used when server connection is reset/changed or the notification disabled.
-   *
-   * @usageNotes Internal function - Do not use.
-   */
-  public resetAlarms() {
-    this._alarms = [];
-    this.alarm$.next(null);
-  }
-
-  /**
-   * Returns an Observable of type alarms containing alarms. Used
-   * by observers whom are interested in Alarms such as Widgets and Alarm menu.
-   */
-  public getAlarms(): Observable<any> {
-    return this.alarm$.asObservable();
-  }
-
-  /**
-   * Add new Alarm and send
-   * @param path Signal K path of the notification
-   * @param notification Raw content of the notification message from Signal K server as INotification
-   */
-  public addAlarm(path: string, notification: INotification) {
-
-    if (/^notifications.security./.test(path)) {
-      return; // as per sbender this part is not ready in the spec - Don't add to alarms
-    }
-
-    if (this.notificationConfig.disableNotifications) { return; }
-
-    let newAlarm: IAlarm = null;
-
-    if (path in this._alarms) {
-      this._alarms[path].notification = notification;
-    } else {
-      newAlarm = {
-        path: path,         // duplicate from Alarm Object key index for added scope from individual alarm context
-        isAck: false,
-        notification: notification,
-      };
-
-      this._alarms[path] = newAlarm;
-    }
-    this.checkAlarms();
-    const msg: IAlarmMsg[] = [{path, alarm: newAlarm}];
-    this.alarm$.next(this._alarms);
-  }
-
-  /**
-   * Update Alarm notification data (data from SignalK) only. ie. alarm.notification
-   * @param path
-   * @param notification
-   */
-  public updateAlarm(path: string, notification: INotification) {
-    this._alarms[path].notification = notification;
-    this.checkAlarms();
-    const msg: IAlarmMsg[] = [{path, alarm: this._alarms[path].notification}];
-    this.alarm$.next(this._alarms);
-  }
-
-  /**
-  * Deletes one alarm and notifies all observers
-  * @param path String path for the alarm to delete
-  * @return True If path exists, false if not found.
-  */
-  public deleteAlarm(path: string): boolean {
-    if (path in this._alarms) {
-      delete this._alarms[path];
-      this.checkAlarms();
-      const msg: IAlarmMsg[] = [{path, alarm: this._alarms[path].notification}];
-      this.alarm$.next(this._alarms);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Set Acknowledgement and send to other observers so they can react accordingly
-   * @param path alarm to acknowledge
-   * @param timeout if set will unacknowledged in this time
-   * @return true if alarms found, else false
-   */
-  public acknowledgeAlarm(path: string, timeout: number = 0): boolean {
-    if (path in this._alarms) {
-      this._alarms[path].isAck = true;
-      const msg: IAlarmMsg[] = [{path, alarm: this._alarms[path].notification}];
-      this.alarm$.next(this._alarms);
-      if (timeout > 0) {
-        //TODO: check this timeout expiration!
-        setTimeout(()=>{
-          console.log("unack: "+ path);
-          if (path in this._alarms) {
-            this._alarms[path].isAck = false;
-            this.alarm$.next(this._alarms);
-          }
-        }, timeout);
-      }
-      this.checkAlarms();
-      return true;
-    }
-    return false
-  }
-
-  /**
-   * Checks all alarms for worst state, and sets any visualSev/AudioSev
-   */
-  public checkAlarms() {
-    // find worse alarm state
-    let unAckAlarms = 0;
-    let audioSev = 0;
-    let visualSev = 0;
-
-    for (let index = 0; index < this._alarms.length; index++) {
-      const alarm = this._alarms[index].alarm;
-
-      if (alarm.isAck) { continue; }
-      unAckAlarms++;
-      let aSev = 0;
-      let vSev = 0;
-
-      // It appears INotification have no method set. (Problem from server?)
-      if (!('method' in alarm.notification)) {
-        continue; // if there's no method, don't alarm...
-      }
-
-      switch (alarm.notification['state']) {
-        //case 'nominal':       // not sure yet... spec not clear. Maybe only relevant for Zones
-        case 'normal':        // information only ie.: engine temperature normal. Not usually displayed
-          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteNormal) { aSev = 0; }
-          if (alarm.notification['method'].includes('visual')) { aSev = 0; }
-          break;
-
-        case 'alert':         // user informational event ie.: auto-pilot waypoint reached, Engine Started/stopped, ect.
-          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteAlert) { aSev = 1; }
-          if (alarm.notification['method'].includes('visual')) { vSev = 1; }
-          break;
-
-        case 'warn':          // user attention needed ie.: auto-pilot detected Wind Shift (go check if it's all fine), bilge pump activated (check if you have an issue).
-          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteWarning) { aSev = 2; }
-          if (alarm.notification['method'].includes('visual')) { vSev = 1; }
-          break;
-
-        case 'alarm':         // a problem that requires immediate user attention ie.: auto-pilot can't stay on course, engine temp above specs.
-          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteAlarm) { aSev = 3; }
-          if (alarm.notification['method'].includes('visual')) { vSev = 2; }
-          break;
-
-        case 'emergency':     // safety threatening event ie.: MOB, collision eminent (AIS related), ran aground (water depth lower than keel draft)
-          if (alarm.notification['method'].includes('sound') && !this.notificationConfig.sound.muteEmergency) { aSev = 4; }
-          if (alarm.notification['method'].includes('visual')) { vSev = 2; }
-          break;
-
-        default: // we don;t know this one. Tell the user.
-          aSev = 0;
-          vSev = 0;
-          this.sendSnackbarNotification("Unknown Notification State received from SignalK", 0, false);
-          console.log("Unknown Notification State received from SignalK\n" + JSON.stringify(alarm));
-      }
-      audioSev = Math.max(audioSev, aSev);
-      visualSev = Math.max(visualSev, vSev);
-    }
-
-
-    if (!this.notificationConfig.sound.disableSound) {
-      this.playAlarm(1000 + audioSev);
-    }
-    this.alarmsInfo$.next({
-      audioSev: audioSev,
-      visualSev: visualSev,
-      alarmCount: Object.keys(this._alarms).length,
-      unackCount: unAckAlarms,
-      isMuted: this.isHowlIdMuted
-    });
-  }
-
-  public getAlarmInfo() {
-    return this.alarmsInfo$.asObservable();
-  }
-
   /**
    * Observable to receive Kip app Snackbar notification. Use in app.component ONLY.
    *
@@ -338,38 +356,6 @@ export class NotificationsService implements OnDestroy {
    */
   public getSnackbarAppNotifications() {
     return this.snackbarAppNotifications.asObservable();
-  }
-
-  /**
-   * Processes Signal K Delta metadata containing Notifications information and
-   * routes to Kip Notification system as Alarms and Notifications.
-   *
-   * @param path path of message ie. the subject of the message
-   * @param notificationValue Content of the message. Must conform to INotification interface.
-   * @usageNotes This function is internal and should not be used.
-   */
-  public processNotificationDelta(notificationDelta: INotificationDelta) {
-    if (this.notificationConfig.disableNotifications) {
-      notificationDelta = null;
-      return;
-    }
-
-    if (notificationDelta.notification === null) {
-      // Alarm removed/cleared on server.
-      this.deleteAlarm(notificationDelta.path);
-    } else {
-      if (notificationDelta.path in this._alarms) {
-        //already know of this alarm. Just check if updated (no need to update doc/etc if no change)
-        if (    (this._alarms[notificationDelta.path].notification['state'] !== notificationDelta.notification['state'])
-              ||(this._alarms[notificationDelta.path].notification['message'] !== notificationDelta.notification['message'])
-              ||(JSON.stringify(this._alarms[notificationDelta.path].notification['method']) !== JSON.stringify(notificationDelta.notification['method'])) ) { // no easy way to compare arrays??? ok...
-          this.updateAlarm(notificationDelta.path, notificationDelta.notification);
-        }
-      } else {
-        // New Alarm, send it
-        this.addAlarm(notificationDelta.path, notificationDelta.notification);
-      }
-    }
   }
 
   /**
@@ -407,7 +393,7 @@ export class NotificationsService implements OnDestroy {
   mutePlayer(state) {
     this.howlPlayer.mute(state, this.activeHowlId);
     this.isHowlIdMuted = state;
-    this.checkAlarms(); //make sure to push updated info tro alarm menu
+    this.updateNotificationsState(); //make sure to push updated info tro alarm menu
   }
 
    /**

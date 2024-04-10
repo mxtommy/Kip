@@ -80,7 +80,7 @@ import { IZoneState } from './app-settings.interfaces';
  *
  * @memberof app-interfaces
  */
- export interface INotification {
+ export interface ISignalKNotification {
   method: Method[],
   state: State,
   message: string
