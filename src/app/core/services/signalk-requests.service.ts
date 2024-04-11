@@ -202,7 +202,6 @@ export class SignalkRequestsService {
 
         if (this.requests[index].statusCode == 202) {
           console.log("[Request Service] Async 202 response received");
-          // this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
           return;
         }
 

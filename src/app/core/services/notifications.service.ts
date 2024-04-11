@@ -120,16 +120,16 @@ export class NotificationsService implements OnDestroy {
     this.howlPlayer = this.getPlayer(1000);
    }
 
-   private startNotificationStream() {
-    this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((msg: INotification) => {
-      this.processNotificationDelta(msg);
-    });
-   }
+  private startNotificationStream() {
+  this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((msg: INotification) => {
+    this.processNotificationDelta(msg);
+  });
+  }
 
-   private stopNotificationStream() {
-    this.notificationStreamSubscription?.unsubscribe();
-    this.reset();
-   }
+  private stopNotificationStream() {
+  this.notificationStreamSubscription?.unsubscribe();
+  this.reset();
+  }
 
   /**
    * Reset the notifications array and send empty notifications array to observers
@@ -195,70 +195,9 @@ export class NotificationsService implements OnDestroy {
   }
 
   /**
-   * Set Acknowledgement and send to other observers so they can react accordingly
-   * @param path alarm to acknowledge
-   * @param timeout if set will unacknowledged in this time
-   * @return true if alarms found, else false
-   */
-  public acknowledge(path: string, timeout: number = 0): boolean {
-    const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
-    if (existingNotification) {
-      existingNotification.isAck = true;
-      this.notifications$.next(this._notifications);
-
-      // Clear any existing timeout for this path
-      if (this.timeoutIds[path]) {
-        clearTimeout(this.timeoutIds[path]!);
-        this.timeoutIds[path] = null;
-      }
-
-      if (timeout > 0) {
-        this.timeoutIds[path] = setTimeout(() => {
-          console.log("unack: " + path);
-          const timeoutNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
-          if (timeoutNotification) {
-            timeoutNotification.isAck = false;
-            this.notifications$.next(this._notifications);
-          }
-        }, timeout);
-      }
-
-      this.updateNotificationsState();
-      return true;
-    }
-    return false
-  }
-
-  /**
-   * Process Notification Delta received from Signal K server.
-   * @param notificationDelta Notification Delta object received from Signal K server.
-   */
-  private processNotificationDelta(notificationDelta: INotification) {
-    if (/^notifications.security./.test(notificationDelta.path)) {
-      return; // as per sbender this part is not ready in the spec - Don't add to alarms
-    }
-
-    if (notificationDelta.notification === null) {
-      // Notification has been removed/cleared on server
-      this.delete(notificationDelta.path);
-    } else {
-      const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == notificationDelta.path);
-      if (existingNotification) {
-        if ( (existingNotification.notification['state'] !== notificationDelta.notification['state'])
-              || (existingNotification.notification['message'] !== notificationDelta.notification['message'])
-              || isEqual(existingNotification.notification['method'], notificationDelta.notification['method']) ) {
-          this.update(notificationDelta);
-        }
-      } else {
-        this.add(notificationDelta);
-      }
-    }
-  }
-
-   /**
    * Checks all alarms for worst state, and sets any visual and Audio notification severity.
    */
-   private updateNotificationsState() {
+  private updateNotificationsState() {
     let unAckAlarms = 0;
     let audioSev = 0;
     let visualSev = 0;
@@ -294,6 +233,67 @@ export class NotificationsService implements OnDestroy {
       this.alarmsInfo$.next(newValue);
       this.lastEmittedValue = newValue;
     }
+  }
+
+  /**
+   * Process Notification Delta received from Signal K server.
+   * @param notificationDelta Notification Delta object received from Signal K server.
+   */
+  private processNotificationDelta(notificationDelta: INotification) {
+    if (/^notifications.security./.test(notificationDelta.path)) {
+      return; // as per sbender this part is not ready in the spec - Don't add to alarms
+    }
+
+    if (notificationDelta.notification === null) {
+      // Notification has been removed/cleared on server
+      this.delete(notificationDelta.path);
+    } else {
+      const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == notificationDelta.path);
+      if (existingNotification) {
+        if ( (existingNotification.notification['state'] !== notificationDelta.notification['state'])
+              || (existingNotification.notification['message'] !== notificationDelta.notification['message'])
+              || !isEqual(existingNotification.notification['method'], notificationDelta.notification['method']) ) {
+          this.update(notificationDelta);
+        }
+      } else {
+        this.add(notificationDelta);
+      }
+    }
+  }
+
+  /**
+   * Set Acknowledgement and send to other observers so they can react accordingly
+   * @param path alarm to acknowledge
+   * @param timeout if set will unacknowledged in this time
+   * @return true if alarms found, else false
+   */
+  public acknowledge(path: string, timeout: number = 0): boolean {
+    const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
+    if (existingNotification) {
+      existingNotification.isAck = true;
+      this.notifications$.next(this._notifications);
+
+      // Clear any existing timeout for this path
+      if (this.timeoutIds[path]) {
+        clearTimeout(this.timeoutIds[path]!);
+        this.timeoutIds[path] = null;
+      }
+
+      if (timeout > 0) {
+        this.timeoutIds[path] = setTimeout(() => {
+          console.log("unack: " + path);
+          const timeoutNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
+          if (timeoutNotification) {
+            timeoutNotification.isAck = false;
+            this.notifications$.next(this._notifications);
+          }
+        }, timeout);
+      }
+
+      this.updateNotificationsState();
+      return true;
+    }
+    return false
   }
 
   /**

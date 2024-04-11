@@ -175,9 +175,7 @@ bootstrapApplication(AppComponent, {
       provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
       useValue: {
         showDelay: 1500,
-        hideDelay: 0,
-        touchendHideDelay: 1000,
-        positionAtOrigin: true,
+        hideDelay: 0
       },
     },
     AuthenticationService,

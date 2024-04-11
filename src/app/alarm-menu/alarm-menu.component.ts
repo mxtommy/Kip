@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { NotificationsService, INotificationMessage, IAlarmInfo } from '../core/services/notifications.service';
-import { Observable, Subscription, filter, iif, map, of, switchMap } from 'rxjs';
+import { Observable, Subscription, filter, iif, map, of, switchMap, tap } from 'rxjs';
 import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
 import { MatDivider } from '@angular/material/divider';
 import { MatListItem } from '@angular/material/list';
@@ -32,8 +32,7 @@ export class AlarmMenuComponent implements OnDestroy {
   private static readonly NORMAL_STATE = "normal";
   private notificationServiceSettingsSubscription: Subscription = null;
   private notifications$: Observable<INotificationMessage[]> = this.notificationsService.observe().pipe(
-    filter(notification => notification !== null)
-  );
+    filter(notification => notification !== null));
   public menuNotifications$ = this.notifications$.pipe(
     switchMap(notifications =>
       iif(
@@ -64,8 +63,7 @@ export class AlarmMenuComponent implements OnDestroy {
         blinkWarn,
         blinkCrit
       } as INotificationInfo;
-    })
-  );
+    }));
   public notificationConfig: INotificationConfig;
 
   constructor(private notificationsService: NotificationsService) {
