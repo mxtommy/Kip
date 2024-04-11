@@ -3,11 +3,11 @@ import { NotificationsService, INotificationMessage, IAlarmInfo } from '../core/
 import { Observable, Subscription, filter, iif, map, of, switchMap } from 'rxjs';
 import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
 import { MatDivider } from '@angular/material/divider';
-import { MatActionList, MatListItem } from '@angular/material/list';
+import { MatListItem } from '@angular/material/list';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatBadge } from '@angular/material/badge';
-import { NgIf, AsyncPipe, NgFor, NgTemplateOutlet } from '@angular/common';
-import { MatMenuTrigger, MatMenu, MatMenuItem, MatMenuModule } from '@angular/material/menu';
+import { NgIf, AsyncPipe, NgFor } from '@angular/common';
+import {MatMenuModule } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 
 interface IMenuItem {

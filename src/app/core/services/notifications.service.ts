@@ -101,7 +101,7 @@ export class NotificationsService implements OnDestroy {
     this.notificationSettingsSubscription = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this._notificationConfig = config;
       this.reset();
-      this.notificationConfig$.next(config); // push to alarm menu
+      this.notificationConfig$.next(config); // push to observers
       if (this._notificationConfig.disableNotifications && !this.notificationStreamSubscription?.closed) {
         this.stopNotificationStream();
       }
@@ -127,9 +127,8 @@ export class NotificationsService implements OnDestroy {
    }
 
    private startNotificationStream() {
-    // Observer of Delta Service Notification message
-    this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((notification: INotification) => {
-      this.processNotificationDelta(notification);
+    this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((msg: INotification) => {
+      this.processNotificationDelta(msg);
     });
    }
 
@@ -143,6 +142,7 @@ export class NotificationsService implements OnDestroy {
    */
   private reset() {
     this._notifications = [];
+    this.updateNotificationsState();
     this.notifications$.next([]);
   }
 
@@ -271,6 +271,10 @@ export class NotificationsService implements OnDestroy {
 
     for (const alarm of this._notifications) {
       if (alarm.isAck || !('method' in alarm.notification)) {
+        continue;
+      }
+
+      if (alarm.notification['state'] === 'normal' && !this._notificationConfig.devices.showNormalState) {
         continue;
       }
 
