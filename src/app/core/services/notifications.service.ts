@@ -9,8 +9,11 @@ import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { SignalKDeltaService, INotification, IStreamStatus } from './signalk-delta.service';
+import { SignalkRequestsService } from './signalk-requests.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
+import { UUID } from '../../utils/uuid';
+
 
 const alarmTrack = {
   1000 : 'notification', //filler
@@ -96,6 +99,7 @@ export class NotificationsService implements OnDestroy {
   constructor(
     private appSettingsService: AppSettingsService,
     private deltaService: SignalKDeltaService,
+    private requests: SignalkRequestsService
     ) {
     // Observer of Notification Service configuration changes
     this.notificationSettingsSubscription = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
@@ -331,6 +335,18 @@ export class NotificationsService implements OnDestroy {
     }
 
     return { aSev, vSev };
+  }
+
+  public setSignalKNotificationState(path: string, state: string) {
+    this.requests.putRequest(
+      path,
+      state,
+      UUID.create()
+    );
+  }
+
+  public clearSignalKNotification(path: string) {
+    this.deltaService.publishDelta({"path": path});
   }
 
   public observerNotificationInfo() {

@@ -153,6 +153,37 @@ export class SignalkRequestsService {
   }
 
   /**
+  * Sends a clear Notification request to Signal K server and returns requestId.
+  * @param path Signal K full path. Automatically removes "self" if included in path.
+  * @param widgetUUID Optional - Subscriber's UUID to be included as part of
+  * the subscribeRequest Subject response. Enables Widget specific filtering.
+  * @return requestId Identifier for this specific request. Enables Request specific filtering.
+  */
+  public clearNotification(path: string, widgetUUID: string): string {
+    let requestId = UUID.create();
+    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
+    let selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
+    let message = {
+      "context": selfContext,
+      "requestId": requestId,
+      "put": {
+        "path": noSelfPath,
+      }
+    }
+    this.signalKDeltaService.publishDelta(message); //send request
+
+    let request: skRequest = {
+      requestId: requestId,
+      state: null,
+      statusCode: null,
+      widgetUUID: widgetUUID,
+    };
+
+    this.requests.push(request); // save to private array pending response with widgetUUID so we can filter response from subscriber
+    return requestId; // return the ID to the Subscriber, if tracking of individual request is required
+  }
+
+  /**
    * Handles request updates, issue display and logging.
    *
    * @param delta Signal K Delta message

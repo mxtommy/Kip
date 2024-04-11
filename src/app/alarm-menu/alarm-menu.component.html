@@ -1,13 +1,26 @@
 @if(notificationInfo$ | async; as notificationInfo) {
   <mat-menu #actions="matMenu">
     <ng-template matMenuContent let-path="path">
-      <button mat-menu-item matTooltip="Silence this notification's audio prompt until new state is received"
-        (click)="ackAlarm(path)">
+      <button mat-menu-item
+        matTooltip="Mark the notification as acknowledged, and remove from the list of active notifications. This action has no bearing on the state of the alarm."
+        (click)="acknowledge(path)">
         Acknowledge
       </button>
-      <button mat-menu-item  matTooltip="Pause notification audio for 5 minutes, unless a new state is received, then the audio will resume"
-        (click)="ackAlarm(path, 300000)">
-        Mute for 5 minutes
+      <button mat-menu-item
+        matTooltip="Mark the notification as acknowledged for 5 minutes only, then it will reappear if the state is still active. This action has no bearing on the state of the alarm."
+        (click)="acknowledge(path, 300000)">
+        Acknowledge for 5 Minutes
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item
+        matTooltip="Set the notification to a normal state. This action will prompt Signal K to change the state of the notification."
+        (click)="setState(path, 'normal')">
+        Set to Normal State
+      </button>
+      <button mat-menu-item
+        matTooltip="Delete the notification from the list of notifications. This action will prompt Signal K to remove the notification."
+        (click)="remove(path)">
+        Remove
       </button>
     </ng-template>
   </mat-menu>
@@ -16,8 +29,7 @@
     <ng-template matMenuContent>
       <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
         [mat-menu-trigger-for]="actions"
-        [matMenuTriggerData]="menuItem"
-        (click)="ackAlarm(menuItem)">
+        [matMenuTriggerData]="menuItem">
         @if(menuItem.isAck) {
           <div  class="menu-items-with-icons fa-solid fa-lg fa-check"></div>
         } @else {
