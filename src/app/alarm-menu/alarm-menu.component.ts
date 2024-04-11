@@ -66,7 +66,6 @@ export class AlarmMenuComponent implements OnDestroy {
       } as INotificationInfo;
     })
   );
-
   public notificationConfig: INotificationConfig;
 
   constructor(private notificationsService: NotificationsService) {

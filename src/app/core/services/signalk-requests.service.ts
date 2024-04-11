@@ -58,8 +58,8 @@ export class SignalkRequestsService {
    * The Device authorization is a manual process done on the server.
    */
   public requestDeviceAccessToken(): string {
-    let requestId = UUID.create();
-    let deviceTokenRequest = {
+    const requestId = UUID.create();
+    const deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
         clientId: this.appSettingsService.KipUUID,
@@ -71,7 +71,7 @@ export class SignalkRequestsService {
     console.log("[Request Service] Requesting Device Authorization Token");
     this.signalKDeltaService.publishDelta(deviceTokenRequest);
 
-    let request = {
+    const request = {
       requestId: requestId,
       state: null,
       statusCode: null
@@ -98,8 +98,8 @@ export class SignalkRequestsService {
   * @memberof SignalkRequestsService
   */
   public requestUserLogin(userId: string, userPassword: string): string {
-    let requestId = UUID.create();
-    let loginRequest = {
+    const requestId = UUID.create();
+    const loginRequest = {
       requestId: requestId,
       login: {
         username: userId,
@@ -110,7 +110,7 @@ export class SignalkRequestsService {
     console.log("[Request Service] Requesting User Login");
     this.signalKDeltaService.publishDelta(loginRequest);
 
-    let request = {
+    const request = {
       requestId: requestId,
       state: null,
       statusCode: null
@@ -128,10 +128,10 @@ export class SignalkRequestsService {
   * @return requestId Identifier for this specific request. Enables Request specific filtering.
   */
   public putRequest(path: string, value: any, widgetUUID: string): string {
-    let requestId = UUID.create();
-    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
-    let selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
-    let message = {
+    const requestId = UUID.create();
+    const noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
+    const selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
+    const message = {
       "context": selfContext,
       "requestId": requestId,
       "put": {
@@ -141,7 +141,7 @@ export class SignalkRequestsService {
     }
     this.signalKDeltaService.publishDelta(message); //send request
 
-    let request: skRequest = {
+    const request: skRequest = {
       requestId: requestId,
       state: null,
       statusCode: null,
@@ -160,10 +160,10 @@ export class SignalkRequestsService {
   * @return requestId Identifier for this specific request. Enables Request specific filtering.
   */
   public clearNotification(path: string, widgetUUID: string): string {
-    let requestId = UUID.create();
-    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
-    let selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
-    let message = {
+    const requestId = UUID.create();
+    const noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
+    const selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
+    const message = {
       "context": selfContext,
       "requestId": requestId,
       "put": {
@@ -172,7 +172,7 @@ export class SignalkRequestsService {
     }
     this.signalKDeltaService.publishDelta(message); //send request
 
-    let request: skRequest = {
+    const request: skRequest = {
       requestId: requestId,
       state: null,
       statusCode: null,
@@ -189,7 +189,7 @@ export class SignalkRequestsService {
    * @param delta Signal K Delta message
    */
   private updateRequest(delta: ISignalKDeltaMessage) {
-    let index = this.requests.findIndex(r => r.requestId == delta.requestId);
+    const index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
       this.requests[index].statusCode = delta.statusCode;

@@ -233,7 +233,7 @@ export class NotificationsService implements OnDestroy {
    * Process Notification Delta received from Signal K server.
    * @param notificationDelta Notification Delta object received from Signal K server.
    */
-  public processNotificationDelta(notificationDelta: INotification) {
+  private processNotificationDelta(notificationDelta: INotification) {
     if (/^notifications.security./.test(notificationDelta.path)) {
       return; // as per sbender this part is not ready in the spec - Don't add to alarms
     }
@@ -335,7 +335,7 @@ export class NotificationsService implements OnDestroy {
   }
 
   public clearSignalKNotification(path: string) {
-    this.deltaService.publishDelta({"path": path});
+    this.requests.clearNotification(path, UUID.create());
   }
 
   public observerNotificationInfo() {
