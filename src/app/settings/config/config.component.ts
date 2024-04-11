@@ -3,9 +3,9 @@ import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
+import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../core/interfaces/app-settings.interfaces';
-import { NotificationsService } from '../../core/services/notifications.service';
 import { StorageService } from '../../core/services/storage.service';
 import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -20,6 +20,7 @@ import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { NgIf, NgFor } from '@angular/common';
 import { RouterLink } from '@angular/router';
+
 
 interface IRemoteConfig {
   scope: string,
@@ -64,7 +65,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   constructor(
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
-    private notificationsService: NotificationsService,
+    private appService: AppService,
     private auth: AuthenticationService,
     private fb: UntypedFormBuilder,
   ) { }
@@ -126,10 +127,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
         switch (error.status) {
           case 401:
-            this.notificationsService.sendSnackbarNotification("Application Storage Error: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false);
+            this.appService.sendSnackbarNotification("Application Storage Error: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false);
             break;
 
-          default: this.notificationsService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+          default: this.appService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
             break;
         }
       });
@@ -139,12 +140,12 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean) {
     if (this.supportApplicationData) {
       if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.notificationsService.sendSnackbarNotification(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
+        this.appService.sendSnackbarNotification(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
         if (!dontRefreshConfigList) {
           this.getServerConfigList();
         }
       } else {
-        this.notificationsService.sendSnackbarNotification("Error saving configuration to server", 0, false);
+        this.appService.sendSnackbarNotification("Error saving configuration to server", 0, false);
       }
     }
   }
@@ -160,7 +161,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       }
       else if(this.copyConfigForm.value.copyDestination === 'Local Storage') {
         // local to local
-        this.notificationsService.sendSnackbarNotification("Local Storage cannot be copies to Local Storage ", 0, false);
+        this.appService.sendSnackbarNotification("Local Storage cannot be copies to Local Storage ", 0, false);
       }
 
     } else {
@@ -171,7 +172,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
           conf = config
         });
       } catch (error) {
-        this.notificationsService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
+        this.appService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
         return;
       }
 
@@ -194,7 +195,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
     this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
-    this.notificationsService.sendSnackbarNotification(`Configuration [${name}] deleted from [${scope}] storage scope`, 5000, false);
+    this.appService.sendSnackbarNotification(`Configuration [${name}] deleted from [${scope}] storage scope`, 5000, false);
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
     }
@@ -223,7 +224,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       console.log('[Configuration] Saving upgraded config [' + oldConfig.name + '] to [' + oldConfig.scope + '] scope');
       this.storageSvc.patchGlobal(oldConfig.name, oldConfig.scope, conf, 'add');
     });
-    this.notificationsService.sendSnackbarNotification("Configuration migration completed. WARNING: Test the migrated configurations before deleting them.", 0, false);
+    this.appService.sendSnackbarNotification("Configuration migration completed. WARNING: Test the migrated configurations before deleting them.", 0, false);
   }
 
   public refreshConfig(): void {
@@ -232,7 +233,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         this.serverConfigList = configs;
       })
       .catch(error => {
-        this.notificationsService.sendSnackbarNotification("[Configuration] Error listing server configurations: " + error, 3000, false);
+        this.appService.sendSnackbarNotification("[Configuration] Error listing server configurations: " + error, 3000, false);
       });
   }
 

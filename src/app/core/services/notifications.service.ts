@@ -3,7 +3,7 @@
  * Alert Notifications
  */
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
@@ -22,15 +22,6 @@ const alarmTrack = {
   1003 : 'alarm',
   1004 : 'emergency',
 };
-
-/**
- * Snack-bar notification message interface.
- */
-export interface AppNotification {
-  message: string;
-  duration: number;
-  silent: boolean;
-}
 
 /**
  * Kip Alarm object. Alarm index key is the path string. Alarm contains native Signal K Notification
@@ -84,7 +75,6 @@ export class NotificationsService implements OnDestroy {
   private _notifications: INotificationMessage[] = []; // local array of Alarms with path as index key
   private notifications$ = new BehaviorSubject<INotificationMessage[] | null>(null);
   private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, unackCount: 0, isMuted: false});
-  public snackbarAppNotifications: Subject<AppNotification> = new Subject<AppNotification>(); // for snackbar message
 
   // sounds properties
   private howlPlayer: Howl;
@@ -319,8 +309,7 @@ export class NotificationsService implements OnDestroy {
     const state = message.notification['state'];
     const severity: ISeverityLevel = NotificationsService.ALARM_SEVERITIES[state];
     if (!severity) {
-      this.sendSnackbarNotification("Unknown Notification State received from Signal K", 0, false);
-      console.log("Unknown Notification State received from Signal K\n" + JSON.stringify(message));
+      console.log("[Notification Service] Unknown Notification State received from Signal K\n" + JSON.stringify(message));
       return { aSev: 0, vSev: 0 };
     }
 
@@ -351,31 +340,6 @@ export class NotificationsService implements OnDestroy {
 
   public observerNotificationInfo() {
     return this.alarmsInfo$.asObservable();
-  }
-
-  /**
-   * Display Kip Snackbar notification.
-   *
-   * @param message Text to be displayed.
-   * @param duration Display duration in milliseconds before automatic dismissal.
-   * Duration value of 0 is indefinite or until use clicks Dismiss button. Defaults
-   *  to 10000 of no value is provided.
-   * @param silent A boolean that defines if the notification should make no sound.
-   * Defaults false.
-   */
-  public sendSnackbarNotification(message: string, duration: number = 10000, silent: boolean = false) {
-    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
-  }
-
-  /**
-   * Observable to receive Kip app Snackbar notification. Use in app.component ONLY.
-   *
-   * @usageNotes To send a Snackbar notification, use sendSnackbarNotification().
-   * Notifications are purely client side and have no relationship or
-   * interactions with the Signal K server.
-   */
-  public getSnackbarAppNotifications() {
-    return this.snackbarAppNotifications.asObservable();
   }
 
   /**

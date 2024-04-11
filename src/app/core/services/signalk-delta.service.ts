@@ -37,7 +37,7 @@ export class SignalKDeltaService {
   // Signal K Requests message stream Observable
   private signalKRequests$ = new Subject<ISignalKDeltaMessage>();
   // Signal K Notifications message stream Observable
-  private signalKNotifications$ = new Subject<INotification>();
+  public signalKNotifications$ = new Subject<INotification>();
   // Signal K data path message stream Observable
   private signalKDataPath$ = new Subject<IPathValueData>();
   // Signal K Metadata message stream Observer

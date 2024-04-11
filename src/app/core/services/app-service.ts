@@ -1,12 +1,20 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
-import { AppNotification, NotificationsService } from './notifications.service';
 import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { SignalKDataService } from './signalk-data.service';
 
 const modePath: string = 'self.environment.mode';
+
+/**
+ * Snack-bar notification message interface.
+ */
+export interface AppNotification {
+  message: string;
+  duration: number;
+  silent: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +34,6 @@ export class AppService implements OnDestroy {
     private settings: AppSettingsService,
     private delta: SignalKDeltaService,
     private sk: SignalKDataService,
-    private notification: NotificationsService
   ) {
     this.autoNightMode = this.settings.getAutoNightMode();
     this.autoNightModeObserver();
@@ -72,8 +79,8 @@ export class AppService implements OnDestroy {
   }
 
   public validateAutoNightModeSupported(): boolean {
-    if (this.sk.getPathObject(modePath) == null) {
-      this.notification.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
+    if (this.sk.getPathObject(modePath) === null) {
+      this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
       return false;
     }
     return true;

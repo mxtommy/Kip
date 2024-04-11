@@ -1,5 +1,6 @@
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
@@ -7,7 +8,6 @@ import { IDeltaUpdate, SignalKDataService } from '../../core/services/signalk-da
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { NotificationsService } from '../../core/services/notifications.service';
 import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
@@ -24,6 +24,7 @@ import { MatDialog } from '@angular/material/dialog';
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
 import ChartStreaming from '@robloche/chartjs-plugin-streaming';
+
 
 
 @Component({
@@ -79,7 +80,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
   constructor(
     public dialog: MatDialog,
     private appSettingsService: AppSettingsService,
-    private notificationsService: NotificationsService,
+    private appService: AppService,
     private signalKDataService: SignalKDataService,
     private signalKConnectionService: SignalKConnectionService,
     private signalkRequestsService: SignalkRequestsService,
@@ -200,13 +201,13 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
           this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valid credentials");
           console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
         } else if (error.status == 404) {
-          this.notificationsService.sendSnackbarNotification("Sign in failed: Login API not found", 5000, false);
+          this.appService.sendSnackbarNotification("Sign in failed: Login API not found", 5000, false);
           console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
         } else if (error.status == 0) {
-          this.notificationsService.sendSnackbarNotification("Sign in failed: Cannot reach server at Signal K URL", 5000, false);
+          this.appService.sendSnackbarNotification("Sign in failed: Cannot reach server at Signal K URL", 5000, false);
           console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at Signal K URL:" + error.message);
         } else {
-          this.notificationsService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
+          this.appService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
           console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
         }
       });
@@ -297,7 +298,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     if(e.checked) {
       let version = this.signalKConnectionService.serverVersion$.getValue();
       if (!compare(version, '1.46.2', ">=")) {
-        this.notificationsService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better",0);
+        this.appService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better",0);
         this.connectionConfig.useSharedConfig = false;
         return;
       }

@@ -7,7 +7,6 @@ import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { INotification, SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
-import { NotificationsService } from './notifications.service';
 import Qty from 'js-quantities';
 
 const SELFROOTDEF: string = "self";
@@ -66,7 +65,7 @@ export class SignalKDataService implements OnDestroy {
   // List of paths used by Kip (Widgets or App (Notifications and such))
   private pathRegister: pathRegistration[] = [];
 
-  // path Observable
+  // Path Delta data
   private skDataObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
   private deltaServiceSelfUrnSubscription: Subscription = null;
   private deltaServiceMetaSubscription: Subscription = null;
@@ -77,16 +76,18 @@ export class SignalKDataService implements OnDestroy {
   private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
   private _deltaUpdatesCounterTimer = null;
 
+  // Units conversions
   private defaultUnits: IUnitDefaults = null;
   private defaultUnitsSub: Subscription = null;
   private conversionList: IUnitGroup[] = [];
+
+  // Zones
   private zonesSub: Subscription = null;
   private zones: Array<IZone> = [];
 
   constructor(
       private appSettingsService: AppSettingsService,
       private deltaService: SignalKDeltaService,
-      private notificationsService: NotificationsService,
       private unitService: UnitsService) {
 
     // Emit Delta message update counter every second
@@ -344,7 +345,7 @@ export class SignalKDataService implements OnDestroy {
           timestamp: Date.now().toString()
         }
       }
-      this.notificationsService.processNotificationDelta(zoneNotification);
+      this.deltaService.signalKNotifications$.next(zoneNotification);
     }
 
     this.skData[pathIndex].state = state;

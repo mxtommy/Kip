@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
-import { NotificationsService } from '../../core/services/notifications.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
@@ -37,7 +36,6 @@ export class SettingsGeneralComponent implements OnInit {
   public enableHighContrast: boolean = null;
 
   constructor(
-    private notifications: NotificationsService,
     private app: AppService,
     private settings: AppSettingsService,
   ) { }
@@ -52,11 +50,11 @@ export class SettingsGeneralComponent implements OnInit {
     try {
       this.saveNotificationsSettings();
       this.saveAutoNightMode();
-      this.notifications.sendSnackbarNotification("General settings saved", 5000, false);
+      this.app.sendSnackbarNotification("General settings saved", 5000, false);
       this.enableHighContrast ? this.settings.setThemeName("high-contrast") : this.settings.setThemeName("modernDark")
 
     } catch (error) {
-      this.notifications.sendSnackbarNotification("Error saving settings: " + error, 5000, false);
+      this.app.sendSnackbarNotification("Error saving settings: " + error, 5000, false);
     }
 
   }

@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { AppSettingsService } from '../../core/services/app-settings.service';
-import { NotificationsService } from '../../core/services/notifications.service';
-
+import { AppService } from '../../core/services/app-service';
 import { IUnitDefaults, UnitsService, IUnit } from '../../core/services/units.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -30,7 +29,7 @@ export class SettingsUnitsComponent implements OnInit {
   constructor(
     private units: UnitsService,
     private appSettingsService: AppSettingsService,
-    private notificationsService: NotificationsService,
+    private appService: AppService,
     ) { }
 
   ngOnInit() {
@@ -64,7 +63,7 @@ export class SettingsUnitsComponent implements OnInit {
 
   submitConfig() {
     this.appSettingsService.setDefaultUnits(this.formUnitMaster.value);
-    this.notificationsService.sendSnackbarNotification("Default units configuration saved", 5000, false);
+    this.appService.sendSnackbarNotification("Default units configuration saved", 5000, false);
   }
 
 }
