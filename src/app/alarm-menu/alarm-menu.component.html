@@ -13,31 +13,33 @@
   </mat-menu>
 
   <mat-menu #alarmMenu="matMenu" focusFirstItem>
-    <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
-      [mat-menu-trigger-for]="actions"
-      [matMenuTriggerData]="menuItem"
-      (click)="ackAlarm(menuItem)">
-      @if(menuItem.isAck) {
-        <div  class="menu-items-with-icons fa-solid fa-lg fa-check"></div>
-      } @else {
-        <div class="menu-items-with-icons fa-solid fa-lg fa-exclamation"></div>
-      }
-      {{ menuItem.notification.message }}
-  </button>
-
-  <mat-divider></mat-divider>
-    <button mat-menu-item class="muteSoundButton" matTooltip="Mute notification sounds"
-      (click)="mutePlayer(notificationInfo.isMuted ? false : true)">
-      @if(notificationInfo.isMuted) {
-        <div class="menu-items-with-icons mute-unmute-alarm" *ngIf="notificationInfo.isMuted">
-          <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Audio
-        </div>
-      } @else {
-        <div class="menu-items-with-icons mute-unumte-alarm" *ngIf="!notificationInfo.isMuted">
-          <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Audio
-        </div>
-      }
+    <ng-template matMenuContent>
+      <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
+        [mat-menu-trigger-for]="actions"
+        [matMenuTriggerData]="menuItem"
+        (click)="ackAlarm(menuItem)">
+        @if(menuItem.isAck) {
+          <div  class="menu-items-with-icons fa-solid fa-lg fa-check"></div>
+        } @else {
+          <div class="menu-items-with-icons fa-solid fa-lg fa-exclamation"></div>
+        }
+        {{ menuItem.notification.message }}
     </button>
+
+    <mat-divider></mat-divider>
+      <button mat-menu-item class="muteSoundButton" matTooltip="Mute notification sounds"
+        (click)="mutePlayer(notificationInfo.isMuted ? false : true)">
+        @if(notificationInfo.isMuted) {
+          <div class="menu-items-with-icons mute-unmute-alarm" *ngIf="notificationInfo.isMuted">
+            <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Audio
+          </div>
+        } @else {
+          <div class="menu-items-with-icons mute-unumte-alarm" *ngIf="!notificationInfo.isMuted">
+            <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Audio
+          </div>
+        }
+      </button>
+    </ng-template>
   </mat-menu>
 
   <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
