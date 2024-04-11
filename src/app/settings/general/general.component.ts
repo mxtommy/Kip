@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash-es';
 import { Component, OnInit } from '@angular/core';
 import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
 import { AppService } from '../../core/services/app-service';
@@ -42,7 +43,7 @@ export class SettingsGeneralComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.notificationConfig = this.settings.getNotificationConfig();
+    this.notificationConfig = cloneDeep(this.settings.getNotificationConfig());
     this.autoNightModeConfig = this.app.autoNightMode;
     this.enableHighContrast = (this.settings.getThemeName() == "high-contrast") ? true : false;
   }

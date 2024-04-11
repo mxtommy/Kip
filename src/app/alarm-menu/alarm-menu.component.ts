@@ -6,8 +6,8 @@ import { MatDivider } from '@angular/material/divider';
 import { MatActionList, MatListItem } from '@angular/material/list';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatBadge } from '@angular/material/badge';
-import { NgIf, AsyncPipe, NgFor } from '@angular/common';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { NgIf, AsyncPipe, NgFor, NgTemplateOutlet } from '@angular/common';
+import { MatMenuTrigger, MatMenu, MatMenuItem, MatMenuModule } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 
 interface IMenuItem {
@@ -26,7 +26,7 @@ interface INotificationInfo extends IAlarmInfo{
     templateUrl: './alarm-menu.component.html',
     styleUrls: ['./alarm-menu.component.scss'],
     standalone: true,
-    imports: [MatButton, MatMenuTrigger, MatBadge, MatMenu, MatMenuItem, MatTooltip, MatActionList, MatDivider, MatListItem, AsyncPipe, NgFor, NgIf]
+    imports: [MatButton, MatMenuModule, MatBadge, MatTooltip, MatDivider, MatListItem, AsyncPipe, NgFor, NgIf]
 })
 export class AlarmMenuComponent implements OnDestroy {
   private static readonly NORMAL_STATE = "normal";
@@ -80,8 +80,8 @@ export class AlarmMenuComponent implements OnDestroy {
     this.notificationsService.mutePlayer(state);
   }
 
-  public ackAlarm(menuItem: INotificationMessage, timeout: number = 0): void {
-    this.notificationsService.acknowledge(menuItem.path, timeout);
+  public ackAlarm(path: string, timeout: number = 0): void {
+    this.notificationsService.acknowledge(path, timeout);
   }
 
   ngOnDestroy() {

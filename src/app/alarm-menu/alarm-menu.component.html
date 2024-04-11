@@ -1,73 +1,64 @@
 @if(notificationInfo$ | async; as notificationInfo) {
-    <mat-menu #actions="matMenu">
-      <!-- <ng-template matMenuContent let-name="item" matTooltip="Silence Alarm (until state change)"> -->
-       <button mat-menu-item
-         (click)="ackAlarm(null)">
-         Acknowledge
-       </button>
-       <button mat-menu-item  matTooltip="Silence notification for 5 minutes, unless state changes"
-         (click)="ackAlarm(null, 300000)">
-         Acknowledge (5 Min)
-       </button>
-      <!-- </ng-template> -->
-    </mat-menu>
-
+  <mat-menu #actions="matMenu">
+    <ng-template matMenuContent let-path="path">
+      <button mat-menu-item matTooltip="Silence this notification's audio prompt until new state is received"
+        (click)="ackAlarm(path)">
+        Acknowledge
+      </button>
+      <button mat-menu-item  matTooltip="Pause notification audio for 5 minutes, unless a new state is received, then the audio will resume"
+        (click)="ackAlarm(path, 300000)">
+        Mute for 5 minutes
+      </button>
+    </ng-template>
+  </mat-menu>
 
   <mat-menu #alarmMenu="matMenu" focusFirstItem>
     <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
       [mat-menu-trigger-for]="actions"
       [matMenuTriggerData]="menuItem"
       (click)="ackAlarm(menuItem)">
-      <div  class="menu-items-with-icons" *ngIf="menuItem.isAck" class="fa-solid fa-lg fa-check"></div>
-      <div class="menu-items-with-icons" *ngIf="!menuItem.isAck" class="fa-solid fa-lg fa-exclamation"></div>
+      @if(menuItem.isAck) {
+        <div  class="menu-items-with-icons fa-solid fa-lg fa-check"></div>
+      } @else {
+        <div class="menu-items-with-icons fa-solid fa-lg fa-exclamation"></div>
+      }
       {{ menuItem.notification.message }}
-    </button>
+  </button>
 
-
-    <mat-divider></mat-divider>
-    <button *ngIf="notificationInfo$ | async as notificationInfo"  mat-menu-item class="muteSoundButton" matTooltip="Mute notification sounds"
+  <mat-divider></mat-divider>
+    <button mat-menu-item class="muteSoundButton" matTooltip="Mute notification sounds"
       (click)="mutePlayer(notificationInfo.isMuted ? false : true)">
-      <div class="menu-items-with-icons mute-unumte-alarm" *ngIf="!notificationInfo.isMuted">
-        <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Alarm Audio
-      </div>
-      <div class="menu-items-with-icons mute-unmute-alarm" *ngIf="notificationInfo.isMuted">
-        <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
-      </div>
+      @if(notificationInfo.isMuted) {
+        <div class="menu-items-with-icons mute-unmute-alarm" *ngIf="notificationInfo.isMuted">
+          <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Audio
+        </div>
+      } @else {
+        <div class="menu-items-with-icons mute-unumte-alarm" *ngIf="!notificationInfo.isMuted">
+          <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Audio
+        </div>
+      }
     </button>
-
   </mat-menu>
-
 
   <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
     [class.alarmCrit]="notificationInfo.blinkCrit"
     [class.alarmWarning]="notificationInfo.blinkWarn"
     [disabled]="notificationInfo.alarmCount == 0 || notificationConfig.disableNotifications">
-
-  @if(notificationConfig.disableNotifications) {
-    <div class="menu-items-with-icons" [matBadgeHidden]="!notificationInfo.unackCount"
-      [matBadge]="notificationInfo.unackCount"
-      matBadgeSize="medium"
-      matBadgePosition="after"
-      matBadgeOverlap="false"
-      matBadgeColor="warn"
-      class="fa-solid fa-envelope fa-2x">
-    </div>
-  } @else {
-    <div class="menu-items-with-icons" [matBadgeHidden]="!notificationInfo.unackCount"
-      [matBadge]="notificationInfo.unackCount"
-      matBadgeSize="medium"
-      matBadgePosition="after"
-      matBadgeOverlap="false"
-      matBadgeColor="warn"
-      class="fa-solid fa-envelope fa-2x">
-    </div>
-  }
-
-  @if(notificationConfig.disableNotifications) {
-    <div class="menu-items-with-icons fa-stack fa-lg">
-      <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
-      <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
-    </div>
-  }
+    @if(!notificationConfig.disableNotifications) {
+      <div class="menu-items-with-icons" [matBadgeHidden]="!notificationInfo.unackCount"
+        [matBadge]="notificationInfo.unackCount"
+        matBadgeSize="medium"
+        matBadgePosition="after"
+        matBadgeOverlap="false"
+        matBadgeColor="warn"
+        class="fa-solid fa-envelope fa-2x">
+      </div>
+    }
+    @if(notificationConfig.disableNotifications) {
+      <div class="menu-items-with-icons" class="fa-stack fa-lg">
+        <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
+        <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
+      </div>
+    }
   </button>
 }
