@@ -18,12 +18,14 @@
     <mat-slide-toggle
       name="disableNotifications"
       [(ngModel)]="notificationConfig.disableNotifications"
+      (change)="togglePanel($event)"
       color="primary">
         Disable Notifications
       </mat-slide-toggle>
     <br/><br/>
     <mat-accordion>
-      <mat-expansion-panel expanded="false">
+      <mat-expansion-panel #statePanel
+        [disabled]="notificationConfig.disableNotifications">
         <mat-expansion-panel-header>
           <mat-panel-title>
             State
@@ -38,7 +40,8 @@
           Show <b>Normal</b> severity
         </mat-checkbox>
       </mat-expansion-panel>
-      <mat-expansion-panel expanded="false">
+      <mat-expansion-panel #soundPanel
+        [disabled]="notificationConfig.disableNotifications">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Sound

@@ -5,8 +5,8 @@ import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
-import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';
+import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { FormsModule, NgForm } from '@angular/forms';
 
@@ -19,21 +19,20 @@ import { FormsModule, NgForm } from '@angular/forms';
     imports: [
         FormsModule,
         MatCheckbox,
-        MatSlideToggle,
-        MatAccordion,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        MatExpansionPanelDescription,
+        MatSlideToggleModule,
+        MatExpansionModule,
         MatDivider,
         MatButton,
     ],
 })
 export class SettingsGeneralComponent implements OnInit {
   @ViewChild('generalForm') generalForm: NgForm;
+  @ViewChild('statePanel') statePanel: MatExpansionPanel;
+  @ViewChild('soundPanel') soundPanel: MatExpansionPanel;
   public notificationConfig: INotificationConfig;
   public autoNightModeConfig: boolean;
   public enableHighContrast: boolean = null;
+  public notificationDisabledExpandPanel: boolean = false;
 
   constructor(
     private app: AppService,
@@ -58,7 +57,15 @@ export class SettingsGeneralComponent implements OnInit {
     this.app.sendSnackbarNotification("General configuration saved", 5000, false);
   }
 
-  setTheme(e: MatCheckboxChange) {
+  public setTheme(e: MatCheckboxChange) {
     this.enableHighContrast = e.checked;
+  }
+
+  public togglePanel(e: MatSlideToggleChange): void {
+    if(e.checked) {
+      this.notificationDisabledExpandPanel = false;
+      this.statePanel.close();
+      this.soundPanel.close();
+    }
   }
 }
