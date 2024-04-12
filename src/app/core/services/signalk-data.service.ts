@@ -268,7 +268,7 @@ export class SignalKDataService implements OnDestroy {
         }
       }
 
-      this.skData.push({
+      pathIndex = this.skData.push({
         path: updatePath,
         pathValue: dataPath.value,
         defaultSource: dataPath.source,
@@ -280,9 +280,7 @@ export class SignalKDataService implements OnDestroy {
             sourceValue: dataPath.value
           }
         }
-      });
-      // get new object index for further processing
-      pathIndex = this.skData.findIndex(pathObject => pathObject.path == updatePath);
+      }) - 1;
     }
 
     // Check for any zones to set state
