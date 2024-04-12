@@ -102,9 +102,7 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     // Snackbar Notifications sub
-    this.appNotificationSub = this.appService.getSnackbarAppNotifications().subscribe(
-
-      appNotification => {
+    this.appNotificationSub = this.appService.getSnackbarAppNotifications().subscribe(appNotification => {
         this._snackBar.open(appNotification.message, 'dismiss', {
           duration: appNotification.duration,
           verticalPosition: 'top'
