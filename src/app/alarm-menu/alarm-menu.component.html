@@ -15,25 +15,20 @@
 
   <mat-menu #alarmMenu="matMenu" focusFirstItem>
     <ng-template matMenuContent>
-      <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
-        [mat-menu-trigger-for]="actions"
-        [matMenuTriggerData]="menuItem">
-        {{ menuItem.notification.message }}
-    </button>
-
-    <mat-divider></mat-divider>
-      <button mat-menu-item class="muteSoundButton" matTooltip="Mute notification sounds"
-        (click)="mutePlayer(notificationInfo.isMuted ? false : true)">
-        @if(notificationInfo.isMuted) {
-          <div class="menu-items-with-icons mute-unmute-alarm" *ngIf="notificationInfo.isMuted">
-            <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Audio
-          </div>
+      @for(menuItem of menuNotifications$ | async; track menuItem) {
+        @if(menuItem.notification.state !== "normal") {
+          <button mat-menu-item
+            [mat-menu-trigger-for]="actions"
+            [matMenuTriggerData]="menuItem">
+            {{ menuItem.notification.message }}
+          </button>
         } @else {
-          <div class="menu-items-with-icons mute-unumte-alarm" *ngIf="!notificationInfo.isMuted">
-            <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Audio
-          </div>
+          <button mat-menu-item>
+            {{ menuItem.notification.message }}
+          </button>
         }
-      </button>
+
+      }
     </ng-template>
   </mat-menu>
 
