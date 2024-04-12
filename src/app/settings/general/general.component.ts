@@ -55,6 +55,7 @@ export class SettingsGeneralComponent implements OnInit {
     }
     this.enableHighContrast ? this.settings.setThemeName("high-contrast") : this.settings.setThemeName("modernDark")
     this.generalForm.form.markAsPristine();
+    this.app.sendSnackbarNotification("General configuration saved", 5000, false);
   }
 
   setTheme(e: MatCheckboxChange) {
