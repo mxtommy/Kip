@@ -13,6 +13,7 @@ import { SignalkRequestsService } from './signalk-requests.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
+import { TMethod } from '../interfaces/signalk-interfaces';
 
 
 const alarmTrack = {
@@ -23,17 +24,6 @@ const alarmTrack = {
   1004 : 'emergency',
 };
 
-/**
- * Kip Alarm object. Alarm index key is the path string. Alarm contains native Signal K Notification
- * values in and additional feature enhancing alarm properties.
- *
- * @path Signal K alarm path - Defines source of the alarm
- * @ack Optional Alarm acknowledgment property
- * @notification Native Signal K Notification message as Object INotification
- */
-export interface INotificationMessage extends INotification {
-  isAck: boolean;
-}
 
 /**
  * Alarm information, some stats used
@@ -42,7 +32,6 @@ export interface IAlarmInfo {
   audioSev: number;
   visualSev: number;
   alarmCount: number;
-  unackCount: number;
   isMuted: boolean;
 }
 
@@ -72,9 +61,9 @@ export class NotificationsService implements OnDestroy {
   private _notificationConfig: INotificationConfig;
   public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
-  private _notifications: INotificationMessage[] = []; // local array of Alarms with path as index key
-  private notifications$ = new BehaviorSubject<INotificationMessage[] | null>(null);
-  private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, unackCount: 0, isMuted: false});
+  private _notifications: INotification[] = []; // local array of Alarms with path as index key
+  private notifications$ = new BehaviorSubject<INotification[] | null>(null);
+  private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false});
 
   // sounds properties
   private howlPlayer: Howl;
@@ -83,7 +72,6 @@ export class NotificationsService implements OnDestroy {
   private isHowlIdMuted: boolean = false;
 
   // Notification acknowledge timeouts references
-  private timeoutIds: { [key: string]: NodeJS.Timeout | null } = {};
   private lastEmittedValue: IAlarmInfo = null;
 
   constructor(
@@ -152,13 +140,8 @@ export class NotificationsService implements OnDestroy {
    * Add notification to the notifications array
    * @param msg Signal K notification message
    */
-  private add(msg: INotification) {
-    const newNotificationMsg: INotificationMessage = {
-      path: msg.path,
-      isAck: false,
-      notification: msg.notification
-    };
-    this._notifications.push(newNotificationMsg);
+  private add(notification: INotification) {
+    this._notifications.push(notification);
     this.updateNotificationsState();
     this.notifications$.next(this._notifications);
   }
@@ -167,15 +150,14 @@ export class NotificationsService implements OnDestroy {
    * Update notification data received from SignalK. ie. alarm.notification
    * @param notification
    */
-  private update(msg: INotification) {
-    let notificationToUpdate: INotificationMessage = this._notifications.find(notification => notification.path == msg.path);
+  private update(notification: INotification) {
+    let notificationToUpdate = this._notifications.find(item => item.path == notification.path);
     if (notificationToUpdate) {
-      notificationToUpdate.notification = {...msg.notification};
-      notificationToUpdate.isAck = notificationToUpdate?.isAck || false;
+      notificationToUpdate.notification = {...notification.notification};
       this.updateNotificationsState();
       this.notifications$.next(this._notifications);
     } else {
-      console.log("[Notification Service] Notification to update not found: " + msg.path);
+      console.log("[Notification Service] Notification to update not found: " + notification.path);
     }
   }
 
@@ -198,12 +180,12 @@ export class NotificationsService implements OnDestroy {
    * Checks all alarms for worst state, and sets any visual and Audio notification severity.
    */
   private updateNotificationsState() {
-    let unAckAlarms = 0;
     let audioSev = 0;
     let visualSev = 0;
+    let activeNotifications: number = 0;
 
     for (const alarm of this._notifications) {
-      if (alarm.isAck || !('method' in alarm.notification)) {
+      if (!('method' in alarm.notification)) {
         continue;
       }
 
@@ -211,7 +193,7 @@ export class NotificationsService implements OnDestroy {
         continue;
       }
 
-      unAckAlarms++;
+      activeNotifications++;
       const { aSev, vSev } = this.getNotificationSeverity(alarm);
       audioSev = Math.max(audioSev, aSev);
       visualSev = Math.max(visualSev, vSev);
@@ -224,8 +206,7 @@ export class NotificationsService implements OnDestroy {
     const newValue: IAlarmInfo = {
       audioSev: audioSev,
       visualSev: visualSev,
-      alarmCount: this._notifications.length,
-      unackCount: unAckAlarms,
+      alarmCount: activeNotifications,
       isMuted: this.isHowlIdMuted
     };
 
@@ -248,52 +229,19 @@ export class NotificationsService implements OnDestroy {
       // Notification has been removed/cleared on server
       this.delete(notificationDelta.path);
     } else {
-      const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == notificationDelta.path);
+      const existingNotification: INotification = this._notifications.find(item => item.path == notificationDelta.path);
       if (existingNotification) {
         if ( (existingNotification.notification['state'] !== notificationDelta.notification['state'])
               || (existingNotification.notification['message'] !== notificationDelta.notification['message'])
               || !isEqual(existingNotification.notification['method'], notificationDelta.notification['method']) ) {
           this.update(notificationDelta);
+          console.log(notificationDelta.notification);
         }
       } else {
         this.add(notificationDelta);
+        console.log(notificationDelta.notification);
       }
     }
-  }
-
-  /**
-   * Set Acknowledgement and send to other observers so they can react accordingly
-   * @param path alarm to acknowledge
-   * @param timeout if set will unacknowledged in this time
-   * @return true if alarms found, else false
-   */
-  public acknowledge(path: string, timeout: number = 0): boolean {
-    const existingNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
-    if (existingNotification) {
-      existingNotification.isAck = true;
-      this.notifications$.next(this._notifications);
-
-      // Clear any existing timeout for this path
-      if (this.timeoutIds[path]) {
-        clearTimeout(this.timeoutIds[path]!);
-        this.timeoutIds[path] = null;
-      }
-
-      if (timeout > 0) {
-        this.timeoutIds[path] = setTimeout(() => {
-          console.log("unack: " + path);
-          const timeoutNotification: INotificationMessage = this._notifications.find(notification => notification.path == path);
-          if (timeoutNotification) {
-            timeoutNotification.isAck = false;
-            this.notifications$.next(this._notifications);
-          }
-        }, timeout);
-      }
-
-      this.updateNotificationsState();
-      return true;
-    }
-    return false
   }
 
   /**
@@ -305,7 +253,7 @@ export class NotificationsService implements OnDestroy {
    * @return {*}  {{ aSev: any; vSev: any; }} Audio and Visual severity levels
    * @memberof NotificationsService
    */
-  private getNotificationSeverity(message: INotificationMessage): { aSev: number; vSev: number; } {
+  private getNotificationSeverity(message: INotification): { aSev: number; vSev: number; } {
     const state = message.notification['state'];
     const severity: ISeverityLevel = NotificationsService.ALARM_SEVERITIES[state];
     if (!severity) {
@@ -326,16 +274,20 @@ export class NotificationsService implements OnDestroy {
     return { aSev, vSev };
   }
 
-  public setSignalKNotificationState(path: string, state: string) {
+  public setSkMethod(path: string, method: TMethod[]) {
     this.requests.putRequest(
-      path,
-      state,
+      `${path}.method`,
+      method,
       UUID.create()
     );
   }
 
-  public clearSignalKNotification(path: string) {
-    this.requests.clearNotification(path, UUID.create());
+  public setSkState(path: string, state: string) {
+    this.requests.putRequest(
+      `${path}.state`,
+      state,
+      UUID.create()
+    );
   }
 
   public observerNotificationInfo() {

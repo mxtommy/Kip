@@ -1,30 +1,14 @@
 @if(notificationInfo$ | async; as notificationInfo) {
   <mat-menu #actions="matMenu">
-    <ng-template matMenuContent let-path="path">
+    <ng-template matMenuContent let-path="path" let-method="notification.method">
       <button mat-menu-item
-        matTooltip="Mark the notification as acknowledged, and remove from the list of active notifications. This action has no bearing on the state of the alarm."
-        matTooltipPosition="right"
-        (click)="acknowledge(path)">
-        Acknowledge
+        *ngIf="method.includes('sound')"
+        (click)="silence(path)">
+        Silence
       </button>
       <button mat-menu-item
-        matTooltip="Mark the notification as acknowledged for 5 minutes only, then it will reappear if the state is still active. This action has no bearing on the state of the alarm."
-        matTooltipPosition="right"
-        (click)="acknowledge(path, 300000)">
-        Acknowledge for 5 Minutes
-      </button>
-      <mat-divider></mat-divider>
-      <button mat-menu-item
-        matTooltip="Set the notification to a normal state. This action will prompt Signal K to change the state of the notification."
-        matTooltipPosition="right"
-        (click)="setState(path, 'normal')">
-        Set to Normal State
-      </button>
-      <button mat-menu-item
-        matTooltip="Delete the notification from the list of notifications. This action will prompt Signal K to remove the notification."
-        matTooltipPosition="right"
-        (click)="remove(path)">
-        Remove
+        (click)="clear(path)">
+        Clear
       </button>
     </ng-template>
   </mat-menu>
@@ -34,11 +18,6 @@
       <button mat-menu-item *ngFor="let menuItem of menuNotifications$ | async"
         [mat-menu-trigger-for]="actions"
         [matMenuTriggerData]="menuItem">
-        @if(menuItem.isAck) {
-          <div  class="menu-items-with-icons fa-solid fa-lg fa-check"></div>
-        } @else {
-          <div class="menu-items-with-icons fa-solid fa-lg fa-exclamation"></div>
-        }
         {{ menuItem.notification.message }}
     </button>
 
@@ -62,21 +41,14 @@
     [class.alarmCrit]="notificationInfo.blinkCrit"
     [class.alarmWarning]="notificationInfo.blinkWarn"
     [disabled]="notificationInfo.alarmCount == 0 || notificationConfig.disableNotifications">
-    @if(!notificationConfig.disableNotifications) {
-      <div class="menu-items-with-icons" [matBadgeHidden]="!notificationInfo.unackCount"
-        [matBadge]="notificationInfo.unackCount"
-        matBadgeSize="medium"
-        matBadgePosition="after"
-        matBadgeOverlap="false"
-        matBadgeColor="warn"
-        class="fa-solid fa-envelope fa-2x">
-      </div>
-    }
-    @if(notificationConfig.disableNotifications) {
-      <div class="menu-items-with-icons" class="fa-stack fa-lg">
-        <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
-        <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
-      </div>
-    }
+    <div class="menu-items-with-icons"
+      [matBadgeHidden]="!notificationInfo.alarmCount"
+      [matBadge]="notificationInfo.alarmCount"
+      matBadgeSize="medium"
+      matBadgePosition="after"
+      matBadgeOverlap="false"
+      matBadgeColor="warn">
+      <i class="fa-solid fa-envelope fa-2x" aria-hidden="true"></i>
+    </div>
   </button>
 }

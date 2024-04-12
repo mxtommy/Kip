@@ -11,12 +11,12 @@ import { AppService } from './app-service';
 const deltaStatusCodes = {
   200: "The request was successfully.",
   202: "Request accepted and pending completion.",
-  400: "Bad client request.",
+  400: "Something is wrong with the client's request.",
   401: "Login failed. Your User ID or Password is incorrect.",
-  403: "DENIED: Authentication required with R/W or Admin permission level to send commands. Configure server connection authentication or request a Device Authorization token.",
+  403: "DENIED: Authorization with R/W or Admin permission level is required to send commands. Configure Sign In credential.",
   405: "The server does not support the request.",
   500: "The request failed.",
-  502: "Something went wrong carrying out the request on the server side.",
+  502: "Something went wrong carrying out the request on the server.",
   504: "Timeout on the server side trying to carry out the request."
 }
 export interface skRequest {
@@ -136,38 +136,7 @@ export class SignalkRequestsService {
       "requestId": requestId,
       "put": {
         "path": noSelfPath,
-        "value": value
-      }
-    }
-    this.signalKDeltaService.publishDelta(message); //send request
-
-    const request: skRequest = {
-      requestId: requestId,
-      state: null,
-      statusCode: null,
-      widgetUUID: widgetUUID,
-    };
-
-    this.requests.push(request); // save to private array pending response with widgetUUID so we can filter response from subscriber
-    return requestId; // return the ID to the Subscriber, if tracking of individual request is required
-  }
-
-  /**
-  * Sends a clear Notification request to Signal K server and returns requestId.
-  * @param path Signal K full path. Automatically removes "self" if included in path.
-  * @param widgetUUID Optional - Subscriber's UUID to be included as part of
-  * the subscribeRequest Subject response. Enables Widget specific filtering.
-  * @return requestId Identifier for this specific request. Enables Request specific filtering.
-  */
-  public clearNotification(path: string, widgetUUID: string): string {
-    const requestId = UUID.create();
-    const noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
-    const selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
-    const message = {
-      "context": selfContext,
-      "requestId": requestId,
-      "put": {
-        "path": noSelfPath,
+        "value": value,
       }
     }
     this.signalKDeltaService.publishDelta(message); //send request

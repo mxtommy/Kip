@@ -79,7 +79,7 @@ export class AppService implements OnDestroy {
   }
 
   public validateAutoNightModeSupported(): boolean {
-    if (this.sk.getPathObject(modePath) === null) {
+    if (!this.sk.getPathObject(modePath)) {
       this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
       return false;
     }

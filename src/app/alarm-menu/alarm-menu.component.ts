@@ -1,20 +1,15 @@
 import { Component, OnDestroy } from '@angular/core';
-import { NotificationsService, INotificationMessage, IAlarmInfo } from '../core/services/notifications.service';
+import { NotificationsService, IAlarmInfo } from '../core/services/notifications.service';
+import { INotification } from '../core/services/signalk-delta.service';
 import { Observable, Subscription, filter, iif, map, of, switchMap, tap } from 'rxjs';
-import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
+import { INotificationConfig,  } from '../core/interfaces/app-settings.interfaces';
 import { MatDivider } from '@angular/material/divider';
-import { MatListItem } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatBadge } from '@angular/material/badge';
+import { MatBadgeModule } from '@angular/material/badge';
 import { NgIf, AsyncPipe, NgFor } from '@angular/common';
-import {MatMenuModule } from '@angular/material/menu';
-import { MatButton } from '@angular/material/button';
-
-interface IMenuItem {
-  [key: string]: any;
-  label: string;
-  Alarm?: INotificationMessage;
-}
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+import { Method, States } from '../core/interfaces/signalk-interfaces';
 
 interface INotificationInfo extends IAlarmInfo{
   blinkWarn: boolean;
@@ -26,12 +21,12 @@ interface INotificationInfo extends IAlarmInfo{
     templateUrl: './alarm-menu.component.html',
     styleUrls: ['./alarm-menu.component.scss'],
     standalone: true,
-    imports: [MatButton, MatMenuModule, MatBadge, MatTooltipModule, MatDivider, MatListItem, AsyncPipe, NgFor, NgIf]
+    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, NgFor, NgIf]
 })
 export class AlarmMenuComponent implements OnDestroy {
   private static readonly NORMAL_STATE = "normal";
   private notificationServiceSettingsSubscription: Subscription = null;
-  private notifications$: Observable<INotificationMessage[]> = this.notificationsService.observe().pipe(
+  private notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
     filter(notification => notification !== null));
   public menuNotifications$ = this.notifications$.pipe(
     switchMap(notifications =>
@@ -39,10 +34,13 @@ export class AlarmMenuComponent implements OnDestroy {
         () => this.notificationConfig.devices.showNormalState,
         of(notifications),
         of(notifications.filter(
-          msg => msg.notification.state !== AlarmMenuComponent.NORMAL_STATE
+          item => item.notification.state !== AlarmMenuComponent.NORMAL_STATE
         ))
       )
-    )
+    ),
+    map(notifications => notifications.filter(
+      item => item.notification.method.includes('visual')
+    ))
   );
   public notificationInfo$ = this.notificationsService.observerNotificationInfo().pipe(
     map((info: IAlarmInfo) => {
@@ -77,16 +75,12 @@ export class AlarmMenuComponent implements OnDestroy {
     this.notificationsService.mutePlayer(state);
   }
 
-  public acknowledge(path: string, timeout: number = 0): void {
-    this.notificationsService.acknowledge(path, timeout);
+  public silence(path: string): void {
+    this.notificationsService.setSkMethod(path, [ Method.Visual ]);
   }
 
-  public remove(path: string): void {
-    this.notificationsService.clearSignalKNotification(path);
-  }
-
-  public setState(path: string, state: string): void {
-    this.notificationsService.setSignalKNotificationState(path, state);
+  public clear(path: string): void {
+    this.notificationsService.setSkState(path, States.Normal);
   }
 
   ngOnDestroy() {

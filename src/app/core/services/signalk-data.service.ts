@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash-es';
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
-import { Method, State } from '../interfaces/signalk-interfaces'
+import { TMethod, TState } from '../interfaces/signalk-interfaces'
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { INotification, SignalKDeltaService } from './signalk-delta.service';
@@ -313,8 +313,8 @@ export class SignalKDataService implements OnDestroy {
 
     // if we're not in alarm, and new state is alarm, sound the alarm!
     if (state != this.skData[pathIndex].state) {
-      let stateString: State; // notification service needs string....
-      let methods: Method[] = null;
+      let stateString: TState; // notification service needs string....
+      let methods: TMethod[] = null;
       switch (state) {
         // @ts-ignore
         case IZoneState.alarm:
