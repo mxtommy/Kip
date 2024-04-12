@@ -12,7 +12,6 @@
       </button>
     </ng-template>
   </mat-menu>
-
   <mat-menu #alarmMenu="matMenu" focusFirstItem>
     <ng-template matMenuContent>
       @for(menuItem of menuNotifications$ | async; track menuItem) {
@@ -31,7 +30,6 @@
       }
     </ng-template>
   </mat-menu>
-
   <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
     [class.alarmCrit]="notificationInfo.blinkCrit"
     [class.alarmWarning]="notificationInfo.blinkWarn"
