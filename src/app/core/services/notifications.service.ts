@@ -235,11 +235,9 @@ export class NotificationsService implements OnDestroy {
               || (existingNotification.notification['message'] !== notificationDelta.notification['message'])
               || !isEqual(existingNotification.notification['method'], notificationDelta.notification['method']) ) {
           this.update(notificationDelta);
-          console.log(notificationDelta.notification);
         }
       } else {
         this.add(notificationDelta);
-        console.log(notificationDelta.notification);
       }
     }
   }
