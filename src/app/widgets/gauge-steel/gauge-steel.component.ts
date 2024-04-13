@@ -3,6 +3,7 @@ import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, E
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { ITheme } from '../../core/interfaces/widgets-interface';
+import Qty from 'js-quantities';
 
 declare let steelseries: any; // 3rd party
 
@@ -128,10 +129,17 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
       let areas = [];
 
       this.zones.forEach(zone => {
-        // Perform Units conversions on zone range
-        let lower = this.unitsSvc.convertToUnit(this.units, zone.lower);
-        let upper = this.unitsSvc.convertToUnit(this.units, zone.upper);
-
+        let lower: number = null;
+          let upper: number = null;
+          // Perform Units conversions on zone range
+          if (zone.unit == "ratio") {
+            lower = zone.lower;
+            upper = zone.upper;
+          } else {
+            const convert = Qty.swiftConverter(zone.unit, this.units);
+            lower = convert(zone.lower);
+            upper = convert(zone.upper);
+          }
 
 
         lower = lower || this.minValue;
