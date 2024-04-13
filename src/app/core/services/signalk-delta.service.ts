@@ -3,7 +3,7 @@ import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rx
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
-import { IMeta, INotification, IPathValueData } from "../interfaces/app-interfaces";
+import { IMeta, ISignalKNotification, IPathValueData } from "../interfaces/app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuthenticationService, IAuthorizationToken } from './authentication.service';
 
@@ -24,9 +24,9 @@ export interface IStreamStatus {
   hasToken: boolean;
 }
 
-export interface INotificationDelta {
+export interface INotification {
   path: string;
-  notification: INotification;
+  notification: ISignalKNotification;
 }
 
 @Injectable({
@@ -37,7 +37,7 @@ export class SignalKDeltaService {
   // Signal K Requests message stream Observable
   private signalKRequests$ = new Subject<ISignalKDeltaMessage>();
   // Signal K Notifications message stream Observable
-  private signalKNotifications$ = new Subject<INotificationDelta>();
+  public signalKNotifications$ = new Subject<INotification>();
   // Signal K data path message stream Observable
   private signalKDataPath$ = new Subject<IPathValueData>();
   // Signal K Metadata message stream Observer
@@ -267,7 +267,7 @@ export class SignalKDeltaService {
 
           //TODO: notifications have evolved with the specs. Need to update at some point...
           if (/^notifications./.test(item.path)) {  // It's is a notification message, pass to notification service
-            const notification: INotificationDelta = {
+            const notification: INotification = {
               path: item.path,
               notification: item.value,
             };
@@ -346,7 +346,7 @@ export class SignalKDeltaService {
     return this.signalKRequests$.asObservable();
   }
 
-  public subscribeNotificationsUpdates(): Observable<INotificationDelta> {
+  public subscribeNotificationsUpdates(): Observable<INotification> {
     return this.signalKNotifications$.asObservable();
   }
 

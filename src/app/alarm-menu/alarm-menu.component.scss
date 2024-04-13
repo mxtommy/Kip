@@ -2,7 +2,7 @@
   z-index: 1000;
 }
 
-.mute-unmte-alarm {
+.mute-unmute-alarm {
   width: max-content;
 }
 
@@ -47,7 +47,7 @@
 }
 
 .menu-items-with-icons {
-  display: flex;
+  display: inline-block;
   align-items: center;
   width: max-content;
 }

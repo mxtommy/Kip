@@ -3,13 +3,14 @@ import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { NotificationsService } from '../../core/services/notifications.service';
+import { AppService } from '../../core/services/app-service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { NgFor, NgIf } from '@angular/common';
+
 
 
 @Component({
@@ -36,7 +37,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   constructor(
     private signalkRequestsService: SignalkRequestsService,
-    private notification: NotificationsService
+    private appService: AppService
     ) {
       super();
 
@@ -99,7 +100,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
           } else {
             errMsg += requestResult.statusCode + " - " +requestResult.statusCodeDescription;
           }
-          this.notification.sendSnackbarNotification(errMsg, 0);
+          this.appService.sendSnackbarNotification(errMsg, 0);
         }
       }
     });

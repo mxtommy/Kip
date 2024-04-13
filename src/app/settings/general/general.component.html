@@ -1,55 +1,89 @@
 <div class="mat-typography">
-  <form #general="ngForm" name="GeneraSetting">
+  <form (ngSubmit)="saveAllSettings()" #generalForm="ngForm" id="GeneraSetting">
     <h2>Display Modes</h2>
-    <mat-checkbox class="full-width" [(ngModel)]="autoNightModeConfig" [ngModelOptions]="{standalone: false}" name="autoNightMode" (change)="isAutoNightPathSupported($event)">Automatically change between Day and Night Modes based on sun phases preserving your night vision</mat-checkbox>
-    <mat-checkbox class="full-width" [(ngModel)]="enableHighContrast" [ngModelOptions]="{standalone: false}" name="enableHighContrast" (change)="setTheme($event)">Enable full sunlight High Contrast, black and white display</mat-checkbox>
+    <mat-checkbox class="full-width"
+      [(ngModel)]="autoNightModeConfig"
+      name="autoNightMode">
+      Automatically change between Day and Night Modes based on sun phases preserving your night vision.
+    </mat-checkbox>
+    <mat-checkbox class="full-width"
+      [(ngModel)]="enableHighContrast"
+      name="enableHighContrast">
+      Enable full sunlight High Contrast, black and white display.
+    </mat-checkbox>
+    <br/><br/>
     <h2>Notifications</h2>
-    <p class="mat-card-subtitle">Notifications are a special type of data sent from Signal K and displayed in the
-      notification menu. They are meant to alert or inform operators. Set server
-      notification preferences such as types of messages to display and audio prompts.</p>
+    <p class="mat-card-subtitle">Signal K data state notifications messages meant to
+      inform operators. Notifications are visible in the notifications menu.</p>
     <mat-slide-toggle
       name="disableNotifications"
       [(ngModel)]="notificationConfig.disableNotifications"
-      [ngModelOptions]="{standalone: true}"
+      (change)="togglePanel($event)"
       color="primary">
-        Disable All Notifications</mat-slide-toggle>
+        Disable Notifications
+      </mat-slide-toggle>
+    <br/><br/>
     <mat-accordion>
-      <mat-expansion-panel expanded="true">
+      <mat-expansion-panel #statePanel
+        [disabled]="notificationConfig.disableNotifications">
         <mat-expansion-panel-header>
           <mat-panel-title>
-            Messages
+            State
           </mat-panel-title>
           <mat-panel-description>
-            Control what messages the server will send
+            Filter notification messages per severity levels
           </mat-panel-description>
         </mat-expansion-panel-header>
-        <mat-checkbox [(ngModel)]="notificationConfig.devices.showNormalState" [ngModelOptions]="{standalone: true}">Show Devices Informational notifications</mat-checkbox>
+        <mat-checkbox
+          name="showNormalState"
+          [(ngModel)]="notificationConfig.devices.showNormalState">
+          Show <b>Normal</b> severity
+        </mat-checkbox>
       </mat-expansion-panel>
-      <mat-expansion-panel expanded="false">
+      <mat-expansion-panel #soundPanel
+        [disabled]="notificationConfig.disableNotifications">
         <mat-expansion-panel-header>
           <mat-panel-title>
-            Audio
+            Sound
           </mat-panel-title>
           <mat-panel-description>
-            Configure sound options
+            Disable audio prompt per severity levels
           </mat-panel-description>
         </mat-expansion-panel-header>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.disableSound" [ngModelOptions]="{standalone: true}">Disable All Audio notification</mat-checkbox>
+        <mat-checkbox
+          name="=disableSound"
+          [(ngModel)]="notificationConfig.sound.disableSound">
+          Disable <b>All</b>
+        </mat-checkbox>
         <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteNormal" [ngModelOptions]="{standalone: true}">Disable <b>Information</b> notifications</mat-checkbox>
+        <mat-checkbox
+        name="muteAlert"
+          [(ngModel)]="notificationConfig.sound.muteAlert">
+          Disable <b>Alert</b> severity
+        </mat-checkbox>
         <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteAlert" [ngModelOptions]="{standalone: true}">Disable <b>Alert Severity</b> notifications</mat-checkbox>
+        <mat-checkbox
+        name="muteWarning"
+          [(ngModel)]="notificationConfig.sound.muteWarning">
+          Disable <b>Warning</b> severity
+        </mat-checkbox>
         <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteWarning" [ngModelOptions]="{standalone: true}">Disable <b>Warning</b> notifications</mat-checkbox>
+        <mat-checkbox
+        name="muteAlarm"
+          [(ngModel)]="notificationConfig.sound.muteAlarm">
+          Disable <b>Alarm</b> severity
+        </mat-checkbox>
         <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteAlarm" [ngModelOptions]="{standalone: true}">Disable <b>Alarm Severity</b> notifications</mat-checkbox>
-        <br/>
-        <mat-checkbox [(ngModel)]="notificationConfig.sound.muteEmergency" [ngModelOptions]="{standalone: true}">Disable <b>Emergency Severity</b> notifications</mat-checkbox>
+        <mat-checkbox
+        name="muteEmergency"
+          [(ngModel)]="notificationConfig.sound.muteEmergency">
+          Disable <b>Emergency</b> severity
+        </mat-checkbox>
       </mat-expansion-panel>
     </mat-accordion>
     <div class="formActionFooter">
       <mat-divider class="formActionDivider"></mat-divider>
-      <button mat-raised-button color="accent" class="formActionButton" (click)='saveAllSettings()'>Save</button>
+      <button mat-raised-button type="submit" color="accent" class="formActionButton" [disabled]="!generalForm.form.dirty">Save</button>
     </div>
   </form>
 </div>

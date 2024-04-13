@@ -1,4 +1,4 @@
-import { Format, Policy } from './signalk-interfaces';
+import { TFormat, TPolicy } from './signalk-interfaces';
 
 export enum ControlType {
   toggle = 0,
@@ -292,9 +292,9 @@ export interface IWidgetPath {
   /** NOT IMPLEMENTED -Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
   smoothingPeriod?: number;
   /** NOT IMPLEMENTED -Signal K - format=[delta|full] specifies delta or full format. Default: delta */
-  format?: Format;
+  format?: TFormat;
   /** NOT IMPLEMENTED -Signal K - policy=[instant|ideal|fixed]. Default: ideal */
-  policy?: Policy;
+  policy?: TPolicy;
   /** NOT IMPLEMENTED -Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
   minPeriod?: number;
 }

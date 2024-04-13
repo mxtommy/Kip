@@ -4,19 +4,19 @@ import { Subscription ,  Observable ,  Subject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { ISignalKDeltaMessage } from '../interfaces/signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
-import { NotificationsService } from './notifications.service';
 import { AuthenticationService } from './authentication.service';
 import { UUID } from '../../utils/uuid'
+import { AppService } from './app-service';
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
   202: "Request accepted and pending completion.",
-  400: "Bad client request.",
+  400: "Something is wrong with the client's request.",
   401: "Login failed. Your User ID or Password is incorrect.",
-  403: "DENIED: Authentication required with R/W or Admin permission level to send commands. Configure server connection authentication or request a Device Authorization token.",
+  403: "DENIED: Authorization with R/W or Admin permission level is required to send commands. Configure Sign In credential.",
   405: "The server does not support the request.",
   500: "The request failed.",
-  502: "Something went wrong carrying out the request on the server side.",
+  502: "Something went wrong carrying out the request on the server.",
   504: "Timeout on the server side trying to carry out the request."
 }
 export interface skRequest {
@@ -39,7 +39,7 @@ export class SignalkRequestsService {
   constructor(
     private signalKDeltaService: SignalKDeltaService,
     private appSettingsService: AppSettingsService,
-    private NotificationsService: NotificationsService,
+    private appService: AppService,
     private auth: AuthenticationService,
     ) {
       // Observer to get all signalk-delta messages of type request type.
@@ -58,8 +58,8 @@ export class SignalkRequestsService {
    * The Device authorization is a manual process done on the server.
    */
   public requestDeviceAccessToken(): string {
-    let requestId = UUID.create();
-    let deviceTokenRequest = {
+    const requestId = UUID.create();
+    const deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
         clientId: this.appSettingsService.KipUUID,
@@ -71,7 +71,7 @@ export class SignalkRequestsService {
     console.log("[Request Service] Requesting Device Authorization Token");
     this.signalKDeltaService.publishDelta(deviceTokenRequest);
 
-    let request = {
+    const request = {
       requestId: requestId,
       state: null,
       statusCode: null
@@ -98,8 +98,8 @@ export class SignalkRequestsService {
   * @memberof SignalkRequestsService
   */
   public requestUserLogin(userId: string, userPassword: string): string {
-    let requestId = UUID.create();
-    let loginRequest = {
+    const requestId = UUID.create();
+    const loginRequest = {
       requestId: requestId,
       login: {
         username: userId,
@@ -110,7 +110,7 @@ export class SignalkRequestsService {
     console.log("[Request Service] Requesting User Login");
     this.signalKDeltaService.publishDelta(loginRequest);
 
-    let request = {
+    const request = {
       requestId: requestId,
       state: null,
       statusCode: null
@@ -128,20 +128,20 @@ export class SignalkRequestsService {
   * @return requestId Identifier for this specific request. Enables Request specific filtering.
   */
   public putRequest(path: string, value: any, widgetUUID: string): string {
-    let requestId = UUID.create();
-    let noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
-    let selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
-    let message = {
+    const requestId = UUID.create();
+    const noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
+    const selfContext: string = "vessels.self";    // hard coded context. Could be dynamic at some point
+    const message = {
       "context": selfContext,
       "requestId": requestId,
       "put": {
         "path": noSelfPath,
-        "value": value
+        "value": value,
       }
     }
     this.signalKDeltaService.publishDelta(message); //send request
 
-    let request: skRequest = {
+    const request: skRequest = {
       requestId: requestId,
       state: null,
       statusCode: null,
@@ -158,7 +158,7 @@ export class SignalkRequestsService {
    * @param delta Signal K Delta message
    */
   private updateRequest(delta: ISignalKDeltaMessage) {
-    let index = this.requests.findIndex(r => r.requestId == delta.requestId);
+    const index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
       this.requests[index].state = delta.state;
       this.requests[index].statusCode = delta.statusCode;
@@ -171,12 +171,11 @@ export class SignalkRequestsService {
 
         if (this.requests[index].statusCode == 202) {
           console.log("[Request Service] Async 202 response received");
-          // this.NotificationsService.sendSnackbarNotification(this.requests[index].statusCodeDescription);
           return;
         }
 
         if (this.requests[index].statusCode == 400) {
-          this.NotificationsService.sendSnackbarNotification(this.requests[index].message);
+          this.appService.sendSnackbarNotification(this.requests[index].message);
           console.log("[Request Service] " + this.requests[index].message );
         }
 
@@ -189,7 +188,7 @@ export class SignalkRequestsService {
         }
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.NotificationsService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
+          this.appService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
           console.log(`[Request Service] ${delta.accessRequest.permission}: Device Access Token received`);
           this.auth.setDeviceAccessToken(delta.accessRequest.token);
 
@@ -203,7 +202,7 @@ export class SignalkRequestsService {
         }
 
       } else {
-        this.NotificationsService.sendSnackbarNotification("ERROR: Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        this.appService.sendSnackbarNotification("ERROR: Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
         console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
@@ -215,7 +214,7 @@ export class SignalkRequestsService {
         this.requests = []; // flush array to clean values that will become stale post error
       }
     } else {
-      this.NotificationsService.sendSnackbarNotification("ERROR: A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta));
+      this.appService.sendSnackbarNotification("ERROR: A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta));
       console.error("[Request Service] A Request message that contains an unknown Request ID was received. from delta:\n" + JSON.stringify(delta))
     }
   }

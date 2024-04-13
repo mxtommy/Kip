@@ -2,12 +2,11 @@ import { cloneDeep } from 'lodash-es';
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
-import { Method, State } from '../interfaces/signalk-interfaces'
+import { TMethod, TState } from '../interfaces/signalk-interfaces'
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDeltaService } from './signalk-delta.service';
+import { INotification, SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
-import { NotificationsService } from './notifications.service';
 import Qty from 'js-quantities';
 
 const SELFROOTDEF: string = "self";
@@ -66,7 +65,7 @@ export class SignalKDataService implements OnDestroy {
   // List of paths used by Kip (Widgets or App (Notifications and such))
   private pathRegister: pathRegistration[] = [];
 
-  // path Observable
+  // Path Delta data
   private skDataObservable: BehaviorSubject<IPathData[]> = new BehaviorSubject<IPathData[]>([]);
   private deltaServiceSelfUrnSubscription: Subscription = null;
   private deltaServiceMetaSubscription: Subscription = null;
@@ -77,16 +76,18 @@ export class SignalKDataService implements OnDestroy {
   private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
   private _deltaUpdatesCounterTimer = null;
 
+  // Units conversions
   private defaultUnits: IUnitDefaults = null;
   private defaultUnitsSub: Subscription = null;
   private conversionList: IUnitGroup[] = [];
+
+  // Zones
   private zonesSub: Subscription = null;
   private zones: Array<IZone> = [];
 
   constructor(
       private appSettingsService: AppSettingsService,
       private deltaService: SignalKDeltaService,
-      private notificationsService: NotificationsService,
       private unitService: UnitsService) {
 
     // Emit Delta message update counter every second
@@ -267,7 +268,7 @@ export class SignalKDataService implements OnDestroy {
         }
       }
 
-      this.skData.push({
+      pathIndex = this.skData.push({
         path: updatePath,
         pathValue: dataPath.value,
         defaultSource: dataPath.source,
@@ -279,9 +280,7 @@ export class SignalKDataService implements OnDestroy {
             sourceValue: dataPath.value
           }
         }
-      });
-      // get new object index for further processing
-      pathIndex = this.skData.findIndex(pathObject => pathObject.path == updatePath);
+      }) - 1;
     }
 
     // Check for any zones to set state
@@ -311,9 +310,9 @@ export class SignalKDataService implements OnDestroy {
     });
 
     // if we're not in alarm, and new state is alarm, sound the alarm!
-    if (state != IZoneState.normal && state != this.skData[pathIndex].state) {
-      let stateString: State; // notification service needs string....
-      let methods: Method[] = null;
+    if (state != this.skData[pathIndex].state) {
+      let stateString: TState; // notification service needs string....
+      let methods: TMethod[] = null;
       switch (state) {
         // @ts-ignore
         case IZoneState.alarm:
@@ -327,20 +326,24 @@ export class SignalKDataService implements OnDestroy {
             methods = [ 'visual','sound' ];
             break;
 
+        // @ts-ignore
+        case IZoneState.normal:
+          stateString = "normal"
+          methods = [ 'visual','sound' ];
+          break;
       }
 
       // start
-      this.notificationsService.addAlarm(updatePath, {
-        method: methods,
-        state: stateString,
-        message: updatePath + ' value in ' + stateString,
-        timestamp: Date.now().toString(),
-      })
-    }
-
-    // if we're in alarm, and new state is not alarm, stop the alarm
-    if (this.skData[pathIndex].state != IZoneState.normal && state == IZoneState.normal) {
-      this.notificationsService.deleteAlarm(updatePath);
+      const zoneNotification: INotification = {
+        path: updatePath,
+        notification: {
+          method: methods,
+          state: stateString,
+          message: updatePath + ' value in ' + stateString,
+          timestamp: Date.now().toString()
+        }
+      }
+      this.deltaService.signalKNotifications$.next(zoneNotification);
     }
 
     this.skData[pathIndex].state = state;

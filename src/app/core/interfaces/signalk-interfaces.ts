@@ -9,26 +9,58 @@
 
 // Metadata, Notification and Stream Subscription type restrictions.
 const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
-export type State = typeof states[number];
+export type TState = typeof states[number];
+
+export enum States {
+  Nominal = "nominal",
+  Normal = "normal",
+  Alert = "alert",
+  Warn = "warn",
+  Alarm = "alarm",
+  Emergency = "emergency"
+}
 
 const types = ["linear", "logarithmic", "squareroot", "power"] as ["linear", "logarithmic", "squareroot", "power"];
-export type Type = typeof types[number];
+export type TType = typeof types[number];
+
+export enum Types {
+  Linear = "linear",
+  Logarithmic = "logarithmic",
+  Squareroot = "squareroot",
+  Power = "power"
+}
 
 const methods = ["visual", "sound"] as ["visual", "sound"];
-export type Method = typeof methods[number];
+export type TMethod = typeof methods[number];
+
+export enum Method {
+  Visual = "visual",
+  Sound = "sound"
+}
 
 const formats = ["delta", "full"] as ["delta", "full"];
-export type Format = typeof formats[number];
+export type TFormat = typeof formats[number];
+
+export enum Format {
+  Delta = "delta",
+  Full = "full"
+}
 
 const policies = ["instant", "ideal", "fixed"] as ["instant", "ideal", "fixed"];
-export type Policy = typeof policies[number];
+export type TPolicy = typeof policies[number];
+
+export enum Policy {
+  Instant = "instant",
+  Ideal = "ideal",
+  Fixed = "fixed"
+}
 
 /**
  * Services: signalk-delta service
  * Use in: Root Delta interface - Signal K (WebSocket stream) lowest level raw message interface.
  *
  * Description: lowest level object interface of all data updates send by the server. This includes
- * server Hello, resquest/response (PUTs, login, device token and validation) and data updates.
+ * server Hello, request/response (PUTs, login, device token and validation) and data updates.
  *
  * @memberof signalk-interfaces
  */
@@ -74,7 +106,7 @@ export type Policy = typeof policies[number];
  * Data Update message object interface.
  *
  * Services: signalk-delta service
- * Used in: IDeltaMessage.updates interface propertie
+ * Used in: IDeltaMessage.updates interface properties
  *
  * @memberof signalk-interfaces
  */
@@ -88,7 +120,7 @@ export interface ISignalKUpdateMessage {
 
 /**
  * Source update message object interface.
- * Used in: IDeltaMessage.updates.source interface propertie
+ * Used in: IDeltaMessage.updates.source interface properties
  *
  * @memberof signalk-interfaces
  */
@@ -96,19 +128,19 @@ export interface ISignalKSource {
   // common
   label: string;
   type: string;
-  //buth n2k and I2C sensors
+  // both n2k and I2C sensors
   src?: string;
-  //n2k
+  // n2k
   deviceInstance?: number;
   pgn?: number;
-  //NMEA0183
+  // NMEA0183
   talker?: string;
   sentence?: string;
 }
 
 /**
  * Value update message object interface.
- * Used in: IDeltaMessage.updates.values.[] interface propertie
+ * Used in: IDeltaMessage.updates.values.[] interface properties
  *
  * @memberof signalk-interfaces
  */
@@ -118,7 +150,7 @@ export interface ISignalKDataValueUpdate {
 }
 
 /**
- * Signal K messsage object interface. Describes meta data received from server.
+ * Signal K message object interface. Describes meta data received from server.
  *
  * Used by: signalk-delta (parser) and signalk-full (parser) services
  *
@@ -145,20 +177,20 @@ export interface ISignalKMetadata {
   description: string;
   units: string;        // required if value is present. describe the type of data
   timeout?: number;     // tells the consumer how long it should consider the value valid
-  properties: {}; // Not defined by Kip. Used by GPS and Ship details and other complexe data types
-  method?: Method[];
+  properties: {}; // Not defined by Kip. Used by GPS and Ship details and other complex data types
+  method?: TMethod[];
   displayScale?: {      //This object provides information regarding the recommended type and extent of the scale used for displaying values.
     lower?: number;
     upper?: number;
-    type: Type;
+    type: TType;
     power?: number;
   }
-  alertMethod?: Method[];
-  warnMethod?: Method[];
-  alarmMethod?: Method[];
-  emergencyMethod?: Method[];
+  alertMethod?: TMethod[];
+  warnMethod?: TMethod[];
+  alarmMethod?: TMethod[];
+  emergencyMethod?: TMethod[];
   zones?: {             //This provides a series of hints to the consumer which can be used to properly set a range on a display gauge and also color sectors of a gauge to indicate normal or dangerous operating conditions.
-    state: State;
+    state: TState;
     lower?: number;
     upper?: number;
     message?: string;

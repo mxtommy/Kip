@@ -102,9 +102,7 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     // Snackbar Notifications sub
-    this.appNotificationSub = this.notificationsService.getSnackbarAppNotifications().subscribe(
-
-      appNotification => {
+    this.appNotificationSub = this.appService.getSnackbarAppNotifications().subscribe(appNotification => {
         this._snackBar.open(appNotification.message, 'dismiss', {
           duration: appNotification.duration,
           verticalPosition: 'top'
@@ -142,23 +140,23 @@ export class AppComponent implements OnInit, OnDestroy {
 
     switch (streamStatus.operation) {
       case 0: // not connected
-        this.notificationsService.sendSnackbarNotification("Not connected to server.", 5000, true);
+        this.appService.sendSnackbarNotification("Not connected to server.", 5000, true);
         break;
 
       case 1: // connecting
-        this.notificationsService.sendSnackbarNotification("Connecting to server.", 2000, true);
+        this.appService.sendSnackbarNotification("Connecting to server.", 2000, true);
        break;
 
       case 2: // connected
-        this.notificationsService.sendSnackbarNotification("Connection successful.", 2000, false);
+        this.appService.sendSnackbarNotification("Connection successful.", 2000, false);
         break;
 
       case 3: // connection error
-        this.notificationsService.sendSnackbarNotification("Error connecting to server.", 0, false);
+        this.appService.sendSnackbarNotification("Error connecting to server.", 0, false);
         break;
 
       default:
-        this.notificationsService.sendSnackbarNotification("Unknown stream connection status.", 0, false);
+        this.appService.sendSnackbarNotification("Unknown stream connection status.", 0, false);
         break;
     }
   }

@@ -2,8 +2,8 @@ import { Component, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, E
 import { Subscription } from 'rxjs';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { NotificationsService } from '../../core/services/notifications.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { AppService } from '../../core/services/app-service';
 
 
 @Component({
@@ -38,7 +38,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
 
   constructor(
     private signalkRequestsService: SignalkRequestsService,
-    private notification: NotificationsService
+    private appService: AppService
     ) {
       super();
 
@@ -145,7 +145,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
           } else {
             errMsg += requestResult.statusCode + " - " +requestResult.statusCodeDescription;
           }
-          this.notification.sendSnackbarNotification(errMsg, 0);
+          this.appService.sendSnackbarNotification(errMsg, 0);
         }
       }
     });

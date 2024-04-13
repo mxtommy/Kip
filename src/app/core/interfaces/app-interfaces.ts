@@ -5,7 +5,7 @@
  * For external data interfaces, such as Signal K, see signalk-interfaces file.
  *********************************************************************************/
 
-import { ISignalKMetadata, State, Method } from "./signalk-interfaces";
+import { ISignalKMetadata, TState, TMethod } from "./signalk-interfaces";
 import { IZoneState } from './app-settings.interfaces';
 
 /**
@@ -80,9 +80,9 @@ import { IZoneState } from './app-settings.interfaces';
  *
  * @memberof app-interfaces
  */
- export interface INotification {
-  method: Method[],
-  state: State,
+ export interface ISignalKNotification {
+  method: TMethod[],
+  state: TState,
   message: string
   timestamp: string,
 }

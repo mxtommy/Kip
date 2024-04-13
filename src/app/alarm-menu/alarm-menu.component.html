@@ -1,55 +1,47 @@
-<button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
-        [class.alarmCrit]="blinkCrit"
-        [class.alarmWarning]="blinkWarn"
-        [disabled]="alarmCount == 0 || notificationConfig.disableNotifications">
-  <div class="menu-items-with-icons" *ngIf="!notificationConfig.disableNotifications" [matBadgeHidden]="!unAckAlarms"
-        [matBadge]="unAckAlarms"
-        matBadgeSize="medium"
-        matBadgePosition="after"
-        matBadgeOverlap="false"
-        matBadgeColor="warn"
-        class="fa-solid fa-envelope fa-2x">
-  </div>
-  <div class="menu-items-with-icons" *ngIf="notificationConfig.disableNotifications" class="fa-stack fa-lg">
-    <i class="fa-solid fa-bell fa-1x" aria-hidden="true"></i>
-    <i class="fa-solid fa-ban fa-stack-2x text-danger" aria-hidden="true"></i>
-  </div>
-</button>
-<mat-menu #alarmMenu="matMenu" focusFirstItem>
-  <div *ngFor="let alarm of alarms | keyvalue; index as i; trackBy:trackAlarmPath">
-    <button mat-menu-item [matMenuTriggerFor]="actions" [matTooltip]="alarm.value.notification.message">
-      <div class="menu-items-with-icons" *ngIf="alarm.value.isAck" class="fa-solid fa-lg fa-check"></div>
-      <div class="menu-items-with-icons" *ngIf="!alarm.value.isAck" class="fa-solid fa-lg fa-exclamation"></div>
-      {{ alarm.value.notification.message.replace("self.", "") }}
-    </button>
-    <mat-menu #actions="matMenu">
-      <button
-        mat-menu-item
-        (click)="ackAlarm(alarm.key)"
-
-        matTooltip="Silence Alarm (until state change)"
-        >
-        Acknowledge
+@if(notificationInfo$ | async; as notificationInfo) {
+  <mat-menu #actions="matMenu">
+    <ng-template matMenuContent let-path="path" let-method="notification.method">
+      <button mat-menu-item
+        *ngIf="method.includes('sound')"
+        (click)="silence(path)">
+        Silence
       </button>
-      <button
-        mat-menu-item
-        (click)="ackAlarm(alarm.key, 300000)"
-
-        matTooltip="Silence Alarm for 5 minutes(state change can re-trigger)"
-        >
-        Acknowledge (5 Min)
+      <button mat-menu-item
+        (click)="clear(path)">
+        Clear
       </button>
-    </mat-menu>
-  </div>
-  <mat-action-list>
-    <mat-divider></mat-divider>
-    <button mat-list-item class="muteSoundButton" matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">
-      <div class="menu-items-with-icons" class="mute-unmte-alarm" *ngIf="!isMuted">
-        <i class="fa-solid fa-bell" aria-hidden="true"></i> Mute Alarm Audio
-      </div>
-      <div class="menu-items-with-icons" class="mute-unmte-alarm" *ngIf="isMuted">
-        <i class="fa-solid fa-bell-slash" aria-hidden="true"></i> Unmute Alarm Audio
-      </div>
-    </button>
-  </mat-action-list>
-</mat-menu>
+    </ng-template>
+  </mat-menu>
+  <mat-menu #alarmMenu="matMenu" focusFirstItem>
+    <ng-template matMenuContent>
+      @for(menuItem of menuNotifications$ | async; track menuItem) {
+        @if(menuItem.notification.state !== "normal") {
+          <button mat-menu-item
+            [mat-menu-trigger-for]="actions"
+            [matMenuTriggerData]="menuItem">
+            {{ menuItem.notification.message }}
+          </button>
+        } @else {
+          <button mat-menu-item>
+            {{ menuItem.notification.message }}
+          </button>
+        }
+
+      }
+    </ng-template>
+  </mat-menu>
+  <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
+    [class.alarmCrit]="notificationInfo.blinkCrit"
+    [class.alarmWarning]="notificationInfo.blinkWarn"
+    [disabled]="notificationInfo.alarmCount == 0 || notificationConfig.disableNotifications">
+    <div class="menu-items-with-icons"
+      [matBadgeHidden]="!notificationInfo.alarmCount"
+      [matBadge]="notificationInfo.alarmCount"
+      matBadgeSize="medium"
+      matBadgePosition="after"
+      matBadgeOverlap="false"
+      matBadgeColor="warn">
+      <i class="fa-solid fa-envelope fa-2x" aria-hidden="true"></i>
+    </div>
+  </button>
+}

@@ -19,7 +19,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -169,6 +169,13 @@ bootstrapApplication(AppComponent, {
         appearance: "outline",
         floatLabel: "always",
         subscriptSizing: "dynamic",
+      },
+    },
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: {
+        showDelay: 1500,
+        hideDelay: 0
       },
     },
     AuthenticationService,
