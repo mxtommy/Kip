@@ -1,6 +1,5 @@
 /**
- * This Angular Service handles both app notifications to the Snackbar and Signal K
- * Alert Notifications
+ * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
@@ -129,27 +128,18 @@ export class NotificationsService implements OnDestroy {
   }
 
   /**
-   * Returns an Observable of type alarms containing alarms. Used
-   * by observers whom are interested in Alarms such as Widgets and Alarm menu.
+   * Returns a notification Observable of notification or null.
    */
-  public observe(): Observable<any> {
+  public observe(): Observable<INotification[] | null> {
     return this.notifications$.asObservable();
   }
 
-  /**
-   * Add notification to the notifications array
-   * @param msg Signal K notification message
-   */
   private add(notification: INotification) {
     this._notifications.push(notification);
     this.updateNotificationsState();
     this.notifications$.next(this._notifications);
   }
 
-  /**
-   * Update notification data received from SignalK. ie. alarm.notification
-   * @param notification
-   */
   private update(notification: INotification) {
     let notificationToUpdate = this._notifications.find(item => item.path == notification.path);
     if (notificationToUpdate) {
@@ -161,10 +151,6 @@ export class NotificationsService implements OnDestroy {
     }
   }
 
-  /**
-   * Delete alarm by path
-   * @param path
-   */
   private delete(path: string): void {
     const index = this._notifications.findIndex(notification => notification.path == path);
     if (index > -1) {
@@ -272,6 +258,13 @@ export class NotificationsService implements OnDestroy {
     return { aSev, vSev };
   }
 
+  /**
+   * Set the method for a specific path.
+   *
+   * @param {string} path Path to set method for
+   * @param {TMethod[]} method Method to set. See TMethod for definition.
+   * @memberof NotificationsService
+   */
   public setSkMethod(path: string, method: TMethod[]) {
     this.requests.putRequest(
       `${path}.method`,
@@ -280,6 +273,13 @@ export class NotificationsService implements OnDestroy {
     );
   }
 
+  /**
+   * Set the state for a specific path.
+   *
+   * @param {string} path Path to set state for
+   * @param {string} state State to set. See TState for definition.
+   * @memberof NotificationsService
+   */
   public setSkState(path: string, state: string) {
     this.requests.putRequest(
       `${path}.state`,
@@ -350,7 +350,13 @@ export class NotificationsService implements OnDestroy {
     this.activeHowlId = this.howlPlayer.play();
   }
 
-  public getNotificationServiceConfigAsO(): Observable<INotificationConfig> {
+  /**
+   * Returns the Notification Configuration Observable.
+   *
+   * @return {*}  {Observable<INotificationConfig>}
+   * @memberof NotificationsService
+   */
+  public observeNotificationConfiguration(): Observable<INotificationConfig> {
     return this.notificationConfig$.asObservable();
   }
 

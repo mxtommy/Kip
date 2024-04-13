@@ -66,7 +66,7 @@ export class AlarmMenuComponent implements OnDestroy {
 
   constructor(private notificationsService: NotificationsService) {
     // Get service configuration
-    this.notificationServiceSettingsSubscription = this.notificationsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
+    this.notificationServiceSettingsSubscription = this.notificationsService.observeNotificationConfiguration().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;
     });
   }
