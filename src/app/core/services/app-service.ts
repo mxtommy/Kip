@@ -73,7 +73,7 @@ export class AppService implements OnDestroy {
               }
             }
           });
-        }, 0);
+        }, 1500);
       }
     });
   }
