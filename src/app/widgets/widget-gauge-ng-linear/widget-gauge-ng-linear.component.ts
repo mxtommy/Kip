@@ -174,9 +174,17 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.zones.forEach(zone => {
         // get zones for our path
         if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
+          let lower: number = null;
+          let upper: number = null;
           // Perform Units conversions on zone range
-          let lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
-          let upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
+          if (zone.unit == "ratio") {
+            lower = zone.lower;
+            upper = zone.upper;
+          } else {
+            const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
+            lower = convert(zone.lower);
+            upper = convert(zone.upper);
+          }
 
           lower = lower || this.widgetProperties.config.minValue;
           upper = upper || this.widgetProperties.config.maxValue;
@@ -255,7 +263,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.gaugeOptions.minorTicks = 10;
         this.gaugeOptions.ticksWidthMinor = 4;
 
-        this.gaugeOptions.highlightsWidth = 6;
+        this.gaugeOptions.highlightsWidth = 5;
       }
       else {
         // Vertical No ticks
@@ -274,7 +282,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 0;
 
-        this.gaugeOptions.highlightsWidth = 15;
+        this.gaugeOptions.highlightsWidth = 5;
       }
     }
     else {
@@ -308,7 +316,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           this.gaugeOptions.minorTicks = 10;
           this.gaugeOptions.ticksWidthMinor = 5;
 
-          this.gaugeOptions.highlightsWidth = 15;
+          this.gaugeOptions.highlightsWidth = 5;
       }
       else {
         // horizontal No ticks
@@ -327,7 +335,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.gaugeOptions.numbersMargin = 0;
         this.gaugeOptions.fontNumbersSize = 0;
 
-        this.gaugeOptions.highlightsWidth = 15;
+        this.gaugeOptions.highlightsWidth = 5;
       }
     }
   }

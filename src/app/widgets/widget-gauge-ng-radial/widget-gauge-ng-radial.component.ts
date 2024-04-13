@@ -390,9 +390,17 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         // get zones for our path
         if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
 
+          let lower: number = null;
+          let upper: number = null;
           // Perform Units conversions on zone range
-          let lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
-          let upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
+          if (zone.unit == "ratio") {
+            lower = zone.lower;
+            upper = zone.upper;
+          } else {
+            const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
+            lower = convert(zone.lower);
+            upper = convert(zone.upper);
+          }
 
           lower = lower || this.widgetProperties.config.minValue;
           upper = upper || this.widgetProperties.config.maxValue;
