@@ -309,44 +309,54 @@ export class SignalKDataService implements OnDestroy {
       }
     });
 
-    // if we're not in alarm, and new state is alarm, sound the alarm!
-    if (state != this.skData[pathIndex].state) {
-      let stateString: TState; // notification service needs string....
-      let methods: TMethod[] = null;
-      switch (state) {
-        // @ts-ignore
-        case IZoneState.alarm:
-          stateString = States.Alarm
-          methods.push(Methods.Visual);
-          methods.push(Methods.Sound);
-          break;
+    /**
+     * Commented temporary until KIP can read zones definitions from Signal K
+     * to remove conflict with SK Zones Notifications and local zones Notifications.
+     *
+     * This is a temporary solution to avoid conflict with Signal K zones notifications.
+     *
+     * We still need to trigger data state so gauges can react to data state defined in
+     * KIP local Zones until we can get those from SK and apply them.
+     */
 
-        // @ts-ignore
-        case IZoneState.warning:
-          stateString = States.Warn;;
-          methods.push(Methods.Visual);
-          methods.push(Methods.Sound);
-            break;
+    // // if we're not in alarm, and new state is alarm, sound the alarm!
+    // if (state != this.skData[pathIndex].state) {
+    //   let stateString: TState; // notification service needs string....
+    //   let methods: TMethod[] = [];
+    //   switch (state) {
+    //     // @ts-ignore
+    //     case IZoneState.alarm:
+    //       stateString = States.Alarm
+    //       methods.push(Methods.Visual);
+    //       methods.push(Methods.Sound);
+    //       break;
 
-        // @ts-ignore
-        case IZoneState.normal:
-          stateString = States.Normal
-          methods.push(Methods.Visual);
-          break;
-      }
+    //     // @ts-ignore
+    //     case IZoneState.warning:
+    //       stateString = States.Warn;;
+    //       methods.push(Methods.Visual);
+    //       methods.push(Methods.Sound);
+    //         break;
 
-      // start
-      const zoneNotification: ISignalKDataValueUpdate = {
-        path: updatePath,
-        value: {
-          method: methods,
-          state: stateString,
-          message: updatePath + ' value in ' + stateString,
-          timestamp: Date.now().toString()
-        }
-      }
-      this.deltaService.signalKNotificationsMsg$.next(zoneNotification);
-    }
+    //     // @ts-ignore
+    //     case IZoneState.normal:
+    //       stateString = States.Normal
+    //       methods.push(Methods.Visual);
+    //       break;
+    //   }
+
+    //   // start
+    //   const zoneNotification: ISignalKDataValueUpdate = {
+    //     path: updatePath,
+    //     value: {
+    //       method: methods,
+    //       state: stateString,
+    //       message: updatePath + ' in ' + stateString,
+    //       timestamp: Date.now().toString()
+    //     }
+    //   }
+    //   this.deltaService.signalKNotificationsMsg$.next(zoneNotification);
+    // }
 
     this.skData[pathIndex].state = state;
 
