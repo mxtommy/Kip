@@ -69,24 +69,6 @@ import { IZoneState } from './app-settings.interfaces';
   meta?: ISignalKMetadata;
 }
 
-/**
- * An App data structure that represents a request/response "ie. a notification"
- * message.
- *
- * Use by: Notification service (consumer), signalk-delta (parser)
- *
- * Follow URL for full Signal K specification and description of fields:
- * @url https://signalk.org/specification/1.7.0/doc/request_response.html
- *
- * @memberof app-interfaces
- */
- export interface ISignalKNotification {
-  method: TMethod[],
-  state: TState,
-  message: string
-  timestamp: string,
-}
-
 export interface IDefaultSource {
   path: string;
   source: string;

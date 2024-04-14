@@ -2,10 +2,11 @@ import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
-import { IMeta, ISignalKNotification, IPathValueData } from "../interfaces/app-interfaces";
+import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage, ISignalKNotification } from '../interfaces/signalk-interfaces';
+import { IMeta, IPathValueData } from "../interfaces/app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuthenticationService, IAuthorizationToken } from './authentication.service';
+import { producerUpdatesAllowed } from '@angular/core/primitives/signals';
 
 
 /**
@@ -24,11 +25,6 @@ export interface IStreamStatus {
   hasToken: boolean;
 }
 
-export interface INotification {
-  path: string;
-  notification: ISignalKNotification;
-}
-
 @Injectable({
     providedIn: 'root'
   })
@@ -37,11 +33,13 @@ export class SignalKDeltaService {
   // Signal K Requests message stream Observable
   private signalKRequests$ = new Subject<ISignalKDeltaMessage>();
   // Signal K Notifications message stream Observable
-  public signalKNotifications$ = new Subject<INotification>();
+  public signalKNotificationsMsg$ = new Subject<ISignalKDataValueUpdate>();
+  // Signal K Notifications message stream Observable
+  public signalKNotificationsMeta$ = new Subject<IMeta>();
   // Signal K data path message stream Observable
   private signalKDataPath$ = new Subject<IPathValueData>();
   // Signal K Metadata message stream Observer
-  private signalKMetadata$ = new Subject<IMeta>();
+  private signalKDataMeta$ = new Subject<IMeta>();
   // Self URN message stream Observer
   private vesselSelfUrn$ = new Subject<string>();
   // local self URN to filter data based on root node (self or others)
@@ -255,28 +253,22 @@ export class SignalKDeltaService {
     // if (context != this.selfUrn) {    // remove non self root nodes
     //   return
     // }
-    for (let update of updates) {
+    for (const update of updates) {
       if (update.meta !== undefined) {
         // Meta message update
-        for (let meta of update.meta) {
-          this.parseMeta(meta, context);
+        for (const meta of update.meta) {
+            this.parseSkMeta(meta, context);
         }
-      } else if (update.$source !== undefined) {
+
+      } else {
         // Source value updates
         for (let item of update.values) {
-
-          //TODO: notifications have evolved with the specs. Need to update at some point...
-          if (/^notifications./.test(item.path)) {  // It's is a notification message, pass to notification service
-            const notification: INotification = {
-              path: item.path,
-              notification: item.value,
-            };
-            this.signalKNotifications$.next(notification);
+          if (item.path.startsWith("notifications.")) {  // It's is a notification message, pass to notification service
+            this.signalKNotificationsMsg$.next(item);
 
           } else {
             // It's a path value source update. Check if it's an Object. NOTE: null represents an undefined object and so is an object it's self, but in SK it should be handled as a value to mean: the path/source exists, but no value can ge generated. Ie. a depth sensor that can't read bottom depth in very deep water will send null.
             if ((typeof(item.value) == 'object') && (item.value !== null)) {
-
               const keys = Object.keys(item.value);
               for (let i = 0; i < keys.length; i++) {
                 const dataPath: IPathValueData = {
@@ -298,6 +290,7 @@ export class SignalKDeltaService {
                 }
                 this.signalKDataPath$.next(dataPath);
               }
+
             } else {
               // It's a Primitive type or a null value
               const dataPath: IPathValueData = {
@@ -315,7 +308,7 @@ export class SignalKDeltaService {
     }
   }
 
-  private parseMeta(metadata: ISignalKMeta, context: string) {
+  private parseSkMeta(metadata: ISignalKMeta, context: string) {
     let meta: IMeta = null;
     // does meta have one with properties for each one?
     if (metadata.value.properties !== undefined) {
@@ -325,7 +318,7 @@ export class SignalKDeltaService {
           path: `${metadata.path}.${key}`,
           meta: metadata.value.properties[key],
         };
-        this.signalKMetadata$.next(meta);
+        (meta.path.startsWith("notifications.")) ? this.signalKNotificationsMeta$.next(meta) : this.signalKDataMeta$.next(meta);
       })
     } else {
       meta = {
@@ -333,7 +326,7 @@ export class SignalKDeltaService {
         path: metadata.path,
         meta: metadata.value,
       };
-      this.signalKMetadata$.next(meta);
+      (meta.path.startsWith("notifications.")) ? this.signalKNotificationsMeta$.next(meta) : this.signalKDataMeta$.next(meta);
     }
   }
 
@@ -346,8 +339,12 @@ export class SignalKDeltaService {
     return this.signalKRequests$.asObservable();
   }
 
-  public subscribeNotificationsUpdates(): Observable<INotification> {
-    return this.signalKNotifications$.asObservable();
+  public observeNotificationsDataUpdates(): Observable<ISignalKDataValueUpdate> {
+    return this.signalKNotificationsMsg$.asObservable();
+  }
+
+  public observeNotificationsMetaUpdates(): Observable<IMeta> {
+    return this.signalKNotificationsMeta$.asObservable();
   }
 
   public subscribeDataPathsUpdates() : Observable<IPathValueData> {
@@ -355,7 +352,7 @@ export class SignalKDeltaService {
   }
 
   public subscribeMetadataUpdates() : Observable<IMeta> {
-    return this.signalKMetadata$.asObservable();
+    return this.signalKDataMeta$.asObservable();
   }
 
   public subscribeSelfUpdates(): Observable<string> {

@@ -2,10 +2,10 @@ import { cloneDeep } from 'lodash-es';
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject } from 'rxjs';
 import { IPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
-import { TMethod, TState } from '../interfaces/signalk-interfaces'
+import { ISignalKDataValueUpdate, Methods, States, TMethod, TState } from '../interfaces/signalk-interfaces'
 import { IZone, IZoneState } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { INotification, SignalKDeltaService } from './signalk-delta.service';
+import { SignalKDeltaService } from './signalk-delta.service';
 import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import Qty from 'js-quantities';
 
@@ -316,34 +316,36 @@ export class SignalKDataService implements OnDestroy {
       switch (state) {
         // @ts-ignore
         case IZoneState.alarm:
-          stateString = "alarm"
-          methods = [ 'visual', 'sound' ];
+          stateString = States.Alarm
+          methods.push(Methods.Visual);
+          methods.push(Methods.Sound);
           break;
 
         // @ts-ignore
         case IZoneState.warning:
-            stateString = "warn"
-            methods = [ 'visual','sound' ];
+          stateString = States.Warn;;
+          methods.push(Methods.Visual);
+          methods.push(Methods.Sound);
             break;
 
         // @ts-ignore
         case IZoneState.normal:
-          stateString = "normal"
-          methods = [ 'visual','sound' ];
+          stateString = States.Normal
+          methods.push(Methods.Visual);
           break;
       }
 
       // start
-      const zoneNotification: INotification = {
+      const zoneNotification: ISignalKDataValueUpdate = {
         path: updatePath,
-        notification: {
+        value: {
           method: methods,
           state: stateString,
           message: updatePath + ' value in ' + stateString,
           timestamp: Date.now().toString()
         }
       }
-      this.deltaService.signalKNotifications$.next(zoneNotification);
+      this.deltaService.signalKNotificationsMsg$.next(zoneNotification);
     }
 
     this.skData[pathIndex].state = state;

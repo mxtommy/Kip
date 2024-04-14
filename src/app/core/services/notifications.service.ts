@@ -7,12 +7,13 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { SignalKDeltaService, INotification, IStreamStatus } from './signalk-delta.service';
+import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
 import { SignalkRequestsService } from './signalk-requests.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
-import { TMethod } from '../interfaces/signalk-interfaces';
+import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
+import { IMeta } from '../interfaces/app-interfaces';
 
 
 const alarmTrack = {
@@ -23,6 +24,11 @@ const alarmTrack = {
   1004 : 'emergency',
 };
 
+export interface INotification {
+  path: string;
+  value?: ISignalKNotification;
+  meta?: ISignalKMetadata;
+}
 
 /**
  * Alarm information, some stats used
@@ -56,7 +62,9 @@ export class NotificationsService implements OnDestroy {
     emergency: { sound: 4, visual: 2 },
   };
   private notificationSettingsSubscription: Subscription = null;
-  private notificationStreamSubscription: Subscription = null;
+  private notificationDataStreamSubscription: Subscription = null;
+  private notificationMetaStreamSubscription: Subscription = null;
+
   private _notificationConfig: INotificationConfig;
   public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
@@ -83,10 +91,10 @@ export class NotificationsService implements OnDestroy {
       this._notificationConfig = config;
       this.reset();
       this.notificationConfig$.next(config); // push to observers
-      if (this._notificationConfig.disableNotifications && !this.notificationStreamSubscription?.closed) {
+      if (this._notificationConfig.disableNotifications && !this.notificationDataStreamSubscription?.closed) {
         this.stopNotificationStream();
       }
-      if (!this._notificationConfig.disableNotifications && (this.notificationStreamSubscription === null || this.notificationStreamSubscription?.closed)) {
+      if (!this._notificationConfig.disableNotifications && (this.notificationDataStreamSubscription === null || this.notificationDataStreamSubscription?.closed)) {
           this.startNotificationStream();
       }
       if (this._notificationConfig.sound.disableSound) {
@@ -108,13 +116,20 @@ export class NotificationsService implements OnDestroy {
    }
 
   private startNotificationStream() {
-  this.notificationStreamSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((msg: INotification) => {
-    this.processNotificationDelta(msg);
-  });
+    this.notificationDataStreamSubscription = this.deltaService.observeNotificationsDataUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
+      this.processNotificationDeltaMsg(msg);
+    });
+
+    this.notificationMetaStreamSubscription = this.deltaService.observeNotificationsMetaUpdates().subscribe((meta: IMeta) => {
+      this.processNotificationDeltaMeta(meta);
+    });
+
+
   }
 
   private stopNotificationStream() {
-  this.notificationStreamSubscription?.unsubscribe();
+  this.notificationDataStreamSubscription?.unsubscribe();
+  this.notificationMetaStreamSubscription?.unsubscribe();
   this.reset();
   }
 
@@ -134,27 +149,28 @@ export class NotificationsService implements OnDestroy {
     return this.notifications$.asObservable();
   }
 
-  private add(notification: INotification) {
-    this._notifications.push(notification);
+  private addValue(msg: ISignalKDataValueUpdate) {
+    this._notifications.push({ path: msg.path, value: msg.value });
     this.updateNotificationsState();
     this.notifications$.next(this._notifications);
   }
 
-  private update(notification: INotification) {
-    let notificationToUpdate = this._notifications.find(item => item.path == notification.path);
+  private updateValue(msg: ISignalKDataValueUpdate) {
+    const notificationToUpdate = this._notifications.find(item => item.path == msg.path);
     if (notificationToUpdate) {
-      notificationToUpdate.notification = {...notification.notification};
+      notificationToUpdate.value = {...msg.value};
       this.updateNotificationsState();
       this.notifications$.next(this._notifications);
     } else {
-      console.log("[Notification Service] Notification to update not found: " + notification.path);
+      console.log("[Notification Service] Notification to update not found: " + msg.path);
     }
   }
 
-  private delete(path: string): void {
-    const index = this._notifications.findIndex(notification => notification.path == path);
-    if (index > -1) {
-      this._notifications.splice(index, 1);
+  private deleteValue(path: string): void {
+    const notification = this._notifications.find(notification => notification.path == path);
+    if (notification) {
+      // this._notifications.splice(index, 1);
+      delete notification.value;
       this.updateNotificationsState();
       this.notifications$.next(this._notifications);
     } else {
@@ -171,11 +187,11 @@ export class NotificationsService implements OnDestroy {
     let activeNotifications: number = 0;
 
     for (const alarm of this._notifications) {
-      if (!('method' in alarm.notification)) {
+      if (!alarm.value || !('method' in alarm.value)) {
         continue;
       }
 
-      if (alarm.notification['state'] === 'normal' && !this._notificationConfig.devices.showNormalState) {
+      if (alarm.value['state'] === States.Normal && !this._notificationConfig.devices.showNormalState) {
         continue;
       }
 
@@ -206,26 +222,41 @@ export class NotificationsService implements OnDestroy {
    * Process Notification Delta received from Signal K server.
    * @param notificationDelta Notification Delta object received from Signal K server.
    */
-  private processNotificationDelta(notificationDelta: INotification) {
-    if (/^notifications.security./.test(notificationDelta.path)) {
+  private processNotificationDeltaMsg(notificationDelta: ISignalKDataValueUpdate) {
+    if (notificationDelta.path.startsWith("notifications.security")) {
       return; // as per sbender this part is not ready in the spec - Don't add to alarms
     }
 
-    if (notificationDelta.notification === null) {
+    if (notificationDelta.value === null) {
       // Notification has been removed/cleared on server
-      this.delete(notificationDelta.path);
+      this.deleteValue(notificationDelta.path);
     } else {
       const existingNotification: INotification = this._notifications.find(item => item.path == notificationDelta.path);
       if (existingNotification) {
-        if ( (existingNotification.notification['state'] !== notificationDelta.notification['state'])
-              || (existingNotification.notification['message'] !== notificationDelta.notification['message'])
-              || !isEqual(existingNotification.notification['method'], notificationDelta.notification['method']) ) {
-          this.update(notificationDelta);
+        if (!existingNotification.value) {
+          this.updateValue(notificationDelta);
+        } else {
+          if ( (existingNotification.value['state'] !== notificationDelta.value['state'])
+            || (existingNotification.value['message'] !== notificationDelta.value['message'])
+            || !isEqual(existingNotification.value['method'], notificationDelta.value['method']) ) {
+            this.updateValue(notificationDelta);
+          }
         }
       } else {
-        this.add(notificationDelta);
+        this.addValue(notificationDelta);
       }
     }
+  }
+
+  private processNotificationDeltaMeta(metaDelta: IMeta) {
+    const existingNotification: INotification = this._notifications.find(item => item.path == metaDelta.path);
+    if (existingNotification) {
+      existingNotification.meta = metaDelta.meta;
+
+    } else {
+      this._notifications.push({path: metaDelta.path, meta: metaDelta.meta});
+    }
+    this.notifications$.next(this._notifications);
   }
 
   /**
@@ -238,7 +269,7 @@ export class NotificationsService implements OnDestroy {
    * @memberof NotificationsService
    */
   private getNotificationSeverity(message: INotification): { aSev: number; vSev: number; } {
-    const state = message.notification['state'];
+    const state = message.value['state'];
     const severity: ISeverityLevel = NotificationsService.ALARM_SEVERITIES[state];
     if (!severity) {
       console.log("[Notification Service] Unknown Notification State received from Signal K\n" + JSON.stringify(message));
@@ -248,10 +279,10 @@ export class NotificationsService implements OnDestroy {
     let aSev = severity.sound;
     let vSev = severity.visual;
 
-    if (message.notification['method'].includes('sound') && this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`]) {
+    if (message.value['method'].includes(Methods.Sound) && this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`]) {
       aSev = 0;
     }
-    if (!message.notification['method'].includes('visual')) {
+    if (!message.value['method'].includes(Methods.Visual)) {
       vSev = 0;
     }
 
@@ -296,7 +327,7 @@ export class NotificationsService implements OnDestroy {
    * Load player with a specific track in loop mode.
    * @param track track ID to play. See const for definition
    */
-   getPlayer(track: number): Howl {
+  getPlayer(track: number): Howl {
     this.activeAlarmSoundtrack = track;
     const player = new Howl({
         src: ['assets/' + alarmTrack[track] + '.mp3'],
@@ -362,6 +393,5 @@ export class NotificationsService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.notificationSettingsSubscription?.unsubscribe();
-    this.notificationStreamSubscription?.unsubscribe();
   }
 }
