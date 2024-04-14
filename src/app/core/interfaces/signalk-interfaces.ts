@@ -33,7 +33,7 @@ export enum Types {
 const methods = ["visual", "sound"] as ["visual", "sound"];
 export type TMethod = typeof methods[number];
 
-export enum Method {
+export enum Methods {
   Visual = "visual",
   Sound = "sound"
 }
@@ -41,7 +41,7 @@ export enum Method {
 const formats = ["delta", "full"] as ["delta", "full"];
 export type TFormat = typeof formats[number];
 
-export enum Format {
+export enum Formats {
   Delta = "delta",
   Full = "full"
 }
@@ -49,7 +49,7 @@ export enum Format {
 const policies = ["instant", "ideal", "fixed"] as ["instant", "ideal", "fixed"];
 export type TPolicy = typeof policies[number];
 
-export enum Policy {
+export enum Policies {
   Instant = "instant",
   Ideal = "ideal",
   Fixed = "fixed"
@@ -195,4 +195,19 @@ export interface ISignalKMetadata {
     upper?: number;
     message?: string;
   }[]
+}
+
+/**
+ * Signal K Notification message object interface.
+ *
+ * Follow URL for full Signal K specification and description of fields:
+ * @url https://signalk.org/specification/1.7.0/doc/request_response.html
+ *
+ * @memberof signalk-interfaces
+ */
+export interface ISignalKNotification {
+  method: TMethod[],
+  state: TState,
+  message: string
+  timestamp: string,
 }

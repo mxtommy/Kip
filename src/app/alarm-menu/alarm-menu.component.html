@@ -1,39 +1,42 @@
 @if(notificationInfo$ | async; as notificationInfo) {
   <mat-menu #actions="matMenu">
-    <ng-template matMenuContent let-path="path" let-method="notification.method">
+    <ng-template matMenuContent let-path="path" let-method="value.method">
       <button mat-menu-item
         *ngIf="method.includes('sound')"
         (click)="silence(path)">
-        Silence
+        <i class="fa-solid fa-bell-slash"></i> Silence
       </button>
       <button mat-menu-item
         (click)="clear(path)">
-        Clear
+        <i class="fa-solid fa-ban"></i> Clear
       </button>
     </ng-template>
   </mat-menu>
   <mat-menu #alarmMenu="matMenu" focusFirstItem>
     <ng-template matMenuContent>
       @for(menuItem of menuNotifications$ | async; track menuItem) {
-        @if(menuItem.notification.state !== "normal") {
+        @if(menuItem.value.state !== "normal") {
           <button mat-menu-item
             [mat-menu-trigger-for]="actions"
             [matMenuTriggerData]="menuItem">
-            {{ menuItem.notification.message }}
+            {{ menuItem.value.message }}
           </button>
         } @else {
           <button mat-menu-item>
-            {{ menuItem.notification.message }}
+            {{ menuItem.value.message }}
           </button>
         }
 
-      }
+      } @empty {
+        <button mat-menu-item disabled="true">
+          <i>"No Notifications"</i>
+        </button>}
     </ng-template>
   </mat-menu>
   <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
     [class.alarmCrit]="notificationInfo.blinkCrit"
     [class.alarmWarning]="notificationInfo.blinkWarn"
-    [disabled]="notificationInfo.alarmCount == 0 || notificationConfig.disableNotifications">
+    [disabled]="notificationConfig.disableNotifications">
     <div class="menu-items-with-icons"
       [matBadgeHidden]="!notificationInfo.alarmCount"
       [matBadge]="notificationInfo.alarmCount"
