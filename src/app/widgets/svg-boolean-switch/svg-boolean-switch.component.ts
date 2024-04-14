@@ -1,7 +1,7 @@
 import { Component, DoCheck, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { IDynamicControl, ITheme } from '../../core/interfaces/widgets-interface';
 
-interface IDimensions {
+export interface IDimensions {
   height: number,
   width: number
 }
@@ -14,7 +14,7 @@ interface IDimensions {
 export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   @Input('controlData') data: IDynamicControl = null;
   @Input('theme') theme: ITheme = null;
-  @Input() dimensions!: IDimensions;
+  @Input({ required: true }) dimensions!: IDimensions;
   @Output() toggleClick = new EventEmitter<IDynamicControl>();
 
   private toggleOff: string = "0 35 180 35";

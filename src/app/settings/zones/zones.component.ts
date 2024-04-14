@@ -179,6 +179,10 @@ export class DialogNewZone {
       return ((upper === null) && (lower === null)) ? { needUpperLower: true } : null;
    }
 
+   get getPathFormGroup(): UntypedFormGroup {
+    return this.zoneForm.get('path') as UntypedFormGroup;
+  }
+
   closeForm() {
     let zone: IZone = {
       uuid: null,

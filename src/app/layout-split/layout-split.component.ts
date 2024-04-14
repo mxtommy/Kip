@@ -4,6 +4,7 @@ import { ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.s
 import { MatMiniFabButton } from '@angular/material/button';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { DynamicWidgetContainerComponent } from '../dynamic-widget-container/dynamic-widget-container.component';
+import { IOutputData, ISplitDirection } from 'angular-split'
 import { NgFor, NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
 import { AngularSplitModule } from 'angular-split';
 
@@ -49,11 +50,11 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  onDragEnd(sizesArray: {gutterNum: number, sizes: Array<number>}) {
+  onDragEnd(sizesArray: IOutputData) {
      this.layoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
   }
 
-  splitArea(areaUUID: string, direction: string) {
+  splitArea(areaUUID: string, direction: ISplitDirection) {
     this.layoutSplitsService.splitArea(this.splitSet.uuid,areaUUID, direction);
   }
 

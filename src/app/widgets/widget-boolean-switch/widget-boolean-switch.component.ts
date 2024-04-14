@@ -8,7 +8,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
-import { SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
+import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { NgFor, NgIf } from '@angular/common';
 
 
@@ -33,7 +33,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private labelColor: string = undefined;
 
   private nbCtrl: number = null;
-  public ctrlDimensions: Object = {};
+  public ctrlDimensions: IDimensions = { width: 0, height: 0};
 
   constructor(
     private signalkRequestsService: SignalkRequestsService,
@@ -86,7 +86,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     let calcH: number = event.newRect.height / this.nbCtrl; // divide by number of instantiated widget
     let ctrlHeightProportion = (35 * event.newRect.width / 180); //check control height not over width proportions
     let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
-    this.ctrlDimensions = {width: event.newRect.width, height: h};
+    this.ctrlDimensions = { width: event.newRect.width, height: h};
     this.resizeWidget();
   }
 

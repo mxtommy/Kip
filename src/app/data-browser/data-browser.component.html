@@ -18,8 +18,8 @@
       <ng-container matColumnDef="defaultSource">
         <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source / Value</mat-header-cell>
         <mat-cell class="dataCell" *matCellDef="let element">
-          <div style="width: 100%;" *ngFor="let item of element.sources |keyvalue; trackBy: trackBySource">
-            <data-browser-row class="flex-container" [path]="element.path" [source]="item.key" [pathValue]="item.value.sourceValue"></data-browser-row>
+          <div style="width: 100%;" *ngFor="let item of element.sources | keyvalue; trackBy: trackBySource">
+            <data-browser-row class="flex-container" [path]="element.path" [source]="getSourceKey(item)" [pathValue]="getSourceValue(item)"></data-browser-row>
           </div>
         </mat-cell>
      </ng-container>

@@ -46,7 +46,7 @@ export class SvgAutopilotComponent implements AfterViewInit {
   @Input('appWindAngle') appWindAngle: number;
   @Input('rudderAngle') rudderAngle: number;
   @Input('apState') apState: string;
-  @Input('apTargetAppWindAngle') apTargetAppWindAngle: string;
+  @Input('apTargetAppWindAngle') apTargetAppWindAngle: number;
   @Input('isApConnected') isApConnected: boolean;
 
   // compass

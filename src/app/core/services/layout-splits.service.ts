@@ -5,18 +5,19 @@ import { Router } from '@angular/router';
 import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
 import { UUID } from '../../utils/uuid'
+import { IAreaSize, IOutputAreaSizes, ISplitDirection } from 'angular-split';
 
 
 interface ISplitArea {
   uuid: string; // uuid of widget of splitset, depending on type.
   type: string; //(widget|splitSet)
-  size: number;
+  size: IAreaSize;
 }
 
 export interface ISplitSet {
   uuid: string;
   parentUUID?: string;
-  direction: string;
+  direction: ISplitDirection;
   splitAreas: Array<ISplitArea>;
 }
 
@@ -94,7 +95,7 @@ export class LayoutSplitsService {
 
    //should only ever be called when changing directions. widgetUUID of area we're splitting
    // becomes first area of new split
-  newSplit(parentUUID: string, direction: string, widget1UUID: string, widget2UUID) {
+  newSplit(parentUUID: string, direction: ISplitDirection, widget1UUID: string, widget2UUID) {
     let uuid = UUID.create();
     let newSplit: ISplitSet = {
       uuid: uuid,
@@ -138,7 +139,7 @@ export class LayoutSplitsService {
     this.router.navigate(['/page', this.rootUUIDs.indexOf(uuid)]);
   }
 
-  splitArea(splitSetUUID: string, areaUUID: string, direction: string): void {
+  splitArea(splitSetUUID: string, areaUUID: string, direction: ISplitDirection): void {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }
     let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(
@@ -148,17 +149,17 @@ export class LayoutSplitsService {
 
     // get current size so we can split it in two
     let currentSize = this.splitSets[splitIndex].splitAreas[areaIndex].size;
-    let area1Size = currentSize / 2;
-    let area2Size = currentSize - area1Size;
+    let area1Size = Number(currentSize) / 2;
+    let area2Size = Number(currentSize) - area1Size;
 
     let newWidgetUUID = this.WidgetManagerService.newWidget();
     let newArea = {
-        uuid: newWidgetUUID,
-        type: 'widget',
-        size: area2Size
-        };
+      uuid: newWidgetUUID,
+      type: 'widget',
+      size: area2Size
+      };
 
-    // test currect direction. If we're splitting in same direction, we just add another
+    // test correct direction. If we're splitting in same direction, we just add another
     // area. If we're splitting in other direction, we need a new splitSet...
     if (this.splitSets[splitIndex].direction == direction) {
 
@@ -175,7 +176,7 @@ export class LayoutSplitsService {
     this.updateSplit(splitSetUUID);
   }
 
-  updateSplitSizes(splitSetUUID: string, sizesArray: Array<number>): void {
+  updateSplitSizes(splitSetUUID: string, sizesArray: IOutputAreaSizes): void {
     let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
     if (splitIndex < 0) { return null; }
     for (let i=0; i < sizesArray.length; i++) {

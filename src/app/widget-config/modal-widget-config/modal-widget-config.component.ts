@@ -44,7 +44,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   public availableDataSets: IDatasetServiceDatasetConfig[];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
   public isPathArray: boolean = false;
-  public addPathEvent: IAddNewPath;
+  public addPathEvent: IWidgetPath;
 
   constructor(
     public dialog: MatDialog,
@@ -162,7 +162,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     return fg;
   }
 
-  public addPathGroup(e: IAddNewPath): void {
+  public addPathGroup(e: IWidgetPath): void {
     this.addPathEvent = e;
   }
 
@@ -243,6 +243,126 @@ export class ModalWidgetConfigComponent implements OnInit {
         }
       });
     }
+  }
+
+  get convertUnitToControl(): UntypedFormControl {
+    return this.formMaster.get('convertUnitTo') as UntypedFormControl;
+  }
+
+  get datasetUUIDToControl(): UntypedFormControl {
+    return this.formMaster.get('datasetUUID') as UntypedFormControl;
+  }
+
+  get filterSelfPathsToControl(): UntypedFormControl {
+    return this.formMaster.get('filterSelfPaths') as UntypedFormControl;
+  }
+
+  get dataTimeoutToControl(): UntypedFormControl {
+    return this.formMaster.get('dataTimeout') as UntypedFormControl;
+  }
+
+  get enableTimeoutToControl(): UntypedFormControl {
+    return this.formMaster.get('enableTimeout') as UntypedFormControl;
+  }
+
+  get dateTimezoneToControl(): UntypedFormControl {
+    return this.formMaster.get('dateTimezone') as UntypedFormControl;
+  }
+
+  get yScaleSuggestedMaxToControl(): UntypedFormControl {
+    return this.formMaster.get('yScaleSuggestedMax') as UntypedFormControl;
+  }
+
+  get enableMinMaxScaleLimitToControl(): UntypedFormControl {
+    return this.formMaster.get('enableMinMaxScaleLimit') as UntypedFormControl;
+  }
+
+  get showDatasetMinimumValueLineToControl(): UntypedFormControl {
+    return this.formMaster.get('showDatasetMinimumValueLine') as UntypedFormControl;
+  }
+
+  get showDatasetMaximumValueLineToControl(): UntypedFormControl {
+    return this.formMaster.get('showDatasetMaximumValueLine') as UntypedFormControl;
+  }
+
+  get showDatasetAverageValueLineToControl(): UntypedFormControl {
+    return this.formMaster.get('showDatasetAverageValueLine') as UntypedFormControl;
+  }
+
+  get showDatasetAngleAverageValueLineToControl(): UntypedFormControl {
+    return this.formMaster.get('showDatasetAngleAverageValueLine') as UntypedFormControl;
+  }
+
+  get startScaleAtZeroToControl(): UntypedFormControl {
+    return this.formMaster.get('startScaleAtZero') as UntypedFormControl;
+  }
+
+  get showLabelToControl(): UntypedFormControl {
+    return this.formMaster.get('showLabel') as UntypedFormControl;
+  }
+
+  get showTimeScaleToControl(): UntypedFormControl {
+    return this.formMaster.get('showTimeScale') as UntypedFormControl;
+  }
+
+  get showYScaleToControl(): UntypedFormControl {
+    return this.formMaster.get('showYScale') as UntypedFormControl;
+  }
+
+  get yScaleSuggestedMinToControl(): UntypedFormControl {
+    return this.formMaster.get('yScaleSuggestedMin') as UntypedFormControl;
+  }
+
+  get yScaleMinToControl(): UntypedFormControl {
+    return this.formMaster.get('yScaleMin') as UntypedFormControl;
+  }
+
+  get yScaleMaxToControl(): UntypedFormControl {
+    return this.formMaster.get('yScaleMax') as UntypedFormControl;
+  }
+
+  get datasetAverageArrayToControl(): UntypedFormControl {
+    return this.formMaster.get('datasetAverageArray') as UntypedFormControl;
+  }
+
+  get trackAgainstAverageToControl(): UntypedFormControl {
+    return this.formMaster.get('trackAgainstAverage') as UntypedFormControl;
+  }
+
+  get showAverageDataToControl(): UntypedFormControl {
+    return this.formMaster.get('showAverageData') as UntypedFormControl;
+  }
+
+  get convertUnitToToControl(): UntypedFormControl {
+    return this.formMaster.get('convertUnitTo') as UntypedFormControl;
+  }
+
+  get datasetUUIDControl(): UntypedFormControl {
+    return this.formMaster.get('datasetUUID') as UntypedFormControl;
+  }
+
+  get displayNameToControl(): UntypedFormControl {
+    return this.formMaster.get('displayName') as UntypedFormControl;
+  }
+
+  get numDecimalToControl(): UntypedFormControl {
+    return this.formMaster.get('numDecimal') as UntypedFormControl;
+  }
+
+  get verticalGraphToControl(): UntypedFormControl {
+    return this.formMaster.get('verticalGraph') as UntypedFormControl;
+  }
+
+  get textColorToControl(): UntypedFormControl {
+    return this.formMaster.get('textColor') as UntypedFormControl;
+  }
+
+  get dateFormatToControl(): UntypedFormControl {
+    return this.formMaster.get('dateFormat') as UntypedFormControl;
+  }
+
+  get multiChildCtrlsToControl(): UntypedFormArray {
+    return this.formMaster.get('multiChildCtrls') as UntypedFormArray;
   }
 
   submitConfig() {

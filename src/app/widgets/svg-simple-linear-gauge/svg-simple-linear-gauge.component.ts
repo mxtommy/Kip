@@ -8,12 +8,12 @@ import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges } fro
 export class SvgSimpleLinearGaugeComponent implements OnChanges {
   @ViewChild('gaugeBarAnimate', {static: true}) gaugeBarAnimate: ElementRef;
   @Input('displayName') displayName: string;
-  @Input('dataValue') dataValue: number;
+  @Input('dataValue') dataValue: string;
   @Input('unitLabel') unitLabel: string;
   @Input('barColor') barColor: string;
   @Input('barColorGradient') barColorGradient: string;
   @Input('barColorBackground') barColorBackground: string;
-  @Input('gaugeValue') gaugeValue: number;
+  @Input('gaugeValue') gaugeValue: string;
   @Input('gaugeMinValue') gaugeMinValue: number;
   @Input('gaugeMaxValue') gaugeMaxValue: number;
 
