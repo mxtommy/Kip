@@ -25,7 +25,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(MatSort) sort: MatSort;
 
   private pathsSubscription: Subscription = null;
-  private dataTableTimer = null;
+  private dataTableTimer: NodeJS.Timeout = null;
 
   public pageSize: number = 10;
   public tableData = new MatTableDataSource<IPathData>([]);
@@ -40,8 +40,8 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    setTimeout(()=>{
-      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe(paths => {
+    this.dataTableTimer = setTimeout(()=>{
+      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe((paths: IPathData[]) => {
         this.tableData.data = paths;
       })}, 0); // set timeout to make it async otherwise delays page load
   }
@@ -81,6 +81,14 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.pageSize = 5;
     }
+  }
+
+  getSourceKey(source: { key: unknown, value: any }): string {
+    return String(source.key);
+  }
+
+  getSourceValue(item: { key: any, value: any } ): any {
+    return item.value.sourceValue;
   }
 
   ngOnDestroy(): void {

@@ -1,13 +1,17 @@
-<div [formGroup]="multiCtrlArray">
-  <boolean-control-config class="full-width" *ngFor="let ctrl of multiCtrlArray.controls; index as i"
-    [ctrlFormGroup]="ctrl"
-    [controlIndex]="i"
-    [arrayLength]="arrayLength"
-    (moveUp)="moveUp($event)"
-    (moveDown)="moveDown($event)"
-    (deleteCtrl)="deletePath($event)">
-  </boolean-control-config>
-  <button class="add-btn" type="button" mat-mini-fab color="primary" (click)="addCtrlGroup()" aria-label="Add control down in the list">
-    <i class="fa-solid fa-plus fa-xl"></i>
-  </button>
+<div [formGroup]="multiFormGroup">
+  <div formArrayName="multiCtrlArray">
+    @for(ctrl of multiCtrlArray.controls; track ctrl; let i = $index) {
+      <boolean-control-config class="full-width"
+        [ctrlFormGroup]="getFormGroup(ctrl)"
+        [controlIndex]="i"
+        [arrayLength]="arrayLength"
+        (moveUp)="moveUp($event)"
+        (moveDown)="moveDown($event)"
+        (deleteCtrl)="deletePath($event)">
+      </boolean-control-config>
+    }
+    <button class="add-btn" type="button" mat-mini-fab color="primary" (click)="addCtrlGroup()" aria-label="Add control down in the list">
+      <i class="fa-solid fa-plus fa-xl"></i>
+    </button>
+  </div>
 </div>

@@ -7,7 +7,7 @@
       </mat-checkbox>
       <path-control-config
         class="full-width"
-        [pathFormGroup]="zoneForm.controls.path"
+        [pathFormGroup]="getPathFormGroup"
         [filterSelfPaths]="zoneForm.value.filterSelfPaths">
       </path-control-config>
       <mat-form-field

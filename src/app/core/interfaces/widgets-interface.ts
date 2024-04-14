@@ -229,7 +229,7 @@ export interface IDynamicControl {
   /** Display label of the control */
   ctrlLabel: string;
   /** The type of control: 1 = toggle, 2 = button, 3 = light */
-  type: ControlType;
+  type: string;
   /** A unique UUID to match against the path key name to link the control/path */
   pathID: string;
   /** The value of the control */
