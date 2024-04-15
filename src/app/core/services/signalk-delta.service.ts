@@ -250,9 +250,9 @@ export class SignalKDeltaService {
   }
 
   private parseUpdates(updates: ISignalKUpdateMessage[], context: string): void {
-    // if (context != this.selfUrn) {    // remove non self root nodes
-    //   return
-    // }
+    if (context != this.selfUrn) {    // remove non self root nodes
+      return
+    }
     for (const update of updates) {
       if (update.meta !== undefined) {
         // Meta message update
