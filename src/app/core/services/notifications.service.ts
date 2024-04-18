@@ -2,18 +2,18 @@
  * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { SignalkRequestsService } from './signalk-requests.service';
+import { SignalKDataService } from './signalk-data.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
 import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
-import { SignalKDataService } from './signalk-data.service';
 
 
 const alarmTrack = {
@@ -29,8 +29,6 @@ export interface INotification {
   value?: ISignalKNotification;
   meta?: ISignalKMetadata;
 }
-
-
 
 /**
  * Alarm information, some stats used
@@ -105,7 +103,7 @@ export class NotificationsService implements OnDestroy {
         this.updateNotificationsState(); //see if any we need to start playing again
       }
     });
-
+    //TODO: tie data-service restart to this
     // Observer of server connection status to reset notifications on SK reconnect
     // this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
     //   if (streamStatus.operation === 2) {
@@ -125,8 +123,6 @@ export class NotificationsService implements OnDestroy {
     this.notificationMetaStreamSubscription = this.dataService.getNotificationMeta().subscribe((meta: IMeta) => {
       this.processNotificationDeltaMeta(meta);
     });
-
-
   }
 
   private stopNotificationStream() {
@@ -164,7 +160,7 @@ export class NotificationsService implements OnDestroy {
       this.updateNotificationsState();
       this.notifications$.next(this._notifications);
     } else {
-      console.log("[Notification Service] Notification to update not found: " + msg.path);
+      console.log("[Notification Service] Update path not found for: " + msg.path);
     }
   }
 
@@ -176,7 +172,7 @@ export class NotificationsService implements OnDestroy {
       this.updateNotificationsState();
       this.notifications$.next(this._notifications);
     } else {
-      console.log("[Notification Service] Notification to delete not found: " + path);
+      console.log("[Notification Service] Notification to delete not found for: " + path);
     }
   }
 
