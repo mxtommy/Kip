@@ -77,10 +77,6 @@ export class SignalKDataService implements OnDestroy {
   private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
   private _deltaUpdatesCounterTimer = null;
 
-  // Units conversions
-  private _defaultUnits: IUnitDefaults = null;
-  private _conversionList: IUnitGroup[] = [];
-
   // Path Delta data
   private _skDataObservable$ = new BehaviorSubject<ISkPathData[]>([]);
 
@@ -93,10 +89,7 @@ export class SignalKDataService implements OnDestroy {
   private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
   private _pathRegister: pathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 
-  constructor(
-      private appSettingsService: AppSettingsService,
-      private deltaService: SignalKDeltaService,
-      private unitService: UnitsService) {
+  constructor(private deltaService: SignalKDeltaService) {
 
     // Emit Delta message update counter every second
     setInterval(() => {
@@ -106,15 +99,6 @@ export class SignalKDataService implements OnDestroy {
         this._deltaUpdatesCounter = 0;
       };
     }, 1000);
-
-    // Subscribe to application default units configuration settings
-    this._defaultUnitsSub = this.appSettingsService.getDefaultUnitsAsO().subscribe(
-      newDefaults => {
-        this._defaultUnits = newDefaults;
-      }
-    );
-
-    this._conversionList = this.unitService.getConversions();
 
     // Observer of Delta service data path updates
     this._deltaServicePathSubscription = this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
@@ -431,20 +415,15 @@ export class SignalKDataService implements OnDestroy {
     return pathsMeta; // copy it....
   }
 
-public getPathObject(path: string): ISkPathData {
-  const pathObject = this._skData.find(pathObject => pathObject.path == path);
-  return pathObject ? cloneDeep(pathObject) : null;
-}
-
-  public getPathUnitType(path: string): string {
-    let pathIndex = this._skData.findIndex(pathObject => pathObject.path == path);
-    if (pathIndex < 0) { return null; }
-    if (('meta' in this._skData[pathIndex]) && ('units' in this._skData[pathIndex].meta)) {
-      return this._skData[pathIndex].meta.units;
-    } else {
-      return null;
-    }
+  public getPathObject(path: string): ISkPathData {
+    const pathObject = this._skData.find(pathObject => pathObject.path == path);
+    return pathObject ? cloneDeep(pathObject) : null;
   }
+
+ public getPathUnitType(path: string): string {
+  const pathObject = this._skData.find(pathObject => pathObject.path == path);
+  return pathObject?.meta?.units || null;
+}
 
   public timeoutPathObservable(path: string, pathType: string): void {
     // push it to any subscriptions of that data
@@ -477,54 +456,6 @@ public getPathObject(path: string): ISkPathData {
         _pathRegister.subject$.next(timeoutValue);
       }
     )
-  }
-
-  /**
-   * Obtain a list of possible Kip value type conversions for a given path. ie,.: Speed conversion group
-   * (kph, Knots, etc.). The conversion list will be trimmed to only the conversions for the group in question.
-   * If a default value type (provided by server) for a path cannot be found,
-   * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
-   * but Kip does not handle it...yet.
-   *
-   * @param path The Signal K path of the value
-   * @return conversions Full list array or subset of list array
-   */
-  public getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
-    let pathUnitType = this.getPathUnitType(path);
-    let groupList = [];
-    let isUnitInList: boolean = false;
-    let defaultUnit: string = "unitless"
-    // if this Path has no predefined Unit type (from Meta or elsewhere) set to unitless
-    if (pathUnitType === null) {
-      return { default: 'unitless', conversions: this._conversionList };
-    } else {
-      // if this Widget has a configured Unit for this Path, only return all Units within same group.
-      // The Assumption is that we should only use conversions group rules.
-      for (let index = 0; index < this._conversionList.length; index++) {
-        const unitGroup:IUnitGroup = this._conversionList[index];
-
-         // add position group if position path
-         if (unitGroup.group == 'Position' && (path.includes('position.latitude') || path.includes('position.longitude'))) {
-          groupList.push(unitGroup)
-        }
-
-        unitGroup.units.forEach(unit => {
-          if (unit.measure == pathUnitType) {
-            isUnitInList = true;
-            defaultUnit = this._defaultUnits[unitGroup.group];
-            groupList.push(unitGroup);
-          }
-        });
-      }
-    }
-
-    if (isUnitInList) {
-
-      return { default: defaultUnit, conversions: groupList };
-    }
-    // default if we have a unit for the Path but it's not know by Kip
-    console.log("Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
-    return { default: 'unitless', conversions: this._conversionList };
   }
 
   public getNotificationMsg(): Observable<ISignalKDataValueUpdate> {

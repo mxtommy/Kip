@@ -37,7 +37,7 @@ export class DataBrowserRowComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.units = this.signalKDataService.getConversionsForPath(this.path);
+    this.units = this.unitsService.getConversionsForPath(this.path);
     this.selectedUnit = this.units.default;
   }
 
