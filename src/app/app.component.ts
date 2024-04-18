@@ -58,8 +58,6 @@ export class AppComponent implements OnInit, OnDestroy {
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
-    // below services are needed: first service instantiation after Init Service
-    private signalKDeltaService: SignalKDeltaService, // needs SignalKDataService & NotificationsService & SignalKConnectionService
     ) {}
 
 

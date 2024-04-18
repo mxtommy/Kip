@@ -63,7 +63,7 @@ export class SignalKDeltaService {
   constructor(
     private server: SignalKConnectionService,
     private auth: AuthenticationService,
-    private zones: NgZone
+    private zones: NgZone // NgZone to run outside Angular zone - NOT to be confused with SK zones
     )
     {
       // Monitor Connection Service Endpoint Status

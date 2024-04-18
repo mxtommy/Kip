@@ -7,12 +7,11 @@ import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
 import { SignalkRequestsService } from './signalk-requests.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
-import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods, TState } from '../interfaces/signalk-interfaces';
+import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
 import { SignalKDataService } from './signalk-data.service';
 

@@ -6,8 +6,7 @@ import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import Qty from 'js-quantities';
-import { States } from '../../core/interfaces/signalk-interfaces';
+import { ISignalKMetadata, ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-radial',
@@ -30,8 +29,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   public unitName: string = null;
 
   // Zones support
-  zones = [];
-  zonesSub: Subscription;
+  private meta: ISignalKMetadata = null;
+  private metaSub: Subscription;
 
   constructor(private appSettingsService: AppSettingsService) {
     super();
@@ -82,7 +81,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         if (oldValue != (temp as number)) {
           this.dataValue = temp;
         }
-        // TODO: Fix color
+        // TODO: Fix color to support all states
         // set zone state colors
         switch (newValue.state) {
           case States.Emergency:
@@ -109,10 +108,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     );
 
     // TODO: Refactor to use new zones meta data
-    this.zonesSub = this.signalKDataService.getPathZones(this.widgetProperties.config.paths['gaugePath'].path).subscribe(zones => {
-        this.zones = zones;
-        this.setHighlights();
-      });
+    this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
+      if (meta) {
+        this.meta = meta;
+        meta.zones && this.setHighlights();
+      }
+    });
    }
 
    ngAfterViewInit(): void {
@@ -385,49 +386,54 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setHighlights(): void {
-    if (!this.zones?.length) {
+    if (!this.meta?.zones?.length) {
       this.gaugeOptions.highlights = [];
       return};
     if (this.widgetProperties.config.radialSize == "marineCompass" || this.widgetProperties.config.radialSize == "baseplateCompass") {
       this.gaugeOptions.highlights = [];
       this.gaugeOptions.highlightsWidth = 0;
     } else {
-      let myZones: IDataHighlight = [];
-      this.zones.forEach(zone => {
-        // get zones for our path
-        if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
-
+      const gaugeZonesHighligh: IDataHighlight = [];
+      this.meta.zones.forEach(zone => {
           let lower: number = null;
           let upper: number = null;
           // Perform Units conversions on zone range
-          if (zone.unit == "ratio") {
+          if (this.widgetProperties.config.paths["gaugePath"].convertUnitTo == "ratio") {
             lower = zone.lower;
             upper = zone.upper;
           } else {
-            const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
-            lower = convert(zone.lower);
-            upper = convert(zone.upper);
+            lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
+            upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
           }
 
           lower = lower || this.widgetProperties.config.minValue;
           upper = upper || this.widgetProperties.config.maxValue;
           let color: string;
           switch (zone.state) {
-            case States.Warn:
-              color = this.theme.warn;
+            case States.Emergency:
+              color = this.theme.textWarnDark;
               break;
             case States.Alarm:
               color = this.theme.warnDark;
+              break;
+            case States.Warn:
+              color = this.theme.textWarnLight;
+              break;
+            case States.Alert:
+              color = this.theme.accentDark;
+              break;
+            case States.Nominal:
+              color = this.theme.primaryDark;
               break;
             default:
               color = "rgba(0,0,0,0)";
           }
 
-          myZones.push({from: lower, to: upper, color: color});
-        }
+          gaugeZonesHighligh.push({from: lower, to: upper, color: color});
+        // }
       });
       //@ts-ignore - bug in highlights property definition
-      this.gaugeOptions.highlights = JSON.stringify(myZones, null, 1);
+      this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighligh, null, 1);
       this.gaugeOptions.highlightsWidth = 6;
     }
   }
@@ -500,6 +506,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
-    this.zonesSub?.unsubscribe();
+    this.metaSub?.unsubscribe();
   }
 }

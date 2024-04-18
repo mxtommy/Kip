@@ -192,7 +192,7 @@ export interface ISignalKMetadata {
   zones?: ISkZone[];
 }
 
-interface ISkZone {
+export interface ISkZone {
   state: TState;
   lower?: number;
   upper?: number;

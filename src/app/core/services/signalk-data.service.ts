@@ -1,10 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable , BehaviorSubject, Subscription, ReplaySubject, Subject, map, combineLatest, of } from 'rxjs';
 import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
-import { ISignalKDataValueUpdate, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
-import { AppSettingsService } from './app-settings.service';
+import { ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
-import { UnitsService, IUnitDefaults, IUnitGroup } from './units.service';
 import { cloneDeep, merge } from 'lodash-es';
 import Qty from 'js-quantities';
 
@@ -53,7 +51,7 @@ interface pathRegistration {
   pathValue$: BehaviorSubject<any>;
   pathState$: BehaviorSubject<TState>;
   subject$: BehaviorSubject<IPathData>; // pathValue and pathState combined subject
-  metaZones$: BehaviorSubject<any>;
+  pathMeta$: BehaviorSubject<ISignalKMetadata>;
 }
 
 export interface IDeltaUpdate {
@@ -189,7 +187,7 @@ export class SignalKDataService implements OnDestroy {
       pathValue$: new BehaviorSubject<any>(currentValue),
       pathState$: new BehaviorSubject<TState>(state),
       subject$: new BehaviorSubject<IPathData>({ value: currentValue, state: state }),
-      metaZones$: new BehaviorSubject<any>(dataPath?.meta?.zones || null)
+      pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
     };
 
     // Combine the latest values and state of the path
@@ -341,8 +339,8 @@ export class SignalKDataService implements OnDestroy {
         pathObject.meta = merge(pathObject.meta, metaProp);
 
         this._pathRegister.filter(registration => registration.path === metaPath).forEach(
-        registration => registration.metaZones$.next(metaProp)
-  );
+          registration => registration.pathMeta$.next(pathObject.meta)
+        );
       } else { // not in our list yet. The Meta update came before the Source update.
         this._skData.push({
           path: metaPath,
@@ -353,6 +351,9 @@ export class SignalKDataService implements OnDestroy {
           type: undefined,
           state: States.Normal
         });
+        metaProp.zones ? this._pathRegister.filter(registration => registration.path === metaPath).forEach(
+          registration => registration.pathMeta$.next(metaProp)
+        ) : null;
       }
     }
   }
@@ -466,9 +467,9 @@ export class SignalKDataService implements OnDestroy {
     return this._skNotificationMeta$.asObservable();
   }
 
-public getPathZones(path: string): Observable<Zone[]> {
+public getPathMeta(path: string): Observable<ISignalKMetadata> {
   const registration = this._pathRegister.find(registration => registration.path == path);
-  return registration?.metaZones$.asObservable() || of([null]);
+  return registration?.pathMeta$.asObservable() || of(null);
 }
 
   ngOnDestroy(): void {
