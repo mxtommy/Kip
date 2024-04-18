@@ -2,9 +2,9 @@ import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/cor
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
-import { TimersService } from '../../core/services/timers.service';
-import { IZoneState } from "../../core/interfaces/app-settings.interfaces";
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { TimersService } from '../../core/services/timers.service';
+import { States } from '../../core/interfaces/signalk-interfaces';
 import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 
@@ -20,7 +20,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
 
   dataValue: number = null;
-  IZoneState: IZoneState = null;
+  zoneState: string = null;
   currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   valueFontSize: number = 1;
   flashOn: boolean = false;
@@ -84,22 +84,22 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         this.dataValue = newValue;
 
         if (newValue > 0) {
-          this.IZoneState = IZoneState.normal;
+          this.zoneState = States.Normal;
         } else if (newValue > -100) {
-          this.IZoneState = IZoneState.alarm;
+          this.zoneState = States.Alarm;
         } else if (newValue > -300) {
-          this.IZoneState = IZoneState.warning;
+          this.zoneState =States.Warn;
         } else {
-          this.IZoneState = IZoneState.normal;
+          this.zoneState = States.Normal;
         }
 
        //start flashing if alarm
-       if (this.IZoneState == IZoneState.alarm && !this.flashInterval) {
+       if (this.zoneState == States.Alarm && !this.flashInterval) {
         this.flashInterval = setInterval(() => {
           this.flashOn = !this.flashOn;
           this.updateCanvas();
         }, 500); // used to flash stuff in alarm
-      } else if (this.IZoneState != IZoneState.alarm) {
+      } else if (this.zoneState != States.Alarm) {
         // stop alarming if not in alarm state
         clearInterval(this.flashInterval);
       }
@@ -268,8 +268,8 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
 
     // get color based on zone
-    switch (this.IZoneState) {
-      case IZoneState.alarm:
+    switch (this.zoneState) {
+      case States.Alarm:
 
         if (this.flashOn) {
           this.canvasCtx.fillStyle = this.textColor;
@@ -282,7 +282,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         }
         break;
 
-      case IZoneState.warning:
+      case States.Warn:
         this.canvasCtx.fillStyle = this.warnColor;
         break;
 

@@ -2,13 +2,13 @@ import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, SimpleC
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
-import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@biacsics/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
 import Qty from 'js-quantities';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-linear',
@@ -31,7 +31,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public isGaugeVertical: Boolean = true;
 
   // Zones support
-  zones: Array<IZone> = [];
+  private zones = [];
   zonesSub: Subscription;
 
   constructor(private appSettingsService: AppSettingsService) {
@@ -77,10 +77,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
         // set colors for zone state
         switch (newValue.state) {
-          case IZoneState.warning:
+          case States.Warn:
             this.gaugeOptions.colorValueText = this.theme.warnDark;
             break;
-          case IZoneState.alarm:
+          case States.Alarm:
             this.gaugeOptions.colorValueText = this.theme.warnDark;
             break;
           default:
@@ -88,8 +88,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         }
       }
     );
-
-    this.subscribeZones();
   }
 
   ngOnDestroy() {
@@ -103,14 +101,14 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     }
   }
 
-  // Subscribe to Zones
-  subscribeZones() {
-    this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(
-      zones => {
-        this.zones = zones;
-        this.updateGaugeConfig();
-      });
-  }
+  // TODO: fix for new meta zones
+  // subscribeZones() {
+  //   this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(
+  //     zones => {
+  //       this.zones = zones;
+  //       this.updateGaugeConfig();
+  //     });
+  // }
 
   updateGaugeConfig(){
     let themePaletteColor = "";
@@ -190,10 +188,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           upper = upper || this.widgetProperties.config.maxValue;
           let color: string;
           switch (zone.state) {
-            case IZoneState.warning:
+            case States.Warn:
               color = this.theme.warn;
               break;
-            case IZoneState.alarm:
+            case States.Alarm:
               color = this.theme.warnDark;
               break;
             default:

@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Observable, Observer, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
-import { SignalKDataService, pathRegistrationValue } from '../core/services/signalk-data.service';
+import { SignalKDataService, IPathData } from '../core/services/signalk-data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
 import { cloneDeep, merge } from 'lodash-es';
@@ -8,7 +8,7 @@ import { cloneDeep, merge } from 'lodash-es';
 
 interface IWidgetDataStream {
   pathName: string;
-  observable: Observable<pathRegistrationValue>;
+  observable: Observable<IPathData>;
 };
 
 @Component({
@@ -100,7 +100,7 @@ export abstract class BaseWidgetComponent {
    * @return {*}
    * @memberof BaseWidgetComponent
    */
-  protected observeDataStream(pathName: string, subscribeNextFunction: ((value) => void))  {
+  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathData) => void))  {
     if (this.dataStream === undefined) {
       this.createDataObservable();
     }
@@ -202,8 +202,8 @@ export abstract class BaseWidgetComponent {
     }
   }
 
-  private buildObserver(pathKey: string, subscribeNextFunction: ((value) => void)): Observer<pathRegistrationValue> {
-    const observer: Observer<pathRegistrationValue> = {
+  private buildObserver(pathKey: string, subscribeNextFunction: ((value: IPathData) => void)): Observer<IPathData> {
+    const observer: Observer<IPathData> = {
       next: (value) => subscribeNextFunction(value),
       error: err => console.error('[Widget] Observer got an error: ' + err),
       complete: () => console.log('[Widget] Observer got a complete notification: ' + pathKey),

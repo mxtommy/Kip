@@ -1,4 +1,4 @@
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig, IZonesConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { UUID } from "../app/utils/uuid"
 
 // Demo Mode config settings file
@@ -618,16 +618,11 @@ export const DemoThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
 }
 
-export const DemoZonesConfig: IZonesConfig = {
-  "zones": [],
-}
-
 export const DemoConfig: IConfig = {
   "app": DemoAppConfig,
   "widget": DemoWidgetConfig,
   "layout": DemoLayoutConfig,
   "theme": DemoThemeConfig,
-  "zones": DemoZonesConfig,
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {

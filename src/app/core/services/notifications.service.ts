@@ -2,7 +2,7 @@
  * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
@@ -12,8 +12,9 @@ import { SignalkRequestsService } from './signalk-requests.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
-import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
+import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods, TState } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
+import { SignalKDataService } from './signalk-data.service';
 
 
 const alarmTrack = {
@@ -29,6 +30,8 @@ export interface INotification {
   value?: ISignalKNotification;
   meta?: ISignalKMetadata;
 }
+
+
 
 /**
  * Alarm information, some stats used
@@ -83,7 +86,7 @@ export class NotificationsService implements OnDestroy {
 
   constructor(
     private appSettingsService: AppSettingsService,
-    private deltaService: SignalKDeltaService,
+    private dataService: SignalKDataService,
     private requests: SignalkRequestsService
     ) {
     // Observer of Notification Service configuration changes
@@ -105,22 +108,22 @@ export class NotificationsService implements OnDestroy {
     });
 
     // Observer of server connection status to reset notifications on SK reconnect
-    this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
-      if (streamStatus.operation === 2) {
-        this.reset();
-      }
-    });
+    // this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
+    //   if (streamStatus.operation === 2) {
+    //     this.reset();
+    //   }
+    // });
 
     // Init audio player
     this.howlPlayer = this.getPlayer(1000);
    }
 
   private startNotificationStream() {
-    this.notificationDataStreamSubscription = this.deltaService.observeNotificationsDataUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
+    this.notificationDataStreamSubscription = this.dataService.getNotificationMsg().subscribe((msg: ISignalKDataValueUpdate) => {
       this.processNotificationDeltaMsg(msg);
     });
 
-    this.notificationMetaStreamSubscription = this.deltaService.observeNotificationsMetaUpdates().subscribe((meta: IMeta) => {
+    this.notificationMetaStreamSubscription = this.dataService.getNotificationMeta().subscribe((meta: IMeta) => {
       this.processNotificationDeltaMeta(meta);
     });
 
@@ -228,7 +231,7 @@ export class NotificationsService implements OnDestroy {
     }
 
     if (notificationDelta.value === null) {
-      // Notification has been removed/cleared on server
+      // Notification has been deleted
       this.deleteValue(notificationDelta.path);
     } else {
       const existingNotification: INotification = this._notifications.find(item => item.path == notificationDelta.path);

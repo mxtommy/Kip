@@ -8,7 +8,6 @@ import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
-import { IZone } from "../../core/interfaces/app-settings.interfaces";
 import { UUID } from '../../utils/uuid';
 import { MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
@@ -46,9 +45,9 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
     ) { }
 
   ngOnInit() {
-    this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
-      this.tableData.data = zones;
-    });
+    // this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
+    //   this.tableData.data = zones;
+    // });
   }
 
   ngAfterViewInit() {
@@ -58,7 +57,7 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
     this.cdRef.detectChanges();
   }
 
-  public trackByUuid(index: number, item: IZone): string {
+  public trackByUuid(index: number, item: any): string {
     return `${item.uuid}`;
   }
 
@@ -75,8 +74,8 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
     let dialogRef;
 
     if (uuid) {
-      const thisZone: IZone = cloneDeep(
-          this.tableData.data.find((zone: IZone) => {
+      const thisZone = cloneDeep(
+          this.tableData.data.find((zone) => {
           return zone.uuid === uuid;
           })
         );
@@ -91,7 +90,7 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
         });
     }
 
-    dialogRef.afterClosed().subscribe((zone: IZone) => {
+    dialogRef.afterClosed().subscribe((zone) => {
       if (zone === undefined || !zone) {
         return; //clicked Cancel, click outside the dialog, or navigated await from page using url bar.
       } else {
@@ -105,32 +104,32 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
     });
   }
 
-  public addZone(zone: IZone) {
-    let zones: IZone[] = this.appSettingsService.getZones();
-    zones.push(zone);
-    this.appSettingsService.saveZones(zones);
+  public addZone(zone: any) {
+    // let zones: [] = this.appSettingsService.getZones();
+    // zones.push(zone);
+    // this.appSettingsService.saveZones(zones);
   }
 
-  public editZone(zone: IZone) {
-    if (zone.uuid) { // is existing zone
-      const zones: IZone[] = this.appSettingsService.getZones();
-      const index = zones.findIndex(zones => zones.uuid === zone.uuid );
+  public editZone(zone) {
+    // if (zone.uuid) { // is existing zone
+    //   const zones: IZone[] = this.appSettingsService.getZones();
+    //   const index = zones.findIndex(zones => zones.uuid === zone.uuid );
 
-      if(index >= 0) {
-        zones.splice(index, 1, zone);
-        this.appSettingsService.saveZones(zones);
-      }
-    }
+    //   if(index >= 0) {
+    //     zones.splice(index, 1, zone);
+    //     this.appSettingsService.saveZones(zones);
+    //   }
+    // }
   }
 
   public deleteZone(uuid: string) {
-    let zones = this.appSettingsService.getZones();
-    //find index
-    let index = zones.findIndex(zone => zone.uuid === uuid);
-    if (index >= 0) {
-      zones.splice(index, 1);
-      this.appSettingsService.saveZones(zones);
-    }
+    // let zones = this.appSettingsService.getZones();
+    // //find index
+    // let index = zones.findIndex(zone => zone.uuid === uuid);
+    // if (index >= 0) {
+    //   zones.splice(index, 1);
+    //   this.appSettingsService.saveZones(zones);
+    // }
   }
 
   ngOnDestroy(): void {
@@ -184,7 +183,7 @@ export class DialogNewZone {
   }
 
   closeForm() {
-    let zone: IZone = {
+    let zone = {
       uuid: null,
       upper: this.zoneForm.get('upper').value,
       lower: this.zoneForm.get('lower').value,
@@ -209,7 +208,7 @@ export class DialogEditZone {
 
   constructor(
     public dialogRef: MatDialogRef<DialogEditZone>,
-    @Inject(MAT_DIALOG_DATA) public zone: IZone,
+    @Inject(MAT_DIALOG_DATA) public zone,
     ) { }
 
   closeForm() {

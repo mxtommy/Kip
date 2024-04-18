@@ -3,7 +3,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
-import { IZone } from '../../core/interfaces/app-settings.interfaces';
 
 @Component({
     selector: 'app-widget-gauge',
@@ -15,7 +14,7 @@ import { IZone } from '../../core/interfaces/app-settings.interfaces';
 export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;
   private zonesSub: Subscription = null;
-  public zones: Array<IZone> = [];
+  public zones = [];
 
   constructor(private settings: AppSettingsService) {
     super();
@@ -57,17 +56,19 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
       }
     );
 
-    this.zonesSub = this.settings.getZonesAsO().subscribe(
-      zones => {
-        let myZones: IZone[] = [];
-        zones.forEach(zone => {
-          // get zones for our path
-          if (zone.path == this.widgetProperties.config.paths["gaugePath"].path) {
-            myZones.push(zone);
-          }
-        })
-        this.zones = myZones;
-      });
+
+    // TODO: fix for new meta zones
+    // this.zonesSub = this.settings.getZonesAsO().subscribe(
+    //   zones => {
+    //     let myZones: IZone[] = [];
+    //     zones.forEach(zone => {
+    //       // get zones for our path
+    //       if (zone.path == this.widgetProperties.config.paths["gaugePath"].path) {
+    //         myZones.push(zone);
+    //       }
+    //     })
+    //     this.zones = myZones;
+    //   });
   }
 
   ngOnDestroy() {

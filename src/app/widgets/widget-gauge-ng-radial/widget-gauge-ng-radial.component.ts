@@ -2,13 +2,12 @@ import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } fr
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
-import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
-
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import Qty from 'js-quantities';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-radial',
@@ -31,7 +30,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   public unitName: string = null;
 
   // Zones support
-  zones: Array<IZone> = [];
+  zones = [];
   zonesSub: Subscription;
 
   constructor(private appSettingsService: AppSettingsService) {
@@ -83,14 +82,22 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         if (oldValue != (temp as number)) {
           this.dataValue = temp;
         }
-
+        // TODO: Fix color
         // set zone state colors
         switch (newValue.state) {
-          case IZoneState.warning:
+          case States.Emergency:
             this.gaugeOptions.colorValueText = this.theme.warnDark;
             this.radialGauge.update(this.gaugeOptions);
             break;
-          case IZoneState.alarm:
+          case States.Alarm:
+            this.gaugeOptions.colorValueText = this.theme.warnDark;
+            this.radialGauge.update(this.gaugeOptions);
+            break;
+          case States.Warn:
+            this.gaugeOptions.colorValueText = this.theme.warnDark;
+            this.radialGauge.update(this.gaugeOptions);
+            break;
+          case States.Alert:
             this.gaugeOptions.colorValueText = this.theme.warnDark;
             this.radialGauge.update(this.gaugeOptions);
             break;
@@ -101,8 +108,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       }
     );
 
-    this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(
-      zones => {
+    // TODO: Refactor to use new zones meta data
+    this.zonesSub = this.signalKDataService.getPathZones(this.widgetProperties.config.paths['gaugePath'].path).subscribe(zones => {
         this.zones = zones;
         this.setHighlights();
       });
@@ -378,7 +385,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setHighlights(): void {
-    if (!this.zones.length) {
+    if (!this.zones?.length) {
       this.gaugeOptions.highlights = [];
       return};
     if (this.widgetProperties.config.radialSize == "marineCompass" || this.widgetProperties.config.radialSize == "baseplateCompass") {
@@ -406,10 +413,10 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           upper = upper || this.widgetProperties.config.maxValue;
           let color: string;
           switch (zone.state) {
-            case IZoneState.warning:
+            case States.Warn:
               color = this.theme.warn;
               break;
-            case IZoneState.alarm:
+            case States.Alarm:
               color = this.theme.warnDark;
               break;
             default:

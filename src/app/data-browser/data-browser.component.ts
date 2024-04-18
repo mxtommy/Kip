@@ -5,7 +5,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { SignalKDataService } from '../core/services/signalk-data.service';
-import { IPathData } from "../core/interfaces/app-interfaces";
+import { ISkPathData } from "../core/interfaces/app-interfaces";
 import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
 import { NgFor, KeyValuePipe } from '@angular/common';
 import { MatInput } from '@angular/material/input';
@@ -28,7 +28,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
   private dataTableTimer: NodeJS.Timeout = null;
 
   public pageSize: number = 10;
-  public tableData = new MatTableDataSource<IPathData>([]);
+  public tableData = new MatTableDataSource<ISkPathData>([]);
   public displayedColumns: string[] = ['path', 'defaultSource'];
 
   constructor(
@@ -41,7 +41,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.dataTableTimer = setTimeout(()=>{
-      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe((paths: IPathData[]) => {
+      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe((paths: ISkPathData[]) => {
         this.tableData.data = paths;
       })}, 0); // set timeout to make it async otherwise delays page load
   }
@@ -63,7 +63,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  public trackByPath(index: number, item: IPathData): string {
+  public trackByPath(index: number, item: ISkPathData): string {
     return `${item.path}`;
   }
 

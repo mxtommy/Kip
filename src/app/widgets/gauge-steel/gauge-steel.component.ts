@@ -1,9 +1,9 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, Renderer2 } from '@angular/core';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
-import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { ITheme } from '../../core/interfaces/widgets-interface';
 import Qty from 'js-quantities';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 declare let steelseries: any; // 3rd party
 
@@ -59,7 +59,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   @Input('frameColor') frameColor: string;
   @Input('minValue') minValue: number;
   @Input('maxValue') maxValue: number;
-  @Input('zones') zones: IZone[];
+  @Input('zones') zones: Array<any>;
   @Input('title') title: string;
   @Input('units') units: string;
   @Input('value') value: number;
@@ -146,10 +146,10 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
         upper = upper || this.maxValue;
         let color: string;
         switch (zone.state) {
-          case IZoneState.warning:
+          case States.Warn:
             color = this.theme.warn;
             break;
-          case IZoneState.alarm:
+          case States.Alarm:
             color = this.theme.warnDark;
             break;
           default:

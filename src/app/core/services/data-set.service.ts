@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDataService, pathRegistrationValue } from './signalk-data.service';
+import { SignalKDataService, IPathData } from './signalk-data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
@@ -157,13 +157,13 @@ export class DatasetService {
     console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
 
     // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
-    function sampleInterval<pathRegistrationValue>(period: number): MonoTypeOperatorFunction<pathRegistrationValue> {
+    function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
     // Subscribe to path data, update historicalData/stats and sends new values to Observers
     dataSource.pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
-      (newValue: pathRegistrationValue) => {
+      (newValue: IPathData) => {
         if (newValue.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value

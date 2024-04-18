@@ -6,7 +6,6 @@
  *********************************************************************************/
 
 import { ISignalKMetadata, TState, TMethod } from "./signalk-interfaces";
-import { IZoneState } from './app-settings.interfaces';
 
 /**
  * An App data structure that represents the values (ie. sensor data)
@@ -40,7 +39,7 @@ import { IZoneState } from './app-settings.interfaces';
  *
  * @memberof app-interfaces
  */
- export interface IPathData {
+ export interface ISkPathData {
   path: string;
   pathValue: any;
   defaultSource?: string; // default source
@@ -49,10 +48,10 @@ import { IZoneState } from './app-settings.interfaces';
       timestamp: string;
       sourceValue: any;
     }
-  }
+  };
   meta?: ISignalKMetadata;
   type: string;
-  state: IZoneState;
+  state: TState;
 }
 
 /**

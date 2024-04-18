@@ -8,12 +8,12 @@
  */
 
 // Metadata, Notification and Stream Subscription type restrictions.
-const states = ["nominal", "normal", "alert", "warn", "alarm", "emergency"] as ["nominal", "normal", "alert", "warn", "alarm", "emergency"];
+const states = ["normal", "nominal", "alert", "warn", "alarm", "emergency"] as ["normal", "nominal", "alert", "warn", "alarm", "emergency"];
 export type TState = typeof states[number];
 
 export enum States {
-  Nominal = "nominal",
   Normal = "normal",
+  Nominal = "nominal",
   Alert = "alert",
   Warn = "warn",
   Alarm = "alarm",
@@ -189,12 +189,14 @@ export interface ISignalKMetadata {
   warnMethod?: TMethod[];
   alarmMethod?: TMethod[];
   emergencyMethod?: TMethod[];
-  zones?: {             //This provides a series of hints to the consumer which can be used to properly set a range on a display gauge and also color sectors of a gauge to indicate normal or dangerous operating conditions.
-    state: TState;
-    lower?: number;
-    upper?: number;
-    message?: string;
-  }[]
+  zones?: ISkZone[];
+}
+
+interface ISkZone {
+  state: TState;
+  lower?: number;
+  upper?: number;
+  message?: string;
 }
 
 /**
