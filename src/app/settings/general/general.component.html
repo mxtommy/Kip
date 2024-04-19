@@ -13,8 +13,10 @@
     </mat-checkbox>
     <br/><br/>
     <h2>Notifications</h2>
-    <p class="mat-card-subtitle">Signal K data state notifications messages meant to
-      inform operators. Notifications are visible in the notifications menu.</p>
+    <p class="mat-card-subtitle">Notifications are integral to Signal K's data state messaging
+      framework. They are designed to provide operators with important information, enabling
+      them to take appropriate actions. In KIP, notifications are presented as Notifications menu items and
+      accompanied by audio prompts for enhanced user interaction.</p>
     <mat-slide-toggle
       name="disableNotifications"
       [(ngModel)]="notificationConfig.disableNotifications"
@@ -28,56 +30,62 @@
         [disabled]="notificationConfig.disableNotifications">
         <mat-expansion-panel-header>
           <mat-panel-title>
-            State
+            Notifications Menu
           </mat-panel-title>
           <mat-panel-description>
-            Filter notification messages per severity levels
+            Show or hide menu items based on their state
           </mat-panel-description>
         </mat-expansion-panel-header>
         <mat-checkbox
           name="showNormalState"
           [(ngModel)]="notificationConfig.devices.showNormalState">
-          Show <b>Normal</b> severity
+          Show <b>Normal</b> state
+        </mat-checkbox>
+        <br/>
+        <mat-checkbox
+          name="showNormalState"
+          [(ngModel)]="notificationConfig.devices.showNominalState">
+          Show <b>Nominal</b> state
         </mat-checkbox>
       </mat-expansion-panel>
       <mat-expansion-panel #soundPanel
         [disabled]="notificationConfig.disableNotifications">
         <mat-expansion-panel-header>
           <mat-panel-title>
-            Sound
+            Audio Prompts
           </mat-panel-title>
           <mat-panel-description>
-            Disable audio prompt per severity levels
+            Mute and unmute data state audio prompts
           </mat-panel-description>
         </mat-expansion-panel-header>
         <mat-checkbox
           name="=disableSound"
           [(ngModel)]="notificationConfig.sound.disableSound">
-          Disable <b>All</b>
+          Mute <b>all Notifications</b>
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteAlert"
           [(ngModel)]="notificationConfig.sound.muteAlert">
-          Disable <b>Alert</b> severity
+          Mute <b>all Alert</b> state
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteWarning"
           [(ngModel)]="notificationConfig.sound.muteWarning">
-          Disable <b>Warning</b> severity
+          Mute <b>all Warning</b> state
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteAlarm"
           [(ngModel)]="notificationConfig.sound.muteAlarm">
-          Disable <b>Alarm</b> severity
+          Mute <b>all Alarm</b> state
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteEmergency"
           [(ngModel)]="notificationConfig.sound.muteEmergency">
-          Disable <b>Emergency</b> severity
+          Mute <b>all Emergency</b> state
         </mat-checkbox>
       </mat-expansion-panel>
     </mat-accordion>

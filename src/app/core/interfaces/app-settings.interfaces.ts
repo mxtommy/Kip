@@ -51,10 +51,12 @@ export interface INotificationConfig {
   devices: {
     disableDevices: boolean;
     showNormalState: boolean;
+    showNominalState: boolean;
   },
   sound: {
     disableSound: boolean;
     muteNormal: boolean;
+    muteNominal: boolean;
     muteWarning: boolean;
     muteAlert: boolean;
     muteAlarm: boolean;

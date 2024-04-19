@@ -93,11 +93,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
             this.radialGauge.update(this.gaugeOptions);
             break;
           case States.Warn:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          case States.Alert:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
+            this.gaugeOptions.colorValueText = this.theme.textWarnLight;
             this.radialGauge.update(this.gaugeOptions);
             break;
           default:
@@ -411,7 +407,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           let color: string;
           switch (zone.state) {
             case States.Emergency:
-              color = this.theme.textWarnDark;
+              color = this.theme.warnDark;
               break;
             case States.Alarm:
               color = this.theme.warnDark;

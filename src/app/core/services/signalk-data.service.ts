@@ -333,16 +333,12 @@ export class SignalKDataService implements OnDestroy {
     } else {
       const { context, path, meta: metaProp } = meta;
       const metaPath = this.setPathContext(context, path);
-      const pathObject = this._skData.find(pathObject => pathObject.path === metaPath);
+      let pathObject = this._skData.find(pathObject => pathObject.path === metaPath);
 
       if (pathObject) {
         pathObject.meta = merge(pathObject.meta, metaProp);
-
-        this._pathRegister.filter(registration => registration.path === metaPath).forEach(
-          registration => registration.pathMeta$.next(pathObject.meta)
-        );
       } else { // not in our list yet. The Meta update came before the Source update.
-        this._skData.push({
+        pathObject = this._skData.at(this._skData.push({
           path: metaPath,
           pathValue: undefined,
           defaultSource: undefined,
@@ -350,11 +346,11 @@ export class SignalKDataService implements OnDestroy {
           meta: metaProp,
           type: undefined,
           state: States.Normal
-        });
-        metaProp.zones ? this._pathRegister.filter(registration => registration.path === metaPath).forEach(
-          registration => registration.pathMeta$.next(metaProp)
-        ) : null;
+        }) - 1);
       }
+      this._pathRegister.filter(registration => registration.path === metaPath).forEach(
+        registration => registration.pathMeta$.next(pathObject.meta)
+      );
     }
   }
 

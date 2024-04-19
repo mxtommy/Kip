@@ -1,15 +1,14 @@
 import { Component, OnDestroy } from '@angular/core';
 import { NotificationsService, INotification, IAlarmInfo } from '../core/services/notifications.service';
-import { Observable, Subscription, filter, iif, map, of, switchMap, tap } from 'rxjs';
+import { Observable, Subscription, filter, iif, map, of, switchMap } from 'rxjs';
 import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
+import { Methods, States } from '../core/interfaces/signalk-interfaces';
 import { MatDivider } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { NgIf, AsyncPipe, NgFor } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { Methods, States } from '../core/interfaces/signalk-interfaces';
-import { METHODS } from 'http';
 
 interface INotificationInfo extends IAlarmInfo{
   blinkWarn: boolean;
@@ -28,15 +27,21 @@ export class AlarmMenuComponent implements OnDestroy {
   private notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
     filter(notification => notification !== null));
   public menuNotifications$ = this.notifications$.pipe(
-    switchMap(notifications =>
-      iif(
-        () => this.notificationConfig.devices.showNormalState,
-        of(notifications),
-        of(notifications.filter(
-          item => item.value && item.value.state !== States.Normal
-        ))
-      )
-    ),
+    map(notifications => {
+      // Define states filter
+      const statesToFilter = [];
+      if (!this.notificationConfig.devices.showNormalState) {
+        statesToFilter.push(States.Normal);
+      }
+      if (!this.notificationConfig.devices.showNominalState) {
+        statesToFilter.push(States.Nominal);
+      }
+
+      // Filter the notifications based on the states
+      return notifications.filter(
+        item => item.value && item.value.state && !statesToFilter.includes(item.value.state)
+      );
+    }),
     map(notifications => notifications.filter(
       item => item.value && item.value.method && item.value.method.includes(Methods.Visual)
     ))
