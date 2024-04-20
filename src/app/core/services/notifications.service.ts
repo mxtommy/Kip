@@ -56,7 +56,8 @@ interface IAlarmSeverities {
 export class NotificationsService implements OnDestroy {
   private static readonly ALARM_SEVERITIES: IAlarmSeverities = {
     normal: { sound: 0, visual: 0 },
-    alert: { sound: 1, visual: 1 },
+    nominal: { sound: 0, visual: 0 },
+    alert: { sound: 1, visual: 0 },
     warn: { sound: 2, visual: 1 },
     alarm: { sound: 3, visual: 2 },
     emergency: { sound: 4, visual: 2 },
@@ -103,13 +104,10 @@ export class NotificationsService implements OnDestroy {
         this.updateNotificationsState(); //see if any we need to start playing again
       }
     });
-    //TODO: tie data-service restart to this
-    // Observer of server connection status to reset notifications on SK reconnect
-    // this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
-    //   if (streamStatus.operation === 2) {
-    //     this.reset();
-    //   }
-    // });
+
+    this.dataService.IsResetService().subscribe(reset => {
+        reset ? this.reset() : null;
+      });
 
     // Init audio player
     this.howlPlayer = this.getPlayer(1000);

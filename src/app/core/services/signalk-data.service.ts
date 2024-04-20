@@ -44,14 +44,14 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
  * @param {string} subject A rxjs BehaviorSubject of Type IPathData used to return Observable
  * @interface pathRegistration
  */
-interface pathRegistration {
+interface IPathRegistration {
   uuid: string;
   path: string;
   source: string;
-  pathValue$: BehaviorSubject<any>;
-  pathState$: BehaviorSubject<TState>;
-  subject$: BehaviorSubject<IPathData>; // pathValue and pathState combined subject
-  pathMeta$: BehaviorSubject<ISignalKMetadata>;
+  _pathValue$: BehaviorSubject<any>;
+  _pathState$: BehaviorSubject<TState>;
+  pathData$: BehaviorSubject<IPathData>; // pathValue and pathState combined subject for Observers ie: widgets
+  _pathMeta$: BehaviorSubject<ISignalKMetadata>;
 }
 
 export interface IDeltaUpdate {
@@ -81,14 +81,14 @@ export class SignalKDataService implements OnDestroy {
   // Zones
   private _skNotificationMsg$ = new Subject<ISignalKDataValueUpdate>();
   private _skNotificationMeta$ = new Subject<IMeta>();
+  private _isReset = new Subject<boolean>();
 
   // Service data variables
   private _selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
   private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
-  private _pathRegister: pathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
+  private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 
   constructor(private deltaService: SignalKDeltaService) {
-
     // Emit Delta message update counter every second
     setInterval(() => {
       if (this._deltaUpdatesCounter !== null) {
@@ -119,7 +119,7 @@ export class SignalKDataService implements OnDestroy {
 
         this._pathRegister.filter(item => item.path == cleanedPath).forEach(
           item => {
-            item.pathState$.next(pathItem.state);
+            item._pathState$.next(pathItem.state);
           }
         );
       }
@@ -148,8 +148,7 @@ export class SignalKDataService implements OnDestroy {
   public resetSignalKData() {
     this._skData = [];
     this._selfUrn = 'self';
-
-    //TODO: add support to reset notification service
+    this._isReset.next(true);
   }
 
   public unsubscribePath(uuid, path) {
@@ -161,7 +160,7 @@ export class SignalKDataService implements OnDestroy {
     // See if already have a Subject for this path and return it.
     const entry = this._pathRegister.find(entry => (entry.path == path) && (entry.uuid == uuid));
     if (entry) { // exists
-      return entry.subject$;
+      return entry.pathData$;
     }
 
     let currentValue: any = null;
@@ -180,28 +179,28 @@ export class SignalKDataService implements OnDestroy {
      dataPath.state ? state = dataPath.state : state = States.Normal;
     }
 
-    let newRegister: pathRegistration  = {
+    let newRegister: IPathRegistration  = {
       uuid: uuid,
       path: path,
       source: source,
-      pathValue$: new BehaviorSubject<any>(currentValue),
-      pathState$: new BehaviorSubject<TState>(state),
-      subject$: new BehaviorSubject<IPathData>({ value: currentValue, state: state }),
-      pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
+      _pathValue$: new BehaviorSubject<any>(currentValue),
+      _pathState$: new BehaviorSubject<TState>(state),
+      pathData$: new BehaviorSubject<IPathData>({ value: currentValue, state: state }),
+      _pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
     };
 
     // Combine the latest values and state of the path
-    const combined$ = combineLatest([newRegister.pathValue$, newRegister.pathState$]).pipe(
+    const combined$ = combineLatest([newRegister._pathValue$, newRegister._pathState$]).pipe(
       map(([v, s]) => {
         return { value: v, state: s } as IPathData;
       })
     );
 
-    // Subscribe combined$ to newRegister.subject$
-    combined$.subscribe(value => newRegister.subject$.next(value));
+    // Subscribe combined$ to newRegister.pathData$
+    combined$.subscribe(value => newRegister.pathData$.next(value));
 
     this._pathRegister.push(newRegister);
-    return newRegister.subject$;
+    return newRegister.pathData$;
   }
 
   private setSelfUrn(value: string) {
@@ -312,9 +311,9 @@ export class SignalKDataService implements OnDestroy {
          * and 'default' should not be visible (hidden in the path selection component).
          */
         if (item.source == 'default') {
-          item.pathValue$.next(this._skData[pathIndex].pathValue);
+          item._pathValue$.next(this._skData[pathIndex].pathValue);
         } else if (item.source in this._skData[pathIndex].sources) {
-          item.pathValue$.next(this._skData[pathIndex].sources[item.source].sourceValue);
+          item._pathValue$.next(this._skData[pathIndex].sources[item.source].sourceValue);
         } else {
           //we're looking for a source we don't know about. Error out to console
           console.error(`[Signal K Data Service] Failed updating zone state. Source unknown or not defined for path: ${item.source}`);
@@ -349,7 +348,7 @@ export class SignalKDataService implements OnDestroy {
         }) - 1);
       }
       this._pathRegister.filter(registration => registration.path === metaPath).forEach(
-        registration => registration.pathMeta$.next(pathObject.meta)
+        registration => registration._pathMeta$.next(pathObject.meta)
       );
     }
   }
@@ -450,7 +449,7 @@ export class SignalKDataService implements OnDestroy {
             break;
         }
 
-        _pathRegister.subject$.next(timeoutValue);
+        _pathRegister.pathData$.next(timeoutValue);
       }
     )
   }
@@ -465,7 +464,11 @@ export class SignalKDataService implements OnDestroy {
 
 public getPathMeta(path: string): Observable<ISignalKMetadata> {
   const registration = this._pathRegister.find(registration => registration.path == path);
-  return registration?.pathMeta$.asObservable() || of(null);
+  return registration?._pathMeta$.asObservable() || of(null);
+}
+
+public IsResetService(): Observable<boolean> {
+  return this._isReset.asObservable();
 }
 
   ngOnDestroy(): void {
