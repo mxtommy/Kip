@@ -6,7 +6,7 @@ import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { ISignalKMetadata, ISkZone, States } from '../../core/interfaces/signalk-interfaces';
+import { ISignalKMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-radial',
@@ -81,8 +81,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         if (oldValue != (temp as number)) {
           this.dataValue = temp;
         }
-        // TODO: Fix color to support all states
-        // set zone state colors
+        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
             this.gaugeOptions.colorValueText = this.theme.warnDark;
@@ -103,7 +102,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       }
     );
 
-    // TODO: Refactor to use new zones meta data
     this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
       if (meta) {
         this.meta = meta;

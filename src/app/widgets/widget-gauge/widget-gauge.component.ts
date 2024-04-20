@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
+import { ISignalKMetadata } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge',
@@ -13,8 +14,12 @@ import { Subscription } from 'rxjs';
 })
 export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;
-  private zonesSub: Subscription = null;
+
   public zones = [];
+
+  // Zones support
+  private meta: ISignalKMetadata = null;
+  private metaSub: Subscription;
 
   constructor(private settings: AppSettingsService) {
     super();
@@ -56,23 +61,18 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
       }
     );
 
-
-    // TODO: fix for new meta zones
-    // this.zonesSub = this.settings.getZonesAsO().subscribe(
-    //   zones => {
-    //     let myZones: IZone[] = [];
-    //     zones.forEach(zone => {
-    //       // get zones for our path
-    //       if (zone.path == this.widgetProperties.config.paths["gaugePath"].path) {
-    //         myZones.push(zone);
-    //       }
-    //     })
-    //     this.zones = myZones;
-    //   });
+    this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
+      if (meta) {
+        this.meta = meta;
+        meta.zones && meta.zones?.forEach(zone => {
+          this.zones.push(zone);
+        });
+      }
+    });
   }
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
-    this.zonesSub?.unsubscribe();
+    this.metaSub?.unsubscribe();
   }
 }

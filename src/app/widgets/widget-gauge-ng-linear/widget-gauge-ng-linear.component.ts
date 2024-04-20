@@ -7,8 +7,7 @@ import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@biacsics/ng-canv
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
-import Qty from 'js-quantities';
-import { States } from '../../core/interfaces/signalk-interfaces';
+import { ISignalKMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-linear',
@@ -31,8 +30,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public isGaugeVertical: Boolean = true;
 
   // Zones support
-  private zones = [];
-  zonesSub: Subscription;
+  private meta: ISignalKMetadata = null;
+  private metaSub: Subscription;
 
   constructor(private appSettingsService: AppSettingsService) {
     super();
@@ -66,33 +65,95 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.validateConfig();
+    this.setHighlights();
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.value === null) {newValue.value = 0}
-        // Only push new values formatted to gauge settings to reduce gauge paint requests
-        let oldValue = this.dataValue;
-        let temp: any = this.formatWidgetNumberValue(newValue.value);
-        if (oldValue != (temp as number)) {
-          this.dataValue = temp;
-        }
+      if (newValue.value === null) {newValue.value = 0}
+      let oldValue = this.dataValue;
+      let temp: any = this.formatWidgetNumberValue(newValue.value);
 
-        // set colors for zone state
-        switch (newValue.state) {
-          case States.Warn:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            break;
-          case States.Alarm:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            break;
-          default:
-            this.gaugeOptions.colorValueText = getComputedStyle(this.wrapper.nativeElement).color;
-        }
+      if (oldValue != (temp as number)) {
+        this.dataValue = temp;
+      }
+      // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+      switch (newValue.state) {
+        case States.Emergency:
+          this.gaugeOptions.colorValueText = this.theme.warnDark;
+          this.linearGauge.update(this.gaugeOptions);
+          break;
+        case States.Alarm:
+          this.gaugeOptions.colorValueText = this.theme.warnDark;
+          this.linearGauge.update(this.gaugeOptions);
+          break;
+        case States.Warn:
+          this.gaugeOptions.colorValueText = this.theme.textWarnLight;
+          this.linearGauge.update(this.gaugeOptions);
+          break;
+        default:
+          this.gaugeOptions.colorValueText = this.theme.text;
+          this.linearGauge.update(this.gaugeOptions);
+      }
       }
     );
+
+    this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
+      if (meta) {
+        this.meta = meta;
+        meta.zones && this.setHighlights();
+      }
+    });
   }
 
-  ngOnDestroy() {
-    this.unsubscribeDataStream();
-    this.zonesSub?.unsubscribe();
+  private setHighlights(): void {
+    if (!this.meta?.zones?.length) {
+      this.gaugeOptions.highlights = [];
+      return};
+    if (this.widgetProperties.config.radialSize == "marineCompass" || this.widgetProperties.config.radialSize == "baseplateCompass") {
+      this.gaugeOptions.highlights = [];
+      this.gaugeOptions.highlightsWidth = 0;
+    } else {
+      const gaugeZonesHighligh: IDataHighlight = [];
+      this.meta.zones.forEach(zone => {
+          let lower: number = null;
+          let upper: number = null;
+          // Perform Units conversions on zone range
+          if (this.widgetProperties.config.paths["gaugePath"].convertUnitTo == "ratio") {
+            lower = zone.lower;
+            upper = zone.upper;
+          } else {
+            lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
+            upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
+          }
+
+          lower = lower || this.widgetProperties.config.minValue;
+          upper = upper || this.widgetProperties.config.maxValue;
+          let color: string;
+          switch (zone.state) {
+            case States.Emergency:
+              color = this.theme.warnDark;
+              break;
+            case States.Alarm:
+              color = this.theme.warnDark;
+              break;
+            case States.Warn:
+              color = this.theme.textWarnLight;
+              break;
+            case States.Alert:
+              color = this.theme.accentDark;
+              break;
+            case States.Nominal:
+              color = this.theme.primaryDark;
+              break;
+            default:
+              color = "rgba(0,0,0,0)";
+          }
+
+          gaugeZonesHighligh.push({from: lower, to: upper, color: color});
+        // }
+      });
+      //@ts-ignore - bug in highlights property definition
+      this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighligh, null, 1);
+      this.gaugeOptions.highlightsWidth = 6;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -100,15 +161,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       this.updateGaugeConfig();
     }
   }
-
-  // TODO: fix for new meta zones
-  // subscribeZones() {
-  //   this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(
-  //     zones => {
-  //       this.zones = zones;
-  //       this.updateGaugeConfig();
-  //     });
-  // }
 
   updateGaugeConfig(){
     let themePaletteColor = "";
@@ -166,44 +218,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         default:
         break;
     }
-
-    // highlights
-    let myZones: IDataHighlight = [];
-    this.zones.forEach(zone => {
-        // get zones for our path
-        if (zone.path == this.widgetProperties.config.paths['gaugePath'].path) {
-          let lower: number = null;
-          let upper: number = null;
-          // Perform Units conversions on zone range
-          if (zone.unit == "ratio") {
-            lower = zone.lower;
-            upper = zone.upper;
-          } else {
-            const convert = Qty.swiftConverter(zone.unit, this.widgetProperties.config.paths["gaugePath"].convertUnitTo);
-            lower = convert(zone.lower);
-            upper = convert(zone.upper);
-          }
-
-          lower = lower || this.widgetProperties.config.minValue;
-          upper = upper || this.widgetProperties.config.maxValue;
-          let color: string;
-          switch (zone.state) {
-            case States.Warn:
-              color = this.theme.warn;
-              break;
-            case States.Alarm:
-              color = this.theme.warnDark;
-              break;
-            default:
-              color = "rgba(0,0,0,0)";
-          }
-          myZones.push({from: lower, to: upper, color: color});
-        }
-      }
-    );
-    this.gaugeOptions.highlights = myZones;
-
-
     // Config storage values
     this.gaugeOptions.minValue = this.widgetProperties.config.minValue;
     this.gaugeOptions.maxValue = this.widgetProperties.config.maxValue;
@@ -348,5 +362,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     else {
       this.gaugeOptions.width = event.newRect.width;
     }
+  }
+
+  ngOnDestroy() {
+    this.unsubscribeDataStream();
+    this.metaSub?.unsubscribe();
   }
 }
