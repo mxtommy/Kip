@@ -3,7 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDataService } from './signalk-data.service';
+import { SignalKDataService } from './data.service';
 
 const modePath: string = 'self.environment.mode';
 

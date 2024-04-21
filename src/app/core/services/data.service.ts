@@ -89,7 +89,7 @@ export class SignalKDataService implements OnDestroy {
   private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 
-  constructor(private deltaService: SignalKDeltaService) {
+  constructor(private delta: SignalKDeltaService) {
     // Emit Delta message update counter every second
     setInterval(() => {
       if (this._deltaUpdatesCounter !== null) {
@@ -100,17 +100,17 @@ export class SignalKDataService implements OnDestroy {
     }, 1000);
 
     // Observer of Delta service data path updates
-    this._deltaServicePathSubscription = this.deltaService.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
+    this._deltaServicePathSubscription = this.delta.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
       this.updatePathData(dataPath);
     });
 
     // Observer of Delta service Metadata updates
-    this._deltaServiceMetaSubscription = this.deltaService.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
+    this._deltaServiceMetaSubscription = this.delta.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
       this.setMeta(deltaMeta);
     })
 
     // Observer router of Delta service Notification updates
-    this._deltaServiceNotificationSubscription = this.deltaService.subscribeNotificationsUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
+    this._deltaServiceNotificationSubscription = this.delta.subscribeNotificationsUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
       // Replace "notifications." with "self." to search for the path in skData
       const cleanedPath = msg.path.replace('notifications.', 'self.');
 
@@ -128,7 +128,7 @@ export class SignalKDataService implements OnDestroy {
     });
 
     // Observer of vessel Self URN updates
-    this._deltaServiceSelfUrnSubscription = this.deltaService.subscribeSelfUpdates().subscribe(self => {
+    this._deltaServiceSelfUrnSubscription = this.delta.subscribeSelfUpdates().subscribe(self => {
       this.setSelfUrn(self);
     });
   }
@@ -152,8 +152,8 @@ export class SignalKDataService implements OnDestroy {
     this._isReset.next(true);
   }
 
-  public unsubscribePath(uuid, path) {
-    this._pathRegister.splice(this._pathRegister.findIndex(registration => registration.path === path && registration.uuid === uuid), 1);
+  public unsubscribePath(path: string): void {
+    this._pathRegister.splice(this._pathRegister.findIndex(registration => registration.path === path), 1);
   }
 
   public subscribePath(uuid: string, path: string, source: string): Observable<IPathData> {

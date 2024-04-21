@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
-import { SignalKDataService } from '../core/services/signalk-data.service';
+import { SignalKDataService } from '../core/services/data.service';
 import { UnitsService } from '../core/services/units.service';
 import { MatCell } from '@angular/material/table';
 import { MatButton } from '@angular/material/button';

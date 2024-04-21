@@ -44,7 +44,7 @@ import { LayoutSplitsService } from './app/core/services/layout-splits.service';
 import { DatasetService } from './app/core/services/data-set.service';
 import { SignalKDeltaService } from './app/core/services/signalk-delta.service';
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
-import { SignalKDataService } from './app/core/services/signalk-data.service';
+import { SignalKDataService } from './app/core/services/data.service';
 import { AuthenticationService } from './app/core/services/authentication.service';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogModule } from '@angular/material/dialog';

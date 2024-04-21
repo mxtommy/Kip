@@ -1,4 +1,4 @@
-import { SignalKDataService } from './signalk-data.service';
+import { SignalKDataService } from './data.service';
 import { Injectable } from '@angular/core';
 import Qty from 'js-quantities';
 

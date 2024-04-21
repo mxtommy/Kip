@@ -17,7 +17,7 @@ import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 import { Subscription } from 'rxjs';
-import { SignalKDataService } from './signalk-data.service';
+import { SignalKDataService } from './data.service';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 

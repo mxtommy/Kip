@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDataService, IPathData } from './signalk-data.service';
+import { SignalKDataService, IPathData } from './data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 

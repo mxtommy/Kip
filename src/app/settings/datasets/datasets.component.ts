@@ -5,7 +5,7 @@ import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeader
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { SignalKDataService } from '../../core/services/signalk-data.service';
+import { SignalKDataService } from '../../core/services/data.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';

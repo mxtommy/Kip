@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Observable, Observer, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
-import { SignalKDataService, IPathData } from '../core/services/signalk-data.service';
+import { SignalKDataService, IPathData } from '../core/services/data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
 import { cloneDeep, merge } from 'lodash-es';
@@ -249,7 +249,7 @@ export abstract class BaseWidgetComponent {
       this.dataSubscription.unsubscribe();
       // Cleanup KIP's pathRegister
       Object.keys(this.widgetProperties.config.paths).forEach(pathKey => {
-        this.signalKDataService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path);
+        this.signalKDataService.unsubscribePath(this.widgetProperties.config.paths[pathKey].path);
         }
       );
       this.dataSubscription = undefined;

@@ -4,7 +4,7 @@ import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
-import { IDeltaUpdate, SignalKDataService } from '../../core/services/signalk-data.service';
+import { IDeltaUpdate, SignalKDataService } from '../../core/services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';

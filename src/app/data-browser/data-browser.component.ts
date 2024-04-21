@@ -4,7 +4,7 @@ import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeader
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { SignalKDataService } from '../core/services/signalk-data.service';
+import { SignalKDataService } from '../core/services/data.service';
 import { ISkPathData } from "../core/interfaces/app-interfaces";
 import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
 import { NgFor, KeyValuePipe } from '@angular/common';

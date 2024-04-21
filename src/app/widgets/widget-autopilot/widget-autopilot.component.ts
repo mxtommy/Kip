@@ -298,7 +298,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (this.skApNotificationSub !== null) {
       this.skApNotificationSub.unsubscribe();
       this.skApNotificationSub = null;
-      this.signalKDataService.unsubscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths['apNotifications'].path);
+      this.signalKDataService.unsubscribePath(this.widgetProperties.config.paths['apNotifications'].path);
     }
   }
 
