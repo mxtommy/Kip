@@ -75,12 +75,11 @@ export class SignalKConnectionService {
    * @memberof SignalKConnectionService
    */
   public async resetSignalK(skUrl: ISignalKUrl, proxyEnabled?: boolean): Promise<void> {
-    if (skUrl.url === null) {
+    if (!skUrl.url) {
       console.log("[Connection Service] Connection reset called with null or empty URL value");
       return;
     }
 
-    // Connections status initialization values for behavior Observer
     const serverServiceEndpoints: IEndpointStatus = {
       operation: 1,
       message: "Connecting...",
@@ -88,14 +87,13 @@ export class SignalKConnectionService {
       httpServiceUrl: null,
       WsServiceUrl: null,
     };
-    this.signalKURL = skUrl;
 
+    this.signalKURL = skUrl;
     this.serverServiceEndpoint$.next(serverServiceEndpoints);
 
     let fullURL = this.signalKURL.url;
-    let re = new RegExp("signalk/?$");
-    if (!re.test(fullURL)) {
-        fullURL = fullURL + "/signalk/";
+    if (!fullURL.endsWith("signalk/")) {
+      fullURL += "/signalk/";
     }
 
     try {
@@ -105,50 +103,39 @@ export class SignalKConnectionService {
       console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
       this.serverVersion$.next(endpointResponse.body.server.version);
 
+      const httpUrl = endpointResponse.body.endpoints.v1["signalk-http"];
+      const wsUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+
       if (proxyEnabled) {
         console.debug("[Connection Service] Proxy Mode Enabled");
-        const skHttpUrl = new URL(endpointResponse.body.endpoints.v1["signalk-http"]);
-        const skWsUrl = new URL(endpointResponse.body.endpoints.v1["signalk-ws"]);
-
-        serverServiceEndpoints.httpServiceUrl =  window.location.origin + skHttpUrl.pathname;
-        console.debug("[Connection Service] Proxy HTTP URI: " +serverServiceEndpoints.httpServiceUrl);
-
-        let uri: string = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
-        uri += window.location.host;
-        uri += skWsUrl.pathname;
-        serverServiceEndpoints.WsServiceUrl = uri;
-
-        console.debug("[Connection Service] Proxy WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
+        serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
+        serverServiceEndpoints.WsServiceUrl = (window.location.protocol == 'https:' ? 'wss://' : 'ws://') + window.location.host + new URL(wsUrl).pathname;
       } else {
-        serverServiceEndpoints.httpServiceUrl = endpointResponse.body.endpoints.v1["signalk-http"];
-        console.debug("[Connection Service] HTTP URI: " +serverServiceEndpoints.httpServiceUrl);
-        serverServiceEndpoints.WsServiceUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
-        console.debug("[Connection Service] WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
+        serverServiceEndpoints.httpServiceUrl = httpUrl;
+        serverServiceEndpoints.WsServiceUrl = wsUrl;
       }
+
+      console.debug("[Connection Service] HTTP URI: " + serverServiceEndpoints.httpServiceUrl);
+      console.debug("[Connection Service] WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
 
       serverServiceEndpoints.operation = 2;
       serverServiceEndpoints.message = endpointResponse.status.toString();
-      serverServiceEndpoints.serverDescription = endpointResponse.body.server.id + " " + endpointResponse.body.server.version;
+      serverServiceEndpoints.serverDescription = `${endpointResponse.body.server.id} ${endpointResponse.body.server.version}`;
     } catch (error) {
       serverServiceEndpoints.operation = 3;
       serverServiceEndpoints.message = error.message;
-      serverServiceEndpoints.serverDescription = null;
       this.handleError(error);
     } finally {
       this.serverServiceEndpoint$.next(serverServiceEndpoints);
     }
   }
 
-  private handleError(error: HttpErrorResponse) {
-    if (error.status === 0) {
-      // A client-side or network error occurred. Handle it accordingly
-      console.error(`[Connection Service] ${error.name}: ${error.message}`);
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
-      console.error(`[Connection Service] Backend returned code ${error.status}, body was: `, error.error);
-    }
-    // Return an observable with a user-facing error message.
+  private handleError(error: HttpErrorResponse): never {
+    const errorMessage = error.status === 0
+      ? `[Connection Service] ${error.name}: ${error.message}`
+      : `[Connection Service] Backend returned code ${error.status}, body was: ${error.error}`;
+
+    console.error(errorMessage);
     throw error;
   }
 
@@ -157,10 +144,10 @@ export class SignalKConnectionService {
     return this.serverServiceEndpoint$.asObservable();
   }
 
-  public setServerInfo(name : string, version: string, roles: Array<string>) {
+  public setServerInfo(name: string, version: string, roles: Array<string>): void {
     this.serverName = name;
     this.serverRoles = roles;
-    console.log("[Connection Service] Server Name: " + name + ", Version: " + version + ", Roles: " + JSON.stringify(roles));
+    console.log(`[Connection Service] Server Name: ${name}, Version: ${version}, Roles: ${JSON.stringify(roles)}`);
   }
 
   public get skServerName() : string {
@@ -174,5 +161,4 @@ export class SignalKConnectionService {
   public get skServerRoles() : Array<string> {
     return this.serverRoles;
   }
-
 }

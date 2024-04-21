@@ -65,6 +65,7 @@ export class NotificationsService implements OnDestroy {
   private _notificationSettingsSubscription: Subscription = null;
   private _notificationDataStreamSubscription: Subscription = null;
   private _notificationMetaStreamSubscription: Subscription = null;
+  private _resetServiceSubscription: Subscription = null;
 
   private _notificationConfig: INotificationConfig;
   private _notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
@@ -84,7 +85,7 @@ export class NotificationsService implements OnDestroy {
 
   constructor(
     private settings: AppSettingsService,
-    private dataService: SignalKDataService,
+    private data: SignalKDataService,
     private requests: SignalkRequestsService
     ) {
     // Observer of Notification Service configuration changes
@@ -105,7 +106,7 @@ export class NotificationsService implements OnDestroy {
       }
     });
 
-    this.dataService.isResetService().subscribe(reset => {
+    this._resetServiceSubscription = this.data.isResetService().subscribe(reset => {
         reset ? this.reset() : null;
       });
 
@@ -114,11 +115,11 @@ export class NotificationsService implements OnDestroy {
    }
 
   private startNotificationStream() {
-    this._notificationDataStreamSubscription = this.dataService.getNotificationMsg().subscribe((msg: ISignalKDataValueUpdate) => {
+    this._notificationDataStreamSubscription = this.data.getNotificationMsg().subscribe((msg: ISignalKDataValueUpdate) => {
       this.processNotificationDeltaMsg(msg);
     });
 
-    this._notificationMetaStreamSubscription = this.dataService.getNotificationMeta().subscribe((meta: IMeta) => {
+    this._notificationMetaStreamSubscription = this.data.getNotificationMeta().subscribe((meta: IMeta) => {
       this.processNotificationDeltaMeta(meta);
     });
   }
@@ -390,5 +391,9 @@ export class NotificationsService implements OnDestroy {
 
   ngOnDestroy(): void {
     this._notificationSettingsSubscription?.unsubscribe();
+    this._resetServiceSubscription?.unsubscribe();
+    this._notificationConfig$.complete();
+    this._notifications$.complete();
+    this._alarmsInfo$.complete();
   }
 }
