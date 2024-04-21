@@ -105,7 +105,7 @@ export class NotificationsService implements OnDestroy {
       }
     });
 
-    this.dataService.IsResetService().subscribe(reset => {
+    this.dataService.isResetService().subscribe(reset => {
         reset ? this.reset() : null;
       });
 

@@ -92,10 +92,10 @@ export class SignalKDataService implements OnDestroy {
     // Emit Delta message update counter every second
     setInterval(() => {
       if (this._deltaUpdatesCounter !== null) {
-        let update: IDeltaUpdate = {timestamp: Date.now(), value: this._deltaUpdatesCounter}
+        const update: IDeltaUpdate = {timestamp: Date.now(), value: this._deltaUpdatesCounter}
         this._deltaUpdatesSubject.next(update);
         this._deltaUpdatesCounter = 0;
-      };
+      }
     }, 1000);
 
     // Observer of Delta service data path updates
@@ -110,19 +110,18 @@ export class SignalKDataService implements OnDestroy {
 
     // Observer router of Delta service Notification updates
     this._deltaServiceNotificationSubscription = this.delta.subscribeNotificationsUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
-      // Replace "notifications." with "self." to search for the path in skData
       const cleanedPath = msg.path.replace('notifications.', 'self.');
 
       const pathItem = this._skData.find(item => item.path == cleanedPath);
       if (pathItem && pathItem.state !== (msg.value as ISignalKNotification).state) {
         pathItem.state = (msg.value as ISignalKNotification).state;
 
-        this._pathRegister.filter(item => item.path == cleanedPath).forEach(
-          item => {
-            item._pathState$.next(pathItem.state);
-          }
-        );
+        const pathRegisterItem = this._pathRegister.find(item => item.path == cleanedPath);
+        if (pathRegisterItem) {
+          pathRegisterItem._pathState$.next(pathItem.state);
+        }
       }
+
       this._skNotificationMsg$.next(msg);
     });
 
@@ -145,7 +144,7 @@ export class SignalKDataService implements OnDestroy {
     return this._deltaUpdatesSubject.asObservable();
   }
 
-  public resetSignalKData() {
+  private resetSignalKData() {
     this._skData = [];
     this._selfUrn = 'self';
     this._isReset.next(true);
@@ -156,30 +155,16 @@ export class SignalKDataService implements OnDestroy {
   }
 
   public subscribePath(path: string, source: string): Observable<IPathData> {
-    // TODO: check if we still need UUIDs for registration. Maybe we can just use the path.
-    // See if already have a Subject for this path and return it.
     const entry = this._pathRegister.find(entry => entry.path == path);
-    if (entry) { // exists
+    if (entry) {
       return entry.pathData$;
     }
 
-    let currentValue: any = null;
-    let state = null;
-
-    // Check if we already have this path. If so, return it's values
     const dataPath = this._skData.find(item => item.path == path);
-    if (dataPath) { // exists
-      if (source == 'default') {
-        currentValue = dataPath.pathValue;
-      } else if (source in dataPath.sources) {
-        currentValue = dataPath.sources[source].sourceValue;
-      } else {
-        currentValue = dataPath; //  return the entire pathObject
-      }
-     dataPath.state ? state = dataPath.state : state = States.Normal;
-    }
+    const currentValue = source === 'default' ? dataPath?.pathValue : dataPath?.sources?.[source]?.sourceValue ?? dataPath;
+    const state = dataPath?.state || States.Normal;
 
-    let newRegister: IPathRegistration  = {
+    const newPathSubject: IPathRegistration  = {
       path: path,
       source: source,
       _pathValue$: new BehaviorSubject<any>(currentValue),
@@ -188,98 +173,63 @@ export class SignalKDataService implements OnDestroy {
       pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
     };
 
-    // Combine the latest values and state of the path
-    const combined$ = combineLatest([newRegister._pathValue$, newRegister._pathState$]).pipe(
-      map(([v, s]) => {
-        return { value: v, state: s } as IPathData;
-      })
+    const combined$ = combineLatest([newPathSubject._pathValue$, newPathSubject._pathState$]).pipe(
+      map(([v, s]) => ({ value: v, state: s } as IPathData))
     );
 
-    // Subscribe combined$ to newRegister.pathData$
-    combined$.subscribe(value => newRegister.pathData$.next(value));
+    combined$.subscribe(value => newPathSubject.pathData$.next(value));
 
-    this._pathRegister.push(newRegister);
-    return newRegister.pathData$;
+    this._pathRegister.push(newPathSubject);
+    return newPathSubject.pathData$;
   }
 
   private setSelfUrn(value: string) {
-    if ((value != "" || value != null) && value != this._selfUrn) {
-      console.log('[Data Service] Setting self to: ' + value);
+    if (value && value !== this._selfUrn) {
       this._selfUrn = value;
     }
   }
 
+  /**
+   * IMPORTANT: We should always push to both pathValue and source's sourceValue. This is required
+   * as per SK specifications. By default, KIP uses the source "default". This
+   * means, read from the pathValue property, and not the sourceValue. In KIP's
+   * path selection component, users can also choose a specific source. This will
+   * force KIP to read data from the sourceValue and disregard pathValue.
+   *
+   * If we have multiple sources for a path and KIP's source is configured to use
+   * "default", KIP will read data from pathValue. In this case, this means that
+   * KIP's pathValue will be overwritten overwritten by both sources, potentially
+   * cause erratic widget behaviors!
+   *
+   * This is, as per SK specifications, by design. Source priority must/should
+   * be configured in Signal K server to prevent this. Once configured, only one
+   * source will update at a time following priority settings making the pathValue
+   * (KIP's "default" source setting) behave accordingly. Else, user should select
+   * a specific source to read from. This feature allows configurations where multiple
+   * source can collaborate to a single path based on priority. Such as if you have
+   * multiple GPS, and one goes down: SK priority will switch sources, and KIP
+   * (configured with "default" source) will continue reading as if nothing ever
+   * happened.
+  */
   private updatePathData(dataPath: IPathValueData): void {
-    this._deltaUpdatesCounter++; // Increase delta updates stat counter
-    let updatePath = this.setPathContext(dataPath.context, dataPath.path);
+    this._deltaUpdatesCounter++;
+    const updatePath = this.setPathContext(dataPath.context, dataPath.path);
 
-    // position data is sent as degrees. KIP expects everything to be in SI, so rad.
+    // Convert position values from degrees to radians
     if (updatePath.includes('position.latitude') || updatePath.includes('position.longitude')) {
       const degToRad = Qty.swiftConverter('deg', 'rad');
-      dataPath.value =  degToRad(dataPath.value);
+      dataPath.value = degToRad(dataPath.value);
     }
 
-    // See if path key exists
-    let pathIndex = this._skData.findIndex(pathObject => pathObject.path == updatePath);
-    if (pathIndex >= 0) { // exists
-
-      if (this._skData[pathIndex].defaultSource === undefined) { // undefined means the path was first created to a Meta update. Meta updates don't contain source information so we set default source on first source data update.
-        this._skData[pathIndex].defaultSource = dataPath.source;
-      }
-      if ((this._skData[pathIndex].type === undefined) && (dataPath.value !== null)) {
-        // undefined means the path was first created by a Meta update. Meta updates don't
-        // contain source information so we set default source on first source data update.
-        // If the value is null, we don't set the value type yet as null is of type object
-        // and it's not what we want. If null we wait to set the type when we get a value.
-        this._skData[pathIndex].type = typeof(dataPath.value);
-
-        // Manually set path string data type if of valid SK datetype
-        if (typeof(dataPath.value) == "string") {
-          if (isRfc3339StringDate(dataPath.value)) {
-            this._skData[pathIndex].type = "Date";
-          }
-        }
-      }
-
-      /**
-       * IMPORTANT: We should always push to both pathValue and source's sourceValue. This is required
-       * as per SK specifications. By default, KIP uses the source "default". This
-       * means, read from the pathValue property, and not the sourceValue. In KIP's
-       * path selection component, users can also choose a specific source. This will
-       * force KIP to read data from the sourceValue and disregard pathValue.
-       *
-       * If we have multiple sources for a path and KIP's source is configured to use
-       * "default", KIP will read data from pathValue. In this case, this means that
-       * KIP's pathValue will be overwritten overwritten by both sources, potentially
-       * cause erratic widget behaviors!
-       *
-       * This is, as per SK specifications, by design. Source priority must/should
-       * be configured in Signal K server to prevent this. Once configured, only one
-       * source will update at a time following priority settings making the pathValue
-       * (KIP's "default" source setting) behave accordingly. Else, user should select
-       * a specific source to read from. This feature allows configurations where multiple
-       * source can collaborate to a single path based on priority. Such as if you have
-       * multiple GPS, and one goes down: SK priority will switch sources, and KIP
-       * (configured with "default" source) will continue reading as if nothing ever
-       * happened.
-      */
-      this._skData[pathIndex].pathValue = dataPath.value;
-      this._skData[pathIndex].sources[dataPath.source] = {
-        timestamp: dataPath.timestamp,
-        sourceValue: dataPath.value,
-      };
-
-    } else { // Doesn't exist. Add new path
+    // Find the path item in _skData or create a new one if it doesn't exist
+    let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
+    if (!pathItem) {
       let pathType: string = typeof(dataPath.value);
-
-      // set path data type to enhance data type identification of SK string datetime
-      if (typeof(dataPath.value) == "string") {
-        if (isRfc3339StringDate(dataPath.value)) {
-          pathType = "Date";
-        }
+      if (pathType === "string" && isRfc3339StringDate(dataPath.value)) {
+        pathType = "Date";
       }
 
-      pathIndex = this._skData.push({
+      pathItem = {
         path: updatePath,
         pathValue: dataPath.value,
         defaultSource: dataPath.source,
@@ -291,71 +241,75 @@ export class SignalKDataService implements OnDestroy {
             sourceValue: dataPath.value
           }
         }
-      }) - 1;
+      };
+
+      this._skData.push(pathItem);
+    } else {
+      // Update the existing path item
+      if (pathItem.defaultSource === undefined) {
+        pathItem.defaultSource = dataPath.source;
+      }
+      if (pathItem.type === undefined && dataPath.value !== null) {
+        pathItem.type = typeof(dataPath.value);
+        if (pathItem.type === "string" && isRfc3339StringDate(dataPath.value)) {
+          pathItem.type = "Date";
+        }
+      }
+      pathItem.pathValue = dataPath.value;
+      pathItem.sources[dataPath.source] = {
+        timestamp: dataPath.timestamp,
+        sourceValue: dataPath.value,
+      };
     }
-    // push value to subscriptions registry
+
+    // Update path register Subjects with new data
     this._pathRegister.filter(item => item.path == updatePath).forEach(
       item => {
-        /**
-         * Source of value 'default' is use to support SK path Priority feature by taking the pathValue
-         * rather than the direct sourceValue. With Priority configured sources can change over time
-         * based on priority.
-         *
-         * Source of value of 'default' should only be selectable in the Widget Options -> Paths -> Data Source
-         * component if only one source exists. Having a single source or using 'default' has no impact as
-         * as pathValue is always taken.
-         *
-         * If multiple sources are present, either Priorities have not been properly configured, or the
-         * user does not want Priorities for the path. In this case individual sources must be selected
-         * and 'default' should not be visible (hidden in the path selection component).
-         */
-        if (item.source == 'default') {
-          item._pathValue$.next(this._skData[pathIndex].pathValue);
-        } else if (item.source in this._skData[pathIndex].sources) {
-          item._pathValue$.next(this._skData[pathIndex].sources[item.source].sourceValue);
+        if (item.source === 'default' || item.source in pathItem.sources) {
+          item._pathValue$.next(pathItem.sources[item.source]?.sourceValue || pathItem.pathValue);
         } else {
-          //we're looking for a source we don't know about. Error out to console
           console.error(`[Data Service] Failed updating zone state. Source unknown or not defined for path: ${item.source}`);
         }
       }
     );
 
     // Push full tree if data-browser is observing
-    this._isSkDataFullTreeActive ? this._skDataObservable$.next(this._skData) : null;
+    if (this._isSkDataFullTreeActive) {
+      this._skDataObservable$.next(this._skData);
+    }
   }
 
   private setMeta(meta: IMeta): void {
     if (meta.path.startsWith("notifications.")) {
       this._skNotificationMeta$.next(meta);
     } else {
-      const { context, path, meta: metaProp } = meta;
-      const metaPath = this.setPathContext(context, path);
+      const metaPath = this.setPathContext(meta.context, meta.path);
       let pathObject = this._skData.find(pathObject => pathObject.path === metaPath);
 
-      if (pathObject) {
-        pathObject.meta = merge(pathObject.meta, metaProp);
-      } else { // not in our list yet. The Meta update came before the Source update.
-        pathObject = this._skData.at(this._skData.push({
+      if (!pathObject) { // not in our list yet. The Meta update came before the Source update.
+        pathObject = {
           path: metaPath,
           pathValue: undefined,
           defaultSource: undefined,
           sources: {},
-          meta: metaProp,
+          meta: meta.meta,
           type: undefined,
           state: States.Normal
-        }) - 1);
+        };
+        this._skData.push(pathObject);
+      } else {
+        pathObject.meta = merge(pathObject.meta, meta.meta);
       }
-      this._pathRegister.filter(registration => registration.path === metaPath).forEach(
-        registration => registration.pathMeta$.next(pathObject.meta)
-      );
+
+      const entry = this._pathRegister.find(entry => entry.path === metaPath);
+      if (entry) {
+        entry.pathMeta$.next(pathObject.meta);
+      }
     }
   }
 
   private setPathContext(context: string, path: string): string {
-    let finalPath: string = `${SELFROOTDEF}.${path}`;
-    if (context !== this._selfUrn) { // account for external context data (coming from AIS, etc.)
-      finalPath = `${context}.${path}`;
-    }
+    const finalPath = context !== this._selfUrn ? `${context}.${path}` : `${SELFROOTDEF}.${path}`;
     return finalPath;
   }
 
@@ -365,100 +319,57 @@ export class SignalKDataService implements OnDestroy {
    * @param selfOnly if true, returns only paths the begins with "self". If false or not specified, everything known
    * @return array of Signal K path string
    */
-  public getPathsByType(valueType: string, selfOnly?: boolean): string[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
-    let paths: string[] = [];
-    for (let i = 0; i < this._skData.length;  i++) {
-       if (this._skData[i].type == valueType) {
-         if (selfOnly) {
-          if (this._skData[i].path.startsWith("self")) {
-            paths.push(this._skData[i].path);
-          }
-         } else {
-          paths.push(this._skData[i].path);
-         }
-      }
-    }
-    return paths; // copy it....
+  public getPathsByType(valueType: string, selfOnly?: boolean): string[] {
+    return this._skData
+      .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
+      .map(item => item.path);
   }
 
   public startSkDataFullTree(): Observable<ISkPathData[]> {
     this._isSkDataFullTreeActive = true;
     this._skDataObservable$.next(this._skData);
-    return this._skDataObservable$.asObservable();
+    return this._skDataObservable$;
   }
 
   public stopSkDataFullTree(): void {
-    if (!this._skDataObservable$.observed) {
-      this._isSkDataFullTreeActive = false;
-      this._skDataObservable$.next(null);
-    }
+    this._isSkDataFullTreeActive = false;
+    this._skDataObservable$.next(null);
   }
 
-  public getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
-    let pathsMeta: IPathMetaData[] = [];
-    for (let i = 0; i < this._skData.length;  i++) {
-       if (this._skData[i].type == valueType) {
-         if (selfOnly) {
-          if (this._skData[i].path.startsWith("self")) {
-            let p: IPathMetaData = {
-              path: this._skData[i].path,
-              meta: this._skData[i].meta,
-            };
-            pathsMeta.push(p);
-          }
-         } else {
-          let p:IPathMetaData = {
-            path: this._skData[i].path,
-            meta: this._skData[i].meta,
-          };
-          pathsMeta.push(p);
-         }
-      }
-    }
-    return pathsMeta; // copy it....
+  public getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] {
+    return this._skData
+      .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
+      .map(item => ({ path: item.path, meta: item.meta }));
   }
 
-  public getPathObject(path: string): ISkPathData {
-    const pathObject = this._skData.find(pathObject => pathObject.path == path);
-    return pathObject ? cloneDeep(pathObject) : null;
+  public getPathObject(path: string): ISkPathData | null {
+    return cloneDeep(this._skData.find(pathObject => pathObject.path === path)) || null;
   }
 
- public getPathUnitType(path: string): string {
-  const pathObject = this._skData.find(pathObject => pathObject.path == path);
-  return pathObject?.meta?.units || null;
-}
+  public getPathUnitType(path: string): string | null {
+    return this._skData.find(pathObject => pathObject.path === path)?.meta?.units || null;
+  }
 
+  /**
+   * Set the value of a path to null and state to Normal. This is used to
+   * timeout a path value and reset it to null. This is useful for widgets
+   * that need to know if a path has timed out.
+   *
+   * @param {string} path The Signal K path to timeout
+   * @param {string} pathType The type of the path value (string, Date, number)
+   * @memberof SignalKDataService
+   */
   public timeoutPathObservable(path: string, pathType: string): void {
-    // push it to any subscriptions of that data
-    this._pathRegister.filter(_pathRegister => _pathRegister.path == path).forEach(
-      _pathRegister => {
+    const pathRegister = this._pathRegister.find(item => item.path == path);
+    if (pathRegister) {
+      let timeoutValue: IPathData;
 
-        let timeoutValue: IPathData;
-
-        switch (pathType) {
-          case 'string':
-              timeoutValue = {value: null, state: States.Normal}
-            break;
-
-          case 'Date':
-              timeoutValue = {value: null, state: States.Normal}
-            break;
-
-          case 'boolean':
-              // do nothing
-            break;
-
-          case 'number':
-            timeoutValue = {value: null, state: States.Normal}
-            break;
-
-          default:
-            break;
-        }
-
-        _pathRegister.pathData$.next(timeoutValue);
+      if (['string', 'Date', 'number'].includes(pathType)) {
+        timeoutValue = {value: null, state: States.Normal};
       }
-    )
+
+      pathRegister.pathData$.next(timeoutValue);
+    }
   }
 
   public getNotificationMsg(): Observable<ISignalKDataValueUpdate> {
@@ -469,12 +380,12 @@ export class SignalKDataService implements OnDestroy {
     return this._skNotificationMeta$.asObservable();
   }
 
-  public getPathMeta(path: string): Observable<ISignalKMetadata> {
+  public getPathMeta(path: string): Observable<ISignalKMetadata | null> {
     const registration = this._pathRegister.find(registration => registration.path == path);
     return registration?.pathMeta$.asObservable() || of(null);
   }
 
-  public IsResetService(): Observable<boolean> {
+  public isResetService(): Observable<boolean> {
     return this._isReset.asObservable();
   }
 
@@ -485,6 +396,9 @@ export class SignalKDataService implements OnDestroy {
     this._deltaServiceMetaSubscription?.unsubscribe();
     this._deltaServicePathSubscription?.unsubscribe();
     this._deltaServiceNotificationSubscription?.unsubscribe();
-    clearInterval(this._deltaUpdatesCounterTimer);
+
+    if (this._deltaUpdatesCounterTimer) {
+      clearInterval(this._deltaUpdatesCounterTimer);
+    }
   }
 }
