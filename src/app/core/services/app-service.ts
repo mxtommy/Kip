@@ -61,7 +61,7 @@ export class AppService implements OnDestroy {
 
                 const connConf: IConnectionConfig = this.settings.getConnectionConfig(); // get app UUUID
 
-                this.autoNightModePathSubscription = this.sk.subscribePath(connConf.kipUUID, modePath, 'default').subscribe(mode => {
+                this.autoNightModePathSubscription = this.sk.subscribePath(modePath, 'default').subscribe(mode => {
                   if (mode.value == 'night' && this.sunValue != mode.value) {
                     this.sunValue = mode.value;
                     this.settings.setThemeName('nightMode');

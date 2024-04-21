@@ -162,7 +162,7 @@ export class DatasetService {
     };
 
     // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
+    dataSource.pathObserverSubscription = this.signalk.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
       (newValue: IPathData) => {
         if (newValue.value === null) return; // we don't need null values
 

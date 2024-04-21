@@ -45,13 +45,12 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
  * @interface pathRegistration
  */
 interface IPathRegistration {
-  uuid: string;
   path: string;
   source: string;
   _pathValue$: BehaviorSubject<any>;
   _pathState$: BehaviorSubject<TState>;
   pathData$: BehaviorSubject<IPathData>; // pathValue and pathState combined subject for Observers ie: widgets
-  _pathMeta$: BehaviorSubject<ISignalKMetadata>;
+  pathMeta$: BehaviorSubject<ISignalKMetadata>;
 }
 
 export interface IDeltaUpdate {
@@ -156,10 +155,10 @@ export class SignalKDataService implements OnDestroy {
     this._pathRegister.splice(this._pathRegister.findIndex(registration => registration.path === path), 1);
   }
 
-  public subscribePath(uuid: string, path: string, source: string): Observable<IPathData> {
+  public subscribePath(path: string, source: string): Observable<IPathData> {
     // TODO: check if we still need UUIDs for registration. Maybe we can just use the path.
     // See if already have a Subject for this path and return it.
-    const entry = this._pathRegister.find(entry => (entry.path == path) && (entry.uuid == uuid));
+    const entry = this._pathRegister.find(entry => entry.path == path);
     if (entry) { // exists
       return entry.pathData$;
     }
@@ -181,13 +180,12 @@ export class SignalKDataService implements OnDestroy {
     }
 
     let newRegister: IPathRegistration  = {
-      uuid: uuid,
       path: path,
       source: source,
       _pathValue$: new BehaviorSubject<any>(currentValue),
       _pathState$: new BehaviorSubject<TState>(state),
       pathData$: new BehaviorSubject<IPathData>({ value: currentValue, state: state }),
-      _pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
+      pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
     };
 
     // Combine the latest values and state of the path
@@ -348,7 +346,7 @@ export class SignalKDataService implements OnDestroy {
         }) - 1);
       }
       this._pathRegister.filter(registration => registration.path === metaPath).forEach(
-        registration => registration._pathMeta$.next(pathObject.meta)
+        registration => registration.pathMeta$.next(pathObject.meta)
       );
     }
   }
@@ -473,7 +471,7 @@ export class SignalKDataService implements OnDestroy {
 
   public getPathMeta(path: string): Observable<ISignalKMetadata> {
     const registration = this._pathRegister.find(registration => registration.path == path);
-    return registration?._pathMeta$.asObservable() || of(null);
+    return registration?.pathMeta$.asObservable() || of(null);
   }
 
   public IsResetService(): Observable<boolean> {

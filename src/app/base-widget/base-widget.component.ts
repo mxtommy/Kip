@@ -81,7 +81,7 @@ export abstract class BaseWidgetComponent {
       } else {
         this.dataStream.push({
           pathName: pathKey,
-          observable: this.signalKDataService.subscribePath(this.widgetProperties.uuid, this.widgetProperties.config.paths[pathKey].path, this.widgetProperties.config.paths[pathKey].source)
+          observable: this.signalKDataService.subscribePath(this.widgetProperties.config.paths[pathKey].path, this.widgetProperties.config.paths[pathKey].source)
         });
       }
     })
