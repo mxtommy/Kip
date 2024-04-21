@@ -388,44 +388,65 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       this.gaugeOptions.highlightsWidth = 0;
     } else {
       const gaugeZonesHighligh: IDataHighlight = [];
-      this.meta.zones.forEach(zone => {
-          let lower: number = null;
-          let upper: number = null;
-          // Perform Units conversions on zone range
-          if (this.widgetProperties.config.paths["gaugePath"].convertUnitTo == "ratio") {
-            lower = zone.lower;
-            upper = zone.upper;
-          } else {
-            lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
-            upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
-          }
 
-          lower = lower || this.widgetProperties.config.minValue;
-          upper = upper || this.widgetProperties.config.maxValue;
-          let color: string;
-          switch (zone.state) {
-            case States.Emergency:
-              color = this.theme.warnDark;
-              break;
-            case States.Alarm:
-              color = this.theme.warnDark;
-              break;
-            case States.Warn:
-              color = this.theme.textWarnLight;
-              break;
-            case States.Alert:
-              color = this.theme.accentDark;
-              break;
-            case States.Nominal:
-              color = this.theme.primaryDark;
-              break;
-            default:
-              color = "rgba(0,0,0,0)";
-          }
+      // Sort zones based on lower value
+      const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);
 
+      for (const zone of sortedZones) {
+        let lower: number = null;
+        let upper: number = null;
+
+        let color: string;
+        switch (zone.state) {
+          case States.Emergency:
+            color = this.theme.warnDark;
+            break;
+          case States.Alarm:
+            color = this.theme.warnDark;
+            break;
+          case States.Warn:
+            color = this.theme.textWarnLight;
+            break;
+          case States.Alert:
+            color = this.theme.accentDark;
+            break;
+          case States.Nominal:
+            color = this.theme.primaryDark;
+            break;
+          default:
+            color = "rgba(0,0,0,0)";
+        }
+
+        // Perform Units conversions on zone range
+        if (this.widgetProperties.config.paths["gaugePath"].convertUnitTo == "ratio") {
+          lower = zone.lower;
+          upper = zone.upper;
+        } else {
+          lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
+          upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
+        }
+
+        // Skip zones that are completely outside the gauge range
+        if (upper < this.widgetProperties.config.minValue || lower > this.widgetProperties.config.maxValue) {
+          continue;
+        }
+
+        // If lower or upper are null, set them to minValue or maxValue
+        lower = lower !== null ? lower : this.widgetProperties.config.minValue;
+        upper = upper !== null ? upper : this.widgetProperties.config.maxValue;
+
+        // Ensure lower does not go below minValue
+        lower = Math.max(lower, this.widgetProperties.config.minValue);
+
+        // Ensure upper does not exceed maxValue
+        if (upper > this.widgetProperties.config.maxValue) {
+          upper = this.widgetProperties.config.maxValue;
           gaugeZonesHighligh.push({from: lower, to: upper, color: color});
-        // }
-      });
+          break;
+        }
+
+        gaugeZonesHighligh.push({from: lower, to: upper, color: color});
+      };
       //@ts-ignore - bug in highlights property definition
       this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighligh, null, 1);
       this.gaugeOptions.highlightsWidth = 6;

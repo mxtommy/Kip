@@ -127,11 +127,36 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
       let sections = [];
       let areas = [];
 
-      this.zones.forEach(zone => {
+      // Sort zones based on lower value
+      const sortedZones = [...this.zones].sort((a, b) => a.lower - b.lower);
+
+      for (const zone of sortedZones) {
         let lower: number = null;
         let upper: number = null;
+
+        let color: string;
+        switch (zone.state) {
+          case States.Emergency:
+            color = this.theme.warnDark;
+            break;
+          case States.Alarm:
+            color = this.theme.warnDark;
+            break;
+          case States.Warn:
+            color = this.theme.textWarnLight;
+            break;
+          case States.Alert:
+            color = this.theme.accentDark;
+            break;
+          case States.Nominal:
+            color = this.theme.primaryDark;
+            break;
+          default:
+            color = "rgba(0,0,0,0)";
+        }
+
         // Perform Units conversions on zone range
-        if (zone.unit == "ratio") {
+        if (this.units == "ratio") {
           lower = zone.lower;
           upper = zone.upper;
         } else {
@@ -139,31 +164,27 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
           upper = this.unitsService.convertToUnit(this.units, zone.upper);
         }
 
-        lower = lower || this.minValue;
-        upper = upper || this.maxValue;
-        let color: string;
-          switch (zone.state) {
-            case States.Emergency:
-              color = this.theme.warnDark;
-              break;
-            case States.Alarm:
-              color = this.theme.warnDark;
-              break;
-            case States.Warn:
-              color = this.theme.textWarnLight;
-              break;
-            case States.Alert:
-              color = this.theme.accentDark;
-              break;
-            case States.Nominal:
-              color = this.theme.primaryDark;
-              break;
-            default:
-              color = "rgba(0,0,0,0)";
-          }
+        // Skip zones that are completely outside the gauge range
+        if (upper < this.minValue || lower > this.maxValue) {
+          continue;
+        }
+
+        // If lower or upper are null, set them to minValue or maxValue
+        lower = lower !== null ? lower : this.minValue;
+        upper = upper !== null ? upper : this.maxValue;
+
+        // Ensure lower does not go below minValue
+        lower = Math.max(lower, this.minValue);
+
+        // Ensure upper does not exceed maxValue
+        if (upper > this.maxValue) {
+          upper = this.maxValue;
+          sections.push(steelseries.Section(lower, upper, color));
+          break;
+        }
 
         sections.push(steelseries.Section(lower, upper, color));
-      });
+      };
 
       this.gaugeOptions['section'] = sections;
       this.gaugeOptions['area'] = areas;
