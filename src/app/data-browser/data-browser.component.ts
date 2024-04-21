@@ -41,7 +41,7 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.dataTableTimer = setTimeout(()=>{
-      this.pathsSubscription = this.signalKDataService.getSkDataObservable().subscribe((paths: ISkPathData[]) => {
+      this.pathsSubscription = this.signalKDataService.startSkDataFullTree().subscribe((paths: ISkPathData[]) => {
         this.tableData.data = paths;
       })}, 0); // set timeout to make it async otherwise delays page load
   }
@@ -93,6 +93,9 @@ export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.dataTableTimer);
+    this.tableData.data = null
+    this.tableData = null;
     this.pathsSubscription?.unsubscribe();
+    this.signalKDataService.stopSkDataFullTree();
   }
 }

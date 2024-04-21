@@ -75,7 +75,8 @@ export class SignalKDataService implements OnDestroy {
   private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
   private _deltaUpdatesCounterTimer = null;
 
-  // Path Delta data
+  // Full skData copy for data-browser component
+  private _isSkDataFullTreeActive: boolean = false;
   private _skDataObservable$ = new BehaviorSubject<ISkPathData[]>([]);
 
   // Zones
@@ -321,9 +322,8 @@ export class SignalKDataService implements OnDestroy {
       }
     );
 
-    // TODO: this is bad. check to only create if subscribed to
-    // push it to paths observer
-    this._skDataObservable$.next(this._skData);
+    // Push full tree if data-browser is observing
+    this._isSkDataFullTreeActive ? this._skDataObservable$.next(this._skData) : null;
   }
 
   private setMeta(meta: IMeta): void {
@@ -383,8 +383,17 @@ export class SignalKDataService implements OnDestroy {
     return paths; // copy it....
   }
 
-  public getSkDataObservable(): Observable<ISkPathData[]> {
+  public startSkDataFullTree(): Observable<ISkPathData[]> {
+    this._isSkDataFullTreeActive = true;
+    this._skDataObservable$.next(this._skData);
     return this._skDataObservable$.asObservable();
+  }
+
+  public stopSkDataFullTree(): void {
+    if (!this._skDataObservable$.observed) {
+      this._isSkDataFullTreeActive = false;
+      this._skDataObservable$.next(null);
+    }
   }
 
   public getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] { //TODO(David): See how we should handle string and boolean type value. We should probably return error and not search for it, plus remove from the Units UI.
