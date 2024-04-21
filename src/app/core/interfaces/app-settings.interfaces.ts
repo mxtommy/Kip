@@ -57,7 +57,7 @@ export interface INotificationConfig {
     disableSound: boolean;
     muteNormal: boolean;
     muteNominal: boolean;
-    muteWarning: boolean;
+    muteWarn: boolean;
     muteAlert: boolean;
     muteAlarm: boolean;
     muteEmergency: boolean;

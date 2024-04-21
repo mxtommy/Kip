@@ -51,7 +51,7 @@ export const DemoAppConfig: IAppConfig = {
       "disableSound": false,
       "muteNormal": true,
       "muteNominal": true,
-      "muteWarning": false,
+      "muteWarn": true,
       "muteAlert": false,
       "muteAlarm": false,
       "muteEmergency": false,

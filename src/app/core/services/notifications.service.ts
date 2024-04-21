@@ -83,12 +83,12 @@ export class NotificationsService implements OnDestroy {
   private lastEmittedValue: IAlarmInfo = null;
 
   constructor(
-    private appSettingsService: AppSettingsService,
+    private settings: AppSettingsService,
     private dataService: SignalKDataService,
     private requests: SignalkRequestsService
     ) {
     // Observer of Notification Service configuration changes
-    this.notificationSettingsSubscription = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
+    this.notificationSettingsSubscription = this.settings.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this._notificationConfig = config;
       this.reset();
       this.notificationConfig$.next(config); // push to observers
@@ -187,7 +187,8 @@ export class NotificationsService implements OnDestroy {
         continue;
       }
 
-      if (alarm.value['state'] === States.Normal && !this._notificationConfig.devices.showNormalState) {
+      if ((alarm.value['state'] === States.Normal && !this._notificationConfig.devices.showNormalState) ||
+          (alarm.value['state'] === States.Nominal && !this._notificationConfig.devices.showNominalState)) {
         continue;
       }
 

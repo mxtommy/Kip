@@ -206,7 +206,7 @@ export class SignalKDataService implements OnDestroy {
 
   private setSelfUrn(value: string) {
     if ((value != "" || value != null) && value != this._selfUrn) {
-      console.debug('[Signal K Data Service] Setting self to: ' + value);
+      console.log('[Data Service] Setting self to: ' + value);
       this._selfUrn = value;
     }
   }
@@ -317,7 +317,7 @@ export class SignalKDataService implements OnDestroy {
           item._pathValue$.next(this._skData[pathIndex].sources[item.source].sourceValue);
         } else {
           //we're looking for a source we don't know about. Error out to console
-          console.error(`[Signal K Data Service] Failed updating zone state. Source unknown or not defined for path: ${item.source}`);
+          console.error(`[Data Service] Failed updating zone state. Source unknown or not defined for path: ${item.source}`);
         }
       }
     );
@@ -471,14 +471,14 @@ export class SignalKDataService implements OnDestroy {
     return this._skNotificationMeta$.asObservable();
   }
 
-public getPathMeta(path: string): Observable<ISignalKMetadata> {
-  const registration = this._pathRegister.find(registration => registration.path == path);
-  return registration?._pathMeta$.asObservable() || of(null);
-}
+  public getPathMeta(path: string): Observable<ISignalKMetadata> {
+    const registration = this._pathRegister.find(registration => registration.path == path);
+    return registration?._pathMeta$.asObservable() || of(null);
+  }
 
-public IsResetService(): Observable<boolean> {
-  return this._isReset.asObservable();
-}
+  public IsResetService(): Observable<boolean> {
+    return this._isReset.asObservable();
+  }
 
   ngOnDestroy(): void {
     this._defaultUnitsSub?.unsubscribe();
