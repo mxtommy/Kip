@@ -6,7 +6,7 @@ import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { ISignalKMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-radial',
@@ -29,7 +29,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   public unitName: string = null;
 
   // Zones support
-  private meta: ISignalKMetadata = null;
+  private meta: ISkMetadata = null;
   private metaSub: Subscription;
 
   constructor(private appSettingsService: AppSettingsService) {
@@ -102,7 +102,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       }
     );
 
-    this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
+    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
       if (meta) {
         this.meta = meta;
         meta.zones && this.setHighlights();

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
-import { SignalKDataService } from '../../core/services/data.service';
+import { DataService } from '../../core/services/data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -42,7 +42,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public unitList: {default?: string, conversions?: IUnitGroup[] };
 
   constructor(
-    private signalKDataService: SignalKDataService,
+    private DataService: DataService,
     private units: UnitsService
     ) { }
 
@@ -97,7 +97,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
  }
 
   private getPaths(isOnlySef: boolean) {
-    this.availablePaths = this.signalKDataService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
+    this.availablePaths = this.DataService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
   }
 
   private filterPaths( value: string ): IPathMetaData[] {
@@ -114,7 +114,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private enableFormFields(setValues?: boolean): void {
-    let pathObject = this.signalKDataService.getPathObject(this.pathFormGroup.controls['path'].value);
+    let pathObject = this.DataService.getPathObject(this.pathFormGroup.controls['path'].value);
     if (pathObject != null) {
       this.pathFormGroup.controls['sampleTime'].enable({onlySelf: true});
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number

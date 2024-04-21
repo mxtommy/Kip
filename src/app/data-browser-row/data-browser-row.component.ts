@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
-import { SignalKDataService } from '../core/services/data.service';
+import { DataService } from '../core/services/data.service';
 import { UnitsService } from '../core/services/units.service';
 import { MatCell } from '@angular/material/table';
 import { MatButton } from '@angular/material/button';
@@ -29,7 +29,7 @@ export class DataBrowserRowComponent implements OnInit {
   selectedUnit: string = "unitless"
 
   constructor(
-    private signalKDataService: SignalKDataService,
+    private DataService: DataService,
     private unitsService: UnitsService,
     public dialog: MatDialog
   ) {

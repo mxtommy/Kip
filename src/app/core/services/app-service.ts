@@ -3,7 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDataService } from './data.service';
+import { DataService } from './data.service';
 
 const modePath: string = 'self.environment.mode';
 
@@ -33,7 +33,7 @@ export class AppService implements OnDestroy {
   constructor(
     private settings: AppSettingsService,
     private delta: SignalKDeltaService,
-    private sk: SignalKDataService,
+    private data: DataService,
   ) {
     this.autoNightMode = this.settings.getAutoNightMode();
     this.autoNightModeObserver();
@@ -51,7 +51,7 @@ export class AppService implements OnDestroy {
           this.autoNightModeSubscription = autoNightMode.subscribe(mode => {
             this.autoNightMode = mode;
             if (mode) {
-              if (this.sk.getPathObject(modePath) !== null) {
+              if (this.data.getPathObject(modePath) !== null) {
 
                 // capture none nightMode theme name changes
                 this.autoNightModeThemeSubscription = this.settings.getThemeNameAsO().subscribe(theme => {
@@ -61,7 +61,7 @@ export class AppService implements OnDestroy {
 
                 const connConf: IConnectionConfig = this.settings.getConnectionConfig(); // get app UUUID
 
-                this.autoNightModePathSubscription = this.sk.subscribePath(modePath, 'default').subscribe(mode => {
+                this.autoNightModePathSubscription = this.data.subscribePath(modePath, 'default').subscribe(mode => {
                   if (mode.value == 'night' && this.sunValue != mode.value) {
                     this.sunValue = mode.value;
                     this.settings.setThemeName('nightMode');
@@ -79,7 +79,7 @@ export class AppService implements OnDestroy {
   }
 
   public validateAutoNightModeSupported(): boolean {
-    if (!this.sk.getPathObject(modePath)) {
+    if (!this.data.getPathObject(modePath)) {
       this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
       return false;
     }

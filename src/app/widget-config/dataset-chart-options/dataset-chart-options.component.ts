@@ -4,7 +4,6 @@ import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { DatasetService, IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { SignalKDataService } from '../../core/services/data.service';
 import { IUnitGroup } from '../../core/services/units.service';
 
 @Component({
@@ -23,7 +22,6 @@ export class DatasetChartOptionsComponent implements OnInit {
 
   constructor(
     private datasetService: DatasetService,
-    private signalk: SignalKDataService,
     private units: UnitsService
   ) {}
 

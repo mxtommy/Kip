@@ -1,4 +1,4 @@
-import { SignalKDataService } from './data.service';
+import { DataService } from './data.service';
 import { Injectable } from '@angular/core';
 import Qty from 'js-quantities';
 
@@ -143,7 +143,7 @@ export class UnitsService {
 
   constructor(
     private AppSettingsService: AppSettingsService,
-    private skData: SignalKDataService
+    private data: DataService
     ) {
       this._defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
         appSettings => {
@@ -339,7 +339,7 @@ export class UnitsService {
    * @return conversions Full list array or subset of list array
    */
   public getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
-    const pathUnitType = this.skData.getPathUnitType(path);
+    const pathUnitType = this.data.getPathUnitType(path);
     let defaultUnit: string = "unitless";
 
     if (pathUnitType === null) {

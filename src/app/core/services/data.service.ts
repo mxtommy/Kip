@@ -1,9 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable , BehaviorSubject, Subscription, ReplaySubject, Subject, map, combineLatest, of } from 'rxjs';
+import { Observable , BehaviorSubject, Subscription, ReplaySubject, Subject, map, combineLatest, of, from, filter, mergeMap, toArray, take, concatMap, switchMap, distinctUntilChanged, tap } from 'rxjs';
 import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
-import { ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
+import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, ISkZone, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
-import { cloneDeep, merge } from 'lodash-es';
+import { cloneDeep, isEqual, merge } from 'lodash-es';
 import Qty from 'js-quantities';
 
 const SELFROOTDEF: string = "self";
@@ -50,7 +50,7 @@ interface IPathRegistration {
   _pathValue$: BehaviorSubject<any>;
   _pathState$: BehaviorSubject<TState>;
   pathData$: BehaviorSubject<IPathData>; // pathValue and pathState combined subject for Observers ie: widgets
-  pathMeta$: BehaviorSubject<ISignalKMetadata>;
+  pathMeta$: BehaviorSubject<ISkMetadata>;
 }
 
 export interface IDeltaUpdate {
@@ -61,7 +61,7 @@ export interface IDeltaUpdate {
 @Injectable({
   providedIn: 'root'
 })
-export class SignalKDataService implements OnDestroy {
+export class DataService implements OnDestroy {
   // Service subscriptions
   private _deltaServiceSelfUrnSubscription: Subscription = null;
   private _deltaServiceMetaSubscription: Subscription = null;
@@ -74,11 +74,16 @@ export class SignalKDataService implements OnDestroy {
   private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
   private _deltaUpdatesCounterTimer = null;
 
-  // Full skData copy for data-browser component
+  // Full skData updates for data-browser component
   private _isSkDataFullTreeActive: boolean = false;
-  private _skDataObservable$ = new BehaviorSubject<ISkPathData[]>([]);
+  private _skDataSubject$ = new BehaviorSubject<ISkPathData[]>([]);
 
-  // Zones
+  // Full skMeta updates for Zones component
+  private _dataServiceMeta: IPathMetaData[] = [];
+  private _isSkMetaFullTreeActive: boolean = false;
+  private _dataServiceMetaSubject$ = new BehaviorSubject<IPathMetaData[]>([]);
+
+  // Notifications
   private _skNotificationMsg$ = new Subject<ISignalKDataValueUpdate>();
   private _skNotificationMeta$ = new Subject<IMeta>();
   private _isReset = new Subject<boolean>();
@@ -170,7 +175,7 @@ export class SignalKDataService implements OnDestroy {
       _pathValue$: new BehaviorSubject<any>(currentValue),
       _pathState$: new BehaviorSubject<TState>(state),
       pathData$: new BehaviorSubject<IPathData>({ value: currentValue, state: state }),
-      pathMeta$: new BehaviorSubject<ISignalKMetadata>(dataPath?.meta || null)
+      pathMeta$: new BehaviorSubject<ISkMetadata>(dataPath?.meta || null)
     };
 
     const combined$ = combineLatest([newPathSubject._pathValue$, newPathSubject._pathState$]).pipe(
@@ -273,9 +278,9 @@ export class SignalKDataService implements OnDestroy {
       }
     );
 
-    // Push full tree if data-browser is observing
+    // Push full tree if data-browser or Zones component are observing
     if (this._isSkDataFullTreeActive) {
-      this._skDataObservable$.next(this._skData);
+      this._skDataSubject$.next(this._skData);
     }
   }
 
@@ -305,7 +310,41 @@ export class SignalKDataService implements OnDestroy {
       if (entry) {
         entry.pathMeta$.next(pathObject.meta);
       }
+
+      // If full meta tree is active, push the full tree
+      if (this._isSkMetaFullTreeActive) {
+        this._dataServiceMeta.push({path: metaPath, meta: pathObject.meta});
+        this._dataServiceMetaSubject$.next(this._dataServiceMeta);
+      }
     }
+  }
+
+  public startSkMetaFullTree(): Observable<IPathMetaData[]> {
+    this._isSkMetaFullTreeActive = true;
+
+    this._dataServiceMeta = this._skData
+      .filter(item => item.meta !== undefined && item.path.startsWith('self.'))
+      .map(item => ({path: item.path, meta: item.meta}));
+
+    this._dataServiceMetaSubject$.next(this._dataServiceMeta);
+    return this._dataServiceMetaSubject$;
+  }
+
+  public stopSkMetaFullTree(): void {
+    this._isSkMetaFullTreeActive = false;
+    this._dataServiceMetaSubject$.next(null);
+    this._dataServiceMeta = null;
+  }
+
+  public startSkDataFullTree(): Observable<ISkPathData[]> {
+    this._isSkDataFullTreeActive = true;
+    this._skDataSubject$.next(this._skData);
+    return this._skDataSubject$;
+  }
+
+  public stopSkDataFullTree(): void {
+    this._isSkDataFullTreeActive = false;
+    this._skDataSubject$.next(null);
   }
 
   private setPathContext(context: string, path: string): string {
@@ -323,17 +362,6 @@ export class SignalKDataService implements OnDestroy {
     return this._skData
       .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
       .map(item => item.path);
-  }
-
-  public startSkDataFullTree(): Observable<ISkPathData[]> {
-    this._isSkDataFullTreeActive = true;
-    this._skDataObservable$.next(this._skData);
-    return this._skDataObservable$;
-  }
-
-  public stopSkDataFullTree(): void {
-    this._isSkDataFullTreeActive = false;
-    this._skDataObservable$.next(null);
   }
 
   public getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] {
@@ -380,7 +408,7 @@ export class SignalKDataService implements OnDestroy {
     return this._skNotificationMeta$.asObservable();
   }
 
-  public getPathMeta(path: string): Observable<ISignalKMetadata | null> {
+  public getPathMeta(path: string): Observable<ISkMetadata | null> {
     const registration = this._pathRegister.find(registration => registration.path == path);
     return registration?.pathMeta$.asObservable() || of(null);
   }

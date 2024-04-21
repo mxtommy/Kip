@@ -17,7 +17,7 @@ import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 import { Subscription } from 'rxjs';
-import { SignalKDataService } from './data.service';
+import { DataService } from './data.service';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
@@ -33,7 +33,7 @@ export class AppNetworkInitService implements OnDestroy {
     private auth: AuthenticationService,
     private router: Router,
     private delta: SignalKDeltaService, // Init to get data before app starts
-    private data: SignalKDataService, // Init to get data before app starts
+    private data: DataService, // Init to get data before app starts
     private storage: StorageService, // Init to get data before app starts
   )
   {

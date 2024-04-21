@@ -8,11 +8,11 @@ import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { SignalkRequestsService } from './signalk-requests.service';
-import { SignalKDataService } from './data.service';
+import { DataService } from './data.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
-import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
+import { TMethod, ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
 
 
@@ -27,7 +27,7 @@ const alarmTrack = {
 export interface INotification {
   path: string;
   value?: ISignalKNotification;
-  meta?: ISignalKMetadata;
+  meta?: ISkMetadata;
 }
 
 /**
@@ -85,7 +85,7 @@ export class NotificationsService implements OnDestroy {
 
   constructor(
     private settings: AppSettingsService,
-    private data: SignalKDataService,
+    private data: DataService,
     private requests: SignalkRequestsService
     ) {
     // Observer of Notification Service configuration changes

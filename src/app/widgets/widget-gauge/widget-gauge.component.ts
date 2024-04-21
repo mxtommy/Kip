@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
-import { ISignalKMetadata } from '../../core/interfaces/signalk-interfaces';
+import { ISkMetadata } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge',
@@ -18,7 +18,7 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
   public zones = [];
 
   // Zones support
-  private meta: ISignalKMetadata = null;
+  private meta: ISkMetadata = null;
   private metaSub: Subscription;
 
   constructor(private settings: AppSettingsService) {
@@ -61,7 +61,7 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
       }
     );
 
-    this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
+    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
       if (meta) {
         this.meta = meta;
         meta.zones && meta.zones?.forEach(zone => {

@@ -1,13 +1,13 @@
 import { Component, OnInit, Inject, Input, ViewChild, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
-import { Subscription, Observable } from 'rxjs';
+import { Subscription, Observable, tap } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
+import { DataService } from './../../core/services/data.service';
 import { UUID } from '../../utils/uuid';
 import { MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
@@ -34,20 +34,25 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   tableData = new MatTableDataSource([]);
 
-  displayedColumns: string[] = ['path', 'unit', 'lower', 'upper', 'state', "actions"];
+  displayedColumns: string[] = ["path"];
 
   zonesSub: Subscription;
 
   constructor(
-    private appSettingsService: AppSettingsService,
     public dialog: MatDialog,
     private cdRef: ChangeDetectorRef,
+    private data: DataService,
     ) { }
 
   ngOnInit() {
-    // this.zonesSub = this.appSettingsService.getZonesAsO().subscribe(zones => {
-    //   this.tableData.data = zones;
-    // });
+    this.zonesSub = this.data.startSkMetaFullTree().subscribe((metaArray: IPathMetaData[]) => {
+      this.tableData.data = metaArray
+        .filter(meta => meta.meta && meta.meta.zones && meta.meta.zones.length > 0)
+        .map(meta => ({
+          path: meta.path,
+          zones: meta.meta.zones
+        }));
+    });
   }
 
   ngAfterViewInit() {
@@ -134,6 +139,7 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.zonesSub?.unsubscribe();
+    this.data.stopSkMetaFullTree();
   }
 }
 

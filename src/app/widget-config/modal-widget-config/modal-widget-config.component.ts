@@ -17,7 +17,6 @@ import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-opt
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
-import { SignalKDataService } from '../../core/services/data.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IAddNewPath, PathsOptionsComponent } from '../paths-options/paths-options.component';

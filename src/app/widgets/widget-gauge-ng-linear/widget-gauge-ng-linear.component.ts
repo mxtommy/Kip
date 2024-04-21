@@ -7,7 +7,7 @@ import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@biacsics/ng-canv
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
-import { ISignalKMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-linear',
@@ -30,7 +30,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public isGaugeVertical: Boolean = true;
 
   // Zones support
-  private meta: ISignalKMetadata = null;
+  private meta: ISkMetadata = null;
   private metaSub: Subscription;
 
   constructor(private appSettingsService: AppSettingsService) {
@@ -95,7 +95,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       }
     );
 
-    this.metaSub = this.signalKDataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISignalKMetadata) => {
+    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
       if (meta) {
         this.meta = meta;
         meta.zones && this.setHighlights();

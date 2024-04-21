@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDataService, IPathData } from './data.service';
+import { DataService, IPathData } from './data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
@@ -51,7 +51,7 @@ export class DatasetService {
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
-  constructor(private appSettings: AppSettingsService, private signalk: SignalKDataService) {
+  constructor(private appSettings: AppSettingsService, private data: DataService) {
     this._svcDatasetConfigs = appSettings.getDataSets();
     this.startAll();
   }
@@ -162,7 +162,7 @@ export class DatasetService {
     };
 
     // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.signalk.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
+    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
       (newValue: IPathData) => {
         if (newValue.value === null) return; // we don't need null values
 
@@ -244,7 +244,7 @@ export class DatasetService {
       uuid: uuid,
       path: path,
       pathSource: source,
-      baseUnit: this.signalk.getPathUnitType(path),
+      baseUnit: this.data.getPathUnitType(path),
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
@@ -267,7 +267,7 @@ export class DatasetService {
   public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
     this.stop(datasetConfig.uuid);
     console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
-    datasetConfig.baseUnit = this.signalk.getPathUnitType(datasetConfig.path);
+    datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
     this.start(datasetConfig.uuid);

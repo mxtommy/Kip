@@ -284,7 +284,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   subscribeAPNotification() {
     if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
-    this.skApNotificationSub = this.signalKDataService.subscribePath(this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
+    this.skApNotificationSub = this.DataService.subscribePath(this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
       newValue => {
           if (!newValue.value == null) {
           this.setNotificationMessage(newValue.value);
@@ -298,7 +298,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (this.skApNotificationSub !== null) {
       this.skApNotificationSub.unsubscribe();
       this.skApNotificationSub = null;
-      this.signalKDataService.unsubscribePath(this.widgetProperties.config.paths['apNotifications'].path);
+      this.DataService.unsubscribePath(this.widgetProperties.config.paths['apNotifications'].path);
     }
   }
 

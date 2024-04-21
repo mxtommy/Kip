@@ -167,10 +167,10 @@ export interface ISignalKDataValueUpdate {
  */
  export interface ISignalKMeta {
   path: string; // not in the spec but always present in the data
-  value: ISignalKMetadata;
+  value: ISkMetadata;
 }
 
-export interface ISignalKMetadata {
+export interface ISkMetadata {
   displayName?: string;
   shortName?: string;
   longName?: string;
