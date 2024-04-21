@@ -66,25 +66,29 @@
         <br/>
         <mat-checkbox
         name="muteAlert"
-          [(ngModel)]="notificationConfig.sound.muteAlert">
+          [(ngModel)]="notificationConfig.sound.muteAlert"
+          [disabled]="notificationConfig.sound.disableSound">
           Mute <b>all Alert</b> state
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteWarn"
-          [(ngModel)]="notificationConfig.sound.muteWarn">
+          [(ngModel)]="notificationConfig.sound.muteWarn"
+          [disabled]="notificationConfig.sound.disableSound">
           Mute <b>all Warn</b> state
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteAlarm"
-          [(ngModel)]="notificationConfig.sound.muteAlarm">
+          [(ngModel)]="notificationConfig.sound.muteAlarm"
+          [disabled]="notificationConfig.sound.disableSound">
           Mute <b>all Alarm</b> state
         </mat-checkbox>
         <br/>
         <mat-checkbox
         name="muteEmergency"
-          [(ngModel)]="notificationConfig.sound.muteEmergency">
+          [(ngModel)]="notificationConfig.sound.muteEmergency"
+          [disabled]="notificationConfig.sound.disableSound">
           Mute <b>all Emergency</b> state
         </mat-checkbox>
       </mat-expansion-panel>
