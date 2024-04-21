@@ -68,7 +68,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('numericPath', newValue => {
-        this.dataValue = newValue.value;
+        this.dataValue = newValue.data.value;
         // init min/max
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }

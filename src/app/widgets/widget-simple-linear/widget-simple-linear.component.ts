@@ -50,24 +50,25 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     this.validateConfig();
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gaugeUnitLabelFormat == "abr") {
-      //  TODO: Improve Units service to have Full Measure label, abbreviation and descriptions so that we can use Full or abr display labels...!
+      //TODO: Improve Units service to have Full Measure label, abbreviation and descriptions so that we can use Full or abr display labels...!
+      //TODO: Add zones support to widget
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
     } else {
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     }
 
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.value == null) {
-          newValue.value = 0;
+        if (newValue.data.value == null) {
+          newValue.data.value = 0;
         }
 
-        newValue.value = this.formatWidgetNumberValue(newValue.value);
-        this.dataValue = (newValue.value as number);
+        newValue.data.value = this.formatWidgetNumberValue(newValue.data.value);
+        this.dataValue = (newValue.data.value as number);
         // Format Widget display label value using settings
         if (this.widgetProperties.config.numDecimal != 0){
-          this.dataLabelValue = newValue.value.padStart((this.widgetProperties.config.numInt + 1 + this.widgetProperties.config.numDecimal), "0");
+          this.dataLabelValue = newValue.data.value.padStart((this.widgetProperties.config.numInt + 1 + this.widgetProperties.config.numDecimal), "0");
         } else {
-          this.dataLabelValue = newValue.value.padStart(this.widgetProperties.config.numInt, "0");
+          this.dataLabelValue = newValue.data.value.padStart(this.widgetProperties.config.numInt, "0");
         }
       }
     );

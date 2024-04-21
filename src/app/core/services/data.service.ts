@@ -1,18 +1,25 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable , BehaviorSubject, Subscription, ReplaySubject, Subject, map, combineLatest, of, from, filter, mergeMap, toArray, take, concatMap, switchMap, distinctUntilChanged, tap } from 'rxjs';
+import { Observable , BehaviorSubject, Subscription, ReplaySubject, Subject, map, combineLatest, of } from 'rxjs';
 import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
-import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, ISkZone, States, TState } from '../interfaces/signalk-interfaces'
+import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
-import { cloneDeep, isEqual, merge } from 'lodash-es';
+import { cloneDeep,merge } from 'lodash-es';
 import Qty from 'js-quantities';
 
 const SELFROOTDEF: string = "self";
 
-export interface IPathData {
-  value: any;
+export interface IPathUpdate {
+  data: IPathData;
+  /** The state of the data sent by SK, as per server Zones definitions. Defaults to 'normal' if no zones are defined, or if the value does not match any zone. */
   state: TState;
 };
 
+interface IPathData {
+  /** The path value */
+  value: any;
+  /** The value's timestamp Date Object (in Zulu time). */
+  timestamp: Date | null;
+}
 export interface IDataState {
   path: string;
   state: TState
@@ -47,10 +54,10 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
 interface IPathRegistration {
   path: string;
   source: string;
-  _pathValue$: BehaviorSubject<any>;
+  _pathData$: BehaviorSubject<IPathData>;
   _pathState$: BehaviorSubject<TState>;
-  pathData$: BehaviorSubject<IPathData>; // pathValue and pathState combined subject for Observers ie: widgets
-  pathMeta$: BehaviorSubject<ISkMetadata>;
+  pathDataUpdate$: BehaviorSubject<IPathUpdate>; // pathValue and pathState combined subject for Observers ie: widgets
+  pathMeta$: BehaviorSubject<ISkMetadata | null>;
 }
 
 export interface IDeltaUpdate {
@@ -159,39 +166,61 @@ export class DataService implements OnDestroy {
     this._pathRegister.splice(this._pathRegister.findIndex(registration => registration.path === path), 1);
   }
 
-  public subscribePath(path: string, source: string): Observable<IPathData> {
+  public subscribePath(path: string, source: string): Observable<IPathUpdate> {
     const entry = this._pathRegister.find(entry => entry.path == path);
     if (entry) {
-      return entry.pathData$;
+      return entry.pathDataUpdate$;
     }
 
+    let currentValue: string = null;
+    let currentTimestamp: string = null;
+    let currentDateTimestamp: Date | null = null;
+    let state: TState = States.Normal;
+    let pathUpdate : IPathUpdate= {
+      data: {
+        value: null,
+        timestamp: null
+      },
+      state: state
+    };
+    let metaUpdate: ISkMetadata = null;
+
     const dataPath = this._skData.find(item => item.path == path);
-    const currentValue = source === 'default' ? dataPath?.pathValue : dataPath?.sources?.[source]?.sourceValue ?? dataPath;
-    const state = dataPath?.state || States.Normal;
+
+    if (this._skData.length || dataPath) {
+      currentValue = source === 'default' ? dataPath.pathValue : dataPath.sources?.[source]?.sourceValue ?? null;
+      currentTimestamp = source === 'default' ? dataPath.pathTimestamp : dataPath.sources?.[source]?.sourceTimestamp ?? null;
+      currentDateTimestamp = currentTimestamp ? new Date(currentTimestamp) : null;
+
+      pathUpdate = {
+        data: {
+          value: currentValue,
+          timestamp: currentDateTimestamp
+        },
+        state: dataPath.state || state
+      };
+
+      state = dataPath.state || state;
+      metaUpdate = dataPath.meta || null;
+    }
 
     const newPathSubject: IPathRegistration  = {
       path: path,
       source: source,
-      _pathValue$: new BehaviorSubject<any>(currentValue),
-      _pathState$: new BehaviorSubject<TState>(state),
-      pathData$: new BehaviorSubject<IPathData>({ value: currentValue, state: state }),
-      pathMeta$: new BehaviorSubject<ISkMetadata>(dataPath?.meta || null)
+      _pathData$: new BehaviorSubject<IPathData>(pathUpdate.data),
+      _pathState$: new BehaviorSubject<TState>(pathUpdate.state),
+      pathDataUpdate$: new BehaviorSubject<IPathUpdate>(pathUpdate),
+      pathMeta$: new BehaviorSubject<ISkMetadata>(metaUpdate)
     };
 
-    const combined$ = combineLatest([newPathSubject._pathValue$, newPathSubject._pathState$]).pipe(
-      map(([v, s]) => ({ value: v, state: s } as IPathData))
+    const combined$ = combineLatest([newPathSubject._pathData$, newPathSubject._pathState$]).pipe(
+      map(([d, s]) => ({ data: d, state: s } as IPathUpdate))
     );
 
-    combined$.subscribe(value => newPathSubject.pathData$.next(value));
+    combined$.subscribe(value => newPathSubject.pathDataUpdate$.next(value));
 
     this._pathRegister.push(newPathSubject);
-    return newPathSubject.pathData$;
-  }
-
-  private setSelfUrn(value: string) {
-    if (value && value !== this._selfUrn) {
-      this._selfUrn = value;
-    }
+      return newPathSubject.pathDataUpdate$;
   }
 
   /**
@@ -237,12 +266,13 @@ export class DataService implements OnDestroy {
       pathItem = {
         path: updatePath,
         pathValue: dataPath.value,
+        pathTimestamp: dataPath.timestamp,  // timestamp of the last update. Be mindful of source priorities
         defaultSource: dataPath.source,
         type: pathType,
         state: States.Normal,
         sources: {
           [dataPath.source]: {
-            timestamp: dataPath.timestamp,
+            sourceTimestamp: dataPath.timestamp,
             sourceValue: dataPath.value
           }
         }
@@ -261,22 +291,22 @@ export class DataService implements OnDestroy {
         }
       }
       pathItem.pathValue = dataPath.value;
+      pathItem.pathTimestamp = dataPath.timestamp;
       pathItem.sources[dataPath.source] = {
-        timestamp: dataPath.timestamp,
+        sourceTimestamp: dataPath.timestamp,
         sourceValue: dataPath.value,
       };
     }
 
     // Update path register Subjects with new data
-    this._pathRegister.filter(item => item.path == updatePath).forEach(
-      item => {
-        if (item.source === 'default' || item.source in pathItem.sources) {
-          item._pathValue$.next(pathItem.sources[item.source]?.sourceValue || pathItem.pathValue);
-        } else {
-          console.error(`[Data Service] Failed updating zone state. Source unknown or not defined for path: ${item.source}`);
-        }
-      }
-    );
+    const item = this._pathRegister.find(item => item.path == updatePath);
+    if (item) {
+        const pathData: IPathData = {
+          value: pathItem.pathValue,
+          timestamp: new Date(pathItem.pathTimestamp)
+        };
+        item._pathData$.next(pathData);
+    }
 
     // Push full tree if data-browser or Zones component are observing
     if (this._isSkDataFullTreeActive) {
@@ -295,11 +325,12 @@ export class DataService implements OnDestroy {
         pathObject = {
           path: metaPath,
           pathValue: undefined,
+          pathTimestamp: undefined,
+          type: undefined,
+          state: States.Normal,
           defaultSource: undefined,
           sources: {},
           meta: meta.meta,
-          type: undefined,
-          state: States.Normal
         };
         this._skData.push(pathObject);
       } else {
@@ -347,6 +378,15 @@ export class DataService implements OnDestroy {
     this._skDataSubject$.next(null);
   }
 
+  private setSelfUrn(value: string) {
+    if ((value != "" || value != null) && value != this._selfUrn) {
+      console.debug('[Signal K Data Service] Setting self to: ' + value);
+      this._selfUrn = value;
+    } else {
+      console.error('[Signal K Data Service] Invalid self URN: ' + value);
+    }
+  }
+
   private setPathContext(context: string, path: string): string {
     const finalPath = context !== this._selfUrn ? `${context}.${path}` : `${SELFROOTDEF}.${path}`;
     return finalPath;
@@ -390,13 +430,18 @@ export class DataService implements OnDestroy {
   public timeoutPathObservable(path: string, pathType: string): void {
     const pathRegister = this._pathRegister.find(item => item.path == path);
     if (pathRegister) {
-      let timeoutValue: IPathData;
+      let timeoutValue: IPathUpdate;
 
       if (['string', 'Date', 'number'].includes(pathType)) {
-        timeoutValue = {value: null, state: States.Normal};
+        timeoutValue = {
+          data: {
+            value: null,
+            timestamp: null
+          },
+        state: States.Normal};
       }
 
-      pathRegister.pathData$.next(timeoutValue);
+      pathRegister.pathDataUpdate$.next(timeoutValue);
     }
   }
 

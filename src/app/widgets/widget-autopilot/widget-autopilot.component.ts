@@ -221,22 +221,22 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   startAllSubscriptions() {
     this.observeDataStream('apState', newValue => {
-        this.currentAPState = newValue.value;
+        this.currentAPState = newValue.data.value;
         this.SetKeyboardMode(this.currentAPState);
       }
     );
 
     this.observeDataStream('headingMag', newValue => {
-        if (newValue.value === null) {
+        if (newValue.data.value === null) {
           this.currentHeading = 0;
         } else {
-          this.currentHeading = newValue.value;
+          this.currentHeading = newValue.data.value;
         }
       }
     );
 
     this.observeDataStream('windAngleApparent', newValue => {
-        if (newValue.value === null) {
+        if (newValue.data.value === null) {
           this.currentAppWindAngle = null;
           return;
         }
@@ -244,28 +244,28 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         // -0 to -180 for port
         // need in 0-360
 
-        if (newValue.value < 0) {// stb
-          this.currentAppWindAngle = 360 + newValue.value; // adding a negative number subtracts it...
+        if (newValue.data.value < 0) {// stb
+          this.currentAppWindAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
         } else {
-          this.currentAppWindAngle = newValue.value;
+          this.currentAppWindAngle = newValue.data.value;
         }
       }
     );
 
     this.observeDataStream('rudderAngle', newValue => {
-        if (newValue.value === null) {
+        if (newValue.data.value === null) {
           this.currentRudder = 0;
         } else {
-          this.currentRudder = newValue.value;
+          this.currentRudder = newValue.data.value;
         }
       }
     );
 
     this.observeDataStream('apTargetWindAngleApp', newValue => {
-        if (newValue.value === null) {
+        if (newValue.data.value === null) {
           this.currentAPTargetAppWind = 0;
         } else {
-          this.currentAPTargetAppWind = newValue.value;
+          this.currentAPTargetAppWind = newValue.data.value;
         }
       }
     );
@@ -286,9 +286,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
     this.skApNotificationSub = this.DataService.subscribePath(this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
       newValue => {
-          if (!newValue.value == null) {
-          this.setNotificationMessage(newValue.value);
-          console.log(newValue.value);
+          if (!newValue.data.value == null) {
+          this.setNotificationMessage(newValue.data.value);
+          console.log(newValue.data.value);
           }
         }
     );

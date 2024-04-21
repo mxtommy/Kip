@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Observable, Observer, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
-import { DataService, IPathData } from '../core/services/data.service';
+import { DataService, IPathUpdate } from '../core/services/data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
 import { cloneDeep, merge } from 'lodash-es';
@@ -8,7 +8,7 @@ import { cloneDeep, merge } from 'lodash-es';
 
 interface IWidgetDataStream {
   pathName: string;
-  observable: Observable<IPathData>;
+  observable: Observable<IPathUpdate>;
 };
 
 @Component({
@@ -100,7 +100,7 @@ export abstract class BaseWidgetComponent {
    * @return {*}
    * @memberof BaseWidgetComponent
    */
-  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathData) => void))  {
+  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void))  {
     if (this.dataStream === undefined) {
       this.createDataObservable();
     }
@@ -131,7 +131,10 @@ export abstract class BaseWidgetComponent {
         dataPipe$ = pathObs.observable.pipe(
           // filterNullish(),
           map(x => ({
-            value: this.unitsService.convertToUnit(convert, x.value),
+            data: {
+              value: this.unitsService.convertToUnit(convert, x.data.value),
+              timestamp: x.data.timestamp
+            },
             state: x.state
           })),
           sampleTime(widgetSample),
@@ -155,7 +158,10 @@ export abstract class BaseWidgetComponent {
         dataPipe$ = pathObs.observable.pipe(
           // filterNullish(),
           map(x => ({
-            value: this.unitsService.convertToUnit(convert, x.value),
+            data: {
+              value: this.unitsService.convertToUnit(convert, x.data.value),
+              timestamp: x.data.timestamp
+            },
             state: x.state
           })),
           sampleTime(widgetSample),
@@ -202,8 +208,8 @@ export abstract class BaseWidgetComponent {
     }
   }
 
-  private buildObserver(pathKey: string, subscribeNextFunction: ((value: IPathData) => void)): Observer<IPathData> {
-    const observer: Observer<IPathData> = {
+  private buildObserver(pathKey: string, subscribeNextFunction: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
+    const observer: Observer<IPathUpdate> = {
       next: (value) => subscribeNextFunction(value),
       error: err => console.error('[Widget] Observer got an error: ' + err),
       complete: () => console.log('[Widget] Observer got a complete notification: ' + pathKey),

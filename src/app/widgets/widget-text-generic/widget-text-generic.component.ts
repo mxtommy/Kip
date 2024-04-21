@@ -52,7 +52,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
     this.resizeWidget();
 
     this.observeDataStream('stringPath', newValue => {
-      this.dataValue = newValue.value;
+      this.dataValue = newValue.data.value;
       this.updateCanvas();
     });
   }

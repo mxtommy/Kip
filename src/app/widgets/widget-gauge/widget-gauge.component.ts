@@ -54,10 +54,10 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
   ngOnInit() {
     this.validateConfig();
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.value == null) {
-          newValue.value = 0;
+        if (newValue.data.value == null) {
+          newValue.data.value = 0;
         }
-        this.dataValue = newValue.value
+        this.dataValue = newValue.data.value
       }
     );
 

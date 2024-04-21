@@ -61,12 +61,12 @@ export class AppService implements OnDestroy {
 
                 const connConf: IConnectionConfig = this.settings.getConnectionConfig(); // get app UUUID
 
-                this.autoNightModePathSubscription = this.data.subscribePath(modePath, 'default').subscribe(mode => {
-                  if (mode.value == 'night' && this.sunValue != mode.value) {
-                    this.sunValue = mode.value;
+                this.autoNightModePathSubscription = this.data.subscribePath(modePath, 'default').subscribe(newValue => {
+                  if (newValue.data.value == 'night' && this.sunValue != newValue.data.value) {
+                    this.sunValue = newValue.data.value;
                     this.settings.setThemeName('nightMode');
-                  } else if (mode.value == 'day' && this.sunValue != mode.value) {
-                    this.sunValue = mode.value;
+                  } else if (newValue.data.value == 'day' && this.sunValue != newValue.data.value) {
+                    this.sunValue = newValue.data.value;
                     this.settings.setThemeName(this.dayTheme);
                   }
                 });

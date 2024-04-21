@@ -72,7 +72,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
       if (Object.prototype.hasOwnProperty.call(this.switchControls, key)) {
         const path = this.switchControls[key];
         this.observeDataStream(key, newValue => {
-            path.value = newValue.value;
+            path.value = newValue.data.value;
           }
         );
       }

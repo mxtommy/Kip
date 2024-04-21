@@ -54,7 +54,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
     this.validateConfig();
     this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('gaugePath', newValue => {
-      this.dataValue = newValue.value;
+      this.dataValue = newValue.data.value;
       this.updateCanvas();
     });
 

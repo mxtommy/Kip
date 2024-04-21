@@ -67,9 +67,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.validateConfig();
     this.setHighlights();
     this.observeDataStream('gaugePath', newValue => {
-      if (newValue.value === null) {newValue.value = 0}
+      if (newValue.data.value === null) {newValue.data.value = 0}
       let oldValue = this.dataValue;
-      let temp: any = this.formatWidgetNumberValue(newValue.value);
+      let temp: any = this.formatWidgetNumberValue(newValue.data.value);
 
       if (oldValue != (temp as number)) {
         this.dataValue = temp;

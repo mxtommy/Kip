@@ -42,24 +42,24 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
  export interface ISkPathData {
   path: string;
   pathValue: any;
+  pathTimestamp: string;
+  type: string;
+  state: TState;
   defaultSource?: string; // default source
   sources: {
     [sourceName: string]: { // per source data
-      timestamp: string;
+      sourceTimestamp: string;
       sourceValue: any;
     }
   };
   meta?: ISkMetadata;
-  type: string;
-  state: TState;
 }
 
 /**
- * An App data structure that represents all meta values of a path. Used
- * as an interface to access meta data subset extracted from internal App
- * paths data source.
+ * An App data structure that represents meta values of a path.
  *
- * Use by: modal-path-selection (consumer) and Signal K (internal data source) service
+ * Use by: modal-path-selection (consumer), Zones component, and Signal K (internal
+ * data source) service
  *
  * @memberof app-interfaces
  */

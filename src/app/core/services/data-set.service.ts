@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { DataService, IPathData } from './data.service';
+import { DataService, IPathUpdate } from './data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
@@ -163,14 +163,14 @@ export class DatasetService {
 
     // Subscribe to path data, update historicalData/stats and sends new values to Observers
     dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
-      (newValue: IPathData) => {
-        if (newValue.value === null) return; // we don't need null values
+      (newValue: IPathUpdate) => {
+        if (newValue.data.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
         if (dataSource.maxDataPoints == dataSource.historicalData.length) {
           dataSource.historicalData.shift();
         }
-        dataSource.historicalData.push(newValue.value);
+        dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
         const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit);
