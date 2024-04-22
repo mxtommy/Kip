@@ -262,9 +262,9 @@ export class SignalKDeltaService {
   }
 
   private parseUpdates(updates: ISignalKUpdateMessage[], context: string): void {
-    if (context != this._selfUrn) {    // remove non self root nodes
-      return;
-    }
+    // if (context != this._selfUrn) {    // remove non self root nodes
+    //   return;
+    // }
 
     updates.forEach(update => {
       if (update.meta !== undefined) {
@@ -291,7 +291,7 @@ export class SignalKDeltaService {
                   dataPath.path = dataPath.path.slice(1);
                 }
 
-                if (context != this._selfUrn && item.path == "") { // data from non self root nodes may have no path. Removing first dot so it attaches to external root node context properly
+                if (context != this._selfUrn && item.path == "") { // data from non self root nodes (other vessel, atoms, stations, buoy, etc.) may have no path. Removing first dot so it attaches to external root node context properly
                   dataPath.path = dataPath.path.slice(1);
                 }
 

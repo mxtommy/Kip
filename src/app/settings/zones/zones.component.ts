@@ -34,7 +34,7 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   tableData = new MatTableDataSource([]);
 
-  displayedColumns: string[] = ["path"];
+  displayedColumns: string[] = ["path", "zone.state", "zone.lower", "zone.upper", "zone.message"];
 
   zonesSub: Subscription;
 
@@ -47,10 +47,10 @@ export class SettingsZonesComponent implements OnInit, AfterViewInit, OnDestroy 
   ngOnInit() {
     this.zonesSub = this.data.startSkMetaFullTree().subscribe((metaArray: IPathMetaData[]) => {
       this.tableData.data = metaArray
-        .filter(meta => meta.meta && meta.meta.zones && meta.meta.zones.length > 0)
-        .map(meta => ({
-          path: meta.path,
-          zones: meta.meta.zones
+        .filter(item => item.meta && item.meta.zones && item.meta.zones.length > 0)
+        .flatMap(item => item.meta.zones.map(zone => {
+          const newItem = { path: item.path, zone: zone };
+          return newItem;
         }));
     });
   }
