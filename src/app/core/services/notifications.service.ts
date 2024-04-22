@@ -134,9 +134,11 @@ export class NotificationsService implements OnDestroy {
    * Reset the notifications array and send empty notifications array to observers
    */
   private reset() {
-    this._notifications = [];
+    if (this._notificationConfig.disableNotifications) {
+      this._notifications = [];
+      this._notifications$.next([]);
+    }
     this.updateNotificationsState();
-    this._notifications$.next([]);
   }
 
   /**
@@ -166,7 +168,6 @@ export class NotificationsService implements OnDestroy {
   private deleteValue(path: string): void {
     const notification = this._notifications.find(notification => notification.path == path);
     if (notification) {
-      // this._notifications.splice(index, 1);
       delete notification.value;
       this.updateNotificationsState();
       this._notifications$.next(this._notifications);
@@ -277,7 +278,7 @@ export class NotificationsService implements OnDestroy {
     let aSev = severity.sound;
     let vSev = severity.visual;
 
-    if (message.value['method'].includes(Methods.Sound) && this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`]) {
+    if (!message.value['method'].includes(Methods.Sound) || this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`]) {
       aSev = 0;
     }
     if (!message.value['method'].includes(Methods.Visual)) {
