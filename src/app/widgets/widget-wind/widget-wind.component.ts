@@ -113,57 +113,57 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   ngOnInit(): void {
     this.validateConfig();
     this.observeDataStream('headingPath', newValue => {
-      if (newValue.value == null) { // act upon data timeout of null
-        newValue.value = 0
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0
       }
-      this.currentHeading = newValue.value;
+      this.currentHeading = newValue.data.value;
     });
 
     this.observeDataStream('courseOverGround', newValue => {
-      if (newValue.value == null) { // act upon data timeout of null
-        newValue.value = 0
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0
       }
-      this.courseOverGroundAngle = newValue.value;
+      this.courseOverGroundAngle = newValue.data.value;
     });
 
     this.observeDataStream('nextWaypointBearing', newValue => {
-      if (newValue.value < 0) {// stb
-        this.waypointAngle = 360 + newValue.value; // adding a negative number subtracts it...
+      if (newValue.data.value < 0) {// stb
+        this.waypointAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
       } else {
-        this.waypointAngle = newValue.value;
+        this.waypointAngle = newValue.data.value;
       }
     }
   );
 
     this.observeDataStream('appWindAngle', newValue => {
-        if (newValue.value == null) { // act upon data timeout of null
-          newValue.value = 0
+        if (newValue.data.value == null) { // act upon data timeout of null
+          newValue.data.value = 0
         }
-        if (newValue.value < 0) {// stb
-          this.appWindAngle = 360 + newValue.value; // adding a negative number subtracts it...
+        if (newValue.data.value < 0) {// stb
+          this.appWindAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
         } else {
-          this.appWindAngle = newValue.value;
+          this.appWindAngle = newValue.data.value;
         }
       }
     );
 
     this.observeDataStream('appWindSpeed', newValue => {
-      if (newValue.value == null) { // act upon data timeout of null
-        newValue.value = 0
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0
       }
-      this.appWindSpeed = newValue.value;
+      this.appWindSpeed = newValue.data.value;
     });
 
     this.observeDataStream('trueWindSpeed', newValue => {
-      if (newValue.value == null) { // act upon data timeout of null
-        newValue.value = 0
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0
       }
-      this.trueWindSpeed = newValue.value;
+      this.trueWindSpeed = newValue.data.value;
     });
 
     this.observeDataStream('trueWindAngle', newValue => {
-      if (newValue.value == null) { // act upon data timeout of null
-        newValue.value = 0
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0
       }
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
           // 0-180+ for stb
@@ -172,13 +172,13 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         if (this.widgetProperties.config.paths['trueWindAngle'].path.match('angleTrueWater')||
         this.widgetProperties.config.paths['trueWindAngle'].path.match('angleTrueGround')) {
           //-180 to 180
-          this.trueWindAngle = this.addHeading(this.currentHeading, newValue.value);
+          this.trueWindAngle = this.addHeading(this.currentHeading, newValue.data.value);
         } else if (this.widgetProperties.config.paths['trueWindAngle'].path.match('direction')) {
           //0-360
-          this.trueWindAngle = newValue.value;
+          this.trueWindAngle = newValue.data.value;
         } else {
           // some other path... assume it's the angle
-          this.trueWindAngle = newValue.value;
+          this.trueWindAngle = newValue.data.value;
         }
 
         //add to historical for wind sectors

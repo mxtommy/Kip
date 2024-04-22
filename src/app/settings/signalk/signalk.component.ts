@@ -4,7 +4,7 @@ import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
-import { IDeltaUpdate, SignalKDataService } from '../../core/services/signalk-data.service';
+import { IDeltaUpdate, DataService } from '../../core/services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
@@ -81,7 +81,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     public dialog: MatDialog,
     private appSettingsService: AppSettingsService,
     private appService: AppService,
-    private signalKDataService: SignalKDataService,
+    private DataService: DataService,
     private signalKConnectionService: SignalKConnectionService,
     private signalkRequestsService: SignalkRequestsService,
     private deltaService: SignalKDeltaService,
@@ -130,7 +130,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     this.startChart();
 
     // Get WebSocket Delta update per seconds stats
-    this.signalkDeltaUpdatesStatsSubscription = this.signalKDataService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
+    this.signalkDeltaUpdatesStatsSubscription = this.DataService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
       this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
       if (this._chart.data.datasets[0].data.length > 60) {
         this._chart.data.datasets[0].data.shift();

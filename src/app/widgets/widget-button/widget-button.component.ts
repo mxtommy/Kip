@@ -70,7 +70,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
     this.canvasButtonTxt = this.canvasBtnTxtElement.nativeElement.getContext('2d');
 
     this.observeDataStream('boolPath', newValue => {
-      this.state = newValue.value;
+      this.state = newValue.data.value;
       this.updateBtnCanvas();
       }
     );

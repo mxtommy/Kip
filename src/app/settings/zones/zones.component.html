@@ -1,58 +1,49 @@
 <div class="mat-typography">
   <h1>Zones Configuration</h1>
-    <p class="mat-card-subtitle">Use Zones to define the state of the data KIP receives for each path. For example,
-    zones can be used to indicate at what voltage a battery considered in normal, warn or critical state.
-    Once configured, each path's zone states will enable a visual state indicator and audio notification.</p>
+    <p class="mat-card-subtitle">Zones are defined with the <b>Edit Zones plugin</b> from
+      Signal K Server. They serve two primary functions: 1. Zones define data states per
+      path. For instance, you can use zones to specify the voltage levels at which a
+      battery enters a warning or critical state. Once configured in Signal K, these states
+      can be listed and acted upon in KIP's Notifications menu, and can trigger an audio prompt.
+      2. The range of each zone is used to visually indicate data states on KIP gauges
+      (where supported). This is done by drawing the zones color on the gauge.</p>
     <mat-form-field class="filter">
       <mat-label>Filter</mat-label>
       <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="" #input>
     </mat-form-field>
     <div class="mat-elevation-z8 full-width table-container">
+
+
       <mat-table class="full-display" [dataSource]="tableData" [trackBy]="trackByUuid" matSort matSortActive="path" matSortDirection="asc">
 
-        <!-- Path Column -->
+         <!-- Path Column -->
         <ng-container matColumnDef="path">
           <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header>Path</mat-header-cell>
           <mat-cell class="pathCell" *matCellDef="let element" data-label="Path: "> {{element.path}} </mat-cell>
         </ng-container>
 
-        <!-- Unit Column -->
-        <ng-container matColumnDef="unit">
-          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>Unit</mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Unit: "> {{element.unit}} </mat-cell>
+        <!-- state Column -->
+        <ng-container matColumnDef="zone.state">
+          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>State</mat-header-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="State: "> {{element.zone.state}} </mat-cell>
         </ng-container>
 
-        <!-- Lower Column -->
-        <ng-container matColumnDef="lower">
+        <!-- lower Column -->
+        <ng-container matColumnDef="zone.lower">
           <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>Lower</mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Lower: "> {{element.lower}} </mat-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Lower: "> {{element.zone.lower}} </mat-cell>
         </ng-container>
 
         <!-- Upper Column -->
-        <ng-container matColumnDef="upper">
+        <ng-container matColumnDef="zone.upper">
           <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>Upper</mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="Upper: "> {{element.upper}} </mat-cell>
+          <mat-cell class="dataCell" *matCellDef="let element" data-label="Upper: "> {{element.zone.upper}} </mat-cell>
         </ng-container>
 
-        <!-- State Column -->
-        <ng-container matColumnDef="state">
-          <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header>State</mat-header-cell>
-          <mat-cell class="dataCell" *matCellDef="let element" data-label="State: ">
-            <div [ngSwitch]="element.state">
-              <div *ngSwitchCase="0">Normal</div>
-              <div *ngSwitchCase="1">Warning</div>
-              <div *ngSwitchCase="2">Alarm</div>
-            </div>
-          </mat-cell>
-        </ng-container>
-
-        <!-- Action Column -->
-        <ng-container matColumnDef="actions">
-          <mat-header-cell class="actionHeader" *matHeaderCellDef mat-sort-header>  </mat-header-cell>
-          <mat-cell class="actionCell" *matCellDef="let element">
-            <button mat-raised-button class="action-buttons" color="accent" (click)="openZoneDialog(element.uuid)">Edit</button>
-            <button mat-raised-button color="accent" (click)="deleteZone(element.uuid)">Delete</button>
-          </mat-cell>
+        <!-- message Column -->
+        <ng-container matColumnDef="zone.message">
+          <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header>Message</mat-header-cell>
+          <mat-cell class="pathCell" *matCellDef="let element" data-label="Message: "> {{element.zone.message}} </mat-cell>
         </ng-container>
 
         <!-- Table header -->
@@ -67,9 +58,5 @@
     </div>
     <div class="paginator">
       <mat-paginator pageSize="5" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
-    </div>
-    <div class="formActionFooter">
-      <mat-divider class="formActionDivider"></mat-divider>
-      <button type="button" mat-raised-button color="accent" class="formActionButton" (click)="openZoneDialog()">Add</button>
     </div>
 </div>

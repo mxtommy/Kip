@@ -1,4 +1,4 @@
-import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, IZonesConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DefaultUnitsConfig } from "./config.blank.units.const";
 import { UUID } from "../app/utils/uuid";
@@ -44,16 +44,11 @@ export const DefaultThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
 }
 
-export const DefaultZonesConfig: IZonesConfig = {
-  "zones": [],
-}
-
 export const defaultConfig: IConfig = {
   "app": DefaultAppConfig,
   "widget": DefaultWidgetConfig,
   "layout": DefaultLayoutConfig,
-  "theme": DefaultThemeConfig,
-  "zones": DefaultZonesConfig,
+  "theme": DefaultThemeConfig
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {

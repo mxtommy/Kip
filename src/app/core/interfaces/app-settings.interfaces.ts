@@ -19,7 +19,6 @@ export interface IConfig {
   widget: IWidgetConfig;
   layout: ILayoutConfig;
   theme: IThemeConfig;
-  zones: IZonesConfig;
 }
 
 export interface IAppConfig {
@@ -43,10 +42,6 @@ export interface ILayoutConfig {
   rootSplits: string[];
 }
 
-export interface IZonesConfig {
-  zones: Array<IZone>;
-}
-
 export interface INotificationConfig {
   disableNotifications: boolean;
   menuGrouping: boolean;
@@ -56,29 +51,17 @@ export interface INotificationConfig {
   devices: {
     disableDevices: boolean;
     showNormalState: boolean;
+    showNominalState: boolean;
   },
   sound: {
     disableSound: boolean;
     muteNormal: boolean;
-    muteWarning: boolean;
+    muteNominal: boolean;
+    muteWarn: boolean;
     muteAlert: boolean;
     muteAlarm: boolean;
     muteEmergency: boolean;
   },
-}
-export interface IZone {
-  uuid: string;
-  path: string;
-  unit: string;
-  upper: number;
-  lower: number;
-  state: IZoneState;
-}
-
-export enum IZoneState {
-  normal = 0,
-  warning = 1,
-  alarm = 2,
 }
 
 export interface ISignalKUrl {

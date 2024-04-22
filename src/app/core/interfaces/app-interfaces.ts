@@ -5,8 +5,7 @@
  * For external data interfaces, such as Signal K, see signalk-interfaces file.
  *********************************************************************************/
 
-import { ISignalKMetadata, TState, TMethod } from "./signalk-interfaces";
-import { IZoneState } from './app-settings.interfaces';
+import { ISkMetadata, TState } from "./signalk-interfaces";
 
 /**
  * An App data structure that represents the values (ie. sensor data)
@@ -40,33 +39,33 @@ import { IZoneState } from './app-settings.interfaces';
  *
  * @memberof app-interfaces
  */
- export interface IPathData {
+ export interface ISkPathData {
   path: string;
   pathValue: any;
+  pathTimestamp: string;
+  type: string;
+  state: TState;
   defaultSource?: string; // default source
   sources: {
     [sourceName: string]: { // per source data
-      timestamp: string;
+      sourceTimestamp: string;
       sourceValue: any;
     }
-  }
-  meta?: ISignalKMetadata;
-  type: string;
-  state: IZoneState;
+  };
+  meta?: ISkMetadata;
 }
 
 /**
- * An App data structure that represents all meta values of a path. Used
- * as an interface to access meta data subset extracted from internal App
- * paths data source.
+ * An App data structure that represents meta values of a path.
  *
- * Use by: modal-path-selection (consumer), setting-zones (consumer) and Signal K (internal data source) service
+ * Use by: modal-path-selection (consumer), Zones component, and Signal K (internal
+ * data source) service
  *
  * @memberof app-interfaces
  */
  export interface IPathMetaData {
   path: string;
-  meta?: ISignalKMetadata;
+  meta?: ISkMetadata;
 }
 
 export interface IDefaultSource {
@@ -78,5 +77,5 @@ export interface IMeta {
   /** Optional SK context representing the root node emitting the value. Empty context should assume the message is from Self. Other contexts can be from AIS, DCS and other types of remote emitting sources configured */
   context: string,
   path: string;
-  meta: ISignalKMetadata;
+  meta: ISkMetadata;
 }

@@ -1,9 +1,8 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, Renderer2 } from '@angular/core';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
-import { IZone, IZoneState } from '../../core/interfaces/app-settings.interfaces';
 import { ITheme } from '../../core/interfaces/widgets-interface';
-import Qty from 'js-quantities';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 declare let steelseries: any; // 3rd party
 
@@ -59,7 +58,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   @Input('frameColor') frameColor: string;
   @Input('minValue') minValue: number;
   @Input('maxValue') maxValue: number;
-  @Input('zones') zones: IZone[];
+  @Input('zones') zones: Array<any>;
   @Input('title') title: string;
   @Input('units') units: string;
   @Input('value') value: number;
@@ -78,7 +77,7 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
 
   sections;
 
-  constructor(private unitsSvc: UnitsService) { }
+  constructor(private unitsService: UnitsService) { }
 
   ngAfterViewInit() {
     if (!this.gaugeType) { this.gaugeType = 'radial'; }
@@ -128,36 +127,64 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
       let sections = [];
       let areas = [];
 
-      this.zones.forEach(zone => {
+      // Sort zones based on lower value
+      const sortedZones = [...this.zones].sort((a, b) => a.lower - b.lower);
+
+      for (const zone of sortedZones) {
         let lower: number = null;
-          let upper: number = null;
-          // Perform Units conversions on zone range
-          if (zone.unit == "ratio") {
-            lower = zone.lower;
-            upper = zone.upper;
-          } else {
-            const convert = Qty.swiftConverter(zone.unit, this.units);
-            lower = convert(zone.lower);
-            upper = convert(zone.upper);
-          }
+        let upper: number = null;
 
-
-        lower = lower || this.minValue;
-        upper = upper || this.maxValue;
         let color: string;
         switch (zone.state) {
-          case IZoneState.warning:
-            color = this.theme.warn;
-            break;
-          case IZoneState.alarm:
+          case States.Emergency:
             color = this.theme.warnDark;
+            break;
+          case States.Alarm:
+            color = this.theme.warnDark;
+            break;
+          case States.Warn:
+            color = this.theme.textWarnLight;
+            break;
+          case States.Alert:
+            color = this.theme.accentDark;
+            break;
+          case States.Nominal:
+            color = this.theme.primaryDark;
             break;
           default:
             color = "rgba(0,0,0,0)";
         }
 
+        // Perform Units conversions on zone range
+        if (this.units == "ratio") {
+          lower = zone.lower;
+          upper = zone.upper;
+        } else {
+          lower = this.unitsService.convertToUnit(this.units, zone.lower);
+          upper = this.unitsService.convertToUnit(this.units, zone.upper);
+        }
+
+        // Skip zones that are completely outside the gauge range
+        if (upper < this.minValue || lower > this.maxValue) {
+          continue;
+        }
+
+        // If lower or upper are null, set them to minValue or maxValue
+        lower = lower !== null ? lower : this.minValue;
+        upper = upper !== null ? upper : this.maxValue;
+
+        // Ensure lower does not go below minValue
+        lower = Math.max(lower, this.minValue);
+
+        // Ensure upper does not exceed maxValue
+        if (upper > this.maxValue) {
+          upper = this.maxValue;
+          sections.push(steelseries.Section(lower, upper, color));
+          break;
+        }
+
         sections.push(steelseries.Section(lower, upper, color));
-      });
+      };
 
       this.gaugeOptions['section'] = sections;
       this.gaugeOptions['area'] = areas;

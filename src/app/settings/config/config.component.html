@@ -421,30 +421,6 @@
             </mat-action-row>
           </mat-expansion-panel>
         </form>
-        <br />
-        <form (ngSubmit)="rawConfigSave('IZonesConfig')">
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>Zones</mat-expansion-panel-header>
-            <mat-form-field class="config-size">
-              <textarea
-                class="textheight"
-                matInput
-                placeholder="Raw Layout JSON configuration"
-                wrap="off"
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck="false"
-                [(ngModel)]="jsonZonesConfig"
-                [ngModelOptions]="{name: 'zonesConfig', updateOn: 'submit'}"
-              ></textarea>
-            </mat-form-field>
-            <mat-action-row>
-              <button mat-raised-button type="submit" color="accent">
-                Save Edits
-              </button>
-            </mat-action-row>
-          </mat-expansion-panel>
-        </form>
       </div>
     </div>
   </div>

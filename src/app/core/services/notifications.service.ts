@@ -7,12 +7,12 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { SignalKDeltaService, IStreamStatus } from './signalk-delta.service';
 import { SignalkRequestsService } from './signalk-requests.service';
+import { DataService } from './data.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../../utils/uuid';
-import { TMethod, ISignalKDataValueUpdate, ISignalKMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
+import { TMethod, ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
 
 
@@ -27,7 +27,7 @@ const alarmTrack = {
 export interface INotification {
   path: string;
   value?: ISignalKNotification;
-  meta?: ISignalKMetadata;
+  meta?: ISkMetadata;
 }
 
 /**
@@ -56,45 +56,47 @@ interface IAlarmSeverities {
 export class NotificationsService implements OnDestroy {
   private static readonly ALARM_SEVERITIES: IAlarmSeverities = {
     normal: { sound: 0, visual: 0 },
-    alert: { sound: 1, visual: 1 },
+    nominal: { sound: 0, visual: 0 },
+    alert: { sound: 1, visual: 0 },
     warn: { sound: 2, visual: 1 },
     alarm: { sound: 3, visual: 2 },
     emergency: { sound: 4, visual: 2 },
   };
-  private notificationSettingsSubscription: Subscription = null;
-  private notificationDataStreamSubscription: Subscription = null;
-  private notificationMetaStreamSubscription: Subscription = null;
+  private _notificationSettingsSubscription: Subscription = null;
+  private _notificationDataStreamSubscription: Subscription = null;
+  private _notificationMetaStreamSubscription: Subscription = null;
+  private _resetServiceSubscription: Subscription = null;
 
   private _notificationConfig: INotificationConfig;
-  public notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
+  private _notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
   private _notifications: INotification[] = []; // local array of Alarms with path as index key
-  private notifications$ = new BehaviorSubject<INotification[] | null>(null);
-  private alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false});
+  private _notifications$ = new BehaviorSubject<INotification[] | null>(null);
+  private _alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false});
 
   // sounds properties
-  private howlPlayer: Howl;
-  private activeAlarmSoundtrack: number = null;
-  private activeHowlId: number = null;
-  private isHowlIdMuted: boolean = false;
+  private _howlPlayer: Howl;
+  private _activeAlarmSoundtrack: number = null;
+  private _activeHowlId: number = null;
+  private _isHowlIdMuted: boolean = false;
 
   // Notification acknowledge timeouts references
-  private lastEmittedValue: IAlarmInfo = null;
+  private _lastEmittedValue: IAlarmInfo = null;
 
   constructor(
-    private appSettingsService: AppSettingsService,
-    private deltaService: SignalKDeltaService,
+    private settings: AppSettingsService,
+    private data: DataService,
     private requests: SignalkRequestsService
     ) {
     // Observer of Notification Service configuration changes
-    this.notificationSettingsSubscription = this.appSettingsService.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
+    this._notificationSettingsSubscription = this.settings.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this._notificationConfig = config;
       this.reset();
-      this.notificationConfig$.next(config); // push to observers
-      if (this._notificationConfig.disableNotifications && !this.notificationDataStreamSubscription?.closed) {
+      this._notificationConfig$.next(config); // push to observers
+      if (this._notificationConfig.disableNotifications && !this._notificationDataStreamSubscription?.closed) {
         this.stopNotificationStream();
       }
-      if (!this._notificationConfig.disableNotifications && (this.notificationDataStreamSubscription === null || this.notificationDataStreamSubscription?.closed)) {
+      if (!this._notificationConfig.disableNotifications && (this._notificationDataStreamSubscription === null || this._notificationDataStreamSubscription?.closed)) {
           this.startNotificationStream();
       }
       if (this._notificationConfig.sound.disableSound) {
@@ -104,32 +106,27 @@ export class NotificationsService implements OnDestroy {
       }
     });
 
-    // Observer of server connection status to reset notifications on SK reconnect
-    this.deltaService.streamEndpoint$.subscribe((streamStatus: IStreamStatus) => {
-      if (streamStatus.operation === 2) {
-        this.reset();
-      }
-    });
+    this._resetServiceSubscription = this.data.isResetService().subscribe(reset => {
+        reset ? this.reset() : null;
+      });
 
     // Init audio player
-    this.howlPlayer = this.getPlayer(1000);
+    this._howlPlayer = this.getPlayer(1000);
    }
 
   private startNotificationStream() {
-    this.notificationDataStreamSubscription = this.deltaService.observeNotificationsDataUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
+    this._notificationDataStreamSubscription = this.data.getNotificationMsg().subscribe((msg: ISignalKDataValueUpdate) => {
       this.processNotificationDeltaMsg(msg);
     });
 
-    this.notificationMetaStreamSubscription = this.deltaService.observeNotificationsMetaUpdates().subscribe((meta: IMeta) => {
+    this._notificationMetaStreamSubscription = this.data.getNotificationMeta().subscribe((meta: IMeta) => {
       this.processNotificationDeltaMeta(meta);
     });
-
-
   }
 
   private stopNotificationStream() {
-  this.notificationDataStreamSubscription?.unsubscribe();
-  this.notificationMetaStreamSubscription?.unsubscribe();
+  this._notificationDataStreamSubscription?.unsubscribe();
+  this._notificationMetaStreamSubscription?.unsubscribe();
   this.reset();
   }
 
@@ -139,20 +136,20 @@ export class NotificationsService implements OnDestroy {
   private reset() {
     this._notifications = [];
     this.updateNotificationsState();
-    this.notifications$.next([]);
+    this._notifications$.next([]);
   }
 
   /**
    * Returns a notification Observable of notification or null.
    */
   public observe(): Observable<INotification[] | null> {
-    return this.notifications$.asObservable();
+    return this._notifications$.asObservable();
   }
 
   private addValue(msg: ISignalKDataValueUpdate) {
     this._notifications.push({ path: msg.path, value: msg.value });
     this.updateNotificationsState();
-    this.notifications$.next(this._notifications);
+    this._notifications$.next(this._notifications);
   }
 
   private updateValue(msg: ISignalKDataValueUpdate) {
@@ -160,9 +157,9 @@ export class NotificationsService implements OnDestroy {
     if (notificationToUpdate) {
       notificationToUpdate.value = {...msg.value};
       this.updateNotificationsState();
-      this.notifications$.next(this._notifications);
+      this._notifications$.next(this._notifications);
     } else {
-      console.log("[Notification Service] Notification to update not found: " + msg.path);
+      console.log("[Notification Service] Update path not found for: " + msg.path);
     }
   }
 
@@ -172,9 +169,9 @@ export class NotificationsService implements OnDestroy {
       // this._notifications.splice(index, 1);
       delete notification.value;
       this.updateNotificationsState();
-      this.notifications$.next(this._notifications);
+      this._notifications$.next(this._notifications);
     } else {
-      console.log("[Notification Service] Notification to delete not found: " + path);
+      console.log("[Notification Service] Notification to delete not found for: " + path);
     }
   }
 
@@ -191,7 +188,8 @@ export class NotificationsService implements OnDestroy {
         continue;
       }
 
-      if (alarm.value['state'] === States.Normal && !this._notificationConfig.devices.showNormalState) {
+      if ((alarm.value['state'] === States.Normal && !this._notificationConfig.devices.showNormalState) ||
+          (alarm.value['state'] === States.Nominal && !this._notificationConfig.devices.showNominalState)) {
         continue;
       }
 
@@ -209,12 +207,12 @@ export class NotificationsService implements OnDestroy {
       audioSev: audioSev,
       visualSev: visualSev,
       alarmCount: activeNotifications,
-      isMuted: this.isHowlIdMuted
+      isMuted: this._isHowlIdMuted
     };
 
-    if (!isEqual(newValue, this.lastEmittedValue)) {
-      this.alarmsInfo$.next(newValue);
-      this.lastEmittedValue = newValue;
+    if (!isEqual(newValue, this._lastEmittedValue)) {
+      this._alarmsInfo$.next(newValue);
+      this._lastEmittedValue = newValue;
     }
   }
 
@@ -228,7 +226,7 @@ export class NotificationsService implements OnDestroy {
     }
 
     if (notificationDelta.value === null) {
-      // Notification has been removed/cleared on server
+      // Notification has been deleted
       this.deleteValue(notificationDelta.path);
     } else {
       const existingNotification: INotification = this._notifications.find(item => item.path == notificationDelta.path);
@@ -256,7 +254,7 @@ export class NotificationsService implements OnDestroy {
     } else {
       this._notifications.push({path: metaDelta.path, meta: metaDelta.meta});
     }
-    this.notifications$.next(this._notifications);
+    this._notifications$.next(this._notifications);
   }
 
   /**
@@ -320,7 +318,7 @@ export class NotificationsService implements OnDestroy {
   }
 
   public observerNotificationInfo() {
-    return this.alarmsInfo$.asObservable();
+    return this._alarmsInfo$.asObservable();
   }
 
   /**
@@ -328,7 +326,7 @@ export class NotificationsService implements OnDestroy {
    * @param track track ID to play. See const for definition
    */
   getPlayer(track: number): Howl {
-    this.activeAlarmSoundtrack = track;
+    this._activeAlarmSoundtrack = track;
     const player = new Howl({
         src: ['assets/' + alarmTrack[track] + '.mp3'],
         autoplay: false,
@@ -342,8 +340,8 @@ export class NotificationsService implements OnDestroy {
         },
         onplayerror: function() {
           console.log("player locked");
-          this.howlPlayer.once('unlock', function() {
-            this.howlPlayer.play();
+          this._howlPlayer.once('unlock', function() {
+            this._howlPlayer.play();
           });
         }
       });
@@ -356,8 +354,8 @@ export class NotificationsService implements OnDestroy {
   * @param state sound muted boolean state
   */
   mutePlayer(state) {
-    this.howlPlayer.mute(state, this.activeHowlId);
-    this.isHowlIdMuted = state;
+    this._howlPlayer.mute(state, this._activeHowlId);
+    this._isHowlIdMuted = state;
     this.updateNotificationsState(); //make sure to push updated info tro alarm menu
   }
 
@@ -366,19 +364,19 @@ export class NotificationsService implements OnDestroy {
    * @param trackId track to play
    */
    playAlarm(trackId: number) {
-    if (this.activeAlarmSoundtrack == trackId) {   // same track, do nothing
+    if (this._activeAlarmSoundtrack == trackId) {   // same track, do nothing
       return;
     }
     if (trackId == 1000) {   // Stop track
-      if (this.howlPlayer) {
-        this.howlPlayer.stop();
+      if (this._howlPlayer) {
+        this._howlPlayer.stop();
       }
-      this.activeAlarmSoundtrack = 1000;
+      this._activeAlarmSoundtrack = 1000;
       return;
     }
-    this.howlPlayer.stop();
-    this.howlPlayer = this.getPlayer(trackId);
-    this.activeHowlId = this.howlPlayer.play();
+    this._howlPlayer.stop();
+    this._howlPlayer = this.getPlayer(trackId);
+    this._activeHowlId = this._howlPlayer.play();
   }
 
   /**
@@ -388,10 +386,14 @@ export class NotificationsService implements OnDestroy {
    * @memberof NotificationsService
    */
   public observeNotificationConfiguration(): Observable<INotificationConfig> {
-    return this.notificationConfig$.asObservable();
+    return this._notificationConfig$.asObservable();
   }
 
   ngOnDestroy(): void {
-    this.notificationSettingsSubscription?.unsubscribe();
+    this._notificationSettingsSubscription?.unsubscribe();
+    this._resetServiceSubscription?.unsubscribe();
+    this._notificationConfig$.complete();
+    this._notifications$.complete();
+    this._alarmsInfo$.complete();
   }
 }

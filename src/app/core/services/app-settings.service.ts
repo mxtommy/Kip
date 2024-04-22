@@ -8,11 +8,11 @@ import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
 import { UUID } from '../../utils/uuid';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, IZonesConfig, INotificationConfig, IZone, ISignalKUrl } from "../interfaces/app-settings.interfaces";
-import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultZonesConfig } from '../../../default-config/config.blank.const';
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
+import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoZonesConfig } from '../../../default-config/config.demo.const';
+import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig } from '../../../default-config/config.demo.const';
 
 import { StorageService } from './storage.service';
 import { IAuthorizationToken } from './authentication.service';
@@ -37,7 +37,7 @@ export class AppSettingsService {
   private loginPassword: string;
   public useSharedConfig: boolean;
   private sharedConfigName: string;
-  private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+  private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null};
 
   private kipUUID: string;
   public signalkUrl: ISignalKUrl;
@@ -45,7 +45,6 @@ export class AppSettingsService {
   private splitSets: ISplitSet[] = [];
   private rootSplits: string[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
-  private zones: BehaviorSubject<Array<IZone>> = new BehaviorSubject<Array<IZone>>([]);
 
   constructor(
     private storage: StorageService
@@ -76,12 +75,11 @@ export class AppSettingsService {
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
 
-        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
         localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
         localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
-        localStorageConfig.zones = this.loadConfigFromLocalStorage("zonesConfig");
 
         this.activeConfig = this.validateAppConfig(localStorageConfig);
         this.pushSettings();
@@ -256,10 +254,6 @@ public loadConfigFromLocalStorage(type: string) {
         case "themeConfig":
           config = this.getDefaultThemeConfig();
           break;
-
-        case "zonesConfig":
-          config = this.getDefaultZonesConfig();
-          break;
       }
     }
 
@@ -284,7 +278,6 @@ public loadConfigFromLocalStorage(type: string) {
     this.unitDefaults.next(this.activeConfig.app.unitDefaults);
     this.kipKNotificationConfig.next(this.activeConfig.app.notificationConfig);
     this.widgets = this.activeConfig.widget.widgets;
-    this.zones.next(this.activeConfig.zones.zones);
     this.splitSets = this.activeConfig.layout.splitSets;
     this.rootSplits = this.activeConfig.layout.rootSplits;
 
@@ -347,10 +340,6 @@ public loadConfigFromLocalStorage(type: string) {
 
   public getThemeConfig(): IThemeConfig {
     return this.buildThemeStorageObject();
-  }
-
-  public getZonesConfig(): IZonesConfig {
-    return this.buildZonesStorageObject()
   }
 
   public get KipUUID(): string {
@@ -478,22 +467,6 @@ public loadConfigFromLocalStorage(type: string) {
     return this.dataSets;
   }
 
-  // Zones
-  public saveZones(zones: Array<IZone>) {
-    this.zones.next(zones);
-    if (this.useSharedConfig) {
-      this.storage.patchConfig('Array<IZone>', zones);
-    } else {
-      this.saveZonesConfigToLocalStorage();
-    }
-  }
-  public getZonesAsO() {
-    return this.zones.asObservable();
-  }
-  public getZones() {
-    return this.zones.getValue();
-  }
-
   // Notification Service Setting
   public getNotificationServiceConfigAsO(): Observable<INotificationConfig> {
     return this.kipKNotificationConfig.asObservable();
@@ -513,12 +486,11 @@ public loadConfigFromLocalStorage(type: string) {
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
 
-    let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null, zones: null};
+    let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null};
     newDefaultConfig.app = this.getDefaultAppConfig();
     newDefaultConfig.widget = this.getDefaultWidgetConfig();
     newDefaultConfig.layout = this.getDefaultLayoutConfig();
     newDefaultConfig.theme = this.getDefaultThemeConfig();
-    newDefaultConfig.zones = this.getDefaultZonesConfig();
 
       if (this.useSharedConfig) {
         this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
@@ -544,7 +516,7 @@ public loadConfigFromLocalStorage(type: string) {
    * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
    * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
-  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IWidgetConfig | ILayoutConfig | IThemeConfig | IZonesConfig, reloadApp?: boolean) {
+  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IWidgetConfig | ILayoutConfig | IThemeConfig, reloadApp?: boolean) {
     let jsonConfig = JSON.stringify(newConfig);
     localStorage.setItem(configType, jsonConfig);
     if (reloadApp) {
@@ -616,13 +588,6 @@ public loadConfigFromLocalStorage(type: string) {
     return storageObject;
   }
 
-  private buildZonesStorageObject() {
-    let storageObject: IZonesConfig = {
-      zones: this.zones.getValue()
-      }
-    return storageObject;
-  }
-
   // Calls build methods and saves to LocalStorage
   private saveAppConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Application config to LocalStorage");
@@ -647,11 +612,6 @@ public loadConfigFromLocalStorage(type: string) {
   private saveThemeConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Theme config to LocalStorage");
     localStorage.setItem('themeConfig', JSON.stringify(this.buildThemeStorageObject()));
-  }
-
-  private saveZonesConfigToLocalStorage() {
-    console.log("[AppSettings Service] Saving Zones config to LocalStorage");
-    localStorage.setItem('zonesConfig', JSON.stringify(this.buildZonesStorageObject()));
   }
 
   // Creates config from defaults and saves to LocalStorage
@@ -687,12 +647,6 @@ public loadConfigFromLocalStorage(type: string) {
   private getDefaultThemeConfig(): IThemeConfig {
     let config: IThemeConfig = DefaultThemeConfig;
     localStorage.setItem("themeConfig", JSON.stringify(config));
-    return config;
-  }
-
-  private getDefaultZonesConfig(): IZonesConfig {
-    let config: IZonesConfig = DefaultZonesConfig;
-    localStorage.setItem("zonesConfig", JSON.stringify(config));
     return config;
   }
 }

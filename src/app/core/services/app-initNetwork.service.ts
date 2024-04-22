@@ -1,3 +1,5 @@
+import { SignalKDeltaService } from './signalk-delta.service';
+import { DatasetService } from './data-set.service';
 import { StorageService } from './storage.service';
 /**
 * This Service uses the APP_INITIALIZER feature to dynamically load
@@ -15,20 +17,24 @@ import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 import { Subscription } from 'rxjs';
+import { DataService } from './data.service';
 
 const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+const CONNECTION_CONFIG_KEY = 'connectionConfig';
 
 @Injectable()
 export class AppNetworkInitService implements OnDestroy {
   private config: IConnectionConfig;
-  private isLoggedIn;
+  private isLoggedIn: boolean = null;
   private loggedInSubscription: Subscription = null;
 
   constructor (
     private connection: SignalKConnectionService,
     private auth: AuthenticationService,
     private router: Router,
-    private storage: StorageService, // early boot up for AppSetting svc
+    private delta: SignalKDeltaService, // Init to get data before app starts
+    private data: DataService, // Init to get data before app starts
+    private storage: StorageService, // Init to get data before app starts
   )
   {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
@@ -69,36 +75,40 @@ export class AppNetworkInitService implements OnDestroy {
 
   private async login(): Promise<void> {
     if (!this.isLoggedIn && this.config.useSharedConfig && this.config.loginName && this.config.loginPassword) {
-      await this.auth.login({ usr: this.config.loginName, pwd: this.config.loginPassword })
-      .catch( (error: HttpErrorResponse) => {
+      try {
+        await this.auth.login({ usr: this.config.loginName, pwd: this.config.loginPassword });
+      } catch (error) {
         if (error.status === 0) {
           this.router.navigate(['/settings']);
         } else if (error.status === 401) {
           this.router.navigate(['/login']);
         }
         console.error("[AppInit Network Service] Login failure. Server returned: " + JSON.stringify(error.error));
-      });
+      }
     }
   }
 
+  private setLocalStorageConfig(): void {
+    localStorage.setItem(CONNECTION_CONFIG_KEY, JSON.stringify(this.config));
+  }
+
   private loadLocalStorageConfig(): void {
-    this.config = JSON.parse(localStorage.getItem('connectionConfig'));
+    this.config = JSON.parse(localStorage.getItem(CONNECTION_CONFIG_KEY));
 
     if (!this.config) {
       this.config = DefaultConnectionConfig;
       this.config.signalKUrl = window.location.origin;
       console.log(`[AppInit Network Service] Connection Configuration not found. Creating configuration using Auto-Discovery URL: ${this.config.signalKUrl}`);
-      localStorage.setItem('connectionConfig', JSON.stringify(this.config));
-
+      this.setLocalStorageConfig();
     } else if (!this.config.signalKUrl) {
       this.config.signalKUrl = window.location.origin;
-      localStorage.setItem('connectionConfig', JSON.stringify(this.config));
+      this.setLocalStorageConfig();
       console.log(`[AppInit Network Service] Config found with no server URL. Setting Auto-Discovery URL: ${this.config.signalKUrl}`);
     }
 
     if (this.config.configVersion == 9) {
       this.config.configVersion = 10;
-      localStorage.setItem('connectionConfig', JSON.stringify(this.config));
+      this.setLocalStorageConfig();
       console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
     }
   }

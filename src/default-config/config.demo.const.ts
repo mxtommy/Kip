@@ -1,4 +1,4 @@
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig, IZonesConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { UUID } from "../app/utils/uuid"
 
 // Demo Mode config settings file
@@ -45,11 +45,13 @@ export const DemoAppConfig: IAppConfig = {
     "devices": {
       "disableDevices": false,
       "showNormalState": false,
+      "showNominalState": false,
     },
     "sound": {
       "disableSound": false,
-      "muteNormal": false,
-      "muteWarning": false,
+      "muteNormal": true,
+      "muteNominal": true,
+      "muteWarn": true,
       "muteAlert": false,
       "muteAlarm": false,
       "muteEmergency": false,
@@ -618,16 +620,11 @@ export const DemoThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
 }
 
-export const DemoZonesConfig: IZonesConfig = {
-  "zones": [],
-}
-
 export const DemoConfig: IConfig = {
   "app": DemoAppConfig,
   "widget": DemoWidgetConfig,
   "layout": DemoLayoutConfig,
   "theme": DemoThemeConfig,
-  "zones": DemoZonesConfig,
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {

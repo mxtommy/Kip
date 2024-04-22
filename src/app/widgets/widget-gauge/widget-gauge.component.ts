@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
-import { IZone } from '../../core/interfaces/app-settings.interfaces';
+import { ISkMetadata } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge',
@@ -14,8 +14,12 @@ import { IZone } from '../../core/interfaces/app-settings.interfaces';
 })
 export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;
-  private zonesSub: Subscription = null;
-  public zones: Array<IZone> = [];
+
+  public zones = [];
+
+  // Zones support
+  private meta: ISkMetadata = null;
+  private metaSub: Subscription;
 
   constructor(private settings: AppSettingsService) {
     super();
@@ -50,28 +54,25 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
   ngOnInit() {
     this.validateConfig();
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.value == null) {
-          newValue.value = 0;
+        if (newValue.data.value == null) {
+          newValue.data.value = 0;
         }
-        this.dataValue = newValue.value
+        this.dataValue = newValue.data.value
       }
     );
 
-    this.zonesSub = this.settings.getZonesAsO().subscribe(
-      zones => {
-        let myZones: IZone[] = [];
-        zones.forEach(zone => {
-          // get zones for our path
-          if (zone.path == this.widgetProperties.config.paths["gaugePath"].path) {
-            myZones.push(zone);
-          }
-        })
-        this.zones = myZones;
-      });
+    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
+      if (meta) {
+        this.meta = meta;
+        meta.zones && meta.zones?.forEach(zone => {
+          this.zones.push(zone);
+        });
+      }
+    });
   }
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
-    this.zonesSub?.unsubscribe();
+    this.metaSub?.unsubscribe();
   }
 }

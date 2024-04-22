@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
-import { SignalKDataService, pathRegistrationValue } from './signalk-data.service';
+import { DataService, IPathUpdate } from './data.service';
 import { UUID } from'../../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
@@ -51,7 +51,7 @@ export class DatasetService {
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
-  constructor(private appSettings: AppSettingsService, private signalk: SignalKDataService) {
+  constructor(private appSettings: AppSettingsService, private data: DataService) {
     this._svcDatasetConfigs = appSettings.getDataSets();
     this.startAll();
   }
@@ -157,20 +157,20 @@ export class DatasetService {
     console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
 
     // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
-    function sampleInterval<pathRegistrationValue>(period: number): MonoTypeOperatorFunction<pathRegistrationValue> {
+    function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
     // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.signalk.subscribePath(configuration.uuid, configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
-      (newValue: pathRegistrationValue) => {
-        if (newValue.value === null) return; // we don't need null values
+    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
+      (newValue: IPathUpdate) => {
+        if (newValue.data.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
         if (dataSource.maxDataPoints == dataSource.historicalData.length) {
           dataSource.historicalData.shift();
         }
-        dataSource.historicalData.push(newValue.value);
+        dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
         const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit);
@@ -244,7 +244,7 @@ export class DatasetService {
       uuid: uuid,
       path: path,
       pathSource: source,
-      baseUnit: this.signalk.getPathUnitType(path),
+      baseUnit: this.data.getPathUnitType(path),
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
@@ -267,7 +267,7 @@ export class DatasetService {
   public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
     this.stop(datasetConfig.uuid);
     console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
-    datasetConfig.baseUnit = this.signalk.getPathUnitType(datasetConfig.path);
+    datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
     this.start(datasetConfig.uuid);

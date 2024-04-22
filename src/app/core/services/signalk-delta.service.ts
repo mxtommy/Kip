@@ -1,12 +1,11 @@
 import { Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject, delay, Observable , retryWhen, Subject, tap } from 'rxjs';
+import { BehaviorSubject, delay, Observable , retryWhen, Subject, takeUntil, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
-import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage, ISignalKNotification } from '../interfaces/signalk-interfaces';
+import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
 import { IMeta, IPathValueData } from "../interfaces/app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuthenticationService, IAuthorizationToken } from './authentication.service';
-import { producerUpdatesAllowed } from '@angular/core/primitives/signals';
 
 
 /**
@@ -29,21 +28,18 @@ export interface IStreamStatus {
     providedIn: 'root'
   })
 export class SignalKDeltaService {
-
   // Signal K Requests message stream Observable
-  private signalKRequests$ = new Subject<ISignalKDeltaMessage>();
+  private _skRequests$ = new Subject<ISignalKDeltaMessage>();
   // Signal K Notifications message stream Observable
-  public signalKNotificationsMsg$ = new Subject<ISignalKDataValueUpdate>();
-  // Signal K Notifications message stream Observable
-  public signalKNotificationsMeta$ = new Subject<IMeta>();
+  private _skNotificationsMsg$ = new Subject<ISignalKDataValueUpdate>();
   // Signal K data path message stream Observable
-  private signalKDataPath$ = new Subject<IPathValueData>();
+  private _skValue$ = new Subject<IPathValueData>();
   // Signal K Metadata message stream Observer
-  private signalKDataMeta$ = new Subject<IMeta>();
+  private _skMetadata$ = new Subject<IMeta>();
   // Self URN message stream Observer
-  private vesselSelfUrn$ = new Subject<string>();
+  private _vesselSelfUrn$ = new Subject<string>();
   // local self URN to filter data based on root node (self or others)
-  private selfUrn: string = undefined;
+  private _selfUrn: string = undefined;
 
   // Delta Service Endpoint status publishing
   public streamEndpoint: IStreamStatus = {
@@ -64,14 +60,22 @@ export class SignalKDeltaService {
   // Token
   private authToken: IAuthorizationToken = null;
 
+  // Subject that emits a value to automatically unsubscribe when the service is destroyed
+  private _destroyed$ = new Subject<void>();
+
+  // Array to store the timeout IDs
+  private timeoutIds: NodeJS.Timeout[] = [];
+
   constructor(
     private server: SignalKConnectionService,
     private auth: AuthenticationService,
-    private zones: NgZone
+    private zones: NgZone // NgZone to run outside Angular zone - NOT to be confused with SK zones
     )
     {
       // Monitor Connection Service Endpoint Status
-      this.server.serverServiceEndpoint$.subscribe((endpointStatus: IEndpointStatus) => {
+      this.server.serverServiceEndpoint$
+        .pipe(takeUntil(this._destroyed$))
+        .subscribe((endpointStatus: IEndpointStatus) => {
         let reason: string = null;
         if (endpointStatus.operation === 2) {
           reason = "New endpoint";
@@ -86,67 +90,68 @@ export class SignalKDeltaService {
             this.closeWS(reason);
           }
 
-          setTimeout(() => {   // need a delay so WebSocket Close Observer has time to complete before connecting again.
-            this.connectWS(reason);
-          }, 250);
+          this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
 
         } else {
           if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
             this.closeWS(reason);
           }
         }
-      });
+        });
 
       // Monitor Token changes
-      this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
-        if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
-          this.authToken = token;
+      this.auth.authToken$
+        .pipe(takeUntil(this._destroyed$))
+        .subscribe((token: IAuthorizationToken) => {
+          if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
+            this.authToken = token;
 
-          let reason: string = null;
-          if (token) {
-            reason = "New token";
-          } else {
-            reason = "Deleted Token";
+            let reason: string = null;
+            if (token) {
+              reason = "New token";
+            } else {
+              reason = "Deleted Token";
+            }
+
+            // Only if the socket is in Connected or Connecting state.
+            if (this.socketWS$ && (this.streamEndpoint.operation === 2 || this.streamEndpoint.operation === 1) ) {
+              this.closeWS(reason);
+              this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
+            }
           }
-
-          // Only if the socket is in Connected or Connecting state.
-          if (this.socketWS$ && (this.streamEndpoint.operation === 2 || this.streamEndpoint.operation === 1) ) {
-            this.closeWS(reason);
-
-            setTimeout(() => {   // need a delay so WebSocket Close Observer has time to complete before connecting again.
-              this.connectWS(reason);
-            }, 250);
-          }
-        }
-      });
+        });
 
       // WebSocket Open Event Handling
-      this.socketWSOpenEvent$.subscribe( event => {
-          this.streamEndpoint.message = "Connected";
-          this.streamEndpoint.operation = 2;
-          if (this.authToken) {
-            console.log("[Delta Service] WebSocket connected with Authorization Token")
-          } else {
-            console.log("[Delta Service] WebSocket connected without Authorization Token");
+      this.socketWSOpenEvent$
+        .pipe(takeUntil(this._destroyed$))
+        .subscribe( event => {
+            this.streamEndpoint.message = "Connected";
+            this.streamEndpoint.operation = 2;
+            if (this.authToken) {
+              console.log("[Delta Service] WebSocket connected with Authorization Token")
+            } else {
+              console.log("[Delta Service] WebSocket connected without Authorization Token");
+            }
+            this.streamEndpoint$.next(this.streamEndpoint);
           }
-          this.streamEndpoint$.next(this.streamEndpoint);
-        }
-     );
+        );
 
       // WebSocket closed Event Handling
-      this.socketWSCloseEvent$.subscribe( event => {
-        if(event.wasClean) {
-          this.streamEndpoint.message = "WebSocket closed";
-          this.streamEndpoint.operation = 0;
-          console.log('[Delta Service] WebSocket closed');
-        } else {
-          console.log('[Delta Service] WebSocket terminated due to socket error');
-          this.streamEndpoint.message = "WebSocket error";
-          this.streamEndpoint.operation = 3;
-          console.log('[Delta Service] WebSocket closed');
-        }
-        this.streamEndpoint$.next(this.streamEndpoint);
-      });
+      this.socketWSCloseEvent$
+        .pipe(takeUntil(this._destroyed$))
+        .subscribe( event => {
+          if(event.wasClean) {
+            this.streamEndpoint.message = "WebSocket closed";
+            this.streamEndpoint.operation = 0;
+            console.log('[Delta Service] WebSocket closed');
+          } else {
+            console.log('[Delta Service] WebSocket terminated due to socket error');
+            this.streamEndpoint.message = "WebSocket error";
+            this.streamEndpoint.operation = 3;
+            console.log('[Delta Service] WebSocket closed');
+          }
+          this.streamEndpoint$.next(this.streamEndpoint);
+        });
     }
 
   /**
@@ -215,82 +220,83 @@ export class SignalKDeltaService {
   *
   * `*** Do not pre-stringify the msg param ***`
   */
-  public publishDelta(msg: any) {
+  public publishDelta(msg: any): void {
     if (this.socketWS$) {
       console.log("[Delta Service] WebSocket sending message");
       this.socketWS$.next(msg);
     } else {
-      setTimeout((): void => {
-        console.log("[Delta Service] WebSocket retry sending message");
-        this.socketWS$.next(msg);
-      }, 1000);
+      this.timeoutIds.push(setTimeout(() => {
+        if (this.socketWS$) {
+          console.log("[Delta Service] WebSocket retry sending message");
+          this.socketWS$.next(msg);
+        }
+       }, 1000));
       console.log("[Delta Service] No WebSocket present to send message");
     }
   }
 
   private processWebsocketMessage(message: ISignalKDeltaMessage) {
-    // We check updates first as it is by far the most frequent
     if (message.updates) {
-      this.parseUpdates(message.updates, message.context); // process update
-
-    } else if (message.requestId) {
-      this.signalKRequests$.next(message); // is a Request/response, send to signalk-request service.
-
-    } else if (message.errorMessage) {
-      console.warn("[Delta Service] Service received stream error message: " + message.errorMessage); // server error message ie. socket failed or closing, sk bug, sk restarted, etc.
-
-    } else if (message.self) {
-      this.selfUrn = message.self;
-      this.vesselSelfUrn$.next(message.self);
-      this.server.setServerInfo(message.name, message.version, message.roles); // is server Hello message
-
-    } else { // not in our list of message types....
-      console.warn("[Delta Service] Unknown message type. Message content:" + message);
+      this.parseUpdates(message.updates, message.context);
+      return;
     }
+
+    if (message.requestId) {
+      this._skRequests$.next(message);
+      return;
+    }
+
+    if (message.errorMessage) {
+      console.warn("[Delta Service] Service received stream error message: " + message.errorMessage);
+      return;
+    }
+
+    if (message.self) {
+      this._selfUrn = message.self;
+      this._vesselSelfUrn$.next(message.self);
+      this.server.setServerInfo(message.name, message.version, message.roles);
+      return;
+    }
+
+    console.warn("[Delta Service] Unknown message type. Message content:" + message);
   }
 
   private parseUpdates(updates: ISignalKUpdateMessage[], context: string): void {
-    // if (context != this.selfUrn) {    // remove non self root nodes
-    //   return
+    // if (context != this._selfUrn) {    // remove non self root nodes
+    //   return;
     // }
-    for (const update of updates) {
+
+    updates.forEach(update => {
       if (update.meta !== undefined) {
         // Meta message update
-        for (const meta of update.meta) {
-            this.parseSkMeta(meta, context);
-        }
-
+        update.meta.forEach(meta => this.parseSkMeta(meta, context));
       } else {
         // Source value updates
-        for (let item of update.values) {
-          if (item.path.startsWith("notifications.")) {  // It's is a notification message, pass to notification service
-            this.signalKNotificationsMsg$.next(item);
-
+        update.values.forEach(item => {
+          if (item.path.startsWith("notifications.")) {  // It's a notification message, pass to notification service
+            this._skNotificationsMsg$.next(item);
           } else {
-            // It's a path value source update. Check if it's an Object. NOTE: null represents an undefined object and so is an object it's self, but in SK it should be handled as a value to mean: the path/source exists, but no value can ge generated. Ie. a depth sensor that can't read bottom depth in very deep water will send null.
+            // It's a path value source update.
             if ((typeof(item.value) == 'object') && (item.value !== null)) {
-              const keys = Object.keys(item.value);
-              for (let i = 0; i < keys.length; i++) {
+              Object.keys(item.value).forEach(key => {
                 const dataPath: IPathValueData = {
                   context: context,
-                  path: `${item.path}.${keys[i]}`,
+                  path: `${item.path}.${key}`,
                   source: update.$source,
                   timestamp: update.timestamp,
-                  value: item.value[keys[i]],
+                  value: item.value[key],
                 };
-                if (update.$source == "defaults") { // defaults are SK special ship description values that have no path. Removing first dot so it attaches to self properly
-                  if (item.path == "") {
-                    dataPath.path = dataPath.path.slice(1);
-                  }
-                }
-                if (context != this.selfUrn) { // data from non self root nodes may have no path. Removing first dot so it attaches to external root node context properly
-                  if (item.path == "") {
-                    dataPath.path = dataPath.path.slice(1);
-                  }
-                }
-                this.signalKDataPath$.next(dataPath);
-              }
 
+                if (update.$source == "defaults" && item.path == "") { // defaults are SK special ship description values that have no path. Removing first dot so it attaches to self properly
+                  dataPath.path = dataPath.path.slice(1);
+                }
+
+                if (context != this._selfUrn && item.path == "") { // data from non self root nodes (other vessel, atoms, stations, buoy, etc.) may have no path. Removing first dot so it attaches to external root node context properly
+                  dataPath.path = dataPath.path.slice(1);
+                }
+
+                this._skValue$.next(dataPath);
+              });
             } else {
               // It's a Primitive type or a null value
               const dataPath: IPathValueData = {
@@ -300,33 +306,29 @@ export class SignalKDeltaService {
                 timestamp: update.timestamp,
                 value: item.value,
               };
-              this.signalKDataPath$.next(dataPath);
+              this._skValue$.next(dataPath);
             }
           }
-        }
+        });
       }
-    }
+    });
   }
 
   private parseSkMeta(metadata: ISignalKMeta, context: string) {
-    let meta: IMeta = null;
-    // does meta have one with properties for each one?
     if (metadata.value.properties !== undefined) {
       Object.keys(metadata.value.properties).forEach(key => {
-        meta = {
+        this._skMetadata$.next({
           context: context,
           path: `${metadata.path}.${key}`,
           meta: metadata.value.properties[key],
-        };
-        (meta.path.startsWith("notifications.")) ? this.signalKNotificationsMeta$.next(meta) : this.signalKDataMeta$.next(meta);
-      })
+        });
+      });
     } else {
-      meta = {
+      this._skMetadata$.next({
         context: context,
         path: metadata.path,
         meta: metadata.value,
-      };
-      (meta.path.startsWith("notifications.")) ? this.signalKNotificationsMeta$.next(meta) : this.signalKDataMeta$.next(meta);
+      });
     }
   }
 
@@ -336,27 +338,23 @@ export class SignalKDeltaService {
   }
 
   public subscribeRequestUpdates(): Observable<ISignalKDeltaMessage> {
-    return this.signalKRequests$.asObservable();
+    return this._skRequests$.asObservable();
   }
 
-  public observeNotificationsDataUpdates(): Observable<ISignalKDataValueUpdate> {
-    return this.signalKNotificationsMsg$.asObservable();
-  }
-
-  public observeNotificationsMetaUpdates(): Observable<IMeta> {
-    return this.signalKNotificationsMeta$.asObservable();
+  public subscribeNotificationsUpdates(): Observable<ISignalKDataValueUpdate> {
+    return this._skNotificationsMsg$.asObservable();
   }
 
   public subscribeDataPathsUpdates() : Observable<IPathValueData> {
-    return this.signalKDataPath$.asObservable();
+    return this._skValue$.asObservable();
   }
 
   public subscribeMetadataUpdates() : Observable<IMeta> {
-    return this.signalKDataMeta$.asObservable();
+    return this._skMetadata$.asObservable();
   }
 
   public subscribeSelfUpdates(): Observable<string> {
-    return this.vesselSelfUrn$.asObservable();
+    return this._vesselSelfUrn$.asObservable();
   }
 
   /**
@@ -367,7 +365,14 @@ export class SignalKDeltaService {
   * @memberof SignalKDeltaService
   */
   OnDestroy(): void {
+    // Emit a value to automatically unsubscribe from all observables
+    this._destroyed$.next();
+    this._destroyed$.complete();
+
+    // Clear all the timeouts
+    this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
+
+    // Close the WebSocket connection
     this.closeWS("App terminated");
   }
-
- }
+}

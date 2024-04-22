@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 
-import { IZoneState } from "../../core/interfaces/app-settings.interfaces";
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-numeric',
@@ -17,7 +17,6 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
 
   dataValue: number = null;
-  IZoneState: IZoneState = null;
   maxValue: number = null;
   minValue: number = null;
   labelColor: string = undefined;
@@ -29,6 +28,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   minMaxFontSize: number = 1;
   flashOn: boolean = false;
   flashInterval = null;
+  dataState: string = States.Normal;
 
   canvasValCtx: CanvasRenderingContext2D;
   canvasMMCtx: CanvasRenderingContext2D;
@@ -68,26 +68,24 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('numericPath', newValue => {
-        this.dataValue = newValue.value;
+        this.dataValue = newValue.data.value;
         // init min/max
         if (this.minValue === null) { this.minValue = this.dataValue; }
         if (this.maxValue === null) { this.maxValue = this.dataValue; }
         if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
         if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
 
-        this.IZoneState = newValue.state;
-
         //start flashing if alarm
-        if ((this.IZoneState == IZoneState.alarm || this.IZoneState == IZoneState.warning) && !this.flashInterval) {
+        if ((newValue.state == States.Alarm || newValue.state == States.Warn) && !this.flashInterval) {
           this.flashInterval = setInterval(() => {
             this.flashOn = !this.flashOn;
             this.updateCanvas();
           }, 350); // used to flash stuff in alarm
-        } else if (this.IZoneState == IZoneState.normal) {
+        } else if (newValue.state == States.Normal) {
           // stop alarming if not in alarm state
           clearInterval(this.flashInterval);
         }
-
+        this.dataState = newValue.state;
         this.updateCanvas();
       }
     );
@@ -221,8 +219,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     }
 
     // get color based on zone
-    switch (this.IZoneState) {
-      case IZoneState.alarm:
+    switch (this.dataState) {
+      case States.Alarm:
         if (this.flashOn) {
           this.canvasValCtx.fillStyle = this.valueColor;
         } else {
@@ -233,7 +231,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
         }
         break;
 
-      case IZoneState.warning:
+      case States.Warn:
         if (this.flashOn) {
           this.canvasValCtx.fillStyle = this.valueColor;
         } else {

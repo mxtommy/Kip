@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, Reactive
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
-import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig, IZonesConfig } from '../../core/interfaces/app-settings.interfaces';
+import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from '../../core/interfaces/app-settings.interfaces';
 import { StorageService } from '../../core/services/storage.service';
 import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -59,7 +59,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public liveWidgetConfig: IWidgetConfig;
   public liveLayoutConfig: ILayoutConfig;
   public liveThemeConfig: IThemeConfig;
-  public liveZonesConfig: IZonesConfig;
   public showRawEditor = false;
 
   constructor(
@@ -188,7 +187,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         this.appSettingsService.replaceConfig("widgetConfig", conf.widget, false);
         this.appSettingsService.replaceConfig("layoutConfig", conf.layout, false);
         this.appSettingsService.replaceConfig("themeConfig", conf.theme, false);
-        this.appSettingsService.replaceConfig("zonesConfig", conf.zones, true);
       }
     }
   }
@@ -283,14 +281,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         this.appSettingsService.replaceConfig('themeConfig', this.liveThemeConfig, true);
         }
         break;
-
-      case "IZonesConfig":
-        if (this.hasToken && !this.isTokenTypeDevice) {
-          this.storageSvc.patchConfig(configType, this.liveZonesConfig);
-        } else {
-        this.appSettingsService.replaceConfig("zonesConfig", this.liveZonesConfig, true);
-        }
-        break;
     }
   }
 
@@ -312,19 +302,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     this.liveWidgetConfig = this.appSettingsService.getWidgetConfig();
     this.liveLayoutConfig = this.appSettingsService.getLayoutConfig();
     this.liveThemeConfig = this.appSettingsService.getThemeConfig();
-    this.liveZonesConfig = this.appSettingsService.getZonesConfig();
-  }
-
-  get jsonZonesConfig() {
-    return JSON.stringify(this.liveZonesConfig, null, 2);
-  }
-
-  set jsonZonesConfig(v) {
-    try{
-      this.liveZonesConfig = JSON.parse(v);}
-    catch(error) {
-      console.log(`JSON syntax error: ${error}`);
-    };
   }
 
   get jsonThemeConfig() {
@@ -403,7 +380,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       "widget": this.appSettingsService.getWidgetConfig(),
       "layout": this.appSettingsService.getLayoutConfig(),
       "theme": this.appSettingsService.getThemeConfig(),
-      "zones": this.appSettingsService.getZonesConfig(),
     };
     return localConfig;
   }
@@ -414,7 +390,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       "widget": this.appSettingsService.loadConfigFromLocalStorage('widgetConfig'),
       "layout": this.appSettingsService.loadConfigFromLocalStorage('layoutConfig'),
       "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
-      "zones": this.appSettingsService.loadConfigFromLocalStorage('zonesConfig'),
     };
     return localConfig;
   }

@@ -5,7 +5,7 @@ import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeader
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { SignalKDataService } from '../../core/services/signalk-data.service';
+import { DataService } from '../../core/services/data.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -157,7 +157,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
   public filterSelfPaths:boolean = true;
 
   constructor(
-    private SignalKDataService: SignalKDataService,
+    private SignalKDataService: DataService,
     public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
     @Inject(MAT_DIALOG_DATA) public dataset: IDatasetServiceDatasetConfig
     ) { }

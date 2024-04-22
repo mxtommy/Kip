@@ -7,11 +7,13 @@ export const DefaultNotificationConfig = {
   "devices": {
     "disableDevices": false,
     "showNormalState": false,
+    "showNominalState": false,
   },
   "sound": {
     "disableSound": false,
-    "muteNormal": false,
-    "muteWarning": false,
+    "muteNormal": true,
+    "muteNominal": true,
+    "muteWarn": true,
     "muteAlert": false,
     "muteAlarm": false,
     "muteEmergency": false,

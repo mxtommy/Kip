@@ -1,6 +1,6 @@
 import { TestBed, inject } from '@angular/core/testing';
 
-import { SignalKDataService } from './signalk-data.service';
+import { SignalKDataService } from './data.service';
 
 describe('SignalKDataService', () => {
   beforeEach(() => {

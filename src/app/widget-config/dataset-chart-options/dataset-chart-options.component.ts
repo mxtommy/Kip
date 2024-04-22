@@ -1,9 +1,9 @@
+import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, OnInit } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { DatasetService, IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { SignalKDataService } from './../../core/services/signalk-data.service';
 import { IUnitGroup } from '../../core/services/units.service';
 
 @Component({
@@ -20,7 +20,10 @@ export class DatasetChartOptionsComponent implements OnInit {
   public availableDataSets: IDatasetServiceDatasetConfig[] = [];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
-  constructor(private datasetService: DatasetService, private signalk: SignalKDataService) {}
+  constructor(
+    private datasetService: DatasetService,
+    private units: UnitsService
+  ) {}
 
     ngOnInit(): void {
       this.availableDataSets = this.datasetService.list().sort();
@@ -35,9 +38,9 @@ export class DatasetChartOptionsComponent implements OnInit {
     private setPathUnits(uuid: string): void {
       this.convertUnitTo.enable();
       if (uuid) {
-        this.unitList = this.signalk.getConversionsForPath(this.datasetService.getDatasetConfig(uuid).path);
+        this.unitList = this.units.getConversionsForPath(this.datasetService.getDatasetConfig(uuid).path);
       } else {
-        this.unitList = this.signalk.getConversionsForPath('');
+        this.unitList = this.units.getConversionsForPath('');
       }
     }
 

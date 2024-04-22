@@ -1,3 +1,4 @@
+import { DataService } from './data.service';
 import { Injectable } from '@angular/core';
 import Qty from 'js-quantities';
 
@@ -30,15 +31,14 @@ export interface IUnitDefaults {
 @Injectable()
 
 export class UnitsService {
-  defaultUnits: IUnitDefaults;
-  defaultUnitsSub: Subscription;
+  _defaultUnitsSub: Subscription;
 
   /**
    * Definition of available Kip units to be used for conversion.
    * Measure property has to match one Unit Conversion Function for proper operation.
    * Description is human readable property.
    */
-  conversionList: IUnitGroup[] = [
+  private _conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
       { measure: 'unitless', description: "As-Is numeric value" }
     ] },
@@ -139,12 +139,15 @@ export class UnitsService {
       { measure: 'longitudeSec', description: "Longitude in seconds" },
     ] },
   ];
+  private _defaultUnits: IUnitDefaults = null;
 
-  constructor(  private AppSettingsService: AppSettingsService,
+  constructor(
+    private AppSettingsService: AppSettingsService,
+    private data: DataService
     ) {
-      this.defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
-        newDefaults => {
-          this.defaultUnits = newDefaults;
+      this._defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
+        appSettings => {
+          this._defaultUnits = appSettings;
         }
       );
   }
@@ -297,6 +300,7 @@ export class UnitsService {
     let num: number = +value; // sometime we get strings here. Weird! Lazy patch.
     return this.unitConversionFunctions[unit](num);
   }
+
   /**
    * Returns the list KIP default unit conversion settings applied before presentation.
    * See KIP's Units Settings configuration.
@@ -309,7 +313,7 @@ export class UnitsService {
    * @memberof UnitsService
    */
   public getDefaults(): IUnitDefaults {
-    return this.defaultUnits;
+    return this._defaultUnits;
   }
 
   /**
@@ -321,6 +325,46 @@ export class UnitsService {
    * @memberof UnitsService
    */
   public getConversions(): IUnitGroup[] {
-    return this.conversionList;
+    return this._conversionList;
+  }
+
+  /**
+   * Obtain a list of possible Kip value type conversions for a given path. ie,.: Speed conversion group
+   * (kph, Knots, etc.). The conversion list will be trimmed to only the conversions for the group in question.
+   * If a default value type (provided by server) for a path cannot be found,
+   * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
+   * but Kip does not handle it...yet.
+   *
+   * @param path The Signal K path of the value
+   * @return conversions Full list array or subset of list array
+   */
+  public getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
+    const pathUnitType = this.data.getPathUnitType(path);
+    let defaultUnit: string = "unitless";
+
+    if (pathUnitType === null) {
+      return { default: 'unitless', conversions: this._conversionList };
+    } else {
+      const groupList = this._conversionList.filter(unitGroup => {
+        if (unitGroup.group == 'Position' && (path.includes('position.latitude') || path.includes('position.longitude'))) {
+          return true;
+        }
+
+        const unitExists = unitGroup.units.find(unit => unit.measure == pathUnitType);
+        if (unitExists) {
+          defaultUnit = this._defaultUnits[unitGroup.group];
+          return true;
+        }
+
+        return false;
+      });
+
+      if (groupList.length > 0) {
+        return { default: defaultUnit, conversions: groupList };
+      }
+
+      console.log("[Units Service] Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
+      return { default: 'unitless', conversions: this._conversionList };
+    }
   }
 }

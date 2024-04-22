@@ -16,8 +16,7 @@ import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
 import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
-import { IUnitGroup } from '../../core/services/units.service';
-import { SignalKDataService } from '../../core/services/signalk-data.service';
+import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IAddNewPath, PathsOptionsComponent } from '../paths-options/paths-options.component';
@@ -51,13 +50,13 @@ export class ModalWidgetConfigComponent implements OnInit {
     public dialogRef: MatDialogRef<ModalWidgetConfigComponent>,
     private fb : UntypedFormBuilder,
     private DatasetService: DatasetService,
-    private signalKDataService: SignalKDataService,
+    private units: UnitsService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
   ) { }
 
   ngOnInit() {
     this.availableDataSets = this.DatasetService.list().sort();
-    this.unitList = this.signalKDataService.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
+    this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.setFormOptions();
   }

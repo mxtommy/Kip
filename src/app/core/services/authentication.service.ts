@@ -25,6 +25,7 @@ export class AuthenticationService implements OnDestroy {
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
   public authToken$ = this._authToken$.asObservable();
   private connectionEndpointSubscription: Subscription = null;
+  private authTokenSubscription: Subscription = null;
 
   // Network connection
   private loginUrl = null;
@@ -59,7 +60,7 @@ export class AuthenticationService implements OnDestroy {
    }
 
     // Token Subject subscription to handle token expiration and renewal
-    this._authToken$.pipe(
+    this.authTokenSubscription = this._authToken$.pipe(
       filter((token: IAuthorizationToken) => (!!token && token.expiry !== null)),
         map((token: IAuthorizationToken) => token.expiry),
         switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry, tokenRenewalBuffer))),
@@ -281,5 +282,6 @@ export class AuthenticationService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.connectionEndpointSubscription?.unsubscribe();
+    this.authTokenSubscription?.unsubscribe();
   }
 }
