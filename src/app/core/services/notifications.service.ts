@@ -251,7 +251,6 @@ export class NotificationsService implements OnDestroy {
     const existingNotification: INotification = this._notifications.find(item => item.path == metaDelta.path);
     if (existingNotification) {
       existingNotification.meta = metaDelta.meta;
-
     } else {
       this._notifications.push({path: metaDelta.path, meta: metaDelta.meta});
     }
