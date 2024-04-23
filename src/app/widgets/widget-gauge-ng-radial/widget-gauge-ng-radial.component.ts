@@ -146,34 +146,15 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
     this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
 
-    // Set Theme related colors
-    switch (this.widgetProperties.config.barColor) {
-      case "primary":
-        themePaletteColor = this.theme.primary;
-        themePaletteDarkColor = this.theme.primaryDark;
-        this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
+     // Set Theme related colors
+    const themePalette = {
+      "primary": { color: this.theme.primary, darkColor: this.theme.primaryDark },
+      "accent": { color: this.theme.accent, darkColor: this.theme.accentDark },
+      "warn": { color: this.theme.warn, darkColor: this.theme.warnDark }
+    };
 
-      case "accent":
-        themePaletteColor = this.theme.accent;
-        themePaletteDarkColor = this.theme.accentDark;
-        this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      case "warn":
-        themePaletteColor = this.theme.warn;
-        themePaletteDarkColor = this.theme.warnDark;
-        this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      default:
-        break;
+    if (themePalette[this.widgetProperties.config.barColor]) {
+      this.setGaugeOptions(themePalette[this.widgetProperties.config.barColor].color, themePalette[this.widgetProperties.config.barColor].darkColor);
     }
 
     this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
@@ -377,6 +358,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       default:
         break;
     }
+  }
+
+  private setGaugeOptions(themePaletteColor: string, themePaletteDarkColor: string) {
+    this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
+    this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+    this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
   }
 
   private setHighlights(): void {
