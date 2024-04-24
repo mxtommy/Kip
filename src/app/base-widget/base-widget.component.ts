@@ -23,7 +23,7 @@ export abstract class BaseWidgetComponent {
   /** Array of data paths use for observable automatic setup and cleanup */
   protected dataStream: Array<IWidgetDataStream> = undefined;
   /** Single Observable Subscription object for all data paths */
-  private dataSubscription: Subscription = undefined;
+  private dataSubscriptions: Subscription = undefined;
   /** Signal K data stream service to obtain/observe server data */
   protected DataService = inject(DataService);
   /** Unit conversion service to convert a wide range of numerical data formats */
@@ -201,10 +201,10 @@ export abstract class BaseWidgetComponent {
       );
     }
 
-    if (this.dataSubscription === undefined) {
-      this.dataSubscription = dataPipe$.subscribe(observer);
+    if (this.dataSubscriptions === undefined) {
+      this.dataSubscriptions = dataPipe$.subscribe(observer);
     } else {
-      this.dataSubscription.add(dataPipe$.subscribe(observer));
+      this.dataSubscriptions.add(dataPipe$.subscribe(observer));
     }
   }
 
@@ -251,14 +251,9 @@ export abstract class BaseWidgetComponent {
    * @memberof BaseWidgetComponent
    */
   protected unsubscribeDataStream(): void {
-    if (this.dataSubscription !== undefined) {
-      this.dataSubscription.unsubscribe();
-      // Cleanup KIP's pathRegister
-      Object.keys(this.widgetProperties.config.paths).forEach(pathKey => {
-        this.DataService.unsubscribePath(this.widgetProperties.config.paths[pathKey].path);
-        }
-      );
-      this.dataSubscription = undefined;
+    if (this.dataSubscriptions) {
+      this.dataSubscriptions.unsubscribe();
+      this.dataSubscriptions = undefined;
       this.dataStream = undefined;
     }
   }
