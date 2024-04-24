@@ -379,7 +379,7 @@ export class DataService implements OnDestroy {
   }
 
   private setSelfUrn(value: string) {
-    if ((value != "" || value != null) && value != this._selfUrn) {
+    if (value !== "" || value !== null) {
       console.debug('[Signal K Data Service] Setting self to: ' + value);
       this._selfUrn = value;
     } else {
