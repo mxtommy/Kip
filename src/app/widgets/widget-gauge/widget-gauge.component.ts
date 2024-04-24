@@ -62,11 +62,10 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
     );
 
     this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      if (meta) {
-        this.meta = meta;
-        meta.zones && meta.zones?.forEach(zone => {
-          this.zones.push(zone);
-        });
+      this.meta = meta || null;
+      if (this.meta && this.meta.zones && this.meta.zones.length > 0) {
+        let zonesArray = this.meta.zones.map(zone => zone);
+        this.zones = zonesArray;
       }
     });
   }

@@ -76,6 +76,8 @@ export class ModalWidgetConfigComponent implements OnInit {
             fa.push(this.generateCtrlArray(ctrl));
           });
 
+        } else if (key == "displayScale") {
+          groups.addControl(key, this.generateFormGroups(formData[key], key));
         } else if (key == "paths") {
           if (this.widgetConfig.multiChildCtrls !== undefined) { // build as formArray if multi control type widget only
             this.isPathArray = true;

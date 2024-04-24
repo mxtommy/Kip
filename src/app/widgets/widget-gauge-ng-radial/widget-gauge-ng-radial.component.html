@@ -1,7 +1,8 @@
 <div class="ngRadialWrapper" #ngRadialWrapperDiv (resized)="onResized($event)">
   <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #radialGauge
     [options]="gaugeOptions"
-    [value]="dataValue"
+    [value]="normalizeDataValue"
+    [attr.value-text]="displayValue"
 
     font-title="arial"
     font-title-weight="bold"
@@ -13,7 +14,6 @@
     bar-stroke-width="0"
     bar-shadow="0"
     color-bar-stroke=""
-    value-text=""
     font-value="arial"
     font-value-weight="bold"
     value-text-shadow="false"

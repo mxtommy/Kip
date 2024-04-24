@@ -101,8 +101,18 @@ export interface IWidgetSvcConfig {
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */
   dataTimeout?: number;
-
-
+  /**
+   * This object represents the scale of a display, such as a gauge or chart. It defines the lower and upper bounds of the scale, and the type of scale to use.
+   *
+   * @property lower - The lower bound of the scale. This is the minimum value that can be represented on the display.
+   * @property upper - The upper bound of the scale. This is the maximum value that can be represented on the display.
+   * @property type - The type of scale to use. This can be 'linear', 'logarithmic', 'squareRoot', 'power' or null if no scale is used.
+   */
+  displayScale?: {
+    lower: number;
+    upper: number;
+    type: 'linear' | 'logarithmic' | 'squareRoot' | 'power' | null;
+  }
   /** Used by multiple Widget: number of fixed decimal places to display */
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */
@@ -236,26 +246,24 @@ export interface IDynamicControl {
   value?: any;
   /** The color of the control */
   color: string;
-
 }
 
 /**
- * Widget Zones data highlights interface. Used to defined how current path data
- * value should be displayed/highlighted with respect to the zones configuration.
+ * IDataHighlight interface
  *
- * @exports
- * @interface IDataHighlight
- * @extends {Array<{
- *   from : number;
- *   to : number;
- *   color: string;
- * }>}
+ * This interface represents a highlight zone on a gauge. Each highlight zone is
+ * defined by a starting point, an ending point, and a color. Zones definitions
+ * are defined in Signal K as part of metadata.
+ *
+ * @property from - The starting point of the highlight zone, represented as a normalized value between 0 and 1.
+ * @property to - The ending point of the highlight zone, also represented as a normalized value between 0 and 1.
+ * @property color - The color of the highlight zone, represented as a string. This can be any valid CSS color string.
  */
-export interface IDataHighlight extends Array<{
+export interface IDataHighlight {
   from: number;
   to: number;
   color: string;
-}> {};
+}
 
 /**
  * Defines all possible properties for data paths. Combines both

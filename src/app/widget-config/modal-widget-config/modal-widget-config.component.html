@@ -108,6 +108,7 @@
             </mat-checkbox>
 
             <!-- Gauge stuff -->
+            <!-- no scale gauge -->
             <mat-form-field *ngIf="(widgetConfig.minValue !== undefined)">
               <mat-label>Minimum Value</mat-label>
               <input matInput type="number" name="minValue" formControlName="minValue" placeholder="Enter or select number...">
@@ -116,6 +117,18 @@
               <mat-label>Maximum Value</mat-label>
               <input matInput type="number" name="maxValue" formControlName="maxValue" placeholder="Enter or select number...">
             </mat-form-field>
+            <!-- gauge with scale -->
+
+            <div formGroupName="displayScale" *ngIf="formMaster.get('displayScale')">
+              <mat-form-field>
+                <mat-label>Scale Start</mat-label>
+                <input matInput type="number" name="lower" formControlName="lower" placeholder="Enter number...">
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Scale End</mat-label>
+                <input matInput type="number" name="upper" formControlName="upper" placeholder="Enter number...">
+              </mat-form-field>
+            </div>
 
             <mat-form-field *ngIf="(widgetConfig.backgroundColor !== undefined) && (widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial')">
               <mat-label>Background Style</mat-label>
@@ -233,7 +246,7 @@
         <div class="tab-content">
 
             <p>
-              <label id="radial-type-label">Radial Gauge type:</label>
+              <label id="radial-type-label">Radial Gauge Type:</label>
               <mat-radio-group class="radio-group" aria-labelledby="radial-type-label" name="radialSize" formControlName="radialSize">
                 <mat-radio-button class="radio-button" value="measuring">Measuring</mat-radio-button>
                 <mat-radio-button class="radio-button" value="capacity">Capacity</mat-radio-button>
@@ -248,6 +261,22 @@
                 <mat-radio-button class="radio-button" [value]="true">0/90/180/270</mat-radio-button>
               </mat-radio-group>
             </p>
+            <p *ngIf="['measuring'].indexOf(formMaster.controls.radialSize.value) > -1">
+              <label id="radial-type-label">Scale Type:</label>
+              <div formGroupName="displayScale" *ngIf="formMaster.get('displayScale')">
+                <mat-form-field class="full-width">
+                  <mat-label>Scale Type</mat-label>
+                    <mat-select
+                      placeholder="Select Scale Type..."
+                      formControlName="type"
+                      name="type">
+                      <mat-option value="linear">Linear</mat-option>
+                      <mat-option value="logarithmic">Logarithmic</mat-option>
+                      <mat-option value="squareroot">Square Root</mat-option>
+                      <mat-option value="power">Power</mat-option>
+                    </mat-select>
+                </mat-form-field>
+              </div>
         </div>
       </mat-tab>
 

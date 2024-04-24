@@ -111,7 +111,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       this.gaugeOptions.highlights = [];
       this.gaugeOptions.highlightsWidth = 0;
     } else {
-      const gaugeZonesHighligh: IDataHighlight = [];
+      const gaugeZonesHighligh: IDataHighlight[] = [];
 
       // Sort zones based on lower value
       const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);

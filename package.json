@@ -44,6 +44,9 @@
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.3.4",
     "@angular/animations": "17.3.4",
@@ -90,6 +93,7 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.6.0",
     "lodash-es": "^4.17.21",
+    "ng-packagr": "^17.3.0",
     "protractor": "~7.0.0",
     "pwa-asset-generator": "^6.3.1",
     "rx-dom-html": "^7.0.3",

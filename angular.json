@@ -139,6 +139,39 @@
           }
         }
       }
+    },
+    "gaugeScales": {
+      "projectType": "library",
+      "root": "projects/gauge-scales",
+      "sourceRoot": "projects/gauge-scales/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/gauge-scales/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/gauge-scales/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/gauge-scales/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/gauge-scales/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
     }
   },
   "schematics": {
