@@ -265,9 +265,9 @@ export interface IDynamicControl {
  * defined by a starting point, an ending point, and a color. Zones definitions
  * are defined in Signal K as part of metadata.
  *
- * @property from - The starting point of the highlight zone, represented as a normalized value between 0 and 1.
- * @property to - The ending point of the highlight zone, also represented as a normalized value between 0 and 1.
- * @property color - The color of the highlight zone, represented as a string. This can be any valid CSS color string.
+ * @property from - The starting point of the highlight zone.
+ * @property to - The ending point of the highlight zone.
+ * @property color - The color of the highlight zone.
  */
 export interface IDataHighlight {
   from: number;

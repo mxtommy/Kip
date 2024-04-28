@@ -232,8 +232,30 @@
         </div>
       </mat-tab>
 
-      <!-- ng-canvas Radial gauges -->
-      @if (widgetConfig.gauge) {
+      <!-- ng-canvas Radial & Linear gauges -->
+      @if (widgetConfig.gauge.type == 'ngLinearVertical' || widgetConfig.gauge.type == 'ngLinearHorizontal') {
+        <mat-tab label="Settings" formGroupName="gauge">
+          <div class="tab-content widget-options-grid tab-content">
+            <mat-form-field class="options-grid-span2" appearance="outline" floatLabel="always">
+              <mat-label>Orientation</mat-label>
+              <mat-select
+                  placeholder="Select type..."
+                  formControlName="type"
+                  name="type">
+                  <mat-option value="ngLinearVertical">Vertical</mat-option>
+                  <mat-option value="ngLinearHorizontal">Horizontal</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <p>
+              <mat-checkbox
+                formControlName="enableTicks"
+                name="enableTicks">
+                  Display Ticks
+              </mat-checkbox>
+            </p>
+          </div>
+        </mat-tab>
+      } @else if (widgetConfig.gauge) {
         <mat-tab label="Settings" formGroupName="gauge">
           <div class="widget-options-grid tab-content">
             <mat-form-field class="options-grid-span2">
@@ -277,30 +299,6 @@
           </div>
         </mat-tab>
       }
-
-
-      <!-- ng-canvas Linear gauges -->
-      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'ngLinearVertical' || widgetConfig.gaugeType == 'ngLinearHorizontal'">
-        <div class="tab-content">
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-            <mat-label>Gauge Type</mat-label>
-            <mat-select
-                placeholder="Select type..."
-                formControlName="gaugeType"
-                name="gaugeType">
-                <mat-option value="ngLinearVertical">Vertical layout</mat-option>
-                <mat-option value="ngLinearHorizontal">Horizontal layout</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <p>
-            <mat-checkbox
-              formControlName="gaugeTicks"
-              name="gaugeTicks">
-                Display Gauge Ticks
-            </mat-checkbox>
-          </p>
-        </div>
-      </mat-tab>
 
       <!-- steel gauge -->
       <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'">
