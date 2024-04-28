@@ -210,13 +210,19 @@ export const DemoWidgetConfig: IWidgetConfig = {
                         "sampleTime": 500
                     }
                 },
-                "minValue": 9,
-                "maxValue": 15,
+                "displayScale": {
+                    "lower": 9,
+                    "upper": 15,
+                    "type": "linear"
+                },
+                "gauge": {
+                    "type": "simpleLinear",
+                    "unitLabelFormat": "full"
+                },
                 "numInt": 1,
                 "numDecimal": 2,
                 "gaugeType": "simpleLinear",
-                "gaugeUnitLabelFormat": "full",
-                "barColor": "warn",
+                "textColor": "warn",
                 "enableTimeout": false
             }
         },

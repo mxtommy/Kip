@@ -115,11 +115,14 @@ export interface IWidgetSvcConfig {
     type: TScaleType;
   }
 
+  /** Gauge type widget property bag */
   gauge?: {
     /** Optional. Type of gauge or layout preset options  */
     type?: string;
-    /** Optional. Common options for gauges */
+    /** Optional. Should gauge ticks be enabled */
     enableTicks?: boolean;
+    /** Optional. Units formatting rule name */
+    unitLabelFormat?: string;
     /** Optional. Used ny ngGauge when in compass mode */
     compassUseNumbers?: boolean
   }
@@ -158,8 +161,6 @@ export interface IWidgetSvcConfig {
 
   /** Used by multiple gauge Widget: defines the UI layout */
   gaugeType?: string;
-  /** Used by multiple gauge Widget */
-  gaugeUnitLabelFormat?: string;
   /** Used by multiple gauge Widget */
   gaugeTicks?: boolean;
   /** Used by multiple gauge Widget */

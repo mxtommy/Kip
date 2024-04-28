@@ -216,26 +216,24 @@
         </div>
       </mat-tab>
 <!-- Gauge stuff -->
-      <!-- Simple Linear gauge -->
-      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'simpleLinear'">
-        <div class="">
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-            <mat-label>Unit Label Options</mat-label>
-              <mat-select
-                placeholder="Select label format"
-                formControlName="gaugeUnitLabelFormat"
-                name="gaugeUnitLabelFormat">
-                <mat-option value="full">Full Label</mat-option>
-                <mat-option value="abr">First Letter Only</mat-option>
-              </mat-select>
-          </mat-form-field>
-        </div>
-      </mat-tab>
-
-      <!-- ng-canvas Radial & Linear gauges -->
-      @if (widgetConfig.gauge.type == 'ngLinearVertical' || widgetConfig.gauge.type == 'ngLinearHorizontal') {
+      @if (widgetConfig.gauge.type == 'simpleLinear') {
         <mat-tab label="Settings" formGroupName="gauge">
-          <div class="tab-content widget-options-grid tab-content">
+          <div class="tab-content widget-options-grid">
+            <mat-form-field class="options-grid-span2">
+              <mat-label>Unit Label Options</mat-label>
+                <mat-select
+                  placeholder="Select label format"
+                  formControlName="unitLabelFormat"
+                  name="unitLabelFormat">
+                  <mat-option value="full">Full Label</mat-option>
+                  <mat-option value="abr">First Letter Only</mat-option>
+                </mat-select>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+      } @else if (widgetConfig.gauge.type == 'ngLinearVertical' || widgetConfig.gauge.type == 'ngLinearHorizontal') {
+        <mat-tab label="Settings" formGroupName="gauge">
+          <div class="tab-content widget-options-grid">
             <mat-form-field class="options-grid-span2" appearance="outline" floatLabel="always">
               <mat-label>Orientation</mat-label>
               <mat-select
