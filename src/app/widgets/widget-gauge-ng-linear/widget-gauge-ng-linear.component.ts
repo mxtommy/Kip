@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Component, OnInit, OnChanges, OnDestroy, AfterContentInit, AfterViewInit } from '@angular/core';
+import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
@@ -71,15 +71,20 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.validateConfig();
+    this.setGaugeConfig();
+
+    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
+
+    this.gaugeOptions.height = gaugeSize.height;
+    if (this.isGaugeVertical == true) {
+      this.gaugeOptions.width = (gaugeSize.height * 0.30);
+    }
+    else {
+      this.gaugeOptions.width = gaugeSize.width;
+    }
   }
 
   ngAfterViewInit() {
-    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = Math.floor(gaugeSize.height * 0.88);
-    this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
-    this.setGaugeConfig();
-    this.linearGauge.update(this.gaugeOptions);
-
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.textValue = "--";
@@ -120,14 +125,16 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   onResized(event: ResizedEvent) {
-    this.gaugeOptions.height = event.newRect.height;
-    if (this.isGaugeVertical == true) {
-      this.gaugeOptions.width = (event.newRect.height * 0.30);
+    if (!event.isFirst) {
+      this.gaugeOptions.height = event.newRect.height;
+      if (this.isGaugeVertical == true) {
+        this.gaugeOptions.width = (event.newRect.height * 0.30);
+      }
+      else {
+        this.gaugeOptions.width = event.newRect.width;
+      }
+      this.linearGauge.update(this.gaugeOptions);
     }
-    else {
-      this.gaugeOptions.width = event.newRect.width;
-    }
-    this.linearGauge.update(this.gaugeOptions);
   }
 
   private setGaugeConfig() {
@@ -178,8 +185,11 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorValueText: this.theme.text,
       colorPlate: window.getComputedStyle(this.wrapper.nativeElement).backgroundColor,
       colorBar: this.theme.background,
+
       colorMajorTicks: this.theme.text,
       colorMinorTicks: this.theme.text,
+      colorNumbers: this.theme.text,
+
       colorNeedleEnd: "",
       colorNeedleShadowUp: "",
       colorNeedleShadowDown: "black",
@@ -223,7 +233,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         themePaletteDarkColor = this.theme.warnDark;
         break;
       case "nobar":
-        themePaletteColor = this.theme.background;
+        themePaletteColor = "";
         themePaletteDarkColor = this.theme.accentDark;
         break;
       default:
@@ -232,7 +242,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
     Object.assign(this.gaugeOptions, {
       colorBarProgress: themePaletteColor,
-      colorBarProgressEnd: themePaletteDarkColor,
+      colorBarProgressEnd: themePaletteColor,
       colorNeedle: themePaletteDarkColor,
       needleWidth: this.widgetProperties.config.textColor === "nobar" ? 20 : 5,
     });
@@ -240,6 +250,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   private setGaugeTypeOptions() {
     const isVertical = this.widgetProperties.config.gauge.type === 'ngLinearVertical';
+    this.isGaugeVertical = isVertical;  // Save for resize event
     const enableTicks = this.widgetProperties.config.gauge.enableTicks;
 
     const defaultOptions = {
@@ -252,7 +263,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       tickSide: enableTicks ? "right" : "",
       ticksWidth: enableTicks ? 8 : 0,
       ticksPadding: enableTicks ? 4 : 0,
-      strokeTicks: enableTicks,
+      strokeTicks: false,
       majorTicks: enableTicks ? [this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper] : [],
       numberSide: enableTicks ? "right" : "",
       numbersMargin: enableTicks ? 0 : 0,

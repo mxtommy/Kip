@@ -1,39 +1,7 @@
 @use "sass:math";
-.verticalLinearWrapper {
+.ngLinearWrapper {
   position: relative;
-  top: 3%;
-  height: 97%;
   width: 100%;
-
-  > .linearGauge {
-    position: absolute;
-    top:0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    text-align: center;
-  }
-
-}
-
-.horizontalLinearWrapper {
-  position: relative;
-  margin: 0px;
-  top: 47%;
-  -ms-transform: translateY(-47%);
-  transform: translateY(-47%);
-  &:before {
-    display:block;
-    content: "";
-    width: 100%;
-    padding-top: math.div(1, 4) * 97%;
-    margin-top: 3%;
-  }
-  > .linearGauge {
-    position: absolute;
-    top:0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-  }
-}
+  height: 100%;
+  text-align: center;
+ }
