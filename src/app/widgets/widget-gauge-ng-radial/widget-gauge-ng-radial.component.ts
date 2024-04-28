@@ -82,13 +82,13 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.validateConfig();
-  }
-
-  ngAfterViewInit(): void {
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = Math.floor(gaugeSize.height * 0.88);
     this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
     this.setGaugeConfig();
+  }
+
+  ngAfterViewInit(): void {
     this.radialGauge.update(this.gaugeOptions);
 
     this.observeDataStream('gaugePath', newValue => {
