@@ -1,3 +1,10 @@
+/**
+ * ng canvas gauge options should be set before ngViewInit for the gauge to be
+ * instantiated with the correct options.
+ *
+ * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
+ * instantiated gauge config.
+ */
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
