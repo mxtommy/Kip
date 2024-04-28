@@ -1,4 +1,4 @@
-import { TFormat, TPolicy } from './signalk-interfaces';
+import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
 
 export enum ControlType {
   toggle = 0,
@@ -80,6 +80,7 @@ export interface IPathArray {
  *
  */
 export interface IWidgetSvcConfig {
+  //TODO: retire old properties and cleanup needed
   /** The Widget's display label */
   displayName?: string;
   /** Set to True to limit all Widget's data paths selection of the configuration UI Paths panel to Self. ie. the user's vessel. Value of True will prevent listing of all Signal K known paths that come from buoy, towers, other vessels, etc. Else all Signal K know data will be listed for selection. Should be set to True unless you need non-self data paths such as monitoring remote vessels, etc. */
@@ -111,7 +112,16 @@ export interface IWidgetSvcConfig {
   displayScale?: {
     lower: number;
     upper: number;
-    type: 'linear' | 'logarithmic' | 'squareRoot' | 'power' | null;
+    type: TScaleType;
+  }
+
+  gauge?: {
+    /** Optional. Type of gauge or layout preset options  */
+    type?: string;
+    /** Optional. Common options for gauges */
+    enableTicks?: boolean;
+    /** Optional. Used ny ngGauge when in compass mode */
+    compassUseNumbers?: boolean
   }
   /** Used by multiple Widget: number of fixed decimal places to display */
   numDecimal?: number;

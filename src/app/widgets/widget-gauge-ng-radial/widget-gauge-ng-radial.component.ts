@@ -5,7 +5,7 @@ import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { normalizeDataToScaleType, generateScaleTypeTicks } from '../../utils/gaugeScales';
+import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
@@ -27,13 +27,13 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   private readonly ANIMATION_TARGET_PLATE:string = "plate";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
 
-  @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
-  @ViewChild('radialGauge', {static: true, read: RadialGauge}) public radialGauge: RadialGauge;
+  @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
+  @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
 
-  // Gauge value for display
-  public displayValue: number = 0;
-  // Gauge scale normalized value. Necessary for gauge range, ticks and highlights to display correctly (0 to 1 scale range)
-  public normalizeDataValue: number = 0;
+  // Gauge text value for value box rendering
+  public textValue: string = "--";
+  // Gauge value
+  public value: number = 0;
 
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
@@ -62,80 +62,72 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           sampleTime: 500
         }
       },
-      gaugeType: 'ngRadial',  // ngLinearVertical or ngLinearHorizontal
-      gaugeTicks: false,
-      radialSize: 'measuring', // capacity, measuring, marineCompass, baseplateCompass
       displayScale: {
         lower: 0,
         upper: 100,
         type: "linear"
       },
-      compassUseNumbers: false,
-      // minValue: 0,
-      // maxValue: 100,
+      gauge: {
+        type: 'measuring', // capacity, measuring, marineCompass, baseplateCompass
+        enableTicks: true,    // theme palette to select
+        compassUseNumbers: false
+      },
       numInt: 1,
       numDecimal: 0,
-      barColor: 'accent',     // theme palette to select
       enableTimeout: false,
+      textColor: "accent",
       dataTimeout: 5
     };
   }
 
   ngOnInit() {
     this.validateConfig();
-
-    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = Math.floor(gaugeSize.height * 0.88);
-    this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
-
-    this.gaugeOptions.highlights = [];
-    this.setGaugeConfig();
-
-    this.observeDataStream('gaugePath', newValue => {
-        if (newValue.data.value === null) {newValue.data.value = 0}
-        const oldValue = this.displayValue;
-        let temp: any = this.formatWidgetNumberValue(newValue.data.value);
-
-        if (oldValue != (temp as number)) {
-          this.displayValue = temp;
-          try {
-            this.normalizeDataValue = normalizeDataToScaleType(newValue.data.value, this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.displayScale.type);
-          } catch (error) {
-            console.error(`[ngGauge] Normalization data error: ${error.message}`);
-          }
-        }
-
-        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-        switch (newValue.state) {
-          case States.Emergency:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          case States.Alarm:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          case States.Warn:
-            this.gaugeOptions.colorValueText = this.theme.textWarnLight;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          default:
-            this.gaugeOptions.colorValueText = this.theme.text;
-            this.radialGauge.update(this.gaugeOptions);
-        }
-      }
-    );
-
-    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.radialSize == "measuring") {
-        this.setHighlights();
-      }
-    });
   }
 
   ngAfterViewInit(): void {
-  this.radialGauge.update(this.gaugeOptions);
+    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
+    this.gaugeOptions.height = Math.floor(gaugeSize.height * 0.88);
+    this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
+    this.setGaugeConfig();
+    this.radialGauge.update(this.gaugeOptions);
+
+    this.observeDataStream('gaugePath', newValue => {
+      if (!newValue.data) {
+        this.textValue = "--";
+        this.value = 0;
+      } else {
+        // Compound value to displayScale
+        this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+        // Format for value box
+        this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
+      }
+
+      // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+      switch (newValue.state) {
+        case States.Emergency:
+          this.gaugeOptions.colorValueText = this.theme.warnDark;
+          this.radialGauge.update(this.gaugeOptions);
+          break;
+        case States.Alarm:
+          this.gaugeOptions.colorValueText = this.theme.warnDark;
+          this.radialGauge.update(this.gaugeOptions);
+          break;
+        case States.Warn:
+          this.gaugeOptions.colorValueText = this.theme.textWarnLight;
+          this.radialGauge.update(this.gaugeOptions);
+          break;
+        default:
+          this.gaugeOptions.colorValueText = this.theme.text;
+          this.radialGauge.update(this.gaugeOptions);
+      }
+    });
+
+    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
+      this.meta = meta || null;
+      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.gauge.type == "measuring") {
+        this.setHighlights();
+      }
+    });
   }
 
   public onResized(event: ResizedEvent): void {
@@ -145,8 +137,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setGaugeConfig(): void {
-    // Set static gauge colors
     this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
+    this.gaugeOptions.highlights = [];
 
     this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal;
@@ -167,8 +159,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       "warn": { color: this.theme.warn, darkColor: this.theme.warnDark }
     };
 
-    if (themePalette[this.widgetProperties.config.barColor]) {
-      this.setGaugeOptions(themePalette[this.widgetProperties.config.barColor].color, themePalette[this.widgetProperties.config.barColor].darkColor);
+    if (themePalette[this.widgetProperties.config.textColor]) {
+      this.setGaugeOptions(themePalette[this.widgetProperties.config.textColor].color, themePalette[this.widgetProperties.config.textColor].darkColor);
 
       this.gaugeOptions.colorTitle = this.theme.text;
       this.gaugeOptions.colorUnits = this.theme.text;
@@ -189,11 +181,11 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
       this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
     } else {
-      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.barColor}`);
+      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.textColor}`);
     }
 
     // Radial gauge type
-    switch(this.widgetProperties.config.radialSize) {
+    switch(this.widgetProperties.config.gauge.type) {
       case "capacity":
         this.configureCapacityGauge();
         break;
@@ -264,26 +256,13 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private configureMeasuringGauge(): void {
-    let ticks = [];
-    try {
-      ticks = generateScaleTypeTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.displayScale.type);
-    } catch (error) {
-      console.error(`[ngGauge] Generate Scale Type Ticks error: ${error.message}`);
-    }
-    // normalize data to 0-1 range for gauge
-    let minValue = this.widgetProperties.config.displayScale.lower;
-    let maxValue = this.widgetProperties.config.displayScale.upper;
-    try {
-      minValue = normalizeDataToScaleType(minValue, this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.displayScale.type);
-      maxValue = normalizeDataToScaleType(maxValue, this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.displayScale.type);
-    } catch (error) {
-      console.error(`[ngGauge] Normalization data error: ${error.message}`);
-    }
+    const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+    this.gaugeOptions.minValue = scale.min;
+    this.gaugeOptions.maxValue = scale.max;
 
     this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     this.gaugeOptions.fontTitleSize = 20;
-    this.gaugeOptions.minValue = minValue;
-    this.gaugeOptions.maxValue = maxValue;
+
     this.gaugeOptions.barProgress = true;
     this.gaugeOptions.barWidth = 15;
 
@@ -294,12 +273,13 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.valueBoxStroke = 0;
     this.gaugeOptions.colorValueBoxBackground = "";
 
+    this.gaugeOptions.exactTicks = false;
+    this.gaugeOptions.majorTicks = scale.majorTicks;
+
+    this.gaugeOptions.minorTicks = 2;
     this.gaugeOptions.ticksAngle = 270;
     this.gaugeOptions.startAngle = 45;
-    this.gaugeOptions.exactTicks = false;
     this.gaugeOptions.strokeTicks = true;
-    this.gaugeOptions.majorTicks = ticks.map(tick => tick.original);
-    this.gaugeOptions.minorTicks = 2;
     this.gaugeOptions.numbersMargin = 3;
     this.gaugeOptions.fontNumbersSize = 15;
 
@@ -344,7 +324,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.startAngle = 180;
     this.gaugeOptions.exactTicks = false;
     this.gaugeOptions.strokeTicks = false;
-    this.gaugeOptions.majorTicks = this.widgetProperties.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
+    this.gaugeOptions.majorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
     this.gaugeOptions.numbersMargin = 3;
     this.gaugeOptions.fontNumbersSize = 15;
     this.gaugeOptions.minorTicks = 22;
@@ -365,10 +345,10 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.borderInnerWidth = this.BORDER_INNER_WIDTH;
     this.gaugeOptions.borderShadowWidth = 0;
 
-    if (this.widgetProperties.config.radialSize === "marineCompass") {
+    if (this.widgetProperties.config.gauge.type === "marineCompass") {
       this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_PLATE;
       this.gaugeOptions.useMinPath = true;
-    } else if (this.widgetProperties.config.radialSize === "baseplateCompass") {
+    } else if (this.widgetProperties.config.gauge.type === "baseplateCompass") {
       this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
       this.gaugeOptions.useMinPath = true;
     }
@@ -403,28 +383,24 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           color = "rgba(0,0,0,0)";
       }
 
-      // Normalize the lower and upper values
-      try {
-        lower = normalizeDataToScaleType(zone.lower, this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.displayScale.type);
-        upper = normalizeDataToScaleType(zone.upper, this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.displayScale.type);
-      } catch (error) {
-        console.error(`[ngGauge] Normalization data error: ${error.message}`);
-      }
+      lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, zone.lower);
+      upper =this.unitsService.convertToUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, zone.upper);
+
       // Skip zones that are completely outside the gauge range
-      if (upper < 0 || lower > 1) {
+      if (upper < this.widgetProperties.config.displayScale.lower || lower > this.widgetProperties.config.displayScale.upper) {
         continue;
       }
 
-      // If lower or upper are null, set them to minValue or maxValue
-      lower = lower !== null ? lower : 0;
-      upper = upper !== null ? upper : 1;
+      // If lower or upper are null, set them to displayScale min or max
+      lower = lower !== null ? lower : this.widgetProperties.config.displayScale.lower;
+      upper = upper !== null ? upper : this.widgetProperties.config.displayScale.upper;
 
-      // Ensure lower does not go below minValue
-      lower = Math.max(lower, 0);
+      // Ensure lower does not go below min
+      lower = Math.max(lower, this.widgetProperties.config.displayScale.lower);
 
-      // Ensure upper does not exceed maxValue
-      if (upper > 1) {
-        upper = 1;
+      // Ensure upper does not exceed max
+      if (upper > this.widgetProperties.config.displayScale.upper) {
+        upper = this.widgetProperties.config.displayScale.upper;
         gaugeZonesHighlight.push({from: lower, to: upper, color: color});
         break;
       }

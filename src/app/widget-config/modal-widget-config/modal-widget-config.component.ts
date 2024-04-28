@@ -19,7 +19,7 @@ import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-c
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { IAddNewPath, PathsOptionsComponent } from '../paths-options/paths-options.component';
+import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
 
@@ -78,7 +78,9 @@ export class ModalWidgetConfigComponent implements OnInit {
 
         } else if (key == "displayScale") {
           groups.addControl(key, this.generateFormGroups(formData[key], key));
-        } else if (key == "paths") {
+        } else if (key == "gauge") {
+          groups.addControl(key, this.generateFormGroups(formData[key], key));
+        }else if (key == "paths") {
           if (this.widgetConfig.multiChildCtrls !== undefined) { // build as formArray if multi control type widget only
             this.isPathArray = true;
             groups.addControl(key, this.fb.array([]));

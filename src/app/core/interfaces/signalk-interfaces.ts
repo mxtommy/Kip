@@ -21,9 +21,9 @@ export enum States {
 }
 
 const types = ["linear", "logarithmic", "squareroot", "power"] as ["linear", "logarithmic", "squareroot", "power"];
-export type TType = typeof types[number];
+export type TScaleType = typeof types[number];
 
-export enum Types {
+export enum ScaleTypes {
   Linear = "linear",
   Logarithmic = "logarithmic",
   Squareroot = "squareroot",
@@ -182,7 +182,7 @@ export interface ISkMetadata {
   displayScale?: {      //This object provides information regarding the recommended type and extent of the scale used for displaying values.
     lower?: number;
     upper?: number;
-    type: TType;
+    type: TScaleType;
     power?: number;
   }
   alertMethod?: TMethod[];
