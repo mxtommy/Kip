@@ -44,9 +44,6 @@
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
-  "dependencies": {
-    "tslib": "^2.3.0"
-  },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.3.4",
     "@angular/animations": "17.3.4",
@@ -101,7 +98,7 @@
     "sass": "^1.49.9",
     "screenfull": "^6.0.2",
     "ts-node": "^8.10.2",
-    "tslib": "^2.2.0",
+    "tslib": "^2.6.2",
     "tslint": "^6.1.3",
     "typescript": "^5.4.5",
     "zone.js": "~0.14.4"
