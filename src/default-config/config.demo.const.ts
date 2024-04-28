@@ -183,14 +183,19 @@ export const DemoWidgetConfig: IWidgetConfig = {
                         "sampleTime": 500
                     }
                 },
-                "gaugeType": "ngRadial",
-                "gaugeTicks": false,
-                "radialSize": "measuring",
-                "minValue": 0,
-                "maxValue": 10,
+                "displayScale": {
+                    "lower": 0,
+                    "upper": 10,
+                    "type": "linear"
+                },
+                "gauge": {
+                    "type": "measuring",
+                    "enableTicks": true,
+                    "compassUseNumbers": false
+                },
                 "numInt": 1,
-                "numDecimal": 1,
-                "barColor": "accent"
+                "numDecimal": 0,
+                "textColor": "accent"
             }
         },
         {
@@ -221,7 +226,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 2,
-                "gaugeType": "simpleLinear",
                 "textColor": "warn",
                 "enableTimeout": false
             }
@@ -328,15 +332,19 @@ export const DemoWidgetConfig: IWidgetConfig = {
                         "sampleTime": 500
                     }
                 },
-                "gaugeType": "ngRadial",
-                "gaugeTicks": false,
-                "radialSize": "baseplateCompass",
-                "compassUseNumbers": false,
-                "minValue": 0,
-                "maxValue": 100,
+                "displayScale": {
+                    "lower": 0,
+                    "upper": 360,
+                    "type": "linear"
+                },
+                "gauge": {
+                    "type": "baseplateCompass",
+                    "enableTicks": false,
+                    "compassUseNumbers": false
+                },
                 "numInt": 1,
                 "numDecimal": 0,
-                "barColor": "accent",
+                "textColor": "accent",
                 "enableTimeout": false
             }
         },

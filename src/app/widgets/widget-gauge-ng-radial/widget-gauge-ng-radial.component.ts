@@ -75,8 +75,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         type: "linear"
       },
       gauge: {
-        type: 'measuring', // capacity, measuring, marineCompass, baseplateCompass
-        enableTicks: true,    // theme palette to select
+        type: 'ngRadial', // capacity, measuring, marineCompass, baseplateCompass
+        subType: 'measuring', // capacity, measuring, marineCompass, baseplateCompass
+        enableTicks: true,
         compassUseNumbers: false
       },
       numInt: 1,
@@ -131,7 +132,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
     this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
       this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.gauge.type == "measuring") {
+      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
         this.setHighlights();
       }
     });
@@ -208,8 +209,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.textColor}`);
     }
 
-    // Radial gauge type
-    switch(this.widgetProperties.config.gauge.type) {
+    // Radial gauge subType
+    switch(this.widgetProperties.config.gauge.subType) {
       case "capacity":
         this.configureCapacityGauge();
         break;
@@ -369,10 +370,10 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.borderInnerWidth = this.BORDER_INNER_WIDTH;
     this.gaugeOptions.borderShadowWidth = 0;
 
-    if (this.widgetProperties.config.gauge.type === "marineCompass") {
+    if (this.widgetProperties.config.gauge.subType === "marineCompass") {
       this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_PLATE;
       this.gaugeOptions.useMinPath = true;
-    } else if (this.widgetProperties.config.gauge.type === "baseplateCompass") {
+    } else if (this.widgetProperties.config.gauge.subType === "baseplateCompass") {
       this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
       this.gaugeOptions.useMinPath = true;
     }

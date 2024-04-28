@@ -129,52 +129,55 @@
               <mat-label>Maximum Value</mat-label>
               <input matInput type="number" name="maxValue" formControlName="maxValue" placeholder="Enter or select number...">
             </mat-form-field>
+
             <!-- Steelgauge -->
-            <mat-form-field *ngIf="(widgetConfig.backgroundColor !== undefined) && (widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial')">
-              <mat-label>Background Style</mat-label>
-              <mat-select
-                placeholder="Select style..."
-                formControlName="backgroundColor"
-                name="backgroundColor">
-                <mat-option value='darkGray'>Dark Gray</mat-option>
-                <mat-option value='satinGray'>Satin Gray</mat-option>
-                <mat-option value='lightGray'>Light Gray</mat-option>
-                <mat-option value='white'>White</mat-option>
-                <mat-option value='black'>Black</mat-option>
-                <mat-option value='beige'>Beige</mat-option>
-                <mat-option value='brown'>Brown</mat-option>
-                <mat-option value='red'>Red</mat-option>
-                <mat-option value='green'>Green</mat-option>
-                <mat-option value='blue'>Blue</mat-option>
-                <mat-option value='anthracite'>Anthracite</mat-option>
-                <mat-option value='mud'>Mud</mat-option>
-                <mat-option value='punchedSheet'>Punched Sheet</mat-option>
-                <mat-option value='carbon'>Carbon</mat-option>
-                <mat-option value='stainless'>Stainless</mat-option>
-                <mat-option value='brushedMetal'>Brushed Metal</mat-option>
-                <mat-option value='brushedStainless'>Brushed Stainless</mat-option>
-                <mat-option value='turned'>Turned</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field *ngIf="(widgetConfig.backgroundColor !== undefined) && (widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial')">
-              <mat-label>Frame Style</mat-label>
-              <mat-select
-                placeholder="Select style..."
-                formControlName="frameColor"
-                name="frameColor">
-                <mat-option value='blackMetal'>Black Metal</mat-option>
-                <mat-option value='metal'>Metal</mat-option>
-                <mat-option value='shinyMetal'>Shiny Metal</mat-option>
-                <mat-option value='brass'>Brass</mat-option>
-                <mat-option value='steel'>Steel</mat-option>
-                <mat-option value='chrome'>Chrome</mat-option>
-                <mat-option value='gold'>Gold</mat-option>
-                <mat-option value='anthracite'>Anthracite</mat-option>
-                <mat-option value='tiltedGray'>Tilted Gray</mat-option>
-                <mat-option value='tiltedBlack'>Tilted Black</mat-option>
-                <mat-option value='glossyMetal'>Glossy Metal</mat-option>
-              </mat-select>
-            </mat-form-field>
+            @if (widgetConfig.gauge?.type == "steel") {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Background Style</mat-label>
+                <mat-select
+                  placeholder="Select style..."
+                  formControlName="backgroundColor"
+                  name="backgroundColor">
+                  <mat-option value='darkGray'>Dark Gray</mat-option>
+                  <mat-option value='satinGray'>Satin Gray</mat-option>
+                  <mat-option value='lightGray'>Light Gray</mat-option>
+                  <mat-option value='white'>White</mat-option>
+                  <mat-option value='black'>Black</mat-option>
+                  <mat-option value='beige'>Beige</mat-option>
+                  <mat-option value='brown'>Brown</mat-option>
+                  <mat-option value='red'>Red</mat-option>
+                  <mat-option value='green'>Green</mat-option>
+                  <mat-option value='blue'>Blue</mat-option>
+                  <mat-option value='anthracite'>Anthracite</mat-option>
+                  <mat-option value='mud'>Mud</mat-option>
+                  <mat-option value='punchedSheet'>Punched Sheet</mat-option>
+                  <mat-option value='carbon'>Carbon</mat-option>
+                  <mat-option value='stainless'>Stainless</mat-option>
+                  <mat-option value='brushedMetal'>Brushed Metal</mat-option>
+                  <mat-option value='brushedStainless'>Brushed Stainless</mat-option>
+                  <mat-option value='turned'>Turned</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Frame Style</mat-label>
+                <mat-select
+                  placeholder="Select style..."
+                  formControlName="faceColor"
+                  name="faceColor">
+                  <mat-option value='blackMetal'>Black Metal</mat-option>
+                  <mat-option value='metal'>Metal</mat-option>
+                  <mat-option value='shinyMetal'>Shiny Metal</mat-option>
+                  <mat-option value='brass'>Brass</mat-option>
+                  <mat-option value='steel'>Steel</mat-option>
+                  <mat-option value='chrome'>Chrome</mat-option>
+                  <mat-option value='gold'>Gold</mat-option>
+                  <mat-option value='anthracite'>Anthracite</mat-option>
+                  <mat-option value='tiltedGray'>Tilted Gray</mat-option>
+                  <mat-option value='tiltedBlack'>Tilted Black</mat-option>
+                  <mat-option value='glossyMetal'>Glossy Metal</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
           </div>
           <!-- end Gauge stuff-->
         </div>
@@ -216,7 +219,7 @@
         </div>
       </mat-tab>
 <!-- Gauge stuff -->
-      @if (widgetConfig.gauge.type == 'simpleLinear') {
+      @if (widgetConfig.gauge?.type == 'simpleLinear') {
         <mat-tab label="Settings" formGroupName="gauge">
           <div class="tab-content widget-options-grid">
             <mat-form-field class="options-grid-span2">
@@ -231,7 +234,7 @@
             </mat-form-field>
           </div>
         </mat-tab>
-      } @else if (widgetConfig.gauge.type == 'ngLinearVertical' || widgetConfig.gauge.type == 'ngLinearHorizontal') {
+      } @else if (widgetConfig.gauge?.type == 'ngLinear') {
         <mat-tab label="Settings" formGroupName="gauge">
           <div class="tab-content widget-options-grid">
             <mat-form-field class="options-grid-span2" appearance="outline" floatLabel="always">
@@ -253,22 +256,22 @@
             </p>
           </div>
         </mat-tab>
-      } @else if (widgetConfig.gauge) {
+      } @else if (widgetConfig.gauge?.type == 'ngRadial') {
         <mat-tab label="Settings" formGroupName="gauge">
           <div class="widget-options-grid tab-content">
             <mat-form-field class="options-grid-span2">
               <mat-label>Gauge Type</mat-label>
                 <mat-select
                   placeholder="Select Gauge Type..."
-                  formControlName="type"
-                  name="type">
+                  formControlName="subType"
+                  name="subType">
                   <mat-option value="measuring">Measuring</mat-option>
                   <mat-option value="capacity">Capacity</mat-option>
                   <mat-option value="marineCompass">Marine Compass</mat-option>
                   <mat-option value="baseplateCompass">Baseplate Compass</mat-option>
                 </mat-select>
             </mat-form-field>
-            @if (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.type) > -1) {
+            @if (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.subType) > -1) {
               <mat-form-field class="options-grid-span2">
                 <mat-label>Tick Labels</mat-label>
                 <select matNativeControl required
@@ -296,38 +299,43 @@
             } -->
           </div>
         </mat-tab>
+      } @else if (widgetConfig.gauge?.type == "steel") {
+        <mat-tab label="Settings" formGroupName="gauge">
+          <div class="widget-options-grid tab-content">
+            <mat-form-field class="options-grid-span2">
+              <mat-label>Gauge Type</mat-label>
+              <mat-select
+                  placeholder="Select type..."
+                  formControlName="subType"
+                  name="subType">
+                  <mat-option value="linear">Linear</mat-option>
+                  <mat-option value="radial">Radial</mat-option>
+              </mat-select>
+            </mat-form-field>
+              <p>
+                <mat-checkbox
+                  formControlName="digitalMeter"
+                  name="digitalMeter">
+                    Digital display
+                </mat-checkbox>
+            </p>
+            @if (formMaster.value.gauge.subType == 'radial') {
+              <mat-form-field class="options-grid-span2">
+                <mat-label>Dial Size</mat-label>
+                <mat-select
+                    placeholder="Select size..."
+                    formControlName="radialSize"
+                    name="radialSize">
+                    <mat-option value="quarter">1/4</mat-option>
+                    <mat-option value="half">1/2</mat-option>
+                    <mat-option value="three-quarter">3/4</mat-option>
+                    <mat-option value="full">Full</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
+          </div>
+        </mat-tab>
       }
-
-      <!-- steel gauge -->
-      <mat-tab label="Settings" *ngIf="widgetConfig.gaugeType == 'linear' || widgetConfig.gaugeType == 'radial'">
-        <div class="tab-content">
-          <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-            <mat-label>Gauge Type</mat-label>
-            <mat-select
-                placeholder="Select type..."
-                formControlName="gaugeType"
-                name="gaugeType">
-                <mat-option value="linear">Linear</mat-option>
-                <mat-option value="radial">Radial</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <p>
-              <mat-checkbox
-                formControlName="barGraph"
-                name="barGraph">
-                  Digital display
-              </mat-checkbox>
-          </p>
-          <p *ngIf="(formMaster.controls.gaugeType.value == 'radial')" >
-            <mat-radio-group *ngIf="formMaster.controls.gaugeType.value == 'radial'" name="radialSize" formControlName="radialSize">
-              <mat-radio-button value="quarter">1/4</mat-radio-button>
-              <mat-radio-button value="half">1/2</mat-radio-button>
-              <mat-radio-button value="three-quarter">3/4</mat-radio-button>
-              <mat-radio-button value="full">Full</mat-radio-button>
-            </mat-radio-group>
-          </p>
-        </div>
-      </mat-tab>
 <!-- end Gauge stuff-->
 
 <!-- PUT Requests -->

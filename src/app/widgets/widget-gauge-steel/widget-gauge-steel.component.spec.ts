@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { WidgetGaugeComponent } from './widget-gauge.component';
+import { WidgetGaugeComponent } from './widget-gauge-steel.component';
 
 describe('WidgetGaugeComponent', () => {
   let component: WidgetGaugeComponent;

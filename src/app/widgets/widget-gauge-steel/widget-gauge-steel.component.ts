@@ -1,4 +1,4 @@
-import { AppSettingsService } from './../../core/services/app-settings.service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
@@ -6,9 +6,9 @@ import { Subscription } from 'rxjs';
 import { ISkMetadata } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
-    selector: 'app-widget-gauge',
-    templateUrl: './widget-gauge.component.html',
-    styleUrls: ['./widget-gauge.component.css'],
+    selector: 'app-widget-gauge-steel',
+    templateUrl: './widget-gauge-steel.component.html',
+    styleUrls: ['./widget-gauge-steel.component.css'],
     standalone: true,
     imports: [GaugeSteelComponent]
 })
@@ -38,14 +38,23 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
           sampleTime: 500
         }
       },
-      gaugeType: 'linear',
-      barGraph: false,    // if linear/radial, is it digital?
-      radialSize: 'full',
-      minValue: 0,
-      maxValue: 100,
-      rotateFace: false,
-      backgroundColor: 'carbon',
-      frameColor: 'anthracite',
+      displayScale: {
+        type: 'linear',
+        lower: 0,
+        upper: 100
+      },
+      gauge: {
+        type: 'steel',
+        subType: 'radial',
+        backgroundColor: 'carbon',
+        faceColor: 'anthracite',
+        radialSize: 'full',
+        rotateFace: false,
+        digitalMeter: false,
+      },
+      textColor: 'accent',
+      // numInt: 1,
+      // numDecimal: 1,
       enableTimeout: false,
       dataTimeout: 5
     };

@@ -80,7 +80,6 @@ export interface IPathArray {
  *
  */
 export interface IWidgetSvcConfig {
-  //TODO: retire old properties and cleanup needed
   /** The Widget's display label */
   displayName?: string;
   /** Set to True to limit all Widget's data paths selection of the configuration UI Paths panel to Self. ie. the user's vessel. Value of True will prevent listing of all Signal K known paths that come from buoy, towers, other vessels, etc. Else all Signal K know data will be listed for selection. Should be set to True unless you need non-self data paths such as monitoring remote vessels, etc. */
@@ -117,14 +116,26 @@ export interface IWidgetSvcConfig {
 
   /** Gauge type widget property bag */
   gauge?: {
-    /** Optional. Type of gauge or layout preset options  */
-    type?: string;
+    /** Optional. Gauge component type */
+    type: string;
+    /** Optional. Gauge subType or layout preset options */
+    subType?: string;
     /** Optional. Should gauge ticks be enabled */
     enableTicks?: boolean;
     /** Optional. Units formatting rule name */
     unitLabelFormat?: string;
     /** Optional. Used ny ngGauge when in compass mode */
-    compassUseNumbers?: boolean
+    compassUseNumbers?: boolean;
+    /** Optional. Used by GaugeSteel to set face style */
+    backgroundColor?: string;
+    /** Optional. Used by GaugeSteel to set face style */
+    faceColor?: string;
+    /** Optional. Used by GaugeSteel to set radial faceplate size */
+    radialSize?: string;
+    /** Optional. Used by GaugeSteel to set faceplate rotation */
+    rotateFace?: boolean;
+    /** Optional. GaugeSteel digital or bar */
+    digitalMeter?: boolean;
   }
   /** Used by multiple Widget: number of fixed decimal places to display */
   numDecimal?: number;
@@ -139,6 +150,8 @@ export interface IWidgetSvcConfig {
   /** Used by multiple Widget to filter maximum data range to display. */
   maxValue?: number;
 
+  /** To retire. Used by Autopilot */
+  barColor?: string;
   /** Used by date Widget: configurable display format of the date/time value */
   dateFormat?: string;
   /** Used by date Widget: Time zone value to apply to the data/time value */
@@ -159,28 +172,10 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Used by multiple gauge Widget: defines the UI layout */
-  gaugeType?: string;
-  /** Used by multiple gauge Widget */
-  gaugeTicks?: boolean;
-  /** Used by multiple gauge Widget */
-  barGraph?: boolean;
-  /** Used by multiple gauge Widget */
-  backgroundColor?: string;
-  /** Used by multiple gauge Widget */
-  frameColor?: string;
-  /** Used by multiple gauge Widget */
-  barColor?: string;
-  /** Used by multiple gauge Widget */
+  /** Property of selected theme color */
   textColor?: string;
   /** Used by multiple gauge Widget */
-  radialSize?: string;
-  /** Used by multiple gauge Widget: Should the needle or the faceplate rotate */
-  rotateFace?: boolean;
-  /** Used by Autopilot Widget: Should the Widget start automatically on load or should the user press Power/On. */
   autoStart?: boolean;
-  /** Used by multiple gauge Widget: Use cardinal points or angle numbers as direction labels */
-  compassUseNumbers?: boolean;
 
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;

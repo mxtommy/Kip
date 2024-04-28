@@ -51,7 +51,7 @@ export const SteelFrameColors = {
 export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
   @Input('widgetUUID') widgetUUID: string;
-  @Input('gaugeType') gaugeType: string; // linear or radial
+  @Input('subType') subType: string; // linear or radial
   @Input('barGauge') barGauge: boolean;
   @Input('radialSize') radialSize?: string;
   @Input('backgroundColor') backgroundColor?: string;
@@ -73,21 +73,20 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   gaugeOptions = {};
   private resizeTimer = null;
 
-  // common options for both radial and linear
-
   sections;
 
-  constructor(private unitsService: UnitsService) { }
+  constructor(private unitsService: UnitsService) {
+  }
 
   ngAfterViewInit() {
-    if (!this.gaugeType) { this.gaugeType = 'radial'; }
+    if (!this.subType) { this.subType = 'radial'; }
   }
 
   buildOptions() {
     this.gaugeOptions = {};
 
     //size
-    if (this.gaugeType == 'radial') {
+    if (this.subType == 'radial') {
       this.gaugeOptions['size'] = Math.min(this.gaugeHeight, this.gaugeWidth); // radial takes only size as both the same
     } else {
       this.gaugeOptions['width'] = this.gaugeWidth;
@@ -103,20 +102,20 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
     this.gaugeOptions['unitString'] = this.units;
 
     // Radial Arc size
-    if (this.gaugeType == 'radial') {
+    if (this.subType == 'radial') {
       switch(this.radialSize) {
         case 'quarter':
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE1;
+          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE1;
           break;
         case 'half':
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE2;
+          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE2;
           break;
         case 'three-quarter':
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE3;
+          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE3;
           break;
         case 'full':
         default:
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE4;
+          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE4;
       }
     }
 
@@ -213,13 +212,13 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
     this.gaugeStarted = true;
     this.buildOptions();
         // Initializing gauges
-    if (this.gaugeType == 'radial') {
+    if (this.subType == 'radial') {
       if (this.barGauge) {
         this.gauge = new steelseries.RadialBargraph(this.widgetUUID, this.gaugeOptions);
       } else {
         this.gauge = new steelseries.Radial(this.widgetUUID, this.gaugeOptions);
       }
-    } else if (this.gaugeType == 'linear') {
+    } else if (this.subType == 'linear') {
        if (this.barGauge) {
         this.gauge = new steelseries.LinearBargraph(this.widgetUUID, this.gaugeOptions);
       } else {
@@ -257,8 +256,8 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
       }
     }
 
-    if (changes.gaugeType) {
-      if ( !changes.gaugeType.firstChange) {
+    if (changes.subType) {
+      if ( !changes.subType.firstChange) {
         this.startGauge();//reset
       }
     }
