@@ -1,11 +1,18 @@
+/**
+ * ng canvas gauge options should be set before ngViewInit for the gauge to be
+ * instantiated with the correct options.
+ *
+ * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
+ * instantiated gauge config.
+ */
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
-import { AppSettingsService } from '../../core/services/app-settings.service';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
@@ -16,11 +23,25 @@ import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
     imports: [AngularResizeEventModule, GaugesModule]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
-  @ViewChild('radialGauge', {static: true, read: RadialGauge}) public radialGauge: RadialGauge;
+  // Gauge option setting constant
+  private readonly DEG: string = "deg";
+  private readonly LINE: string = "line";
+  private readonly NEEDLE_START: number = 75;
+  private readonly NEEDLE_END: number = 99;
+  private readonly NEEDLE_CIRCLE_SIZE: number = 2;
+  private readonly BORDER_MIDDLE_WIDTH: number = 2;
+  private readonly BORDER_INNER_WIDTH: number = 2;
+  private readonly ANIMATION_TARGET_PLATE:string = "plate";
+  private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
+  private readonly WIDGET_SIZE_FACTOR: number = 0.97;
 
-  // main gauge value variable
-  public dataValue = 0;
+  @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
+  @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
+
+  // Gauge text value for value box rendering
+  public textValue: string = "--";
+  // Gauge value
+  public value: number = 0;
 
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
@@ -32,7 +53,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   private meta: ISkMetadata = null;
   private metaSub: Subscription;
 
-  constructor(private appSettingsService: AppSettingsService) {
+  constructor() {
     super();
 
     this.defaultConfig = {
@@ -49,137 +70,107 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           sampleTime: 500
         }
       },
-      gaugeType: 'ngRadial',  //ngLinearVertical or ngLinearHorizontal
-      gaugeTicks: false,
-      radialSize: 'measuring',
-      compassUseNumbers: false,
-      minValue: 0,
-      maxValue: 100,
+      displayScale: {
+        lower: 0,
+        upper: 100,
+        type: "linear"
+      },
+      gauge: {
+        type: 'ngRadial', // capacity, measuring, marineCompass, baseplateCompass
+        subType: 'measuring', // capacity, measuring, marineCompass, baseplateCompass
+        enableTicks: true,
+        compassUseNumbers: false
+      },
       numInt: 1,
       numDecimal: 0,
-      barColor: 'accent',     // theme palette to select
       enableTimeout: false,
+      textColor: "accent",
       dataTimeout: 5
     };
   }
 
   ngOnInit() {
     this.validateConfig();
-
-    let gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = Math.floor(gaugeSize.height * 0.88);
-    this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
-
+    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
+    this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
+    this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
     this.setGaugeConfig();
-    this.setHighlights();
+  }
+
+  ngAfterViewInit(): void {
+    this.radialGauge.update(this.gaugeOptions);
 
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.data.value === null) {newValue.data.value = 0}
-        let oldValue = this.dataValue;
-        let temp: any = this.formatWidgetNumberValue(newValue.data.value);
-
-        if (oldValue != (temp as number)) {
-          this.dataValue = temp;
-        }
-        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-        switch (newValue.state) {
-          case States.Emergency:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          case States.Alarm:
-            this.gaugeOptions.colorValueText = this.theme.warnDark;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          case States.Warn:
-            this.gaugeOptions.colorValueText = this.theme.textWarnLight;
-            this.radialGauge.update(this.gaugeOptions);
-            break;
-          default:
-            this.gaugeOptions.colorValueText = this.theme.text;
-            this.radialGauge.update(this.gaugeOptions);
-        }
+      if (!newValue.data) {
+        this.textValue = "--";
+        this.value = 0;
+      } else {
+        // Compound value to displayScale
+        this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+        // Format for value box
+        this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
-    );
 
-    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      if (meta) {
-        this.meta = meta;
-        meta.zones && this.setHighlights();
+      // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+      switch (newValue.state) {
+        case States.Emergency:
+          this.gaugeOptions.colorValueText = this.theme.warnDark;
+          this.radialGauge.update(this.gaugeOptions);
+          break;
+        case States.Alarm:
+          this.gaugeOptions.colorValueText = this.theme.warnDark;
+          this.radialGauge.update(this.gaugeOptions);
+          break;
+        case States.Warn:
+          this.gaugeOptions.colorValueText = this.theme.textWarnLight;
+          this.radialGauge.update(this.gaugeOptions);
+          break;
+        default:
+          this.gaugeOptions.colorValueText = this.theme.text;
+          this.radialGauge.update(this.gaugeOptions);
       }
     });
-   }
 
-   ngAfterViewInit(): void {
-    this.radialGauge.update(this.gaugeOptions);
-   }
+    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
+      this.meta = meta || null;
+      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
+        this.setHighlights();
+      }
+    });
+  }
 
   public onResized(event: ResizedEvent): void {
-    this.gaugeOptions.height = Math.floor(event.newRect.height * 0.88);
-    this.gaugeOptions.width = Math.floor(event.newRect.width * 0.88);
+    this.gaugeOptions.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
+    this.gaugeOptions.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
     this.radialGauge.update(this.gaugeOptions);
   }
 
-  private setGaugeConfig(): void{
-    // Zones color variables
-    let themePaletteColor = "";
-    let themePaletteDarkColor = "";
-
-    // Set static gauge colors
+  private setGaugeConfig(): void {
     this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
-    this.gaugeOptions.colorTitle = this.theme.text;
-    this.gaugeOptions.colorUnits = this.theme.text;
-    this.gaugeOptions.colorValueText = this.theme.text;
+    this.gaugeOptions.highlights = [];
 
-    this.colorStrokeTicks = this.theme.text; // missing property in gaugeOptions
-    this.gaugeOptions.colorMinorTicks = this.theme.text;
-    this.gaugeOptions.colorNumbers = this.theme.text;
-
-    this.gaugeOptions.colorMajorTicks = this.theme.text;
-
-    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-    this.gaugeOptions.colorBar = this.theme.background;
-    this.gaugeOptions.colorNeedleShadowUp = "";
-    this.gaugeOptions.colorNeedleShadowDown = "black";
-    this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
-
-    // Set Theme related colors
-    switch (this.widgetProperties.config.barColor) {
-      case "primary":
-        themePaletteColor = this.theme.primary;
-        themePaletteDarkColor = this.theme.primaryDark;
-        this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      case "accent":
-        themePaletteColor = this.theme.accent;
-        themePaletteDarkColor = this.theme.accentDark;
-        this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      case "warn":
-        themePaletteColor = this.theme.warn;
-        themePaletteDarkColor = this.theme.warnDark;
-        this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-        this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-        this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
-        break;
-
-      default:
-        break;
-    }
+    this.gaugeOptions.fontTitle="arial";
+    this.gaugeOptions.fontTitleWeight="bold";
+    this.gaugeOptions.fontUnits="arial";
+    this.gaugeOptions.fontUnitsSize=25;
+    this.gaugeOptions.fontUnitsWeight="normal";
+    this.gaugeOptions.colorBorderOuter="red";
+    this.gaugeOptions.colorBorderOuterEnd="green";
+    this.gaugeOptions.barStrokeWidth=0;
+    this.gaugeOptions.barShadow=0;
+    this.gaugeOptions.colorBarStroke="";
+    this.gaugeOptions.fontValue="arial";
+    this.gaugeOptions.fontValueWeight="bold";
+    this.gaugeOptions.valueTextShadow=false;
+    this.gaugeOptions.colorValueBoxShadow="";
+    this.gaugeOptions.fontNumbers="arial";
+    this.gaugeOptions.fontNumbersWeight="bold";
 
     this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal;
     this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
     this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
+    this.gaugeOptions.highlightsWidth = 0;
 
     this.gaugeOptions.animation = true;
     this.gaugeOptions.animateOnInit = false;
@@ -187,336 +178,265 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.animationRule = "linear";
     this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 50; // prevent data and animation delay collisions
 
-    // Radial gauge type
-    switch(this.widgetProperties.config.radialSize) {
+     // Set Theme related colors
+    const themePalette = {
+      "text": { color: this.theme.text, darkColor: this.theme.text },
+      "primary": { color: this.theme.primary, darkColor: this.theme.primaryDark },
+      "accent": { color: this.theme.accent, darkColor: this.theme.accentDark },
+      "warn": { color: this.theme.warn, darkColor: this.theme.warnDark }
+    };
+
+    if (themePalette[this.widgetProperties.config.textColor]) {
+      this.setGaugeOptions(themePalette[this.widgetProperties.config.textColor].color, themePalette[this.widgetProperties.config.textColor].darkColor);
+
+      this.gaugeOptions.colorTitle = this.theme.textDark;
+      this.gaugeOptions.colorUnits = this.theme.text;
+      this.gaugeOptions.colorValueText = this.theme.text;
+
+      this.colorStrokeTicks = this.theme.text; // missing property in gaugeOptions
+      this.gaugeOptions.colorMinorTicks = this.theme.text;
+      this.gaugeOptions.colorNumbers = this.theme.text;
+
+      this.gaugeOptions.colorMajorTicks = this.theme.text;
+
+      this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
+      this.gaugeOptions.colorBar = this.theme.background;
+      this.gaugeOptions.colorNeedleShadowUp = "";
+      this.gaugeOptions.colorNeedleShadowDown = "black";
+      this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
+      this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
+      this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
+      this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
+    } else {
+      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.textColor}`);
+    }
+
+    // Radial gauge subType
+    switch(this.widgetProperties.config.gauge.subType) {
       case "capacity":
-        this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
-        this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks; always drawing first tick and using color="" does not work
-        this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
-        this.gaugeOptions.fontTitleSize = 60;
-        this.gaugeOptions.minValue = this.widgetProperties.config.minValue;
-        this.gaugeOptions.maxValue = this.widgetProperties.config.maxValue;
-        this.gaugeOptions.barProgress = true;
-        this.gaugeOptions.barWidth = 15;
-
-        this.gaugeOptions.valueBox = true;
-        this.gaugeOptions.fontValueSize = 110;
-        this.gaugeOptions.valueBoxWidth = 100;
-        this.gaugeOptions.valueBoxBorderRadius = 0;
-        this.gaugeOptions.valueBoxStroke = 0;
-        this.gaugeOptions.colorValueBoxBackground = "";
-
-        this.gaugeOptions.ticksAngle = 360;
-        this.gaugeOptions.startAngle = 180;
-        this.gaugeOptions.exactTicks = true;
-        this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = [];
-        this.gaugeOptions.minorTicks = 0;
-        this.gaugeOptions.numbersMargin = 0;
-        this.gaugeOptions.fontNumbersSize = 0;
-
-        this.gaugeOptions.needle = true;
-        this.gaugeOptions.needleType = "line";
-        this.gaugeOptions.needleWidth = 2;
-        this.gaugeOptions.needleShadow = false;
-        this.gaugeOptions.needleStart = 80;
-        this.gaugeOptions.needleEnd = 95;
-        this.gaugeOptions.needleCircleSize = 1;
-        this.gaugeOptions.needleCircleInner = false;
-        this.gaugeOptions.needleCircleOuter = false;
-
-        this.gaugeOptions.borders = true;
-        this.gaugeOptions.borderOuterWidth = 0;
-        this.gaugeOptions.borderMiddleWidth = 2;
-        this.gaugeOptions.borderInnerWidth = 2;
-        this.gaugeOptions.borderShadowWidth = 0;
-
-        this.gaugeOptions.animationTarget = "needle";
-        this.gaugeOptions.useMinPath = false;
+        this.configureCapacityGauge();
         break;
-
       case "measuring":
-        this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
-        let [minValue, maxValue, ticksArray]= this.calculateMajorTicks(this.widgetProperties.config.minValue, this.widgetProperties.config.maxValue);
-
-        this.gaugeOptions.fontTitleSize = 20;
-        this.gaugeOptions.minValue = minValue;
-        this.gaugeOptions.maxValue = maxValue;
-        this.gaugeOptions.barProgress = true;
-        this.gaugeOptions.barWidth = 15;
-
-        this.gaugeOptions.valueBox = true;
-        this.gaugeOptions.fontValueSize = 60;
-        this.gaugeOptions.valueBoxWidth = 100;
-        this.gaugeOptions.valueBoxBorderRadius = 0;
-        this.gaugeOptions.valueBoxStroke = 0;
-        this.gaugeOptions.colorValueBoxBackground = "";
-
-        this.gaugeOptions.ticksAngle = 270;
-        this.gaugeOptions.startAngle = 45;
-        this.gaugeOptions.exactTicks = false;
-        this.gaugeOptions.strokeTicks = true;
-        this.gaugeOptions.majorTicks = ticksArray;
-        this.gaugeOptions.minorTicks = 2;
-        this.gaugeOptions.numbersMargin = 3;
-        this.gaugeOptions.fontNumbersSize = 15;
-
-        this.gaugeOptions.needle = true;
-        this.gaugeOptions.needleType = "line";
-        this.gaugeOptions.needleWidth = 2;
-        this.gaugeOptions.needleShadow = false;
-        this.gaugeOptions.needleStart = 0;
-        this.gaugeOptions.needleEnd = 95;
-        this.gaugeOptions.needleCircleSize = 10;
-        this.gaugeOptions.needleCircleInner = false;
-        this.gaugeOptions.needleCircleOuter = false;
-
-        this.gaugeOptions.borders = false;
-        this.gaugeOptions.borderOuterWidth = 0;
-        this.gaugeOptions.borderMiddleWidth = 0;
-        this.gaugeOptions.borderInnerWidth = 0;
-        this.gaugeOptions.borderShadowWidth = 0;
-
-        this.gaugeOptions.animationTarget = "needle";
-        this.gaugeOptions.useMinPath = false;
+        this.configureMeasuringGauge();
         break;
-
       case "marineCompass":
-        // override gauge config min/max/unit to make them compatible for 360 circular rotation
-        this.gaugeOptions.minValue = 0;
-        this.gaugeOptions.maxValue = 360;
-        this.gaugeOptions.units = this.widgetProperties.config.paths["gaugePath"].convertUnitTo = "deg";
-
-        this.gaugeOptions.fontTitleSize = 60;
-        this.gaugeOptions.barProgress = false;
-        this.gaugeOptions.barWidth = 0;
-
-        this.gaugeOptions.valueBox = true
-        this.gaugeOptions.fontValueSize = 50;
-        this.gaugeOptions.valueBoxWidth = 0;
-        this.gaugeOptions.valueBoxBorderRadius = 5;
-        this.gaugeOptions.valueBoxStroke = 0;
-        this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
-
-        this.gaugeOptions.ticksAngle = 360;
-        this.gaugeOptions.startAngle = 180;
-        this.gaugeOptions.exactTicks = false;
-        this.gaugeOptions.strokeTicks = false;
-
-        this.gaugeOptions.majorTicks = this.widgetProperties.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
-        this.gaugeOptions.numbersMargin = 3;
-        this.gaugeOptions.fontNumbersSize = 15;
-        this.gaugeOptions.minorTicks = 22;
-
-        this.gaugeOptions.needle = true;
-        this.gaugeOptions.needleType = "line";
-        this.gaugeOptions.needleWidth = 3;
-        this.gaugeOptions.needleShadow = false;
-        this.gaugeOptions.needleStart = 75;
-        this.gaugeOptions.needleEnd = 99;
-        this.gaugeOptions.needleCircleSize = 2;
-        this.gaugeOptions.needleCircleInner = false;
-        this.gaugeOptions.needleCircleOuter = false;
-
-        this.gaugeOptions.borders = true;
-        this.gaugeOptions.borderOuterWidth = 0;
-        this.gaugeOptions.borderMiddleWidth = 2;
-        this.gaugeOptions.borderInnerWidth = 2;
-        this.gaugeOptions.borderShadowWidth = 0;
-
-        this.gaugeOptions.animationTarget = "plate";
-        this.gaugeOptions.useMinPath = true;
+        this.configureCompassGauge();
         break;
-
       case "baseplateCompass":
-        // override gauge config min/max/unit to make them compatible for 360 circular rotation
-        this.gaugeOptions.minValue = 0;
-        this.gaugeOptions.maxValue = 360;
-        this.gaugeOptions.units = this.widgetProperties.config.paths["gaugePath"].convertUnitTo = "deg";
-
-        this.gaugeOptions.fontTitleSize = 60;
-        this.gaugeOptions.barProgress = false;
-        this.gaugeOptions.barWidth = 0;
-
-        this.gaugeOptions.valueBox = true
-        this.gaugeOptions.fontValueSize = 50;
-        this.gaugeOptions.valueBoxWidth = 0;
-        this.gaugeOptions.valueBoxBorderRadius = 5;
-        this.gaugeOptions.valueBoxStroke = 0;
-        this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
-
-        this.gaugeOptions.ticksAngle = 360;
-        this.gaugeOptions.startAngle = 180;
-        this.gaugeOptions.exactTicks = false;
-        this.gaugeOptions.strokeTicks = false;
-        this.gaugeOptions.majorTicks = this.widgetProperties.config.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
-        this.gaugeOptions.numbersMargin = 3;
-        this.gaugeOptions.fontNumbersSize = 15;
-        this.gaugeOptions.minorTicks = 22;
-
-        this.gaugeOptions.needle = true;
-        this.gaugeOptions.needleType = "line";
-        this.gaugeOptions.needleWidth = 3;
-        this.gaugeOptions.needleShadow = false;
-        this.gaugeOptions.needleStart = 75;
-        this.gaugeOptions.needleEnd = 99;
-        this.gaugeOptions.needleCircleSize = 2;
-        this.gaugeOptions.needleCircleInner = false;
-        this.gaugeOptions.needleCircleOuter = false;
-
-        this.gaugeOptions.borders = true;
-        this.gaugeOptions.borderOuterWidth = 0;
-        this.gaugeOptions.borderMiddleWidth = 2;
-        this.gaugeOptions.borderInnerWidth = 2;
-        this.gaugeOptions.borderShadowWidth = 0;
-
-        this.gaugeOptions.animationTarget = "needle";
-        this.gaugeOptions.useMinPath = true;
+        this.configureCompassGauge();
         break;
-
       default:
         break;
     }
   }
 
+  private setGaugeOptions(themePaletteColor: string, themePaletteDarkColor: string) {
+    this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
+    this.gaugeOptions.colorNeedle = themePaletteDarkColor;
+    this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
+  }
+
+  private configureCapacityGauge(): void {
+    this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
+    this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks; always drawing first tick and using color="" does not work
+    this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
+    this.gaugeOptions.fontTitleSize = 60;
+    this.gaugeOptions.minValue = this.widgetProperties.config.displayScale.lower;
+    this.gaugeOptions.maxValue = this.widgetProperties.config.displayScale.upper;
+    this.gaugeOptions.barProgress = true;
+    this.gaugeOptions.barWidth = 15;
+
+    this.gaugeOptions.valueBox = true;
+    this.gaugeOptions.fontValueSize = 110;
+    this.gaugeOptions.valueBoxWidth = 100;
+    this.gaugeOptions.valueBoxBorderRadius = 0;
+    this.gaugeOptions.valueBoxStroke = 0;
+    this.gaugeOptions.colorValueBoxBackground = "";
+
+    this.gaugeOptions.ticksAngle = 360;
+    this.gaugeOptions.startAngle = 180;
+    this.gaugeOptions.exactTicks = true;
+    this.gaugeOptions.strokeTicks = false;
+    this.gaugeOptions.majorTicks = [];
+    this.gaugeOptions.minorTicks = 0;
+    this.gaugeOptions.numbersMargin = 0;
+    this.gaugeOptions.fontNumbersSize = 0;
+
+    this.gaugeOptions.needle = true;
+    this.gaugeOptions.needleType = this.LINE;
+    this.gaugeOptions.needleWidth = 2;
+    this.gaugeOptions.needleShadow = false;
+    this.gaugeOptions.needleStart = 80;
+    this.gaugeOptions.needleEnd = 95;
+    this.gaugeOptions.needleCircleSize = 1;
+    this.gaugeOptions.needleCircleInner = false;
+    this.gaugeOptions.needleCircleOuter = false;
+
+    this.gaugeOptions.borders = true;
+    this.gaugeOptions.borderOuterWidth = 0;
+    this.gaugeOptions.borderMiddleWidth = 2;
+    this.gaugeOptions.borderInnerWidth = 2;
+    this.gaugeOptions.borderShadowWidth = 0;
+
+    this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
+    this.gaugeOptions.useMinPath = false;
+  }
+
+  private configureMeasuringGauge(): void {
+    const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+    this.gaugeOptions.minValue = scale.min;
+    this.gaugeOptions.maxValue = scale.max;
+
+    this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
+    this.gaugeOptions.fontTitleSize = 24;
+
+    this.gaugeOptions.barProgress = true;
+    this.gaugeOptions.barWidth = 15;
+
+    this.gaugeOptions.valueBox = true;
+    this.gaugeOptions.fontValueSize = 60;
+    this.gaugeOptions.valueBoxWidth = 100;
+    this.gaugeOptions.valueBoxBorderRadius = 0;
+    this.gaugeOptions.valueBoxStroke = 0;
+    this.gaugeOptions.colorValueBoxBackground = "";
+
+    this.gaugeOptions.exactTicks = false;
+    this.gaugeOptions.majorTicks = scale.majorTicks;
+
+    this.gaugeOptions.minorTicks = 2;
+    this.gaugeOptions.ticksAngle = 270;
+    this.gaugeOptions.startAngle = 45;
+    this.gaugeOptions.strokeTicks = true;
+    this.gaugeOptions.numbersMargin = 3;
+    this.gaugeOptions.fontNumbersSize = 15;
+
+    this.gaugeOptions.needle = true;
+    this.gaugeOptions.needleType = this.LINE;
+    this.gaugeOptions.needleWidth = 2;
+    this.gaugeOptions.needleShadow = false;
+    this.gaugeOptions.needleStart = 0;
+    this.gaugeOptions.needleEnd = 95;
+    this.gaugeOptions.needleCircleSize = 10;
+    this.gaugeOptions.needleCircleInner = false;
+    this.gaugeOptions.needleCircleOuter = false;
+
+    this.gaugeOptions.borders = false;
+    this.gaugeOptions.borderOuterWidth = 0;
+    this.gaugeOptions.borderMiddleWidth = 0;
+    this.gaugeOptions.borderInnerWidth = 0;
+    this.gaugeOptions.borderShadowWidth = 0;
+
+    this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
+    this.gaugeOptions.useMinPath = false;
+  }
+
+  private configureCompassGauge(): void {
+    // override gauge config min/max/unit to make them compatible for 360 circular rotation
+    this.gaugeOptions.minValue = 0;
+    this.gaugeOptions.maxValue = 360;
+    this.gaugeOptions.units = this.widgetProperties.config.paths["gaugePath"].convertUnitTo = this.DEG;
+
+    this.gaugeOptions.fontTitleSize = 60;
+    this.gaugeOptions.barProgress = false;
+    this.gaugeOptions.barWidth = 0;
+
+    this.gaugeOptions.valueBox = true
+    this.gaugeOptions.fontValueSize = 50;
+    this.gaugeOptions.valueBoxWidth = 0;
+    this.gaugeOptions.valueBoxBorderRadius = 5;
+    this.gaugeOptions.valueBoxStroke = 0;
+    this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
+
+    this.gaugeOptions.ticksAngle = 360;
+    this.gaugeOptions.startAngle = 180;
+    this.gaugeOptions.exactTicks = false;
+    this.gaugeOptions.strokeTicks = false;
+    this.gaugeOptions.majorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
+    this.gaugeOptions.numbersMargin = 3;
+    this.gaugeOptions.fontNumbersSize = 15;
+    this.gaugeOptions.minorTicks = 22;
+
+    this.gaugeOptions.needle = true;
+    this.gaugeOptions.needleType = this.LINE;
+    this.gaugeOptions.needleStart = this.NEEDLE_START;
+    this.gaugeOptions.needleEnd = this.NEEDLE_END;
+    this.gaugeOptions.needleCircleSize = this.NEEDLE_CIRCLE_SIZE;
+    this.gaugeOptions.needleWidth = 3;
+    this.gaugeOptions.needleShadow = false;
+    this.gaugeOptions.needleCircleInner = false;
+    this.gaugeOptions.needleCircleOuter = false;
+
+    this.gaugeOptions.borders = true;
+    this.gaugeOptions.borderOuterWidth = 0;
+    this.gaugeOptions.borderMiddleWidth = this.BORDER_MIDDLE_WIDTH;
+    this.gaugeOptions.borderInnerWidth = this.BORDER_INNER_WIDTH;
+    this.gaugeOptions.borderShadowWidth = 0;
+
+    if (this.widgetProperties.config.gauge.subType === "marineCompass") {
+      this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_PLATE;
+      this.gaugeOptions.useMinPath = true;
+    } else if (this.widgetProperties.config.gauge.subType === "baseplateCompass") {
+      this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
+      this.gaugeOptions.useMinPath = true;
+    }
+  }
+
   private setHighlights(): void {
-    if (!this.meta?.zones?.length) {
-      this.gaugeOptions.highlights = [];
-      return};
-    if (this.widgetProperties.config.radialSize == "marineCompass" || this.widgetProperties.config.radialSize == "baseplateCompass") {
-      this.gaugeOptions.highlights = [];
-      this.gaugeOptions.highlightsWidth = 0;
-    } else {
-      const gaugeZonesHighligh: IDataHighlight = [];
+    const gaugeZonesHighlight: IDataHighlight[] = [];
+    // Sort zones based on lower value
+    const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);
+    for (const zone of sortedZones) {
+      let lower: number = null;
+      let upper: number = null;
 
-      // Sort zones based on lower value
-      const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);
-
-      for (const zone of sortedZones) {
-        let lower: number = null;
-        let upper: number = null;
-
-        let color: string;
-        switch (zone.state) {
-          case States.Emergency:
-            color = this.theme.warnDark;
-            break;
-          case States.Alarm:
-            color = this.theme.warnDark;
-            break;
-          case States.Warn:
-            color = this.theme.textWarnLight;
-            break;
-          case States.Alert:
-            color = this.theme.accentDark;
-            break;
-          case States.Nominal:
-            color = this.theme.primaryDark;
-            break;
-          default:
-            color = "rgba(0,0,0,0)";
-        }
-
-        // Perform Units conversions on zone range
-        if (this.widgetProperties.config.paths["gaugePath"].convertUnitTo == "ratio") {
-          lower = zone.lower;
-          upper = zone.upper;
-        } else {
-          lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.lower);
-          upper = this.unitsService.convertToUnit(this.widgetProperties.config.paths["gaugePath"].convertUnitTo, zone.upper);
-        }
-
-        // Skip zones that are completely outside the gauge range
-        if (upper < this.widgetProperties.config.minValue || lower > this.widgetProperties.config.maxValue) {
-          continue;
-        }
-
-        // If lower or upper are null, set them to minValue or maxValue
-        lower = lower !== null ? lower : this.widgetProperties.config.minValue;
-        upper = upper !== null ? upper : this.widgetProperties.config.maxValue;
-
-        // Ensure lower does not go below minValue
-        lower = Math.max(lower, this.widgetProperties.config.minValue);
-
-        // Ensure upper does not exceed maxValue
-        if (upper > this.widgetProperties.config.maxValue) {
-          upper = this.widgetProperties.config.maxValue;
-          gaugeZonesHighligh.push({from: lower, to: upper, color: color});
+      let color: string;
+      switch (zone.state) {
+        case States.Emergency:
+          color = this.theme.warnDark;
           break;
-        }
-
-        gaugeZonesHighligh.push({from: lower, to: upper, color: color});
-      };
-      //@ts-ignore - bug in highlights property definition
-      this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighligh, null, 1);
-      this.gaugeOptions.highlightsWidth = 6;
-    }
-  }
-
-  /**
-   * Method to calculate nice values for min, max and range for the
-   * gaugeOptions.majorTicks. This function will recalculate a new nice rounded scale
-   * the better suited to the value range.
-   *
-   * @private
-   * @param {number} minValue suggested range min value
-   * @param {number} maxValue suggested range max value
-   * @return {*}  {[number, number, number[]]} array containing calculated rounded range minimal value, maximum value and the tick array
-   * @memberof WidgetGaugeNgRadialComponent
-   */
-  private calculateMajorTicks(minValue: number, maxValue: number): [number, number, number[]] {
-    const tickArray = [] as Array<number>;
-    let niceRange = maxValue - minValue;
-    let majorTickSpacing = 0;
-    let maxNoOfMajorTicks = 10;
-
-
-    niceRange = this.calcNiceNumber(maxValue - minValue, false);
-    majorTickSpacing = this.calcNiceNumber(niceRange / (maxNoOfMajorTicks - 1), true);
-    let niceMinValue = Math.floor(minValue / majorTickSpacing) * majorTickSpacing;
-    let niceMaxValue = Math.ceil(maxValue / majorTickSpacing) * majorTickSpacing;
-
-    tickArray.push(niceMinValue);
-
-    const range: number = niceRange / majorTickSpacing;
-
-    for (let index = 0; index < range; index++) {
-      if (tickArray[index] < niceMaxValue) {
-        // need to do some trick here to account for JavaScript fraction issues else when scale ticks are smaller than 1, nice numbers can't be produced ie. tick of 0.3 will be 0.30000000004 (see: https://flaviocopes.com/javascript-decimal-arithmetics/)
-        let tick = (Number(tickArray[index].toFixed(2)) * 100 + Number(majorTickSpacing.toFixed(2)) * 100) / 100;
-        tickArray.push(tick);
+        case States.Alarm:
+          color = this.theme.warnDark;
+          break;
+        case States.Warn:
+          color = this.theme.textWarnLight;
+          break;
+        case States.Alert:
+          color = this.theme.accentDark;
+          break;
+        case States.Nominal:
+          color = this.theme.primaryDark;
+          break;
+        default:
+          color = "rgba(0,0,0,0)";
       }
-    }
-    return [niceMinValue, niceMaxValue, tickArray];
-  }
 
-  private calcNiceNumber(range: number, round: boolean): number {
-    const exponent = Math.floor(Math.log10(range));   // exponent of range
-    const fraction = range / Math.pow(10, exponent);  // fractional part of range
-    let niceFraction: number = null;                  // nice, rounded fraction
+      lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, zone.lower);
+      upper =this.unitsService.convertToUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, zone.upper);
 
-    if (round) {
-        if (1.5 > fraction) {
-            niceFraction = 1;
-        } else if (3 > fraction) {
-            niceFraction = 2;
-        } else if (7 > fraction) {
-            niceFraction = 5;
-        } else {
-            niceFraction = 10;
-        }
-    } else {
-        if (1 >= fraction) {
-            niceFraction = 1;
-        } else if (2 >= fraction) {
-            niceFraction = 2;
-        } else if (5 >= fraction) {
-            niceFraction = 5;
-        } else {
-            niceFraction = 10;
-        }
-    }
-    return niceFraction * Math.pow(10, exponent);
+      // Skip zones that are completely outside the gauge range
+      if (upper < this.widgetProperties.config.displayScale.lower || lower > this.widgetProperties.config.displayScale.upper) {
+        continue;
+      }
+
+      // If lower or upper are null, set them to displayScale min or max
+      lower = lower !== null ? lower : this.widgetProperties.config.displayScale.lower;
+      upper = upper !== null ? upper : this.widgetProperties.config.displayScale.upper;
+
+      // Ensure lower does not go below min
+      lower = Math.max(lower, this.widgetProperties.config.displayScale.lower);
+
+      // Ensure upper does not exceed max
+      if (upper > this.widgetProperties.config.displayScale.upper) {
+        upper = this.widgetProperties.config.displayScale.upper;
+        gaugeZonesHighlight.push({from: lower, to: upper, color: color});
+        break;
+      }
+
+      gaugeZonesHighlight.push({from: lower, to: upper, color: color});
+    };
+    this.gaugeOptions.highlightsWidth = 6;
+    //@ts-ignore - bug in highlights property definition
+    this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
   }
 
   ngOnDestroy() {

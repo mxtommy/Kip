@@ -2,14 +2,15 @@
 
 <svg-simple-linear-gauge class="simpleLinearGauge"
   [displayName]="widgetProperties.config.displayName"
+  [displayNameColor]="theme.textDark"
   [unitLabel]="unitsLabel"
   [dataValue]="dataLabelValue"
   [barColor]="barColor"
   [barColorGradient]="barColorGradient"
   [barColorBackground]="barColorBackground"
   [gaugeValue]="dataLabelValue"
-  [gaugeMaxValue]="widgetProperties.config.maxValue"
-  [gaugeMinValue]="widgetProperties.config.minValue"
+  [gaugeMaxValue]="widgetProperties.config.displayScale.upper"
+  [gaugeMinValue]="widgetProperties.config.displayScale.lower"
   ></svg-simple-linear-gauge>
 
 <div #primary class='primary' style="display: none;"></div>

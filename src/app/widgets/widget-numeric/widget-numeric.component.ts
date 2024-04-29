@@ -68,27 +68,29 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('numericPath', newValue => {
-        this.dataValue = newValue.data.value;
-        // init min/max
-        if (this.minValue === null) { this.minValue = this.dataValue; }
-        if (this.maxValue === null) { this.maxValue = this.dataValue; }
-        if (this.dataValue > this.maxValue) { this.maxValue = this.dataValue; }
-        if (this.dataValue < this.minValue) { this.minValue = this.dataValue; }
+      this.dataValue = newValue.data.value;
 
-        //start flashing if alarm
-        if ((newValue.state == States.Alarm || newValue.state == States.Warn) && !this.flashInterval) {
-          this.flashInterval = setInterval(() => {
-            this.flashOn = !this.flashOn;
-            this.updateCanvas();
-          }, 350); // used to flash stuff in alarm
-        } else if (newValue.state == States.Normal) {
-          // stop alarming if not in alarm state
-          clearInterval(this.flashInterval);
-        }
-        this.dataState = newValue.state;
-        this.updateCanvas();
+      // Initialize min/max
+      if (this.minValue === null || this.dataValue < this.minValue) {
+        this.minValue = this.dataValue;
+      } else if (this.maxValue === null || this.dataValue > this.maxValue) {
+        this.maxValue = this.dataValue;
       }
-    );
+
+      // Start flashing if alarm
+      if ((newValue.state == States.Alarm || newValue.state == States.Warn) && !this.flashInterval) {
+        this.flashInterval = setInterval(() => {
+          this.flashOn = !this.flashOn;
+        }, 350); // Used to flash stuff in alarm
+      } else if (newValue.state == States.Normal && this.flashInterval) {
+        // Stop alarming if not in alarm state
+        clearInterval(this.flashInterval);
+        this.flashInterval = null;
+      }
+
+      this.dataState = newValue.state;
+      this.updateCanvas();
+    });
 
     this.resizeWidget();
   }
@@ -190,7 +192,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       if (cUnit == 'latitudeSec' || cUnit == 'latitudeMin' || cUnit == 'longitudeSec' || cUnit == 'longitudeMin') {
         valueText = this.dataValue.toString();
       } else {
-        valueText = this.applyDecorations(this.formatWidgetNumberValue(this.dataValue));
+        valueText = this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
       }
     } else {
       valueText = "--";
@@ -322,14 +324,14 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     if (this.widgetProperties.config.showMin) {
       if (this.minValue != null) {
-        valueText = " Min: " + this.applyDecorations(this.formatWidgetNumberValue(this.minValue));
+        valueText = " Min: " + this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal));
       } else {
         valueText = " Min: --";
       }
     }
     if (this.widgetProperties.config.showMax) {
       if (this.maxValue != null) {
-        valueText += " Max: " + this.applyDecorations(this.formatWidgetNumberValue(this.maxValue));
+        valueText += " Max: " + this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal));
       } else {
         valueText += " Max: --";
       }

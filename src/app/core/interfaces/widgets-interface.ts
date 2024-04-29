@@ -1,4 +1,4 @@
-import { TFormat, TPolicy } from './signalk-interfaces';
+import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
 
 export enum ControlType {
   toggle = 0,
@@ -101,8 +101,42 @@ export interface IWidgetSvcConfig {
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */
   dataTimeout?: number;
+  /**
+   * This object represents the scale of a display, such as a gauge or chart. It defines the lower and upper bounds of the scale, and the type of scale to use.
+   *
+   * @property lower - The lower bound of the scale. This is the minimum value that can be represented on the display.
+   * @property upper - The upper bound of the scale. This is the maximum value that can be represented on the display.
+   * @property type - The type of scale to use. This can be 'linear', 'logarithmic', 'squareRoot', 'power' or null if no scale is used.
+   */
+  displayScale?: {
+    lower: number;
+    upper: number;
+    type: TScaleType;
+  }
 
-
+  /** Gauge type widget property bag */
+  gauge?: {
+    /** Optional. Gauge component type */
+    type: string;
+    /** Optional. Gauge subType or layout preset options */
+    subType?: string;
+    /** Optional. Should gauge ticks be enabled */
+    enableTicks?: boolean;
+    /** Optional. Units formatting rule name */
+    unitLabelFormat?: string;
+    /** Optional. Used ny ngGauge when in compass mode */
+    compassUseNumbers?: boolean;
+    /** Optional. Used by GaugeSteel to set face style */
+    backgroundColor?: string;
+    /** Optional. Used by GaugeSteel to set face style */
+    faceColor?: string;
+    /** Optional. Used by GaugeSteel to set radial faceplate size */
+    radialSize?: string;
+    /** Optional. Used by GaugeSteel to set faceplate rotation */
+    rotateFace?: boolean;
+    /** Optional. GaugeSteel digital or bar */
+    digitalMeter?: boolean;
+  }
   /** Used by multiple Widget: number of fixed decimal places to display */
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */
@@ -116,6 +150,8 @@ export interface IWidgetSvcConfig {
   /** Used by multiple Widget to filter maximum data range to display. */
   maxValue?: number;
 
+  /** To retire. Used by Autopilot */
+  barColor?: string;
   /** Used by date Widget: configurable display format of the date/time value */
   dateFormat?: string;
   /** Used by date Widget: Time zone value to apply to the data/time value */
@@ -136,30 +172,10 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Used by multiple gauge Widget: defines the UI layout */
-  gaugeType?: string;
-  /** Used by multiple gauge Widget */
-  gaugeUnitLabelFormat?: string;
-  /** Used by multiple gauge Widget */
-  gaugeTicks?: boolean;
-  /** Used by multiple gauge Widget */
-  barGraph?: boolean;
-  /** Used by multiple gauge Widget */
-  backgroundColor?: string;
-  /** Used by multiple gauge Widget */
-  frameColor?: string;
-  /** Used by multiple gauge Widget */
-  barColor?: string;
-  /** Used by multiple gauge Widget */
+  /** Property of selected theme color */
   textColor?: string;
   /** Used by multiple gauge Widget */
-  radialSize?: string;
-  /** Used by multiple gauge Widget: Should the needle or the faceplate rotate */
-  rotateFace?: boolean;
-  /** Used by Autopilot Widget: Should the Widget start automatically on load or should the user press Power/On. */
   autoStart?: boolean;
-  /** Used by multiple gauge Widget: Use cardinal points or angle numbers as direction labels */
-  compassUseNumbers?: boolean;
 
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;
@@ -236,26 +252,24 @@ export interface IDynamicControl {
   value?: any;
   /** The color of the control */
   color: string;
-
 }
 
 /**
- * Widget Zones data highlights interface. Used to defined how current path data
- * value should be displayed/highlighted with respect to the zones configuration.
+ * IDataHighlight interface
  *
- * @exports
- * @interface IDataHighlight
- * @extends {Array<{
- *   from : number;
- *   to : number;
- *   color: string;
- * }>}
+ * This interface represents a highlight zone on a gauge. Each highlight zone is
+ * defined by a starting point, an ending point, and a color. Zones definitions
+ * are defined in Signal K as part of metadata.
+ *
+ * @property from - The starting point of the highlight zone.
+ * @property to - The ending point of the highlight zone.
+ * @property color - The color of the highlight zone.
  */
-export interface IDataHighlight extends Array<{
+export interface IDataHighlight {
   from: number;
   to: number;
   color: string;
-}> {};
+}
 
 /**
  * Defines all possible properties for data paths. Combines both

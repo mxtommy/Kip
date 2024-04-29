@@ -34,13 +34,18 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
           sampleTime: 500
         }
       },
-      minValue: 0,
-      maxValue: 15,
+      displayScale: {
+        lower: 0,
+        upper: 15,
+        type: "linear"
+      },
+      gauge: {
+        type: 'simpleLinear',
+        unitLabelFormat: "full", // Applied to Units label. abr = first letter only. full = full string
+      },
       numInt: 1,
       numDecimal: 2,
-      gaugeType: "simpleLinear", // Applied to Units label. abr = first letter only. full = full string
-      gaugeUnitLabelFormat: "full", // Applied to Units label. abr = first letter only. full = full string
-      barColor: 'accent',
+      textColor: 'accent',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -49,7 +54,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   ngOnInit(): void {
     this.validateConfig();
     // set Units label sting based on gauge config
-    if (this.widgetProperties.config.gaugeUnitLabelFormat == "abr") {
+    if (this.widgetProperties.config.gauge.unitLabelFormat == "abr") {
       //TODO: Improve Units service to have Full Measure label, abbreviation and descriptions so that we can use Full or abr display labels...!
       //TODO: Add zones support to widget
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
@@ -58,20 +63,15 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     }
 
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.data.value == null) {
-          newValue.data.value = 0;
-        }
-
-        newValue.data.value = this.formatWidgetNumberValue(newValue.data.value);
-        this.dataValue = (newValue.data.value as number);
-        // Format Widget display label value using settings
-        if (this.widgetProperties.config.numDecimal != 0){
-          this.dataLabelValue = newValue.data.value.padStart((this.widgetProperties.config.numInt + 1 + this.widgetProperties.config.numDecimal), "0");
-        } else {
-          this.dataLabelValue = newValue.data.value.padStart(this.widgetProperties.config.numInt, "0");
-        }
+      if (newValue.data.value == null) {
+        this.dataValue = 0;
+        this.dataLabelValue = "--";
+      } else {
+        this.dataLabelValue = this.dataValue.toFixed(this.widgetProperties.config.numDecimal)
       }
-    );
+      this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -83,7 +83,11 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   updateGaugeSettings() {
     this.barColorBackground = this.theme.background;
 
-    switch (this.widgetProperties.config.barColor) {
+    switch (this.widgetProperties.config.textColor) {
+      case "text":
+        this.barColor = this.theme.text;
+        this.barColorGradient = this.theme.textDark;
+        break;
       case "primary":
         this.barColor = this.theme.primary;
         this.barColorGradient = this.theme.primaryDark;

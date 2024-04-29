@@ -6,7 +6,7 @@ import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-nume
 import { WidgetTextGenericComponent } from '../../widgets/widget-text-generic/widget-text-generic.component';
 import { WidgetDateGenericComponent } from '../../widgets/widget-date-generic/widget-date-generic.component';
 import { WidgetWindComponent } from '../../widgets/widget-wind/widget-wind.component';
-import { WidgetGaugeComponent } from '../../widgets/widget-gauge/widget-gauge.component';
+import { WidgetGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
 import { WidgetButtonComponent } from '../../widgets/widget-button/widget-button.component';
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component'
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';

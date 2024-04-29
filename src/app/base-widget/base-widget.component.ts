@@ -227,17 +227,18 @@ export abstract class BaseWidgetComponent {
    * @return {*}  {string} the final output to display
    * @memberof BaseWidgetComponent
    */
-  protected formatWidgetNumberValue(v: number): string {
-    if (v == null || v === undefined || typeof(v) != "number") {return v.toString()}
-    // As per Widget config
-    // - Limit value to Min/Max range
-    if (v >= this.widgetProperties.config.maxValue) {
-      v = this.widgetProperties.config.maxValue;
-    } else if (v <= this.widgetProperties.config.minValue) {
-      v = this.widgetProperties.config.minValue;
+  protected formatWidgetNumberValue(v: any): string {
+    // Check if v is not a number or is null or undefined
+    if (typeof v !== 'number' || v == null) {
+      return '';
     }
-    // Strip decimals but keep as a string type for blank trailing decimal positions
-    let vStr: string = v.toFixed(this.widgetProperties.config.numDecimal);
+
+    // Limit value to Min/Max range
+    v = Math.min(Math.max(v, this.widgetProperties.config.minValue), this.widgetProperties.config.maxValue);
+
+    // Convert to fixed decimal string
+    const vStr = v.toFixed(this.widgetProperties.config.numDecimal);
+
     return vStr;
   }
 

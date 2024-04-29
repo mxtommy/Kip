@@ -7,6 +7,11 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "paths": {
+      "gaugeScales": [
+        "./dist/gauge-scales"
+      ]
+    },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "ES2022",
