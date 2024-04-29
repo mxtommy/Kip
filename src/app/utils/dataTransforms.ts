@@ -125,3 +125,20 @@ function powerScale(V: number, L: number, U: number, P: number): number {
   }
   return (Math.pow(V, P) - Math.pow(L, P)) / (Math.pow(U, P) - Math.pow(L, P));
 }
+
+/**
+ * Converts a radian value to a degree value.
+ *
+ * The input is expected to be in the range of -π to +π.
+ * The output will be in the range of 0 to 360, where 0 radian is equivalent to 0 degree.
+ *
+ * @param {number} radian - The radian value to convert. Should be in the range -π to +π.
+ * @returns {number} The converted degree value, in the range 0 to 360.
+ */
+export function convertSplitRadianToDegree(radian: number): number {
+  let degree = radian * (180 / Math.PI);
+  if (degree < 0) {
+    degree = 360 + degree;
+  }
+  return degree;
+}
