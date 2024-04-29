@@ -312,13 +312,15 @@
                   <mat-option value="radial">Radial</mat-option>
               </mat-select>
             </mat-form-field>
+            @if (formMaster.value.gauge.subType == 'linear') {
               <p>
                 <mat-checkbox
                   formControlName="digitalMeter"
                   name="digitalMeter">
                     Digital display
                 </mat-checkbox>
-            </p>
+              </p>
+            }
             @if (formMaster.value.gauge.subType == 'radial') {
               <mat-form-field class="options-grid-span2">
                 <mat-label>Dial Size</mat-label>

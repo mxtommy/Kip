@@ -66,7 +66,8 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
         if (newValue.data.value == null) {
           newValue.data.value = 0;
         }
-        this.dataValue = newValue.data.value
+        // Compound value to displayScale
+        this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
       }
     );
 

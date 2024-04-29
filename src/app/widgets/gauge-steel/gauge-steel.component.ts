@@ -1,8 +1,9 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, Input, AfterViewInit, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, Renderer2 } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 import { ITheme } from '../../core/interfaces/widgets-interface';
 import { States } from '../../core/interfaces/signalk-interfaces';
+import { Init } from 'v8';
 
 declare let steelseries: any; // 3rd party
 
@@ -48,7 +49,7 @@ export const SteelFrameColors = {
     standalone: true,
     imports: [AngularResizeEventModule]
 })
-export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
   @Input('widgetUUID') widgetUUID: string;
   @Input('subType') subType: string; // linear or radial
@@ -78,21 +79,15 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   constructor(private unitsService: UnitsService) {
   }
 
-  ngAfterViewInit() {
-    if (!this.subType) { this.subType = 'radial'; }
+  ngOnInit(): void {
+    const widgetSize = this.sgWrapperDiv.nativeElement.getBoundingClientRect();
+    this.gaugeOptions['size'] = Math.min(widgetSize.height, widgetSize.width); // radial uses size. takes only size as both the same
+    this.gaugeOptions['width'] = widgetSize.width; // linear
+    this.gaugeOptions['height'] = widgetSize.height; // linear
+    this.buildOptions();
   }
 
-  buildOptions() {
-    this.gaugeOptions = {};
-
-    //size
-    if (this.subType == 'radial') {
-      this.gaugeOptions['size'] = Math.min(this.gaugeHeight, this.gaugeWidth); // radial takes only size as both the same
-    } else {
-      this.gaugeOptions['width'] = this.gaugeWidth;
-      this.gaugeOptions['height'] = this.gaugeHeight;
-    }
-
+  private buildOptions() {
     //minMax
     this.gaugeOptions['minValue'] = this.minValue;
     this.gaugeOptions['maxValue'] = this.maxValue;
@@ -105,17 +100,17 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
     if (this.subType == 'radial') {
       switch(this.radialSize) {
         case 'quarter':
-          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE1;
+          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE1;
           break;
         case 'half':
-          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE2;
+          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE2;
           break;
         case 'three-quarter':
-          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE3;
+          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE3;
           break;
         case 'full':
         default:
-          this.gaugeOptions['subType'] = steelseries.GaugeType.TYPE4;
+          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE4;
       }
     }
 
@@ -208,16 +203,12 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
     this.gaugeOptions['ledVisible'] = false;
   }
 
-  startGauge() {
+  private startGauge() {
     this.gaugeStarted = true;
     this.buildOptions();
         // Initializing gauges
     if (this.subType == 'radial') {
-      if (this.barGauge) {
-        this.gauge = new steelseries.RadialBargraph(this.widgetUUID, this.gaugeOptions);
-      } else {
-        this.gauge = new steelseries.Radial(this.widgetUUID, this.gaugeOptions);
-      }
+      this.gauge = new steelseries.Radial(this.widgetUUID, this.gaugeOptions);
     } else if (this.subType == 'linear') {
        if (this.barGauge) {
         this.gauge = new steelseries.LinearBargraph(this.widgetUUID, this.gaugeOptions);
@@ -228,84 +219,21 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   }
 
   onResized(event: ResizedEvent) {
-    if (event.newRect.height < 50) {
+    if (event.newRect.height < 50 || event.newRect.width < 50) {
       return;
     }
-    if (event.newRect.width < 50) {
-      return;
-    }
-    if (!this.isInResizeWindow) {
-      this.isInResizeWindow = true;
-
-      this.resizeTimer = setTimeout(() => {
-        let rect = this.sgWrapperDiv.nativeElement.getBoundingClientRect();
-        this.gaugeWidth = rect.width;
-        this.gaugeHeight = rect.height;
-        this.isInResizeWindow = false;
-        this.startGauge();
-         }, 500);
-    }
+    this.gaugeOptions['size'] = Math.min(event.newRect.height, event.newRect.width); // radial uses size. takes only size as both the same
+    this.gaugeOptions['width'] = event.newRect.width; // linear
+    this.gaugeOptions['height'] = event.newRect.height; // linear
+    this.isInResizeWindow = false;
+    this.startGauge();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.gaugeStarted) { return; }
 
-    if (changes.value) {
-      if (!changes.value.firstChange) {
+    if (changes.value && !changes.value.firstChange) {
         this.gauge.setValueAnimated(changes.value.currentValue);
-      }
-    }
-
-    if (changes.subType) {
-      if ( !changes.subType.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-
-    if (changes.barGauge) {
-      if ( !changes.barGauge.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-
-    if (changes.title) {
-      if ( !changes.title.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-
-    if (changes.units) {
-      if ( !changes.units.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-    if (changes.minValue) {
-      if ( !changes.minValue.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-    if (changes.maxValue) {
-      if ( !changes.maxValue.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-
-    if (changes.radialSize) {
-      if ( !changes.radialSize.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-
-    if (changes.backgroundColor) {
-      if ( !changes.backgroundColor.firstChange) {
-        this.startGauge();//reset
-      }
-    }
-
-    if (changes.frameColor) {
-      if ( !changes.frameColor.firstChange) {
-        this.startGauge();//reset
-      }
     }
 
     if (changes.zones) {
@@ -314,6 +242,5 @@ export class GaugeSteelComponent implements AfterViewInit, OnChanges, OnDestroy 
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.resizeTimer);
   }
 }
