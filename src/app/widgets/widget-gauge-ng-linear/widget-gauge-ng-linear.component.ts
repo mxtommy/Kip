@@ -187,7 +187,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       animationRule: "linear",
       animatedValue: false,
       animateOnInit: false,
-      colorTitle: this.theme.text,
+      colorTitle: this.theme.textDark,
       colorUnits: this.theme.text,
       colorValueText: this.theme.text,
       colorPlate: window.getComputedStyle(this.wrapper.nativeElement).backgroundColor,
@@ -227,6 +227,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     let themePaletteDarkColor = "";
 
     switch (this.widgetProperties.config.textColor) {
+      case "text":
+        themePaletteColor = this.theme.textDark;
+        themePaletteDarkColor = this.theme.text;
+        break;
       case "primary":
         themePaletteColor = this.theme.primary;
         themePaletteDarkColor = this.theme.primaryDark;

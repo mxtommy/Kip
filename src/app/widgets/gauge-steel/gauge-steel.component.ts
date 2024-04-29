@@ -3,7 +3,6 @@ import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDe
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 import { ITheme } from '../../core/interfaces/widgets-interface';
 import { States } from '../../core/interfaces/signalk-interfaces';
-import { Init } from 'v8';
 
 declare let steelseries: any; // 3rd party
 
@@ -50,6 +49,8 @@ export const SteelFrameColors = {
     imports: [AngularResizeEventModule]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
+  private readonly WIDGET_SIZE_FACTOR: number = 0.97;
+
   @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
   @Input('widgetUUID') widgetUUID: string;
   @Input('subType') subType: string; // linear or radial
@@ -81,9 +82,9 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit(): void {
     const widgetSize = this.sgWrapperDiv.nativeElement.getBoundingClientRect();
-    this.gaugeOptions['size'] = Math.min(widgetSize.height, widgetSize.width); // radial uses size. takes only size as both the same
-    this.gaugeOptions['width'] = widgetSize.width; // linear
-    this.gaugeOptions['height'] = widgetSize.height; // linear
+    this.gaugeOptions['size'] = (Math.min(widgetSize.height, widgetSize.width)) * this.WIDGET_SIZE_FACTOR; // radial uses size. takes only size as both the same
+    this.gaugeOptions['width'] = widgetSize.width * this.WIDGET_SIZE_FACTOR; // linear
+    this.gaugeOptions['height'] = widgetSize.height * this.WIDGET_SIZE_FACTOR; // linear
     this.buildOptions();
   }
 
@@ -222,9 +223,9 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     if (event.newRect.height < 50 || event.newRect.width < 50) {
       return;
     }
-    this.gaugeOptions['size'] = Math.min(event.newRect.height, event.newRect.width); // radial uses size. takes only size as both the same
-    this.gaugeOptions['width'] = event.newRect.width; // linear
-    this.gaugeOptions['height'] = event.newRect.height; // linear
+    this.gaugeOptions['size'] = (Math.min(event.newRect.height, event.newRect.width)) * this.WIDGET_SIZE_FACTOR; // radial uses size. takes only size as both the same
+    this.gaugeOptions['width'] = event.newRect.width * this.WIDGET_SIZE_FACTOR; // linear
+    this.gaugeOptions['height'] = event.newRect.height * this.WIDGET_SIZE_FACTOR; // linear
     this.isInResizeWindow = false;
     this.startGauge();
   }

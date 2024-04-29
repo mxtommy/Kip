@@ -33,6 +33,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   private readonly BORDER_INNER_WIDTH: number = 2;
   private readonly ANIMATION_TARGET_PLATE:string = "plate";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
+  private readonly WIDGET_SIZE_FACTOR: number = 0.97;
 
   @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
   @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
@@ -91,8 +92,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngOnInit() {
     this.validateConfig();
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = Math.floor(gaugeSize.height * 0.88);
-    this.gaugeOptions.width = Math.floor(gaugeSize.width * 0.88);
+    this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
+    this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
     this.setGaugeConfig();
   }
 
@@ -139,8 +140,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   public onResized(event: ResizedEvent): void {
-    this.gaugeOptions.height = Math.floor(event.newRect.height * 0.88);
-    this.gaugeOptions.width = Math.floor(event.newRect.width * 0.88);
+    this.gaugeOptions.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
+    this.gaugeOptions.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
     this.radialGauge.update(this.gaugeOptions);
   }
 
@@ -179,6 +180,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
      // Set Theme related colors
     const themePalette = {
+      "text": { color: this.theme.text, darkColor: this.theme.text },
       "primary": { color: this.theme.primary, darkColor: this.theme.primaryDark },
       "accent": { color: this.theme.accent, darkColor: this.theme.accentDark },
       "warn": { color: this.theme.warn, darkColor: this.theme.warnDark }
@@ -187,7 +189,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     if (themePalette[this.widgetProperties.config.textColor]) {
       this.setGaugeOptions(themePalette[this.widgetProperties.config.textColor].color, themePalette[this.widgetProperties.config.textColor].darkColor);
 
-      this.gaugeOptions.colorTitle = this.theme.text;
+      this.gaugeOptions.colorTitle = this.theme.textDark;
       this.gaugeOptions.colorUnits = this.theme.text;
       this.gaugeOptions.colorValueText = this.theme.text;
 
@@ -286,7 +288,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.maxValue = scale.max;
 
     this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
-    this.gaugeOptions.fontTitleSize = 20;
+    this.gaugeOptions.fontTitleSize = 24;
 
     this.gaugeOptions.barProgress = true;
     this.gaugeOptions.barWidth = 15;

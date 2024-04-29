@@ -3,3 +3,8 @@
     width: 100%;
     text-align: center;
 }
+
+.canvas-steel {
+  position: relative;
+  top: 2%;
+}

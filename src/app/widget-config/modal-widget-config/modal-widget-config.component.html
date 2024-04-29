@@ -89,7 +89,9 @@
                 <mat-option value='primary'>Primary</mat-option>
                 <mat-option value='accent'>Accent</mat-option>
                 <mat-option value='warn'>Warn</mat-option>
-                <mat-option *ngIf="(widgetConfig.gauge.type == 'ngLinearVertical') || (widgetConfig.gauge.type == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
+                @if (widgetConfig.gauge) {
+                  <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinearVertical') || (widgetConfig.gauge?.type == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
+                }
               </mat-select>
             </mat-form-field>
 

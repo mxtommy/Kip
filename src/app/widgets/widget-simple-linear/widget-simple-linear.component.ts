@@ -84,6 +84,10 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     this.barColorBackground = this.theme.background;
 
     switch (this.widgetProperties.config.textColor) {
+      case "text":
+        this.barColor = this.theme.text;
+        this.barColorGradient = this.theme.textDark;
+        break;
       case "primary":
         this.barColor = this.theme.primary;
         this.barColorGradient = this.theme.primaryDark;
