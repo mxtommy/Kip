@@ -240,7 +240,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           // draw warn background
           this.canvasValCtx.fillStyle = this.theme.textWarnLight;
           this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-          this.canvasValCtx.fillStyle = this.theme.text;
+          this.canvasValCtx.fillStyle = this.valueColor;
         }
         break;
 
