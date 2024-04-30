@@ -227,7 +227,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           this.canvasValCtx.fillStyle = this.valueColor;
         } else {
           // draw warn background
-          this.canvasValCtx.fillStyle = this.theme.warn;
+          this.canvasValCtx.fillStyle = this.theme.warnDark;
           this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
           this.canvasValCtx.fillStyle = this.valueColor;
         }
@@ -238,9 +238,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           this.canvasValCtx.fillStyle = this.valueColor;
         } else {
           // draw warn background
-          this.canvasValCtx.fillStyle = "#ffd00050";
+          this.canvasValCtx.fillStyle = this.theme.textWarnLight;
           this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-          this.canvasValCtx.fillStyle = this.valueColor;
+          this.canvasValCtx.fillStyle = this.theme.text;
         }
         break;
 
