@@ -9,6 +9,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { NgIf, AsyncPipe, NgFor } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
+import { MatActionList } from '@angular/material/list';
 
 interface INotificationInfo extends IAlarmInfo{
   blinkWarn: boolean;
@@ -20,7 +21,7 @@ interface INotificationInfo extends IAlarmInfo{
     templateUrl: './alarm-menu.component.html',
     styleUrls: ['./alarm-menu.component.scss'],
     standalone: true,
-    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, NgFor, NgIf]
+    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, MatActionList, NgFor, NgIf]
 })
 export class AlarmMenuComponent implements OnDestroy {
   private notificationServiceSettingsSubscription: Subscription = null;
@@ -67,6 +68,7 @@ export class AlarmMenuComponent implements OnDestroy {
       } as INotificationInfo;
     }));
   public notificationConfig: INotificationConfig;
+  public isMuted: boolean = false;
 
   constructor(private notificationsService: NotificationsService) {
     // Get service configuration
@@ -76,6 +78,7 @@ export class AlarmMenuComponent implements OnDestroy {
   }
 
   public mutePlayer(state: boolean): void {
+    this.isMuted = state;
     this.notificationsService.mutePlayer(state);
   }
 

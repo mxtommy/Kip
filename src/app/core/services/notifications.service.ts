@@ -277,7 +277,7 @@ export class NotificationsService implements OnDestroy {
     let aSev = severity.sound;
     let vSev = severity.visual;
 
-    if (!message.value['method'].includes(Methods.Sound) || this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`]) {
+    if (!message.value['method'].includes(Methods.Sound) || this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`] || this._isHowlIdMuted) {
       aSev = 0;
     }
     if (!message.value['method'].includes(Methods.Visual)) {
@@ -356,7 +356,7 @@ export class NotificationsService implements OnDestroy {
   mutePlayer(state) {
     this._howlPlayer.mute(state, this._activeHowlId);
     this._isHowlIdMuted = state;
-    this.updateNotificationsState(); //make sure to push updated info tro alarm menu
+    this.updateNotificationsState(); //make sure to push updated info to alarm menu
   }
 
    /**

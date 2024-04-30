@@ -8,7 +8,7 @@
       </button>
       <button mat-menu-item
         (click)="clear(path)">
-        <i class="fa-solid fa-ban"></i> Clear
+        <i class="fa-solid fa-circle-check"></i> Resolve
       </button>
     </ng-template>
   </mat-menu>
@@ -30,7 +30,17 @@
       } @empty {
         <button mat-menu-item disabled="true">
           <i>"No Notifications"</i>
-        </button>}
+        </button>
+      }
+      <mat-divider></mat-divider>
+      <button mat-menu-item matTooltip="Mute notification sounds"
+        (click)="mutePlayer(isMuted ? false : true)">
+        @if (isMuted) {
+          <i class="fa-solid fa-volume-high" aria-hidden="true"></i> Unmute Audio
+        } @else {
+          <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i> Mute Audio
+        }
+      </button>
     </ng-template>
   </mat-menu>
   <button [matMenuTriggerFor]="alarmMenu" color="accent" mat-flat-button class="menuBarAlarmsButton button-elevation"
