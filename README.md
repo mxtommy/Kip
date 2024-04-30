@@ -74,11 +74,12 @@ KIP is now installed and available on your home screen
   - Radial and linear Steel gauge: Old school look & fell gauges.
 
   - Wind Steering Display: Your typical sailboat wind gauge.
-  - Freeboard-SK Chart Plotter: A high quality Signal K implementation of Freeboard.
+  - Freeboard-SK Chart Plotter: A high quality Signal K implementation of Freeboard integration widget.
   - Autopilot Head: Operate your autopilot from any device remotely.
   - Data Chart: Visualize data trends over time.
   - Race Timer: Track regatta start sequence.
-  - Embedded Webpage: A powerful way of integrating any web based content or application within with your KIP layout - Grafana dashboards, Node-RED dashboard, internet weather services, Youtube, Netflix, Twitter, Gmail, your own standalone webapp, you name it!
+  - Embedded Webpage: A powerful way of integrating any web based content or application within with your KIP layout - Grafana dashboards, Node-RED dashboard, your own standalone webapp,anything that does not
+cross domain!
 
   Get the latest version of KIP to see what's new!
 ### Widget Samples
