@@ -6,6 +6,16 @@ import { AppSettingsService } from './app-settings.service';
 import { Subscription } from 'rxjs';
 
 /**
+ * Interface for a list of possible Kip value type conversions for a given path.
+ *
+ * @export
+ * @interface IConversionPathList
+ */
+export interface IConversionPathList {
+  default: string;
+  conversions: IUnitGroup[];
+}
+/**
  *  Group of Kip units array
  */
 export interface IUnitGroup {
@@ -28,6 +38,25 @@ export interface IUnitDefaults {
   [key: string]: string;
 }
 
+/**
+ * Interface for supported path value units provided by Signal K (schema v 1.7)
+ * See: https://github.com/SignalK/specification/blob/master/schemas/definitions.json
+ */
+export interface ISkBaseUnit {
+  unit: string;
+  properties: ISkUnitProperties;
+}
+
+/**
+ * Interface describing units properties
+ */
+export interface ISkUnitProperties {
+  display: string,
+  quantity: string,
+  quantityDisplay: string,
+  description: string
+}
+
 @Injectable()
 
 export class UnitsService {
@@ -38,7 +67,7 @@ export class UnitsService {
    * Measure property has to match one Unit Conversion Function for proper operation.
    * Description is human readable property.
    */
-  private _conversionList: IUnitGroup[] = [
+  private readonly _conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
       { measure: 'unitless', description: "As-Is numeric value" }
     ] },
@@ -139,6 +168,221 @@ export class UnitsService {
       { measure: 'longitudeSec', description: "Longitude in seconds" },
     ] },
   ];
+
+  public readonly skBaseUnits: ISkBaseUnit[] =
+    [
+      { unit: "s", properties: {
+          display: "s",
+          quantity: "Time",
+          quantityDisplay: "t",
+          description: "Elapsed time (interval) in seconds"
+        }
+      },
+      { unit: "Hz", properties: {
+          display: "Hz",
+          quantity: "Frequency",
+          quantityDisplay: "f",
+          description: "Frequency in Hertz"
+        }
+      },
+      { unit: "m3", properties: {
+          display: "m\u00b3",
+          quantity: "Volume",
+          quantityDisplay: "V",
+          description: "Volume in cubic meters"
+        }
+      },
+      { unit: "m3/s", properties: {
+          display: "m\u00b3/s",
+          quantity: "Flow",
+          quantityDisplay: "Q",
+          description: "Liquid or gas flow in cubic meters per second"
+        }
+      },
+      { unit: "kg/s", properties: {
+          display: "kg/s",
+          quantity: "Mass flow rate",
+          quantityDisplay: "\u1e41",
+          description: "Liquid or gas flow in kilograms per second"
+        }
+      },
+      { unit: "kg/m3", properties: {
+          display: "kg/m\u00b3",
+          quantity: "Density",
+          quantityDisplay: "\u03c1",
+          description: "Density in kg per cubic meter"
+        }
+      },
+      { unit: "deg", properties: {
+          display: "\u00b0",
+          quantity: "Angle",
+          quantityDisplay: "\u2220",
+          description: "Latitude or longitude in decimal degrees"
+        }
+      },
+      { unit: "rad", properties: {
+          display: "\u33ad",
+          quantity: "Angle",
+          quantityDisplay: "\u2220",
+          description: "Angular arc in radians"
+        }
+      },
+      { unit: "rad/s", properties: {
+          display: "\u33ad/s",
+          quantity: "Rotation",
+          quantityDisplay: "\u03c9",
+          description: "Angular rate in radians per second"
+        }
+      },
+      { unit: "A", properties: {
+          display: "A",
+          quantity: "Current",
+          quantityDisplay: "I",
+          description: "Electrical current in ampere"
+        }
+      },
+      { unit: "C", properties: {
+          display: "C",
+          quantity: "Charge",
+          quantityDisplay: "Q",
+          description: "Electrical charge in Coulomb"
+        }
+      },
+      { unit: "V", properties: {
+          display: "V",
+          quantity: "Voltage",
+          quantityDisplay: "V",
+          description: "Electrical potential in volt"
+        }
+      },
+      { unit: "W", properties: {
+          display: "W",
+          quantity: "Power",
+          quantityDisplay: "P",
+          description: "Power in watt"
+        }
+      },
+      { unit: "Nm", properties: {
+          display: "Nm",
+          quantity: "Torque",
+          quantityDisplay: "\u03c4",
+          description: "Torque in Newton meter"
+        }
+      },
+      { unit: "J", properties: {
+          display: "J",
+          quantity: "Energy",
+          quantityDisplay: "E",
+          description: "Electrical energy in joule"
+        }
+      },
+      { unit: "ohm", properties: {
+          display: "\u2126",
+          quantity: "Resistance",
+          quantityDisplay: "R",
+          description: "Electrical resistance in ohm"
+        }
+      },
+      { unit: "m", properties: {
+          display: "m",
+          quantity: "Distance",
+          quantityDisplay: "d",
+          description: "Distance in meters"
+        }
+      },
+      { unit: "m/s", properties: {
+          display: "m/s",
+          quantity: "Speed",
+          quantityDisplay: "v",
+          description: "Speed in meters per second"
+        }
+      },
+      { unit: "m2", properties: {
+          display: "\u33a1",
+          quantity: "Area",
+          quantityDisplay: "A",
+          description: "(Surface) area in square meters"
+        }
+      },
+      { unit: "K", properties: {
+          display: "K",
+          quantity: "Temperature",
+          quantityDisplay: "T",
+          description: "Temperature in kelvin"
+        }
+      },
+      { unit: "Pa", properties: {
+          display: "Pa",
+          quantity: "Pressure",
+          quantityDisplay: "P",
+          description: "Pressure in pascal"
+        }
+      },
+      { unit: "kg", properties: {
+          display: "kg",
+          quantity: "Mass",
+          quantityDisplay: "m",
+          description: "Mass in kilogram"
+        }
+      },
+      { unit: "ratio", properties: {
+          display: "",
+          quantity: "Ratio",
+          quantityDisplay: "\u03c6",
+          description: "Relative value compared to reference or normal value. 0 = 0%, 1 = 100%, 1e-3 = 1 ppt"
+        }
+      },
+      { unit: "m/s2", properties: {
+          display: "m/s\u00b2",
+          quantity: "Acceleration",
+          quantityDisplay: "a",
+          description: "Acceleration in meters per second squared"
+        }
+      },
+      { unit: "rad/s2", properties: {
+          display: "rad/s\u00b2",
+          quantity: "Angular acceleration",
+          quantityDisplay: "a",
+          description: "Angular acceleration in radians per second squared"
+        }
+      },
+      { unit: "N", properties: {
+          display: "N",
+          quantity: "Force",
+          quantityDisplay: "F",
+          description: "Force in newton"
+        }
+      },
+      { unit: "T", properties: {
+          display: "T",
+          quantity: "Magnetic field",
+          quantityDisplay: "B",
+          description: "Magnetic field strength in tesla"
+        }
+      },
+      { unit: "Lux", properties: {
+          display: "lx",
+          quantity: "Light Intensity",
+          quantityDisplay: "Ev",
+          description: "Light Intensity in lux"
+        }
+      },
+      { unit: "Pa/s", properties: {
+          display: "Pa/s",
+          quantity: "Pressure rate",
+          quantityDisplay: "R",
+          description: "Pressure change rate in pascal per second"
+        }
+      },
+      { unit: "Pa.s", properties: {
+          display: "Pa s",
+          quantity: "Viscosity",
+          quantityDisplay: "\u03bc",
+          description: "Viscosity in pascal seconds"
+        }
+      }
+    ];
+
   private _defaultUnits: IUnitDefaults = null;
 
   constructor(
@@ -338,12 +582,13 @@ export class UnitsService {
    * @param path The Signal K path of the value
    * @return conversions Full list array or subset of list array
    */
-  public getConversionsForPath(path: string): { default: string, conversions: IUnitGroup[] } {
+  public getConversionsForPath(path: string): IConversionPathList {
     const pathUnitType = this.data.getPathUnitType(path);
+    const UNITLESS = 'unitless';
     let defaultUnit: string = "unitless";
 
     if (pathUnitType === null) {
-      return { default: 'unitless', conversions: this._conversionList };
+      return { default: UNITLESS, conversions: this._conversionList };
     } else {
       const groupList = this._conversionList.filter(unitGroup => {
         if (unitGroup.group == 'Position' && (path.includes('position.latitude') || path.includes('position.longitude'))) {
@@ -364,7 +609,7 @@ export class UnitsService {
       }
 
       console.log("[Units Service] Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
-      return { default: 'unitless', conversions: this._conversionList };
+      return { default: UNITLESS, conversions: this._conversionList };
     }
   }
 }
