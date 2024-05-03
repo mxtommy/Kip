@@ -525,12 +525,24 @@ public loadConfigFromLocalStorage(type: string) {
   }
 
   public loadDemoConfig() {
-    localStorage.clear();
-    this.replaceConfig("appConfig", DemoAppConfig);
-    this.replaceConfig("connectionConfig", DemoConnectionConfig);
-    this.replaceConfig("widgetConfig", DemoWidgetConfig);
-    this.replaceConfig("layoutConfig", DemoLayoutConfig);
-    this.replaceConfig("themeConfig", DemoThemeConfig, true);
+    console.log("[AppSettings Service] Loading Demo Configuration Settings as shared Config: " + this.useSharedConfig + " and reloading app.");
+    if (this.useSharedConfig) {
+      let demoConfig: IConfig = {
+        app: DemoAppConfig,
+        widget: DemoWidgetConfig,
+        layout: DemoLayoutConfig,
+        theme: DemoThemeConfig
+      };
+      this.storage.setConfig('user', this.sharedConfigName, demoConfig);
+      this.reloadApp();
+    } else {
+      localStorage.clear();
+      this.replaceConfig("appConfig", DemoAppConfig);
+      this.replaceConfig("connectionConfig", DemoConnectionConfig);
+      this.replaceConfig("widgetConfig", DemoWidgetConfig);
+      this.replaceConfig("layoutConfig", DemoLayoutConfig);
+      this.replaceConfig("themeConfig", DemoThemeConfig, true);
+    }
   }
 
   public reloadApp() {
