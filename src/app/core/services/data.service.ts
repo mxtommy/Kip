@@ -187,7 +187,7 @@ export class DataService implements OnDestroy {
 
     const dataPath = this._skData.find(item => item.path == path);
 
-    if (this._skData.length || dataPath) {
+    if (this._skData.length && dataPath) {
       currentValue = source === 'default' ? dataPath.pathValue : dataPath.sources?.[source]?.sourceValue ?? null;
       currentTimestamp = source === 'default' ? dataPath.pathTimestamp : dataPath.sources?.[source]?.sourceTimestamp ?? null;
       currentDateTimestamp = currentTimestamp ? new Date(currentTimestamp) : null;
