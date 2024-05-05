@@ -21,7 +21,7 @@
               (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
               <mat-option>All</mat-option>
               @for (item of pathSkUnitsFiltersList; track item) {
-                <mat-option [value]="item">{{item.properties.quantity}}</mat-option>
+                <mat-option [value]="item">{{item.properties.quantity}}: {{item.properties.display}}</mat-option>
               }
             </mat-select>
           </mat-form-field>
