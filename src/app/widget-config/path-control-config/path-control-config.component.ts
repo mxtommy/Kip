@@ -14,9 +14,11 @@ import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/f
 import { AsyncPipe } from '@angular/common';
 
 
-function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
+function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
+    const allPathsAndMeta = getPaths();
     const pathFound = allPathsAndMeta.some(array => array.path === control.value);
+    console.warn('path validation: ' + allPathsAndMeta.length + " " + pathFound);
     return pathFound ? null : { requireMatch: true };
   };
 }
@@ -44,7 +46,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public showPathSkUnitsFilter: boolean = false;
   public pathSkUnitsFilterControl = new FormControl<ISkBaseUnit | null>(null);
   public pathSkUnitsFiltersList: ISkBaseUnit[];
-  public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '', quantity: 'Unitless', quantityDisplay: '', description: '', }};
+  public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '(null)', quantity: 'Unitless', quantityDisplay: '(null)', description: '', }};
 
   constructor(
     private data: DataService,
@@ -52,12 +54,11 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     ) { }
 
   ngOnInit() {
-    this.getPaths(this.pathFormGroup.controls['pathType'].value, this.filterSelfPaths);
-
     // Path Unit filter setup
     this.pathSkUnitsFiltersList = this.units.skBaseUnits.sort((a, b) => {
       return a.properties.quantity > b.properties.quantity ? 1 : -1;
     });
+    this.pathSkUnitsFiltersList.unshift(this.unitlessUnit);
 
     if (this.pathFormGroup.value.pathSkUnitsFilter) {
       this.pathSkUnitsFilterControl.setValue(this.pathSkUnitsFiltersList.find(item => item.unit === this.pathFormGroup.value.pathSkUnitsFilter), {onlySelf: true});
@@ -68,25 +69,20 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     }
 
     // add path validator fn and validate
-    this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(this.availablePaths)]);
-    this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
+    this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(() => this.getPaths())]);
 
     // If SampleTime control is not present because the path property is missing, add it.
     if (!this.pathFormGroup.controls['sampleTime']) {
       this.pathFormGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
-      this.pathFormGroup.controls['sampleTime'].updateValueAndValidity();
+      this.pathFormGroup.controls['sampleTime'].updateValueAndValidity({onlySelf: true, emitEvent: false});
     }
-
-    // Populate sources and units for this path (or just the current or default setting if we know nothing about the path)
-    this.updateSourcesAndUnits();
 
     // subscribe to path formControl changes
     this.pathValueChange$ = this.pathFormGroup.controls['path'].valueChanges.pipe(
-      debounceTime(200),
+      debounceTime(300),
       startWith(''),
-      map(value => this._filterPaths(value || '')))
+      map(value => this.filterPaths(value || '')))
       .subscribe((paths) => {
-        this.filteredPaths.next(paths);
         if (this.pathFormGroup.controls['path'].valid) {
           this.enableFormFields(true);
         } else {
@@ -95,38 +91,27 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       });
 
     this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
-      if (pathType == 'number') {
-        this.pathSkUnitsFilterControl.setValue(this.unitlessUnit, {onlySelf: true});
-      }
-      this.getPaths(this.pathFormGroup.controls['pathType'].value, this.filterSelfPaths);
+        this.pathSkUnitsFilterControl.setValue(this.unitlessUnit);
+        this.pathFormGroup.controls['path'].updateValueAndValidity();
     });
   }
 
   ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
     //subscribe to filterSelfPaths parent formControl changes
     if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
-      this.getPaths(this.pathFormGroup.controls['pathType'].value, this.filterSelfPaths);
-    } else if (changes['pathFormGroup'] && !changes['pathFormGroup'].firstChange) {
-      this.pathFormGroup.updateValueAndValidity();
-    }
-    else if (changes['pathFormGroup']) {
-      this.pathFormGroup.updateValueAndValidity();
-    } else {
-      console.error('[modal-path-selector] Unmapped OnChange event')
+      this.pathFormGroup.controls['path'].updateValueAndValidity();
     }
  }
 
-  private getPaths(pathType: string, filterSelfPaths: boolean) {
-    // Get path by type
-    this.availablePaths = this.data.getPathsAndMetaByType(pathType, filterSelfPaths).sort();
-    // Update autocomplete filteredPaths list
-    this.filteredPaths.next(this._filterPaths(''));
+  private getPaths(): IPathMetaData[] {
+    const pathType = this.pathFormGroup.controls['pathType'].value;
+    const filterSelfPaths = this.filterSelfPaths;
+   return this.data.getPathsAndMetaByType(pathType, filterSelfPaths).sort();
   }
 
-  private _filterPaths(value: string): IPathMetaData[] {
-    const filterValue = value.toLowerCase();
-
-    let filteredPaths = this.availablePaths;
+  public filterPaths(searchString: string) {
+    const filterString = searchString.toLowerCase();
+    let filteredPaths = this.getPaths();
 
     // If a unit filter is set, apply it first
     if (this.pathSkUnitsFilterControl.value != null) {
@@ -137,17 +122,8 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     }
 
     // Then filter based on the path
-    filteredPaths = filteredPaths.filter(item => item.path.toLowerCase().includes(filterValue));
-
-    return filteredPaths;
-  }
-
-  private updateSourcesAndUnits() {
-    if ((!this.pathFormGroup.value.path) || (this.pathFormGroup.value.path == '') || (!this.pathFormGroup.controls['path'].valid)) {
-      this.disablePathFields();
-    } else {
-      this.enableFormFields();
-    }
+    filteredPaths = filteredPaths.filter(item => item.path.toLowerCase().includes(filterString));
+    this.filteredPaths.next(filteredPaths);
   }
 
   private enableFormFields(setValues?: boolean): void {
