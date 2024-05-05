@@ -91,6 +91,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
         } else {
           this.disablePathFields();
         }
+        this.pathFormGroup.updateValueAndValidity();
       });
   }
 
@@ -118,8 +119,10 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     let filteredPaths = this.availablePaths;
 
     // If a unit filter is set, apply it first
-      if (this.pathSkUnitsFilterControl.value != null) {
-      filteredPaths = filteredPaths.filter(item => item.meta.units === this.pathSkUnitsFilterControl.value.unit);
+    if (this.pathSkUnitsFilterControl.value != null) {
+      filteredPaths = filteredPaths.filter(item =>
+        item.meta && item.meta.units && item.meta.units === this.pathSkUnitsFilterControl.value.unit
+      );
     }
 
     // Then filter based on string
