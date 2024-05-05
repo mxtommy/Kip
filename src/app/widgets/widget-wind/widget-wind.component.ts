@@ -40,6 +40,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           sampleTime: 500
         },

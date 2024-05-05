@@ -5,22 +5,24 @@
     </div>
 
 
-      @if (pathFormGroup.value.pathType == 'number' || pathFormGroup.value.pathType == 'boolean') {
+      @if ((pathFormGroup.value.pathType == 'number' || pathFormGroup.value.pathType == 'boolean') && showPathSkUnitsFilter) {
         <div class="flex-field-fixed">
           <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
             <mat-label>
-              @if (!filterPathUnits.value) {
+              @if (!pathUnitsFilter.value) {
                 <i class="fa-solid fa-filter"></i>
               } @else {
                 <i class="fa-solid fa-filter-circle-xmark"></i>
               }
               Filter</mat-label>
-            <mat-select #filterPathUnits>
-              <mat-option>None</mat-option>
-              <mat-option value="test">Knots</mat-option>
-              <mat-option value="test">m/s</mat-option>
-              <mat-option value="test">test</mat-option>
-              <mat-option value="test">test</mat-option>
+            <mat-select #pathUnitsFilter
+              [formControl]="pathSkUnitsFilterControl"
+              panelWidth=""
+              (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
+              <mat-option>All</mat-option>
+              @for (item of pathSkUnitsFiltersList; track item) {
+                <mat-option [value]="item">{{item.properties.quantity}}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
@@ -28,7 +30,7 @@
       <div class="flex-field-to-100">
         <mat-form-field floatLabel="auto" appearance="fill" subscriptSizing="dynamic" class="pathField">
           <mat-label>Signal K Path</mat-label>
-          <input type="text" matInput
+          <input #pathInput type="text" matInput
             placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
             formControlName="path"
             required

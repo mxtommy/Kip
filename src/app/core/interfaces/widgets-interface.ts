@@ -297,7 +297,7 @@ export interface IWidgetPath {
   /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
   isPathConfigurable: boolean;
   /** Hide numeric path type filter */
-  pathSkUnitsFilterHidden?: boolean;
+  showPathSkUnitsFilter?: boolean;
   /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type or null to list all types */
   pathSkUnitsFilter?: TValidSkUnits;
   /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */

@@ -1,5 +1,5 @@
 import { DataService } from './data.service';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import Qty from 'js-quantities';
 
 import { AppSettingsService } from './app-settings.service';
@@ -61,8 +61,8 @@ export interface ISkUnitProperties {
 
 @Injectable()
 
-export class UnitsService {
-  _defaultUnitsSub: Subscription;
+export class UnitsService implements OnDestroy {
+  private _defaultUnitsSub: Subscription;
 
   /**
    * Definition of available Kip units to be used for conversion.
@@ -613,5 +613,9 @@ export class UnitsService {
       console.log("[Units Service] Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
       return { default: UNITLESS, conversions: this._conversionList };
     }
+  }
+
+  ngOnDestroy(): void {
+    this._defaultUnitsSub?.unsubscribe();
   }
 }
