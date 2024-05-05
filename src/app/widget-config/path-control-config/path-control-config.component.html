@@ -20,6 +20,7 @@
               panelWidth=""
               (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
               <mat-option>All</mat-option>
+              <mat-option [value]="unitlessUnit">{{unitlessUnit.properties.quantity}}</mat-option>
               @for (item of pathSkUnitsFiltersList; track item) {
                 <mat-option [value]="item">{{item.properties.quantity}}: {{item.properties.display}}</mat-option>
               }
@@ -41,6 +42,15 @@
                 <span matIconSuffix class="fa-solid fa-close"></span>
               </button>
             }
+            @if (pathFormGroup.controls['path'].errors?.['required']) {
+              <mat-error>
+                A valid Signal K path is required.
+              </mat-error>
+            }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
+              <mat-error>
+                The requested path does not match a path published by the server.
+              </mat-error>
+            }
           <mat-autocomplete #pathAutoComplete="matAutocomplete">
             @for (option of filteredPaths | async; track option) {
               <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
@@ -54,15 +64,6 @@
               </mat-option>
             }
           </mat-autocomplete>
-          @if (pathFormGroup.controls['path'].errors?.['required']) {
-            <mat-error>
-              A valid Signal K path is required.
-            </mat-error>
-          }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
-            <mat-error>
-              The requested path does not match a path published by the server.
-            </mat-error>
-          }
         </mat-form-field>
       </div>
 

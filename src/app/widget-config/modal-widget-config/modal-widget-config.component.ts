@@ -177,6 +177,7 @@ export class ModalWidgetConfigComponent implements OnInit {
         const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
         if (pathIDCtrl.value == ctrl.pathID) {
           fg.controls['description'].setValue(ctrl.ctrlLabel);
+          fg.controls['pathType'].setValue(ctrl.isNumeric ? 'number' : 'boolean');
         }
       });
     });

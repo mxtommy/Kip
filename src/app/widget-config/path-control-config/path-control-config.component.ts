@@ -44,14 +44,15 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public showPathSkUnitsFilter: boolean = false;
   public pathSkUnitsFilterControl = new FormControl<ISkBaseUnit | null>(null);
   public pathSkUnitsFiltersList: ISkBaseUnit[];
+  public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '', quantity: 'Unitless', quantityDisplay: '', description: '', }};
 
   constructor(
-    private DataService: DataService,
+    private data: DataService,
     private units: UnitsService
     ) { }
 
   ngOnInit() {
-    this.getPaths(this.filterSelfPaths);
+    this.getPaths(this.pathFormGroup.controls['pathType'].value, this.filterSelfPaths);
 
     // Path Unit filter setup
     this.pathSkUnitsFiltersList = this.units.skBaseUnits.sort((a, b) => {
@@ -92,12 +93,19 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
           this.disablePathFields();
         }
       });
+
+    this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
+      if (pathType == 'number') {
+        this.pathSkUnitsFilterControl.setValue(this.unitlessUnit, {onlySelf: true});
+      }
+      this.getPaths(this.pathFormGroup.controls['pathType'].value, this.filterSelfPaths);
+    });
   }
 
   ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
     //subscribe to filterSelfPaths parent formControl changes
     if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
-      this.getPaths(this.filterSelfPaths);
+      this.getPaths(this.pathFormGroup.controls['pathType'].value, this.filterSelfPaths);
     } else if (changes['pathFormGroup'] && !changes['pathFormGroup'].firstChange) {
       this.pathFormGroup.updateValueAndValidity();
     }
@@ -108,8 +116,11 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     }
  }
 
-  private getPaths(isOnlySef: boolean) {
-    this.availablePaths = this.DataService.getPathsAndMetaByType(this.pathFormGroup.value.pathType, isOnlySef).sort();
+  private getPaths(pathType: string, filterSelfPaths: boolean) {
+    // Get path by type
+    this.availablePaths = this.data.getPathsAndMetaByType(pathType, filterSelfPaths).sort();
+    // Update autocomplete filteredPaths list
+    this.filteredPaths.next(this._filterPaths(''));
   }
 
   private _filterPaths(value: string): IPathMetaData[] {
@@ -118,15 +129,18 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     let filteredPaths = this.availablePaths;
 
     // If a unit filter is set, apply it first
-      if (this.pathSkUnitsFilterControl.value != null) {
-      filteredPaths = filteredPaths.filter(item => item.meta.units === this.pathSkUnitsFilterControl.value.unit);
+    if (this.pathSkUnitsFilterControl.value != null) {
+      filteredPaths = filteredPaths.filter(item =>
+        (item.meta && item.meta.units && item.meta.units === this.pathSkUnitsFilterControl.value.unit) ||
+        (!item.meta || !item.meta.units) && this.pathSkUnitsFilterControl.value.unit === 'unitless'
+      );
     }
 
-    // Then filter based on string
+    // Then filter based on the path
     filteredPaths = filteredPaths.filter(item => item.path.toLowerCase().includes(filterValue));
 
     return filteredPaths;
-}
+  }
 
   private updateSourcesAndUnits() {
     if ((!this.pathFormGroup.value.path) || (this.pathFormGroup.value.path == '') || (!this.pathFormGroup.controls['path'].valid)) {
@@ -137,7 +151,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private enableFormFields(setValues?: boolean): void {
-    let pathObject = this.DataService.getPathObject(this.pathFormGroup.controls['path'].value);
+    let pathObject = this.data.getPathObject(this.pathFormGroup.controls['path'].value);
     if (pathObject != null) {
       this.pathFormGroup.controls['sampleTime'].enable({onlySelf: true});
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number

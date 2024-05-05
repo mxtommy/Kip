@@ -63,6 +63,9 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
     // Build control array
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
+      if (!ctrlConfig.isNumeric) {
+        ctrlConfig.isNumeric = false;
+      }
         this.switchControls.push({...ctrlConfig});
       }
     );

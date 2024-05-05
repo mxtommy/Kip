@@ -1,7 +1,7 @@
 <div [formGroup]="ctrlFormGroup" class="ctrl-grid rounded-card">
   <div class="controls flex-container">
     <div class="flex-label">
-      <mat-form-field class="full-width" appearance="outline" floatLabel="always">
+      <mat-form-field class="full-width">
         <mat-label>Label</mat-label>
         <input matInput
           type="string"
@@ -10,7 +10,7 @@
       </mat-form-field>
     </div>
     <div class="flex-settings">
-      <mat-form-field class="settings" appearance="outline" floatLabel="always">
+      <mat-form-field class="settings">
         <mat-label>Type</mat-label>
         <mat-select
           placeholder="Select Type..."
@@ -24,7 +24,7 @@
       </mat-form-field>
     </div>
     <div class="flex-settings">
-      <mat-form-field class="settings" appearance="outline" floatLabel="always">
+      <mat-form-field class="settings">
         <mat-label>Color</mat-label>
         <mat-select
           placeholder="Select Color..."
@@ -38,16 +38,26 @@
         </mat-select>
       </mat-form-field>
     </div>
+    <div class="flex-full-width">
+      <mat-checkbox
+        formControlName="isNumeric">
+          Use numeric path
+        </mat-checkbox>
+    </div>
   </div>
   <div class="actions">
     <div class="flex-actions">
       <div class="btn-grid">
-        <button class="up" type="button" mat-icon-button color="primary" *ngIf="controlIndex !== 0" (click)="moveCtrlUp()" aria-label="Move control up in the list">
-          <i class="fa-solid fa-caret-up"></i>
-        </button>
-        <button class="down" type="button" mat-icon-button color="primary" *ngIf="controlIndex !== arrayLength - 1" (click)="moveCtrlDown()" aria-label="Move control down in the list">
-          <i class="fa-solid fa-caret-down"></i>
-        </button>
+        @if (controlIndex !== 0) {
+          <button class="up" type="button" mat-icon-button color="primary" (click)="moveCtrlUp()" aria-label="Move control up in the list">
+            <i class="fa-solid fa-caret-up"></i>
+          </button>
+        }
+        @if (controlIndex !== arrayLength - 1) {
+          <button class="down" type="button" mat-icon-button color="primary" (click)="moveCtrlDown()" aria-label="Move control down in the list">
+            <i class="fa-solid fa-caret-down"></i>
+          </button>
+        }
         <button class="delete" type="button" mat-icon-button color="primary" (click)="deleteControl()" aria-label="Delete control">
           <i class="fa-solid fa-trash-can"></i>
         </button>
