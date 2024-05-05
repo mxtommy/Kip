@@ -5,6 +5,8 @@ import Qty from 'js-quantities';
 import { AppSettingsService } from './app-settings.service';
 import { Subscription } from 'rxjs';
 
+export type TValidSkUnits = 's' | 'Hz' | 'm3' | 'm3/s' | 'kg/s' | 'kg/m3' | 'deg' | 'rad' | 'rad/s' | 'A' | 'C' | 'V' | 'W' | 'Nm' | 'J' | 'ohm' | 'm' | 'm/s' | 'm2' | 'K' | 'Pa' | 'kg' | 'ratio' | 'm/s2' | 'rad/s2' | 'N' | 'T' | 'Lux' | 'Pa/s' | 'Pa.s' | null;
+
 /**
  * Interface for a list of possible Kip value type conversions for a given path.
  *
@@ -43,7 +45,7 @@ export interface IUnitDefaults {
  * See: https://github.com/SignalK/specification/blob/master/schemas/definitions.json
  */
 export interface ISkBaseUnit {
-  unit: string;
+  unit: TValidSkUnits;
   properties: ISkUnitProperties;
 }
 

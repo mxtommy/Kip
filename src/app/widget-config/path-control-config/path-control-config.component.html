@@ -3,54 +3,67 @@
     <div class="flex-field-100">
       <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
     </div>
-    <div class="flex-field-100">
-      <mat-form-field class="pathField" subscriptSizing="dynamic" matAutocompleteOrigin #origin="matAutocompleteOrigin">
-        <mat-label>Signal K Path</mat-label>
-        <input type="text" matInput
-          placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
-          formControlName="path"
-          required
-          [matAutocomplete]="pathAutoComplete"
-          [matAutocompleteConnectedTo]="origin">
-        <!-- @if (pathFormGroup.value.path) {
-          <button mat-icon-button matSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
-            <span class="fa-solid fa-close"></span>
-          </button>
-        } -->
-        @if (pathFormGroup.value.pathType == 'number') {
-          <mat-select matSuffix>
-            <mat-option>test 1</mat-option>
-            <mat-option>test 2</mat-option>
-            <mat-option>test 3</mat-option>
-          </mat-select>
-          <!-- <button mat-button matSuffix aria-label="Filter">
-            My button
-          </button> -->
-        }
-        <mat-autocomplete #pathAutoComplete="matAutocomplete">
-          @for (option of filteredPaths | async; track option) {
-            <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
-              @if (option.meta != undefined) {
-                <span>{{option.path}}</span>
-                <br>
-                <small class="pathMetaDescription">{{option.meta.description}}</small>
+
+
+      @if (pathFormGroup.value.pathType == 'number' || pathFormGroup.value.pathType == 'boolean') {
+        <div class="flex-field-fixed">
+          <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
+            <mat-label>
+              @if (!filterPathUnits.value) {
+                <i class="fa-solid fa-filter"></i>
               } @else {
-                {{option.path}}
+                <i class="fa-solid fa-filter-circle-xmark"></i>
               }
-            </mat-option>
+              Filter</mat-label>
+            <mat-select #filterPathUnits>
+              <mat-option>None</mat-option>
+              <mat-option value="test">Knots</mat-option>
+              <mat-option value="test">m/s</mat-option>
+              <mat-option value="test">test</mat-option>
+              <mat-option value="test">test</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+      <div class="flex-field-to-100">
+        <mat-form-field floatLabel="auto" appearance="fill" subscriptSizing="dynamic" class="pathField">
+          <mat-label>Signal K Path</mat-label>
+          <input type="text" matInput
+            placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
+            formControlName="path"
+            required
+            [matAutocomplete]="pathAutoComplete"
+            >
+            @if (pathFormGroup.value.path) {
+              <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
+                <span matIconSuffix class="fa-solid fa-close"></span>
+              </button>
+            }
+          <mat-autocomplete #pathAutoComplete="matAutocomplete">
+            @for (option of filteredPaths | async; track option) {
+              <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
+                @if (option.meta != undefined) {
+                  <span>{{option.path}}</span>
+                  <br>
+                  <small class="pathMetaDescription">{{option.meta.description}}</small>
+                } @else {
+                  {{option.path}}
+                }
+              </mat-option>
+            }
+          </mat-autocomplete>
+          @if (pathFormGroup.controls['path'].errors?.['required']) {
+            <mat-error>
+              A valid Signal K path is required.
+            </mat-error>
+          }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
+            <mat-error>
+              The requested path does not match a path published by the server.
+            </mat-error>
           }
-        </mat-autocomplete>
-        @if (pathFormGroup.controls['path'].errors?.['required']) {
-          <mat-error>
-            A valid Signal K path is required.
-          </mat-error>
-        }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
-          <mat-error>
-            The requested path does not match a path published by the server.
-          </mat-error>
-        }
-      </mat-form-field>
-    </div>
+        </mat-form-field>
+      </div>
+
     <div class="pathProperties">
       <div class="sourceField">
         <mat-form-field class="fields" appearance="outline" floatLabel="always">

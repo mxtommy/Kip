@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy, ViewChild } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IConversionPathList, IUnitGroup, UnitsService } from '../../core/services/units.service';
@@ -8,10 +8,10 @@ import { Observable, Subscription } from 'rxjs'
 import { MatSelect } from '@angular/material/select';
 import { MatOption, MatOptgroup } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
-import { MatAutocompleteTrigger, MatAutocomplete, MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
-import { NgIf, NgFor, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 
 
 function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
@@ -31,6 +31,7 @@ function requirePathMatch(allPathsAndMeta: IPathMetaData[]): ValidatorFn {
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   @Input() pathFormGroup!: UntypedFormGroup;
   @Input() filterSelfPaths!: boolean;
+  @ViewChild('filterPathUnits') filterPathUnits: MatOptgroup;
 
   public availablePaths: IPathMetaData[];
   public filteredPaths: Observable<IPathMetaData[]>;
