@@ -114,7 +114,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
           "apTargetWindAngleApp": {
@@ -123,7 +125,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
           "apNotifications": {
@@ -141,7 +145,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
           "headingTrue": {
@@ -150,7 +156,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
           "windAngleApparent": {
@@ -159,7 +167,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
           "windAngleTrueWater": {
@@ -168,7 +178,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
           "rudderAngle": {
@@ -177,7 +189,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: true,
+            isPathConfigurable: false,
+            showPathSkUnitsFilter: false,
+            pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
         },

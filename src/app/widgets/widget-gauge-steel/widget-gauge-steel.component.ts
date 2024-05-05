@@ -34,6 +34,8 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
           source: null,
           pathType: "number",
           isPathConfigurable: true,
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
           convertUnitTo: "unitless",
           sampleTime: 500
         }

@@ -1,76 +1,118 @@
-<div [formGroup]="pathFormGroup" class="flex-container rounded-card" *ngIf="pathFormGroup.value.isPathConfigurable">
-  <div class="flex-field-100">
-    <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
-  </div>
-  <div class="flex-field-100">
-    <mat-form-field class="pathField" appearance="outline" floatLabel="always" subscriptSizing="dynamic">
-      <mat-label>Signal K Path</mat-label>
-      <input type="text" matInput
-        placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
-        formControlName="path"
-        required
-        [matAutocomplete]="pathAutoComplete"
-        >
-      <button mat-icon-button matSuffix *ngIf="pathFormGroup.value.path" aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
-        <span class="fa-solid fa-close"></span>
-      </button>
-      <mat-autocomplete #pathAutoComplete="matAutocomplete">
-        <mat-option *ngFor="let pathAndMeta of filteredPaths | async" [value]="pathAndMeta.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
-          <ng-container *ngIf="(pathAndMeta.meta != undefined)">
-            <span>{{pathAndMeta.path}}</span>
-            <br>
-            <small class="pathMetaDescription">{{pathAndMeta.meta.description}}</small>
-          </ng-container>
-          <ng-container *ngIf="(pathAndMeta.meta == undefined)">
-              {{pathAndMeta.path}}
-          </ng-container>
-        </mat-option>
-      </mat-autocomplete>
-      <mat-error *ngIf="pathFormGroup.controls['path'].errors?.['required']">
-        Path required
-      </mat-error>
-      <mat-error *ngIf="pathFormGroup.controls['path'].errors?.['requireMatch'] && !pathFormGroup.controls['path'].errors?.['required']">
-        Path does not match any known valid path
-      </mat-error>
-    </mat-form-field>
-  </div>
-  <div class="pathProperties">
-    <div class="sourceField">
-      <mat-form-field class="fields" appearance="outline" floatLabel="always">
-        <mat-label>Data Source</mat-label>
-        <mat-select
+@if (pathFormGroup.value.isPathConfigurable) {
+  <div [formGroup]="pathFormGroup" class="flex-container rounded-card">
+    <div class="flex-field-100">
+      <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
+    </div>
+
+
+      @if ((pathFormGroup.value.pathType == 'number' || pathFormGroup.value.pathType == 'boolean') && showPathSkUnitsFilter) {
+        <div class="flex-field-fixed">
+          <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
+            <mat-label>
+              @if (!pathUnitsFilter.value) {
+                <i class="fa-solid fa-filter"></i>
+              } @else {
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+              }
+              Filter</mat-label>
+            <mat-select #pathUnitsFilter
+              [formControl]="pathSkUnitsFilterControl"
+              panelWidth=""
+              (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
+              <mat-option>All</mat-option>
+              @for (item of pathSkUnitsFiltersList; track item) {
+                <mat-option [value]="item">{{item.properties.quantity}}: {{item.properties.display}}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+      <div class="flex-field-to-100">
+        <mat-form-field floatLabel="auto" appearance="fill" subscriptSizing="dynamic" class="pathField">
+          <mat-label>Signal K Path</mat-label>
+          <input #pathInput type="text" matInput
+            placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
+            formControlName="path"
+            required
+            [matAutocomplete]="pathAutoComplete"
+            >
+            @if (pathFormGroup.value.path) {
+              <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
+                <span matIconSuffix class="fa-solid fa-close"></span>
+              </button>
+            }
+          <mat-autocomplete #pathAutoComplete="matAutocomplete">
+            @for (option of filteredPaths | async; track option) {
+              <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
+                @if (option.meta != undefined) {
+                  <span>{{option.path}}</span>
+                  <br>
+                  <small class="pathMetaDescription">{{option.meta.description}}</small>
+                } @else {
+                  {{option.path}}
+                }
+              </mat-option>
+            }
+          </mat-autocomplete>
+          @if (pathFormGroup.controls['path'].errors?.['required']) {
+            <mat-error>
+              A valid Signal K path is required.
+            </mat-error>
+          }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
+            <mat-error>
+              The requested path does not match a path published by the server.
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+    <div class="pathProperties">
+      <div class="sourceField">
+        <mat-form-field class="fields" appearance="outline" floatLabel="always">
+          <mat-label>Data Source</mat-label>
+          <mat-select
             placeholder="Select source"
             formControlName="source"
             required>
-            <mat-option *ngFor="let source of availableSources" [value]="source">
+            @for (source of availableSources; track source) {
+              <mat-option [value]="source">
                 {{source}}
-            </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-    <div class="sampleTimeField">
-      <mat-form-field class="fields" appearance="outline" floatLabel="always">
-        <mat-label>Sample Time</mat-label>
-        <input matInput type="number"
-          placeholder="Sample time in milliseconds"
-          formControlName="sampleTime"
-          required>
-      </mat-form-field>
-    </div>
-    <div class="unitField">
-      <mat-form-field *ngIf="pathFormGroup.value.pathType == 'number'" class="fields" appearance="outline" floatLabel="always">
-        <mat-label>Display Format</mat-label>
-        <mat-select
-            placeholder="Select unit"
-            formControlName="convertUnitTo"
-            required>
-            <mat-optgroup *ngFor="let group of unitList.conversions" [label]="group.group">
-              <mat-option *ngFor="let unit of group.units" [value]="unit.measure">
-                {{unit.description}}
               </mat-option>
-            </mat-optgroup>
-        </mat-select>
-      </mat-form-field>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="sampleTimeField">
+        <mat-form-field class="fields" appearance="outline" floatLabel="always">
+          <mat-label>Sample Time</mat-label>
+          <input matInput type="number"
+            placeholder="Sample time in milliseconds"
+            formControlName="sampleTime"
+            required>
+        </mat-form-field>
+      </div>
+      <div class="unitField">
+        @if (pathFormGroup.value.pathType == 'number') {
+          <mat-form-field class="fields">
+            <mat-label>Display Format</mat-label>
+            <mat-select
+                placeholder="Select unit"
+                formControlName="convertUnitTo"
+                required>
+                @for (group of unitList.conversions; track group) {
+                  <mat-optgroup [label]="group.group">
+                    @for (unit of group.units; track unit) {
+                      <mat-option [value]="unit.measure">
+                        {{unit.description}}
+                      </mat-option>
+                    }
+                  </mat-optgroup>
+                }
+            </mat-select>
+          </mat-form-field>
+        }
+      </div>
     </div>
   </div>
-</div>
+}
+

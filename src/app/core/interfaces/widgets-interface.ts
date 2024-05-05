@@ -1,3 +1,4 @@
+import { TValidSkUnits } from '../services/units.service';
 import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
 
 export enum ControlType {
@@ -293,12 +294,14 @@ export interface IWidgetPath {
   source: string | null;
   /** Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from. Format can be: number, string, boolean or null to list all types */
   pathType: string  | null;
-  /** NOT IMPLEMENTED - Used by the Widget Options UI to filter path list ie. self.navigation.* or *.navigation.* */
-  pathFilter?: string; //TODO: to implement in the future to facilitate sub path selection
-  /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
-  convertUnitTo?: string;
   /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
   isPathConfigurable: boolean;
+  /** Hide numeric path type filter */
+  showPathSkUnitsFilter?: boolean;
+  /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type or null to list all types */
+  pathSkUnitsFilter?: TValidSkUnits;
+  /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
+  convertUnitTo?: string;
   /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
   sampleTime: number;
   /** Used as a reference ID when path is an Array and array index is not appropriate. */
