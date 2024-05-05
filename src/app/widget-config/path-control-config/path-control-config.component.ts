@@ -51,10 +51,17 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     ) { }
 
   ngOnInit() {
-    //populate available paths
     this.getPaths(this.filterSelfPaths);
 
-    // populate filterPathUnits with the formControl value
+    // Path Unit filter setup
+    this.pathSkUnitsFiltersList = this.units.skBaseUnits.sort((a, b) => {
+      return a.properties.quantity > b.properties.quantity ? 1 : -1;
+    });
+
+    if (this.pathFormGroup.value.pathSkUnitsFilter) {
+      this.pathSkUnitsFilterControl.setValue(this.pathSkUnitsFiltersList.find(item => item.unit === this.pathFormGroup.value.pathSkUnitsFilter), {onlySelf: true});
+    }
+
     if (this.pathFormGroup.value.showPathSkUnitsFilter) {
       this.showPathSkUnitsFilter = this.pathFormGroup.value.showPathSkUnitsFilter;
     }
@@ -71,10 +78,6 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
 
     // Populate sources and units for this path (or just the current or default setting if we know nothing about the path)
     this.updateSourcesAndUnits();
-
-    this.pathSkUnitsFiltersList = this.units.skBaseUnits.sort((a, b) => {
-      return a.properties.quantity > b.properties.quantity ? 1 : -1;
-    });
 
     // subscribe to path formControl changes
     this.pathValueChange$ = this.pathFormGroup.controls['path'].valueChanges.pipe(

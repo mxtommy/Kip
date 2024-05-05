@@ -30,6 +30,8 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
           source: null,
           pathType: "number",
           isPathConfigurable: true,
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: 'V',
           convertUnitTo: "V",
           sampleTime: 500
         }

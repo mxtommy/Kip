@@ -54,6 +54,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           source: null,
           pathType: "number",
           isPathConfigurable: true,
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
           convertUnitTo: "unitless",
           sampleTime: 500
         }
