@@ -63,6 +63,9 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
     // Build control array
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
+      if (!ctrlConfig.isNumeric) {
+        ctrlConfig.isNumeric = false;
+      }
         this.switchControls.push({...ctrlConfig});
       }
     );
@@ -72,9 +75,14 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
       if (Object.prototype.hasOwnProperty.call(this.switchControls, key)) {
         const path = this.switchControls[key];
         this.observeDataStream(key, newValue => {
+          if (path.isNumeric) {
+            if ([0, 1, null].includes(newValue.data.value)) {
+              path.value = Boolean(newValue.data.value);
+            }
+          } else {
             path.value = newValue.data.value;
           }
-        );
+        });
       }
     }
 
@@ -109,11 +117,19 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   public toggle($event: IDynamicControl): void {
     const paths = <Array<IWidgetPath>>this.widgetProperties.config.paths;
     const i = paths.findIndex((path: IWidgetPath) => path.pathID == $event.pathID);
-    this.signalkRequestsService.putRequest(
-      this.widgetProperties.config.paths[i].path,
-      $event.value,
-      this.widgetProperties.uuid
-    );
+    if($event.isNumeric) {
+      this.signalkRequestsService.putRequest(
+        this.widgetProperties.config.paths[i].path,
+        $event.value ? 1 : 0,
+        this.widgetProperties.uuid
+      );
+    } else {
+      this.signalkRequestsService.putRequest(
+        this.widgetProperties.config.paths[i].path,
+        $event.value,
+        this.widgetProperties.uuid
+      );
+    }
   }
 
   private resizeWidget(): void {

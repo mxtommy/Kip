@@ -253,6 +253,8 @@ export interface IDynamicControl {
   value?: any;
   /** The color of the control */
   color: string;
+  /** If the control should use numeric path instead of boolean */
+  isNumeric: boolean;
 }
 
 /**
@@ -298,7 +300,7 @@ export interface IWidgetPath {
   isPathConfigurable: boolean;
   /** Hide numeric path type filter */
   showPathSkUnitsFilter?: boolean;
-  /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type or null to list all types */
+  /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type, 'unitless' for paths with no meta units or null to list all types (no filter) */
   pathSkUnitsFilter?: TValidSkUnits;
   /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
   convertUnitTo?: string;

@@ -57,6 +57,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
         type: ['1', Validators.required],
         pathID:[newUUID],
         color:['text'],
+        isNumeric: [false],
         value:[null]
       }
     ));
@@ -72,7 +73,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
       pathType: 'boolean',
       isPathConfigurable: true,
       showPathSkUnitsFilter: false,
-      pathSkUnitsFilter: null,
+      pathSkUnitsFilter: 'unitless',
       convertUnitTo: 'unitless',
       sampleTime: 500
     }
