@@ -61,6 +61,8 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
         source: [newPath.source, Validators.required],
         pathType: [newPath.pathType],
         isPathConfigurable: [newPath.isPathConfigurable],
+        showPathSkUnitsFilter: [newPath.showPathSkUnitsFilter],
+        pathSkUnitsFilter: [newPath.pathSkUnitsFilter],
         convertUnitTo: [newPath.convertUnitTo],
         sampleTime: [newPath.sampleTime]
       })

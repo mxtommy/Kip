@@ -28,10 +28,10 @@
         </div>
       }
       <div class="flex-field-to-100">
-        <mat-form-field floatLabel="auto" appearance="fill" subscriptSizing="dynamic" class="pathField">
+        <mat-form-field floatLabel="auto" appearance="fill" class="pathField">
           <mat-label>Signal K Path</mat-label>
           <input #pathInput type="text" matInput
-            placeholder="Select path (note dropdown limited to 50, type to use autocomplete)"
+            placeholder="Type to use autocomplete or select from list"
             formControlName="path"
             required
             [matAutocomplete]="pathAutoComplete"
@@ -43,11 +43,11 @@
             }
             @if (pathFormGroup.controls['path'].errors?.['required']) {
               <mat-error>
-                A valid Signal K path is required.
+                Path is required. Please enter a valid Signal K path.
               </mat-error>
             }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
               <mat-error>
-                The requested path does not match a path published by the server.
+                Path not recognized. Please enter a path from the server's published list.
               </mat-error>
             }
           <mat-autocomplete #pathAutoComplete="matAutocomplete">
