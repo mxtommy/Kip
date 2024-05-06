@@ -208,11 +208,6 @@ export class ModalWidgetConfigComponent implements OnInit {
   }
 
   private setFormOptions(): void {
-    if (this.formMaster.contains('waypointEnable')) {
-      const ctrlGrp = this.formMaster.get('paths.nextWaypointBearing');
-      this.formMaster.controls['waypointEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable()
-    }
-
     if (this.formMaster.contains('courseOverGroundEnable')) {
       const ctrlGrp = this.formMaster.get('paths.courseOverGround');
       this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
