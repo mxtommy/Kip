@@ -1,1 +1,7 @@
-<p>widget-gauge-ng-compass works!</p>
+<div class="ngRadialWrapper" #ngCompassWrapperDiv (resized)="onResized($event)">
+  <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #compassGauge
+    [options]="gaugeOptions"
+    [value]="value"
+    [attr.value-text]="textValue"
+  ></radial-gauge>
+</div>
