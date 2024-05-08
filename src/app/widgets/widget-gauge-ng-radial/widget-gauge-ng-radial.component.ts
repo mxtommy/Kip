@@ -10,7 +10,7 @@ import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
-import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@biacsics/ng-canvas-gauges';
+import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
@@ -52,6 +52,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   // Zones support
   private meta: ISkMetadata = null;
   private metaSub: Subscription;
+  private state: string = "normal";
 
   constructor() {
     super();
@@ -113,23 +114,25 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
 
-      // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-      switch (newValue.state) {
-        case States.Emergency:
-          this.gaugeOptions.colorValueText = this.theme.warnDark;
-          this.radialGauge.update(this.gaugeOptions);
-          break;
-        case States.Alarm:
-          this.gaugeOptions.colorValueText = this.theme.warnDark;
-          this.radialGauge.update(this.gaugeOptions);
-          break;
-        case States.Warn:
-          this.gaugeOptions.colorValueText = this.theme.textWarnLight;
-          this.radialGauge.update(this.gaugeOptions);
-          break;
-        default:
-          this.gaugeOptions.colorValueText = this.theme.text;
-          this.radialGauge.update(this.gaugeOptions);
+      if (this.state !== newValue.state) {
+        this.state = newValue.state;
+        //@ts-ignore
+        let option: RadialGaugeOptions = {};
+        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+        switch (newValue.state) {
+          case States.Emergency:
+            option.colorValueText = this.theme.warnDark;
+            break;
+          case States.Alarm:
+            option.colorValueText = this.theme.warnDark;
+            break;
+          case States.Warn:
+            option.colorValueText = this.theme.textWarnLight;
+            break;
+          default:
+            option.colorValueText = this.theme.text;
+        }
+        this.radialGauge.update(option);
       }
     });
 
@@ -142,9 +145,14 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   public onResized(event: ResizedEvent): void {
-    this.gaugeOptions.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
-    this.gaugeOptions.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
-    this.radialGauge.update(this.gaugeOptions);
+    if (!event.isFirst) {
+      //@ts-ignore
+      let resize: RadialGaugeOptions = {};
+      resize.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
+      resize.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
+
+      this.radialGauge.update(resize);
+    }
   }
 
   private setGaugeConfig(): void {
@@ -436,9 +444,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
-    this.gaugeOptions.highlightsWidth = 6;
+    //@ts-ignore
+    let highlights: RadialGaugeOptions = {};
+    highlights.highlightsWidth = 6;
     //@ts-ignore - bug in highlights property definition
-    this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    this.radialGauge.update(highlights);
   }
 
   ngOnDestroy() {

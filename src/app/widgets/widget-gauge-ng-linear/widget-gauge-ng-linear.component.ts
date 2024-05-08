@@ -10,7 +10,7 @@ import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
-import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@biacsics/ng-canvas-gauges';
+import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
@@ -40,6 +40,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   // Zones support
   private meta: ISkMetadata = null;
   private metaSub: Subscription;
+  private state: string = "normal";
 
   constructor(private appSettingsService: AppSettingsService) {
     super();
@@ -105,23 +106,25 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
 
-      // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-      switch (newValue.state) {
-        case States.Emergency:
-          this.gaugeOptions.colorValueText = this.theme.warnDark;
-          this.linearGauge.update(this.gaugeOptions);
-          break;
-        case States.Alarm:
-          this.gaugeOptions.colorValueText = this.theme.warnDark;
-          this.linearGauge.update(this.gaugeOptions);
-          break;
-        case States.Warn:
-          this.gaugeOptions.colorValueText = this.theme.textWarnLight;
-          this.linearGauge.update(this.gaugeOptions);
-          break;
-        default:
-          this.gaugeOptions.colorValueText = this.theme.text;
-          this.linearGauge.update(this.gaugeOptions);
+      if (this.state !== newValue.state) {
+        this.state = newValue.state;
+        //@ts-ignore
+        let option: LinearGaugeOptions = {};
+        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+        switch (newValue.state) {
+          case States.Emergency:
+            option.colorValueText = this.theme.warnDark;
+            break;
+          case States.Alarm:
+            option.colorValueText = this.theme.warnDark;
+            break;
+          case States.Warn:
+            option.colorValueText = this.theme.textWarnLight;
+            break;
+          default:
+            option.colorValueText = this.theme.text;
+        }
+        this.linearGauge.update(option);
       }
     });
 
@@ -133,16 +136,18 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     });
   }
 
-  onResized(event: ResizedEvent) {
+  public onResized(event: ResizedEvent) {
     if (!event.isFirst) {
-      this.gaugeOptions.height = event.newRect.height;
+      //@ts-ignore
+      let resize: LinearGaugeOptions = {};
+      resize.height = event.newRect.height;
       if (this.isGaugeVertical == true) {
-        this.gaugeOptions.width = (event.newRect.height * 0.30);
+        resize.height = (event.newRect.height * 0.30);
       }
       else {
-        this.gaugeOptions.width = event.newRect.width;
+        resize.width = event.newRect.width;
       }
-      this.linearGauge.update(this.gaugeOptions);
+      this.linearGauge.update(resize);
     }
   }
 
@@ -342,9 +347,12 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
-    this.gaugeOptions.highlightsWidth = 4;
+    //@ts-ignore
+    let highlights: LinearGaugeOptions = {};
+    highlights.highlightsWidth = 6;
     //@ts-ignore - bug in highlights property definition
-    this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    this.linearGauge.update(highlights);
   }
 
   ngOnDestroy() {
