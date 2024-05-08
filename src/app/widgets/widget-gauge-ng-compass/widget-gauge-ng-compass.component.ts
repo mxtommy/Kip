@@ -49,6 +49,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   // Zones support
   private meta: ISkMetadata = null;
   private metaSub: Subscription;
+  private state: string = "normal";
 
   constructor() {
     super();
@@ -71,12 +72,10 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       },
       gauge: {
         type: 'ngRadial',
-        subType: 'marineCompass', // marineCompass, baseplateCompass
+        subType: 'baseplateCompass', // marineCompass, baseplateCompass
         enableTicks: true,
         compassUseNumbers: false
       },
-      numInt: 1,
-      numDecimal: 0,
       enableTimeout: false,
       textColor: "accent",
       dataTimeout: 5
@@ -100,29 +99,30 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         this.value = 0;
       } else {
         // Compound value to displayScale
-        console.log(newValue.data.value);
         this.value = Math.min(Math.max(newValue.data.value, 0), 360);
         // Format for value box
-        this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
+        this.textValue = this.value.toFixed(0);
       }
 
-      // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-      switch (newValue.state) {
-        case States.Emergency:
-          this.gaugeOptions.colorValueText = this.theme.warnDark;
-          this.compassGauge.update(this.gaugeOptions);
-          break;
-        case States.Alarm:
-          this.gaugeOptions.colorValueText = this.theme.warnDark;
-          this.compassGauge.update(this.gaugeOptions);
-          break;
-        case States.Warn:
-          this.gaugeOptions.colorValueText = this.theme.textWarnLight;
-          this.compassGauge.update(this.gaugeOptions);
-          break;
-        default:
-          this.gaugeOptions.colorValueText = this.theme.text;
-          this.compassGauge.update(this.gaugeOptions);
+      if (this.state !== newValue.state) {
+        this.state = newValue.state;
+        //@ts-ignore
+        let option: RadialGaugeOptions = {};
+        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+        switch (newValue.state) {
+          case States.Emergency:
+            option.colorValueText = this.theme.warnDark;
+            break;
+          case States.Alarm:
+            option.colorValueText = this.theme.warnDark;
+            break;
+          case States.Warn:
+            option.colorValueText = this.theme.textWarnLight;
+            break;
+          default:
+            option.colorValueText = this.theme.text;
+        }
+        this.compassGauge.update(option);
       }
     });
 
@@ -135,9 +135,14 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   public onResized(event: ResizedEvent): void {
-    this.gaugeOptions.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
-    this.gaugeOptions.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
-    this.compassGauge.update(this.gaugeOptions);
+    if (!event.isFirst) {
+      //@ts-ignore
+      let resize: RadialGaugeOptions = {};
+      resize.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
+      resize.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
+
+      this.compassGauge.update(resize);
+    }
   }
 
   private setGaugeConfig(): void {
@@ -145,67 +150,67 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     // override gauge config min/max/unit to make them compatible for 360 circular rotation
     this.gaugeOptions.minValue = 0;
     this.gaugeOptions.maxValue = 360;
+    this.gaugeOptions.valueDec = 0;
+    this.gaugeOptions.valueInt = 1;
     this.gaugeOptions.units = this.widgetProperties.config.paths["gaugePath"].convertUnitTo;
 
     this.gaugeOptions.fontTitleSize = 60;
-    // this.gaugeOptions.barProgress = false;
-    // this.gaugeOptions.barWidth = 0;
+    this.gaugeOptions.barProgress = false;
+    this.gaugeOptions.barWidth = 0;
 
     this.gaugeOptions.valueBox = true;
-    // this.gaugeOptions.fontValueSize = 50;
-    // this.gaugeOptions.valueBoxWidth = 0;
-    // this.gaugeOptions.valueBoxBorderRadius = 5;
-    // this.gaugeOptions.valueBoxStroke = 0;
-    // this.gaugeOptions.colorValueBoxBackground = "";
+    this.gaugeOptions.fontValueSize = 50;
+    this.gaugeOptions.valueBoxWidth = 0;
+    this.gaugeOptions.valueBoxBorderRadius = 5;
+    this.gaugeOptions.valueBoxStroke = 0;
+    this.gaugeOptions.colorValueBoxBackground = "";
 
     this.gaugeOptions.ticksAngle = 360;
     this.gaugeOptions.startAngle = 180;
-    // this.gaugeOptions.exactTicks = false;
+    this.gaugeOptions.exactTicks = false;
     this.gaugeOptions.strokeTicks = false;
     this.gaugeOptions.majorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
-    // this.gaugeOptions.numbersMargin = 3;
-    // this.gaugeOptions.fontNumbersSize = 15;
+    this.gaugeOptions.majorTicksDec = 0;
+    this.gaugeOptions.majorTicksInt = 1;
+    this.gaugeOptions.numbersMargin = 3;
+    this.gaugeOptions.fontNumbersSize = 15;
     this.gaugeOptions.minorTicks = 22;
 
-    // this.gaugeOptions.needle = true;
+    this.gaugeOptions.needle = true;
     this.gaugeOptions.needleType = this.LINE;
     this.gaugeOptions.needleStart = this.NEEDLE_START;
     this.gaugeOptions.needleEnd = this.NEEDLE_END;
     this.gaugeOptions.needleCircleSize = this.NEEDLE_CIRCLE_SIZE;
     this.gaugeOptions.needleWidth = 3;
-    // this.gaugeOptions.needleShadow = false;
-    // this.gaugeOptions.needleCircleInner = false;
+    this.gaugeOptions.needleShadow = false;
+    this.gaugeOptions.needleCircleInner = false;
     this.gaugeOptions.needleCircleOuter = false;
 
     this.gaugeOptions.borders = true;
-    this.gaugeOptions.borderOuterWidth = 10;
+    this.gaugeOptions.borderOuterWidth = 0;
     this.gaugeOptions.borderMiddleWidth = this.BORDER_MIDDLE_WIDTH;
     this.gaugeOptions.borderInnerWidth = this.BORDER_INNER_WIDTH;
     this.gaugeOptions.borderShadowWidth = 0;
     this.gaugeOptions.highlights = [];
 
-    // this.gaugeOptions.fontTitle="arial";
-    // this.gaugeOptions.fontTitleWeight="bold";
-    // this.gaugeOptions.fontUnits="arial";
-    // this.gaugeOptions.fontUnitsSize=25;
-    // this.gaugeOptions.fontUnitsWeight="normal";
+    this.gaugeOptions.fontTitle="arial";
+    this.gaugeOptions.fontTitleWeight="bold";
+    this.gaugeOptions.fontUnits="arial";
+    this.gaugeOptions.fontUnitsSize = 25;
+    this.gaugeOptions.fontUnitsWeight="normal";
     // this.gaugeOptions.colorBorderOuter="red";
     // this.gaugeOptions.colorBorderOuterEnd="green";
-    // this.gaugeOptions.barStrokeWidth=0;
-    // this.gaugeOptions.barShadow=0;
-    // this.gaugeOptions.colorBarStroke="";
-    // this.gaugeOptions.fontValue="arial";
-    // this.gaugeOptions.fontValueWeight="bold";
+    this.gaugeOptions.barStrokeWidth = 0;
+    this.gaugeOptions.barShadow = 0;
+    this.gaugeOptions.colorBarStroke="";
+    this.gaugeOptions.fontValue="arial";
+    this.gaugeOptions.fontValueWeight="bold";
     this.gaugeOptions.valueTextShadow = false;
-    // this.gaugeOptions.colorValueBoxShadow="";
-    // this.gaugeOptions.fontNumbers="arial";
-    // this.gaugeOptions.fontNumbersWeight="bold";
+    this.gaugeOptions.colorValueBoxShadow="";
+    this.gaugeOptions.fontNumbers="arial";
+    this.gaugeOptions.fontNumbersWeight="bold";
 
-    // this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
-    // this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal;
-    // this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
-    // this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
-    // this.gaugeOptions.highlightsWidth = 0;
+    this.gaugeOptions.highlightsWidth = 0;
 
     if (this.widgetProperties.config.gauge.subType === "marineCompass") {
       this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_PLATE;
@@ -215,7 +220,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       this.gaugeOptions.useMinPath = true;
     }
 
-    // this.gaugeOptions.animation = true;
+    this.gaugeOptions.animation = true;
     this.gaugeOptions.animateOnInit = true;
     this.gaugeOptions.animatedValue = true;
     this.gaugeOptions.animationRule = "linear";
@@ -314,9 +319,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
-    //TODO: this.gaugeOptions.highlightsWidth = 6;
+    //@ts-ignore
+    let highlights: RadialGaugeOptions = {};
+    highlights.highlightsWidth = 6;
     //@ts-ignore - bug in highlights property definition
-    //TODO: this.gaugeOptions.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    this.compassGauge.update(highlights);
   }
 
   ngOnDestroy(): void {
