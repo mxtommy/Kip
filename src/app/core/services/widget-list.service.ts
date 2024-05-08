@@ -18,6 +18,7 @@ import { WidgetSimpleLinearComponent } from "../../widgets/widget-simple-linear/
 import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
 import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
+import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
 
 class widgetInfo {
   name: string;
@@ -84,6 +85,11 @@ export class WidgetListService {
         name: 'WidgetGaugeNgRadialComponent',
         componentName: WidgetGaugeNgRadialComponent,
         description: 'Radial'
+      },
+      {
+        name: 'WidgetGaugeNgCompassComponent',
+        componentName: WidgetGaugeNgCompassComponent,
+        description: "Compass"
       },
       {
         name: 'WidgetGaugeComponent',
