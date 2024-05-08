@@ -24,7 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { AngularResizeEventModule } from 'angular-resize-event';
-import { GaugesModule } from '@biacsics/ng-canvas-gauges';
+import { GaugesModule } from '@godind/ng-canvas-gauges';
 import { AngularSplitModule } from 'angular-split';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
