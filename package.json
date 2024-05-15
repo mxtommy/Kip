@@ -59,7 +59,7 @@
     "@angular/platform-browser": "17.3.4",
     "@angular/platform-browser-dynamic": "17.3.4",
     "@angular/router": "17.3.4",
-    "@godind/ng-canvas-gauges": "^6.1.7",
+    "@godind/ng-canvas-gauges": "^6.2.0",
     "@robloche/chartjs-plugin-streaming": "^3.1.0",
     "@types/canvas-gauges": "^2.1.8",
     "@types/hammerjs": "^2.0.45",
