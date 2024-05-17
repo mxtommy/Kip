@@ -14,6 +14,11 @@ import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
+function rgbToHex(rgb) {
+  let [r, g, b] = rgb.match(/\d+/g).map(Number);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+}
+
 @Component({
   selector: 'widget-gauge-ng-compass',
   standalone: true,
@@ -24,8 +29,8 @@ import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly DEG: string = "deg";
   private readonly LINE: string = "line";
-  private readonly NEEDLE_START: number = 75;
-  private readonly NEEDLE_END: number = 99;
+  private readonly NEEDLE_START: number = 40;
+  private readonly NEEDLE_END: number = 100;
   private readonly NEEDLE_CIRCLE_SIZE: number = 15;
   private readonly BORDER_MIDDLE_WIDTH: number = 2;
   private readonly BORDER_INNER_WIDTH: number = 2;
@@ -74,7 +79,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         type: 'ngRadial',
         subType: 'baseplateCompass', // marineCompass, baseplateCompass
         enableTicks: true,
-        compassUseNumbers: false
+        compassUseNumbers: false,
+        showValueBox: false
       },
       enableTimeout: false,
       textColor: "accent",
@@ -152,36 +158,35 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.maxValue = 360;
     this.gaugeOptions.valueDec = 0;
     this.gaugeOptions.valueInt = 1;
-    this.gaugeOptions.units = this.widgetProperties.config.paths["gaugePath"].convertUnitTo;
+    this.gaugeOptions.units = "";
 
     this.gaugeOptions.fontTitleSize = 60;
     this.gaugeOptions.barProgress = false;
     this.gaugeOptions.barWidth = 0;
 
-    this.gaugeOptions.valueBox = true;
+    this.gaugeOptions.valueBox = this.widgetProperties.config.gauge.showValueBox;
     this.gaugeOptions.fontValueSize = 50;
-    this.gaugeOptions.valueBoxWidth = 0;
+    this.gaugeOptions.valueBoxWidth = 26;
     this.gaugeOptions.valueBoxBorderRadius = 5;
     this.gaugeOptions.valueBoxStroke = 0;
-    this.gaugeOptions.colorValueBoxBackground = "";
 
     this.gaugeOptions.ticksAngle = 360;
     this.gaugeOptions.startAngle = 180;
     this.gaugeOptions.exactTicks = false;
-    this.gaugeOptions.strokeTicks = false;
-    this.gaugeOptions.majorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
+    this.gaugeOptions.strokeTicks = "";
+    this.gaugeOptions.majorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? ["N", "30", "60", "E", "120", "150", "S", "210", "240", "W", "300", "330", "N"] : ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"];
     this.gaugeOptions.majorTicksDec = 0;
     this.gaugeOptions.majorTicksInt = 1;
-    this.gaugeOptions.numbersMargin = 3;
-    this.gaugeOptions.fontNumbersSize = 15;
-    this.gaugeOptions.minorTicks = 22;
+    this.gaugeOptions.numbersMargin = 5;
+    this.gaugeOptions.fontNumbersSize = 25;
+    this.gaugeOptions.minorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? 3 : 2;
 
     this.gaugeOptions.needle = true;
     this.gaugeOptions.needleType = this.LINE;
     this.gaugeOptions.needleStart = this.NEEDLE_START;
     this.gaugeOptions.needleEnd = this.NEEDLE_END;
     this.gaugeOptions.needleCircleSize = this.NEEDLE_CIRCLE_SIZE;
-    this.gaugeOptions.needleWidth = 3;
+    this.gaugeOptions.needleWidth = 4;
     this.gaugeOptions.needleShadow = false;
     this.gaugeOptions.needleCircleInner = false;
     this.gaugeOptions.needleCircleOuter = false;
@@ -198,11 +203,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.fontUnits="arial";
     this.gaugeOptions.fontUnitsSize = 25;
     this.gaugeOptions.fontUnitsWeight="normal";
-    // this.gaugeOptions.colorBorderOuter="red";
-    // this.gaugeOptions.colorBorderOuterEnd="green";
     this.gaugeOptions.barStrokeWidth = 0;
     this.gaugeOptions.barShadow = 0;
-    this.gaugeOptions.colorBarStroke="";
     this.gaugeOptions.fontValue="arial";
     this.gaugeOptions.fontValueWeight="bold";
     this.gaugeOptions.valueTextShadow = false;
@@ -236,19 +238,27 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
     if (themePalette[this.widgetProperties.config.textColor]) {
       this.setGaugeOptions(themePalette[this.widgetProperties.config.textColor].color, themePalette[this.widgetProperties.config.textColor].darkColor);
+      const tColor = themePalette[this.widgetProperties.config.textColor].color
+      const dColor = themePalette[this.widgetProperties.config.textColor].darkColor
 
       this.gaugeOptions.colorTitle = this.theme.textDark;
       this.gaugeOptions.colorUnits = this.theme.text;
       this.gaugeOptions.colorValueText = this.theme.text;
 
-      this.colorStrokeTicks = this.theme.text; // missing property in gaugeOptions
       this.gaugeOptions.colorMinorTicks = this.theme.text;
-      this.gaugeOptions.colorNumbers = this.theme.text;
+      this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
+        [rgbToHex(this.theme.textWarnDark), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(dColor), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(dColor), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(dColor), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.textWarnDark)] :
+        [rgbToHex(this.theme.textWarnDark), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(this.theme.textWarnDark)];
 
-      this.gaugeOptions.colorMajorTicks = this.theme.text;
+      this.colorStrokeTicks = this.theme.warn; // missing property in gaugeOptions
+      this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
+        [rgbToHex(this.theme.textWarnDark), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.textWarnDark)] :
+        [rgbToHex(this.theme.textWarnDark), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.textWarnDark)];
 
       this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
       this.gaugeOptions.colorBar = this.theme.background;
+      this.gaugeOptions.colorBarStroke="";
+      this.gaugeOptions.colorValueBoxBackground = this.theme.background;
       this.gaugeOptions.colorNeedleShadowUp = "";
       this.gaugeOptions.colorNeedleShadowDown = "black";
       this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
@@ -261,9 +271,11 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   private setGaugeOptions(themePaletteColor: string, themePaletteDarkColor: string) {
-    this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-    this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-    this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
+    this.gaugeOptions.colorBarProgress = themePaletteColor;
+    this.gaugeOptions.colorBorderMiddle = themePaletteDarkColor;
+    this.gaugeOptions.colorBorderMiddleEnd = themePaletteDarkColor;
+    this.gaugeOptions.colorNeedle = themePaletteColor;
+    this.gaugeOptions.colorNeedleEnd = themePaletteColor;
   }
 
   private setHighlights(): void {

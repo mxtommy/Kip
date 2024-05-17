@@ -186,7 +186,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.animateOnInit = false;
     this.gaugeOptions.animatedValue = false;
     this.gaugeOptions.animationRule = "linear";
-    this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 50; // prevent data and animation delay collisions
+    this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 25; // prevent data and animation delay collisions
 
      // Set Theme related colors
     const themePalette = {
@@ -350,7 +350,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.barProgress = false;
     this.gaugeOptions.barWidth = 0;
 
-    this.gaugeOptions.valueBox = true
+    this.gaugeOptions.valueBox = true;
     this.gaugeOptions.fontValueSize = 50;
     this.gaugeOptions.valueBoxWidth = 0;
     this.gaugeOptions.valueBoxBorderRadius = 5;
