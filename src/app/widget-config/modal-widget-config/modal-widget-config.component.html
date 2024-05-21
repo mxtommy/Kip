@@ -154,7 +154,7 @@
             }
 
             @if (widgetConfig.gauge?.type == 'ngLinear') {
-              <mat-form-field formGroupName="gauge">
+              <mat-form-field formGroupName="gauge" class="options-grid-span2">
                 <mat-label>Orientation</mat-label>
                 <mat-select
                     placeholder="Select type..."
@@ -164,13 +164,6 @@
                     <mat-option value="horizontal">Horizontal</mat-option>
                 </mat-select>
               </mat-form-field>
-              <div formGroupName="gauge">
-                <mat-checkbox
-                  formControlName="enableTicks"
-                  name="enableTicks">
-                    Display Ticks
-                </mat-checkbox>
-              </div>
             }
 
             @if (widgetConfig.gauge?.type == 'simpleLinear') {
