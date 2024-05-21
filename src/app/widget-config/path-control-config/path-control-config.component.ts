@@ -12,7 +12,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
 import { AsyncPipe } from '@angular/common';
-import { start } from 'repl';
+import path from 'path';
 
 
 function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -71,7 +71,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     // add path validator fn and validate
     this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(() => this.getPaths())]);
     this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
-    this.pathFormGroup.controls['path'].valid ? this.enableFormFields(true) : this.disablePathFields();
+    this.pathFormGroup.controls['path'].valid ? this.enableFormFields(false) : this.disablePathFields();
 
     // If SampleTime control is not present because the path property is missing, add it.
     if (!this.pathFormGroup.controls['sampleTime']) {
@@ -84,8 +84,12 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       debounce(value => value === '' ? timer(0) : timer(350)),
       startWith(''),
       map(value => this.filterPaths(value || '')))
-      .subscribe((paths) => {
+      .subscribe((path) => {
+        if (this.pathFormGroup.controls['path'].pristine) {
+          return;
+        } else {
         this.pathFormGroup.controls['path'].valid ? this.enableFormFields(true) : this.disablePathFields();
+        }
       }
     );
 
