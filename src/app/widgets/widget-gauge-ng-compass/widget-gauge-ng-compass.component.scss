@@ -1,11 +1,8 @@
-radial-gauge.radialGauge {
+.ngCompassWrapper {
   position: relative;
   top: 2%;
-}
-
-.ngRadialWrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  left: 2%;
+  width: 96%;
+  height: 96%;
   text-align: center;
  }

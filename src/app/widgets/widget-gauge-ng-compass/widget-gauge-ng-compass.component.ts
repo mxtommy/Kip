@@ -134,7 +134,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
     this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
       this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
+      if (this.meta && this.meta.zones && this.meta.zones.length > 0 ) {
         this.setHighlights();
       }
     });
@@ -160,14 +160,13 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.valueInt = 1;
     this.gaugeOptions.units = "";
 
-    this.gaugeOptions.fontTitleSize = 60;
     this.gaugeOptions.barProgress = false;
     this.gaugeOptions.barWidth = 0;
 
     this.gaugeOptions.valueBox = this.widgetProperties.config.gauge.showValueBox;
-    this.gaugeOptions.fontValueSize = 50;
+    this.gaugeOptions.fontValueSize = 60;
     this.gaugeOptions.valueBoxWidth = 26;
-    this.gaugeOptions.valueBoxBorderRadius = 5;
+    this.gaugeOptions.valueBoxBorderRadius = 10;
     this.gaugeOptions.valueBoxStroke = 0;
 
     this.gaugeOptions.ticksAngle = 360;
@@ -199,7 +198,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.highlights = [];
 
     this.gaugeOptions.fontTitle="arial";
-    this.gaugeOptions.fontTitleWeight="bold";
+    this.gaugeOptions.fontTitleWeight="normal";
+    this.gaugeOptions.fontTitleSize = 25;
     this.gaugeOptions.fontUnits="arial";
     this.gaugeOptions.fontUnitsSize = 25;
     this.gaugeOptions.fontUnitsWeight="normal";
