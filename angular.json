@@ -27,8 +27,7 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "canvas-gauges",
-              "rx-dom-html",
+              "@godind/canvas-gauges",
               "howler",
               "js-quantities"
             ]
