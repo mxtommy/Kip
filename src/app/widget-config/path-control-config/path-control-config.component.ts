@@ -12,7 +12,6 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
 import { AsyncPipe } from '@angular/common';
-import path from 'path';
 
 
 function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -37,6 +36,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public availablePaths: IPathMetaData[];
   public filteredPaths = new BehaviorSubject<IPathMetaData[] | null>(null);
   private pathValueChange$: Subscription = null;
+  private pathFormGroup$: Subscription = null;
 
   // Sources control
   public availableSources: Array<string>;
@@ -93,7 +93,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       }
     );
 
-    this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
+    this.pathFormGroup$ = this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
         this.pathSkUnitsFilterControl.setValue(this.unitlessUnit);
         this.pathFormGroup.controls['path'].updateValueAndValidity();
     });
@@ -173,5 +173,6 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
 
   ngOnDestroy(): void {
     this.pathValueChange$?.unsubscribe();
+    this.pathFormGroup$?.unsubscribe();
   }
 }
