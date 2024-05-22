@@ -127,6 +127,8 @@ export interface IWidgetSvcConfig {
     unitLabelFormat?: string;
     /** Optional. Used ny ngGauge when in compass mode */
     compassUseNumbers?: boolean;
+    /** Optional. Used ny ngGauge to show/hide value box */
+    showValueBox?: boolean;
     /** Optional. Used by GaugeSteel to set face style */
     backgroundColor?: string;
     /** Optional. Used by GaugeSteel to set face style */

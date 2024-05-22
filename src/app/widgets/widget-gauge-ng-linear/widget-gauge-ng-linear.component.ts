@@ -12,9 +12,9 @@ import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { AppSettingsService } from '../../core/services/app-settings.service';
 import { JsonPipe } from '@angular/common';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
 
 @Component({
     selector: 'app-widget-gauge-ng-linear',
@@ -35,14 +35,15 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   // Gauge options
   public gaugeOptions = {} as LinearGaugeOptions;
-  public isGaugeVertical: Boolean = true;
+  private isGaugeVertical: Boolean = true;
+  public height: string = "";
 
   // Zones support
   private meta: ISkMetadata = null;
   private metaSub: Subscription;
   private state: string = "normal";
 
-  constructor(private appSettingsService: AppSettingsService) {
+  constructor() {
     super();
 
     this.defaultConfig = {
@@ -67,8 +68,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         type: "linear"
       },
       gauge: {
-        type: 'ngLinearVertical', // ngLinearVertical ot ngLinearHorizontal
-        enableTicks: false,    // theme palette to select
+        type: 'ngLinear',
+        subType: 'vertical',    // vertical or horizontal
+        enableTicks: true,
       },
       numInt: 1,
       numDecimal: 0,
@@ -84,13 +86,17 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.setGaugeConfig();
 
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
+    this.isGaugeVertical = this.widgetProperties.config.gauge.subType === 'vertical';  // Save for resize event
 
-    this.gaugeOptions.height = gaugeSize.height;
-    if (this.isGaugeVertical == true) {
-      this.gaugeOptions.width = (gaugeSize.height * 0.30);
+    if (this.isGaugeVertical) {
+      this.gaugeOptions.height = gaugeSize.height;
+      this.gaugeOptions.width = (gaugeSize.height * 0.3);
+      this.height = "0px";
     }
     else {
+      this.gaugeOptions.height = gaugeSize.width * 0.3;
       this.gaugeOptions.width = gaugeSize.width;
+      this.height = ((gaugeSize.height - this.gaugeOptions.height) / 2).toString() + "px";
     }
   }
 
@@ -140,24 +146,45 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     if (!event.isFirst) {
       //@ts-ignore
       let resize: LinearGaugeOptions = {};
-      resize.height = event.newRect.height;
-      if (this.isGaugeVertical == true) {
-        resize.height = (event.newRect.height * 0.30);
+      if (this.isGaugeVertical) {
+        resize.height = event.newRect.height;
+        resize.width = (event.newRect.height * 0.3);
+        this.height = "0px";
       }
       else {
+        resize.height = event.newRect.width * 0.3;
         resize.width = event.newRect.width;
+        this.height = ((event.newRect.height - resize.height) / 2).toString() + "px";
       }
       this.linearGauge.update(resize);
     }
   }
 
   private setGaugeConfig() {
+    const isVertical = this.widgetProperties.config.gauge.subType === 'vertical';
+    const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
     const defaultOptions = {
-      highlights: [],
-      highlightsWidth: 0,
+      minValue: scale.min,
+      maxValue: scale.max,
+      valueInt: this.widgetProperties.config.numInt,
+      valueDec: this.widgetProperties.config.numDecimal,
+
       title: this.widgetProperties.config.displayName,
+      fontTitleSize: 40,
       fontTitle: "arial",
       fontTitleWeight: "bold",
+
+      barLength: isVertical ? 80 : 90,
+      barWidth: 30,
+      barProgress: true,
+      barBeginCircle: 0,
+      barStrokeWidth: 0,
+      barShadow: 0,
+
+      needleStart: -45,
+      needleEnd: 55,
+
+
       units: this.widgetProperties.config.paths['gaugePath'].convertUnitTo,
       fontUnits: "arial",
       fontUnitsWeight: "normal",
@@ -173,27 +200,23 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorBorderInnerEnd: "#121212",
       borderShadowWidth: 0,
       borderRadius: 0,
-      barProgress: true,
-      barBeginCircle: 0,
-      barStrokeWidth: 0,
-      barShadow: 0,
+
       colorBarEnd: "",
       colorBarStroke: "0",
       valueBoxStroke: 0,
       colorValueBoxRect: "",
       colorValueBoxRectEnd: "",
       colorValueBoxBackground: this.theme.background,
-      fontValue: "arial",
       fontValueSize: 50,
+      fontValue: "arial",
       fontValueWeight: "bold",
       valueTextShadow: false,
+
       colorValueBoxShadow: "",
       fontNumbers: "arial",
       fontNumbersWeight: "normal",
-      animation: true,
-      animationRule: "linear",
-      animatedValue: false,
-      animateOnInit: false,
+      fontUnitsSize: this.isGaugeVertical ? 40 : 35,
+
       colorTitle: this.theme.textDark,
       colorUnits: this.theme.text,
       colorValueText: this.theme.text,
@@ -207,26 +230,42 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorNeedleEnd: "",
       colorNeedleShadowUp: "",
       colorNeedleShadowDown: "black",
-      minValue: this.widgetProperties.config.displayScale.lower,
-      maxValue: this.widgetProperties.config.displayScale.upper,
-      valueInt: this.widgetProperties.config.numInt,
-      valueDec: this.widgetProperties.config.numDecimal,
+
+      majorTicks: scale.majorTicks,
       majorTicksInt: this.widgetProperties.config.numInt,
       majorTicksDec: this.widgetProperties.config.numDecimal,
-      animationDuration: this.widgetProperties.config.paths['gaugePath'].sampleTime - 25,
+      numberSide: "left",
+      fontNumbersSize: 25,
+      numbersMargin: isVertical ? 8 : 4,
+      tickSide: "left",
+      ticksWidth: 10,
+      ticksPadding: 0,
+      strokeTicks: false,
+      minorTicks: 2,
+      ticksWidthMinor: 6,
+
+
       valueBox: true,
-      valueBoxWidth: 100,
-      valueBoxBorderRadius: 0,
+      valueBoxWidth: 35,
+      valueBoxBorderRadius: 10,
       needle: true,
       needleType: "line",
       needleShadow: false,
       needleSide: "both",
+
+      highlights: [],
+      highlightsWidth: 0,
+
+      animation: true,
+      animationRule: "linear",
+      animatedValue: false,
+      animateOnInit: false,
+      animationDuration: this.widgetProperties.config.paths['gaugePath'].sampleTime - 25,
     };
 
     Object.assign(this.gaugeOptions, defaultOptions);
 
     this.setThemePaletteColor();
-    this.setGaugeTypeOptions();
   }
 
   private setThemePaletteColor() {
@@ -264,34 +303,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorNeedle: themePaletteDarkColor,
       needleWidth: this.widgetProperties.config.textColor === "nobar" ? 20 : 5,
     });
-  }
-
-  private setGaugeTypeOptions() {
-    const isVertical = this.widgetProperties.config.gauge.type === 'ngLinearVertical';
-    this.isGaugeVertical = isVertical;  // Save for resize event
-    const enableTicks = this.widgetProperties.config.gauge.enableTicks;
-
-    const defaultOptions = {
-      barLength: isVertical ? 75 : 80,
-      fontTitleSize: isVertical ? 40 : 45,
-      fontUnitsSize: isVertical ? 40 : 35,
-      barWidth: enableTicks ? 30 : (isVertical ? 100 : 60),
-      needleStart: enableTicks ? -45 : 0,
-      needleEnd: enableTicks ? 55 : 100,
-      tickSide: enableTicks ? "right" : "",
-      ticksWidth: enableTicks ? 8 : 0,
-      ticksPadding: enableTicks ? 4 : 0,
-      strokeTicks: false,
-      majorTicks: enableTicks ? [this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper] : [],
-      numberSide: enableTicks ? "right" : "",
-      numbersMargin: enableTicks ? 0 : 0,
-      fontNumbersSize: enableTicks ? 25 : 0,
-      minorTicks: enableTicks ? 10 : 0,
-      ticksWidthMinor: enableTicks ? 4 : 0,
-      highlightsWidth: 5,
-    };
-
-    Object.assign(this.gaugeOptions, defaultOptions);
   }
 
   private setHighlights(): void {
@@ -349,7 +360,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     };
     //@ts-ignore
     let highlights: LinearGaugeOptions = {};
-    highlights.highlightsWidth = 6;
+    highlights.highlightsWidth = 5;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.linearGauge.update(highlights);

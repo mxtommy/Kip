@@ -78,23 +78,6 @@
               [dateTimezone]="dateTimezoneToControl">
             </display-datetime-options>
 
-            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.textColor !== undefined)">
-              <mat-label>Color</mat-label>
-              <mat-select
-              placeholder="Select Color..."
-              formControlName="textColor"
-              name="textColor"
-              required>
-                <mat-option value='text'>Font</mat-option>
-                <mat-option value='primary'>Primary</mat-option>
-                <mat-option value='accent'>Accent</mat-option>
-                <mat-option value='warn'>Warn</mat-option>
-                @if (widgetConfig.gauge) {
-                  <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinearVertical') || (widgetConfig.gauge?.type == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
             <!-- sail gauge stuff -->
             <mat-checkbox class="fields" *ngIf="(widgetConfig.laylineEnable !== undefined)"
               name="laylineEnable"
@@ -130,6 +113,87 @@
             <mat-form-field *ngIf="(widgetConfig.maxValue !== undefined) && !formMaster.get('displayScale')">
               <mat-label>Maximum Value</mat-label>
               <input matInput type="number" name="maxValue" formControlName="maxValue" placeholder="Enter or select number...">
+            </mat-form-field>
+
+            @if (widgetConfig.gauge?.type == 'ngRadial') {
+              @if (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.subType) > -1) {
+                <mat-form-field class="options-grid-span2" formGroupName="gauge">
+                  <mat-label>Rotation Element</mat-label>
+                    <mat-select
+                      placeholder="Select Gauge Type..."
+                      formControlName="subType"
+                      name="subType">
+                      <mat-option value="marineCompass">Dial (Marine Compass)</mat-option>
+                      <mat-option value="baseplateCompass">Needle (Base plate compass)</mat-option>
+                    </mat-select>
+                </mat-form-field>
+                <div formGroupName="gauge">
+                  <mat-checkbox name="showValueBox" formControlName="showValueBox">
+                    Show value box
+                  </mat-checkbox>
+                </div>
+                <div formGroupName="gauge">
+                  <mat-checkbox name="compassUseNumbers" formControlName="compassUseNumbers">
+                    Show cardinal degrees
+                  </mat-checkbox>
+                </div>
+              } @else if ( ['measuring','capacity'].indexOf(formMaster.value.gauge.subType) > -1 ) {
+
+                  <mat-form-field formGroupName="gauge" class="options-grid-span2">
+                    <mat-label>Gauge Type</mat-label>
+                    <mat-select
+                      placeholder="Select Gauge Type..."
+                      formControlName="subType"
+                      name="subType">
+                      <mat-option value="measuring">Measuring</mat-option>
+                      <mat-option value="capacity">Capacity</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+              }
+            }
+
+            @if (widgetConfig.gauge?.type == 'ngLinear') {
+              <mat-form-field formGroupName="gauge" class="options-grid-span2">
+                <mat-label>Orientation</mat-label>
+                <mat-select
+                    placeholder="Select type..."
+                    formControlName="subType"
+                    name="subType">
+                    <mat-option value="vertical">Vertical</mat-option>
+                    <mat-option value="horizontal">Horizontal</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
+
+            @if (widgetConfig.gauge?.type == 'simpleLinear') {
+              <mat-form-field formGroupName="gauge" class="options-grid-span2">
+                <mat-label>Unit Label</mat-label>
+                  <mat-select
+                    placeholder="Select label format"
+                    formControlName="unitLabelFormat"
+                    name="unitLabelFormat">
+                    <mat-option value="full">Full Label</mat-option>
+                    <mat-option value="abr">First Letter Only</mat-option>
+                  </mat-select>
+              </mat-form-field>
+            }
+
+            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.textColor !== undefined)">
+              <mat-label>Color</mat-label>
+              <mat-select
+                placeholder="Select Color..."
+                formControlName="textColor"
+                name="textColor"
+                required>
+                <mat-option value='text'>Font</mat-option>
+                <mat-option value='primary'>Primary</mat-option>
+                <mat-option value='accent'>Accent</mat-option>
+                <mat-option value='warn'>Warn</mat-option>
+                @if (widgetConfig.gauge) {
+                  <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinearVertical') || (widgetConfig.gauge?.type == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
+                }
+              </mat-select>
             </mat-form-field>
 
             <!-- Steelgauge -->
@@ -221,87 +285,7 @@
         </div>
       </mat-tab>
 <!-- Gauge stuff -->
-      @if (widgetConfig.gauge?.type == 'simpleLinear') {
-        <mat-tab label="Settings" formGroupName="gauge">
-          <div class="tab-content widget-options-grid">
-            <mat-form-field class="options-grid-span2">
-              <mat-label>Unit Label Options</mat-label>
-                <mat-select
-                  placeholder="Select label format"
-                  formControlName="unitLabelFormat"
-                  name="unitLabelFormat">
-                  <mat-option value="full">Full Label</mat-option>
-                  <mat-option value="abr">First Letter Only</mat-option>
-                </mat-select>
-            </mat-form-field>
-          </div>
-        </mat-tab>
-      } @else if (widgetConfig.gauge?.type == 'ngLinear') {
-        <mat-tab label="Settings" formGroupName="gauge">
-          <div class="tab-content widget-options-grid">
-            <mat-form-field class="options-grid-span2" appearance="outline" floatLabel="always">
-              <mat-label>Orientation</mat-label>
-              <mat-select
-                  placeholder="Select type..."
-                  formControlName="type"
-                  name="type">
-                  <mat-option value="ngLinearVertical">Vertical</mat-option>
-                  <mat-option value="ngLinearHorizontal">Horizontal</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <p>
-              <mat-checkbox
-                formControlName="enableTicks"
-                name="enableTicks">
-                  Display Ticks
-              </mat-checkbox>
-            </p>
-          </div>
-        </mat-tab>
-      } @else if (widgetConfig.gauge?.type == 'ngRadial') {
-        <mat-tab label="Settings" formGroupName="gauge">
-          <div class="widget-options-grid tab-content">
-            <mat-form-field class="options-grid-span2">
-              <mat-label>Gauge Type</mat-label>
-                <mat-select
-                  placeholder="Select Gauge Type..."
-                  formControlName="subType"
-                  name="subType">
-                  <mat-option value="measuring">Measuring</mat-option>
-                  <mat-option value="capacity">Capacity</mat-option>
-                  <mat-option value="marineCompass">Marine Compass</mat-option>
-                  <mat-option value="baseplateCompass">Baseplate Compass</mat-option>
-                </mat-select>
-            </mat-form-field>
-            @if (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.subType) > -1) {
-              <mat-form-field class="options-grid-span2">
-                <mat-label>Tick Labels</mat-label>
-                <select matNativeControl required
-                    placeholder="Select Tick Labels..."
-                    formControlName="compassUseNumbers"
-                    name="compassUseNumbers">
-                    <option [ngValue]=false>N/E/S/W</option>
-                    <option [ngValue]=true>0/90/180/270</option>
-                  </select>
-              </mat-form-field>
-            }
-            <!-- @else if (['measuring'].indexOf(formMaster.value.gauge.type) > -1) {
-              <mat-form-field formGroupName="displayScale" class="options-grid-span2">
-                <mat-label>Scale Type</mat-label>
-                  <mat-select
-                    placeholder="Select Scale Type..."
-                    formControlName="type"
-                    name="type">
-                    <mat-option value="linear">Linear</mat-option>
-                    <mat-option value="logarithmic">Logarithmic</mat-option>
-                    <mat-option value="squareroot">Square Root</mat-option>
-                    <mat-option value="power">Power</mat-option>
-                  </mat-select>
-              </mat-form-field>
-            } -->
-          </div>
-        </mat-tab>
-      } @else if (widgetConfig.gauge?.type == "steel") {
+        @if (widgetConfig.gauge?.type == "steel") {
         <mat-tab label="Settings" formGroupName="gauge">
           <div class="widget-options-grid tab-content">
             <mat-form-field class="options-grid-span2">
