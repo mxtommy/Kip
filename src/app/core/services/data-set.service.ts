@@ -399,7 +399,7 @@ export class DatasetService {
 
       // Calculate the SMA
       let sum = 0;
-      for (let i = 0; i < windowSize; i++) {
+      for (let i = values.length - windowSize; i < values.length; i++) {
           sum += values[i];
       }
       return sum / windowSize;
@@ -407,7 +407,7 @@ export class DatasetService {
 
     function calculateDirectionalSMA(radianValues: number[], windowSize: number): number {
       if (radianValues.length === 0) {
-          return 0; // Handle empty array case
+        return 0; // Handle empty array case
       }
 
       // Adjust window size if array length is smaller
@@ -416,7 +416,7 @@ export class DatasetService {
       // Calculate the sum of radian values within the window
       let sum = 0;
       for (let i = radianValues.length - actualWindowSize; i < radianValues.length; i++) {
-          sum += radianValues[i];
+        sum += radianValues[i];
       }
 
       // Calculate the simple moving average
