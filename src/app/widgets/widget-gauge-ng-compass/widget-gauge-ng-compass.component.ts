@@ -19,6 +19,13 @@ function rgbToHex(rgb) {
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
 
+function convertNegToPortDegree(degree: number) {
+  if (degree < 0) {
+      degree = 360 + degree;
+  }
+  return degree;
+}
+
 @Component({
   selector: 'widget-gauge-ng-compass',
   standalone: true,
@@ -56,6 +63,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   private metaSub: Subscription;
   private state: string = "normal";
 
+  private readonly negToPortPaths = [
+    "self.environment.wind.angleApparent",
+    "self.environment.wind.angleTrueGround",
+    "self.environment.wind.angleTrueWater"
+  ];
+
   constructor() {
     super();
 
@@ -69,8 +82,9 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           source: null,
           pathType: "number",
           isPathConfigurable: true,
-          showPathSkUnitsFilter: true,
+          showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          isConvertUnitToConfigurable: false,
           convertUnitTo: this.DEG,
           sampleTime: 500
         }
@@ -104,8 +118,10 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         this.textValue = "--";
         this.value = 0;
       } else {
+        let convertedValue: number = this.negToPortPaths.includes(this.widgetProperties.config.paths['gaugePath'].path) ? convertNegToPortDegree(newValue.data.value) : newValue.data.value;
+
         // Compound value to displayScale
-        this.value = Math.min(Math.max(newValue.data.value, 0), 360);
+        this.value = Math.min(Math.max(convertedValue, 0), 360);
         // Format for value box
         this.textValue = this.value.toFixed(0);
       }

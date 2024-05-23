@@ -280,12 +280,6 @@ export interface IDataHighlight {
  * Defines all possible properties for data paths. Combines both
  * both KIP and Signal K path features.
  *
- * @interface IWidgetPaths
- */
-
-/**
- *
- *
  * @export
  * @interface IWidgetPath
  */
@@ -304,6 +298,8 @@ export interface IWidgetPath {
   showPathSkUnitsFilter?: boolean;
   /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type, 'unitless' for paths with no meta units or null to list all types (no filter) */
   pathSkUnitsFilter?: TValidSkUnits;
+  /** Used to hide the path Format configuration field from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the Format for the path's value. Use this to hardcode a format configuration */
+  isConvertUnitToConfigurable?: boolean;
   /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
   convertUnitTo?: string;
   /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
