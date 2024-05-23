@@ -92,7 +92,7 @@
         </mat-form-field>
       </div>
       <div class="unitField">
-        @if (pathFormGroup.value.pathType == 'number') {
+        @if ((pathFormGroup.value.pathType == 'number' && pathFormGroup.value.isConvertUnitToConfigurable === undefined) || (pathFormGroup.value.pathType == 'number' && pathFormGroup.value.isConvertUnitToConfigurable === true)) {
           <mat-form-field class="fields">
             <mat-label>Display Format</mat-label>
             <mat-select
