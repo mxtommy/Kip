@@ -45,7 +45,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     this.getColors(this.widgetProperties.config.textColor);
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');

@@ -104,8 +104,6 @@
               Show Next Waypoint
             </mat-checkbox>
 
-            <!-- Gauge stuff -->
-            <!-- no scale gauge -->
             <mat-form-field *ngIf="(widgetConfig.minValue !== undefined) && !formMaster.get('displayScale')">
               <mat-label>Minimum Value</mat-label>
               <input matInput type="number" name="minValue" formControlName="minValue" placeholder="Enter or select number...">

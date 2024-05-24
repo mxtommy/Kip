@@ -179,17 +179,19 @@ export interface ISkMetadata {
   timeout?: number;     // tells the consumer how long it should consider the value valid
   properties: {}; // Not defined by Kip. Used by GPS and Ship details and other complex data types
   method?: TMethod[];
-  displayScale?: {      //This object provides information regarding the recommended type and extent of the scale used for displaying values.
-    lower?: number;
-    upper?: number;
-    type: TScaleType;
-    power?: number;
-  }
+  displayScale?: ISkDisplayScale
   alertMethod?: TMethod[];
   warnMethod?: TMethod[];
   alarmMethod?: TMethod[];
   emergencyMethod?: TMethod[];
   zones?: ISkZone[];
+}
+
+export interface ISkDisplayScale {
+    lower?: number;
+    upper?: number;
+    type: TScaleType;
+    power?: number;
 }
 
 export interface ISkZone {

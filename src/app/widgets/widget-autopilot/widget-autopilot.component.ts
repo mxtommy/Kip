@@ -215,7 +215,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     if (this.widgetProperties.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }

@@ -6,32 +6,26 @@
  * instantiated gauge config.
  */
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { AsyncPipe } from '@angular/common';
+import { Subject, Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
-import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-ng-radial',
     templateUrl: './widget-gauge-ng-radial.component.html',
     styleUrls: ['./widget-gauge-ng-radial.component.css'],
     standalone: true,
-    imports: [AngularResizeEventModule, GaugesModule]
+    imports: [AngularResizeEventModule, GaugesModule, AsyncPipe]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   // Gauge option setting constant
-  private readonly DEG: string = "deg";
   private readonly LINE: string = "line";
-  private readonly NEEDLE_START: number = 75;
-  private readonly NEEDLE_END: number = 99;
-  private readonly NEEDLE_CIRCLE_SIZE: number = 2;
-  private readonly BORDER_MIDDLE_WIDTH: number = 2;
-  private readonly BORDER_INNER_WIDTH: number = 2;
-  private readonly ANIMATION_TARGET_PLATE:string = "plate";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
   private readonly WIDGET_SIZE_FACTOR: number = 0.97;
 
@@ -43,6 +37,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   // Gauge value
   public value: number = 0;
 
+  private displayScaleSub: Subscription;
+
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
@@ -50,7 +46,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   public unitName: string = null;
 
   // Zones support
-  private meta: ISkMetadata = null;
   private metaSub: Subscription;
   private state: string = "normal";
 
@@ -93,7 +88,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
-    this.validateConfig();
+    //TODO: simplify initialization
+    this.initWidget();
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
     this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
@@ -103,14 +99,24 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngAfterViewInit(): void {
     this.radialGauge.update(this.gaugeOptions);
 
+    this.displayScaleSub = this.displayScale$.subscribe(scale => {
+      const scaleRange = adjustLinearScaleAndMajorTicks(scale.lower, scale.upper);
+      //@ts-ignore
+      const scaleUpdate: RadialGaugeOptions = {};
+      scaleUpdate.minValue = scaleRange.min;
+      scaleUpdate.maxValue = scaleRange.max;
+      scaleUpdate.majorTicks = scaleRange.majorTicks;
+      this.radialGauge.update(scaleUpdate);
+    });
+
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.textValue = "--";
         this.value = 0;
       } else {
-        // Compound value to displayScale
-        this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+        this.value = newValue.data.value;
         // Format for value box
+        //TODO: how can we simply use the original value subject to pipe into a transform and use async in templates?
         this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
 
@@ -136,10 +142,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       }
     });
 
-    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
-        this.setHighlights();
+    this.metaSub = this.zones$.subscribe(zones => {
+      if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
+        this.setHighlights(zones);
       }
     });
   }
@@ -156,7 +161,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setGaugeConfig(): void {
-    this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
+    // this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
     this.gaugeOptions.highlights = [];
 
     this.gaugeOptions.fontTitle="arial";
@@ -229,14 +234,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       case "measuring":
         this.configureMeasuringGauge();
         break;
-      case "marineCompass":
-        this.configureCompassGauge();
-        break;
-      case "baseplateCompass":
-        this.configureCompassGauge();
-        break;
       default:
-        break;
     }
   }
 
@@ -251,8 +249,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks; always drawing first tick and using color="" does not work
     this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
     this.gaugeOptions.fontTitleSize = 60;
-    this.gaugeOptions.minValue = this.widgetProperties.config.displayScale.lower;
-    this.gaugeOptions.maxValue = this.widgetProperties.config.displayScale.upper;
     this.gaugeOptions.barProgress = true;
     this.gaugeOptions.barWidth = 15;
 
@@ -267,7 +263,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.startAngle = 180;
     this.gaugeOptions.exactTicks = true;
     this.gaugeOptions.strokeTicks = false;
-    this.gaugeOptions.majorTicks = [];
     this.gaugeOptions.minorTicks = 0;
     this.gaugeOptions.numbersMargin = 0;
     this.gaugeOptions.fontNumbersSize = 0;
@@ -293,10 +288,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private configureMeasuringGauge(): void {
-    const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
-    this.gaugeOptions.minValue = scale.min;
-    this.gaugeOptions.maxValue = scale.max;
-
     this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     this.gaugeOptions.fontTitleSize = 24;
 
@@ -311,7 +302,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorValueBoxBackground = "";
 
     this.gaugeOptions.exactTicks = false;
-    this.gaugeOptions.majorTicks = scale.majorTicks;
 
     this.gaugeOptions.minorTicks = 2;
     this.gaugeOptions.ticksAngle = 270;
@@ -340,61 +330,10 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.useMinPath = false;
   }
 
-  private configureCompassGauge(): void {
-    // override gauge config min/max/unit to make them compatible for 360 circular rotation
-    this.gaugeOptions.minValue = 0;
-    this.gaugeOptions.maxValue = 360;
-    this.gaugeOptions.units = this.widgetProperties.config.paths["gaugePath"].convertUnitTo = this.DEG;
-
-    this.gaugeOptions.fontTitleSize = 60;
-    this.gaugeOptions.barProgress = false;
-    this.gaugeOptions.barWidth = 0;
-
-    this.gaugeOptions.valueBox = true;
-    this.gaugeOptions.fontValueSize = 50;
-    this.gaugeOptions.valueBoxWidth = 0;
-    this.gaugeOptions.valueBoxBorderRadius = 5;
-    this.gaugeOptions.valueBoxStroke = 0;
-    this.gaugeOptions.colorValueBoxBackground = this.gaugeOptions.colorBar;
-
-    this.gaugeOptions.ticksAngle = 360;
-    this.gaugeOptions.startAngle = 180;
-    this.gaugeOptions.exactTicks = false;
-    this.gaugeOptions.strokeTicks = false;
-    this.gaugeOptions.majorTicks = this.widgetProperties.config.gauge.compassUseNumbers ? ["0,45,90,135,180,225,270,315,0"] : ["N,NE,E,SE,S,SW,W,NW,N"];
-    this.gaugeOptions.numbersMargin = 3;
-    this.gaugeOptions.fontNumbersSize = 15;
-    this.gaugeOptions.minorTicks = 22;
-
-    this.gaugeOptions.needle = true;
-    this.gaugeOptions.needleType = this.LINE;
-    this.gaugeOptions.needleStart = this.NEEDLE_START;
-    this.gaugeOptions.needleEnd = this.NEEDLE_END;
-    this.gaugeOptions.needleCircleSize = this.NEEDLE_CIRCLE_SIZE;
-    this.gaugeOptions.needleWidth = 3;
-    this.gaugeOptions.needleShadow = false;
-    this.gaugeOptions.needleCircleInner = false;
-    this.gaugeOptions.needleCircleOuter = false;
-
-    this.gaugeOptions.borders = true;
-    this.gaugeOptions.borderOuterWidth = 0;
-    this.gaugeOptions.borderMiddleWidth = this.BORDER_MIDDLE_WIDTH;
-    this.gaugeOptions.borderInnerWidth = this.BORDER_INNER_WIDTH;
-    this.gaugeOptions.borderShadowWidth = 0;
-
-    if (this.widgetProperties.config.gauge.subType === "marineCompass") {
-      this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_PLATE;
-      this.gaugeOptions.useMinPath = true;
-    } else if (this.widgetProperties.config.gauge.subType === "baseplateCompass") {
-      this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
-      this.gaugeOptions.useMinPath = true;
-    }
-  }
-
-  private setHighlights(): void {
+  private setHighlights(zones: ISkZone[]): void {
     const gaugeZonesHighlight: IDataHighlight[] = [];
     // Sort zones based on lower value
-    const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);
+    const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);
     for (const zone of sortedZones) {
       let lower: number = null;
       let upper: number = null;
@@ -455,5 +394,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngOnDestroy() {
     this.unsubscribeDataStream();
     this.metaSub?.unsubscribe();
+    this.displayScaleSub?.unsubscribe();
   }
 }

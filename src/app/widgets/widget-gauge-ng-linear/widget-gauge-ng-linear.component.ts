@@ -82,7 +82,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     this.setGaugeConfig();
 
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();

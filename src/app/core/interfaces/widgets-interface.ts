@@ -1,5 +1,5 @@
 import { TValidSkUnits } from '../services/units.service';
-import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
+import { ISkZone, TFormat, TPolicy, TScaleType } from './signalk-interfaces';
 
 export enum ControlType {
   toggle = 0,
@@ -81,39 +81,43 @@ export interface IPathArray {
  *
  */
 export interface IWidgetSvcConfig {
-  /** The Widget's display label */
+  /** The common display name for display. NOTE: This property can be overwritten by metadata. */
   displayName?: string;
-  /** Set to True to limit all Widget's data paths selection of the configuration UI Paths panel to Self. ie. the user's vessel. Value of True will prevent listing of all Signal K known paths that come from buoy, towers, other vessels, etc. Else all Signal K know data will be listed for selection. Should be set to True unless you need non-self data paths such as monitoring remote vessels, etc. */
-  filterSelfPaths?: boolean;
-  /** The widget's path configuration property used for Observable setup. This property can be either contain an object with one key:string per path with it's value as a IWidgetPath object, or an Array of IWidgetPaths. Array is used by multi-control widgets where key:strings Objects are not appropriate. The Key:string Object should be used for typical widgets. */
-  paths?: IPathArray | IWidgetPath[];
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
-  usage?: {
-    [key: string]: string[];
-  };
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
-  typeVal?: {
-    [key: string]: string;
-  };
-  /** Array of sub/child component setting */
-  multiChildCtrls?: IDynamicControl[];
+  /** The short display name for display (AWS, DPT, SOG, etc.). NOTE: This property can be overwritten by metadata. */
+  shortName?: string;
+  /** The long display name for display. NOTE: This property can be overwritten by metadata. */
+  longName?: string;
+  //timeout?: number;     // NOT IMPLEMENTED:tells the consumer how long it should consider the value valid
+  /** This object provides information regarding the recommended type and extent of the scale used for displaying values. NOTE: This property can be overwritten by metadata. */
+  displayScale?: {
+    /** The lower bound of the scale. This is the minimum value that can be represented on the display. NOTE: This property can be overwritten by metadata. */
+    lower?: number;
+    /** The upper bound of the scale. This is the maximum value that can be represented on the display. NOTE: This property can be overwritten by metadata. */
+    upper?: number;
+    /** The type of scale to use. This can be 'linear', 'logarithmic', 'squareRoot', 'power' or null if no scale is used (KIP only support linear for now). NOTE: This property can be overwritten by metadata. */
+    type: TScaleType;
+    /** If scale type is 'power', the power value to use of the display scale */
+    power?: number;
+  }
 
-  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
+  /** Property of selected theme color */
+  textColor?: string;
+    /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */
   dataTimeout?: number;
-  /**
-   * This object represents the scale of a display, such as a gauge or chart. It defines the lower and upper bounds of the scale, and the type of scale to use.
-   *
-   * @property lower - The lower bound of the scale. This is the minimum value that can be represented on the display.
-   * @property upper - The upper bound of the scale. This is the maximum value that can be represented on the display.
-   * @property type - The type of scale to use. This can be 'linear', 'logarithmic', 'squareRoot', 'power' or null if no scale is used.
-   */
-  displayScale?: {
-    lower: number;
-    upper: number;
-    type: TScaleType;
-  }
+  /** Used by multiple Widget: number of fixed decimal places to display */
+  numDecimal?: number;
+  /** Used by multiple Widget: number of fixed Integer places to display */
+  numInt?: number;
+
+  /** The widget's path configuration property used for Observable setup. This property can be either contain an object with one key:string per path with it's value as a IWidgetPath object, or an Array of IWidgetPaths. Array is used by multi-control widgets where key:strings Objects are not appropriate. The Key:string Object should be used for typical widgets. */
+  paths?: IPathArray | IWidgetPath[];
+  /** Set to True to limit all Widget's data paths selection of the configuration UI Paths panel to Self. ie. the user's vessel. Value of True will prevent listing of all Signal K known paths that come from buoy, towers, other vessels, etc. Else all Signal K know data will be listed for selection. Should be set to True unless you need non-self data paths such as monitoring remote vessels, etc. */
+  filterSelfPaths?: boolean;
+
+  /** Array of sub/child component setting */
+  multiChildCtrls?: IDynamicControl[];
 
   /** Gauge type widget property bag */
   gauge?: {
@@ -140,21 +144,29 @@ export interface IWidgetSvcConfig {
     /** Optional. GaugeSteel digital or bar */
     digitalMeter?: boolean;
   }
-  /** Used by multiple Widget: number of fixed decimal places to display */
-  numDecimal?: number;
-  /** Used by multiple Widget: number of fixed Integer places to display */
-  numInt?: number;
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
   /** Used by numeric data Widget: Display maximum registered value since started */
   showMax?: boolean;
-  /** Used by multiple Widget to filter minimum data range to display. */
-  minValue?: number;
-  /** Used by multiple Widget to filter maximum data range to display. */
-  maxValue?: number;
 
+  /** Option for widget that supports Signal K PUT command */
+  putEnable?: boolean;
+  /** Option for widget that supports Signal K PUT command */
+  putMomentary?: boolean;
+  /** Option for widget that supports Signal K PUT command */
+  putMomentaryValue?: boolean;
+
+  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
+  usage?: {
+    [key: string]: string[];
+  };
+  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
+  typeVal?: {
+    [key: string]: string;
+  };
   /** To retire. Used by Autopilot */
   barColor?: string;
+
   /** Used by date Widget: configurable display format of the date/time value */
   dateFormat?: string;
   /** Used by date Widget: Time zone value to apply to the data/time value */
@@ -175,8 +187,6 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Property of selected theme color */
-  textColor?: string;
   /** Used by multiple gauge Widget */
   autoStart?: boolean;
 
@@ -220,15 +230,12 @@ export interface IWidgetSvcConfig {
   yScaleMin?: number;
   /** Chart y scale maximum */
   yScaleMax?: number;
+  /** Chart scale minimum value */
+  minValue?: number;
+  /** Chart scale maximum value */
+  maxValue?: number;
   /** Used by historical data Widget */
   verticalGraph?: boolean;
-
-  /** Option for widget that supports Signal K PUT command */
-  putEnable?: boolean;
-  /** Option for widget that supports Signal K PUT command */
-  putMomentary?: boolean;
-  /** Option for widget that supports Signal K PUT command */
-  putMomentaryValue?: boolean;
 
  /** Used by IFrame widget: URL lo load in the iframe */
   widgetUrl?: string;

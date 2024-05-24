@@ -103,7 +103,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
     this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
