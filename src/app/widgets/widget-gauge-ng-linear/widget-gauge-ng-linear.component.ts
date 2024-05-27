@@ -39,7 +39,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public height: string = "";
 
   // Zones support
-  private meta: ISkMetadata = null;
   private metaSub: Subscription;
   private state: string = "normal";
 
