@@ -94,10 +94,7 @@ export class ModalWidgetConfigComponent implements OnInit {
         }
 
         if (parent == 'paths') {
-          //if we are building Paths sub object formGroups, skip non configurable paths
-          if (this.widgetConfig.paths[key].isPathConfigurable) {
-            groups.addControl(key, this.generateFormGroups(formData[key], key));
-          }
+          groups.addControl(key, this.generateFormGroups(formData[key], key));
         }
 
       } else {

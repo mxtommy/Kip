@@ -15,20 +15,21 @@
   </mat-form-field>
 </div>
 <ng-container [formGroup]="pathsFormGroup">
-  <ng-container *ngIf="isArray">
-    <path-control-config style="display: block;"
-      *ngFor="let group of pathsFormGroup.controls"
-      [pathFormGroup]="group"
-      [filterSelfPaths]="filterSelfPaths.value">
-    </path-control-config>
-  </ng-container>
-  <ng-container *ngIf="!isArray">
-    <path-control-config style="display: block;"
-      *ngFor="let group of pathsFormGroup.controls | objectKeys"
-      [pathFormGroup]="pathsFormGroup.get(group)"
-      [filterSelfPaths]="filterSelfPaths.value">
-    </path-control-config>
-  </ng-container>
+  @if(isArray) {
+    @for (group of pathsFormGroup.controls; track group) {
+      <path-control-config style="display: block;"
+        [pathFormGroup]="group"
+        [filterSelfPaths]="filterSelfPaths.value">
+      </path-control-config>
+    }
+  } @else {
+    @for (group of pathsFormGroup.controls | objectKeys; track group) {
+      <path-control-config style="display: block;"
+        [pathFormGroup]="pathsFormGroup.get(group)"
+        [filterSelfPaths]="filterSelfPaths.value">
+      </path-control-config>
+    }
+  }
 </ng-container>
 <mat-checkbox
   name="filterSelfPaths"

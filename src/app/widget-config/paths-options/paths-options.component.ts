@@ -3,7 +3,6 @@ import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormCo
 import { IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { ObjectKeysPipe } from '../../core/pipes/object-keys.pipe';
 import { ModalPathControlConfigComponent } from '../path-control-config/path-control-config.component';
-import { NgIf, NgFor } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -19,7 +18,7 @@ export interface IAddNewPath {
     templateUrl: './paths-options.component.html',
     styleUrls: ['./paths-options.component.css'],
     standalone: true,
-    imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, NgIf, NgFor, ModalPathControlConfigComponent, ObjectKeysPipe]
+    imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, ModalPathControlConfigComponent, ObjectKeysPipe]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {
   @Input() formGroupName!: string;
