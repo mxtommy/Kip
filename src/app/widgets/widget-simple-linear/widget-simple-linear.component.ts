@@ -57,8 +57,6 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     this.initWidget();
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gauge.unitLabelFormat == "abr") {
-      //TODO: Improve Units service to have Full Measure label, abbreviation and descriptions so that we can use Full or abr display labels...!
-      //TODO: Add zones support to widget
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
     } else {
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
@@ -69,10 +67,9 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
         this.dataValue = 0;
         this.dataLabelValue = "--";
       } else {
+        this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
         this.dataLabelValue = this.dataValue.toFixed(this.widgetProperties.config.numDecimal)
       }
-      this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
-
     });
   }
 

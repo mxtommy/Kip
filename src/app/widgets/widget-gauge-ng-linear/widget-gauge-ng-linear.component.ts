@@ -103,13 +103,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   ngAfterViewInit() {
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
-        this.textValue = "--";
         this.value = 0;
       } else {
         // Compound value to displayScale
         this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
-        // Format for value box
-        this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
 
       if (this.state !== newValue.state) {

@@ -101,12 +101,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
-        this.textValue = "--";
         this.value = 0;
       } else {
         this.value = newValue.data.value;
-        // Format for value box
-        this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
 
       if (this.state !== newValue.state) {
