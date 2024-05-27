@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, Observer, Subject, Subscription, delayWhen
 import { DataService, IPathUpdate } from '../core/services/data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
-import { ISkDisplayScale, ISkZone } from '../core/interfaces/signalk-interfaces';
+import { ISkZone } from '../core/interfaces/signalk-interfaces';
 import { cloneDeep, merge } from 'lodash-es';
 
 
