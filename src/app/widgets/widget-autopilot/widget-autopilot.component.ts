@@ -104,7 +104,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             path: 'self.steering.autopilot.state',
             source: 'default',
             pathType: "string",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
+            showPathSkUnitsFilter: false,
             convertUnitTo: "",
             sampleTime: 500
           },
@@ -114,7 +115,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
@@ -125,27 +126,27 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
           },
-          "apNotifications": {
-            description: "Autopilot Notifications",
-            path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* path subscription paths in sk service and widget config modal
-            source: 'default',
-            pathType: "string",
-            convertUnitTo: "",
-            isPathConfigurable: false,
-            sampleTime: 500
-          },
+          // "apNotifications": {
+          //   description: "Autopilot Notifications",
+          //   path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* path subscription paths in sk service and widget config modal
+          //   source: 'default',
+          //   pathType: "string",
+          //   convertUnitTo: "",
+          //   isPathConfigurable: false,
+          //   sampleTime: 500
+          // },
           "headingMag": {
             description: "Heading Magnetic",
             path: 'self.navigation.headingMagnetic',
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
@@ -156,7 +157,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
@@ -167,7 +168,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
@@ -178,7 +179,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
@@ -189,7 +190,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             source: 'default',
             pathType: "number",
             convertUnitTo: "deg",
-            isPathConfigurable: false,
+            isPathConfigurable: true,
             showPathSkUnitsFilter: false,
             pathSkUnitsFilter: 'rad',
             sampleTime: 500
@@ -229,7 +230,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy() {
     this.unsubscribeDataStream();
     this.unsubscribeSKRequest();
-    this.unsubscribeAPNotification();
+    // this.unsubscribeAPNotification();
     console.log("Autopilot Subs Stopped");
   }
 
@@ -285,36 +286,36 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     );
 
     this.subscribeSKRequest();
-    this.subscribeAPNotification();
+    // this.subscribeAPNotification();
     console.log("Autopilot Subs Started");
   }
 
   stopAllSubscriptions() {
     this.unsubscribeDataStream();
     this.unsubscribeSKRequest();
-    this.unsubscribeAPNotification();
+    // this.unsubscribeAPNotification();
     console.log("Autopilot Subs Stopped");
   }
 
-  subscribeAPNotification() {
-    if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
-    this.skApNotificationSub = this.DataService.subscribePath(this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
-      newValue => {
-          if (!newValue.data.value == null) {
-          this.setNotificationMessage(newValue.data.value);
-          console.log(newValue.data.value);
-          }
-        }
-    );
-  }
+  // subscribeAPNotification() {
+  //   if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
+  //   this.skApNotificationSub = this.DataService.subscribePath(this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
+  //     newValue => {
+  //         if (!newValue.data.value == null) {
+  //         this.setNotificationMessage(newValue.data.value);
+  //         console.log(newValue.data.value);
+  //         }
+  //       }
+  //   );
+  // }
 
-  unsubscribeAPNotification() {
-    if (this.skApNotificationSub !== null) {
-      this.skApNotificationSub.unsubscribe();
-      this.skApNotificationSub = null;
-      this.DataService.unsubscribePath(this.widgetProperties.config.paths['apNotifications'].path);
-    }
-  }
+  // unsubscribeAPNotification() {
+  //   if (this.skApNotificationSub !== null) {
+  //     this.skApNotificationSub.unsubscribe();
+  //     this.skApNotificationSub = null;
+  //     this.DataService.unsubscribePath(this.widgetProperties.config.paths['apNotifications'].path);
+  //   }
+  // }
 
   subscribeSKRequest() {
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {

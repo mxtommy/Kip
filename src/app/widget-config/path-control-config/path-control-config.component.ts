@@ -178,6 +178,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private updatePathMetaBoundDisplayName(path: string) {
+    if (!this.pathFormGroup.parent.parent.value.hasOwnProperty('displayName')) {return;}
     const meta = this.data.getPathMeta(path);
     if (meta?.displayName) {
       this.pathFormGroup.parent.parent.controls['displayName'].setValue(meta.displayName);
@@ -185,6 +186,8 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private updatePathMetaBoundDisplayScale(path: string) {
+    if (!this.pathFormGroup.parent.parent.value.hasOwnProperty('displayScale')) {return;}
+
     const meta = this.data.getPathMeta(path);
     if (meta?.displayScale) {
       const displayScale = this.pathFormGroup.parent.parent.get('displayScale') as FormGroup;
