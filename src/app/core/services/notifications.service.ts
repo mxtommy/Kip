@@ -115,11 +115,11 @@ export class NotificationsService implements OnDestroy {
    }
 
   private startNotificationStream() {
-    this._notificationDataStreamSubscription = this.data.getNotificationMsg().subscribe((msg: ISignalKDataValueUpdate) => {
+    this._notificationDataStreamSubscription = this.data.getNotificationMsgObservable().subscribe((msg: ISignalKDataValueUpdate) => {
       this.processNotificationDeltaMsg(msg);
     });
 
-    this._notificationMetaStreamSubscription = this.data.getNotificationMeta().subscribe((meta: IMeta) => {
+    this._notificationMetaStreamSubscription = this.data.getNotificationMetaObservable().subscribe((meta: IMeta) => {
       this.processNotificationDeltaMeta(meta);
     });
   }

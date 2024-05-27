@@ -43,13 +43,21 @@
             </mat-form-field>
 
             @if (formMaster.get('displayScale')) {
-              <mat-form-field formGroupName="displayScale">
+              <mat-form-field formGroupName="displayScale" appearance="outline">
                 <mat-label>Scale Start</mat-label>
-                <input matInput type="number" name="lower" formControlName="lower" placeholder="Enter number...">
+                <input matNativeControl
+                  type="number"
+                  name="lower"
+                  formControlName="lower"
+                  placeholder="Enter number...">
               </mat-form-field>
-              <mat-form-field formGroupName="displayScale">
+              <mat-form-field formGroupName="displayScale" appearance="outline">
                 <mat-label>Scale End</mat-label>
-                <input matInput type="number" name="upper" formControlName="upper" placeholder="Enter number...">
+                <input matInput
+                  type="number"
+                  name="upper"
+                  formControlName="upper"
+                  placeholder="Enter number...">
               </mat-form-field>
             }
 
@@ -106,11 +114,17 @@
 
             <mat-form-field *ngIf="(widgetConfig.minValue !== undefined) && !formMaster.get('displayScale')">
               <mat-label>Minimum Value</mat-label>
-              <input matInput type="number" name="minValue" formControlName="minValue" placeholder="Enter or select number...">
+              <input matInput type="number"
+                name="minValue"
+                formControlName="minValue"
+                placeholder="Enter or select number...">
             </mat-form-field>
             <mat-form-field *ngIf="(widgetConfig.maxValue !== undefined) && !formMaster.get('displayScale')">
               <mat-label>Maximum Value</mat-label>
-              <input matInput type="number" name="maxValue" formControlName="maxValue" placeholder="Enter or select number...">
+              <input matInput type="number"
+                name="maxValue"
+                formControlName="maxValue"
+                placeholder="Enter or select number...">
             </mat-form-field>
 
             @if (widgetConfig.gauge?.type == 'ngRadial') {

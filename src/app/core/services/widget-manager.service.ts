@@ -1,10 +1,12 @@
+import { DataService } from './data.service';
+import { SignalkRequestsService } from './signalk-requests.service';
 /**
  * This service runs all Widget management operations, handles widget
  * persistance and defines possible Widget properties.
  */
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
-import { IWidget } from '../interfaces/widgets-interface';
+import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { UUID } from '../../utils/uuid'
 
 @Injectable()
@@ -12,19 +14,18 @@ export class WidgetManagerService {
 
   widgets: Array<IWidget>;
 
-  constructor(
-    private AppSettingsService: AppSettingsService
-  ) {
-    this.widgets = this.AppSettingsService.getWidgets();
+  constructor(private settings: AppSettingsService, private request: SignalkRequestsService, private data: DataService) {
+    this.widgets = this.settings.getWidgets();
   }
 
   getWidget(uuid: string) {
-      return this.widgets.find(w => w.uuid == uuid);
+    const widget = this.widgets.find(w => w.uuid == uuid);
+    return widget;
   }
 
   newWidget() {
     const uuid = UUID.create();
-    this.widgets.push({ uuid: uuid, type: 'WidgetBlank', config: null });
+    this.widgets.push({ uuid: uuid, type: 'WidgetBlank', config: {displayName: ''} });
     this.saveWidgets();
     return uuid;
   }
@@ -43,15 +44,17 @@ export class WidgetManagerService {
     this.saveWidgets();
   }
 
-  updateWidgetConfig(uuid: string, newConfig) {
-    const wIndex = this.widgets.findIndex(w => w.uuid == uuid);
-    if (wIndex < 0) { return; } // not found
-    this.widgets[wIndex].config = newConfig;
+  updateWidgetConfig(uuid: string, newConfig: IWidgetSvcConfig) {
+    const widget = this.widgets.find(w => w.uuid == uuid);
+
+    if (!widget) { return; } // not found
+
+    widget.config = newConfig;
     this.saveWidgets();
   }
 
   saveWidgets() {
-    this.AppSettingsService.saveWidgets(this.widgets);
+    this.settings.saveWidgets(this.widgets);
   }
 
 }

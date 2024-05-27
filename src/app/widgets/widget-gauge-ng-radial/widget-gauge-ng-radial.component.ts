@@ -7,7 +7,7 @@
  */
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { Subject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
@@ -53,7 +53,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     super();
 
     this.defaultConfig = {
-      displayName: null,
+      displayName: 'Gauge Label',
       filterSelfPaths: true,
       paths: {
         "gaugePath": {
@@ -99,16 +99,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngAfterViewInit(): void {
     this.radialGauge.update(this.gaugeOptions);
 
-    this.displayScaleSub = this.displayScale$.subscribe(scale => {
-      const scaleRange = adjustLinearScaleAndMajorTicks(scale.lower, scale.upper);
-      //@ts-ignore
-      const scaleUpdate: RadialGaugeOptions = {};
-      scaleUpdate.minValue = scaleRange.min;
-      scaleUpdate.maxValue = scaleRange.max;
-      scaleUpdate.majorTicks = scaleRange.majorTicks;
-      this.radialGauge.update(scaleUpdate);
-    });
-
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.textValue = "--";
@@ -116,7 +106,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       } else {
         this.value = newValue.data.value;
         // Format for value box
-        //TODO: how can we simply use the original value subject to pipe into a transform and use async in templates?
         this.textValue = this.value.toFixed(this.widgetProperties.config.numDecimal);
       }
 
@@ -161,7 +150,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setGaugeConfig(): void {
-    // this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
+    this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
     this.gaugeOptions.highlights = [];
 
     this.gaugeOptions.fontTitle="arial";
@@ -245,6 +234,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private configureCapacityGauge(): void {
+    this.gaugeOptions.minValue = this.widgetProperties.config.displayScale.lower;
+    this.gaugeOptions.maxValue = this.widgetProperties.config.displayScale.upper;
     this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // bug with MajorTicks; always drawing first tick and using color="" does not work
     this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
@@ -288,6 +279,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private configureMeasuringGauge(): void {
+    const unit = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
+    const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+
+    this.gaugeOptions.minValue = scale.min;
+    this.gaugeOptions.maxValue = scale.max;
+
     this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     this.gaugeOptions.fontTitleSize = 24;
 
@@ -302,7 +299,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorValueBoxBackground = "";
 
     this.gaugeOptions.exactTicks = false;
-
+    this.gaugeOptions.majorTicks = scale.majorTicks;
     this.gaugeOptions.minorTicks = 2;
     this.gaugeOptions.ticksAngle = 270;
     this.gaugeOptions.startAngle = 45;
@@ -384,8 +381,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
     //@ts-ignore
-    let highlights: RadialGaugeOptions = {};
-    highlights.highlightsWidth = 6;
+    let highlights: LinearGaugeOptions = {};
+    highlights.highlightsWidth = 5;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.radialGauge.update(highlights);

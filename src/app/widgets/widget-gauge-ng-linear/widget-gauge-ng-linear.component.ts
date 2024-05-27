@@ -13,7 +13,7 @@ import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { JsonPipe } from '@angular/common';
-import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { ISkMetadata, ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
 
 @Component({
@@ -134,10 +134,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       }
     });
 
-    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0) {
-        this.setHighlights();
+    this.metaSub = this.zones$.subscribe(zones => {
+      if (zones && zones.length > 0) {
+        this.setHighlights(zones);
       }
     });
   }
@@ -305,10 +304,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     });
   }
 
-  private setHighlights(): void {
+  private setHighlights(zones: ISkZone[]): void {
     const gaugeZonesHighlight: IDataHighlight[] = [];
     // Sort zones based on lower value
-    const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);
+    const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);
     for (const zone of sortedZones) {
       let lower: number = null;
       let upper: number = null;

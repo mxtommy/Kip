@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@a
 import { DataService } from '../../core/services/data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IConversionPathList, ISkBaseUnit, UnitsService } from '../../core/services/units.service';
-import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors, FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors, FormsModule, ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { debounce, map, startWith } from 'rxjs/operators';
 import { BehaviorSubject, Subscription, timer } from 'rxjs'
 import { MatSelect } from '@angular/material/select';
@@ -88,7 +88,13 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
         if (this.pathFormGroup.controls['path'].pristine) {
           return;
         } else {
-        this.pathFormGroup.controls['path'].valid ? this.enableFormFields(true) : this.disablePathFields();
+          if (this.pathFormGroup.controls['path'].valid){
+            this.enableFormFields(true);
+            this.updatePathMetaBoundDisplayName(this.pathFormGroup.controls['path'].value);
+            this.updatePathMetaBoundDisplayScale(this.pathFormGroup.controls['path'].value);
+          } else {
+            this.disablePathFields();
+          }
         }
       }
     );
@@ -168,6 +174,34 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
       this.pathFormGroup.controls['convertUnitTo'].reset('', {onlySelf: true});
       this.pathFormGroup.controls['convertUnitTo'].disable({onlySelf: false});
+    }
+  }
+
+  private updatePathMetaBoundDisplayName(path: string) {
+    const meta = this.data.getPathMeta(path);
+    if (meta?.displayName) {
+      this.pathFormGroup.parent.parent.controls['displayName'].setValue(meta.displayName);
+    }
+  }
+
+  private updatePathMetaBoundDisplayScale(path: string) {
+    const meta = this.data.getPathMeta(path);
+    if (meta?.displayScale) {
+      const displayScale = this.pathFormGroup.parent.parent.get('displayScale') as FormGroup;
+      const unit = this.pathFormGroup.controls['convertUnitTo'].value;
+
+      if (meta.displayScale.lower !== null && meta.displayScale.lower !== undefined) {
+        displayScale.controls['lower'].setValue(this.units.convertToUnit(unit, meta.displayScale.lower));
+      }
+      if (meta.displayScale.upper !== null && meta.displayScale.upper !== undefined) {
+        displayScale.controls['upper'].setValue(this.units.convertToUnit(unit, meta.displayScale.upper));
+      }
+      if (meta.displayScale.type !== null && meta.displayScale.type !== undefined){
+        displayScale.controls['type'].setValue(meta.displayScale.type);
+      }
+      if (meta.displayScale.power !== null && meta.displayScale.power !== undefined){
+        displayScale.controls['power'].setValue(meta.displayScale.power);
+      }
     }
   }
 

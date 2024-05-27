@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 
 @Component({
@@ -7,7 +7,7 @@ import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
     styleUrls: ['./widget-blank.component.css'],
     standalone: true
 })
-export class WidgetBlankComponent extends BaseWidgetComponent {
+export class WidgetBlankComponent extends BaseWidgetComponent implements OnInit {
 
   constructor() {
     super();
@@ -16,4 +16,9 @@ export class WidgetBlankComponent extends BaseWidgetComponent {
       displayName: ''
     };
   }
+
+  ngOnInit(): void {
+    this.initWidget();
+  }
+
 }

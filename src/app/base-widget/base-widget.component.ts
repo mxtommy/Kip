@@ -50,21 +50,12 @@ export abstract class BaseWidgetComponent {
       const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
       const path = this.widgetProperties.config.paths[firstKey].path;
 
-      this.metaSubscriptions = this.DataService.getPathMeta(path).subscribe(
+      this.metaSubscriptions = this.DataService.getPathMetaObservable(path).subscribe(
         (meta) => {
           if (!meta) return;
-          if (meta.displayName) {
-            this.displayName$.next(meta.displayName);
-          }
-          if (meta.displayScale) {
-            this.displayScale$.next(meta.displayScale);
-          }
           if (meta.zones) {
             this.zones$.next(meta.zones);
           }
-        },
-        (error) => {
-          console.error('[Base-Widget] Meta subscription error:', error);
         }
       );
     }
@@ -85,12 +76,6 @@ export abstract class BaseWidgetComponent {
    */
   private validateConfig() {
     this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
-    if (this.widgetProperties.config.displayName) {
-      this.displayName$.next(this.widgetProperties.config.displayName);
-    }
-    if (this.widgetProperties.config.displayScale) {
-      this.displayScale$.next(this.widgetProperties.config.displayScale);
-    }
   }
 
   /**
