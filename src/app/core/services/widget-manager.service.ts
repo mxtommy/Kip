@@ -1,5 +1,3 @@
-import { DataService } from './data.service';
-import { SignalkRequestsService } from './signalk-requests.service';
 /**
  * This service runs all Widget management operations, handles widget
  * persistance and defines possible Widget properties.
@@ -14,7 +12,7 @@ export class WidgetManagerService {
 
   widgets: Array<IWidget>;
 
-  constructor(private settings: AppSettingsService, private request: SignalkRequestsService, private data: DataService) {
+  constructor(private settings: AppSettingsService) {
     this.widgets = this.settings.getWidgets();
   }
 
