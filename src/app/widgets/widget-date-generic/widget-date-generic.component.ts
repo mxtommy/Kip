@@ -51,7 +51,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     this.getColors(this.widgetProperties.config.textColor);
     this.observeDataStream('gaugePath', newValue => {
       this.dataValue = newValue.data.value;

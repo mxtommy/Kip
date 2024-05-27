@@ -46,7 +46,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   ngOnInit(): void {
-    this.validateConfig();
+    this.initWidget();
     this.getColors(this.widgetProperties.config.textColor);
     this.subscribeTimer();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');

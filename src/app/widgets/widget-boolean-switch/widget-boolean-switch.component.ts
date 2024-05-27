@@ -55,7 +55,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit(): void {
-    this.validateConfig();
+    this.initWidget();
     this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.textColor);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;

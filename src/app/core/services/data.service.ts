@@ -40,23 +40,25 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
 };
 
 /**
- * A path registration is an object used to track a path's Subjects. Each registration
- * is used to share the same Subject to multiple Observers using subscribePath()
- * and unsubscribePath() methods which returns the registration's subject as an
- * Observable.
+ * The `IPathRegistration` interface represents a registration object used to track a path's Subjects.
+ * Each registration is used to share the same Subject with multiple Observers.
+ * The `subscribePath()` and `unsubscribePath()` methods return the registration's subject as an Observable.
  *
- * @param {string} uuid The UUID for the widget registering the path
- * @param {string} path A Signal K path
- * @param {string} source Set Signal K data path source when multiple sources exists for the same path. If set, the Signal K default source will be ignored.
- * @param {string} subject A rxjs BehaviorSubject of Type IPathData used to return Observable
- * @interface pathRegistration
+ * @property {string} path - A Signal K path.
+ * @property {string} source - The Signal K data path source. This is used when multiple sources exist for the same path. If set, the Signal K default source will be ignored.
+ * @property {BehaviorSubject<IPathData>} _pathData$ - A BehaviorSubject of the private path value.
+ * @property {BehaviorSubject<TState>} _pathState$ - A BehaviorSubject of the private path data state property.
+ * @property {BehaviorSubject<IPathUpdate>} pathDataUpdate$ - A BehaviorSubject that contains path value and value state.
+ * @property {BehaviorSubject<ISkMetadata | null>} pathMeta$ - A BehaviorSubject containing available meta or null.
+ *
+ * @interface IPathRegistration
  */
 interface IPathRegistration {
   path: string;
   source: string;
   _pathData$: BehaviorSubject<IPathData>;
   _pathState$: BehaviorSubject<TState>;
-  pathDataUpdate$: BehaviorSubject<IPathUpdate>; // pathValue and pathState combined subject for Observers ie: widgets
+  pathDataUpdate$: BehaviorSubject<IPathUpdate>;
   pathMeta$: BehaviorSubject<ISkMetadata | null>;
 }
 
@@ -445,17 +447,28 @@ export class DataService implements OnDestroy {
     }
   }
 
-  public getNotificationMsg(): Observable<ISignalKDataValueUpdate> {
+  public getNotificationMsgObservable(): Observable<ISignalKDataValueUpdate> {
     return this._skNotificationMsg$.asObservable();
   }
 
-  public getNotificationMeta(): Observable<IMeta> {
+  public getNotificationMetaObservable(): Observable<IMeta> {
     return this._skNotificationMeta$.asObservable();
   }
 
-  public getPathMeta(path: string): Observable<ISkMetadata | null> {
+  public getPathMetaObservable(path: string): Observable<ISkMetadata | null> {
     const registration = this._pathRegister.find(registration => registration.path == path);
     return registration?.pathMeta$.asObservable() || of(null);
+  }
+
+  /**
+   * Fetches the metadata for a given path from the _skData array.
+   *
+   * @param {string} path - The path for which to fetch the metadata.
+   *
+   * @returns {ISkMetadata | null} The metadata object for the given path if found, otherwise null.
+   */
+  public getPathMeta(path: string): ISkMetadata | null {
+      return this._skData.find(item => item.path === path)?.meta || null;
   }
 
   public isResetService(): Observable<boolean> {

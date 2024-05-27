@@ -62,7 +62,7 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     this.observeDataStream('gaugePath', newValue => {
         if (newValue.data.value == null) {
           newValue.data.value = 0;
@@ -72,11 +72,9 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
       }
     );
 
-    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0) {
-        let zonesArray = this.meta.zones.map(zone => zone);
-        this.zones = zonesArray;
+    this.metaSub = this.zones$.subscribe(zones => {
+      if (zones && zones.length > 0) {
+        this.zones = zones;
       }
     });
   }

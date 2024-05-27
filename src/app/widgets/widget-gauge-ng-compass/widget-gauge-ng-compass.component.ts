@@ -9,7 +9,6 @@ import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } fr
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
-import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
@@ -73,7 +72,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     super();
 
     this.defaultConfig = {
-      displayName: null,
+      displayName: "Gauge Label",
       filterSelfPaths: true,
       paths: {
         "gaugePath": {
@@ -103,7 +102,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
     this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
@@ -145,13 +144,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
             option.colorValueText = this.theme.text;
         }
         this.compassGauge.update(option);
-      }
-    });
-
-    this.metaSub = this.DataService.getPathMeta(this.widgetProperties.config.paths['gaugePath'].path).subscribe((meta: ISkMetadata) => {
-      this.meta = meta || null;
-      if (this.meta && this.meta.zones && this.meta.zones.length > 0 ) {
-        this.setHighlights();
       }
     });
   }
@@ -292,67 +284,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.colorBorderMiddleEnd = themePaletteDarkColor;
     this.gaugeOptions.colorNeedle = themePaletteColor;
     this.gaugeOptions.colorNeedleEnd = themePaletteColor;
-  }
-
-  private setHighlights(): void {
-    const gaugeZonesHighlight: IDataHighlight[] = [];
-    // Sort zones based on lower value
-    const sortedZones = [...this.meta.zones].sort((a, b) => a.lower - b.lower);
-    for (const zone of sortedZones) {
-      let lower: number = null;
-      let upper: number = null;
-
-      let color: string;
-      switch (zone.state) {
-        case States.Emergency:
-          color = this.theme.warnDark;
-          break;
-        case States.Alarm:
-          color = this.theme.warnDark;
-          break;
-        case States.Warn:
-          color = this.theme.textWarnLight;
-          break;
-        case States.Alert:
-          color = this.theme.accentDark;
-          break;
-        case States.Nominal:
-          color = this.theme.primaryDark;
-          break;
-        default:
-          color = "rgba(0,0,0,0)";
-      }
-
-      lower = this.unitsService.convertToUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, zone.lower);
-      upper =this.unitsService.convertToUnit(this.widgetProperties.config.paths['gaugePath'].convertUnitTo, zone.upper);
-
-      // Skip zones that are completely outside the gauge range
-      if (upper < 0 || lower > 360) {
-        continue;
-      }
-
-      // If lower or upper are null, set them to displayScale min or max
-      lower = lower !== null ? lower : 0;
-      upper = upper !== null ? upper : 360;
-
-      // Ensure lower does not go below min
-      lower = Math.max(lower, this.widgetProperties.config.displayScale.lower);
-
-      // Ensure upper does not exceed max
-      if (upper > this.widgetProperties.config.displayScale.upper) {
-        upper = this.widgetProperties.config.displayScale.upper;
-        gaugeZonesHighlight.push({from: lower, to: upper, color: color});
-        break;
-      }
-
-      gaugeZonesHighlight.push({from: lower, to: upper, color: color});
-    };
-    //@ts-ignore
-    let highlights: RadialGaugeOptions = {};
-    highlights.highlightsWidth = 6;
-    //@ts-ignore - bug in highlights property definition
-    highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
-    this.compassGauge.update(highlights);
   }
 
   ngOnDestroy(): void {

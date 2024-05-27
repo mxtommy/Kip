@@ -1,8 +1,9 @@
 import { Component, Input, inject } from '@angular/core';
-import { Observable, Observer, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, Observable, Observer, Subject, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
 import { DataService, IPathUpdate } from '../core/services/data.service';
 import { UnitsService } from '../core/services/units.service';
 import { ITheme, IWidget, IWidgetSvcConfig } from '../core/interfaces/widgets-interface';
+import { ISkZone } from '../core/interfaces/signalk-interfaces';
 import { cloneDeep, merge } from 'lodash-es';
 
 
@@ -18,18 +19,45 @@ export abstract class BaseWidgetComponent {
   @Input() theme!: ITheme;
   @Input() widgetProperties!: IWidget;
 
-  /** Default Widget configuration Object properties. This Object is only used as a template once when Widget is added to KIP's UI and it is automatically pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI are only stored in AppSettings service. defaultConfig is never used again. */
+  public displayName$ = new Subject<string>;
+  public zones$ = new BehaviorSubject<ISkZone[]>([]);
+
+
+  /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
   public defaultConfig: IWidgetSvcConfig = undefined;
   /** Array of data paths use for observable automatic setup and cleanup */
   protected dataStream: Array<IWidgetDataStream> = undefined;
   /** Single Observable Subscription object for all data paths */
   private dataSubscriptions: Subscription = undefined;
+  /** Single Observable Subscription object for all data paths */
+  private metaSubscriptions: Subscription = undefined;
   /** Signal K data stream service to obtain/observe server data */
   protected DataService = inject(DataService);
   /** Unit conversion service to convert a wide range of numerical data formats */
   protected unitsService = inject(UnitsService);
 
   constructor() {
+  }
+
+  protected initWidget(): void {
+    this.validateConfig();
+    this.observeMeta();
+  }
+
+  private observeMeta(): void {
+    if (this.widgetProperties && this.widgetProperties.config?.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
+      const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
+      const path = this.widgetProperties.config.paths[firstKey].path;
+
+      this.metaSubscriptions = this.DataService.getPathMetaObservable(path).subscribe(
+        (meta) => {
+          if (!meta) return;
+          if (meta.zones) {
+            this.zones$.next(meta.zones);
+          }
+        }
+      );
+    }
   }
 
   /**
@@ -45,7 +73,7 @@ export abstract class BaseWidgetComponent {
    * @protected
    * @memberof BaseWidgetComponent
    */
-  protected validateConfig() {
+  private validateConfig() {
     this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
   }
 
@@ -234,7 +262,7 @@ export abstract class BaseWidgetComponent {
     }
 
     // Limit value to Min/Max range
-    v = Math.min(Math.max(v, this.widgetProperties.config.minValue), this.widgetProperties.config.maxValue);
+    v = Math.min(Math.max(v, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
 
     // Convert to fixed decimal string
     const vStr = v.toFixed(this.widgetProperties.config.numDecimal);
@@ -257,5 +285,8 @@ export abstract class BaseWidgetComponent {
       this.dataSubscriptions = undefined;
       this.dataStream = undefined;
     }
+
+    this.metaSubscriptions?.unsubscribe();
+    this.metaSubscriptions = undefined;
   }
 }

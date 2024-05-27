@@ -125,7 +125,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
    }
 
   ngOnInit(): void {
-    this.validateConfig();
+    this.initWidget();
     this.observeDataStream('headingPath', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
         newValue.data.value = 0

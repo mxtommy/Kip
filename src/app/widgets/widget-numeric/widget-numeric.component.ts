@@ -64,7 +64,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');

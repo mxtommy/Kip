@@ -95,7 +95,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   ngOnInit(): void {
     this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
-    this.validateConfig();
+    this.initWidget();
 
 
     if (this.datasetConfig) {

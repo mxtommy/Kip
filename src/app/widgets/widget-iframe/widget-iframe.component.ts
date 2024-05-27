@@ -22,7 +22,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.initWidget();
     this.widgetUrl = this.widgetProperties.config.widgetUrl;
   }
 
