@@ -20,7 +20,6 @@ export abstract class BaseWidgetComponent {
   @Input() widgetProperties!: IWidget;
 
   public displayName$ = new Subject<string>;
-  public displayScale$ = new Subject<ISkDisplayScale>;
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
 
 
