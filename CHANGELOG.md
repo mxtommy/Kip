@@ -2,7 +2,7 @@
 ## New features
 * Boolean Control Panel Widget: Support for numeric paths (0/1 PUT values)
 * New Compass Gauge Widget with support for rad units using negative to port values. Compass needle or faceplate rotation support
-* Signal K Metadata support for Zones configuration, Display Name and Display Scale. IMPORTANT: Exiting gauges gauge Min & Max setting will be lost on upgrade and require manual configuration of new Scale Start and Scale End Widget Options. 
+* Signal K Metadata support for Zones configuration, Display Name and Display Scale. IMPORTANT: Exiting gauges Min Value & Max Value setting will be lost on upgrade and require manual configuration of new Scale Start and Scale End Widget Options. 
 * Ability to filter Widget Option's path selection list based on Signal K Units type
 ## Improvements
 * Linear Gauge Widget support for tick bar numbers improving readability
