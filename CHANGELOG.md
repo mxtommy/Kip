@@ -1,4 +1,8 @@
 # V 2.10.0
+## BREAKING CHANGE
+* Requires Signal K v2.8+
+* Retired existing KIP zones in favor of Signal K metadata defined zones.
+* Radial and linear gauge scale min/max range configuration discarded. Reconfiguration using new Scale Start/Scale End required. 
 ## New features
 * Boolean Control Panel Widget: Support for numeric paths (0/1 PUT values)
 * New Compass Gauge Widget with support for rad units using negative to port values. Compass needle or faceplate rotation support
