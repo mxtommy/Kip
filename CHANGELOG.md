@@ -11,7 +11,7 @@
 * Chromium browser side scrollbar always visible
 * Data Chart Widget Simple Moving Average calculation not using latest datapoints
 * Gauge library canvas context stack and object destruction memory leaks
-* Settings/Storage Load Demo button not persisting configuration in Sing In mode.
+* Settings/Storage: Load Demo button not loading demo layout in Sign In mode.
 * Radial Gauge Widget inaccurate ticks with very larger numbers
 * Incorrect demo server URL example in Setting/Signal K panel by @mshulman
 ## Retired Feature
