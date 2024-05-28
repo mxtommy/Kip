@@ -16,7 +16,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 # Features
 ## Access from Phones, Tablets, Raspberry Pi and Computers
-  Once installe, simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip` to load KIP and enjoy it's features remotely on any device.
+  Once installed on the Signal K server, simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip` to load KIP and enjoy it's features remotely on any device.
 
 ### Responsive Design
   KIP adjusts to the device type and form factor for the best possible user experience.
