@@ -70,7 +70,8 @@ KIP is now installed and available on your home screen
 
   - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery remaining capacity, etc.
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
-  - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
+  - Radial gauge: Visually display any numerical data on a radial scale - Boat Speed,Eond Speed, engine RPM,etc.
+  - Compass gauge: A card or marine compass to display directionnal data such as heading,bearing to next waypoint, wind angle, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges.
 
   - Wind Steering Display: Your typical sailboat wind gauge.
