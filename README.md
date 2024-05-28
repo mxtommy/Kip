@@ -55,7 +55,7 @@ KIP is now installed and available on your home screen
   Easy basic widget configuration.
   ![Gauges Configuration Image](./images/KipConfig-display-1024x488.png) 
   
-  See what Signal K has to offer that you can leverage with widgets. Select it and tweak the display options your your purpose.
+  See what Signal K has to offer that you can leverage with widgets. Select it and tweak the display options to your purpose.
   ![Paths Configuration Image](./images/KipWidgetConfig-paths-1024x488.png)
   
   Many units are supported. Choose your preferred App defaults, than tweak it widget-by-widget as necessary. KIP will automatically convert the units for you.
