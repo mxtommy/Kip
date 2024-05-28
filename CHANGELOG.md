@@ -5,7 +5,7 @@
 * Signal K Metadata support for Zones configuration, Display Name and Display Scale. IMPORTANT: Exiting gauges Min Value & Max Value setting will be lost on upgrade and require manual configuration of new Scale Start and Scale End Widget Options. 
 * Ability to filter Widget Option's path selection list based on Signal K Units type
 ## Improvements
-* Linear Gauge Widget support for tick bar numbers improving readability
+* Linear Gauge Widget support for autoscaling and tick bar numbers improving readability
 * Refactoring of Signal K Notification support with improved integration. Includes Notification options to Silence and Clear messages on the server. Also fixes existing ghost messages issue and normal state notifications that generated unwarranted prompts.
 ## Fixes
 * Chromium browser side scrollbar always visible
