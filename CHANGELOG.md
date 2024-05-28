@@ -1,3 +1,22 @@
+# V 2.10.0
+## New features
+* Boolean Control Panel Widget: Support for numeric paths (0/1 PUT values)
+* New Compass Gauge Widget with support for rad units using negative to port value and needle or faceplate rotation
+* Signal K Metadata support for Zones configuration, Display Name and Display Scale. IMPORTANT: Exiting gauges gauge Min & Max setting will be lost on upgrade and require manual configuration of new Scale Start and Scale End Widget Options. 
+* Ability to filter Widget Option's path selection list based on Signal K Units type
+## Improvements
+* Linear Gauge Widget support for tick bar numbers improving readability
+* Refactoring of Signal K Notification support with improved integration. Includes Notification options to Silence and Clear messages on the server. Also fixes existing ghost messages issue and normal state notifications that generated unwarranted prompts.
+## Fixes
+* Chromium browser side scrollbar always visible
+* Data Chart Widget Simple Moving Average calculation not using latest datapoints
+* Gauge library canvas context stack and object destruction memory leaks
+* Settings/Storage Load Demo button not persisting configuration in Sing In mode.
+* Radial Gauge Widget inaccurate ticks with very larger numbers
+* Incorrect demo server URL example in Setting/Signal K panel by @mshulman
+## Retired Feature
+* KIP local Zones support removed in favor of Signal K Zones configuration. Pre KIP V2.10 configuration will be lost.
+* Radial Gauge compass mode options removed
 # V 2.9.3
 ## Improvements
 * Reintroduced High Contrast mode in Settings > General options panel
