@@ -382,15 +382,6 @@ export const DemoWidgetConfig: IWidgetConfig = {
                         "isPathConfigurable": true,
                         "sampleTime": 500
                     },
-                    "apNotifications": {
-                        "description": "Autopilot Notifications",
-                        "path": "self.notifications.autopilot.*",
-                        "source": "default",
-                        "pathType": "string",
-                        "convertUnitTo": "",
-                        "isPathConfigurable": false,
-                        "sampleTime": 500
-                    },
                     "headingMag": {
                         "description": "Heading Magnetic",
                         "path": "self.navigation.headingMagnetic",
