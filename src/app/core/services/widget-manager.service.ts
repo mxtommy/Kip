@@ -21,7 +21,12 @@ export class WidgetManagerService {
     return widget;
   }
 
-  newWidget() {
+  /**
+   * Creates and persists a new widget.
+   *
+   * @returns {string} The UUID of the newly created widget.
+   */
+  public newWidget(): string {
     const uuid = UUID.create();
     this.widgets.push({ uuid: uuid, type: 'WidgetBlank', config: {displayName: ''} });
     this.saveWidgets();

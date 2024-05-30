@@ -6,10 +6,11 @@ import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
 import { UUID } from '../../utils/uuid'
 import { IAreaSize, IOutputAreaSizes, ISplitDirection } from 'angular-split';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 
-interface ISplitArea {
-  uuid: string; // uuid of widget of splitset, depending on type.
+export interface ISplitArea {
+  uuid: string; // uuid of area. Area can contain widget or splitSet.
   type: string; //(widget|splitSet)
   size: IAreaSize;
 }
@@ -93,8 +94,8 @@ export class LayoutSplitsService {
     return this.splitSets[splitIndex];
   }
 
-   //should only ever be called when changing directions. widgetUUID of area we're splitting
-   // becomes first area of new split
+  // should only ever be called when changing directions. widgetUUID of area we're splitting
+  // becomes first area of new split
   newSplit(parentUUID: string, direction: ISplitDirection, widget1UUID: string, widget2UUID) {
     let uuid = UUID.create();
     let newSplit: ISplitSet = {
@@ -140,126 +141,116 @@ export class LayoutSplitsService {
   }
 
   splitArea(splitSetUUID: string, areaUUID: string, direction: ISplitDirection): void {
-    let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }
-    let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(
-                area => area.uuid == areaUUID
-            );
-    if (areaIndex < 0) { return; } // not found....
+    const split = this.splitSets.find(split => split.uuid == splitSetUUID);
+    if (split) {
+      const area = split.splitAreas.find(area => area.uuid == areaUUID
+);
+      if (area) {
+        // get current size so we can split it in two
+        const currentSize = area.size;
+        const area1Size = Number(currentSize) / 2;
+        const area2Size = Number(currentSize) - area1Size;
 
-    // get current size so we can split it in two
-    let currentSize = this.splitSets[splitIndex].splitAreas[areaIndex].size;
-    let area1Size = Number(currentSize) / 2;
-    let area2Size = Number(currentSize) - area1Size;
+        const newWidgetUUID = this.WidgetManagerService.newWidget();
+        const newArea = {
+          uuid: newWidgetUUID,
+          type: 'widget',
+          size: area2Size
+        };
 
-    let newWidgetUUID = this.WidgetManagerService.newWidget();
-    let newArea = {
-      uuid: newWidgetUUID,
-      type: 'widget',
-      size: area2Size
-      };
+        // test correct direction. If we're splitting in same direction, we just add another
+        // area. If we're splitting in other direction, we need a new splitSet...
+        if (split.direction == direction) {
+          area.size = area1Size;
+          const areaIndex = split.splitAreas.findIndex(area => area.uuid == areaUUID);
+          split.splitAreas.splice(areaIndex + 1, 0, newArea);
 
-    // test correct direction. If we're splitting in same direction, we just add another
-    // area. If we're splitting in other direction, we need a new splitSet...
-    if (this.splitSets[splitIndex].direction == direction) {
-
-      // same direction, add new area after specified area
-
-      this.splitSets[splitIndex].splitAreas[areaIndex].size = area1Size;
-      this.splitSets[splitIndex].splitAreas.splice(areaIndex+1, 0, newArea);
-
-    } else {
-      let newSplitUUID = this.newSplit(splitSetUUID, direction, areaUUID, newWidgetUUID);
-      this.splitSets[splitIndex].splitAreas[areaIndex].uuid = newSplitUUID;
-      this.splitSets[splitIndex].splitAreas[areaIndex].type = 'splitSet';
+        } else {
+        const newSplitUUID = this.newSplit(splitSetUUID, direction, areaUUID, newWidgetUUID);
+        area.uuid = newSplitUUID;
+        area.type = 'splitSet';
+        }
+        this.updateSplit(split);
+      }
     }
-    this.updateSplit(splitSetUUID);
   }
 
   updateSplitSizes(splitSetUUID: string, sizesArray: IOutputAreaSizes): void {
-    let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }
-    for (let i=0; i < sizesArray.length; i++) {
-      this.splitSets[splitIndex].splitAreas[i].size = sizesArray[i];
+    const split = this.splitSets.find(split => split.uuid == splitSetUUID);
+    if (split) {
+      for (let i = 0; i < sizesArray.length; i++) {
+        split.splitAreas[i].size = sizesArray[i];
+      }
+      this.updateSplit(split);
     }
-    this.updateSplit(splitSetUUID);
   }
 
 
-  deleteArea(splitSetUUID, areaUUID): void {
-
-    let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }
-    // if num of areas in split > 1, delete the area from the splitset.
-    // delete widget too! :P
-    if (this.splitSets[splitIndex].splitAreas.length > 1) {
-      // delete widget
+  public deleteArea(splitSetUUID: string, areaUUID: string): void {
+    const split = this.splitSets.find(split => split.uuid == splitSetUUID);
+    if (split) {
       this.WidgetManagerService.deleteWidget(areaUUID);
 
-      //delete Area
-      let areaIndex = this.splitSets[splitIndex].splitAreas.findIndex(w => w.uuid == areaUUID)
-      if (areaIndex < 0) { return null; } // not found?
-      //delete area
-      this.splitSets[splitIndex].splitAreas.splice(areaIndex,1);
-      this.updateSplit(splitSetUUID);
+      // if not last areas in split, delete area
+      if (split.splitAreas.length > 1) {
+        const areaIndex = split.splitAreas.findIndex(area => area.uuid == areaUUID)
+        if (areaIndex < 0) { return null; } // not found?
+        split.splitAreas.splice(areaIndex, 1);
+        this.updateSplit(split);
 
-    } else {
-      // We're the last area in the splitset, so delete the whole splitset
-      this.WidgetManagerService.deleteWidget(areaUUID);
-
-      if (this.isRootSplit(splitSetUUID)) {
-        // We're the rootsplit, bye bye page
-        console.log('[LayoutSplit Service] Deleting last split in root');
-
-        //delete this splitset...
-        this.splitSets.splice(splitIndex, 1);
-
-        //remove from rootUUIDs
-        let rootIndex = this.rootUUIDs.findIndex( uuid => uuid == splitSetUUID);
-        this.rootUUIDs.splice(rootIndex,1);
-        this.saveRootUUIDs();
-
-        if (this.rootUUIDs.length <= 0) {
-          // no more roots, we need at least one
-          console.log("[LayoutSplit Service] Deleted last page");
-          this.newRootSplit();
-          this.setActiveRootIndex(0);
-        }
-
-        this.nextRoot();
       } else {
-        // we're not the root, so find parent split and clear there.
+        // We're the last area in the splitSet. Delete split.
+        const splitIndex = this.splitSets.findIndex( split => split.uuid == splitSetUUID);
+        // We're the rootSplit, delete root split (will delete the page)
+        if (this.isRootSplit(splitSetUUID)) {
+          this.splitSets.splice(splitIndex, 1);
+          this.splitSetObs[splitSetUUID].observable.complete();
 
-        // find parent split,
-        let parentIndex = this.splitSets.findIndex( sSet => sSet.uuid == this.splitSets[splitIndex].parentUUID);
-        let parentUUID = this.splitSets[parentIndex].uuid;
+          const rootIndex = this.rootUUIDs.findIndex( uuid => uuid == splitSetUUID);
+          this.rootUUIDs.splice(rootIndex, 1);
+          this.saveRootUUIDs();
 
-        //delete this splitset...
-        this.splitSets.splice(splitIndex, 1);
-        // we don't delete the sub, otherwise might get areas
+          if (this.rootUUIDs.length <= 0) {
+            // no more roots, we need at least one to have a default page with blank widget
+            this.newRootSplit();
+            this.setActiveRootIndex(0);
+          }
 
-        this.deleteArea(parentUUID, splitSetUUID);
+          this.nextRoot();
+        } else {
+          // we're not the root, so find parent split and delete it.
+          const parentIndex = this.splitSets.findIndex(splitParent => splitParent.uuid == split.parentUUID);
+          const parentUUID = this.splitSets[parentIndex].uuid;
+
+          // delete split
+          this.splitSets.splice(splitIndex, 1);
+
+          // we don't delete the sub, otherwise might get areas
+
+          // delete area from parent
+          this.deleteArea(parentUUID, splitSetUUID);
         }
 
+      }
 
     }
-
-
-
   }
 
-  updateSplit(splitSetUUID: string) {
-    let splitIndex = this.splitSets.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (splitIndex < 0) { return null; }
-
-    let subIndex = this.splitSetObs.findIndex(sSet => sSet.uuid == splitSetUUID);
-    if (subIndex < 0) { return null; }
-
-    this.splitSetObs[subIndex].observable.next(this.splitSets[splitIndex]);
-    this.saveSplits();
+  private updateSplit(split: ISplitSet): void {
+    const splitSub = this.splitSetObs.find(sSet => sSet.uuid == split.uuid);
+    if (splitSub) {
+      splitSub.observable.next(split);
+      this.saveSplits();
+    }
   }
 
-  isRootSplit(uuid: string) {
+  /**
+   * Checks if the given UUID is a root UUID.
+   *
+   * @param {string} uuid - The UUID to check.
+   * @returns {boolean} True if the UUID is a root UUID, false otherwise.
+   */
+  isRootSplit(uuid: string): boolean {
     return this.rootUUIDs.includes(uuid);
   }
 
@@ -271,4 +262,7 @@ export class LayoutSplitsService {
     this.AppSettingsService.saveSplitSets(this.splitSets);
   }
 
+  public dropArea(event: CdkDragDrop<ISplitSet[]>, splitSetUUID: string): void {
+    moveItemInArray(this.splitSets.find(split => split.uuid === splitSetUUID).splitAreas, event.previousIndex, event.currentIndex);
+  }
 }

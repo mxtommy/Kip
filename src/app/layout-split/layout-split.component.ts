@@ -1,19 +1,19 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
+import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
-import { ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.service';
+import { ISplitArea, ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.service';
 import { MatMiniFabButton } from '@angular/material/button';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { DynamicWidgetContainerComponent } from '../dynamic-widget-container/dynamic-widget-container.component';
-import { IOutputData, ISplitDirection } from 'angular-split'
-import { NgFor, NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
-import { AngularSplitModule } from 'angular-split';
+import { AngularSplitModule, IOutputData, ISplitDirection } from 'angular-split';
+
 
 @Component({
     selector: 'layout-split',
     templateUrl: './layout-split.component.html',
     styleUrls: ['./layout-split.component.scss'],
     standalone: true,
-    imports: [AngularSplitModule, NgFor, NgSwitch, NgSwitchCase, DynamicWidgetContainerComponent, NgIf, MatMenu, MatMenuItem, MatMiniFabButton, MatMenuTrigger]
+    imports: [AngularSplitModule, CdkDrag, CdkDropList, DynamicWidgetContainerComponent, MatMenu, MatMenuItem, MatMiniFabButton, MatMenuTrigger]
 })
 export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
 
@@ -33,10 +33,6 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
        }
     );
 
-  }
-
-  ngOnDestroy() {
-    this.splitSetSub.unsubscribe();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -63,5 +59,12 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
     this.layoutSplitsService.deleteArea(this.splitSet.uuid, areaUUID);
   }
 
+  public drop(event: CdkDragDrop<ISplitSet[]>, uuid: string): void {
+    this.layoutSplitsService.dropArea(event, uuid);
+  }
+
+  ngOnDestroy() {
+    this.splitSetSub.unsubscribe();
+  }
 
 }
