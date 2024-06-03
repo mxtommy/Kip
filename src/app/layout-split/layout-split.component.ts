@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
 import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
-import { ISplitArea, ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.service';
+import { ISplitSet, LayoutSplitsService } from '../core/services/layout-splits.service';
 import { MatMiniFabButton } from '@angular/material/button';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { DynamicWidgetContainerComponent } from '../dynamic-widget-container/dynamic-widget-container.component';
@@ -24,10 +24,10 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   splitSetSub: Subscription;
 
   constructor(
-    private layoutSplitsService: LayoutSplitsService) { }
+    private split: LayoutSplitsService) { }
 
   ngOnInit() {
-    this.splitSetSub = this.layoutSplitsService.getSplitObs(this.splitUUID).subscribe(
+    this.splitSetSub = this.split.getSplitObs(this.splitUUID).subscribe(
       splitSet => {
         this.splitSet = splitSet;
        }
@@ -47,20 +47,20 @@ export class LayoutSplitComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onDragEnd(sizesArray: IOutputData) {
-     this.layoutSplitsService.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
+     this.split.updateSplitSizes(this.splitSet.uuid, sizesArray.sizes);
   }
 
   splitArea(areaUUID: string, direction: ISplitDirection) {
-    this.layoutSplitsService.splitArea(this.splitSet.uuid,areaUUID, direction);
+    this.split.splitArea(this.splitSet.uuid,areaUUID, direction);
   }
 
 
   deleteArea(areaUUID) {
-    this.layoutSplitsService.deleteArea(this.splitSet.uuid, areaUUID);
+    this.split.deleteArea(this.splitSet.uuid, areaUUID);
   }
 
   public drop(event: CdkDragDrop<ISplitSet[]>, uuid: string): void {
-    this.layoutSplitsService.dropArea(event, uuid);
+    this.split.dropArea(event, uuid);
   }
 
   ngOnDestroy() {
