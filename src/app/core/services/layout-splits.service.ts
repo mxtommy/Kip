@@ -60,7 +60,7 @@ export class LayoutSplitsService {
     }
   }
 
-  nextRoot() {
+  public nextRoot(): void {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
     if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {
       this.router.navigate(['/page', currentIndex]);
@@ -71,7 +71,7 @@ export class LayoutSplitsService {
     }
   }
 
-  previousRoot() {
+  public previousRoot(): void{
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
     if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {
       this.router.navigate(['/page', currentIndex]);
@@ -80,6 +80,10 @@ export class LayoutSplitsService {
     } else {
       this.router.navigate(['/page', this.rootUUIDs.length - 1]);
     }
+  }
+
+  private setRoot(index: number): void {
+    this.router.navigate(['/page', index]);
   }
 
   getSplitObs(uuid:string) {
@@ -208,26 +212,30 @@ export class LayoutSplitsService {
           this.splitSetObs.splice(this.splitSetObs.findIndex(splitObs => splitObs.uuid === splitSetUUID), 1);
 
 
-          const rootIndex = this.rootUUIDs.findIndex( uuid => uuid == splitSetUUID);
+          let rootIndex = this.rootUUIDs.findIndex( uuid => uuid == splitSetUUID);
           this.rootUUIDs.splice(rootIndex, 1);
           this.saveRootUUIDs();
 
           if (this.rootUUIDs.length <= 0) {
             // no more roots, we need at least one to have a default page with blank widget
             this.newRootSplit();
-            this.setActiveRootIndex(0);
+            rootIndex = 0;
+          } else if (rootIndex > this.rootUUIDs.length - 1) {
+            rootIndex = this.rootUUIDs.length - 1;
           }
-          this.nextRoot();
+
+          this.setActiveRootIndex(rootIndex);
+          this.setRoot(rootIndex);
+
         } else {
-          // we're not the root, keep the area abd parent UUID for delete.
+          // we're not the root, keep the area and parent UUID for delete.
           const parentIndex = this.splitSets.findIndex(splitParent => splitParent.uuid == split.parentUUID);
           const parentUUID = this.splitSets[parentIndex].uuid;
 
-          // delete split, stop observers and remove from split Observer array
+          // delete split, stop observers and remove from split Observer from array
           this.splitSets.splice(splitIndex, 1);
           this.splitSetObs.find(splitObs => splitObs.uuid === splitSetUUID).observable.complete();
           this.splitSetObs.splice(this.splitSetObs.findIndex(splitObs => splitObs.uuid === splitSetUUID), 1);
-          // we don't delete the sub, otherwise might get areas
 
           // delete area from parent
           this.deleteArea(parentUUID, splitSetUUID);
