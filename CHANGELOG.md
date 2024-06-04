@@ -1,3 +1,6 @@
+# V 2.10.1
+## Fixes
+* Values jumping between sources. Fixes #420
 # V 2.10.0
 ## BREAKING CHANGE
 * Requires Signal K v2.8+

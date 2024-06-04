@@ -154,6 +154,9 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
             this.pathFormGroup.controls['source'].setValue('default', {onlySelf: true});
           }
         }
+        else if (this.pathFormGroup.controls['source'].value != 'default') {
+          this.pathFormGroup.controls['source'].setValue('', {onlySelf: true});
+        }
       } else if (Object.keys(pathObject.sources).length > 1) {
         this.availableSources = Object.keys(pathObject.sources);
         if (this.pathFormGroup.controls['source'].value == 'default') {
