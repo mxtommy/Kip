@@ -61,7 +61,7 @@ export class LayoutSplitsService {
   }
 
   public nextRoot(): void {
-    let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
+    const currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
     if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {
       this.router.navigate(['/page', currentIndex]);
     } else if ((currentIndex == -1) || ((currentIndex + 1) == this.rootUUIDs.length)) {
@@ -72,7 +72,7 @@ export class LayoutSplitsService {
   }
 
   public previousRoot(): void{
-    let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
+    const currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
     if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {
       this.router.navigate(['/page', currentIndex]);
     } else if (currentIndex >= 1) {
@@ -124,7 +124,8 @@ export class LayoutSplitsService {
     return uuid;
   }
 
-  newRootSplit() {
+  public newRootSplit(): void {
+    const currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
     //create new root split
     const uuid = UUID.create();
     const newWidget = this.WidgetManagerService.newWidget();
@@ -133,11 +134,13 @@ export class LayoutSplitsService {
       direction: 'horizontal',
       splitAreas: [ {uuid: newWidget, type: 'widget', size: 100}]
     }
+
     this.splitSets.push(newRootSplit);
 
     this.splitSetObs.push({uuid: uuid, observable: new BehaviorSubject(newRootSplit)});
 
-    this.rootUUIDs.push(uuid);
+    // Insert the new UUID after the current index in rootUUIDs
+    this.rootUUIDs.splice(currentIndex + 1, 0, uuid);
     this.saveRootUUIDs();
 
     //get index of our new split
