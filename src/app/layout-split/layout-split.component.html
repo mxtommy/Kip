@@ -29,7 +29,7 @@
         </div>
       </as-split-area>
     } @else {
-      <as-split-area [order]="i" [size]="area.size">
+      <as-split-area [order]="i" [size]="area.size" cdkDrag cdkDragDisabled="false">
         <layout-split
           [unlockStatus]="unlockStatus"
           [splitUUID]="area.uuid">

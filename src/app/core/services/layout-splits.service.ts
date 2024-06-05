@@ -6,7 +6,7 @@ import { AppSettingsService } from './app-settings.service';
 import { WidgetManagerService } from './widget-manager.service';
 import { UUID } from '../../utils/uuid'
 import { IAreaSize, IOutputAreaSizes, ISplitDirection } from 'angular-split';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 
 export interface ISplitArea {
@@ -274,8 +274,18 @@ export class LayoutSplitsService {
   }
 
   public dropArea(event: CdkDragDrop<ISplitSet[]>, splitSetUUID: string): void {
-    const split = this.splitSets.find(split => split.uuid === splitSetUUID)
-    moveItemInArray(split.splitAreas, event.previousIndex, event.currentIndex);
-    this.updateSplit(split);
+    console.warn("area dropped\n" + "previous: " + event.previousContainer.id + "\nnew: " + event.container.id + "\n index :" + event.previousIndex + " to " + event.currentIndex + " in " + splitSetUUID);
+    if (event.previousContainer === event.container) {
+      const split = this.splitSets.find(split => split.uuid === splitSetUUID)
+      moveItemInArray(split.splitAreas, event.previousIndex, event.currentIndex);
+      this.updateSplit(split);
+    } else {
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex,
+      );
+    }
   }
 }
