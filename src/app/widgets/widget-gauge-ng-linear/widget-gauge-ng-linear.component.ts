@@ -11,10 +11,10 @@ import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { JsonPipe } from '@angular/common';
 import { ISkMetadata, ISkZone, States } from '../../core/interfaces/signalk-interfaces';
-import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
+import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 
 @Component({
     selector: 'app-widget-gauge-ng-linear',

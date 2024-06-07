@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, Inject, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
-import { AppSettingsService } from '../core/services/app-settings.service';
+import { LayoutSplitsService } from './../core/services/layout-splits.service';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelDescription } from '@angular/material/expansion';
 import { NgIf } from '@angular/common';
 import { MatTabGroup, MatTab, MatTabContent } from '@angular/material/tabs';
@@ -30,13 +30,13 @@ export class AppHelpComponent implements OnInit, OnDestroy {
 
   step: number = -1;
 
-  constructor(  private AppSettingsService: AppSettingsService,) {
+  constructor(  private splits: LayoutSplitsService,) {
 
   }
 
   ngOnInit() {
     // get Unlock Status
-    this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(
+    this.unlockStatusSub = this.splits.getEditLayoutObservable().subscribe(
       unlockStatus => {
         this.unlockStatus = unlockStatus;
       }

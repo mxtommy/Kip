@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 
 @Component({
     selector: 'app-widget-blank',

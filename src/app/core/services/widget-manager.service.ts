@@ -5,7 +5,7 @@
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { UUID } from '../../utils/uuid'
+import { UUID } from '../utils/uuid'
 
 @Injectable()
 export class WidgetManagerService {
@@ -21,7 +21,12 @@ export class WidgetManagerService {
     return widget;
   }
 
-  newWidget() {
+  /**
+   * Creates and persists a new widget.
+   *
+   * @returns {string} The UUID of the newly created widget.
+   */
+  public newWidget(): string {
     const uuid = UUID.create();
     this.widgets.push({ uuid: uuid, type: 'WidgetBlank', config: {displayName: ''} });
     this.saveWidgets();

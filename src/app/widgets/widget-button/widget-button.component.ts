@@ -2,7 +2,7 @@ import { Component, OnInit, OnChanges, OnDestroy, AfterViewChecked, ViewChild, E
 import { Subscription } from 'rxjs';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { AppService } from '../../core/services/app-service';
 
 

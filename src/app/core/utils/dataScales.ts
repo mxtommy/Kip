@@ -1,4 +1,4 @@
-import { TScaleType } from "../core/interfaces/signalk-interfaces";
+import { TScaleType } from "../interfaces/signalk-interfaces";
 
 /**
    * Returns an adjusted scale range, with major tick values that are well rounded ie. limiting

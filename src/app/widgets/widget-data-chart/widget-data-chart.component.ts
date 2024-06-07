@@ -1,6 +1,6 @@
 import { IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
 import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 

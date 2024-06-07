@@ -4,7 +4,7 @@ import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { WidgetManagerService} from '../../core/services/widget-manager.service';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { MatBadge } from '@angular/material/badge';
 import { NgIf } from '@angular/common';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';

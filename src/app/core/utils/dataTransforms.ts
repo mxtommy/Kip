@@ -1,4 +1,4 @@
-import { TScaleType } from "../core/interfaces/signalk-interfaces";
+import { TScaleType } from "../interfaces/signalk-interfaces";
 
 /**
 * Normalizes a value to a range from 0 to 1 based on the specified scale type.

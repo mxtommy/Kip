@@ -21,10 +21,10 @@
 
 // import Components themes
 @import 'app/app.component.scss';
-@import 'app/dynamic-widget-container/dynamic-widget-container.component.scss';
-@import 'app/layout-split/layout-split.component.scss';
+@import 'app/core/components/dynamic-widget-container/dynamic-widget-container.component.scss';
+@import 'app/core/components/page-layout/page-layout.component.scss';
 @import 'app/widget-config/path-control-config/path-control-config.component.scss';
-@import 'app/alarm-menu/alarm-menu.component.scss';
+@import 'app/core/components/alarm-menu/alarm-menu.component.scss';
 @import 'app/settings/signalk/signalk.component.scss';
 @import 'app/settings/datasets/datasets.component.scss';
 @import 'app/settings/config/config.component.scss';

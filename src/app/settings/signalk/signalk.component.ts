@@ -8,7 +8,7 @@ import { IDeltaUpdate, DataService } from '../../core/services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
+import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
 import { MatCheckbox } from '@angular/material/checkbox';
