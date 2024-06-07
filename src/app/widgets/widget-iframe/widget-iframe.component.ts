@@ -1,4 +1,4 @@
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { Component, OnInit } from '@angular/core';
 import { SafePipe } from '../../core/pipes/safe.pipe';
 import { NgIf } from '@angular/common';

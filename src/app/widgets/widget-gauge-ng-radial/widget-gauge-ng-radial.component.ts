@@ -12,8 +12,8 @@ import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({

@@ -3,20 +3,19 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
-import { AppSettingsService } from '../core/services/app-settings.service';
-import { LayoutSplitsService } from '../core/services/layout-splits.service';
-import { LayoutSplitComponent } from '../layout-split/layout-split.component';
+import { LayoutSplitsService } from '../../services/layout-splits.service';
+import { PageLayoutComponent } from '../page-layout/page-layout.component';
 
 
 
 @Component({
-    selector: 'app-root-display',
-    templateUrl: './root-display.component.html',
-    styleUrls: [],
+    selector: 'page-root',
+    templateUrl: './page-root.component.html',
+    styleUrls: ['./page-root.component.scss'],
     standalone: true,
-    imports: [LayoutSplitComponent]
+    imports: [PageLayoutComponent]
 })
-export class RootDisplayComponent implements OnInit, OnDestroy {
+export class PageRootComponent implements OnInit, OnDestroy {
 
   rootUUIDSub: Subscription;
   currentRootUUID: string = null;
@@ -28,7 +27,6 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
   unlockStatus: boolean;
 
   constructor(
-    private AppSettingsService: AppSettingsService,
     private LayoutSplitsService: LayoutSplitsService,
     private route: ActivatedRoute) { }
 
@@ -46,7 +44,7 @@ export class RootDisplayComponent implements OnInit, OnDestroy {
     });
 
     // get Unlock Status
-    this.unlockStatusSub = this.AppSettingsService.getUnlockStatusAsO().subscribe(unlockStatus => {
+    this.unlockStatusSub = this.LayoutSplitsService.getEditLayoutObservable().subscribe(unlockStatus => {
       this.unlockStatus = unlockStatus;
     });
   }

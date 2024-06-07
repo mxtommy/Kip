@@ -8,12 +8,12 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogCont
 import { UntypedFormControl, FormsModule } from '@angular/forms';
 import { cloneDeep } from "lodash-es";
 
-import { DynamicWidgetDirective } from '../core/directives/dynamic-widget.directive';
-import { DynamicWidget, IWidget, ITheme } from '../core/interfaces/widgets-interface';
-import { ModalWidgetConfigComponent } from '../widget-config/modal-widget-config/modal-widget-config.component';
-import { AppSettingsService } from '../core/services/app-settings.service';
-import { WidgetManagerService } from '../core/services/widget-manager.service';
-import { WidgetListService, widgetList } from '../core/services/widget-list.service';
+import { DynamicWidgetDirective } from '../../directives/dynamic-widget.directive';
+import { DynamicWidget, IWidget, ITheme } from '../../interfaces/widgets-interface';
+import { ModalWidgetConfigComponent } from '../../../widget-config/modal-widget-config/modal-widget-config.component';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { WidgetManagerService } from '../../services/widget-manager.service';
+import { WidgetListService, widgetList } from '../../services/widget-list.service';
 import { MatDivider } from '@angular/material/divider';
 import { MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';

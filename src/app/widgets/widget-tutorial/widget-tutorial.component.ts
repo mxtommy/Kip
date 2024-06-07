@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { NgIf } from '@angular/common';

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { formatDate } from '@angular/common';
 
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 
 @Component({
     selector: 'app-widget-date-generic',

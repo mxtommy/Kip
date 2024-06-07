@@ -1,8 +1,8 @@
 import { Component, OnDestroy } from '@angular/core';
-import { NotificationsService, INotification, IAlarmInfo } from '../core/services/notifications.service';
+import { NotificationsService, INotification, IAlarmInfo } from '../../services/notifications.service';
 import { Observable, Subscription, filter, iif, map, of, switchMap } from 'rxjs';
-import { INotificationConfig } from '../core/interfaces/app-settings.interfaces';
-import { Methods, States } from '../core/interfaces/signalk-interfaces';
+import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
+import { Methods, States } from '../../interfaces/signalk-interfaces';
 import { MatDivider } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';

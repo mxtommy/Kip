@@ -5,7 +5,7 @@ import { AppSettingsService } from './app-settings.service';
 import { ISignalKDeltaMessage } from '../interfaces/signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { AuthenticationService } from './authentication.service';
-import { UUID } from '../../utils/uuid'
+import { UUID } from '../utils/uuid'
 import { AppService } from './app-service';
 
 const deltaStatusCodes = {

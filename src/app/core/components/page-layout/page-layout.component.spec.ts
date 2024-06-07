@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { LayoutSplitComponent } from './layout-split.component';
+import { PageLayoutComponent } from './page-layout.component';
 
 describe('LayoutSplitComponent', () => {
-  let component: LayoutSplitComponent;
-  let fixture: ComponentFixture<LayoutSplitComponent>;
+  let component: PageLayoutComponent;
+  let fixture: ComponentFixture<PageLayoutComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [LayoutSplitComponent]
+    imports: [PageLayoutComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(LayoutSplitComponent);
+    fixture = TestBed.createComponent(PageLayoutComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

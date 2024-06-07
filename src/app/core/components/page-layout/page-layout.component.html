@@ -1,0 +1,52 @@
+@if (splitSet$ | async; as splitSet) {
+  <as-split
+    [direction]="splitSet.direction"
+    [disabled]="!unlockStatus"
+    (dragEnd)="onDragEnd(splitSet.uuid, $event)"
+    gutterSize="4"
+    cdkDropList
+    (cdkDropListDropped)="cdkDrop(splitSet.uuid, $event)"
+    [cdkDropListOrientation]="splitSet.direction"
+    [cdkDropListData]="splitSet.splitAreas"
+    [cdkDropListConnectedTo]="connectedCdkDropLists">
+    @for (area of splitSet.splitAreas; track area; let i = $index) {
+      @if (area.type === "widget") {
+        <as-split-area
+          [order]="i"
+          [size]="area.size"
+          unit="percent"
+          cdkDrag
+          [cdkDragData]="area"
+          (cdkDragMoved)="cdkDragMoved($event)"
+          (cdkDragReleased)="cdkDragReleased($event)">
+          <div class="splitArea">
+            <app-dynamic-widget-container
+              [splitUUID]="area.uuid"
+              [unlockStatus]="unlockStatus">
+            </app-dynamic-widget-container>
+            @if (unlockStatus) {
+              <div class="splitMenu">
+                <mat-menu #splitMenu="matMenu">
+                  <button mat-menu-item (click)="addWidget(splitSet.uuid, area.uuid, 'vertical')">Split Horz.</button>
+                  <button mat-menu-item (click)="addWidget(splitSet.uuid, area.uuid, 'horizontal')">Split Vert.</button>
+                </mat-menu>
+                <button color="accent" mat-mini-fab [matMenuTriggerFor]="splitMenu"><span class="fa-solid fa-columns"></span></button>
+              </div>
+              <div class="splitdelete">
+                <button color="accent" mat-mini-fab (click)="deleteArea(splitSet.uuid, area.uuid)"><span class="fa-solid fa-times" ></span></button>
+              </div>
+            }
+          </div>
+        </as-split-area>
+      } @else {
+        <as-split-area [order]="i" [size]="area.size" cdkDrag cdkDragDisabled="false">
+          <page-layout
+            [unlockStatus]="unlockStatus"
+            [splitUUID]="area.uuid">
+          </page-layout>
+        </as-split-area>
+      }
+    }
+  </as-split>
+}
+

@@ -5,7 +5,7 @@
 import { Injectable } from '@angular/core';
 import { AppSettingsService } from './app-settings.service';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { UUID } from '../../utils/uuid'
+import { UUID } from '../utils/uuid'
 
 @Injectable()
 export class WidgetManagerService {

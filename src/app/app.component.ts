@@ -15,7 +15,7 @@ import { AppService } from './core/services/app-service';
 import { NgIf } from '@angular/common';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
-import { AlarmMenuComponent } from './alarm-menu/alarm-menu.component';
+import { AlarmMenuComponent } from './core/components/alarm-menu/alarm-menu.component';
 import { RouterOutlet, RouterLink } from '@angular/router';
 
 declare var NoSleep: any; //3rd party
@@ -68,10 +68,10 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     );
 
-    // Page layout area operations sub
-    this.unlockStatusSub = this.appSettingsService.getUnlockStatusAsO().subscribe(
-      status => { this.unlockStatus = status; }
-    );
+    // Page layout editing sub
+    this.unlockStatusSub = this.LayoutSplitsService.getEditLayoutObservable().subscribe(status => {
+      this.unlockStatus = status;
+    });
 
     // Theme operations sub
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
@@ -195,7 +195,7 @@ export class AppComponent implements OnInit, OnDestroy {
       // console.log("Unlocking");
       this.unlockStatus = true;
     }
-    this.appSettingsService.setUnlockStatus(this.unlockStatus);
+    this.LayoutSplitsService.setEditLayoutStatus(this.unlockStatus);
   }
 
   newPage() {

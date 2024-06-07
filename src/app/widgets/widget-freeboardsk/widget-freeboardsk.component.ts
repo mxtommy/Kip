@@ -1,7 +1,7 @@
 import { AuthenticationService } from './../../core/services/authentication.service';
 import { AppSettingsService } from './../../core/services/app-settings.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { Subscription } from 'rxjs';
 

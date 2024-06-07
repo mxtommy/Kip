@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { RootDisplayComponent } from './root-display.component';
+import { PageRootComponent } from './page-root.component';
 
-describe('RootDisplayComponent', () => {
-  let component: RootDisplayComponent;
-  let fixture: ComponentFixture<RootDisplayComponent>;
+describe('PagesComponent', () => {
+  let component: PageRootComponent;
+  let fixture: ComponentFixture<PageRootComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [RootDisplayComponent]
+    imports: [PageRootComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(RootDisplayComponent);
+    fixture = TestBed.createComponent(PageRootComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

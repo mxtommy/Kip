@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/cor
 import { Subscription } from 'rxjs';
 import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
 
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { NgIf } from '@angular/common';

@@ -31,3 +31,14 @@ as-split-area { // Added on all areas.
   z-index: 500;
 }
 
+.cdk-drop-list-receiving {
+  background-color: red;
+}
+
+.cdk-drop-list-dragging {
+  background-color: blue;
+}
+
+.cdk-drop-list {
+  border: 5px dotted gray;
+}

@@ -6,7 +6,7 @@ import { IDatasetServiceDatasetConfig } from './data-set.service';
 import { ISplitSet } from './layout-splits.service';
 import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
-import { UUID } from '../../utils/uuid';
+import { UUID } from '../utils/uuid';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
 import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
@@ -25,7 +25,6 @@ const configVersion: number = 10; // used to invalidate old configs defined as a
   providedIn: 'root'
 })
 export class AppSettingsService {
-  private unlockStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
@@ -344,15 +343,6 @@ public loadConfigFromLocalStorage(type: string) {
 
   public get KipUUID(): string {
     return this.kipUUID;
-  }
-
-  // UnlockStatus
-  public getUnlockStatusAsO() {
-    return this.unlockStatus.asObservable();
-  }
-
-  public setUnlockStatus(value) {
-    this.unlockStatus.next(value);
   }
 
   // Themes

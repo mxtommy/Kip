@@ -30,7 +30,7 @@ import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.co
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
 import { AppHelpComponent } from './app/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
-import { RootDisplayComponent } from './app/root-display/root-display.component';
+import { PageRootComponent } from './app/core/components/page-root/page-root.component';
 import { withHashLocation, provideRouter, Routes } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { StorageService } from './app/core/services/storage.service';
@@ -70,7 +70,7 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
 };
 const appRoutes: Routes = [
   { path: '', redirectTo: 'page/0', pathMatch: 'full' },
-  { path: 'page/:id', component: RootDisplayComponent },
+  { path: 'page/:id', component: PageRootComponent },
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data', component: DataBrowserComponent },
