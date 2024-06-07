@@ -5,11 +5,11 @@
   $warn: map-get($theme, warn);
 
   .warn {
-    color: mat.get-color-from-palette($warn, 500);
+    color: mat.m2-get-color-from-palette($warn, 500);
   }
 
   .warn-contrast {
-    color: mat.get-contrast-color-from-palette($warn, 500);
+    color: mat.m2-get-contrast-color-from-palette($warn, 500);
   }
 }
 
