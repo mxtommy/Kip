@@ -1,38 +1,14 @@
 import { enableProdMode, APP_INITIALIZER, Injectable, importProvidersFrom } from '@angular/core';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
-import { MatSortModule } from '@angular/material/sort';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatTableModule } from '@angular/material/table';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatListModule } from '@angular/material/list';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatInputModule } from '@angular/material/input';
-import { MatStepperModule } from '@angular/material/stepper';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { AngularResizeEventModule } from 'angular-resize-event';
-import { GaugesModule } from '@godind/ng-canvas-gauges';
-import { AngularSplitModule } from 'angular-split';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
 import { AppHelpComponent } from './app/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
 import { PageRootComponent } from './app/core/components/page-root/page-root.component';
 import { withHashLocation, provideRouter, Routes } from '@angular/router';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { StorageService } from './app/core/services/storage.service';
 import { TimersService } from './app/core/services/timers.service';
 import { NotificationsService } from './app/core/services/notifications.service';
@@ -47,13 +23,13 @@ import { SignalKConnectionService } from './app/core/services/signalk-connection
 import { DataService } from './app/core/services/data.service';
 import { AuthenticationService } from './app/core/services/authentication.service';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
-import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule, bootstrapApplication } from '@angular/platform-browser';
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
-
 import 'hammerjs';
+
 
 /**
  * Bootstrap function used by AppInitService provider at app initialization
@@ -100,33 +76,6 @@ bootstrapApplication(AppComponent, {
   providers: [
     importProvidersFrom(
       BrowserModule,
-      FormsModule,
-      ReactiveFormsModule,
-      AngularSplitModule,
-      AngularResizeEventModule,
-      GaugesModule,
-      MatMenuModule,
-      MatButtonModule,
-      MatTooltipModule,
-      MatDialogModule,
-      MatSelectModule,
-      MatToolbarModule,
-      MatCheckboxModule,
-      MatGridListModule,
-      MatRadioModule,
-      MatTabsModule,
-      MatCardModule,
-      MatSnackBarModule,
-      MatStepperModule,
-      MatInputModule,
-      MatExpansionModule,
-      MatBadgeModule,
-      MatSlideToggleModule,
-      MatListModule,
-      MatAutocompleteModule,
-      MatTableModule,
-      MatPaginatorModule,
-      MatSortModule,
       HammerModule
     ),
     // Imports Interceptor that capture http requests and inserts authorization

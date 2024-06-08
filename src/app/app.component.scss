@@ -8,32 +8,32 @@
   $app-defaults: map-get($theme, app-defaults);
 
   .app-defaults {
-    background-color: mat.get-color-from-palette($app-defaults, app-background);
-    color: mat.get-color-from-palette($foreground, text);
+    background-color: mat.m2-get-color-from-palette($app-defaults, app-background);
+    color: mat.m2-get-color-from-palette($foreground, text);
   }
 
   .theme-menu {
-    background-color: mat.get-color-from-palette($accent, A200);
+    background-color: mat.m2-get-color-from-palette($accent, A200);
   }
 
   .menuBarButtonGroup {
-    background-color: mat.get-color-from-palette($foreground, divider);
+    background-color: mat.m2-get-color-from-palette($foreground, divider);
   }
 
   button.mat-mdc-button-base {
-    color: mat.get-color-from-palette($foreground, text);
+    color: mat.m2-get-color-from-palette($foreground, text);
   }
 
   mat-select.mat-mdc-select {
-    color: mat.get-color-from-palette($foreground, text);
+    color: mat.m2-get-color-from-palette($foreground, text);
   }
 
   input.mat-mdc-input-element.mdc-text-field__input.cdk-text-field-autofill-monitored {
-    color: mat.get-color-from-palette($foreground, text);
+    color: mat.m2-get-color-from-palette($foreground, text);
   }
 
   span.mat-mdc-dialog-title.mdc-dialog__title {
-    color: mat.get-color-from-palette($foreground, text);
+    color: mat.m2-get-color-from-palette($foreground, text);
   }
 
 

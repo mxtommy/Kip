@@ -7,7 +7,7 @@
  */
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
@@ -21,7 +21,7 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
     standalone: true,
-    imports: [AngularResizeEventModule, GaugesModule, JsonPipe]
+    imports: [NgxResizeObserverModule, GaugesModule, JsonPipe]
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -137,22 +137,20 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     });
   }
 
-  public onResized(event: ResizedEvent) {
-    if (!event.isFirst) {
-      //@ts-ignore
-      let resize: LinearGaugeOptions = {};
-      if (this.isGaugeVertical) {
-        resize.height = event.newRect.height;
-        resize.width = (event.newRect.height * 0.3);
-        this.height = "0px";
-      }
-      else {
-        resize.height = event.newRect.width * 0.3;
-        resize.width = event.newRect.width;
-        this.height = ((event.newRect.height - resize.height) / 2).toString() + "px";
-      }
-      this.linearGauge.update(resize);
+  public onResized(event) {
+    //@ts-ignore
+    let resize: LinearGaugeOptions = {};
+    if (this.isGaugeVertical) {
+      resize.height = event.contentRect.height;
+      resize.width = (event.contentRect.height * 0.3);
+      this.height = "0px";
     }
+    else {
+      resize.height = event.contentRect.width * 0.3;
+      resize.width = event.contentRect.width;
+      this.height = ((event.contentRect.height - resize.height) / 2).toString() + "px";
+    }
+    this.linearGauge.update(resize);
   }
 
   private setGaugeConfig() {

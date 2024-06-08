@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
@@ -13,7 +13,7 @@ import { MatButton } from '@angular/material/button';
     templateUrl: './widget-race-timer.component.html',
     styleUrls: ['./widget-race-timer.component.scss'],
     standalone: true,
-    imports: [AngularResizeEventModule, MatButton, NgIf]
+    imports: [NgxResizeObserverModule, MatButton, NgIf]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
@@ -54,7 +54,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     // this.resizeWidget();
   }
 
-  onResized(event: ResizedEvent) {
+  onResized(event) {
     this.resizeWidget();
   }
 

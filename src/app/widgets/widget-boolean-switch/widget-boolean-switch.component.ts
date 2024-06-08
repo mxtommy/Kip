@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
@@ -18,7 +18,7 @@ import { NgFor, NgIf } from '@angular/common';
     templateUrl: './widget-boolean-switch.component.html',
     styleUrls: ['./widget-boolean-switch.component.css'],
     standalone: true,
-    imports: [AngularResizeEventModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
+    imports: [NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;
@@ -90,11 +90,11 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     this.subscribeSKRequest();
   }
 
-  onResized(event: ResizedEvent) {
-    let calcH: number = event.newRect.height / this.nbCtrl; // divide by number of instantiated widget
-    let ctrlHeightProportion = (35 * event.newRect.width / 180); //check control height not over width proportions
+  onResized(event) {
+    let calcH: number = event.contentRect.height / this.nbCtrl; // divide by number of instantiated widget
+    let ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
     let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
-    this.ctrlDimensions = { width: event.newRect.width, height: h};
+    this.ctrlDimensions = { width: event.contentRect.width, height: h};
     this.resizeWidget();
   }
 

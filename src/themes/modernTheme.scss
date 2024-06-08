@@ -106,9 +106,9 @@ $modern-warn: (
 // palette color later in this scss file.
 //  * The warn palette is optional (defaults to $mat-red). This is the palette that should
 //    used for error and warning.
-$modern-theme-primary: mat.define-palette($modern-primary);
-$modern-theme-accent:  mat.define-palette($modern-accent, A200, A100, A400);
-$modern-theme-warn:  mat.define-palette($modern-warn);
+$modern-theme-primary: mat.m2-define-palette($modern-primary);
+$modern-theme-accent:  mat.m2-define-palette($modern-accent, A200, A100, A400);
+$modern-theme-warn:  mat.m2-define-palette($modern-warn);
 
 // custom component color maps
 
@@ -156,7 +156,7 @@ $app-defaults: (
 );
 
 // Make temp theme using default palettes
-$theme: mat.define-dark-theme((
+$theme: mat.m2-define-dark-theme((
   color: (
     primary: $modern-theme-primary,
     accent: $modern-theme-accent,

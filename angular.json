@@ -9,15 +9,18 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
             "baseHref": "/@mxtommy/kip/",
             "aot": true,
-            "outputPath": "public",
+            "outputPath": {
+              "base": "public"
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": [
+              "src/polyfills.ts"
+            ],
             "assets": [
               "src/assets",
               "src/manifest.json"
@@ -30,7 +33,8 @@
               "@godind/canvas-gauges",
               "howler",
               "js-quantities"
-            ]
+            ],
+            "browser": "src/main.ts"
           },
           "configurations": {
             "production": {
@@ -46,8 +50,6 @@
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -134,39 +136,6 @@
             ],
             "exclude": [
               "**/node_modules/**"
-            ]
-          }
-        }
-      }
-    },
-    "gaugeScales": {
-      "projectType": "library",
-      "root": "projects/gauge-scales",
-      "sourceRoot": "projects/gauge-scales/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/gauge-scales/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/gauge-scales/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/gauge-scales/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/gauge-scales/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
             ]
           }
         }

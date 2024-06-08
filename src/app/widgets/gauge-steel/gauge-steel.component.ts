@@ -1,6 +1,6 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { ITheme } from '../../core/interfaces/widgets-interface';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
@@ -46,7 +46,7 @@ export const SteelFrameColors = {
     templateUrl: './gauge-steel.component.html',
     styleUrls: ['./gauge-steel.component.css'],
     standalone: true,
-    imports: [AngularResizeEventModule]
+    imports: [NgxResizeObserverModule]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   private readonly WIDGET_SIZE_FACTOR: number = 0.97;
@@ -219,13 +219,13 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  onResized(event: ResizedEvent) {
-    if (event.newRect.height < 50 || event.newRect.width < 50) {
+  onResized(event) {
+    if (event.contentRect.height < 50 || event.contentRect.width < 50) {
       return;
     }
-    this.gaugeOptions['size'] = (Math.min(event.newRect.height, event.newRect.width)) * this.WIDGET_SIZE_FACTOR; // radial uses size. takes only size as both the same
-    this.gaugeOptions['width'] = event.newRect.width * this.WIDGET_SIZE_FACTOR; // linear
-    this.gaugeOptions['height'] = event.newRect.height * this.WIDGET_SIZE_FACTOR; // linear
+    this.gaugeOptions['size'] = (Math.min(event.contentRect.height, event.contentRect.width)) * this.WIDGET_SIZE_FACTOR; // radial uses size. takes only size as both the same
+    this.gaugeOptions['width'] = event.contentRect.width * this.WIDGET_SIZE_FACTOR; // linear
+    this.gaugeOptions['height'] = event.contentRect.height * this.WIDGET_SIZE_FACTOR; // linear
     this.isInResizeWindow = false;
     this.startGauge();
   }

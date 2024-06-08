@@ -8,12 +8,12 @@
   // Custom mat-dialog style class defined in app.modules.ts MAT_DIALOG_DEFAULT_OPTIONS
   // provider as global Dialog settings
   .mat-mdc-dialog-panel mat-dialog-container > div > div.mat-mdc-dialog-surface {
-    background-color: mat.get-color-from-palette($app-defaults, app-background);
+    background-color: mat.m2-get-color-from-palette($app-defaults, app-background);
   }
 
   .rounded-card {
     margin-top: 10px;
-    background-color: mat.get-color-from-palette($foreground, dividers);
+    background-color: mat.m2-get-color-from-palette($foreground, dividers);
     border-radius: 4px;
     padding: 10px;
   }

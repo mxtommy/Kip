@@ -7,49 +7,49 @@
   $themeForeground: map-get($theme, foreground);
 
   .primary {
-    color: mat.get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceLight);
+    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceLight);
   }
   .accent {
-    color: mat.get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceLight);
+    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceLight);
   }
   .warn {
-    color: mat.get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceLight);
+    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceLight);
   }
   .primaryDark {
-    color: mat.get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceDark);
+    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceDark);
   }
   .accentDark {
-    color: mat.get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceDark);
+    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceDark);
   }
   .warnDark {
-    color: mat.get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceDark);
+    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceDark);
   }
   .background {
-    color: mat.get-color-from-palette($themeForeground, divider);
+    color: mat.m2-get-color-from-palette($themeForeground, divider);
   }
   .text {
-    color: mat.get-color-from-palette($themeForeground, text);
+    color: mat.m2-get-color-from-palette($themeForeground, text);
   }
   .textDark {
-    color: mat.get-color-from-palette($textThemeEmitter, text-dark);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, text-dark);
   }
   .textPrimaryLight {
-    color: mat.get-color-from-palette($textThemeEmitter, primary-light);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, primary-light);
   }
   .textPrimaryDark {
-    color: mat.get-color-from-palette($textThemeEmitter, primary-dark);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, primary-dark);
   }
   .textAccentLight {
-    color: mat.get-color-from-palette($textThemeEmitter, accent-light);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, accent-light);
   }
   .textAccentDark {
-    color: mat.get-color-from-palette($textThemeEmitter, accent-dark);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, accent-dark);
   }
   .textWarnLight {
-    color: mat.get-color-from-palette($textThemeEmitter, warn-light);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, warn-light);
   }
   .textWarnDark {
-    color: mat.get-color-from-palette($textThemeEmitter, warn-dark);
+    color: mat.m2-get-color-from-palette($textThemeEmitter, warn-dark);
   }
 }
 

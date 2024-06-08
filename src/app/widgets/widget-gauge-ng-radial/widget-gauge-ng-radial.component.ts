@@ -8,7 +8,7 @@
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
@@ -21,7 +21,7 @@ import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
     templateUrl: './widget-gauge-ng-radial.component.html',
     styleUrls: ['./widget-gauge-ng-radial.component.css'],
     standalone: true,
-    imports: [AngularResizeEventModule, GaugesModule, AsyncPipe]
+    imports: [NgxResizeObserverModule, GaugesModule, AsyncPipe]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   // Gauge option setting constant
@@ -98,7 +98,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngAfterViewInit(): void {
     this.radialGauge.update(this.gaugeOptions);
-
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.value = 0;
@@ -135,15 +134,13 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     });
   }
 
-  public onResized(event: ResizedEvent): void {
-    if (!event.isFirst) {
+  public onResized(event): void {
       //@ts-ignore
       let resize: RadialGaugeOptions = {};
-      resize.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
-      resize.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
+      resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);
+      resize.width = Math.floor(event.contentRect.width * this.WIDGET_SIZE_FACTOR);
 
       this.radialGauge.update(resize);
-    }
   }
 
   private setGaugeConfig(): void {

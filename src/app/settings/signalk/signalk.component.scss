@@ -6,7 +6,7 @@
   $foreground: map-get($theme, foreground);
 
   .serverStatus {
-    background-color: mat.get-color-from-palette($background, card);
+    background-color: mat.m2-get-color-from-palette($background, card);
     margin-top: 20px;
     margin: 5% 5% 0% 5%;
     padding: 10px 20px 20px 20px;
@@ -19,7 +19,7 @@
     height: 150px;
     width: 100%;
     border: 2px inset;
-    border-color: mat.get-color-from-palette($foreground, text);
+    border-color: mat.m2-get-color-from-palette($foreground, text);
   }
 }
 

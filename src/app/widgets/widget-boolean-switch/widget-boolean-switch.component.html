@@ -1,6 +1,6 @@
 <div class="wrapper">
   <canvas #canvasLabel class="canvas-label"></canvas>
-  <div class="widgets-container" #widgetContainer (resized)="onResized($event)">
+  <div class="widgets-container" #widgetContainer (onResize)="onResized($event)">
     <ng-container *ngFor="let ctrl of switchControls">
       <app-svg-boolean-switch class="svg-widget" *ngIf="ctrl.type === '1'"
         [controlData]="ctrl"

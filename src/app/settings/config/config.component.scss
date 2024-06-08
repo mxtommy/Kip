@@ -9,27 +9,27 @@
 
 
   .descriptiveTexts {
-    color: mat.get-color-from-palette($foreground, text);
+    color: mat.m2-get-color-from-palette($foreground, text);
     font-size: 14px;
   }
 
   .flex-item-upgrade {
     flex: 1 1 100%;
-    background-color: mat.get-color-from-palette($warn, 400);;
+    background-color: mat.m2-get-color-from-palette($warn, 400);;
     padding: 10px 20px 10px 20px;
     border-radius: 4px;
   }
 
   .flex-item {
     flex: 1 1 29%;
-    background-color: mat.get-color-from-palette($background, card);
+    background-color: mat.m2-get-color-from-palette($background, card);
     padding: 10px 20px 10px 20px;
     border-radius: 4px;
   }
 
   .flex-item-copy {
     flex: 2 1 40%;
-    background-color: mat.get-color-from-palette($background, card);
+    background-color: mat.m2-get-color-from-palette($background, card);
     padding: 10px 20px 10px 20px;
     border-radius: 4px;
   }
