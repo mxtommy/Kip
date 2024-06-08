@@ -69,7 +69,7 @@
     "@types/js-quantities": "^1.6.4",
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^18.19.30",
-    "angular-resize-event": "git+https://git@github.com/dereekb/angular-resize-event.git#00ef5139ccd6a02f0afd7639ae1bd365ac8b13f9",
+    "ngx-resize-observer": "^2.7.0",
     "angular-split": "^17.2.0",
     "chart.js": "^4.4.2",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -102,5 +102,7 @@
     "tslint": "^6.1.3",
     "typescript": "^5.4.5",
     "zone.js": "~0.14.4"
+  },
+  "dependencies": {
   }
 }

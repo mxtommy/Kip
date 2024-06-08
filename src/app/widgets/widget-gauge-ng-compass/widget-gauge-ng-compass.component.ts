@@ -7,7 +7,7 @@
  */
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
@@ -28,7 +28,7 @@ function convertNegToPortDegree(degree: number) {
 @Component({
   selector: 'widget-gauge-ng-compass',
   standalone: true,
-  imports: [AngularResizeEventModule, GaugesModule],
+  imports: [NgxResizeObserverModule, GaugesModule],
   templateUrl: './widget-gauge-ng-compass.component.html',
   styleUrl: './widget-gauge-ng-compass.component.scss'
 })
@@ -148,15 +148,13 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     });
   }
 
-  public onResized(event: ResizedEvent): void {
-    if (!event.isFirst) {
-      //@ts-ignore
-      let resize: RadialGaugeOptions = {};
-      resize.height = Math.floor(event.newRect.height * this.WIDGET_SIZE_FACTOR);
-      resize.width = Math.floor(event.newRect.width * this.WIDGET_SIZE_FACTOR);
+  public onResized(event): void {
+    //@ts-ignore
+    let resize: RadialGaugeOptions = {};
+    resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);
+    resize.width = Math.floor(event.contentRect.width * this.WIDGET_SIZE_FACTOR);
 
-      this.compassGauge.update(resize);
-    }
+    this.compassGauge.update(resize);
   }
 
   private setGaugeConfig(): void {

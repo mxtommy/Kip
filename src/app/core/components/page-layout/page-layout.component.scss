@@ -30,15 +30,15 @@ as-split-area { // Added on all areas.
   top: 5%;
   z-index: 500;
 }
+// TODO: Clean up the following styles once Drag & Drop is implemented
+// .cdk-drop-list-receiving {
+//   background-color: red;
+// }
 
-.cdk-drop-list-receiving {
-  background-color: red;
-}
+// .cdk-drop-list-dragging {
+//   background-color: blue;
+// }
 
-.cdk-drop-list-dragging {
-  background-color: blue;
-}
-
-.cdk-drop-list {
-  border: 5px dotted gray;
-}
+// .cdk-drop-list {
+//   border: 5px dotted gray;
+// }

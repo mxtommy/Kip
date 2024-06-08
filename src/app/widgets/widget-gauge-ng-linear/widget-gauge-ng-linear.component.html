@@ -1,4 +1,4 @@
-<div class="ngLinearWrapper" #linearWrapperDiv (resized)="onResized($event)">
+<div class="ngLinearWrapper" #linearWrapperDiv (onResize)="onResized($event)">
   <div [style.height]="height" style="width: 100%;"></div>
   <linear-gauge class="linearGauge" id="{{widgetProperties.uuid}}" #linearGauge
     [options]="gaugeOptions"

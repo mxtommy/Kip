@@ -1,4 +1,4 @@
-<div class="ngCompassWrapper" #ngCompassWrapperDiv (resized)="onResized($event)">
+<div class="ngCompassWrapper" #ngCompassWrapperDiv (onResize)="onResized($event)">
   <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #compassGauge
     [options]="gaugeOptions"
     [value]="value"
