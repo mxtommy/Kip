@@ -86,6 +86,13 @@
               [dateTimezone]="dateTimezoneToControl">
             </display-datetime-options>
 
+            <!-- AP gauge stuff -->
+            <mat-checkbox class="fields" *ngIf="(widgetConfig.invertRudder !== undefined)"
+              name="invertRudder"
+              formControlName="invertRudder">
+                Invert Rudder angle
+            </mat-checkbox>
+
             <!-- sail gauge stuff -->
             <mat-checkbox class="fields" *ngIf="(widgetConfig.laylineEnable !== undefined)"
               name="laylineEnable"
