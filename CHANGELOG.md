@@ -1,3 +1,6 @@
+# V 2.11.0
+## New features
+* Autopilot invert rudder angle support and matching Display tab widget Option 
 # V 2.10.1
 ## Fixes
 * Values jumping between sources. Fixes #420
