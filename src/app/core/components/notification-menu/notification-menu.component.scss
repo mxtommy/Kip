@@ -2,6 +2,11 @@
   z-index: 1000;
 }
 
+.notification-menu-button {
+  width: 25%;
+  height: 48px;
+}
+
 // Alarm button when warning
 .alarmWarning {
   animation:blinkingAlarmWarning 1.5s infinite;

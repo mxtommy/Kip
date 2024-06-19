@@ -1,0 +1,95 @@
+@if(notificationInfo$ | async; as notificationInfo) {
+  <mat-menu #actions="matMenu">
+    <ng-template matMenuContent let-path="path" let-method="value.method">
+      <button mat-menu-item *ngIf="method.includes('sound')" (click)="silence(path)">
+        <mat-icon>do_not_disturb_on_total_silence</mat-icon>
+        <span>Silence</span>
+      </button>
+      <button mat-menu-item (click)="clear(path)">
+        <mat-icon>check_circle</mat-icon>
+        <span>Resolve</span>
+      </button>
+    </ng-template>
+  </mat-menu>
+  <mat-menu #alarmMenu="matMenu" focusFirstItem>
+    <ng-template matMenuContent>
+      @for(menuItem of menuNotifications$ | async; track menuItem) {
+        @if(menuItem.value.state !== "normal" && menuItem.value.state !== "nominal") {
+          @switch (menuItem.value.state) {
+            @case ("alert") {
+              <button mat-menu-item
+                [mat-menu-trigger-for]="actions"
+                [matMenuTriggerData]="menuItem">
+                <mat-icon>report</mat-icon>
+                <span>{{ menuItem.value.message }}</span>
+              </button>
+            }
+            @case ("warn") {
+              <button mat-menu-item
+                [mat-menu-trigger-for]="actions"
+                [matMenuTriggerData]="menuItem">
+                <mat-icon>warning</mat-icon>
+                <span>{{ menuItem.value.message }}</span>
+              </button>
+            }
+            @case ("alarm") {
+              <button mat-menu-item
+                [mat-menu-trigger-for]="actions"
+                [matMenuTriggerData]="menuItem">
+                <mat-icon>error</mat-icon>
+                <span>{{ menuItem.value.message }}</span>
+              </button>
+            }
+            @case ("emergency") {
+              <button mat-menu-item
+                [mat-menu-trigger-for]="actions"
+                [matMenuTriggerData]="menuItem">
+                <mat-icon>emergency_home</mat-icon>
+                <span>{{ menuItem.value.message }}</span>
+              </button>
+            }
+          }
+
+        } @else {
+          <button mat-menu-item disabled="true">
+            <mat-icon>info</mat-icon>
+            <span>{{ menuItem.value.message }}</span>
+          </button>
+        }
+
+      } @empty {
+        <button mat-menu-item disabled="true">
+          <i>"No Notifications"</i>
+        </button>
+      }
+      <mat-divider></mat-divider>
+      @if (isMuted) {
+        <button mat-menu-item matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">
+          <mat-icon>volume_up</mat-icon>
+          <span>Unmute Audio</span>
+        </button>
+      } @else {
+        <button mat-menu-item matTooltip="Mute notification sounds" (click)="mutePlayer(isMuted ? false : true)">
+          <mat-icon>volume_off</mat-icon>
+          <span>Mute Audio</span>
+        </button>
+
+      }
+
+    </ng-template>
+  </mat-menu>
+  <button [matMenuTriggerFor]="alarmMenu" mat-icon-button class="notification-menu-button button-elevation"
+    [class.alarmCrit]="notificationInfo.blinkCrit"
+    [class.alarmWarning]="notificationInfo.blinkWarn"
+    [disabled]="notificationConfig.disableNotifications">
+    <div class="menu-items-with-icons"
+      [matBadgeHidden]="!notificationInfo.alarmCount"
+      [matBadge]="notificationInfo.alarmCount"
+      matBadgeSize="medium"
+      matBadgePosition="after"
+      matBadgeOverlap="false"
+      matBadgeColor="warn">
+      <mat-icon>notifications</mat-icon>
+    </div>
+  </button>
+}

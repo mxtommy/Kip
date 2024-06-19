@@ -1,113 +1,58 @@
-@use '@angular/material' as mat;
+// Material 3 styles file.
+// Proceed with caution if making changes to this file.
+
 @use 'sass:map';
-// For more information: https://material.angular.io/guide/theming
-// For customizations see https://material.angular.io/guide/theming-your-components
+@use '@angular/material' as mat;
+@use './app/app.component-theme' as app;
 
-//Import themes
-@import 'themes/modernTheme.scss';
-@import 'themes/nightMode.scss';
-@import 'themes/highContrastTheme.scss';
-
-// Include the common all common Materiel styles.
-
-@include mat.all-component-typographies();
 @include mat.core();
 
-//Import common/shared styles
-@import 'styles-common/settingsTabContent.scss';
-@import 'styles-common/tabs.scss';
-@import 'styles-common/dialog-panel.scss';
+// Import local Angular Google font and icon styles
+@import './assets/google-fonts/material-icons.scss';
+@import './assets/google-fonts/roboto.scss';
+// Import the Material Design typography and color palettes
+@import './themes/base-m3-theme.scss';
 
 
-// import Components themes
-@import 'app/app.component.scss';
-@import 'app/core/components/dynamic-widget-container/dynamic-widget-container.component.scss';
-@import 'app/core/components/page-layout/page-layout.component.scss';
-@import 'app/widget-config/path-control-config/path-control-config.component.scss';
-@import 'app/core/components/alarm-menu/alarm-menu.component.scss';
-@import 'app/settings/signalk/signalk.component.scss';
-@import 'app/settings/datasets/datasets.component.scss';
-@import 'app/settings/config/config.component.scss';
-@import 'app/widgets/widget-numeric/widget-numeric.component.scss';
-@import 'app/widgets/widget-race-timer/widget-race-timer.component.scss';
-@import 'app/widgets/widget-autopilot/widget-autopilot.component.scss';
-@import 'app/widgets/widget-wind/widget-wind.component.scss';
-
-
-@mixin theme-kip-components($theme) {
-  @include app-theme($theme);
-  @include dialog-panel-styles($theme);
-  @include dynamic-widget-container-theme($theme);
-  @include modal-path-selector-theme($theme);
-  @include widget-numeric-theme($theme);
-  @include widget-autopilot-theme($theme);
-  @include widget-wind-theme($theme);
-  @include theme-settings-sk($theme);
-  @include theme-settings-config($theme);
+:root {
+  // Apply all component css dark theme by default
+  @include mat.all-component-themes($dark-theme);
+  @include mat.system-level-colors($dark-theme);
+  @include mat.system-level-typography($dark-theme);
+  @include mat.typography-hierarchy($dark-theme);
+  @include app.theme($dark-theme);
 }
 
-@include mat.all-component-themes($theme);
-@include theme-kip-components($theme);
-
-.nightMode {
-  @include mat.all-component-colors($nightMode);
-  @include theme-kip-components($nightMode);
-}
-
-.high-contrast {
-  @include mat.all-component-colors($highContrast);
-  @include theme-kip-components($highContrast);
-}
-
-/* You can add global styles to this file, and also import other style files */
 html,
 body,
 app-root {
-	height: 100%;
+  height: 100%;
 }
 
 body {
-	margin: 0;
+  margin: 0;
   touch-action: none;
 }
 
-.ng-valid[required], .ng-valid.required  {
-    border-left: 5px solid #42A948; /* green */
-  }
-
-.ng-invalid:not(form)  {
-  border-left: 5px solid #a94442; /* red */
-}
-
-.verticalCenter {
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.flexContainer {
+app-root {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
-  height: 100%;
 }
 
-.flowRow {
-    flex-direction: row;
-}
-
-.flexCol {
-    flex-direction: column;
+// Bug: Fix M3 mat-menu-panel background color var not being set
+.mat-mdc-menu-panel {
+  --mat-menu-container-color: #1F1F1F;
 }
 
 /*
-  Loading Spinner styles. Used during app bootstrap process (while
-  executing app-initNetwork.service but before Angular has fully loaded)
+*  Loading Spinner styles. Used during app bootstrap process (while
+*  executing app-initNetwork.service but before Angular has fully loaded)
 */
-
 .loader-container {
   height: 100%;
   width: 100%;
-  background-color: #424242;
+  background-color: #000000;
 }
 
 #loader {

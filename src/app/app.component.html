@@ -1,63 +1,85 @@
-<div [class]="activeThemeClass">
-  <div class="mainContainer app-defaults">
-    <!-- <div class="mainWindow" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" > -->
-    <div class="mainWindow">
-        <router-outlet></router-outlet>
+<div class="dashboard-container">
+    <router-outlet></router-outlet>
+</div>
+<div class="menu-bar-container">
+  <div class="menu-bar">
+    <div class="menu-bar-button-group">
+      <notification-menu></notification-menu>
     </div>
-    <div class="menuBar">
-      <div class="menuBarContainer theme-menu">
-        <div class="menuBarButtonGroups">
-          <app-alarm-menu></app-alarm-menu>
-        </div>
-        <div class="menuBarButtonGroups">
-          <button color="accent"mat-flat-button class="menuBarNavButtons" (click)="pageDown()">
-            <i class="fa-solid fa-chevron-left fa-2x" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="menuBarButtonGroups">
-          <button color="accent" mat-flat-button class="menuBarNavButtons" (click)="pageUp()">
-            <i class="fa-solid fa-chevron-right fa-2x" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="menuBarButtonGroups">
-            <button color="accent" mat-flat-button class="menuBarSettingsButton" [matMenuTriggerFor]="settingsMenu" >
-              <i class="fa-solid fa-bars fa-2x" aria-hidden="true"></i>
-            </button>
-        </div>
-      </div>
+    <div class="menu-bar-button-group">
+      <button mat-fab extended class="page-button" (click)="pageDown()">
+        <mat-icon>arrow_back_ios_new</mat-icon>
+      </button>
+    </div>
+    <div class="menu-bar-button-group">
+      <button mat-fab extended class="page-button" (click)="pageUp()">
+        <mat-icon>arrow_forward_ios_new</mat-icon>
+      </button>
+    </div>
+    <div class="menu-bar-button-group">
+        <button mat-icon-button class="settings-menu-button" [matMenuTriggerFor]="settingsMenu">
+          <mat-icon>menu</mat-icon>
+        </button>
     </div>
   </div>
 </div>
 
 <mat-menu #settingsMenu="matMenu">
   <button mat-menu-item routerLink="/help">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-question-circle" aria-hidden="true"></i>&nbsp;Help</div>
+    <mat-icon>help_center</mat-icon>
+    <span>Help</span>
   </button>
   <button mat-menu-item [matMenuTriggerFor]="configMenu">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-cog" aria-hidden="true"></i>&nbsp;Configuration</div>
+    <mat-icon>settings_applications</mat-icon>
+    <span>Configuration</span>
   </button>
   <button mat-menu-item routerLink="/data">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-info" aria-hidden="true"></i>&nbsp;Data Browser</div>
+    <mat-icon>troubleshoot</mat-icon>
+    <span>Data Browser</span>
   </button>
-  <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
-    <div class="menu-items-with-icons" *ngIf="!isNightMode"><i class="fa-solid fa-moon" aria-hidden="true"></i>&nbsp;Night Mode</div>
-    <div class="menu-items-with-icons" *ngIf="isNightMode"><i class="fa-solid fa-sun" aria-hidden="true"></i>&nbsp;Day Mode</div>
-  </button>
-  <button mat-menu-item (click)="toggleFullScreen()">
-    <div class="menu-items-with-icons" *ngIf="!fullscreenStatus"><i class="fa-solid fa-window-maximize" aria-hidden="true"></i>&nbsp;Fullscreen</div>
-    <div class="menu-items-with-icons" *ngIf="fullscreenStatus"><i class="fa-solid fa-window-restore" aria-hidden="true"></i>&nbsp;Exit Fullscreen</div>
-  </button>
+  @if (!isNightMode) {
+    <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
+      <mat-icon>nightlight</mat-icon>
+      <span>Night Mode</span>
+    </button>
+  } @else {
+    <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
+      <mat-icon>light_mode</mat-icon>
+      <span>Day Mode</span>
+    </button>
+  }
+
+  @if (!fullscreenStatus) {
+    <button mat-menu-item (click)="toggleFullScreen()">
+      <mat-icon>fullscreen</mat-icon>
+      <span>Full Screen</span>
+    </button>
+  } @else {
+    <button mat-menu-item (click)="toggleFullScreen()">
+      <mat-icon>close_fullscreen</mat-icon>
+      <span>Exit Full Screen</span>
+    </button>
+  }
 </mat-menu>
 
 <mat-menu #configMenu="matMenu" xPosition="before">
   <button mat-menu-item routerLink="/settings">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-sliders" aria-hidden="true"></i>&nbsp;Settings</div>
+    <mat-icon>settings</mat-icon>
+    <span>Settings</span>
   </button>
+  @if (!unlockStatus) {
+    <button mat-menu-item (click)="unlockPage()">
+      <mat-icon>lock_open</mat-icon>
+      <span>Edit Layout</span>
+    </button>
+  } @else {
+    <button mat-menu-item (click)="unlockPage()">
+      <mat-icon>lock</mat-icon>
+      <span>Lock Layout</span>
+    </button>
+  }
   <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-plus-square" aria-hidden="true"></i>&nbsp;Add Page</div>
-  </button>
-  <button mat-menu-item (click)="unlockPage()">
-    <div class="menu-items-with-icons" *ngIf="!unlockStatus"><i class="fa-solid fa-columns" aria-hidden="true"></i>&nbsp;Edit Layout</div>
-    <div class="menu-items-with-icons" *ngIf="unlockStatus"><i class="fa-solid fa-lock" aria-hidden="true"></i>&nbsp;Lock Layout</div>
+    <mat-icon>dashboard_customize</mat-icon>
+    <span>Add Page</span>
   </button>
 </mat-menu>

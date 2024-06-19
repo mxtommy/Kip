@@ -1,106 +1,49 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-
-@mixin app-theme($theme) {
-  $accent: map-get($theme, accent);
-  $background: map-get($theme, background);
-  $foreground: map-get($theme, foreground);
-  $app-defaults: map-get($theme, app-defaults);
-
-  .app-defaults {
-    background-color: mat.m2-get-color-from-palette($app-defaults, app-background);
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  .theme-menu {
-    background-color: mat.m2-get-color-from-palette($accent, A200);
-  }
-
-  .menuBarButtonGroup {
-    background-color: mat.m2-get-color-from-palette($foreground, divider);
-  }
-
-  button.mat-mdc-button-base {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  mat-select.mat-mdc-select {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  input.mat-mdc-input-element.mdc-text-field__input.cdk-text-field-autofill-monitored {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  span.mat-mdc-dialog-title.mdc-dialog__title {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-
-}
-
-.fullheight {
-  height: 100%;
-}
-
-.mainContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  height: 100%;
-}
-
-.mainWindow {
+.dashboard-container {
   flex: 30;
   overflow: auto;
  }
 
-.menuBar {
+.menu-bar-container {
   flex: 1;
 }
 
-.menuBarContainer {
+.menu-bar {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   flex-wrap: nowrap;
 }
 
-.menuBarContainer .menuBarButtonGroups {
+.menu-bar .menu-bar-button-group {
   flex-grow: 1;
 }
 
-.menuBarContainer .menuBarButtonGroups:first-child {
+.menu-bar .menu-bar-button-group:first-child {
   text-align: left;
   margin-left: 2px;
 }
 
-.menuBarContainer .menuBarButtonGroups {
+.menu-bar .menu-bar-button-group {
   text-align: center;
 }
 
-.menuBarContainer .menuBarButtonGroups:last-child {
+.menu-bar .menu-bar-button-group:last-child {
   text-align: right;
   margin-right: 2px;
 }
 
-.menuBarButtonGroups .menuBarNavButtons {
+.menu-bar-button-group .notification-menu-button {
+  width: 25%;
+  height: 48px;
+}
+
+.menu-bar .page-button {
   width: 99%;
   height: 48px;
 }
 
-.menuBarButtonGroups .menuBarAlarmsButton {
-  width: 25%;
-  height: 48px;
-}
-
-.menuBarButtonGroups .menuBarSettingsButton {
-  width: 25%;
-  height: 48px;
-}
-
-.menu-items-with-icons {
-  display: flex;
-  align-items: center;
-  width: max-content;
+.menu-bar-button-group .settings-menu-button {
+  // --mdc-icon-button-state-layer-size: 25%;
+  // width: 25%;
+  // height: 48px;
 }

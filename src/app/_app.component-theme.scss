@@ -1,0 +1,68 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+
+
+  .my-carousel-button {
+    // Read the 50 hue from the primary color palette.
+    color: mat.get-theme-color($theme, primary, 50);
+  }
+}
+
+@mixin typography($theme) {
+  .my-carousel {
+    // Get the large headline font from the theme.
+    font: mat.get-theme-typography($theme, headline-large, font);
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+
+  @if mat.theme-has($theme, typography) {
+    @include typography($theme);
+  }
+}
+
+
+
+// @mixin app-theme($theme) {
+//   $accent: map-get($theme, accent);
+//   $background: map-get($theme, background);
+//   $foreground: map-get($theme, foreground);
+//   $app-defaults: map-get($theme, app-defaults);
+
+//   .app-defaults {
+//     background-color: mat.m2-get-color-from-palette($app-defaults, app-background);
+//     color: mat.m2-get-color-from-palette($foreground, text);
+//   }
+
+//   .theme-menu {
+//     background-color: mat.m2-get-color-from-palette($accent, A200);
+//   }
+
+//   .menuBarButtonGroup {
+//     background-color: mat.m2-get-color-from-palette($foreground, divider);
+//   }
+
+//   button.mat-mdc-button-base {
+//     color: mat.m2-get-color-from-palette($foreground, text);
+//   }
+
+//   mat-select.mat-mdc-select {
+//     color: mat.m2-get-color-from-palette($foreground, text);
+//   }
+
+//   input.mat-mdc-input-element.mdc-text-field__input.cdk-text-field-autofill-monitored {
+//     color: mat.m2-get-color-from-palette($foreground, text);
+//   }
+
+//   span.mat-mdc-dialog-title.mdc-dialog__title {
+//     color: mat.m2-get-color-from-palette($foreground, text);
+//   }
+
+
+// }
