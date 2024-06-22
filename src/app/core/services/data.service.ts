@@ -337,7 +337,7 @@ export class DataService implements OnDestroy {
           path: metaPath,
           pathValue: undefined,
           pathTimestamp: undefined,
-          type: undefined,
+          type: meta.meta.units ? "number" : undefined,
           state: States.Normal,
           defaultSource: undefined,
           sources: {},
@@ -345,6 +345,9 @@ export class DataService implements OnDestroy {
         };
         this._skData.push(pathObject);
       } else {
+        if (pathObject.type === 'object' && meta.meta.units) {
+          pathObject.type = "number";
+        }
         pathObject.meta = merge(pathObject.meta, meta.meta);
       }
 
