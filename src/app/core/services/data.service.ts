@@ -345,6 +345,9 @@ export class DataService implements OnDestroy {
         };
         this._skData.push(pathObject);
       } else {
+        if (pathObject.type === 'object' && meta.meta.units) {
+          pathObject.type = "number";
+        }
         pathObject.meta = merge(pathObject.meta, meta.meta);
       }
 
