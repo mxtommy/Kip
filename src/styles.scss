@@ -35,14 +35,7 @@ body {
 }
 
 app-root {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-// Bug: Fix M3 mat-menu-panel background color var not being set
-.mat-mdc-menu-panel {
-  --mat-menu-container-color: #1F1F1F;
+  display: block;
 }
 
 /*

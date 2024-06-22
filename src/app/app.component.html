@@ -2,25 +2,27 @@
     <router-outlet></router-outlet>
 </div>
 <div class="menu-bar-container">
-  <div class="menu-bar">
-    <div class="menu-bar-button-group">
-      <notification-menu></notification-menu>
-    </div>
-    <div class="menu-bar-button-group">
-      <button mat-fab extended class="page-button" (click)="pageDown()">
-        <mat-icon>arrow_back_ios_new</mat-icon>
+  <notification-menu class="menu-bar-notification"></notification-menu>
+  <div class="menu-bar-navigation">
+    <button mat-button class="change-page-button" (click)="pageDown()">
+      <span class="material-icons">
+        arrow_back_ios
+      </span>
+    </button>
+  </div>
+  <div class="menu-bar-navigation">
+    <button mat-button class="change-page-button" (click)="pageUp()">
+      <span class="material-icons">
+        arrow_forward_ios
+      </span>
+    </button>
+  </div>
+  <div class="menu-bar-actions">
+      <button mat-button [matMenuTriggerFor]="settingsMenu">
+        <span class="material-icons">
+          menu
+        </span>
       </button>
-    </div>
-    <div class="menu-bar-button-group">
-      <button mat-fab extended class="page-button" (click)="pageUp()">
-        <mat-icon>arrow_forward_ios_new</mat-icon>
-      </button>
-    </div>
-    <div class="menu-bar-button-group">
-        <button mat-icon-button class="settings-menu-button" [matMenuTriggerFor]="settingsMenu">
-          <mat-icon>menu</mat-icon>
-        </button>
-    </div>
   </div>
 </div>
 

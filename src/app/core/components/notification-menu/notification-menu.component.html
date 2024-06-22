@@ -78,7 +78,7 @@
 
     </ng-template>
   </mat-menu>
-  <button [matMenuTriggerFor]="alarmMenu" mat-icon-button class="notification-menu-button button-elevation"
+  <button [matMenuTriggerFor]="alarmMenu" mat-button class="notification-menu-button button-elevation"
     [class.alarmCrit]="notificationInfo.blinkCrit"
     [class.alarmWarning]="notificationInfo.blinkWarn"
     [disabled]="notificationConfig.disableNotifications">
@@ -89,7 +89,7 @@
       matBadgePosition="after"
       matBadgeOverlap="false"
       matBadgeColor="warn">
-      <mat-icon>notifications</mat-icon>
+      <span class="material-icons">notifications</span>
     </div>
   </button>
 }
