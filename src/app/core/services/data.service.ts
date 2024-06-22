@@ -337,7 +337,7 @@ export class DataService implements OnDestroy {
           path: metaPath,
           pathValue: undefined,
           pathTimestamp: undefined,
-          type: undefined,
+          type: meta.meta.units ? "number" : undefined,
           state: States.Normal,
           defaultSource: undefined,
           sources: {},
