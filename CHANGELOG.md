@@ -1,3 +1,8 @@
+
+# V 2.11.1
+## Fixes
+* Path not available in numeric Widget Options when first emitted value is null. Fixes #408
+* Linear & Radial Steel Style gauge support for decimal places. Fixes #433  
 # V 2.11.0
 ## New features
 * Autopilot invert rudder angle support and matching Display tab widget Option 
