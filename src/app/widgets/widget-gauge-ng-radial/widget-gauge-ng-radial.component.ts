@@ -167,10 +167,10 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.fontNumbers="arial";
     this.gaugeOptions.fontNumbersWeight="bold";
 
-    this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
-    this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal;
-    this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt;
-    this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal;
+    this.gaugeOptions.valueInt = this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1;
+    this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2;
+    this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1;
+    this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2;
     this.gaugeOptions.highlightsWidth = 0;
 
     this.gaugeOptions.animation = true;

@@ -93,7 +93,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     //minMax
     this.gaugeOptions['minValue'] = this.minValue;
     this.gaugeOptions['maxValue'] = this.maxValue;
-    this.gaugeOptions['lcdDecimals'] = this.decimals || 2;
+    this.gaugeOptions['lcdDecimals'] = this.decimals !== undefined && this.decimals !== null ? this.decimals : 2;
 
     //labels
     this.gaugeOptions['titleString'] = this.title;
