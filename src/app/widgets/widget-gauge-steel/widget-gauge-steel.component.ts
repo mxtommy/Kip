@@ -55,7 +55,7 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
         digitalMeter: false,
       },
       // numInt: 1,
-      // numDecimal: 1,
+      numDecimal: 1,
       enableTimeout: false,
       dataTimeout: 5
     };

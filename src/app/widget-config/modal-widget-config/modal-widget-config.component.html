@@ -62,11 +62,11 @@
             }
 
             <mat-form-field *ngIf="(widgetConfig.numInt !== undefined)">
-              <mat-label>Minimum Integer Places</mat-label>
+              <mat-label>Integer Places</mat-label>
               <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numInt"  formControlName="numInt">
             </mat-form-field>
-            <mat-form-field *ngIf="(widgetConfig.numInt !== undefined)">
-              <mat-label>Maximum Decimal Places</mat-label>
+            <mat-form-field *ngIf="(widgetConfig.numDecimal !== undefined)">
+              <mat-label>Decimal Places</mat-label>
               <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal">
             </mat-form-field>
 
