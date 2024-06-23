@@ -2,9 +2,6 @@
 @use '@angular/material' as mat;
 
 @mixin color($theme) {
-  .navbar-button:not(:disabled) {
-    color: var(--sys-on-background);
-  }
 }
 
 @mixin theme($theme) {

@@ -1,24 +1,24 @@
 <div class="dashboard-container">
     <router-outlet></router-outlet>
 </div>
-<div class="menu-bar-container">
-  <notification-menu class="menu-bar-notification"></notification-menu>
-  <div class="menu-bar-navigation">
-    <button mat-button class="change-page-button" (click)="pageDown()">
+<div class="navbar-container">
+  <notification-menu class="navbar-notification"></notification-menu>
+  <div class="navbar-navigation">
+    <button mat-button class="change-page-button navbar-button" (click)="pageDown()">
       <span class="material-icons">
         arrow_back_ios
       </span>
     </button>
   </div>
-  <div class="menu-bar-navigation">
-    <button mat-button class="change-page-button" (click)="pageUp()">
+  <div class="navbar-navigation">
+    <button mat-button class="change-page-button navbar-button" (click)="pageUp()">
       <span class="material-icons">
         arrow_forward_ios
       </span>
     </button>
   </div>
-  <div class="menu-bar-actions">
-      <button mat-button [matMenuTriggerFor]="settingsMenu">
+  <div class="navbar-actions">
+      <button mat-button class="actions-button navbar-button" [matMenuTriggerFor]="settingsMenu">
         <span class="material-icons">
           menu
         </span>

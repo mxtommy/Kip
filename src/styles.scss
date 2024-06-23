@@ -1,9 +1,9 @@
 // Material 3 styles file.
 // Proceed with caution if making changes to this file.
-
 @use 'sass:map';
 @use '@angular/material' as mat;
-@use './app/app.component-theme' as app;
+@use './app/app.component-theme' as appRoot;
+@use './app/core/components/notification-menu/notification-menu.component-theme' as notificationMenu;
 
 @include mat.core();
 
@@ -13,14 +13,15 @@
 // Import the Material Design typography and color palettes
 @import './themes/base-m3-theme.scss';
 
-
 :root {
   // Apply all component css dark theme by default
   @include mat.all-component-themes($dark-theme);
   @include mat.system-level-colors($dark-theme);
   @include mat.system-level-typography($dark-theme);
   @include mat.typography-hierarchy($dark-theme);
-  @include app.theme($dark-theme);
+  // Apply component theming
+  @include appRoot.theme($dark-theme);
+  @include notificationMenu.theme($dark-theme);
 }
 
 html,
