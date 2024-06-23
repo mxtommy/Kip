@@ -4,6 +4,7 @@
 @use '@angular/material' as mat;
 @use './app/app.component-theme' as appRoot;
 @use './app/core/components/notification-menu/notification-menu.component-theme' as notificationMenu;
+@use './app/core/components/dynamic-widget-container/dynamic-widget-container.component-theme' as widgetContainer;
 
 @include mat.core();
 
@@ -11,7 +12,7 @@
 @import './assets/google-fonts/material-icons.scss';
 @import './assets/google-fonts/roboto.scss';
 // Import the Material Design typography and color palettes
-@import './themes/base-m3-theme.scss';
+@import './themes/dark-m3-theme.scss';
 
 :root {
   // Apply all component css dark theme by default
@@ -22,6 +23,10 @@
   // Apply component theming
   @include appRoot.theme($dark-theme);
   @include notificationMenu.theme($dark-theme);
+  @include widgetContainer.theme($dark-theme);
+
+  // Set KIP CSS theming variables
+  --kip-widget-card-background: map.get($dark-theme, kip-app-colors, widget-card-background);
 }
 
 html,
