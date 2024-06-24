@@ -78,8 +78,8 @@
     </ng-template>
   </mat-menu>
   <button [matMenuTriggerFor]="alarmMenu" mat-button class="notification-menu-button navbar-button button-elevation"
-    [class.alarmCrit]="notificationInfo.blinkCrit"
-    [class.alarmWarning]="notificationInfo.blinkWarn"
+    [class.alarm-critical]="notificationInfo.blinkCrit"
+    [class.alarm-warning]="notificationInfo.blinkWarn"
     [disabled]="notificationConfig.disableNotifications">
     <span class="material-icons navbar-icon"
       [matBadgeHidden]="!notificationInfo.alarmCount"

@@ -16,8 +16,12 @@
 // Import the Material Design typography and color palettes
 @import './themes/dark-m3-theme.scss';
 
-// Set default (dark) KIP CSS theming variables
+// Get App (dark) CSS theming value
+$sys-background: mat.get-theme-color($dark-theme, neutral, 10);
+
+// Get default (dark) KIP CSS theming value
 $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
+$kip-widget-card-border-color: #252525;
 $kip-widget-action-button-color: mat.get-theme-color($dark-theme, surface-bright);
 $kip-widget-action-button-foreground-color: mat.get-theme-color($dark-theme, on-background);
 $kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-container);
@@ -25,12 +29,11 @@ $kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-c
 // Set light KIP CSS theming variables
 @if mat.get-theme-type($dark-theme) == light {
   $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 100);
+  $kip-widget-card-border-color: #252525;
   //add more for light theme
 }
 
-
-
-
+// Write styles
 :root {
   // Apply all component css dark theme by default
   @include mat.all-component-themes($dark-theme);
@@ -43,13 +46,20 @@ $kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-c
   @include widgetContainer.theme($dark-theme);
   @include pageLayout.theme($dark-theme);
 
+  // App background color
+  --sys-background: #{$sys-background};
+
   // Widgets card styles
   --kip-widget-card-background-color: #{$kip-widget-card-background-color};
+  --kip-widget-card-border-color: #{$kip-widget-card-border-color};
+  --kip-widget-card-border-style: solid;
+  --kip-widget-card-border-width: 2px;
   --kip-widget-action-button-color: #{$kip-widget-action-button-color};
   --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
   --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
 }
 
+// Base app style setup tags
 html,
 body,
 app-root {
@@ -72,7 +82,7 @@ app-root {
 .loader-container {
   height: 100%;
   width: 100%;
-  background-color: #000000;
+  background-color: var(--sys-background);
 }
 
 #loader {

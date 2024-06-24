@@ -150,12 +150,3 @@ $dark-theme: mat.define-theme((
     scale: 0,
   ),
 ));
-
-// define KIP colors
-$kip-app-colors: (
-  widget-card-background: rgb(0, 0, 0),
-);
-
-$dark-theme: map.merge($dark-theme, (
-  kip-app-colors: $kip-app-colors,
-));

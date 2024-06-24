@@ -1,10 +1,10 @@
-.host {
-    position: relative;
+:host {
     width: 100%;
     height: 100%;
+    display:block;
 }
 
-.mat-mdc-card {
+.widget-container {
   display: block;
   position: absolute !important;
   width: 100%;
@@ -13,21 +13,23 @@
   padding: 0px;
   transition: none;
   transition-property: none;
+  border-style: var(--kip-widget-card-border-style);
+  border-width: var(--kip-widget-card-border-width);
 }
 
-.selectWidgetMenu {
+.widget-select-button {
     position: absolute;
     right: 5%;
     bottom: 5%;
 }
 
-.settingsButton {
+.widget-settings-button {
   position: absolute;
   bottom: 5%;
   left: 50%;
   transform: translate(-50%);
 }
 
-.full-width {
+.form-field-width {
     width: 100%;
 }

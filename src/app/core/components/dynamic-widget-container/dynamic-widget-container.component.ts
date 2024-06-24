@@ -20,7 +20,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { MatMiniFabButton, MatButton } from '@angular/material/button';
-import { NgIf, NgFor, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { MatCard } from '@angular/material/card';
 
 
@@ -29,7 +29,7 @@ import { MatCard } from '@angular/material/card';
     templateUrl: './dynamic-widget-container.component.html',
     styleUrls: ['./dynamic-widget-container.component.scss'],
     standalone: true,
-    imports: [MatCard, DynamicWidgetDirective, NgIf, MatMiniFabButton]
+    imports: [MatCard, DynamicWidgetDirective, MatMiniFabButton]
 })
 export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   @Input('splitUUID') splitUUID: string;   // Get UUID from layout-split. We use it as the widgetUUID later for the widget
@@ -181,7 +181,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
     templateUrl: './dynamic-widget-container.modal.html',
     styleUrls: ['./dynamic-widget-container.component.scss'],
     standalone: true,
-    imports: [FormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, NgFor, MatTab, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, KeyValuePipe]
+    imports: [FormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, KeyValuePipe]
 })
 export class DynamicWidgetContainerModalComponent implements OnInit {
 
@@ -206,7 +206,7 @@ export class DynamicWidgetContainerModalComponent implements OnInit {
     this.widgetList = this.widgetListService.getList();
     this.newWidget = this.data.currentType;
     // find index of the group containing the existing type;
-    let index=0;
+    let index = 0;
     for (let [group, groupWidgetList] of Object.entries(this.widgetList)) {
       if (groupWidgetList.findIndex(w => w.name == this.data.currentType) >= 0 ) {
         this.selectedTab.setValue(index);

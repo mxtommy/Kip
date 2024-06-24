@@ -1,12 +1,14 @@
 .dashboard-container {
-  padding: 4px;
-  height: calc(100% - 48px - 8px);
+  padding: 4px 4px 2px 4px;
+  height: calc(100% - 50px - 6px);
  }
 
 .navbar-container {
   height: 48px;
   width: 100%;
   --mdc-text-button-container-shape: 10px;
+  border-top-style: var(--kip-widget-card-border-style);
+  border-top-width: var(--kip-widget-card-border-width);
 }
 
 .navbar-navigation {

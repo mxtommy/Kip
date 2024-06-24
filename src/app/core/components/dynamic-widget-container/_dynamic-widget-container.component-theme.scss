@@ -2,13 +2,14 @@
 @use '@angular/material' as mat;
 
 @mixin theme($theme) {
-  .kip-widget-background-color {
-    background-color: var(--kip-widget-card-background-color)
+  .kip-widget-card-colors {
+    background-color: var(--kip-widget-card-background-color);
+    border-color: var(--kip-widget-card-border-color);
   }
 
   .kip-widget-action-button-color {
     background-color: var(--kip-widget-action-button-color);
-    color: var(--kip-widget-action-button-foreground-color)
+    color: var(--kip-widget-action-button-foreground-color);
   }
 
   //TODO: Clean up with new approach
