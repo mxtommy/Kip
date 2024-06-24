@@ -75,21 +75,17 @@
         </button>
 
       }
-
     </ng-template>
   </mat-menu>
   <button [matMenuTriggerFor]="alarmMenu" mat-button class="notification-menu-button navbar-button button-elevation"
     [class.alarmCrit]="notificationInfo.blinkCrit"
     [class.alarmWarning]="notificationInfo.blinkWarn"
     [disabled]="notificationConfig.disableNotifications">
-    <div class="menu-items-with-icons"
+    <span class="material-icons navbar-icon"
       [matBadgeHidden]="!notificationInfo.alarmCount"
       [matBadge]="notificationInfo.alarmCount"
-      matBadgeSize="medium"
+      matBadgeSize="large"
       matBadgePosition="after"
-      matBadgeOverlap="false"
-      matBadgeColor="warn">
-      <span class="material-icons">notifications</span>
-    </div>
+      matBadgeOverlap="true">notifications</span>
   </button>
 }

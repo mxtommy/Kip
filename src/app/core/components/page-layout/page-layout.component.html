@@ -3,7 +3,7 @@
     [direction]="splitSet.direction"
     [disabled]="!unlockStatus"
     (dragEnd)="onDragEnd(splitSet.uuid, $event)"
-    gutterSize="4"
+    gutterSize="8"
     cdkDropList
     (cdkDropListDropped)="cdkDrop(splitSet.uuid, $event)"
     [cdkDropListOrientation]="splitSet.direction"

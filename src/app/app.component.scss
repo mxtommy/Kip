@@ -1,5 +1,6 @@
 .dashboard-container {
-  height: calc(100% - 48px);
+  padding: 4px;
+  height: calc(100% - 48px - 8px);
  }
 
 .navbar-container {
@@ -11,13 +12,15 @@
 .navbar-navigation {
   display: inline-block;
   height: 100%;
-  width: calc((100% - 128px) / 2);
+  min-width: calc((100% - 168px) / 2);
+  padding: 0px 5px;
 }
 
 .navbar-actions {
   display: inline-block;
   height: 100%;
   min-width: 64px;
+  padding: 0px 5px;
 }
 
 .change-page-button {
@@ -28,3 +31,9 @@
 .actions-button {
   height: 100%;
 }
+
+:host ::ng-deep .navbar-icon {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
