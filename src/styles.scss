@@ -17,21 +17,32 @@
 @import './themes/dark-m3-theme.scss';
 
 // Get App (dark) CSS theming value
-$sys-background: mat.get-theme-color($dark-theme, neutral, 10);
+$background: map-get($kip-dark-color, "background");
 
 // Get default (dark) KIP CSS theming value
-$kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
-$kip-widget-card-border-color: #252525;
-$kip-widget-action-button-color: mat.get-theme-color($dark-theme, surface-bright);
-$kip-widget-action-button-foreground-color: mat.get-theme-color($dark-theme, on-background);
-$kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-container);
+$kip-widget-card-background-color: map-get($kip-dark-color, "widget-card-background-color");
+$kip-widget-card-border-color: map-get($kip-dark-color, "widget-card-border-color");
+$kip-widget-action-button-color: map-get($kip-dark-color, "widget-action-button-color");
+$kip-widget-action-button-foreground-color: map-get($kip-dark-color, "widget-action-button-foreground-color");
+$kip-widget-action-delete-button-color: map-get($kip-dark-color, "widget-action-delete-button-color");
 
-// Set light KIP CSS theming variables
-@if mat.get-theme-type($dark-theme) == light {
-  $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 100);
-  $kip-widget-card-border-color: #252525;
-  //add more for light theme
-}
+$blue: map-get($kip-dark-color, "blue");
+$green: map-get($kip-dark-color, "green");
+$purple: map-get($kip-dark-color, "purple");
+$yellow: map-get($kip-dark-color, "yellow");
+$pink: map-get($kip-dark-color, "pink");
+$orange: map-get($kip-dark-color, "orange");
+$white: map-get($kip-dark-color, "white");
+$grey: map-get($kip-dark-color, "grey");
+$darkgrey: map-get($kip-dark-color, "darkgrey");
+
+$port: map-get($kip-dark-color, "port");
+$starboard: map-get($kip-dark-color, "starboard");
+$zone-nominal: map-get($kip-dark-color, "zone-nominal");
+$zone-alert: map-get($kip-dark-color, "zone-alert");
+$zone-warn: map-get($kip-dark-color, "zone-warn");
+$zone-alarm: map-get($kip-dark-color, "zone-alarm");
+$zone-emergency: map-get($kip-dark-color, "zone-emergency");
 
 // Write styles
 :root {
@@ -46,10 +57,10 @@ $kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-c
   @include widgetContainer.theme($dark-theme);
   @include pageLayout.theme($dark-theme);
 
-  // App background color
-  --sys-background: #{$sys-background};
+  // Set app background color
+  --sys-background: #{$background};
 
-  // Widgets card styles
+  // Create KIP global CSS variables
   --kip-widget-card-background-color: #{$kip-widget-card-background-color};
   --kip-widget-card-border-color: #{$kip-widget-card-border-color};
   --kip-widget-card-border-style: solid;
@@ -57,6 +68,25 @@ $kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-c
   --kip-widget-action-button-color: #{$kip-widget-action-button-color};
   --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
   --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
+
+  --kip-blue-color: #{$blue};
+  --kip-green-color: #{$green};
+  --kip-purple-color: #{$purple};
+  --kip-yellow-color: #{$yellow};
+  --kip-pink-color: #{$pink};
+  --kip-orange-color: #{$orange};
+  --kip-white-color: #{$white};
+  --kip-grey-color: #{$grey};
+  --kip-darkgrey-color: #{$darkgrey};
+
+  --kip-port-color: #{$port};
+  --kip-starboard-color: #{$starboard};
+  --kip-zone-nominal-color: #{$zone-nominal};
+  --kip-zone-alert-color: #{$zone-alert};
+  --kip-zone-warn-color: #{$zone-warn};
+  --kip-zone-alarm-color: #{$zone-alarm};
+  --kip-zone-emergency-color: #{$zone-emergency};
+
 }
 
 // Base app style setup tags
@@ -69,6 +99,7 @@ app-root {
 body {
   margin: 0;
   touch-action: none;
+  filter: brightness(1); //TODO: make this a night mode setting in the app
 }
 
 app-root {

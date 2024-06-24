@@ -150,3 +150,36 @@ $dark-theme: mat.define-theme((
     scale: 0,
   ),
 ));
+
+$widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
+$widget-action-button-color: mat.get-theme-color($dark-theme, surface-bright);
+$widget-action-button-foreground-color: mat.get-theme-color($dark-theme, on-background);
+$widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-container);
+$background: mat.get-theme-color($dark-theme, neutral, 10);
+
+$kip-dark-color: (
+  blue: #4284ff,
+  green: #45B522,
+  purple: #8F43E3,
+  yellow: #DBB621,
+  pink: #C728BC,
+  orange: #FF5733,
+  white: #FFFFFF,
+  grey: #B5B5B5,
+  darkgrey: #3F3F3F,
+
+  port: #8F0000,
+  starboard: #008700,
+  zone-nominal: #0164FA,
+  zone-alert: #FAF004,
+  zone-warn: #FF7D29,
+  zone-alarm: #E90000,
+  zone-emergency: #760000,
+
+  widget-card-background-color: #{$widget-card-background-color},
+  widget-card-border-color: #252525,
+  widget-action-button-color: #{$widget-action-button-color},
+  widget-action-button-foreground-color: #{$widget-action-button-foreground-color},
+  widget-action-delete-button-color: #{$widget-action-delete-button-color},
+  background: #{$background},
+);
