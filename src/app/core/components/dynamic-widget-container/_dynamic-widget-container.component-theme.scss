@@ -2,10 +2,10 @@
 @use '@angular/material' as mat;
 
 @mixin theme($theme) {
-  .card-color {
-    background-color: var(--kip-widget-card-background)
+  .kip-widget-background-color {
+    background-color: var(--kip-widget-card-background-color)
   }
-
+  //TODO: Clean up with new approach
   // .primary {
   //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceLight);
   // }

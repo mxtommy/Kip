@@ -14,19 +14,27 @@
 // Import the Material Design typography and color palettes
 @import './themes/dark-m3-theme.scss';
 
+// Set KIP CSS theming variables
+$kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
+
+@if mat.get-theme-type($dark-theme) == light {
+  $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 100);
+}
+
 :root {
   // Apply all component css dark theme by default
   @include mat.all-component-themes($dark-theme);
   @include mat.system-level-colors($dark-theme);
   @include mat.system-level-typography($dark-theme);
   @include mat.typography-hierarchy($dark-theme);
-  // Apply component theming
+  // Apply KIP core component theming
   @include appRoot.theme($dark-theme);
   @include notificationMenu.theme($dark-theme);
   @include widgetContainer.theme($dark-theme);
 
-  // Set KIP CSS theming variables
-  --kip-widget-card-background: map.get($dark-theme, kip-app-colors, widget-card-background);
+  --kip-widget-card-background-color: #{$kip-widget-card-background-color};
+
+
 }
 
 html,
