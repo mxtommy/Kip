@@ -1,28 +1,33 @@
-<div class="dynamicWidgetContainer">
-    <mat-card class="kip-widget-background-color">
-      <ng-template dynamic-widget></ng-template>
-    </mat-card>
-  <div class="selectWidgetMenu">
-    <button *ngIf="unlockStatus" color="accent" mat-mini-fab class="selector-fab" (click)="selectWidget()"><span class="fa-solid fa-list"></span></button>
-  </div>
-  <div class="settingsButton" *ngIf="unlockStatus">
-    <button  color="accent" mat-mini-fab class="selector-fab" (click)="openWidgetSettings()">
-      <span class="fa-solid fa-cog"></span>
-    </button>
-  </div>
-  <div #primary class='primary' style="display: none;"></div>
-  <div #accent class='accent' style="display: none;"></div>
-  <div #warn class='warn' style="display: none;"></div>
-  <div #primaryDark class='primaryDark' style="display: none;"></div>
-  <div #accentDark class='accentDark' style="display: none;"></div>
-  <div #warnDark class='warnDark' style="display: none;"></div>
-  <div #background class='background' style="display: none;"></div>
-  <div #text class='text' style="display: none;"></div>
-  <div #textDark class='textDark' style="display: none;"></div>
-  <div #textPrimaryLight class='textPrimaryLight' style="display: none;"></div>
-  <div #textPrimaryDark class='textPrimaryDark' style="display: none;"></div>
-  <div #textAccentLight class='textAccentLight' style="display: none;"></div>
-  <div #textAccentDark class='textAccentDark' style="display: none;"></div>
-  <div #textWarnLight class='textWarnLight' style="display: none;"></div>
-  <div #textWarnDark class='textWarnDark' style="display: none;"></div>
+<mat-card class="kip-widget-background-color">
+  <ng-template dynamic-widget></ng-template>
+</mat-card>
+<div class="selectWidgetMenu">
+  <button *ngIf="unlockStatus" mat-mini-fab class="selector-fab kip-widget-action-button-color" (click)="selectWidget()">
+    <span class="material-icons">
+      widgets
+    </span>
+  </button>
 </div>
+<div class="settingsButton" *ngIf="unlockStatus">
+  <button mat-mini-fab class="selector-fab kip-widget-action-button-color" (click)="openWidgetSettings()">
+    <span class="material-icons">
+      tune
+    </span>
+  </button>
+</div>
+<!-- //TODO: Clean up -->
+<div #primary class='primary' style="display: none;"></div>
+<div #accent class='accent' style="display: none;"></div>
+<div #warn class='warn' style="display: none;"></div>
+<div #primaryDark class='primaryDark' style="display: none;"></div>
+<div #accentDark class='accentDark' style="display: none;"></div>
+<div #warnDark class='warnDark' style="display: none;"></div>
+<div #background class='background' style="display: none;"></div>
+<div #text class='text' style="display: none;"></div>
+<div #textDark class='textDark' style="display: none;"></div>
+<div #textPrimaryLight class='textPrimaryLight' style="display: none;"></div>
+<div #textPrimaryDark class='textPrimaryDark' style="display: none;"></div>
+<div #textAccentLight class='textAccentLight' style="display: none;"></div>
+<div #textAccentDark class='textAccentDark' style="display: none;"></div>
+<div #textWarnLight class='textWarnLight' style="display: none;"></div>
+<div #textWarnDark class='textWarnDark' style="display: none;"></div>

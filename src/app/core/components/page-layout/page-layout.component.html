@@ -11,7 +11,7 @@
     [cdkDropListConnectedTo]="connectedCdkDropLists">
     @for (area of splitSet.splitAreas; track area; let i = $index) {
       @if (area.type === "widget") {
-        <as-split-area
+        <as-split-area class="split-area"
           [order]="i"
           [size]="area.size"
           unit="percent"
@@ -19,24 +19,34 @@
           [cdkDragData]="area"
           (cdkDragMoved)="cdkDragMoved($event)"
           (cdkDragReleased)="cdkDragReleased($event)">
-          <div class="splitArea">
             <app-dynamic-widget-container
               [splitUUID]="area.uuid"
               [unlockStatus]="unlockStatus">
             </app-dynamic-widget-container>
             @if (unlockStatus) {
-              <div class="splitMenu">
+              <div class="split-menu">
                 <mat-menu #splitMenu="matMenu">
-                  <button mat-menu-item (click)="addWidget(splitSet.uuid, area.uuid, 'vertical')">Split Horz.</button>
-                  <button mat-menu-item (click)="addWidget(splitSet.uuid, area.uuid, 'horizontal')">Split Vert.</button>
+                  <button mat-menu-item (click)="addWidget(splitSet.uuid, area.uuid, 'vertical')">
+                    <mat-icon>horizontal_split</mat-icon>
+                    Split Horizontal
+                  </button>
+                  <button mat-menu-item (click)="addWidget(splitSet.uuid, area.uuid, 'horizontal')">
+                    <mat-icon>vertical_split</mat-icon>
+                    Split Vertical
+                  </button>
                 </mat-menu>
-                <button color="accent" mat-mini-fab [matMenuTriggerFor]="splitMenu"><span class="fa-solid fa-columns"></span></button>
+                <button mat-mini-fab class="kip-widget-action-button-color" [matMenuTriggerFor]="splitMenu">
+                  <mat-icon>
+                    splitscreen
+                  </mat-icon>
+                </button>
               </div>
-              <div class="splitdelete">
-                <button color="accent" mat-mini-fab (click)="deleteArea(splitSet.uuid, area.uuid)"><span class="fa-solid fa-times" ></span></button>
+              <div class="split-delete">
+                <button mat-mini-fab class="kip-widget-action-delete-button-color" (click)="deleteArea(splitSet.uuid, area.uuid)">
+                  <mat-icon>clear</mat-icon>
+                </button>
               </div>
             }
-          </div>
         </as-split-area>
       } @else {
         <as-split-area [order]="i" [size]="area.size" cdkDrag cdkDragDisabled="false">

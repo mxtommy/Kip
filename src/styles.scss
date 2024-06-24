@@ -5,21 +5,31 @@
 @use './app/app.component-theme' as appRoot;
 @use './app/core/components/notification-menu/notification-menu.component-theme' as notificationMenu;
 @use './app/core/components/dynamic-widget-container/dynamic-widget-container.component-theme' as widgetContainer;
+@use './app/core/components/page-layout/page-layout.component-theme' as pageLayout;
 
 @include mat.core();
 
 // Import local Angular Google font and icon styles
+@import './assets/google-fonts/material-symbols-outlined.scss';
 @import './assets/google-fonts/material-icons.scss';
 @import './assets/google-fonts/roboto.scss';
 // Import the Material Design typography and color palettes
 @import './themes/dark-m3-theme.scss';
 
-// Set KIP CSS theming variables
+// Set default (dark) KIP CSS theming variables
 $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
+$kip-widget-action-button-color: mat.get-theme-color($dark-theme, surface-bright);
+$kip-widget-action-button-foreground-color: mat.get-theme-color($dark-theme, on-background);
+$kip-widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-container);
 
+// Set light KIP CSS theming variables
 @if mat.get-theme-type($dark-theme) == light {
   $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 100);
+  //add more for light theme
 }
+
+
+
 
 :root {
   // Apply all component css dark theme by default
@@ -31,10 +41,13 @@ $kip-widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
   @include appRoot.theme($dark-theme);
   @include notificationMenu.theme($dark-theme);
   @include widgetContainer.theme($dark-theme);
+  @include pageLayout.theme($dark-theme);
 
+  // Widgets card styles
   --kip-widget-card-background-color: #{$kip-widget-card-background-color};
-
-
+  --kip-widget-action-button-color: #{$kip-widget-action-button-color};
+  --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
+  --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
 }
 
 html,
