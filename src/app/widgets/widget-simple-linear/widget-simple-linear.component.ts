@@ -47,7 +47,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       },
       numInt: 1,
       numDecimal: 2,
-      textColor: 'accent',
+      color: 'yellow',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -81,25 +81,42 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
 
   updateGaugeSettings() {
     this.barColorBackground = this.theme.background;
-
-    switch (this.widgetProperties.config.textColor) {
-      case "text":
-        this.barColor = this.theme.text;
-        this.barColorGradient = this.theme.textDark;
+    switch (this.widgetProperties.config.color) {
+      case "white":
+        this.barColor = this.theme.white;
+        this.barColorGradient = this.theme.white;
         break;
-      case "primary":
-        this.barColor = this.theme.primary;
-        this.barColorGradient = this.theme.primaryDark;
+      case "blue":
+        this.barColor = this.theme.blue; // Assuming you have blue defined in your theme
+        this.barColorGradient = this.theme.blue;
         break;
-
-      case "accent":
-        this.barColor = this.theme.accent;
-        this.barColorGradient = this.theme.accentDark;
+      case "green":
+        this.barColor = this.theme.green; // Assuming you have green defined in your theme
+        this.barColorGradient = this.theme.green;
         break;
-
-      case "warn":
-        this.barColor = this.theme.warn;
-        this.barColorGradient = this.theme.warnDark;
+      case "pink":
+        this.barColor = this.theme.pink; // Assuming you have pink defined in your theme
+        this.barColorGradient = this.theme.pink;
+        break;
+      case "orange":
+        this.barColor = this.theme.orange; // Assuming you have orange defined in your theme
+        this.barColorGradient = this.theme.orange;
+        break;
+      case "purple":
+        this.barColor = this.theme.purple; // Assuming you have purple defined in your theme
+        this.barColorGradient = this.theme.purple;
+        break;
+      case "grey":
+        this.barColor = this.theme.grey; // Assuming you have gray defined in your theme
+        this.barColorGradient = this.theme.grey;
+        break;
+      case "yellow":
+        this.barColor = this.theme.yellow; // Assuming you have yellow defined in your theme
+        this.barColorGradient = this.theme.yellow;
+        break;
+      default:
+        this.barColor = this.theme.white;
+        this.barColorGradient = this.theme.white;
         break;
     }
   }

@@ -82,7 +82,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       numInt: 1,
       numDecimal: 0,
       enableTimeout: false,
-      textColor: "accent",
+      color: "white",
       dataTimeout: 5
     };
   }
@@ -112,16 +112,16 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.warnDark;
+            option.colorValueText = this.theme.zoneEmergency;
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.warnDark;
+            option.colorValueText = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            option.colorValueText = this.theme.textWarnLight;
+            option.colorValueText = this.theme.zoneWarn;
             break;
           default:
-            option.colorValueText = this.theme.text;
+            option.colorValueText = this.theme.white;
         }
         this.radialGauge.update(option);
       }
@@ -178,24 +178,28 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
      // Set Theme related colors
     const themePalette = {
-      "text": { color: this.theme.text, darkColor: this.theme.text },
-      "primary": { color: this.theme.primary, darkColor: this.theme.primaryDark },
-      "accent": { color: this.theme.accent, darkColor: this.theme.accentDark },
-      "warn": { color: this.theme.warn, darkColor: this.theme.warnDark }
+      "white": { color: this.theme.white, darkColor: this.theme.white },
+      "blue": { color: this.theme.blue, darkColor: this.theme.blue },
+      "green": { color: this.theme.green, darkColor: this.theme.green },
+      "pink": { color: this.theme.pink, darkColor: this.theme.pink },
+      "orange": { color: this.theme.orange, darkColor: this.theme.orange },
+      "purple": { color: this.theme.purple, darkColor: this.theme.purple },
+      "grey": { color: this.theme.grey, darkColor: this.theme.grey },
+      "yellow": { color: this.theme.yellow, darkColor: this.theme.yellow }
     };
 
-    if (themePalette[this.widgetProperties.config.textColor]) {
-      this.setGaugeOptions(themePalette[this.widgetProperties.config.textColor].color, themePalette[this.widgetProperties.config.textColor].darkColor);
+    if (themePalette[this.widgetProperties.config.color]) {
+      this.setGaugeOptions(themePalette[this.widgetProperties.config.color].color, themePalette[this.widgetProperties.config.color].darkColor);
 
-      this.gaugeOptions.colorTitle = this.theme.textDark;
-      this.gaugeOptions.colorUnits = this.theme.text;
-      this.gaugeOptions.colorValueText = this.theme.text;
+      this.gaugeOptions.colorTitle = this.theme.white;
+      this.gaugeOptions.colorUnits = this.theme.white;
+      this.gaugeOptions.colorValueText = this.theme.white;
 
-      this.colorStrokeTicks = this.theme.text; // missing property in gaugeOptions
-      this.gaugeOptions.colorMinorTicks = this.theme.text;
-      this.gaugeOptions.colorNumbers = this.theme.text;
+      this.colorStrokeTicks = this.theme.white; // missing property in gaugeOptions
+      this.gaugeOptions.colorMinorTicks = this.theme.white;
+      this.gaugeOptions.colorNumbers = this.theme.white;
 
-      this.gaugeOptions.colorMajorTicks = this.theme.text;
+      this.gaugeOptions.colorMajorTicks = this.theme.white;
 
       this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
       this.gaugeOptions.colorBar = this.theme.background;
@@ -206,7 +210,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
       this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
     } else {
-      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.textColor}`);
+      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.color}`);
     }
 
     // Radial gauge subType
@@ -332,19 +336,19 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       let color: string;
       switch (zone.state) {
         case States.Emergency:
-          color = this.theme.warnDark;
+          color = this.theme.zoneEmergency;
           break;
         case States.Alarm:
-          color = this.theme.warnDark;
+          color = this.theme.zoneAlarm;
           break;
         case States.Warn:
-          color = this.theme.textWarnLight;
+          color = this.theme.zoneWarn;
           break;
         case States.Alert:
-          color = this.theme.accentDark;
+          color = this.theme.zoneAlert;
           break;
         case States.Nominal:
-          color = this.theme.primaryDark;
+          color = this.theme.zoneNominal;
           break;
         default:
           color = "rgba(0,0,0,0)";

@@ -47,7 +47,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         paths: [],
         enableTimeout: false,
         dataTimeout: 5,
-        textColor: "text",
+        color: "text",
         putEnable: true,
         putMomentary: false,
         multiChildCtrls: []
@@ -57,7 +57,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   ngOnInit(): void {
     this.initWidget();
     this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
-    this.getColors(this.widgetProperties.config.textColor);
+    this.getColors(this.widgetProperties.config.color);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
     this.resizeWidget();
 
@@ -176,24 +176,32 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): void {
     switch (color) {
-      case "text":
-        this.labelColor = this.theme.textDark;
+      case "white":
+        this.labelColor = this.theme.white;
         break;
-
-      case "primary":
-        this.labelColor = this.theme.textPrimaryDark;
+      case "blue":
+        this.labelColor = this.theme.blue;
         break;
-
-      case "accent":
-        this.labelColor = this.theme.textAccentDark;
+      case "green":
+        this.labelColor = this.theme.green;
         break;
-
-      case "warn":
-        this.labelColor = this.theme.textWarnDark;
+      case "pink":
+        this.labelColor = this.theme.pink;
         break;
-
+      case "orange":
+        this.labelColor = this.theme.orange;
+        break;
+      case "purple":
+        this.labelColor = this.theme.purple;
+        break;
+      case "grey":
+        this.labelColor = this.theme.grey;
+        break;
+      case "yellow":
+        this.labelColor = this.theme.yellow;
+        break;
       default:
-        this.labelColor = this.theme.textDark;
+        this.labelColor = this.theme.white;
         break;
     }
   }

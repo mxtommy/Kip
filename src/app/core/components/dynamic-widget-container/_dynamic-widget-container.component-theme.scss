@@ -1,7 +1,7 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 
-@mixin theme($theme) {
+@mixin color($theme) {
   .kip-widget-card-colors {
     background-color: var(--kip-widget-card-background-color);
     border-color: var(--kip-widget-card-border-color);
@@ -11,51 +11,10 @@
     background-color: var(--kip-widget-action-button-color);
     color: var(--kip-widget-action-button-foreground-color);
   }
+}
 
-  //TODO: Clean up with new approach
-  // .primary {
-  //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceLight);
-  // }
-  // .accent {
-  //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceLight);
-  // }
-  // .warn {
-  //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceLight);
-  // }
-  // .primaryDark {
-  //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceDark);
-  // }
-  // .accentDark {
-  //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceDark);
-  // }
-  // .warnDark {
-  //   color: mat.m2-get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceDark);
-  // }
-  // .background {
-  //   color: mat.m2-get-color-from-palette($themeForeground, divider);
-  // }
-  // .text {
-  //   color: mat.m2-get-color-from-palette($themeForeground, text);
-  // }
-  // .textDark {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, text-dark);
-  // }
-  // .textPrimaryLight {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, primary-light);
-  // }
-  // .textPrimaryDark {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, primary-dark);
-  // }
-  // .textAccentLight {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, accent-light);
-  // }
-  // .textAccentDark {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, accent-dark);
-  // }
-  // .textWarnLight {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, warn-light);
-  // }
-  // .textWarnDark {
-  //   color: mat.m2-get-color-from-palette($textThemeEmitter, warn-dark);
-  // }
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
 }

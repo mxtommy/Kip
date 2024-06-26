@@ -57,7 +57,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       showMin: false,
       numDecimal: 1,
       numInt: 1,
-      textColor: 'text',
+      color: 'white',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -68,7 +68,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-    this.getColors(this.widgetProperties.config.textColor);
+    this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
 
@@ -112,29 +112,41 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
   private getColors(color: string): void {
     switch (color) {
-      case "text":
-        this.labelColor = this.theme.textDark;
-        this.valueColor = this.theme.text;
+      case "white":
+        this.labelColor = this.theme.white;
+        this.valueColor = this.theme.white;
         break;
-
-      case "primary":
-        this.labelColor = this.theme.textPrimaryDark;
-        this.valueColor = this.theme.textPrimaryLight;
+      case "blue":
+        this.labelColor = this.theme.blue; // Assuming you have blue defined in your theme
+        this.valueColor = this.theme.blue;
         break;
-
-      case "accent":
-        this.labelColor = this.theme.textAccentDark;
-        this.valueColor = this.theme.textAccentLight;
+      case "green":
+        this.labelColor = this.theme.green; // Assuming you have green defined in your theme
+        this.valueColor = this.theme.green;
         break;
-
-      case "warn":
-        this.labelColor = this.theme.textWarnDark;
-        this.valueColor = this.theme.textWarnLight;
+      case "pink":
+        this.labelColor = this.theme.pink; // Assuming you have pink defined in your theme
+        this.valueColor = this.theme.pink;
         break;
-
+      case "orange":
+        this.labelColor = this.theme.orange; // Assuming you have orange defined in your theme
+        this.valueColor = this.theme.orange;
+        break;
+      case "purple":
+        this.labelColor = this.theme.purple; // Assuming you have purple defined in your theme
+        this.valueColor = this.theme.purple;
+        break;
+      case "grey":
+        this.labelColor = this.theme.grey; // Assuming you have gray defined in your theme
+        this.valueColor = this.theme.grey;
+        break;
+      case "yellow":
+        this.labelColor = this.theme.yellow; // Assuming you have yellow defined in your theme
+        this.valueColor = this.theme.yellow;
+        break;
       default:
-        this.labelColor = this.theme.textDark;
-        this.valueColor = this.theme.text;
+        this.labelColor = this.theme.white;
+        this.valueColor = this.theme.white;
         break;
     }
   }
@@ -229,7 +241,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           this.canvasValCtx.fillStyle = this.valueColor;
         } else {
           // draw warn background
-          this.canvasValCtx.fillStyle = this.theme.warnDark;
+          this.canvasValCtx.fillStyle = this.theme.zoneWarn;
           this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
           this.canvasValCtx.fillStyle = this.valueColor;
         }
@@ -240,7 +252,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
           this.canvasValCtx.fillStyle = this.valueColor;
         } else {
           // draw warn background
-          this.canvasValCtx.fillStyle = this.theme.textWarnLight;
+          this.canvasValCtx.fillStyle = this.theme.zoneWarn;
           this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
           this.canvasValCtx.fillStyle = this.valueColor;
         }

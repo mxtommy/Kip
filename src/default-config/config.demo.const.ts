@@ -82,7 +82,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "showMin": false,
                 "numDecimal": 1,
                 "numInt": 1,
-                "textColor": "accent",
+                "color": "yellow",
                 "enableTimeout": false
             }
         },
@@ -195,7 +195,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 0,
-                "textColor": "accent"
+                "color": "yellow"
             }
         },
         {
@@ -226,7 +226,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 2,
-                "textColor": "warn",
+                "color": "pink",
                 "enableTimeout": false
             }
         },
@@ -251,7 +251,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "showMin": true,
                 "numDecimal": 1,
                 "numInt": 1,
-                "textColor": "text",
+                "color": "white",
                 "enableTimeout": false
             }
         },
@@ -276,7 +276,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "showMin": true,
                 "numDecimal": 1,
                 "numInt": 1,
-                "textColor": "primary",
+                "color": "blue",
                 "enableTimeout": false
             }
         },
@@ -305,7 +305,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "yScaleSuggestedMax": null,
                 "enableMinMaxScaleLimit": false,
                 "numDecimal": 1,
-                "textColor": "primary",
+                "color": "blue",
                 "minValue": null,
                 "maxValue": null
             }
@@ -344,7 +344,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 0,
-                "textColor": "accent",
+                "color": "yellow",
                 "enableTimeout": false
             }
         },
@@ -478,7 +478,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "dateFormat": "dd/MM HH:mm",
                 "dateTimezone": "America/Toronto",
-                "textColor": "text",
+                "color": "white",
                 "enableTimeout": false
             }
         }

@@ -44,7 +44,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
       },
       dateFormat: 'dd/MM/yyyy HH:mm:ss',
       dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      textColor: 'text',
+      color: 'white',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -52,7 +52,7 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
 
   ngOnInit() {
     this.initWidget();
-    this.getColors(this.widgetProperties.config.textColor);
+    this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('gaugePath', newValue => {
       this.dataValue = newValue.data.value;
       this.updateCanvas();
@@ -73,29 +73,41 @@ export class WidgetDateGenericComponent extends BaseWidgetComponent implements O
 
   private getColors(color: string): void {
     switch (color) {
-      case "text":
-        this.labelColor = this.theme.textDark;
-        this.valueColor = this.theme.text;
+      case "white":
+        this.labelColor = this.theme.white;
+        this.valueColor = this.theme.white;
         break;
-
-      case "primary":
-        this.labelColor = this.theme.textPrimaryDark;
-        this.valueColor = this.theme.textPrimaryLight;
+      case "blue":
+        this.labelColor = this.theme.blue;
+        this.valueColor = this.theme.blue;
         break;
-
-      case "accent":
-        this.labelColor = this.theme.textAccentDark;
-        this.valueColor = this.theme.textAccentLight;
+      case "green":
+        this.labelColor = this.theme.green;
+        this.valueColor = this.theme.green;
         break;
-
-      case "warn":
-        this.labelColor = this.theme.textWarnDark;
-        this.valueColor = this.theme.textWarnLight;
+      case "pink":
+        this.labelColor = this.theme.pink;
+        this.valueColor = this.theme.pink;
         break;
-
+      case "orange":
+        this.labelColor = this.theme.orange;
+        this.valueColor = this.theme.orange;
+        break;
+      case "purple":
+        this.labelColor = this.theme.purple;
+        this.valueColor = this.theme.purple;
+        break;
+      case "grey":
+        this.labelColor = this.theme.grey;
+        this.valueColor = this.theme.grey;
+        break;
+      case "yellow":
+        this.labelColor = this.theme.yellow;
+        this.valueColor = this.theme.yellow;
+        break;
       default:
-        this.labelColor = this.theme.textDark;
-        this.valueColor = this.theme.text;
+        this.labelColor = this.theme.white;
+        this.valueColor = this.theme.white;
         break;
     }
   }

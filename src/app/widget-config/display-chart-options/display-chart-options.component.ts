@@ -42,7 +42,7 @@ export class DisplayChartOptionsComponent implements OnInit {
   @Input () yScaleMax!: UntypedFormControl;
 
   @Input () numDecimal!: UntypedFormControl;
-  @Input () textColor!: UntypedFormControl;
+  @Input () color!: UntypedFormControl;
 
 
   constructor(

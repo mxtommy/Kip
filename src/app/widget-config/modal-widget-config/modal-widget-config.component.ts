@@ -349,8 +349,8 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('verticalGraph') as UntypedFormControl;
   }
 
-  get textColorToControl(): UntypedFormControl {
-    return this.formMaster.get('textColor') as UntypedFormControl;
+  get colorToControl(): UntypedFormControl {
+    return this.formMaster.get('color') as UntypedFormControl;
   }
 
   get dateFormatToControl(): UntypedFormControl {

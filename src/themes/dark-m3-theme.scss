@@ -158,16 +158,14 @@ $widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-conta
 $background: mat.get-theme-color($dark-theme, neutral, 10);
 
 $kip-dark-color: (
-  blue: #4284ff,
-  green: #45B522,
-  purple: #8F43E3,
-  yellow: #DBB621,
-  pink: #C728BC,
-  orange: #FF5733,
+  blue: #1F90FF,
+  green: #00f500,
+  purple: #A020F0,
+  yellow: #fff700,
+  pink: #FC0FC0,
+  orange: #FFA500,
   white: #FFFFFF,
   grey: #B5B5B5,
-  darkgrey: #3F3F3F,
-
   port: #8F0000,
   starboard: #008700,
   zone-nominal: #0164FA,
@@ -175,7 +173,6 @@ $kip-dark-color: (
   zone-warn: #FF7D29,
   zone-alarm: #E90000,
   zone-emergency: #760000,
-
   widget-card-background-color: #{$widget-card-background-color},
   widget-card-border-color: #252525,
   widget-action-button-color: #{$widget-action-button-color},

@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
@@ -16,6 +16,31 @@ export interface AppNotification {
   silent: boolean;
 }
 
+/**
+ * Kip theme hex colors
+ *
+ * @export
+ * @interface ITheme
+ */
+export interface ITheme {
+  blue: string,
+  green: string,
+  purple: string,
+  yellow: string,
+  pink: string,
+  orange: string,
+  white: string,
+  grey: string,
+  port: string,
+  starboard: string,
+  zoneNominal: string,
+  zoneAlert: string,
+  zoneWarn: string,
+  zoneAlarm: string,
+  zoneEmergency: string,
+  background: string,
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -29,6 +54,7 @@ export class AppService implements OnDestroy {
   private autoNightModeThemeSubscription: Subscription = null;
   public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
   private pathTimer = null;
+  public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
 
   constructor(
     private settings: AppSettingsService,
@@ -37,6 +63,8 @@ export class AppService implements OnDestroy {
   ) {
     this.autoNightMode = this.settings.getAutoNightMode();
     this.autoNightModeObserver();
+    this.readThemeCssRoleVariables();
+
   }
 
   private autoNightModeObserver(): void {
@@ -113,6 +141,30 @@ export class AppService implements OnDestroy {
    */
   public getSnackbarAppNotifications() {
     return this.snackbarAppNotifications.asObservable();
+  }
+
+  private readThemeCssRoleVariables(): void {
+    const root = document.documentElement;
+    const computedStyle = getComputedStyle(root);
+    const cssThemeRolesColor: ITheme = {
+      background: computedStyle.getPropertyValue('--sys-background').trim(),
+      blue: computedStyle.getPropertyValue('--kip-blue-color').trim(),
+      green: computedStyle.getPropertyValue('--kip-green-color').trim(),
+      grey: computedStyle.getPropertyValue('--kip-grey-color').trim(),
+      orange: computedStyle.getPropertyValue('--kip-orange-color').trim(),
+      pink: computedStyle.getPropertyValue('--kip-pink-color').trim(),
+      purple: computedStyle.getPropertyValue('--kip-purple-color').trim(),
+      white: computedStyle.getPropertyValue('--kip-white-color').trim(),
+      yellow: computedStyle.getPropertyValue('--kip-yellow-color').trim(),
+      port: computedStyle.getPropertyValue('--kip-port-color').trim(),
+      starboard: computedStyle.getPropertyValue('--kip-starboard-color').trim(),
+      zoneNominal: computedStyle.getPropertyValue('--kip-zone-nominal-color').trim(),
+      zoneWarn: computedStyle.getPropertyValue('--kip-zone-warn-color').trim(),
+      zoneAlert: computedStyle.getPropertyValue('--kip-zone-alert-color').trim(),
+      zoneAlarm: computedStyle.getPropertyValue('--kip-zone-alarm-color').trim(),
+      zoneEmergency: computedStyle.getPropertyValue('--kip-zone-emergency-color').trim(),
+    };
+    this.cssThemeColorRoles$.next(cssThemeRolesColor);
   }
 
   ngOnDestroy(): void {

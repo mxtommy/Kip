@@ -96,7 +96,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         showValueBox: false
       },
       enableTimeout: false,
-      textColor: "accent",
+      color: "yellow",
       dataTimeout: 5
     };
   }
@@ -132,16 +132,16 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.warnDark;
+            option.colorValueText = this.theme.zoneEmergency;
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.warnDark;
+            option.colorValueText = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            option.colorValueText = this.theme.textWarnLight;
+            option.colorValueText = this.theme.zoneWarn;
             break;
           default:
-            option.colorValueText = this.theme.text;
+            option.colorValueText = this.theme.white;
         }
         this.compassGauge.update(option);
       }
@@ -236,30 +236,34 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
      // Set Theme related colors
     const themePalette = {
-      "text": { color: this.theme.text, darkColor: this.theme.text },
-      "primary": { color: this.theme.primary, darkColor: this.theme.primaryDark },
-      "accent": { color: this.theme.accent, darkColor: this.theme.accentDark },
-      "warn": { color: this.theme.warn, darkColor: this.theme.warnDark }
+      "white": { color: this.theme.white, darkColor: this.theme.white },
+      "blue": { color: this.theme.blue, darkColor: this.theme.blue },
+      "green": { color: this.theme.green, darkColor: this.theme.green },
+      "pink": { color: this.theme.pink, darkColor: this.theme.pink },
+      "orange": { color: this.theme.orange, darkColor: this.theme.orange },
+      "purple": { color: this.theme.purple, darkColor: this.theme.purple },
+      "grey": { color: this.theme.grey, darkColor: this.theme.grey },
+      "yellow": { color: this.theme.yellow, darkColor: this.theme.yellow }
     };
 
-    if (themePalette[this.widgetProperties.config.textColor]) {
-      this.setGaugeOptions(themePalette[this.widgetProperties.config.textColor].color, themePalette[this.widgetProperties.config.textColor].darkColor);
-      const tColor = themePalette[this.widgetProperties.config.textColor].color
-      const dColor = themePalette[this.widgetProperties.config.textColor].darkColor
+    if (themePalette[this.widgetProperties.config.color]) {
+      this.setGaugeOptions(themePalette[this.widgetProperties.config.color].color, themePalette[this.widgetProperties.config.color].darkColor);
+      const tColor = themePalette[this.widgetProperties.config.color].color
+      const dColor = themePalette[this.widgetProperties.config.color].darkColor
 
-      this.gaugeOptions.colorTitle = this.theme.textDark;
-      this.gaugeOptions.colorUnits = this.theme.text;
-      this.gaugeOptions.colorValueText = this.theme.text;
+      this.gaugeOptions.colorTitle = this.theme.white;
+      this.gaugeOptions.colorUnits = this.theme.white;
+      this.gaugeOptions.colorValueText = this.theme.white;
 
-      this.gaugeOptions.colorMinorTicks = this.theme.text;
+      this.gaugeOptions.colorMinorTicks = this.theme.white;
       this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
-        [rgbToHex(this.theme.textWarnDark), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(dColor), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(dColor), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(dColor), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.textWarnDark)] :
-        [rgbToHex(this.theme.textWarnDark), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(this.theme.textWarnDark)];
+        [rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white)] :
+        [rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(this.theme.white)];
 
-      this.colorStrokeTicks = this.theme.warn; // missing property in gaugeOptions
+      this.colorStrokeTicks = this.theme.pink; // missing property in gaugeOptions
       this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
-        [rgbToHex(this.theme.textWarnDark), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.textWarnDark)] :
-        [rgbToHex(this.theme.textWarnDark), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.text), rgbToHex(this.theme.textWarnDark)];
+        [rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white)] :
+        [rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white)];
 
       this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
       this.gaugeOptions.colorBar = this.theme.background;
@@ -272,7 +276,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
       this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
     } else {
-      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.textColor}`);
+      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.color}`);
     }
   }
 

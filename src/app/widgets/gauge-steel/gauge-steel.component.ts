@@ -1,7 +1,7 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { ITheme } from '../../core/interfaces/widgets-interface';
+import { ITheme } from '../../core/services/app-service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
 declare let steelseries: any; // 3rd party
@@ -132,19 +132,19 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
         let color: string;
         switch (zone.state) {
           case States.Emergency:
-            color = this.theme.warnDark;
+            color = this.theme.zoneEmergency;
             break;
           case States.Alarm:
-            color = this.theme.warnDark;
+            color = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            color = this.theme.textWarnLight;
+            color = this.theme.zoneWarn;
             break;
           case States.Alert:
-            color = this.theme.accentDark;
+            color = this.theme.zoneAlert;
             break;
           case States.Nominal:
-            color = this.theme.primaryDark;
+            color = this.theme.zoneNominal;
             break;
           default:
             color = "rgba(0,0,0,0)";

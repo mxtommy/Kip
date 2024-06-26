@@ -17,32 +17,31 @@
 @import './themes/dark-m3-theme.scss';
 
 // Get App (dark) CSS theming value
-$background: map-get($kip-dark-color, "background");
+$background: map-get($kip-dark-color, background);
 
 // Get default (dark) KIP CSS theming value
-$kip-widget-card-background-color: map-get($kip-dark-color, "widget-card-background-color");
-$kip-widget-card-border-color: map-get($kip-dark-color, "widget-card-border-color");
-$kip-widget-action-button-color: map-get($kip-dark-color, "widget-action-button-color");
-$kip-widget-action-button-foreground-color: map-get($kip-dark-color, "widget-action-button-foreground-color");
-$kip-widget-action-delete-button-color: map-get($kip-dark-color, "widget-action-delete-button-color");
+$kip-widget-card-background-color: map-get($kip-dark-color, widget-card-background-color);
+$kip-widget-card-border-color: map-get($kip-dark-color, widget-card-border-color);
+$kip-widget-action-button-color: map-get($kip-dark-color, widget-action-button-color);
+$kip-widget-action-button-foreground-color: map-get($kip-dark-color, widget-action-button-foreground-color);
+$kip-widget-action-delete-button-color: map-get($kip-dark-color, widget-action-delete-button-color);
 
-$blue: map-get($kip-dark-color, "blue");
-$green: map-get($kip-dark-color, "green");
-$purple: map-get($kip-dark-color, "purple");
-$yellow: map-get($kip-dark-color, "yellow");
-$pink: map-get($kip-dark-color, "pink");
-$orange: map-get($kip-dark-color, "orange");
-$white: map-get($kip-dark-color, "white");
-$grey: map-get($kip-dark-color, "grey");
-$darkgrey: map-get($kip-dark-color, "darkgrey");
+$blue: map-get($kip-dark-color, blue);
+$green: map-get($kip-dark-color, green);
+$purple: map-get($kip-dark-color, purple);
+$yellow: map-get($kip-dark-color, yellow);
+$pink: map-get($kip-dark-color, pink);
+$orange: map-get($kip-dark-color, orange);
+$white: map-get($kip-dark-color, white);
+$grey: map-get($kip-dark-color, grey);
 
-$port: map-get($kip-dark-color, "port");
-$starboard: map-get($kip-dark-color, "starboard");
-$zone-nominal: map-get($kip-dark-color, "zone-nominal");
-$zone-alert: map-get($kip-dark-color, "zone-alert");
-$zone-warn: map-get($kip-dark-color, "zone-warn");
-$zone-alarm: map-get($kip-dark-color, "zone-alarm");
-$zone-emergency: map-get($kip-dark-color, "zone-emergency");
+$port: map-get($kip-dark-color, port);
+$starboard: map-get($kip-dark-color, starboard);
+$zone-nominal: map-get($kip-dark-color, zone-nominal);
+$zone-alert: map-get($kip-dark-color, zone-alert);
+$zone-warn: map-get($kip-dark-color, zone-warn);
+$zone-alarm: map-get($kip-dark-color, zone-alarm);
+$zone-emergency: map-get($kip-dark-color, zone-emergency);
 
 // Write styles
 :root {
@@ -77,7 +76,6 @@ $zone-emergency: map-get($kip-dark-color, "zone-emergency");
   --kip-orange-color: #{$orange};
   --kip-white-color: #{$white};
   --kip-grey-color: #{$grey};
-  --kip-darkgrey-color: #{$darkgrey};
 
   --kip-port-color: #{$port};
   --kip-starboard-color: #{$starboard};
@@ -86,7 +84,6 @@ $zone-emergency: map-get($kip-dark-color, "zone-emergency");
   --kip-zone-warn-color: #{$zone-warn};
   --kip-zone-alarm-color: #{$zone-alarm};
   --kip-zone-emergency-color: #{$zone-emergency};
-
 }
 
 // Base app style setup tags

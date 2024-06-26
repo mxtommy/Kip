@@ -2,9 +2,10 @@ import { Component, Input, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Observer, Subject, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
 import { DataService, IPathUpdate } from '../../services/data.service';
 import { UnitsService } from '../../services/units.service';
-import { ITheme, IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
+import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
 import { ISkZone } from '../../interfaces/signalk-interfaces';
 import { cloneDeep, merge } from 'lodash-es';
+import { ITheme } from '../../services/app-service';
 
 
 interface IWidgetDataStream {

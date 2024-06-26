@@ -41,13 +41,13 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
     this.defaultConfig = {
       timerLength: 300,
-      textColor: 'text',
+      color: 'white',
     };
   }
 
   ngOnInit(): void {
     this.initWidget();
-    this.getColors(this.widgetProperties.config.textColor);
+    this.getColors(this.widgetProperties.config.color);
     this.subscribeTimer();
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
@@ -153,36 +153,52 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       this.TimersService.setTimer(this.timeName, this.dataValue - 600);
   }
 
-  private getColors(themeColor: string) {
-    switch (themeColor) {
-      case "text":
-        this.textColor = this.theme.text;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+  private getColors(color: string) {
+    switch (color) {
+      case "white":
+        this.textColor = this.theme.white;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
-
-      case "primary":
-        this.textColor = this.theme.textPrimaryLight;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+      case "blue":
+        this.textColor = this.theme.blue;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
-
-      case "accent":
-        this.textColor = this.theme.textAccentLight;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+      case "green":
+        this.textColor = this.theme.green;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;;
         break;
-
-      case "warn":
-        this.textColor = this.theme.textWarnLight;
-        this.warnColor = this.theme.text;
-        this.warmContrast = this.theme.text;
+      case "pink":
+        this.textColor = this.theme.pink;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
-
+      case "orange":
+        this.textColor = this.theme.orange;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
+      case "purple":
+        this.textColor = this.theme.purple;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
+      case "grey":
+        this.textColor = this.theme.grey;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
+      case "yellow":
+        this.textColor = this.theme.yellow;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
       default:
-        this.textColor = this.theme.text;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+        this.textColor = this.theme.white;
+        this.warnColor = this.theme.zoneWarn;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
     }
   }

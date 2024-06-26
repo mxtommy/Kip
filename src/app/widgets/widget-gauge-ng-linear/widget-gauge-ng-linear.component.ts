@@ -73,7 +73,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       },
       numInt: 1,
       numDecimal: 0,
-      textColor: 'accent',
+      color: 'white',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -115,16 +115,16 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.warnDark;
+            option.colorValueText = this.theme.zoneEmergency;
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.warnDark;
+            option.colorValueText = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            option.colorValueText = this.theme.textWarnLight;
+            option.colorValueText = this.theme.zoneWarn;
             break;
           default:
-            option.colorValueText = this.theme.text;
+            option.colorValueText = this.theme.white;
         }
         this.linearGauge.update(option);
       }
@@ -210,15 +210,15 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       fontNumbersWeight: "normal",
       fontUnitsSize: this.isGaugeVertical ? 40 : 35,
 
-      colorTitle: this.theme.textDark,
-      colorUnits: this.theme.text,
-      colorValueText: this.theme.text,
+      colorTitle: this.theme.white,
+      colorUnits: this.theme.white,
+      colorValueText: this.theme.white,
       colorPlate: window.getComputedStyle(this.wrapper.nativeElement).backgroundColor,
       colorBar: this.theme.background,
 
-      colorMajorTicks: this.theme.text,
-      colorMinorTicks: this.theme.text,
-      colorNumbers: this.theme.text,
+      colorMajorTicks: this.theme.white,
+      colorMinorTicks: this.theme.white,
+      colorNumbers: this.theme.white,
 
       colorNeedleEnd: "",
       colorNeedleShadowUp: "",
@@ -265,28 +265,46 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
-    switch (this.widgetProperties.config.textColor) {
-      case "text":
-        themePaletteColor = this.theme.textDark;
-        themePaletteDarkColor = this.theme.text;
+    switch (this.widgetProperties.config.color) {
+      case "white":
+        themePaletteColor = this.theme.white;
+        themePaletteDarkColor = this.theme.white;
         break;
-      case "primary":
-        themePaletteColor = this.theme.primary;
-        themePaletteDarkColor = this.theme.primaryDark;
+      case "blue":
+        themePaletteColor = this.theme.blue;
+        themePaletteDarkColor = this.theme.blue;
         break;
-      case "accent":
-        themePaletteColor = this.theme.accent;
-        themePaletteDarkColor = this.theme.accentDark;
+      case "green":
+        themePaletteColor = this.theme.green;
+        themePaletteDarkColor = this.theme.green;
         break;
-      case "warn":
-        themePaletteColor = this.theme.warn;
-        themePaletteDarkColor = this.theme.warnDark;
+      case "pink":
+        themePaletteColor = this.theme.pink;
+        themePaletteDarkColor = this.theme.pink;
+        break;
+      case "orange":
+        themePaletteColor = this.theme.orange;
+        themePaletteDarkColor = this.theme.orange;
+        break;
+      case "purple":
+        themePaletteColor = this.theme.purple;
+        themePaletteDarkColor = this.theme.purple;
+        break;
+      case "grey":
+        themePaletteColor = this.theme.grey;
+        themePaletteDarkColor = this.theme.grey;
+        break;
+      case "yellow":
+        themePaletteColor = this.theme.yellow;
+        themePaletteDarkColor = this.theme.yellow;
         break;
       case "nobar":
         themePaletteColor = "";
-        themePaletteDarkColor = this.theme.accentDark;
+        themePaletteDarkColor = this.theme.yellow;
         break;
       default:
+        themePaletteColor = this.theme.white;
+        themePaletteDarkColor = this.theme.white;
         break;
     }
 
@@ -294,7 +312,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorBarProgress: themePaletteColor,
       colorBarProgressEnd: themePaletteColor,
       colorNeedle: themePaletteDarkColor,
-      needleWidth: this.widgetProperties.config.textColor === "nobar" ? 20 : 5,
+      needleWidth: this.widgetProperties.config.color === "nobar" ? 20 : 5,
     });
   }
 
@@ -309,19 +327,19 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       let color: string;
       switch (zone.state) {
         case States.Emergency:
-          color = this.theme.warnDark;
+          color = this.theme.zoneEmergency;
           break;
         case States.Alarm:
-          color = this.theme.warnDark;
+          color = this.theme.zoneAlarm;
           break;
         case States.Warn:
-          color = this.theme.textWarnLight;
+          color = this.theme.zoneWarn;
           break;
         case States.Alert:
-          color = this.theme.accentDark;
+          color = this.theme.zoneAlert;
           break;
         case States.Nominal:
-          color = this.theme.primaryDark;
+          color = this.theme.zoneNominal;
           break;
         default:
           color = "rgba(0,0,0,0)";

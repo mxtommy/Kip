@@ -59,7 +59,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
         putEnable: false,
         putMomentary: false,
         putMomentaryValue: true,
-        barColor: 'accent',
+        barColor: 'yellow',
         enableTimeout: false,
         dataTimeout: 5
       };
@@ -80,32 +80,78 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
   private updateGaugeSettings() {
     this.buttonColorOff = ''; //this.theme.background;
     this.buttonColorOn = this.theme.background;
+
     switch (this.widgetProperties.config.barColor) {
-      case "primary":
+      case "white":
         this.buttonLabelColorOff = this.theme.background;
-        this.buttonLabelColorOn = this.theme.primary;
-        this.buttonBorberColorOff = this.theme.primary;
-        this.buttonBorberColorOn = this.theme.primaryDark;
+        this.buttonLabelColorOn = this.theme.white;
+        this.buttonBorberColorOff = this.theme.white;
+        this.buttonBorberColorOn = this.theme.white;
         this.lightColorOff = this.theme.background;
-        this.lightColorOn = this.theme.primaryDark;
+        this.lightColorOn = this.theme.white;
         break;
 
-      case "accent":
+      case "blue":
         this.buttonLabelColorOff = this.theme.background;
-        this.buttonLabelColorOn = this.theme.accent;
-        this.buttonBorberColorOff = this.theme.accent;
-        this.buttonBorberColorOn = this.theme.accentDark;
+        this.buttonLabelColorOn = this.theme.blue;
+        this.buttonBorberColorOff = this.theme.blue;
+        this.buttonBorberColorOn = this.theme.blue;
         this.lightColorOff = this.theme.background;
-        this.lightColorOn =  this.theme.accentDark;
+        this.lightColorOn = this.theme.blue;
         break;
 
-      case "warn":
+      case "green":
         this.buttonLabelColorOff = this.theme.background;
-        this.buttonLabelColorOn = this.theme.warn;
-        this.buttonBorberColorOff = this.theme.warn;;
-        this.buttonBorberColorOn = this.theme.warnDark;
+        this.buttonLabelColorOn = this.theme.green;
+        this.buttonBorberColorOff = this.theme.green;
+        this.buttonBorberColorOn = this.theme.green;
         this.lightColorOff = this.theme.background;
-        this.lightColorOn = this.theme.warnDark;
+        this.lightColorOn = this.theme.green;
+        break;
+
+      case "pink":
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.pink;
+        this.buttonBorberColorOff = this.theme.pink;
+        this.buttonBorberColorOn = this.theme.pink;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.pink;
+        break;
+
+      case "orange":
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.orange;
+        this.buttonBorberColorOff = this.theme.orange;
+        this.buttonBorberColorOn = this.theme.orange;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.orange;
+        break;
+
+      case "purple":
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.purple;
+        this.buttonBorberColorOff = this.theme.purple;
+        this.buttonBorberColorOn = this.theme.purple;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.purple;
+        break;
+
+      case "grey":
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.grey;
+        this.buttonBorberColorOff = this.theme.grey;
+        this.buttonBorberColorOn = this.theme.grey;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.grey;
+        break;
+
+      case "yellow":
+        this.buttonLabelColorOff = this.theme.background;
+        this.buttonLabelColorOn = this.theme.yellow;
+        this.buttonBorberColorOff = this.theme.yellow;
+        this.buttonBorberColorOn = this.theme.yellow;
+        this.lightColorOff = this.theme.background;
+        this.lightColorOn = this.theme.yellow;
         break;
     }
   }
@@ -256,7 +302,7 @@ export class WidgetButtonComponent extends BaseWidgetComponent implements OnInit
     this.canvasButtonTxt.font = this.valueFontSize.toString() + "px Arial";
     this.canvasButtonTxt.textAlign = "center";
     this.canvasButtonTxt.textBaseline="middle";
-    this.canvasButtonTxt.fillStyle = this.theme.text;
+    this.canvasButtonTxt.fillStyle = this.theme.white;
     this.canvasButtonTxt.fillText(valueText,this.canvasBtnTxtElement.nativeElement.width/2,(this.canvasBtnTxtElement.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
   }
 
