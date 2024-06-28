@@ -19,5 +19,6 @@ export const DefaultUnitsConfig: IUnitDefaults = {
   "Angular Velocity": 'deg/min',
   "Angle": 'deg',
   "Frequency": 'Hz',
-  "Ratio": 'ratio'
+  "Ratio": 'ratio',
+  "Resistance": 'ohm'
 }

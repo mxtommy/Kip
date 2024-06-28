@@ -8,23 +8,18 @@ import { MatDivider } from '@angular/material/divider';
 import { MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { NgFor, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 
 @Component({
     selector: 'settings-units',
     templateUrl: './units.component.html',
     styleUrls: ['./units.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, NgFor, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatButton, KeyValuePipe]
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatButton, KeyValuePipe]
 })
 export class SettingsUnitsComponent implements OnInit {
-
-  formUnitMaster: UntypedFormGroup;
-
-  groupUnits: {[key: string]: IUnit}[] = [];
-  defaultUnits: IUnitDefaults;
-
-
+  public unitsFormGroup = new UntypedFormGroup({});
+  protected groupUnits: {[key: string]: IUnit}[] = [];
 
   constructor(
     private units: UnitsService,
@@ -33,37 +28,27 @@ export class SettingsUnitsComponent implements OnInit {
     ) { }
 
   ngOnInit() {
+    const unitsSettings: IUnitDefaults = this.appSettingsService.getDefaultUnits();
+    // Format unit group data a bit better for consumption in template
+    const unitGroupsRaw = this.units.getConversions();
 
-    this.defaultUnits = this.appSettingsService.getDefaultUnits();
+    for (let i = 0; i < unitGroupsRaw.length; i++) {
+      if(unitGroupsRaw[i].group === "Position") return; // Skip the iteration when key is "Position" as it's not a valid unit group as-is. We need to use position Objects instead. Then we can set format properly.
+      const units = [];
 
-    //format unit group data a bit better for consumption in template
-    let unitGroupsRaw = this.units.getConversions();
-
-    for (let gindex = 0; gindex < unitGroupsRaw.length; gindex++) {
-      const unitGroup = unitGroupsRaw[gindex];
-      let units = [];
-
-      for (let index = 0; index < unitGroup.units.length; index++) {
-        const unit = unitGroup.units[index];
+      for (let index = 0; index < unitGroupsRaw[i].units.length; index++) {
+        const unit: IUnit = unitGroupsRaw[i].units[index];
         units.push(unit);
       }
-      this.groupUnits[unitGroup.group] = units;
+      this.groupUnits[unitGroupsRaw[i].group] = units;
+      // Generate formGroup
+      this.unitsFormGroup.addControl(unitGroupsRaw[i].group, new UntypedFormControl(unitsSettings[unitGroupsRaw[i].group]));
     }
-
-    //generate formGroup
-    let groups = new UntypedFormGroup({});
-    Object.keys(this.defaultUnits).forEach(key => {
-      groups.addControl(key, new UntypedFormControl(this.defaultUnits[key]));
-    });
-
-    this.formUnitMaster = groups;
-    this.formUnitMaster.updateValueAndValidity();
-    //console.log(this.formUnitMaster);
+    this.unitsFormGroup.updateValueAndValidity();
   }
 
   submitConfig() {
-    this.appSettingsService.setDefaultUnits(this.formUnitMaster.value);
-    this.appService.sendSnackbarNotification("Default units configuration saved", 5000, false);
+    this.appSettingsService.setDefaultUnits(this.unitsFormGroup.value);
+    this.appService.sendSnackbarNotification("Configuration saved", 5000, false);
   }
-
 }

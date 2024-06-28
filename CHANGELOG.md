@@ -1,4 +1,8 @@
 
+# V 2.12.0
+## New features
+* Add Kilo Pascal (kPa) format to Pressure units.
+* Add Resistance Unit with Ohm (ohm) and Kilo Ohm ((kiloohm)) formats.
 # V 2.11.1
 ## Fixes
 * Path not available in numeric Widget Options when first emitted value is null. Fixes #408

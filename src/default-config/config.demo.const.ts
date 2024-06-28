@@ -34,7 +34,8 @@ export const DemoAppConfig: IAppConfig = {
     "Angular Velocity": 'deg/min',
     "Angle": 'deg',
     "Frequency": 'Hz',
-    "Ratio": 'ratio'
+    "Ratio": 'ratio',
+    "Resistance": 'ohm'
   },
   "notificationConfig": {
     "disableNotifications": false,
