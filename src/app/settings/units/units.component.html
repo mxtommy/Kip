@@ -1,20 +1,25 @@
 <div class="mat-typography">
-  <form (ngSubmit)="submitConfig()" [formGroup]="formUnitMaster" style="height: 100%;">
+  <form (ngSubmit)="submitConfig()" [formGroup]="unitsFormGroup" style="height: 100%;">
     <h1>Application Default Units</h1>
-    <p class="mat-card-subtitle">Set the default units preferences per types of unit groups. The values will be automatically converted for display.</p>
+    <p class="mat-card-subtitle">Set preferred default format per unit types. Units display formats can be overwritten in Widgets configuration.</p>
     <div class="unit-grid">
-      <mat-form-field *ngFor="let unitType of defaultUnits | keyvalue">
-        <mat-label>{{unitType.key}}</mat-label>
-        <mat-select
-          [placeholder] = "unitType.key"
-          [formControlName] = "unitType.key">
-          <mat-option *ngFor="let unit of groupUnits[unitType.key]" [value]="unit.measure" >{{ unit.description }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+      @for(control of unitsFormGroup.controls | keyvalue; track control) {
+        <mat-form-field>
+          <mat-label>{{control.key}}</mat-label>
+          <mat-select
+            [placeholder] = "control.key"
+            [formControlName] = "control.key"
+            required>
+            @for(unit of groupUnits[control.key]; track unit) {
+              <mat-option [value]="unit.measure" >{{ unit.description }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
     </div>
     <div class="formActionFooter">
       <mat-divider class="formActionDivider"></mat-divider>
-      <button mat-raised-button class="formActionButton" color="accent" type="submit" [disabled]="!formUnitMaster.valid">Save</button>
+      <button mat-raised-button class="formActionButton" color="accent" type="submit" [disabled]="!unitsFormGroup.valid">Save</button>
     </div>
   </form>
 </div>
