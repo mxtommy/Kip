@@ -60,6 +60,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   --sys-background: #{$background};
 
   // Create KIP global CSS variables
+  --kip-nightModeBrightness: 1;
   --kip-widget-card-background-color: #{$kip-widget-card-background-color};
   --kip-widget-card-border-color: #{$kip-widget-card-border-color};
   --kip-widget-card-border-style: solid;
@@ -96,7 +97,8 @@ app-root {
 body {
   margin: 0;
   touch-action: none;
-  filter: brightness(1); //TODO: make this a night mode setting in the app
+  filter: brightness(var(--kip-nightModeBrightness));
+  backdrop-filter: brightness(var(--kip-nightModeBrightness));
 }
 
 app-root {

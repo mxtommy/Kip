@@ -1,7 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
-import { IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 
@@ -46,8 +45,8 @@ export interface ITheme {
 })
 export class AppService implements OnDestroy {
   public autoNightMode: boolean; // from Config value
-  private sunValue: string = 'day';
-  private dayTheme: string;
+  private _lastMode: string = 'day';
+
   private autoNightDeltaStatus: Subscription = null;
   private autoNightModeSubscription: Subscription = null;
   private autoNightModePathSubscription: Subscription = null;
@@ -68,7 +67,7 @@ export class AppService implements OnDestroy {
   }
 
   private autoNightModeObserver(): void {
-    let deltaStatus = this.delta.getDataStreamStatusAsO(); // wait for delta service to start
+    const deltaStatus = this.delta.getDataStreamStatusAsO(); // wait for delta service to start
     this.autoNightDeltaStatus = deltaStatus.subscribe(stat => {
       stat as IStreamStatus;
       if(stat.operation == 2) {
@@ -80,22 +79,11 @@ export class AppService implements OnDestroy {
             this.autoNightMode = mode;
             if (mode) {
               if (this.data.getPathObject(modePath) !== null) {
-
-                // capture none nightMode theme name changes
-                this.autoNightModeThemeSubscription = this.settings.getThemeNameAsO().subscribe(theme => {
-                  if (theme != 'nightMode')
-                  this.dayTheme = theme;
-                });
-
-                const connConf: IConnectionConfig = this.settings.getConnectionConfig(); // get app UUUID
-
-                this.autoNightModePathSubscription = this.data.subscribePath(modePath, 'default').subscribe(newValue => {
-                  if (newValue.data.value == 'night' && this.sunValue != newValue.data.value) {
-                    this.sunValue = newValue.data.value;
-                    this.settings.setThemeName('nightMode');
-                  } else if (newValue.data.value == 'day' && this.sunValue != newValue.data.value) {
-                    this.sunValue = newValue.data.value;
-                    this.settings.setThemeName(this.dayTheme);
+                this.autoNightModePathSubscription = this.data.subscribePath(modePath, 'default').subscribe(path => {
+                if (path !== null && path.data.value !== this._lastMode) {
+                    this._lastMode = path.data.value;
+                    const brightness = path.data.value === 'night' ? this.settings.getNightModeBrightness() : 1;
+                    this.setBrightness(brightness);
                   }
                 });
               }
@@ -165,6 +153,11 @@ export class AppService implements OnDestroy {
       zoneEmergency: computedStyle.getPropertyValue('--kip-zone-emergency-color').trim(),
     };
     this.cssThemeColorRoles$.next(cssThemeRolesColor);
+  }
+
+  public setBrightness(brightness: number): void {
+    const root = document.documentElement;
+    root.style.setProperty('--kip-nightModeBrightness', `${brightness}`);
   }
 
   ngOnDestroy(): void {

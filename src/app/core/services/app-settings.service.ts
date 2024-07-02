@@ -29,6 +29,7 @@ export class AppSettingsService {
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
   private autoNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
 
   public proxyEnabled: boolean = false;
   private useDeviceToken: boolean = false;
@@ -151,6 +152,7 @@ export class AppSettingsService {
     let upgradedAppConfig: IAppConfig = {
       configVersion: 9,
       autoNightMode: this.autoNightMode.getValue(),
+      nightModeBrightness: 0.20,
       dataSets: cloneDeep(config.app.dataSets),
       notificationConfig: cloneDeep(config.app.notificationConfig),
       unitDefaults: cloneDeep(config.app.unitDefaults)
@@ -282,9 +284,16 @@ public loadConfigFromLocalStorage(type: string) {
 
     if (this.activeConfig.app.autoNightMode === undefined) {
       this.setAutoNightMode(false);
-    } else
-    this.autoNightMode.next(this.activeConfig.app.autoNightMode);
+    } else {
+      this.autoNightMode.next(this.activeConfig.app.autoNightMode);
     }
+
+    if (this.activeConfig.app.nightModeBrightness === undefined) {
+      this.setNightModeBrightness(0.2);
+    } else {
+      this.nightModeBrightness.next(this.activeConfig.app.nightModeBrightness);
+    }
+  }
 
   //UnitDefaults
   public getDefaultUnitsAsO() {
@@ -386,6 +395,21 @@ public loadConfigFromLocalStorage(type: string) {
 
   public getAutoNightMode(): boolean {
     return this.autoNightMode.getValue();
+  }
+
+  public getNightModeBrightness(): number {
+    return this.nightModeBrightness.getValue();
+  }
+
+  public setNightModeBrightness(brightness: number): void {
+    this.nightModeBrightness.next(brightness);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
   }
 
   // Widgets
@@ -546,6 +570,7 @@ public loadConfigFromLocalStorage(type: string) {
     let storageObject: IAppConfig = {
       configVersion: configVersion,
       autoNightMode: this.autoNightMode.getValue(),
+      nightModeBrightness: this.nightModeBrightness.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
