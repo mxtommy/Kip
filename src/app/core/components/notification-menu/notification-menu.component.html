@@ -13,7 +13,7 @@
   </mat-menu>
   <mat-menu #alarmMenu="matMenu" focusFirstItem>
     <ng-template matMenuContent>
-      @for(menuItem of menuNotifications$ | async; track menuItem) {
+      @for(menuItem of menuNotifications$ | async; track menuItem.path) {
         @if(menuItem.value.state !== "normal" && menuItem.value.state !== "nominal") {
           @switch (menuItem.value.state) {
             @case ("alert") {

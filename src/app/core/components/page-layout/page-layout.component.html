@@ -9,7 +9,7 @@
     [cdkDropListOrientation]="splitSet.direction"
     [cdkDropListData]="splitSet.splitAreas"
     [cdkDropListConnectedTo]="connectedCdkDropLists">
-    @for (area of splitSet.splitAreas; track area; let i = $index) {
+    @for (area of splitSet.splitAreas; track area.uuid; let i = $index) {
       @if (area.type === "widget") {
         <as-split-area class="split-area"
           [order]="i"
