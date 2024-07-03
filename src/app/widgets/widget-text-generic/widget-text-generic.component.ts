@@ -13,6 +13,7 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('textGenericWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
+  private readonly fontString = "px Roboto";
   dataValue: any = null;
   dataTimestamp: number = Date.now();
   valueFontSize: number = 1;
@@ -68,39 +69,39 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
   private getColors(color: string): void {
     switch (color) {
       case "white":
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
       case "blue":
-        this.labelColor = this.theme.blue;
+        this.labelColor = this.theme.blueDim;
         this.valueColor = this.theme.blue;
         break;
       case "green":
-        this.labelColor = this.theme.green;
+        this.labelColor = this.theme.greenDim;
         this.valueColor = this.theme.green;
         break;
       case "pink":
-        this.labelColor = this.theme.pink;
+        this.labelColor = this.theme.pinkDim;
         this.valueColor = this.theme.pink;
         break;
       case "orange":
-        this.labelColor = this.theme.orange;
+        this.labelColor = this.theme.orangeDim;
         this.valueColor = this.theme.orange;
         break;
       case "purple":
-        this.labelColor = this.theme.purple;
+        this.labelColor = this.theme.purpleDim;
         this.valueColor = this.theme.purple;
         break;
       case "grey":
-        this.labelColor = this.theme.grey;
+        this.labelColor = this.theme.greyDim;
         this.valueColor = this.theme.grey;
         break;
       case "yellow":
-        this.labelColor = this.theme.yellow;
+        this.labelColor = this.theme.yellowDim;
         this.valueColor = this.theme.yellow;
         break;
       default:
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
     }
@@ -162,23 +163,23 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
 
       // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
-      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
       let measure = this.canvasCtx.measureText(valueText).width;
 
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
         this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
       }
       // now decrease by 1 to in case still too big
       while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
         this.valueFontSize--;
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
       }
     }
 
-    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
     this.canvasCtx.fillStyle = this.valueColor;
@@ -192,10 +193,10 @@ export class WidgetTextGenericComponent extends BaseWidgetComponent implements O
     if (this.widgetProperties.config.displayName === null) { return; }
     let fontSize = 1;
 
-    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial"; // need to init it so we do loop at least once :)
+    this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString; // need to init it so we do loop at least once :)
     while ( (this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
-        this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+        this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString;
     }
 
     this.canvasBGCtx.textAlign = "left";

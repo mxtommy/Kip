@@ -27,13 +27,36 @@ $kip-widget-action-button-foreground-color: map-get($kip-dark-color, widget-acti
 $kip-widget-action-delete-button-color: map-get($kip-dark-color, widget-action-delete-button-color);
 
 $blue: map-get($kip-dark-color, blue);
+$blueDim: map-get($kip-dark-color, blue-dim);
+$blueDimmer: map-get($kip-dark-color, blue-dimmer);
+
 $green: map-get($kip-dark-color, green);
+$greenDim: map-get($kip-dark-color, green-dim);
+$greenDimmer: map-get($kip-dark-color, green-dimmer);
+
 $purple: map-get($kip-dark-color, purple);
+$purpleDim: map-get($kip-dark-color, purple-dim);
+$purpleDimmer: map-get($kip-dark-color, purple-dimmer);
+
 $yellow: map-get($kip-dark-color, yellow);
+$yellowDim: map-get($kip-dark-color, yellow-dim);
+$yellowDimmer: map-get($kip-dark-color, yellow-dimmer);
+
 $pink: map-get($kip-dark-color, pink);
+$pinkDim: map-get($kip-dark-color, pink-dim);
+$pinkDimmer: map-get($kip-dark-color, pink-dimmer);
+
 $orange: map-get($kip-dark-color, orange);
+$orangeDim: map-get($kip-dark-color, orange-dim);
+$orangeDimmer: map-get($kip-dark-color, orange-dimmer);
+
 $white: map-get($kip-dark-color, white);
+$whiteDim: map-get($kip-dark-color, white-dim);
+$whiteDimmer: map-get($kip-dark-color, white-dimmer);
+
 $grey: map-get($kip-dark-color, grey);
+$greyDim: map-get($kip-dark-color, grey-dim);
+$greyDimmer: map-get($kip-dark-color, grey-dimmer);
 
 $port: map-get($kip-dark-color, port);
 $starboard: map-get($kip-dark-color, starboard);
@@ -70,13 +93,36 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
 
   --kip-blue-color: #{$blue};
+  --kip-blue-dim-color: #{$blueDim};
+  --kip-blue-dimmer-color: #{$blueDimmer};
+
   --kip-green-color: #{$green};
+  --kip-green-dim-color: #{$greenDim};
+  --kip-green-dimmer-color: #{$greenDimmer};
+
   --kip-purple-color: #{$purple};
+  --kip-purple-dim-color: #{$purpleDim};
+  --kip-purple-dimmer-color: #{$purpleDimmer};
+
   --kip-yellow-color: #{$yellow};
+  --kip-yellow-dim-color: #{$yellowDim};
+  --kip-yellow-dimmer-color: #{$yellowDimmer};
+
   --kip-pink-color: #{$pink};
+  --kip-pink-dim-color: #{$pinkDim};
+  --kip-pink-dimmer-color: #{$pinkDimmer};
+
   --kip-orange-color: #{$orange};
+  --kip-orange-dim-color: #{$orangeDim};
+  --kip-orange-dimmer-color: #{$orangeDimmer};
+
   --kip-white-color: #{$white};
+  --kip-white-dim-color: #{$whiteDim};
+  --kip-white-dimmer-color: #{$whiteDimmer};
+
   --kip-grey-color: #{$grey};
+  --kip-grey-dim-color: #{$greyDim};
+  --kip-grey-dimmer-color: #{$greyDimmer};
 
   --kip-port-color: #{$port};
   --kip-starboard-color: #{$starboard};

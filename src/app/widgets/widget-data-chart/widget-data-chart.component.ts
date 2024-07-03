@@ -310,146 +310,146 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     switch (widgetColor) {
       case "white":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.white;
-          colors.valueFill = this.theme.white.replace(/[\d\.]+\)$/g, '0.15)');
+          colors.valueLine = this.theme.whiteDimmer;
+          colors.valueFill = this.theme.whiteDimmer;
           colors.averageLine = this.theme.white;
           colors.averageFill = this.theme.white;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.white;
           colors.valueFill = this.theme.white;
-          colors.averageLine = this.theme.white;
-          colors.averageFill = this.theme.white.replace(/[\d\.]+\)$/g, '0.15)');
+          colors.averageLine = this.theme.whiteDimmer;
+          colors.averageFill = this.theme.whiteDimmer;
           colors.chartValue = this.theme.white;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "blue":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.blue;
-          colors.valueFill = this.theme.blue.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.blueDimmer;
+          colors.valueFill = this.theme.blueDimmer;
           colors.averageLine = this.theme.blue;
           colors.averageFill = this.theme.blue;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.blue;
           colors.valueFill = this.theme.blue;
-          colors.averageLine = this.theme.blue;
-          colors.averageFill = this.theme.blue.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.blueDimmer;
+          colors.averageFill = this.theme.blueDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "green":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.green;
-          colors.valueFill = this.theme.green.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.greenDimmer;
+          colors.valueFill = this.theme.greenDimmer;
           colors.averageLine = this.theme.green;
           colors.averageFill = this.theme.green;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.green;
           colors.valueFill = this.theme.green;
-          colors.averageLine = this.theme.green;
-          colors.averageFill = this.theme.green.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.greenDimmer;
+          colors.averageFill = this.theme.greenDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "pink":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.pink;
-          colors.valueFill = this.theme.pink.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.pinkDimmer;
+          colors.valueFill = this.theme.pinkDimmer;
           colors.averageLine = this.theme.pink;
           colors.averageFill = this.theme.pink;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.pink;
           colors.valueFill = this.theme.pink;
-          colors.averageLine = this.theme.pink;
-          colors.averageFill = this.theme.pink.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.pinkDimmer;
+          colors.averageFill = this.theme.pinkDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDim;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "orange":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.orange;
-          colors.valueFill = this.theme.orange.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.orangeDimmer;
+          colors.valueFill = this.theme.orangeDimmer;
           colors.averageLine = this.theme.orange;
           colors.averageFill = this.theme.orange;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.orange;
           colors.valueFill = this.theme.orange;
-          colors.averageLine = this.theme.orange;
-          colors.averageFill = this.theme.orange.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.orangeDimmer;
+          colors.averageFill = this.theme.orangeDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "purple":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.purple;
-          colors.valueFill = this.theme.purple.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.purpleDimmer;
+          colors.valueFill = this.theme.purpleDimmer;
           colors.averageLine = this.theme.purple;
           colors.averageFill = this.theme.purple;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.purple;
           colors.valueFill = this.theme.purple;
-          colors.averageLine = this.theme.purple;
-          colors.averageFill = this.theme.purple.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.purpleDimmer;
+          colors.averageFill = this.theme.purpleDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "grey":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.grey;
-          colors.valueFill = this.theme.grey.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.greyDimmer;
+          colors.valueFill = this.theme.greyDimmer;
           colors.averageLine = this.theme.grey;
           colors.averageFill = this.theme.grey;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.grey;
           colors.valueFill = this.theme.grey;
-          colors.averageLine = this.theme.grey;
-          colors.averageFill = this.theme.grey.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.greyDimmer;
+          colors.averageFill = this.theme.greyDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
       case "yellow":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.yellow;
-          colors.valueFill = this.theme.yellow.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.yellowDimmer;
+          colors.valueFill = this.theme.yellowDimmer;
           colors.averageLine = this.theme.yellow;
           colors.averageFill = this.theme.yellow;
           colors.chartValue = colors.averageLine;
         } else {
           colors.valueLine = this.theme.yellow;
           colors.valueFill = this.theme.yellow;
-          colors.averageLine = this.theme.yellow;
-          colors.averageFill = this.theme.yellow.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.averageLine = this.theme.yellowDimmer;
+          colors.averageFill = this.theme.yellowDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.white;
-        colors.chartLabel = this.theme.white;
+        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.chartLabel = this.theme.whiteDim;
         break;
     }
     return colors;

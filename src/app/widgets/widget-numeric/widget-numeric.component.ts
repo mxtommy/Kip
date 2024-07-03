@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
@@ -30,6 +29,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   flashInterval = null;
   dataState: string = States.Normal;
 
+  private readonly fontString = "px Roboto";
   canvasValCtx: CanvasRenderingContext2D;
   canvasMMCtx: CanvasRenderingContext2D;
   canvasBGCtx: CanvasRenderingContext2D;
@@ -113,39 +113,39 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   private getColors(color: string): void {
     switch (color) {
       case "white":
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
       case "blue":
-        this.labelColor = this.theme.blue; // Assuming you have blue defined in your theme
+        this.labelColor = this.theme.blueDim;
         this.valueColor = this.theme.blue;
         break;
       case "green":
-        this.labelColor = this.theme.green; // Assuming you have green defined in your theme
+        this.labelColor = this.theme.greenDim;
         this.valueColor = this.theme.green;
         break;
       case "pink":
-        this.labelColor = this.theme.pink; // Assuming you have pink defined in your theme
+        this.labelColor = this.theme.pinkDim;
         this.valueColor = this.theme.pink;
         break;
       case "orange":
-        this.labelColor = this.theme.orange; // Assuming you have orange defined in your theme
+        this.labelColor = this.theme.orangeDim;
         this.valueColor = this.theme.orange;
         break;
       case "purple":
-        this.labelColor = this.theme.purple; // Assuming you have purple defined in your theme
+        this.labelColor = this.theme.purpleDim;
         this.valueColor = this.theme.purple;
         break;
       case "grey":
-        this.labelColor = this.theme.grey; // Assuming you have gray defined in your theme
+        this.labelColor = this.theme.greyDim;
         this.valueColor = this.theme.grey;
         break;
       case "yellow":
-        this.labelColor = this.theme.yellow; // Assuming you have yellow defined in your theme
+        this.labelColor = this.theme.yellowDim;
         this.valueColor = this.theme.yellow;
         break;
       default:
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
     }
@@ -218,19 +218,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
       // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
-      this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
       let measure = this.canvasValCtx.measureText(valueText).width;
 
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
         this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
-        this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
       }
       // now decrease by 1 to in case still too big
       while (this.canvasValCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
         this.valueFontSize--;
-        this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasValCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
       }
     }
 
@@ -276,19 +276,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     // start with large font, no sense in going bigger than the size of the canvas :)
     let fontSize = maxTextHeight;
-    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString;
     let measure = this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width;
 
     // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
     if (measure > maxTextWidth) {
       let estimateRatio = maxTextWidth / measure;
       fontSize = Math.floor(fontSize * estimateRatio);
-      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+      this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString;
     }
     // now decrease by 1 to in case still too big
     while (this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width > maxTextWidth && fontSize > 0) {
       fontSize--;
-      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+      this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString;
     }
 
     this.canvasBGCtx.textAlign = "left";
@@ -308,19 +308,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     // start with large font, no sense in going bigger than the size of the canvas :)
     let fontSize = maxTextHeight;
-    this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+    this.canvasBGCtx.font = "bold " + fontSize.toString() + this.fontString;
     let measure = this.canvasBGCtx.measureText(this.widgetProperties.config.paths['numericPath'].convertUnitTo).width;
 
     // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
     if (measure > maxTextWidth) {
       let estimateRatio = maxTextWidth / measure;
       fontSize = Math.floor(fontSize * estimateRatio);
-      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+      this.canvasBGCtx.font = "bold " + fontSize.toString() + this.fontString;
     }
     // now decrease by 1 in case font is still too big
     while (this.canvasBGCtx.measureText(this.widgetProperties.config.paths['numericPath'].convertUnitTo).width > maxTextWidth && fontSize > 0) {
       fontSize--;
-      this.canvasBGCtx.font = "bold " + fontSize.toString() + "px Arial";
+      this.canvasBGCtx.font = "bold " + fontSize.toString() + this.fontString;
     }
 
     this.canvasBGCtx.textAlign = "right";
@@ -357,19 +357,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
       // start with large font, no sense in going bigger than the size of the canvas :)
       this.minMaxFontSize = maxTextHeight;
-      this.canvasMMCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+      this.canvasMMCtx.font = "normal " + this.minMaxFontSize.toString() + this.fontString;
       let measure = this.canvasMMCtx.measureText(valueText).width;
 
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
         this.minMaxFontSize = Math.floor(this.minMaxFontSize * estimateRatio);
-        this.canvasMMCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+        this.canvasMMCtx.font = "normal " + this.minMaxFontSize.toString() + this.fontString;
       }
       // now decrease by 1 to in case still too big
       while (this.canvasMMCtx.measureText(valueText).width > maxTextWidth && this.minMaxFontSize > 0) {
         this.minMaxFontSize--;
-        this.canvasMMCtx.font = "bold " + this.minMaxFontSize.toString() + "px Arial";
+        this.canvasMMCtx.font = "normal " + this.minMaxFontSize.toString() + this.fontString;
       }
     }
 
