@@ -4,7 +4,6 @@
 @mixin color($theme) {
   .kip-widget-card-colors {
     background-color: var(--kip-widget-card-background-color);
-    border-color: var(--kip-widget-card-border-color);
   }
 
   .kip-widget-action-button-color {

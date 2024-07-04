@@ -333,8 +333,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; } //no need to do anything if we're not showing min/max
 
     let valueText: string = '';
-    const maxTextWidth = Math.floor(this.canvasMM.nativeElement.width * 0.45);
-    const maxTextHeight = Math.floor(this.canvasMM.nativeElement.height * 0.075);
+    const maxTextWidth = Math.floor(this.canvasMM.nativeElement.width * 0.57);
+    const maxTextHeight = Math.floor(this.canvasMM.nativeElement.height * 0.1);
 
     if (this.widgetProperties.config.showMin) {
       if (this.minValue != null) {
