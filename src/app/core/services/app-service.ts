@@ -15,6 +15,7 @@ export interface AppNotification {
   silent: boolean;
 }
 
+
 /**
  * Kip theme hex colors
  *
@@ -60,6 +61,16 @@ export interface ITheme {
   providedIn: 'root'
 })
 export class AppService implements OnDestroy {
+  public readonly configurableThemeColors: {label: string, value: string}[] = [
+    {label: "White", value: "white"},
+    {label: "Blue", value: "blue"},
+    {label: "Green", value: "green"},
+    {label: "Orange", value: "orange"},
+    {label: "Yellow", value: "yellow"},
+    {label: "Pink", value: "pink"},
+    {label: "Purple", value: "purple"},
+    {label: "Grey", value: "grey"}
+  ];
   public autoNightMode: boolean; // from Config value
   private _lastMode: string = 'day';
 
@@ -70,6 +81,7 @@ export class AppService implements OnDestroy {
   public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
   private pathTimer = null;
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
+  private readonly _cssThemeColorRoles: ITheme = null;
 
   constructor(
     private settings: AppSettingsService,
@@ -79,7 +91,7 @@ export class AppService implements OnDestroy {
     this.autoNightMode = this.settings.getAutoNightMode();
     this.autoNightModeObserver();
     this.readThemeCssRoleVariables();
-
+    this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
   }
 
   private autoNightModeObserver(): void {
@@ -186,6 +198,12 @@ export class AppService implements OnDestroy {
     };
     this.cssThemeColorRoles$.next(cssThemeRolesColor);
   }
+
+
+  public get cssThemeColors() : ITheme {
+    return this._cssThemeColorRoles;
+  }
+
 
   public setBrightness(brightness: number): void {
     const root = document.documentElement;

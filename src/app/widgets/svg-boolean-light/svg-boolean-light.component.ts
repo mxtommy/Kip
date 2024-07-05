@@ -45,7 +45,6 @@ export class SvgBooleanLightComponent implements OnInit, DoCheck {
     }
   }
 
-
   public toggle(state: boolean): void {
     this.data.value = state;
     this.toggleClick.emit(this.data);
@@ -54,39 +53,39 @@ export class SvgBooleanLightComponent implements OnInit, DoCheck {
   private getColors(color: string): void {
     switch (color) {
       case "white":
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
       case "blue":
-        this.labelColor = this.theme.blue;
+        this.labelColor = this.theme.blueDim;
         this.valueColor = this.theme.blue;
         break;
       case "green":
-        this.labelColor = this.theme.green;
+        this.labelColor = this.theme.greenDim;
         this.valueColor = this.theme.green;
         break;
       case "pink":
-        this.labelColor = this.theme.pink;
+        this.labelColor = this.theme.pinkDim;
         this.valueColor = this.theme.pink;
         break;
       case "orange":
-        this.labelColor = this.theme.orange;
+        this.labelColor = this.theme.orangeDim;
         this.valueColor = this.theme.orange;
         break;
       case "purple":
-        this.labelColor = this.theme.purple;
+        this.labelColor = this.theme.purpleDim;
         this.valueColor = this.theme.purple;
         break;
       case "grey":
-        this.labelColor = this.theme.grey;
+        this.labelColor = this.theme.greyDim;
         this.valueColor = this.theme.grey;
         break;
       case "yellow":
-        this.labelColor = this.theme.yellow;
+        this.labelColor = this.theme.yellowDim;
         this.valueColor = this.theme.yellow;
         break;
       default:
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
     }

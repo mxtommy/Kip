@@ -71,47 +71,47 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
     switch (color) {
       case "white":
         this.labelColorEnabled = 'black';
-        this.labelColorDisabled = this.theme.white;
+        this.labelColorDisabled = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
       case "blue":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.blue;
+        this.labelColorDisabled = this.theme.blueDim;
         this.valueColor = this.theme.blue;
         break;
       case "green":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.green;
+        this.labelColorDisabled = this.theme.greenDim;
         this.valueColor = this.theme.green;
         break;
       case "pink":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.pink;
+        this.labelColorDisabled = this.theme.pinkDim;
         this.valueColor = this.theme.pink;
         break;
       case "orange":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.orange;
+        this.labelColorDisabled = this.theme.orangeDim;
         this.valueColor = this.theme.orange;
         break;
       case "purple":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.purple;
+        this.labelColorDisabled = this.theme.purpleDim;
         this.valueColor = this.theme.purple;
         break;
       case "grey":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.grey;
+        this.labelColorDisabled = this.theme.greyDim;
         this.valueColor = this.theme.grey;
         break;
       case "yellow":
         this.labelColorEnabled = this.theme.white;
-        this.labelColorDisabled = this.theme.yellow;
+        this.labelColorDisabled = this.theme.yellowDim;
         this.valueColor = this.theme.yellow;
         break;
       default:
         this.labelColorEnabled = 'black';
-        this.labelColorDisabled = this.theme.white;
+        this.labelColorDisabled = this.theme.whiteDim;
         this.valueColor = this.theme.white;
         break;
     }

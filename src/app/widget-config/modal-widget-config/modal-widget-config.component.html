@@ -198,14 +198,9 @@
                 formControlName="color"
                 name="color"
                 required>
-                <mat-option value='white'>White</mat-option>
-                <mat-option value='blue'>blue</mat-option>
-                <mat-option value='green'>Green</mat-option>
-                <mat-option value='purple'>Purple</mat-option>
-                <mat-option value='yellow'>Yellow</mat-option>
-                <mat-option value='pink'>Pink</mat-option>
-                <mat-option value='orange'>Orange</mat-option>
-                <mat-option value='grey'>Grey</mat-option>
+                @for(color of colors; track color) {
+                  <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
+                }
                 @if (widgetConfig.gauge) {
                   <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinearVertical') || (widgetConfig.gauge?.type == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
                 }

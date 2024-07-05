@@ -16,7 +16,7 @@ import { NgFor, NgIf } from '@angular/common';
 @Component({
     selector: 'app-widget-boolean-switch',
     templateUrl: './widget-boolean-switch.component.html',
-    styleUrls: ['./widget-boolean-switch.component.css'],
+    styleUrls: ['./widget-boolean-switch.component.scss'],
     standalone: true,
     imports: [NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
@@ -47,7 +47,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         paths: [],
         enableTimeout: false,
         dataTimeout: 5,
-        color: "text",
+        color: "white",
         putEnable: true,
         putMomentary: false,
         multiChildCtrls: []
@@ -156,10 +156,10 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     if (this.widgetProperties.config.displayName === null) { return; }
     let fontSize = 1;
 
-    this.canvasLabelCtx.font = 'bold ' + fontSize.toString() + 'px Arial'; // need to init it, so we do loop at least once :)
+    this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto'; // need to init it, so we do loop at least once :)
     while ( (this.canvasLabelCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
-        this.canvasLabelCtx.font = 'bold ' + fontSize.toString() + 'px Arial';
+        this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto';
     }
 
     this.canvasLabelCtx.textAlign = 'left';
@@ -177,31 +177,31 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private getColors(color: string): void {
     switch (color) {
       case "white":
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         break;
       case "blue":
-        this.labelColor = this.theme.blue;
+        this.labelColor = this.theme.blueDim;
         break;
       case "green":
-        this.labelColor = this.theme.green;
+        this.labelColor = this.theme.greenDim;
         break;
       case "pink":
-        this.labelColor = this.theme.pink;
+        this.labelColor = this.theme.pinkDim;
         break;
       case "orange":
-        this.labelColor = this.theme.orange;
+        this.labelColor = this.theme.orangeDim;
         break;
       case "purple":
-        this.labelColor = this.theme.purple;
+        this.labelColor = this.theme.purpleDim;
         break;
       case "grey":
-        this.labelColor = this.theme.grey;
+        this.labelColor = this.theme.greyDim;
         break;
       case "yellow":
-        this.labelColor = this.theme.yellow;
+        this.labelColor = this.theme.yellowDim;
         break;
       default:
-        this.labelColor = this.theme.white;
+        this.labelColor = this.theme.whiteDim;
         break;
     }
   }
