@@ -55,6 +55,7 @@ export interface ITheme {
   zoneAlarm: string,
   zoneEmergency: string,
   background: string,
+  cardColor: string,
 }
 
 @Injectable({
@@ -164,6 +165,7 @@ export class AppService implements OnDestroy {
     const computedStyle = getComputedStyle(root);
     const cssThemeRolesColor: ITheme = {
       background: computedStyle.getPropertyValue('--sys-background').trim(),
+      cardColor: computedStyle.getPropertyValue('--kip-widget-card-background-color').trim(),
       blue: computedStyle.getPropertyValue('--kip-blue-color').trim(),
       blueDim: computedStyle.getPropertyValue('--kip-blue-dim-color').trim(),
       blueDimmer: computedStyle.getPropertyValue('--kip-blue-dimmer-color').trim(),
@@ -191,8 +193,8 @@ export class AppService implements OnDestroy {
       port: computedStyle.getPropertyValue('--kip-port-color').trim(),
       starboard: computedStyle.getPropertyValue('--kip-starboard-color').trim(),
       zoneNominal: computedStyle.getPropertyValue('--kip-zone-nominal-color').trim(),
-      zoneWarn: computedStyle.getPropertyValue('--kip-zone-warn-color').trim(),
       zoneAlert: computedStyle.getPropertyValue('--kip-zone-alert-color').trim(),
+      zoneWarn: computedStyle.getPropertyValue('--kip-zone-warn-color').trim(),
       zoneAlarm: computedStyle.getPropertyValue('--kip-zone-alarm-color').trim(),
       zoneEmergency: computedStyle.getPropertyValue('--kip-zone-emergency-color').trim(),
     };

@@ -1,6 +1,8 @@
 radial-gauge.radialGauge {
+  display: block;
   position: relative;
-  top: 2%;
+  width: 100%;
+  height: 100%;
 }
 
 .ngRadialWrapper {

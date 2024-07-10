@@ -19,7 +19,7 @@ import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 @Component({
     selector: 'app-widget-gauge-ng-radial',
     templateUrl: './widget-gauge-ng-radial.component.html',
-    styleUrls: ['./widget-gauge-ng-radial.component.css'],
+    styleUrls: ['./widget-gauge-ng-radial.component.scss'],
     standalone: true,
     imports: [NgxResizeObserverModule, GaugesModule, AsyncPipe]
 })
@@ -27,7 +27,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   // Gauge option setting constant
   private readonly LINE: string = "line";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
-  private readonly WIDGET_SIZE_FACTOR: number = 0.97;
+  private readonly WIDGET_SIZE_FACTOR: number = 1;
 
   @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
   @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
@@ -112,16 +112,29 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.zoneEmergency;
+            option.colorBorderOuter = this.theme.zoneEmergency;
+            option.colorBorderMiddle = this.theme.zoneEmergency;
+            option.colorBarProgress = this.theme.zoneEmergency;
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.zoneAlarm;
+            option.colorBorderOuter = this.theme.zoneAlarm;
+            option.colorBorderMiddle = this.theme.cardColor;
+            option.colorBarProgress = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            option.colorValueText = this.theme.zoneWarn;
+            option.colorBorderOuter = this.theme.cardColor;
+            option.colorBorderMiddle = this.theme.zoneWarn;
+            option.colorBarProgress = this.theme.zoneWarn;
+            break;
+          case States.Alert:
+            option.colorBorderOuter = this.theme.cardColor;
+            option.colorBorderMiddle = this.theme.cardColor;
+            option.colorBarProgress = this.theme.zoneAlert;
             break;
           default:
-            option.colorValueText = this.theme.white;
+            option.colorBorderOuter = this.theme.cardColor;
+            option.colorBorderMiddle = this.theme.cardColor;
+            option.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
         }
         this.radialGauge.update(option);
       }
@@ -147,21 +160,19 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
     this.gaugeOptions.highlights = [];
 
-    this.gaugeOptions.fontTitle="arial";
+    this.gaugeOptions.fontTitle="Roboto";
     this.gaugeOptions.fontTitleWeight="bold";
-    this.gaugeOptions.fontUnits="arial";
+    this.gaugeOptions.fontUnits="Roboto";
     this.gaugeOptions.fontUnitsSize=25;
     this.gaugeOptions.fontUnitsWeight="normal";
-    this.gaugeOptions.colorBorderOuter="red";
-    this.gaugeOptions.colorBorderOuterEnd="green";
     this.gaugeOptions.barStrokeWidth=0;
     this.gaugeOptions.barShadow=0;
     this.gaugeOptions.colorBarStroke="";
-    this.gaugeOptions.fontValue="arial";
+    this.gaugeOptions.fontValue="Roboto";
     this.gaugeOptions.fontValueWeight="bold";
     this.gaugeOptions.valueTextShadow=false;
     this.gaugeOptions.colorValueBoxShadow="";
-    this.gaugeOptions.fontNumbers="arial";
+    this.gaugeOptions.fontNumbers="Roboto";
     this.gaugeOptions.fontNumbersWeight="bold";
 
     this.gaugeOptions.valueInt = this.widgetProperties.config.numInt;
@@ -176,42 +187,36 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.animationRule = "linear";
     this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 25; // prevent data and animation delay collisions
 
-     // Set Theme related colors
-    const themePalette = {
-      "white": { color: this.theme.white, darkColor: this.theme.white },
-      "blue": { color: this.theme.blue, darkColor: this.theme.blue },
-      "green": { color: this.theme.green, darkColor: this.theme.green },
-      "pink": { color: this.theme.pink, darkColor: this.theme.pink },
-      "orange": { color: this.theme.orange, darkColor: this.theme.orange },
-      "purple": { color: this.theme.purple, darkColor: this.theme.purple },
-      "grey": { color: this.theme.grey, darkColor: this.theme.grey },
-      "yellow": { color: this.theme.yellow, darkColor: this.theme.yellow }
-    };
+    // Borders
+    this.gaugeOptions.colorBorderShadow = false;
+    this.gaugeOptions.colorBorderOuter = this.theme.cardColor;
+    this.gaugeOptions.colorBorderOuterEnd = '';
+    this.gaugeOptions.colorBorderMiddle = this.theme.cardColor;
+    this.gaugeOptions.colorBorderMiddleEnd = '';
 
-    if (themePalette[this.widgetProperties.config.color]) {
-      this.setGaugeOptions(themePalette[this.widgetProperties.config.color].color, themePalette[this.widgetProperties.config.color].darkColor);
+    // Progress bar
+    this.gaugeOptions.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
+    this.gaugeOptions.colorNeedle = this.getColors(this.widgetProperties.config.color).dim;
+    this.gaugeOptions.colorNeedleEnd = this.getColors(this.widgetProperties.config.color).dim;
+    // Labels
+    this.gaugeOptions.colorTitle = this.theme.whiteDim;//this.getColors(this.widgetProperties.config.color).dim;
+    this.gaugeOptions.colorUnits = this.theme.whiteDim;//this.getColors(this.widgetProperties.config.color).dim;
+    this.gaugeOptions.colorValueText = this.getColors(this.widgetProperties.config.color).color;
+    // Ticks
+    this.colorStrokeTicks = this.getColors(this.widgetProperties.config.color).dim; // missing property in gaugeOptions
+    this.gaugeOptions.colorMinorTicks = this.getColors(this.widgetProperties.config.color).dim;
+    this.gaugeOptions.colorNumbers = this.getColors(this.widgetProperties.config.color).dim;
+    this.gaugeOptions.colorMajorTicks = this.getColors(this.widgetProperties.config.color).dim;
+    // Plate
+    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.theme.cardColor;
+    this.gaugeOptions.colorBar = this.theme.background;
 
-      this.gaugeOptions.colorTitle = this.theme.white;
-      this.gaugeOptions.colorUnits = this.theme.white;
-      this.gaugeOptions.colorValueText = this.theme.white;
-
-      this.colorStrokeTicks = this.theme.white; // missing property in gaugeOptions
-      this.gaugeOptions.colorMinorTicks = this.theme.white;
-      this.gaugeOptions.colorNumbers = this.theme.white;
-
-      this.gaugeOptions.colorMajorTicks = this.theme.white;
-
-      this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-      this.gaugeOptions.colorBar = this.theme.background;
-      this.gaugeOptions.colorNeedleShadowUp = "";
-      this.gaugeOptions.colorNeedleShadowDown = "black";
-      this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
-      this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
-      this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
-      this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
-    } else {
-      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.color}`);
-    }
+    this.gaugeOptions.colorNeedleShadowUp = "";
+    this.gaugeOptions.colorNeedleShadowDown = "black";
+    this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
 
     // Radial gauge subType
     switch(this.widgetProperties.config.gauge.subType) {
@@ -225,10 +230,18 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     }
   }
 
-  private setGaugeOptions(themePaletteColor: string, themePaletteDarkColor: string) {
-    this.gaugeOptions.colorBarProgress = this.gaugeOptions.colorBorderMiddle = this.gaugeOptions.colorBorderMiddleEnd = themePaletteColor;
-    this.gaugeOptions.colorNeedle = themePaletteDarkColor;
-    this.gaugeOptions.colorNeedleEnd = themePaletteDarkColor;
+  private getColors(color: string): { color: string, dim: string, dimmer: string } {
+    const themePalette = {
+      "white": { color: this.theme.white, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer },
+      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
+      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
+      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
+      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
+      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
+      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
+      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
+    };
+    return themePalette[color];
   }
 
   private configureCapacityGauge(): void {
@@ -315,9 +328,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.needleCircleInner = false;
     this.gaugeOptions.needleCircleOuter = false;
 
-    this.gaugeOptions.borders = false;
-    this.gaugeOptions.borderOuterWidth = 0;
-    this.gaugeOptions.borderMiddleWidth = 0;
+    this.gaugeOptions.borders = true;
+    this.gaugeOptions.borderOuterWidth = 2;
+    this.gaugeOptions.borderMiddleWidth = 1;
     this.gaugeOptions.borderInnerWidth = 0;
     this.gaugeOptions.borderShadowWidth = 0;
 
