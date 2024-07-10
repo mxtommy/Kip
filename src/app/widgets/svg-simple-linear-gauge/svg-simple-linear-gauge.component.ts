@@ -2,30 +2,28 @@ import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges } fro
 
 @Component({
     selector: 'svg-simple-linear-gauge',
-    templateUrl: './svg-simple-linear-gauge.component.html',
+    templateUrl: './svg-simple-linear-gauge.component.svg',
     standalone: true
 })
 export class SvgSimpleLinearGaugeComponent implements OnChanges {
   @ViewChild('gaugeBarAnimate', {static: true}) gaugeBarAnimate: ElementRef;
-  @Input('displayName') displayName: string;
-  @Input('displayNameColor') displayNameColor: string;
-  @Input('dataValue') dataValue: string;
-  @Input('unitLabel') unitLabel: string;
-  @Input('barColor') barColor: string;
-  @Input('barColorGradient') barColorGradient: string;
-  @Input('barColorBackground') barColorBackground: string;
-  @Input('gaugeValue') gaugeValue: string;
-  @Input('gaugeMinValue') gaugeMinValue: number;
-  @Input('gaugeMaxValue') gaugeMaxValue: number;
+  @Input({ required: true }) displayName!: string;
+  @Input({ required: true }) displayNameColor!: string;
+  @Input({ required: true }) dataValue!: string;
+  @Input({ required: true }) unitLabel!: string;
+  @Input({ required: true }) barColor!: string;
+  @Input({ required: true }) barColorGradient!: string;
+  @Input({ required: true }) barColorBackground!: string;
+  @Input({ required: true }) gaugeValue!: string;
+  @Input({ required: true }) gaugeMinValue!: number;
+  @Input({ required: true }) gaugeMaxValue!: number;
 
   newGaugeValue: number = 1;
   oldGaugeValue: number = 1;
 
   constructor() { }
 
-
   ngOnChanges(changes: SimpleChanges) {
-
     // Data Value
     if (changes.dataValue) {
       if (! changes.dataValue.firstChange) {
