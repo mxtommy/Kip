@@ -202,7 +202,7 @@
                   <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
                 }
                 @if (widgetConfig.gauge) {
-                  <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinearVertical') || (widgetConfig.gauge?.type == 'ngLinearHorizontal')" value='nobar'>No Progress</mat-option>
+                  <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinear') || (widgetConfig.gauge?.type == 'ngLinear')" value='nobar'>No Progress</mat-option>
                 }
               </mat-select>
             </mat-form-field>
