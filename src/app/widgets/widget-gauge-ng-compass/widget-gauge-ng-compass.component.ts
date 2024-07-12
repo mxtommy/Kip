@@ -13,9 +13,11 @@ import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
-function rgbToHex(rgb) {
-  let [r, g, b] = rgb.match(/\d+/g).map(Number);
-  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+function rgbaToHex(rgba) {
+  let [r, g, b, a = 1] = rgba.match(/\d+(\.\d+)?/g).map(Number);
+  // Convert the alpha from 0-1 to 0-255 then to HEX, default to 255 (fully opaque) if alpha is not provided
+  let alpha = a === 1 ? '' : Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase() + alpha;
 }
 
 function convertNegToPortDegree(degree: number) {
@@ -45,17 +47,17 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   private readonly WIDGET_SIZE_FACTOR: number = 0.97;
 
   // Gauge text value for value box rendering
-  public textValue: string = "--";
+  protected textValue: string = "--";
   // Gauge value
-  public value: number = 0;
+  protected value: number = 0;
 
   @ViewChild('ngCompassWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
   @ViewChild('compassGauge', { static: true }) compassGauge: RadialGauge;
 
-  public gaugeOptions = {} as RadialGaugeOptions;
+  protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  public colorStrokeTicks: string = "";
-  public unitName: string = null;
+  protected colorStrokeTicks: string = "";
+  protected unitName: string = null;
 
   // Zones support
   private meta: ISkMetadata = null;
@@ -96,7 +98,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         showValueBox: false
       },
       enableTimeout: false,
-      color: "yellow",
+      color: "white",
       dataTimeout: 5
     };
   }
@@ -106,6 +108,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
     this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
+
     this.setGaugeConfig();
   }
 
@@ -140,6 +143,9 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           case States.Warn:
             option.colorValueText = this.theme.zoneWarn;
             break;
+          case States.Alert:
+            option.colorValueText = this.theme.zoneAlert;
+            break;
           default:
             option.colorValueText = this.theme.white;
         }
@@ -148,7 +154,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     });
   }
 
-  public onResized(event): void {
+  protected onResized(event): void {
     //@ts-ignore
     let resize: RadialGaugeOptions = {};
     resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);
@@ -203,19 +209,19 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.borderShadowWidth = 0;
     this.gaugeOptions.highlights = [];
 
-    this.gaugeOptions.fontTitle="arial";
+    this.gaugeOptions.fontTitle="Roboto";
     this.gaugeOptions.fontTitleWeight="normal";
     this.gaugeOptions.fontTitleSize = 25;
-    this.gaugeOptions.fontUnits="arial";
+    this.gaugeOptions.fontUnits="Roboto";
     this.gaugeOptions.fontUnitsSize = 25;
     this.gaugeOptions.fontUnitsWeight="normal";
     this.gaugeOptions.barStrokeWidth = 0;
     this.gaugeOptions.barShadow = 0;
-    this.gaugeOptions.fontValue="arial";
+    this.gaugeOptions.fontValue="Roboto";
     this.gaugeOptions.fontValueWeight="bold";
     this.gaugeOptions.valueTextShadow = false;
     this.gaugeOptions.colorValueBoxShadow="";
-    this.gaugeOptions.fontNumbers="arial";
+    this.gaugeOptions.fontNumbers="Roboto";
     this.gaugeOptions.fontNumbersWeight="bold";
 
     this.gaugeOptions.highlightsWidth = 0;
@@ -232,60 +238,56 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.animateOnInit = true;
     this.gaugeOptions.animatedValue = true;
     this.gaugeOptions.animationRule = "linear";
-    this.gaugeOptions.animationDuration = 500;//this.widgetProperties.config.paths['gaugePath'].sampleTime - 50; // prevent data and animation delay collisions
-
-     // Set Theme related colors
-    const themePalette = {
-      "white": { color: this.theme.white, darkColor: this.theme.white },
-      "blue": { color: this.theme.blue, darkColor: this.theme.blue },
-      "green": { color: this.theme.green, darkColor: this.theme.green },
-      "pink": { color: this.theme.pink, darkColor: this.theme.pink },
-      "orange": { color: this.theme.orange, darkColor: this.theme.orange },
-      "purple": { color: this.theme.purple, darkColor: this.theme.purple },
-      "grey": { color: this.theme.grey, darkColor: this.theme.grey },
-      "yellow": { color: this.theme.yellow, darkColor: this.theme.yellow }
-    };
-
-    if (themePalette[this.widgetProperties.config.color]) {
-      this.setGaugeOptions(themePalette[this.widgetProperties.config.color].color, themePalette[this.widgetProperties.config.color].darkColor);
-      const tColor = themePalette[this.widgetProperties.config.color].color
-      const dColor = themePalette[this.widgetProperties.config.color].darkColor
-
-      this.gaugeOptions.colorTitle = this.theme.white;
-      this.gaugeOptions.colorUnits = this.theme.white;
-      this.gaugeOptions.colorValueText = this.theme.white;
-
-      this.gaugeOptions.colorMinorTicks = this.theme.white;
-      this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
-        [rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white)] :
-        [rgbToHex(this.theme.white), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(dColor), rgbToHex(this.theme.white)];
-
-      this.colorStrokeTicks = this.theme.pink; // missing property in gaugeOptions
-      this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
-        [rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white)] :
-        [rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white), rgbToHex(this.theme.white)];
-
-      this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = getComputedStyle(this.wrapper.nativeElement).backgroundColor;
-      this.gaugeOptions.colorBar = this.theme.background;
-      this.gaugeOptions.colorBarStroke="";
-      this.gaugeOptions.colorValueBoxBackground = this.theme.background;
-      this.gaugeOptions.colorNeedleShadowUp = "";
-      this.gaugeOptions.colorNeedleShadowDown = "black";
-      this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
-      this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
-      this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
-      this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
-    } else {
-      console.error(`[ngGauge] Unknown bar color value: ${this.widgetProperties.config.color}`);
-    }
+    this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 50; // prevent data and animation delay collisions
+    // gauge does not support rbg abd rgba color values
+    this.setGaugeOptions(this.getColors(this.widgetProperties.config.color).color, rgbaToHex(this.getColors(this.widgetProperties.config.color).dim), rgbaToHex(this.getColors(this.widgetProperties.config.color).dimmer));
   }
 
-  private setGaugeOptions(themePaletteColor: string, themePaletteDarkColor: string) {
-    this.gaugeOptions.colorBarProgress = themePaletteColor;
-    this.gaugeOptions.colorBorderMiddle = themePaletteDarkColor;
-    this.gaugeOptions.colorBorderMiddleEnd = themePaletteDarkColor;
-    this.gaugeOptions.colorNeedle = themePaletteColor;
-    this.gaugeOptions.colorNeedleEnd = themePaletteColor;
+  private setGaugeOptions(color: string, dim: string, dimmer: string) {
+    const whiteDim = rgbaToHex(this.getColors('white').dim);
+    this.gaugeOptions.colorBarProgress = color;
+    this.gaugeOptions.colorBorderMiddle = dim;
+    this.gaugeOptions.colorBorderMiddleEnd = dim;
+    this.gaugeOptions.colorNeedle = color;
+    this.gaugeOptions.colorNeedleEnd = color;
+
+    this.gaugeOptions.colorTitle = whiteDim;
+    this.gaugeOptions.colorUnits = whiteDim;
+    this.gaugeOptions.colorValueText = color;
+
+    this.gaugeOptions.colorMinorTicks = whiteDim;
+    this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
+      [this.theme.port, whiteDim, whiteDim, dim, whiteDim, whiteDim, dim, whiteDim, whiteDim, dim, whiteDim, whiteDim, this.theme.port] :
+      [this.theme.port, dim, dim, dim, dim, dim, dim, dim, this.theme.port];
+
+    this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
+      [this.theme.port, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.port] :
+      [this.theme.port, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.port];
+
+    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = this.theme.cardColor;
+    this.gaugeOptions.colorBar = this.theme.background;
+    this.gaugeOptions.colorBarStroke="";
+    this.gaugeOptions.colorValueBoxBackground = this.theme.background;
+    this.gaugeOptions.colorNeedleShadowUp = "";
+    this.gaugeOptions.colorNeedleShadowDown = "";
+    this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
+    this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
+  }
+
+  private getColors(color: string): { color: string, dim: string, dimmer: string } {
+    const themePalette = {
+      "white": { color: this.theme.white, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer },
+      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
+      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
+      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
+      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
+      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
+      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
+      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
+    };
+    return themePalette[color];
   }
 
   ngOnDestroy(): void {
