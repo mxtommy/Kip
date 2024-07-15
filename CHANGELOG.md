@@ -1,5 +1,8 @@
 
-# V 2.12.0
+
+# V 2.12.1
+## Fixes
+* Numeric widget using seconds value not converting to HH:MM:SS format. Fixes #438
 ## New features
 * Add Kilo Pascal (kPa) format to Pressure units.
 * Add Resistance Unit with Ohm (ohm) and Kilo Ohm ((kiloohm)) formats.
