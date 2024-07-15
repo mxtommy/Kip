@@ -189,9 +189,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     let valueText: string;
 
     if (this.dataValue !== null) {
-      //TODO: Check for lon/lat special case -- ugly setup. we should probably have a lon/lat widget for this!
+      //TODO: Check for lon/lat and Seconds numeric value special case -- ugly setup. we should probably have a lon/lat widget for this!
       let cUnit: string = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-      if (cUnit == 'latitudeSec' || cUnit == 'latitudeMin' || cUnit == 'longitudeSec' || cUnit == 'longitudeMin') {
+      if (cUnit == 'latitudeSec' || cUnit == 'latitudeMin' || cUnit == 'longitudeSec' || cUnit == 'longitudeMin' || cUnit == 'HH:MM:SS') {
         valueText = this.dataValue.toString();
       } else {
         valueText = this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
