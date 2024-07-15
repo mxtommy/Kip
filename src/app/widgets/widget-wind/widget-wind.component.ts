@@ -255,8 +255,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   stopWindSectors() {
-
-      this.windSectorObservableSub?.unsubscribe();
+    this.windSectorObservableSub?.unsubscribe();
   }
 
   addHeading(h1: number, h2: number) {

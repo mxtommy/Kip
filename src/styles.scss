@@ -6,6 +6,7 @@
 @use './app/core/components/notification-menu/notification-menu.component-theme' as notificationMenu;
 @use './app/core/components/dynamic-widget-container/dynamic-widget-container.component-theme' as widgetContainer;
 @use './app/core/components/page-layout/page-layout.component-theme' as pageLayout;
+@use './app/widgets/widget-wind/widget-wind.component-theme' as widgetWind;
 
 @include mat.core();
 
@@ -78,6 +79,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   @include notificationMenu.theme($dark-theme);
   @include widgetContainer.theme($dark-theme);
   @include pageLayout.theme($dark-theme);
+  @include widgetWind.theme($dark-theme);
 
   // Set app background color
   --sys-background: #{$background};

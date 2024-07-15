@@ -1,0 +1,107 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+//   .laylines {
+//     stroke:  mat.m2-get-color-from-palette($foreground, text);
+//   }
+
+//   .wind-sector-port {
+//     fill: mat.m2-get-color-from-palette($wind, port);
+//   }
+
+//   .wind-sector-stbd {
+//     fill: mat.m2-get-color-from-palette($wind, starboard);
+//   }
+
+//   .compass-outer-ring {
+//       stroke: mat.m2-get-color-from-palette($wind, compass-dark);
+//   }
+//   .compass-inner-ring {
+//       stroke: mat.m2-get-color-from-palette($wind, compass-light);
+//       fill: mat.m2-get-color-from-palette($wind, compass-light);
+//   }
+
+
+
+//   .sailSetupBoat {
+//     stroke: mat.m2-get-color-from-palette($wind, compass-light);
+//   }
+
+//   .sailSetupFull {
+//     fill: mat.m2-get-color-from-palette($primary, 300);
+//   }
+
+//   .sailSetupReef1 {
+//     fill: mat.m2-get-color-from-palette($accent, 300);
+//   }
+
+//   .sailSetupReef2 {
+//     fill: mat.m2-get-color-from-palette($warn, 300);
+//   }
+
+//   .sailSetupReef3 {
+//     fill: mat.m2-get-color-from-palette($warn, 500);
+//   }
+
+//   .port {
+//       stop-color: mat.m2-get-color-from-palette($wind, port);
+//   }
+//   .starboard  {
+//     stop-color: mat.m2-get-color-from-palette($wind, starboard);
+//   }
+
+//   .rudderPort {
+//     fill: mat.m2-get-color-from-palette($wind, rudder-port);
+//   }
+//   .rudderStarboard  {
+//     fill: mat.m2-get-color-from-palette($wind, rudder-starboard);
+//   }
+
+//   .course-over-ground {
+//     fill: mat.m2-get-color-from-palette($wind, courseOverGround);
+//   }
+
+//   .next-waypoint {
+//     stroke: mat.m2-get-color-from-palette($wind, nextWaypoint);
+//   }
+//   .true-wind {
+//       fill: mat.m2-get-color-from-palette($wind, true-wind-background)
+//   }
+
+//   .app-wind {
+//       fill: mat.m2-get-color-from-palette($wind, app-wind-background)
+//   }
+
+//   .simpleLinear-text {
+//     fill: mat.m2-get-color-from-palette($foreground, text);
+//   }
+// }
+
+@mixin color($theme) {
+  .wind-text {
+    fill: var(--kip-widget-card-background-color);
+    stroke: var(--kip-widget-card-background-color);
+  }
+
+  .wind-rose-background {
+    stroke: red;
+  }
+
+  .heading-background {
+    stroke: var(--kip-widget-card-background-color);
+    fill: var(--kip-white-color);
+  }
+
+  .boatBackground {
+    stop-color: var(--kip-white-color) !important; //400
+  }
+  .simpleLinear-text {
+    fill: var(--kip-white-color);
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
