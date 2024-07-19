@@ -1019,18 +1019,26 @@
     </svg>
   </div>
   <div class="apStatusBar" #apStatusBar>
-    <div class="" style="width: calc((100% - 50px))" [style.visibility]="messageVisibility" [innerText]="messageInnerText"></div>
-    <div class="activityIcon" [style.visibility]="activityIconVisibility"><i class="fa-solid fa-exchange" aria-hidden="true"></i></div>
-    <div style="width: 25px;" [style.visibility]="errorIconVisibility"><i class="fa-solid fa-exclamation-triangle" style="color: darkgoldenrod;" aria-hidden="true"></i></div>
+    <div style="display: inline-block;width: calc(100% - 50px)" [style.visibility]="messageVisibility" [innerText]="messageInnerText"></div>
+    <div style="display: inline-block;" [style.visibility]="activityIconVisibility">
+      <span class="material-icons" [style.visibility]="activityIconVisibility">
+        sync_alt
+      </span>
+    </div>
+    <!-- <div [style.visibility]="!errorIconVisibility" style="display: inline-block;color: darkgoldenrod;width: 25px;">
+      <span class="material-icons">
+        warning
+      </span>
+    </div> -->
   </div>
   <div class="apStencil" #apStencil [@fadeInOut]="isApConnected ? 'connected' : 'disconnected'">
     <p style="font-weight: bold;opacity: 75%;">OFFLINE</p>
-    <p style="opacity: 75%;">Press <i class="fa-solid fa-power-off" aria-hidden="true"></i> to connect to Signal K server</p>
+    <p style="opacity: 75%;">Press <span class="material-icons">power_settings_new</span> to connect to Signal K server</p>
   </div>
   <div class="apStencil confirmCommand" [style.visibility]="msgStencilVisibility" [innerHTML]="msgStencilInnerHTML">
   </div>
   <div class="apStencil error" [style.visibility]="errorStencilVisibility">
-    <i class="fa-solid fa-exclamation-triangle fa-5x" style="color: darkgoldenrod;padding-top: 15px;" aria-hidden="true"></i>
+    <span class="material-icons" style="color: darkgoldenrod;padding-top: 15px;">warning</span>
     <p [innerHTML]="errorStencilInnerText"></p>
   </div>
 </div>

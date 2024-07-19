@@ -8,6 +8,7 @@ import { BaseWidgetComponent } from '../../core/components/base-widget/base-widg
 import { MatBadge } from '@angular/material/badge';
 import { NgIf } from '@angular/common';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
+import { MatIcon } from '@angular/material/icon';
 
 const defaultPpreferedDisplayMode = {
   wind: 'windAngleApparent',
@@ -39,8 +40,14 @@ const timeoutBlink = 250;
 @Component({
     selector: 'app-widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
+    styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
-    imports: [MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge]
+    host: {
+      '[style.--mdc-filled-button-container-color]': '"var(--kip-port-color)"',
+      '[style.--mdc-filled-button-label-text-color]': '"var(--kip-white-color)"',
+      '[style.--mdc-filled-button-container-shape]': '"5px"',
+    },
+    imports: [MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge, MatIcon]
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   // AP keypad

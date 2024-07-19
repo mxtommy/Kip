@@ -4,8 +4,10 @@
       <span>N2K Autopilot</span>
     </div>
     <div class="apPower">
-      <button mat-flat-button color="primary" class="powerBtn" id="powerBtn" #powerBtn disabled="false" (click)="powerBtnClick($event)">
-        <i class="fa-solid fa-power-off" aria-hidden="true"></i>
+      <button mat-flat-button class="powerBtn" id="powerBtn" #powerBtn disabled="false" (click)="powerBtnClick($event)">
+        <span class="material-icons">
+          power_settings_new
+        </span>
       </button>
     </div>
   </div>
@@ -19,44 +21,44 @@
     ></app-svg-autopilot>
   <div class="autopilotGridBtnContainer">
     <div class="itemStbTack">
-      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="stbTackBtn" #stbTackBtn disabled="true" (click)="buildAndSendCommand('tackToStarboard')">Std Tack</button>
+      <button type="button" mat-flat-button color="accent" class="auto-pilot-btn-width" id="stbTackBtn" #stbTackBtn disabled="true" (click)="buildAndSendCommand('tackToStarboard')">Std Tack</button>
     </div>
     <div class="itemPlus1">
-      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="plus1Btn" #plus1Btn disabled="true" (click)="buildAndSendCommand('+1')">+1°</button>
+      <button type="button" mat-flat-button color="accent" class="auto-pilot-btn-width" id="plus1Btn" #plus1Btn disabled="true" (click)="buildAndSendCommand('+1')">+1°</button>
     </div>
     <div class="itemMinus1">
-      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="minus1Btn" #minus1Btn disabled="true" (click)="buildAndSendCommand('-1')">-1°</button>
+      <button type="button" mat-flat-button color="accent" class="auto-pilot-btn-width" id="minus1Btn" #minus1Btn disabled="true" (click)="buildAndSendCommand('-1')">-1°</button>
     </div>
     <div class="itemPrtTack">
-      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="prtTackBtn" #prtTackBtn disabled="true" (click)="buildAndSendCommand('tackToPort')">Prt Tack</button>
+      <button type="button" mat-flat-button color="accent" class="auto-pilot-btn-width" id="prtTackBtn" #prtTackBtn disabled="true" (click)="buildAndSendCommand('tackToPort')">Prt Tack</button>
     </div>
     <div class="itemStandby">
-      <button type="button" mat-flat-button color="warn" class="autoPilotBtn" id="standbyBtn" #standbyBtn disabled="true" (click)="buildAndSendCommand('standby')">Standby</button>
+      <button type="button" mat-flat-button class="auto-pilot-btn-width" id="standbyBtn" #standbyBtn disabled="true" (click)="buildAndSendCommand('standby')">Standby</button>
     </div>
     <div class="itemPlus10">
-      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="plus10Btn" #plus10Btn disabled="true" (click)="buildAndSendCommand('+10')">+10°</button>
+      <button type="button" mat-flat-button color="accent" class="auto-pilot-btn-width" id="plus10Btn" #plus10Btn disabled="true" (click)="buildAndSendCommand('+10')">+10°</button>
     </div>
     <div class="itemMinus10">
-      <button type="button" mat-flat-button color="accent" class="autoPilotBtn" id="minus10Btn" #minus10Btn disabled="true" (click)="buildAndSendCommand('-10')">-10°</button>
+      <button type="button" mat-flat-button color="accent" class="auto-pilot-btn-width" id="minus10Btn" #minus10Btn disabled="true" (click)="buildAndSendCommand('-10')">-10°</button>
     </div>
     <div class="itemAuto">
-      <button type="button" mat-flat-button color="warn" class="autoPilotBtn" id="autoBtn" #autoBtn disabled="true" (click)="buildAndSendCommand('auto')">Auto</button>
+      <button type="button" mat-flat-button class="auto-pilot-btn-width" id="autoBtn" #autoBtn disabled="true" (click)="buildAndSendCommand('auto')">Auto</button>
     </div>
     <div class="itemWindmode">
-      <button type="button" mat-flat-button color="warn" class="autoPilotBtn" id="windModeBtn" #windModeBtn disabled="true" (click)="buildAndSendCommand('wind')">Wind</button>
+      <button type="button" mat-flat-button class="auto-pilot-btn-width" id="windModeBtn" #windModeBtn disabled="true" (click)="buildAndSendCommand('wind')">Wind</button>
     </div>
     <div class="itemTrackmode">
-      <button type="button" mat-flat-button color="primary" class="autoPilotBtn" id="trackModeBtn" #trackModeBtn disabled="true" (click)="buildAndSendCommand('route')">Route</button>
+      <button type="button" mat-flat-button color="primary" class="auto-pilot-btn-width" id="trackModeBtn" #trackModeBtn disabled="true" (click)="buildAndSendCommand('route')">Route</button>
     </div>
     <div class="itemMute">
-      <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="muteBtn" #muteBtn disabled="true" (click)="sendSilence()">
-        <i *ngIf="alarmsCount" class="fa-solid fa-bell-slash" aria-hidden="true"></i>
-        <i *ngIf="!alarmsCount" class="fa-solid fa-bell" aria-hidden="true"></i>
+      <button type="button" mat-mini-fab class="auto-pilot-btn-widthCtrl" id="muteBtn" #muteBtn disabled="true" (click)="sendSilence()">
+        <span *ngIf="alarmsCount" class="material-icons">notifications_off</span>
+        <span *ngIf="!alarmsCount" class="material-icons">notifications</span>
       </button>
     </div>
     <div class="itemMessage">
-      <button type="button" mat-mini-fab color="primary" class="autoPilotBtnCtrl" id="messageBtn" #messageBtn disabled="true" (click)="notificationScroll()">
-        <span class="fa-solid fa-envelope" aria-hidden="true"></span>
+      <button type="button" mat-mini-fab class="auto-pilot-btn-widthCtrl" id="messageBtn" #messageBtn disabled="true" (click)="notificationScroll()">
+        <span class="material-icons">mail</span>
         <span *ngIf="alarmsCount" matBadge="{{alarmsCount}}" matBadgeColor="warn" matBadgeSize="medium" matBadgeHidden="false" matBadgeOverlap="false"></span>
       </button>
     </div>

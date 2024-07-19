@@ -1,0 +1,84 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin light-color($theme) {
+}
+
+@mixin dark-color($theme) {
+  .apScreen .apStencil {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    border-radius: 5px;
+    z-index: 10;
+    vertical-align: middle;
+    background-color: var(--sys-background);
+  }
+
+.apScreen {
+    display: block;
+    position: relative;
+    width: 360px;
+    height: calc(202px + 38.5px); // add status bar
+    margin: auto;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid var(--kip-grey-dim-color);
+    background-color: var(--sys-background);
+  }
+
+  .compass-inner-ring {
+    stroke: var(--kip-white-color);
+    fill: var(--kip-white-color);
+  }
+
+  .compass-outer-ring {
+      stroke: var(--kip-grey-color);
+  }
+
+  .apCompassOrnaments {
+    fill: var(--kip-kip-widget-card-background-color);
+    stroke: var(--sys-background);
+  }
+
+  .rudderPort {
+    fill: var(--kip-port-color);
+  }
+
+  .rudderStarboard  {
+    fill: var(--kip-starboard-color);
+  }
+
+  .starboard  {
+    stop-color: var(--kip-starboard-color);
+  }
+
+  .port {
+    stop-color: var(--kip-port-color);
+  }
+
+  .app-wind {
+      fill: var(--kip-blue-color);
+  }
+
+  .apText {
+    fill: var(--kip-white-color);
+  }
+
+  .powerBtn {
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    $theme-type: mat.get-theme-type($theme);
+    @if $theme-type == dark {
+      @include dark-color($theme);
+    } @else {
+      @include light-color($theme);
+    }
+  }
+}
