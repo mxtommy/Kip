@@ -167,16 +167,18 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
             minute: `mm\''`,
             second: `ss"`,
             millisecond: "SSS"
-          }
+          },
         },
         ticks: {
           autoSkip: false,
+          color: this.getThemeColors().averageChartLine,
           major: {
             enabled: true
           }
         },
         grid: {
-          display: true
+          display: true,
+          color: this.theme.whiteDimmer
         }
       },
       y: {
@@ -187,7 +189,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
         max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
         beginAtZero: this.widgetProperties.config.startScaleAtZero,
-        // grace: "5%",
         title: {
           display: false,
           text: "Value Axis",
@@ -196,12 +197,14 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         ticks: {
           maxTicksLimit: 8,
           precision: this.widgetProperties.config.numDecimal,
+          color: this.getThemeColors().averageChartLine,
           major: {
             enabled: true,
           }
         },
         grid: {
           display: true,
+          color: this.theme.whiteDimmer,
         }
       }
     }
@@ -247,7 +250,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               position: "start",
               yAdjust: 12,
               padding: 4,
-              color: 'rgba(255,255,255,0.6)',
+              color: this.getThemeColors().averageChartLine,
               backgroundColor: 'rgba(63,63,63,0.0)'
             }
           },
@@ -262,7 +265,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               position: "start",
               yAdjust: -12,
               padding: 4,
-              color:  'rgba(255,255,255,0.6)',
+              color: this.getThemeColors().averageChartLine,
               backgroundColor: 'rgba(63,63,63,0.0)'
             }
           },
@@ -278,7 +281,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               display: true,
               position: "start",
               padding: 4,
-              color: 'rgba(255,255,255,0.6)',
+              color: this.getThemeColors().chartValue,
               backgroundColor: 'rgba(63,63,63,0.7)'
             }
           }
@@ -322,7 +325,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.whiteDimmer;
           colors.chartValue = this.theme.white;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.whiteDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -340,7 +343,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.blueDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.blueDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -358,7 +361,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.greenDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.greenDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -376,7 +379,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.pinkDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDim;
+        colors.averageChartLine = this.theme.pinkDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -394,7 +397,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.orangeDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.orangeDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -412,7 +415,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.purpleDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.purpleDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -430,7 +433,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.greyDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.greyDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
 
@@ -448,7 +451,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           colors.averageFill = this.theme.yellowDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.whiteDimmer;
+        colors.averageChartLine = this.theme.yellowDim;
         colors.chartLabel = this.theme.whiteDim;
         break;
     }
