@@ -42,11 +42,6 @@ const timeoutBlink = 250;
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
-    host: {
-      '[style.--mdc-filled-button-container-color]': '"var(--kip-port-color)"',
-      '[style.--mdc-filled-button-label-text-color]': '"var(--kip-white-color)"',
-      '[style.--mdc-filled-button-container-shape]': '"5px"',
-    },
     imports: [MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge, MatIcon]
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
