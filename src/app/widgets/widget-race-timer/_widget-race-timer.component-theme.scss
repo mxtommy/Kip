@@ -1,0 +1,20 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  .button-color-red {
+    --mdc-filled-button-container-color: var(--kip-port-color);
+    --mdc-filled-button-label-text-color: var(--kip-white-color);
+  }
+
+  .button-color-blue {
+    --mdc-filled-button-container-color: var(--kip-blue-color);
+    --mdc-filled-button-label-text-color: var(--sys-background);
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

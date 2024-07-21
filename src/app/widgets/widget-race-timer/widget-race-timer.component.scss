@@ -29,6 +29,7 @@
 .timer-button-groups {
   min-width: 247px;
   max-width: 100%;
+  --mdc-filled-button-container-shape: 5px;
 }
 
 .timer-adjusters-group {
@@ -59,4 +60,3 @@
 .timer-adjust-buttons {
   width: calc(30% - 10px);
 }
-

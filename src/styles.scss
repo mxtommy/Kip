@@ -8,6 +8,7 @@
 @use './app/core/components/page-layout/page-layout.component-theme' as pageLayout;
 @use './app/widgets/widget-wind/widget-wind.component-theme' as widgetWind;
 @use './app/widgets/widget-autopilot/widget-autopilot.component-theme' as widgetAp;
+@use './app/widgets/widget-race-timer/widget-race-timer.component-theme' as widgetRaceTimer;
 
 @include mat.core();
 
@@ -83,6 +84,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   // Apply widget theming
   @include widgetWind.theme($dark-theme);
   @include widgetAp.theme($dark-theme);
+  @include widgetRaceTimer.theme($dark-theme);
 
   // Set app background color
   --sys-background: #{$background};
