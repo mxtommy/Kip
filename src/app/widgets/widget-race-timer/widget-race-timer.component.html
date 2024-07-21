@@ -3,13 +3,13 @@
   <canvas id="canvasBG" class="canvas-size numeric-labels" #canvasBG></canvas>
     <div class="timerBarContainer">
       <div class="timer-button-groups timer-adjusters-group">
-        <button mat-flat-button class="timer-adjust-buttons button-color-blue" (click)="remOneMin()">
+        <button mat-flat-button class="timer-adjust-buttons" (click)="remOneMin()">
           -1
         </button>
-        <button mat-flat-button class="timer-reset-button button-color-blue" (click)="resetTimer()">
+        <button mat-flat-button class="timer-reset-button" (click)="resetTimer()">
          Reset
         </button>
-        <button mat-flat-button class="timer-adjust-buttons button-color-blue" (click)="addOneMin()">
+        <button mat-flat-button class="timer-adjust-buttons" (click)="addOneMin()">
          +1
         </button>
       </div>
@@ -17,7 +17,7 @@
         <button *ngIf="!timerRunning" mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
           Start
         </button>
-        <button *ngIf="timerRunning" mat-flat-button class="timer-start-button button-color-blue" (click)="pauseTimer()">
+        <button *ngIf="timerRunning" mat-flat-button class="timer-start-button" (click)="pauseTimer()">
           Pause
         </button>
         <button mat-flat-button class="timer-synch-button button-color-red" (click)="roundToMin()">

@@ -6,11 +6,6 @@
     --mdc-filled-button-container-color: var(--kip-port-color);
     --mdc-filled-button-label-text-color: var(--kip-white-color);
   }
-
-  .button-color-blue {
-    --mdc-filled-button-container-color: var(--kip-blue-color);
-    --mdc-filled-button-label-text-color: var(--sys-background);
-  }
 }
 
 @mixin theme($theme) {
