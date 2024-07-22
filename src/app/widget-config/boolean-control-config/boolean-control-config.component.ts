@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AppService, ITheme } from './../../core/services/app-service';
+import { AppService } from './../../core/services/app-service';
 import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
 import { MatOption } from '@angular/material/core';
@@ -7,7 +7,6 @@ import { MatSelect } from '@angular/material/select';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { Observable } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
 import { ObjectKeysPipe } from './../../core/pipes/object-keys.pipe';
 
