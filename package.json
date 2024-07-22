@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "2.10.0",
+  "version": "3.0.0",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -45,21 +45,22 @@
     "e2e": "ng e2e"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^18.0.3",
-    "@angular/animations": "18.0.2",
-    "@angular/cdk": "^18.0.2",
-    "@angular/cli": "^18.0.3",
-    "@angular/common": "18.0.2",
-    "@angular/compiler": "18.0.2",
-    "@angular/compiler-cli": "18.0.2",
-    "@angular/core": "18.0.2",
-    "@angular/forms": "18.0.2",
-    "@angular/language-service": "18.0.2",
-    "@angular/material": "^18.0.2",
-    "@angular/platform-browser": "18.0.2",
-    "@angular/platform-browser-dynamic": "18.0.2",
-    "@angular/router": "18.0.2",
+    "@angular-devkit/build-angular": "^18.0.4",
+    "@angular/animations": "18.0.3",
+    "@angular/cdk": "^18.0.3",
+    "@angular/cli": "^18.0.4",
+    "@angular/common": "18.0.3",
+    "@angular/compiler": "18.0.3",
+    "@angular/compiler-cli": "18.0.3",
+    "@angular/core": "18.0.3",
+    "@angular/forms": "18.0.3",
+    "@angular/language-service": "18.0.3",
+    "@angular/material": "^18.0.3",
+    "@angular/platform-browser": "18.0.3",
+    "@angular/platform-browser-dynamic": "18.0.3",
+    "@angular/router": "18.0.3",
     "@godind/ng-canvas-gauges": "^6.2.1",
+    "@material/material-color-utilities": "^0.2.7",
     "@robloche/chartjs-plugin-streaming": "^3.1.0",
     "@types/canvas-gauges": "^2.1.8",
     "@types/hammerjs": "^2.0.45",
@@ -69,7 +70,6 @@
     "@types/js-quantities": "^1.6.4",
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^18.19.30",
-    "ngx-resize-observer": "^2.7.0",
     "angular-split": "^17.2.0",
     "chart.js": "^4.4.2",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -91,6 +91,7 @@
     "karma-jasmine-html-reporter": "^1.6.0",
     "lodash-es": "^4.17.21",
     "ng-packagr": "^18.0.0",
+    "ngx-resize-observer": "^2.7.0",
     "protractor": "~7.0.0",
     "pwa-asset-generator": "^6.3.1",
     "rx-dom-html": "^7.0.3",
@@ -102,7 +103,5 @@
     "tslint": "^6.1.3",
     "typescript": "^5.4.5",
     "zone.js": "~0.14.4"
-  },
-  "dependencies": {
   }
 }

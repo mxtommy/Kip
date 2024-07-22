@@ -1,113 +1,172 @@
-@use '@angular/material' as mat;
+// Material 3 styles file.
+// Proceed with caution if making changes to this file.
 @use 'sass:map';
-// For more information: https://material.angular.io/guide/theming
-// For customizations see https://material.angular.io/guide/theming-your-components
+@use '@angular/material' as mat;
+@use './app/app.component-theme' as appRoot;
+@use './app/core/components/notification-menu/notification-menu.component-theme' as notificationMenu;
+@use './app/core/components/dynamic-widget-container/dynamic-widget-container.component-theme' as widgetContainer;
+@use './app/core/components/page-layout/page-layout.component-theme' as pageLayout;
+@use './app/widgets/widget-wind/widget-wind.component-theme' as widgetWind;
+@use './app/widgets/widget-autopilot/widget-autopilot.component-theme' as widgetAp;
+@use './app/widgets/widget-race-timer/widget-race-timer.component-theme' as widgetRaceTimer;
 
-//Import themes
-@import 'themes/modernTheme.scss';
-@import 'themes/nightMode.scss';
-@import 'themes/highContrastTheme.scss';
-
-// Include the common all common Materiel styles.
-
-@include mat.all-component-typographies();
 @include mat.core();
 
-//Import common/shared styles
-@import 'styles-common/settingsTabContent.scss';
-@import 'styles-common/tabs.scss';
-@import 'styles-common/dialog-panel.scss';
+// Import local Angular Google font and icon styles
+@import './assets/google-fonts/material-symbols-outlined.scss';
+@import './assets/google-fonts/material-icons.scss';
+@import './assets/google-fonts/roboto.scss';
+// Import the Material Design typography and color palettes
+@import './themes/dark-m3-theme.scss';
 
+// Get App (dark) CSS theming value
+$background: map-get($kip-dark-color, background);
 
-// import Components themes
-@import 'app/app.component.scss';
-@import 'app/core/components/dynamic-widget-container/dynamic-widget-container.component.scss';
-@import 'app/core/components/page-layout/page-layout.component.scss';
-@import 'app/widget-config/path-control-config/path-control-config.component.scss';
-@import 'app/core/components/alarm-menu/alarm-menu.component.scss';
-@import 'app/settings/signalk/signalk.component.scss';
-@import 'app/settings/datasets/datasets.component.scss';
-@import 'app/settings/config/config.component.scss';
-@import 'app/widgets/widget-numeric/widget-numeric.component.scss';
-@import 'app/widgets/widget-race-timer/widget-race-timer.component.scss';
-@import 'app/widgets/widget-autopilot/widget-autopilot.component.scss';
-@import 'app/widgets/widget-wind/widget-wind.component.scss';
+// Get default (dark) KIP CSS theming value
+$kip-widget-card-background-color: map-get($kip-dark-color, widget-card-background-color);
+$kip-widget-card-border-color: map-get($kip-dark-color, widget-card-border-color);
+$kip-widget-action-button-color: map-get($kip-dark-color, widget-action-button-color);
+$kip-widget-action-button-foreground-color: map-get($kip-dark-color, widget-action-button-foreground-color);
+$kip-widget-action-delete-button-color: map-get($kip-dark-color, widget-action-delete-button-color);
 
+$blue: map-get($kip-dark-color, blue);
+$blueDim: map-get($kip-dark-color, blue-dim);
+$blueDimmer: map-get($kip-dark-color, blue-dimmer);
 
-@mixin theme-kip-components($theme) {
-  @include app-theme($theme);
-  @include dialog-panel-styles($theme);
-  @include dynamic-widget-container-theme($theme);
-  @include modal-path-selector-theme($theme);
-  @include widget-numeric-theme($theme);
-  @include widget-autopilot-theme($theme);
-  @include widget-wind-theme($theme);
-  @include theme-settings-sk($theme);
-  @include theme-settings-config($theme);
+$green: map-get($kip-dark-color, green);
+$greenDim: map-get($kip-dark-color, green-dim);
+$greenDimmer: map-get($kip-dark-color, green-dimmer);
+
+$purple: map-get($kip-dark-color, purple);
+$purpleDim: map-get($kip-dark-color, purple-dim);
+$purpleDimmer: map-get($kip-dark-color, purple-dimmer);
+
+$yellow: map-get($kip-dark-color, yellow);
+$yellowDim: map-get($kip-dark-color, yellow-dim);
+$yellowDimmer: map-get($kip-dark-color, yellow-dimmer);
+
+$pink: map-get($kip-dark-color, pink);
+$pinkDim: map-get($kip-dark-color, pink-dim);
+$pinkDimmer: map-get($kip-dark-color, pink-dimmer);
+
+$orange: map-get($kip-dark-color, orange);
+$orangeDim: map-get($kip-dark-color, orange-dim);
+$orangeDimmer: map-get($kip-dark-color, orange-dimmer);
+
+$white: map-get($kip-dark-color, white);
+$whiteDim: map-get($kip-dark-color, white-dim);
+$whiteDimmer: map-get($kip-dark-color, white-dimmer);
+
+$grey: map-get($kip-dark-color, grey);
+$greyDim: map-get($kip-dark-color, grey-dim);
+$greyDimmer: map-get($kip-dark-color, grey-dimmer);
+
+$port: map-get($kip-dark-color, port);
+$starboard: map-get($kip-dark-color, starboard);
+$zone-nominal: map-get($kip-dark-color, zone-nominal);
+$zone-alert: map-get($kip-dark-color, zone-alert);
+$zone-warn: map-get($kip-dark-color, zone-warn);
+$zone-alarm: map-get($kip-dark-color, zone-alarm);
+$zone-emergency: map-get($kip-dark-color, zone-emergency);
+
+// Write styles
+:root {
+  // Apply all component css dark theme by default
+  @include mat.all-component-themes($dark-theme);
+  @include mat.system-level-colors($dark-theme);
+  @include mat.system-level-typography($dark-theme);
+  @include mat.typography-hierarchy($dark-theme);
+  // Apply KIP core component theming
+  @include appRoot.theme($dark-theme);
+  @include notificationMenu.theme($dark-theme);
+  @include widgetContainer.theme($dark-theme);
+  @include pageLayout.theme($dark-theme);
+  // Apply widget theming
+  @include widgetWind.theme($dark-theme);
+  @include widgetAp.theme($dark-theme);
+  @include widgetRaceTimer.theme($dark-theme);
+
+  // Set app background color
+  --sys-background: #{$background};
+
+  // Create KIP global CSS variables
+  --kip-nightModeBrightness: 1;
+  --kip-widget-card-background-color: #{$kip-widget-card-background-color};
+  --kip-widget-card-border-color: #{$kip-widget-card-border-color};
+  --kip-widget-card-border-style: solid;
+  --kip-widget-card-border-width: 2px;
+  --kip-widget-action-button-color: #{$kip-widget-action-button-color};
+  --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
+  --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
+
+  --kip-blue-color: #{$blue};
+  --kip-blue-dim-color: #{$blueDim};
+  --kip-blue-dimmer-color: #{$blueDimmer};
+
+  --kip-green-color: #{$green};
+  --kip-green-dim-color: #{$greenDim};
+  --kip-green-dimmer-color: #{$greenDimmer};
+
+  --kip-purple-color: #{$purple};
+  --kip-purple-dim-color: #{$purpleDim};
+  --kip-purple-dimmer-color: #{$purpleDimmer};
+
+  --kip-yellow-color: #{$yellow};
+  --kip-yellow-dim-color: #{$yellowDim};
+  --kip-yellow-dimmer-color: #{$yellowDimmer};
+
+  --kip-pink-color: #{$pink};
+  --kip-pink-dim-color: #{$pinkDim};
+  --kip-pink-dimmer-color: #{$pinkDimmer};
+
+  --kip-orange-color: #{$orange};
+  --kip-orange-dim-color: #{$orangeDim};
+  --kip-orange-dimmer-color: #{$orangeDimmer};
+
+  --kip-white-color: #{$white};
+  --kip-white-dim-color: #{$whiteDim};
+  --kip-white-dimmer-color: #{$whiteDimmer};
+
+  --kip-grey-color: #{$grey};
+  --kip-grey-dim-color: #{$greyDim};
+  --kip-grey-dimmer-color: #{$greyDimmer};
+
+  --kip-port-color: #{$port};
+  --kip-starboard-color: #{$starboard};
+  --kip-zone-nominal-color: #{$zone-nominal};
+  --kip-zone-alert-color: #{$zone-alert};
+  --kip-zone-warn-color: #{$zone-warn};
+  --kip-zone-alarm-color: #{$zone-alarm};
+  --kip-zone-emergency-color: #{$zone-emergency};
 }
 
-@include mat.all-component-themes($theme);
-@include theme-kip-components($theme);
-
-.nightMode {
-  @include mat.all-component-colors($nightMode);
-  @include theme-kip-components($nightMode);
-}
-
-.high-contrast {
-  @include mat.all-component-colors($highContrast);
-  @include theme-kip-components($highContrast);
-}
-
-/* You can add global styles to this file, and also import other style files */
+// Set base app style
 html,
 body,
 app-root {
-	height: 100%;
+  height: 100%;
 }
 
 body {
-	margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin: 0;
   touch-action: none;
+  filter: brightness(var(--kip-nightModeBrightness));
+  backdrop-filter: brightness(var(--kip-nightModeBrightness));
 }
 
-.ng-valid[required], .ng-valid.required  {
-    border-left: 5px solid #42A948; /* green */
-  }
-
-.ng-invalid:not(form)  {
-  border-left: 5px solid #a94442; /* red */
-}
-
-.verticalCenter {
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.flexContainer {
-  display: flex;
-  align-items: stretch;
-  height: 100%;
-}
-
-.flowRow {
-    flex-direction: row;
-}
-
-.flexCol {
-    flex-direction: column;
+app-root {
+  display: block;
 }
 
 /*
-  Loading Spinner styles. Used during app bootstrap process (while
-  executing app-initNetwork.service but before Angular has fully loaded)
+*  Loading Spinner styles. Used during app bootstrap process (while
+*  executing app-initNetwork.service but before Angular has fully loaded)
 */
-
 .loader-container {
   height: 100%;
   width: 100%;
-  background-color: #424242;
+  background-color: var(--sys-background);
 }
 
 #loader {

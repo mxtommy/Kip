@@ -6,6 +6,7 @@ import { UUID } from "../app/core/utils/uuid";
 export const DefaultAppConfig: IAppConfig = {
   "configVersion": 10,
   "autoNightMode": false,
+  "nightModeBrightness": 0.20,
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,

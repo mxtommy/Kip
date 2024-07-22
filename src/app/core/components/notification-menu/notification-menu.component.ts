@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { NotificationsService, INotification, IAlarmInfo } from '../../services/notifications.service';
-import { Observable, Subscription, filter, iif, map, of, switchMap } from 'rxjs';
+import { Observable, Subscription, filter, map } from 'rxjs';
 import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
 import { Methods, States } from '../../interfaces/signalk-interfaces';
 import { MatDivider } from '@angular/material/divider';
@@ -10,6 +10,7 @@ import { NgIf, AsyncPipe, NgFor } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatActionList } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
 
 interface INotificationInfo extends IAlarmInfo{
   blinkWarn: boolean;
@@ -17,13 +18,13 @@ interface INotificationInfo extends IAlarmInfo{
 }
 
 @Component({
-    selector: 'app-alarm-menu',
-    templateUrl: './alarm-menu.component.html',
-    styleUrls: ['./alarm-menu.component.scss'],
+    selector: 'notification-menu',
+    templateUrl: './notification-menu.component.html',
+    styleUrls: ['./notification-menu.component.scss'],
     standalone: true,
-    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, MatActionList, NgFor, NgIf]
+    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, MatActionList, MatIconModule, NgFor, NgIf]
 })
-export class AlarmMenuComponent implements OnDestroy {
+export class NotificationMenuComponent implements OnDestroy {
   private notificationServiceSettingsSubscription: Subscription = null;
   private notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
     filter(notification => notification !== null));

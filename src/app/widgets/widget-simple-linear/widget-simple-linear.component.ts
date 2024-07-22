@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 
@@ -9,13 +9,13 @@ import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-si
     standalone: true,
     imports: [SvgSimpleLinearGaugeComponent]
 })
-export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy, OnChanges {
-  public unitsLabel:string = "";
-  public dataLabelValue: string = "0";
-  public dataValue: Number = 0;
-  public barColor: string = "";
-  public barColorGradient: string = "";
-  public barColorBackground: string = "";
+export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+  protected unitsLabel:string = "";
+  protected dataLabelValue: string = "0";
+  protected dataValue: Number = 0;
+  protected barColor: string = "";
+  protected barColorGradient: string = "";
+  protected barColorBackground: string = "";
 
   constructor() {
     super();
@@ -47,7 +47,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       },
       numInt: 1,
       numDecimal: 2,
-      textColor: 'accent',
+      color: 'white',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -55,6 +55,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
 
   ngOnInit(): void {
     this.initWidget();
+    this.updateGaugeSettings();
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gauge.unitLabelFormat == "abr") {
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
@@ -73,34 +74,44 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.theme) {
-      this.updateGaugeSettings();
-    }
-  }
-
-  updateGaugeSettings() {
+  private updateGaugeSettings() {
     this.barColorBackground = this.theme.background;
-
-    switch (this.widgetProperties.config.textColor) {
-      case "text":
-        this.barColor = this.theme.text;
-        this.barColorGradient = this.theme.textDark;
+    switch (this.widgetProperties.config.color) {
+      case "white":
+        this.barColor = this.theme.white;
+        this.barColorGradient = this.theme.whiteDimmer;
         break;
-      case "primary":
-        this.barColor = this.theme.primary;
-        this.barColorGradient = this.theme.primaryDark;
+      case "blue":
+        this.barColor = this.theme.blue;
+        this.barColorGradient = this.theme.blueDimmer;
         break;
-
-      case "accent":
-        this.barColor = this.theme.accent;
-        this.barColorGradient = this.theme.accentDark;
+      case "green":
+        this.barColor = this.theme.green;
+        this.barColorGradient = this.theme.greenDimmer;
         break;
-
-      case "warn":
-        this.barColor = this.theme.warn;
-        this.barColorGradient = this.theme.warnDark;
+      case "pink":
+        this.barColor = this.theme.pink;
+        this.barColorGradient = this.theme.pinkDimmer;
         break;
+      case "orange":
+        this.barColor = this.theme.orange;
+        this.barColorGradient = this.theme.orangeDimmer;
+        break;
+      case "purple":
+        this.barColor = this.theme.purple;
+        this.barColorGradient = this.theme.purpleDimmer;
+        break;
+      case "grey":
+        this.barColor = this.theme.grey;
+        this.barColorGradient = this.theme.greyDimmer;
+        break;
+      case "yellow":
+        this.barColor = this.theme.yellow;
+        this.barColorGradient = this.theme.yellowDimmer;
+        break;
+      default:
+        this.barColor = this.theme.white;
+        this.barColorGradient = this.theme.whiteDimmer;
     }
   }
 

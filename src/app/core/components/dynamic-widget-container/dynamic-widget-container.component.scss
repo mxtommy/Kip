@@ -1,88 +1,33 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-
-@mixin dynamic-widget-container-theme($theme) {
-  $textThemeEmitter: map-get($theme, widgetTexts);
-  $gaugeThemeEmitter: map-get($theme, ngGauge);
-  $themeForeground: map-get($theme, foreground);
-
-  .primary {
-    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceLight);
-  }
-  .accent {
-    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceLight);
-  }
-  .warn {
-    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceLight);
-  }
-  .primaryDark {
-    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, primary-gaugeFaceDark);
-  }
-  .accentDark {
-    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, accent-gaugeFaceDark);
-  }
-  .warnDark {
-    color: mat.m2-get-color-from-palette($gaugeThemeEmitter, warn-gaugeFaceDark);
-  }
-  .background {
-    color: mat.m2-get-color-from-palette($themeForeground, divider);
-  }
-  .text {
-    color: mat.m2-get-color-from-palette($themeForeground, text);
-  }
-  .textDark {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, text-dark);
-  }
-  .textPrimaryLight {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, primary-light);
-  }
-  .textPrimaryDark {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, primary-dark);
-  }
-  .textAccentLight {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, accent-light);
-  }
-  .textAccentDark {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, accent-dark);
-  }
-  .textWarnLight {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, warn-light);
-  }
-  .textWarnDark {
-    color: mat.m2-get-color-from-palette($textThemeEmitter, warn-dark);
-  }
-}
-
-.dynamicWidgetContainer {
-    position: relative;
+:host {
     width: 100%;
     height: 100%;
+    display:block;
 }
 
-.mat-mdc-card {
+.widget-container {
   display: block;
   position: absolute !important;
-  width: calc(100% - 4px);
-  height: calc(100% - 5px);
-  margin: 3px auto auto 2px;
+  width: 100%;
+  height: 100%;
+  margin: 0px;
   padding: 0px;
   transition: none;
   transition-property: none;
 }
 
-.selectWidgetMenu {
+.widget-select-button {
     position: absolute;
     right: 5%;
     bottom: 5%;
 }
 
-.settingsButton {
+.widget-settings-button {
   position: absolute;
   bottom: 5%;
   left: 50%;
   transform: translate(-50%);
 }
 
-.full-width {
+.form-field-width {
     width: 100%;
 }

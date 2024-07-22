@@ -7,6 +7,7 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { DynamicWidgetContainerComponent } from '../dynamic-widget-container/dynamic-widget-container.component';
 import { AngularSplitModule, IOutputData, ISplitDirection } from 'angular-split';
 import { AsyncPipe } from '@angular/common';
+import { MatIcon } from '@angular/material/icon';
 
 
 @Component({
@@ -14,7 +15,7 @@ import { AsyncPipe } from '@angular/common';
     templateUrl: './page-layout.component.html',
     styleUrls: ['./page-layout.component.scss'],
     standalone: true,
-    imports: [AngularSplitModule, CdkDrag, CdkDropList, AsyncPipe, DynamicWidgetContainerComponent, MatMenu, MatMenuItem, MatMiniFabButton, MatMenuTrigger]
+    imports: [ AngularSplitModule, CdkDrag, CdkDropList, AsyncPipe, DynamicWidgetContainerComponent, MatMenu, MatMenuItem, MatMiniFabButton, MatMenuTrigger, MatIcon]
 })
 export class PageLayoutComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild(CdkDropList) dropList?: CdkDropList;

@@ -31,10 +31,9 @@
           formControlName="color"
           name="color"
           required>
-          <mat-option value='text'>Font</mat-option>
-          <mat-option value='primary'>Primary</mat-option>
-          <mat-option value='accent'>Accent</mat-option>
-          <mat-option value='warn'>Warn</mat-option>
+          @for(color of colors; track color) {
+            <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>

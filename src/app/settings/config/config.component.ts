@@ -209,6 +209,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
           let upgradedAppConfig: IAppConfig = {
             configVersion: 9,
             autoNightMode: this.appSettingsService.getAutoNightMode(),
+            nightModeBrightness: this.appSettingsService.getNightModeBrightness(),
             dataSets: cloneDeep(config.app.dataSets),
             notificationConfig: cloneDeep(config.app.notificationConfig),
             unitDefaults: cloneDeep(config.app.unitDefaults)

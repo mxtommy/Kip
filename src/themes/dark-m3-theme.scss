@@ -1,0 +1,182 @@
+// Material 3 styles file.
+// Proceed with caution if making changes to this file.
+
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+// Note: Color palettes are generated from primary: #347EFF, secondary: #bfc6dc, tertiary: #D0A600, neutral: #76777d #7c7c7c
+$_palettes: (
+  primary: (
+    0: #000000,
+    10: #001944,
+    20: #002d6d,
+    25: #003783,
+    30: #00429a,
+    35: #004db1,
+    40: #0058c9,
+    50: #1e71f1,
+    60: #548dff,
+    70: #84aaff,
+    80: #afc6ff,
+    90: #d9e2ff,
+    95: #edf0ff,
+    98: #faf8ff,
+    99: #fefbff,
+    100: #ffffff,
+  ),
+  secondary: (
+    0: #000000,
+    10: #001a42,
+    20: #002e6b,
+    25: #003880,
+    30: #13448f,
+    35: #24509b,
+    40: #335ca8,
+    50: #4e76c3,
+    60: #6990df,
+    70: #84aafc,
+    80: #aec6ff,
+    90: #d8e2ff,
+    95: #edf0ff,
+    98: #faf9ff,
+    99: #fefbff,
+    100: #ffffff,
+  ),
+  tertiary: (
+    0: #000000,
+    10: #241a00,
+    20: #3d2f00,
+    25: #4a3900,
+    30: #584400,
+    35: #665000,
+    40: #745b00,
+    50: #927300,
+    60: #b08c00,
+    70: #d0a600,
+    80: #eec12c,
+    90: #ffe08b,
+    95: #ffefcd,
+    98: #fff8f1,
+    99: #fffbff,
+    100: #ffffff,
+  ),
+  neutral: (
+    0: #000000,
+    10: #191c1d,
+    20: #2e3132,
+    25: #393c3d,
+    30: #444748,
+    35: #505354,
+    40: #5c5f5f,
+    50: #747878,
+    60: #8e9192,
+    70: #a9acac,
+    80: #c4c7c7,
+    90: #e1e3e3,
+    95: #eff1f1,
+    98: #f8fafa,
+    99: #fafdfd,
+    100: #ffffff,
+    4: #0b0f0f,
+    6: #101415,
+    12: #1d2021,
+    17: #272b2b,
+    22: #323536,
+    24: #363a3a,
+    87: #d8dadb,
+    92: #e6e8e9,
+    94: #eceeef,
+    96: #f2f4f4,
+  ),
+  neutral-variant: (
+    0: #000000,
+    10: #141d1f,
+    20: #293234,
+    25: #343d3f,
+    30: #3f484a,
+    35: #4b5456,
+    40: #576062,
+    50: #6f797a,
+    60: #899294,
+    70: #a3adaf,
+    80: #bfc8ca,
+    90: #dbe4e6,
+    95: #e9f2f4,
+    98: #f2fbfd,
+    99: #f6feff,
+    100: #ffffff,
+  ),
+  error: (
+    0: #000000,
+    10: #410002,
+    20: #690005,
+    25: #7e0007,
+    30: #93000a,
+    35: #a80710,
+    40: #ba1a1a,
+    50: #de3730,
+    60: #ff5449,
+    70: #ff897d,
+    80: #ffb4ab,
+    90: #ffdad6,
+    95: #ffedea,
+    98: #fff8f7,
+    99: #fffbff,
+    100: #ffffff,
+  ),
+);
+
+$_rest: (
+  secondary: map.get($_palettes, secondary),
+  neutral: map.get($_palettes, neutral),
+  neutral-variant: map.get($_palettes,  neutral-variant),
+  error: map.get($_palettes, error),
+);
+$_primary: map.merge(map.get($_palettes, primary), $_rest);
+$_tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+
+// Define the theme object.
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: $_primary,
+    tertiary: $_tertiary,
+    use-system-variables: true,
+  ),
+  typography: (
+    use-system-variables: true,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+$widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
+$widget-action-button-color: mat.get-theme-color($dark-theme, surface-bright);
+$widget-action-button-foreground-color: mat.get-theme-color($dark-theme, on-background);
+$widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-container);
+$background: mat.get-theme-color($dark-theme, neutral, 10);
+
+$kip-dark-color: (
+  blue: #3298ff, blue-dim: #359affc6, blue-dimmer: #063b7178,
+  green: #00f500, green-dim: #00f500b6, green-dimmer: #00680078,
+  purple: #A020F0, purple-dim: #A020F0b6, purple-dimmer: #4a0f6e78,
+  yellow: #fff700, yellow-dim: #fff700b6, yellow-dimmer: #726e0078,
+  pink: #FC0FC0, pink-dim: #FC0FC0b6, pink-dimmer: #6d075378,
+  orange: #FFA500, orange-dim: #FFA500b6, orange-dimmer: #714a0078,
+  white: #FFFFFF, white-dim: #ffffffb6, white-dimmer: #ffffff29,
+  grey: #B5B5B5, grey-dim: #B5B5B5b6, grey-dimmer: #1a1a1a,
+  port: #8F0000,
+  starboard: #008700,
+  zone-nominal: #0164FA,
+  zone-alert: #FAF004,
+  zone-warn: #FF7D29,
+  zone-alarm: #E90000,
+  zone-emergency: #760000,
+  widget-card-background-color: #{$widget-card-background-color},
+  widget-card-border-color: #252525,
+  widget-action-button-color: #{$widget-action-button-color},
+  widget-action-button-foreground-color: #{$widget-action-button-foreground-color},
+  widget-action-delete-button-color: #{$widget-action-delete-button-color},
+  background: #{$background},
+);

@@ -2,20 +2,22 @@
      <h1 mat-dialog-title>Widget Selection</h1>
     <mat-dialog-content>
       <mat-tab-group class="tabGroup" [selectedIndex]="selectedTab.value" (selectedIndexChange)="selectedTab.setValue($event)">
-        <mat-tab *ngFor="let item of widgetList | keyvalue: keepOrder " [label]="item.key">
-          <div class="tab-content ">
-
-            <mat-form-field class="full-width" appearance="outline" floatLabel="always">
-              <mat-label>Type</mat-label>
-              <mat-select placeholder="Click or tap to list types..." [(ngModel)]="newWidget" name="newWidget">
-                  <mat-option *ngFor="let widget of item.value" [value]="widget.name">
+        @for (item of widgetList | keyvalue: keepOrder; track item) {
+          <mat-tab [label]="item.key">
+            <div class="tab-content ">
+              <mat-form-field class="form-field-width">
+                <mat-label>Type</mat-label>
+                <mat-select placeholder="Click or tap to list types..." [(ngModel)]="newWidget" name="newWidget">
+                  @for (widget of item.value; track widget) {
+                    <mat-option [value]="widget.name">
                       {{widget.description}}
-                  </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-          </div>
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
           </mat-tab>
+        }
         </mat-tab-group>
     </mat-dialog-content>
     <mat-divider></mat-divider>

@@ -1,0 +1,19 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  .kip-widget-card-colors {
+    background-color: var(--kip-widget-card-background-color);
+  }
+
+  .kip-widget-action-button-color {
+    background-color: var(--kip-widget-action-button-color);
+    color: var(--kip-widget-action-button-foreground-color);
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

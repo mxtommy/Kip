@@ -9,7 +9,7 @@ import { UntypedFormControl, FormsModule } from '@angular/forms';
 import { cloneDeep } from "lodash-es";
 
 import { DynamicWidgetDirective } from '../../directives/dynamic-widget.directive';
-import { DynamicWidget, IWidget, ITheme } from '../../interfaces/widgets-interface';
+import { DynamicWidget, IWidget } from '../../interfaces/widgets-interface';
 import { ModalWidgetConfigComponent } from '../../../widget-config/modal-widget-config/modal-widget-config.component';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { WidgetManagerService } from '../../services/widget-manager.service';
@@ -20,8 +20,9 @@ import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { MatMiniFabButton, MatButton } from '@angular/material/button';
-import { NgIf, NgFor, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { MatCard } from '@angular/material/card';
+import { AppService, ITheme } from '../../services/app-service';
 
 
 @Component({
@@ -29,62 +30,31 @@ import { MatCard } from '@angular/material/card';
     templateUrl: './dynamic-widget-container.component.html',
     styleUrls: ['./dynamic-widget-container.component.scss'],
     standalone: true,
-    imports: [MatCard, DynamicWidgetDirective, NgIf, MatMiniFabButton]
+    imports: [MatCard, DynamicWidgetDirective, MatMiniFabButton]
 })
 export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
   @Input('splitUUID') splitUUID: string;   // Get UUID from layout-split. We use it as the widgetUUID later for the widget
   @Input('unlockStatus') unlockStatus: boolean; // From layout-split.
   @ViewChild(DynamicWidgetDirective, {static: true, read: ViewContainerRef}) dynamicWidgetContainerRef : ViewContainerRef; // Parent layout-split container ref
 
-  // hack to access material-theme palette colors
-  @ViewChild('primary', {static: true, read: ElementRef}) private primary: ElementRef;
-  @ViewChild('accent', {static: true, read: ElementRef}) private accent: ElementRef;
-  @ViewChild('warn', {static: true, read: ElementRef}) private warn: ElementRef;
-  @ViewChild('primaryDark', {static: true, read: ElementRef}) private primaryDark: ElementRef;
-  @ViewChild('accentDark', {static: true, read: ElementRef}) private accentDark: ElementRef;
-  @ViewChild('warnDark', {static: true, read: ElementRef}) private warnDark: ElementRef;
-  @ViewChild('background', {static: true, read: ElementRef}) private background: ElementRef;
-  @ViewChild('text', {static: true, read: ElementRef}) private text: ElementRef;
-  @ViewChild('textDark', {static: true, read: ElementRef}) private textDark: ElementRef;
-  @ViewChild('textPrimaryLight', {static: true, read: ElementRef}) private textPrimaryLight: ElementRef;
-  @ViewChild('textPrimaryDark', {static: true, read: ElementRef}) private textPrimaryDark: ElementRef;
-  @ViewChild('textAccentLight', {static: true, read: ElementRef}) private textAccentLight: ElementRef;
-  @ViewChild('textAccentDark', {static: true, read: ElementRef}) private textAccentDark: ElementRef;
-  @ViewChild('textWarnLight', {static: true, read: ElementRef}) private textWarnLight: ElementRef;
-  @ViewChild('textWarnDark', {static: true, read: ElementRef}) private textWarnDark: ElementRef;
-
   private themeNameSub: Subscription = null;
+  private themeColorSubscription: Subscription = null;
   private themeChangeTimer = null;
   private splitWidgetSettings: IWidget;
-  private themeColor: ITheme = {primary: '', accent: '', warn: '', primaryDark: '', accentDark: '', warnDark: '', background: '', text: '', textDark: '', textPrimaryLight: '', textPrimaryDark: '', textAccentLight:'', textAccentDark:'', textWarnLight:'', textWarnDark:''};
+  private themeColor: ITheme = null;
   public widgetInstance;
 
   constructor(
-      public dialog: MatDialog,
-      private appSettingsService: AppSettingsService, // need for theme change subscription
-      private WidgetManagerService: WidgetManagerService,
-      private widgetListService: WidgetListService) { }
+    public dialog: MatDialog,
+    private appSettingsService: AppSettingsService, // need for theme change subscription
+    private WidgetManagerService: WidgetManagerService,
+    private widgetListService: WidgetListService,
+    private app: AppService) { }
 
   ngOnInit() {
+    this.themeColorSubscription = this.app.cssThemeColorRoles$.subscribe(t => this.themeColor = t);
     this.subscribeTheme();
-  }
 
-  private loadTheme(): void {
-    this.themeColor.primary = getComputedStyle(this.primary.nativeElement).color;
-    this.themeColor.accent = getComputedStyle(this.accent.nativeElement).color;
-    this.themeColor.warn = getComputedStyle(this.warn.nativeElement).color;
-    this.themeColor.primaryDark = getComputedStyle(this.primaryDark.nativeElement).color;
-    this.themeColor.accentDark = getComputedStyle(this.accentDark.nativeElement).color;
-    this.themeColor.warnDark = getComputedStyle(this.warnDark.nativeElement).color;
-    this.themeColor.background = getComputedStyle(this.background.nativeElement).color;
-    this.themeColor.text = getComputedStyle(this.text.nativeElement).color;
-    this.themeColor.textDark = getComputedStyle(this.textDark.nativeElement).color;
-    this.themeColor.textPrimaryLight = getComputedStyle(this.textPrimaryLight.nativeElement).color;
-    this.themeColor.textPrimaryDark = getComputedStyle(this.textPrimaryDark.nativeElement).color;
-    this.themeColor.textAccentLight = getComputedStyle(this.textAccentLight.nativeElement).color;
-    this.themeColor.textAccentDark = getComputedStyle(this.textAccentDark.nativeElement).color;
-    this.themeColor.textWarnLight = getComputedStyle(this.textWarnLight.nativeElement).color;
-    this.themeColor.textWarnDark = getComputedStyle(this.textWarnDark.nativeElement).color;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -101,6 +71,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.themeNameSub?.unsubscribe();
+    this.themeColorSubscription?.unsubscribe();
     clearTimeout(this.themeChangeTimer);
   }
 
@@ -164,11 +135,11 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
       this.splitWidgetSettings.config = this.widgetInstance.defaultConfig; // load default in current instance.
   }
 
+  // We keep this for when we make a light theme
   private subscribeTheme() {
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe(
       themeChange => {
         this.themeChangeTimer = setTimeout(() => {   // delay so browser getComputedStyles has time to complete Material Theme style changes.
-          this.loadTheme();
           this.instantiateWidget();
          }, 50);
     })
@@ -181,7 +152,7 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
     templateUrl: './dynamic-widget-container.modal.html',
     styleUrls: ['./dynamic-widget-container.component.scss'],
     standalone: true,
-    imports: [FormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, NgFor, MatTab, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, KeyValuePipe]
+    imports: [FormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatDialogActions, MatButton, MatDialogClose, KeyValuePipe]
 })
 export class DynamicWidgetContainerModalComponent implements OnInit {
 
@@ -206,7 +177,7 @@ export class DynamicWidgetContainerModalComponent implements OnInit {
     this.widgetList = this.widgetListService.getList();
     this.newWidget = this.data.currentType;
     // find index of the group containing the existing type;
-    let index=0;
+    let index = 0;
     for (let [group, groupWidgetList] of Object.entries(this.widgetList)) {
       if (groupWidgetList.findIndex(w => w.name == this.data.currentType) >= 0 ) {
         this.selectedTab.setValue(index);

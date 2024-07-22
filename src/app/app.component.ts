@@ -12,11 +12,11 @@ import { DatasetService } from './core/services/data-set.service';
 import { NotificationsService } from './core/services/notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
 import { AppService } from './core/services/app-service';
-import { NgIf } from '@angular/common';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import { MatButton } from '@angular/material/button';
-import { AlarmMenuComponent } from './core/components/alarm-menu/alarm-menu.component';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+import { NotificationMenuComponent } from './core/components/notification-menu/notification-menu.component';
+import { RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 
 declare var NoSleep: any; //3rd party
 
@@ -25,7 +25,7 @@ declare var NoSleep: any; //3rd party
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [RouterOutlet, AlarmMenuComponent, MatButton, MatMenuTrigger, MatMenu, MatMenuItem, RouterLink, NgIf]
+    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule]
 })
 export class AppComponent implements OnInit, OnDestroy {
 
@@ -39,7 +39,8 @@ export class AppComponent implements OnInit, OnDestroy {
   fullscreenStatus = false;
 
   themeName: string;
-  activeThemeClass: string = 'modern-dark fullheight';
+  //TODO: Still need this?
+  // activeThemeClass: string = 'modern-dark fullheight';
   activeTheme: string;
   themeNameSub: Subscription;
 
@@ -75,27 +76,28 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Theme operations sub
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
-        this.activeThemeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
+        //TODO: See if we need to keep this to switch theme CSS class.
+      //   this.activeThemeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
 
-        if (!this.themeName) { // first run
-          this.themeName = newTheme;
-        } else  {
-          this.overlayContainer.getContainerElement().classList.remove(this.activeTheme);
-        }
+      //   if (!this.themeName) { // first run
+      //     this.themeName = newTheme;
+      //   } else  {
+      //     this.overlayContainer.getContainerElement().classList.remove(this.activeTheme);
+      //   }
 
-        if (newTheme != 'nightMode') {
-          this.isNightMode = false;
-          if (newTheme !== this.themeName) {
-            this.overlayContainer.getContainerElement().classList.add(newTheme);
-            this.themeName = newTheme;
-          } else {
-            this.overlayContainer.getContainerElement().classList.add(this.themeName);
-          }
-        } else {
-          this.overlayContainer.getContainerElement().classList.add(newTheme);
-          this.isNightMode = true;
-        }
-        this.activeTheme = newTheme;
+      //   if (newTheme != 'nightMode') {
+      //     this.isNightMode = false;
+      //     if (newTheme !== this.themeName) {
+      //       this.overlayContainer.getContainerElement().classList.add(newTheme);
+      //       this.themeName = newTheme;
+      //     } else {
+      //       this.overlayContainer.getContainerElement().classList.add(this.themeName);
+      //     }
+      //   } else {
+      //     this.overlayContainer.getContainerElement().classList.add(newTheme);
+      //     this.isNightMode = true;
+      //   }
+      //   this.activeTheme = newTheme;
       }
     );
 
@@ -179,12 +181,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   setNightMode(nightMode: boolean) {
-    this.isNightMode = nightMode;
-    if (this.isNightMode) {
-      this.appSettingsService.setThemeName("nightMode");
-    } else {
-      this.appSettingsService.setThemeName(this.themeName);
-    }
+    //TODO: See if yo still need this
+    // this.isNightMode = nightMode;
+    // if (this.isNightMode) {
+    //   this.appSettingsService.setThemeName("nightMode");
+    // } else {
+    //   this.appSettingsService.setThemeName(this.themeName);
+    // }
   }
 
   unlockPage() {

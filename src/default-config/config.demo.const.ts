@@ -5,6 +5,7 @@ import { UUID } from "../app/core/utils/uuid"
 export const DemoAppConfig: IAppConfig = {
   "configVersion": 10,
   "autoNightMode": false,
+  "nightModeBrightness": 0.20,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
@@ -82,7 +83,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "showMin": false,
                 "numDecimal": 1,
                 "numInt": 1,
-                "textColor": "accent",
+                "color": "yellow",
                 "enableTimeout": false
             }
         },
@@ -195,7 +196,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 0,
-                "textColor": "accent"
+                "color": "yellow"
             }
         },
         {
@@ -226,7 +227,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 2,
-                "textColor": "warn",
+                "color": "pink",
                 "enableTimeout": false
             }
         },
@@ -251,7 +252,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "showMin": true,
                 "numDecimal": 1,
                 "numInt": 1,
-                "textColor": "text",
+                "color": "white",
                 "enableTimeout": false
             }
         },
@@ -276,7 +277,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "showMin": true,
                 "numDecimal": 1,
                 "numInt": 1,
-                "textColor": "primary",
+                "color": "blue",
                 "enableTimeout": false
             }
         },
@@ -305,7 +306,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 "yScaleSuggestedMax": null,
                 "enableMinMaxScaleLimit": false,
                 "numDecimal": 1,
-                "textColor": "primary",
+                "color": "blue",
                 "minValue": null,
                 "maxValue": null
             }
@@ -344,7 +345,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "numInt": 1,
                 "numDecimal": 0,
-                "textColor": "accent",
+                "color": "yellow",
                 "enableTimeout": false
             }
         },
@@ -478,7 +479,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
                 },
                 "dateFormat": "dd/MM HH:mm",
                 "dateTimezone": "America/Toronto",
-                "textColor": "text",
+                "color": "white",
                 "enableTimeout": false
             }
         }

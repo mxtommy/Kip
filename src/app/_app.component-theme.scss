@@ -1,0 +1,19 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  .navbar-button:not(:disabled) {
+    color: var(--sys-on-background);
+  }
+
+  .navbar-colors {
+    background-color: var(--kip-widget-card-background-color);
+    border-color: var(--kip-widget-card-border-color);
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

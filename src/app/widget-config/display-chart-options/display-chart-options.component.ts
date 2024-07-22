@@ -1,14 +1,14 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { DatasetService } from '../../core/services/data-set.service';
+import { AppService } from '../../core/services/app-service';
 import { MatCardModule } from '@angular/material/card';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { Component, Input, OnInit } from '@angular/core';
-import { DatasetService } from '../../core/services/data-set.service';
 import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
 import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
-
 
 @Component({
   selector: 'config-display-chart-options',
@@ -42,14 +42,17 @@ export class DisplayChartOptionsComponent implements OnInit {
   @Input () yScaleMax!: UntypedFormControl;
 
   @Input () numDecimal!: UntypedFormControl;
-  @Input () textColor!: UntypedFormControl;
+  @Input () color!: UntypedFormControl;
+  protected colors = [];
 
 
   constructor(
     private dsService: DatasetService,
+    private app: AppService
   ) { }
 
   ngOnInit(): void {
+    this.colors = this.app.configurableThemeColors;
     if (!this.showAverageData.value) {
       this.trackAgainstAverage.disable();
     }

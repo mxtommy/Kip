@@ -1,106 +1,41 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-
-@mixin app-theme($theme) {
-  $accent: map-get($theme, accent);
-  $background: map-get($theme, background);
-  $foreground: map-get($theme, foreground);
-  $app-defaults: map-get($theme, app-defaults);
-
-  .app-defaults {
-    background-color: mat.m2-get-color-from-palette($app-defaults, app-background);
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  .theme-menu {
-    background-color: mat.m2-get-color-from-palette($accent, A200);
-  }
-
-  .menuBarButtonGroup {
-    background-color: mat.m2-get-color-from-palette($foreground, divider);
-  }
-
-  button.mat-mdc-button-base {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  mat-select.mat-mdc-select {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  input.mat-mdc-input-element.mdc-text-field__input.cdk-text-field-autofill-monitored {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-  span.mat-mdc-dialog-title.mdc-dialog__title {
-    color: mat.m2-get-color-from-palette($foreground, text);
-  }
-
-
-}
-
-.fullheight {
-  height: 100%;
-}
-
-.mainContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  height: 100%;
-}
-
-.mainWindow {
-  flex: 30;
-  overflow: auto;
+.dashboard-container {
+  padding: 4px 4px 2px 4px;
+  height: calc(100% - 50px - 6px);
  }
 
-.menuBar {
-  flex: 1;
-}
-
-.menuBarContainer {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-}
-
-.menuBarContainer .menuBarButtonGroups {
-  flex-grow: 1;
-}
-
-.menuBarContainer .menuBarButtonGroups:first-child {
-  text-align: left;
-  margin-left: 2px;
-}
-
-.menuBarContainer .menuBarButtonGroups {
-  text-align: center;
-}
-
-.menuBarContainer .menuBarButtonGroups:last-child {
-  text-align: right;
-  margin-right: 2px;
-}
-
-.menuBarButtonGroups .menuBarNavButtons {
-  width: 99%;
+.navbar-container {
   height: 48px;
+  width: 100%;
+  --mdc-text-button-container-shape: 10px;
+  border-top-style: var(--kip-widget-card-border-style);
+  border-top-width: var(--kip-widget-card-border-width);
 }
 
-.menuBarButtonGroups .menuBarAlarmsButton {
-  width: 25%;
-  height: 48px;
+.navbar-navigation {
+  display: inline-block;
+  height: 100%;
+  min-width: calc((100% - 168px) / 2);
+  padding: 0px 5px;
 }
 
-.menuBarButtonGroups .menuBarSettingsButton {
-  width: 25%;
-  height: 48px;
+.navbar-actions {
+  display: inline-block;
+  height: 100%;
+  min-width: 64px;
+  padding: 0px 5px;
 }
 
-.menu-items-with-icons {
-  display: flex;
-  align-items: center;
-  width: max-content;
+.change-page-button {
+  width: 100%;
+  height: 100%;
 }
+
+.actions-button {
+  height: 100%;
+}
+
+:host ::ng-deep .navbar-icon {
+  font-size: 2rem;
+  font-weight: 600;
+}
+

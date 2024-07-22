@@ -86,7 +86,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       yScaleMin: null,
       yScaleMax: null,
       numDecimal: 1,
-      textColor: 'primary',
+      color: 'white',
     };
 
     Chart.register(annotationPlugin, ChartStreaming);
@@ -167,16 +167,18 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
             minute: `mm\''`,
             second: `ss"`,
             millisecond: "SSS"
-          }
+          },
         },
         ticks: {
           autoSkip: false,
+          color: this.getThemeColors().averageChartLine,
           major: {
             enabled: true
           }
         },
         grid: {
-          display: true
+          display: true,
+          color: this.theme.whiteDimmer
         }
       },
       y: {
@@ -187,7 +189,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
         max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
         beginAtZero: this.widgetProperties.config.startScaleAtZero,
-        // grace: "5%",
         title: {
           display: false,
           text: "Value Axis",
@@ -196,12 +197,14 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         ticks: {
           maxTicksLimit: 8,
           precision: this.widgetProperties.config.numDecimal,
+          color: this.getThemeColors().averageChartLine,
           major: {
             enabled: true,
           }
         },
         grid: {
           display: true,
+          color: this.theme.whiteDimmer,
         }
       }
     }
@@ -247,7 +250,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               position: "start",
               yAdjust: 12,
               padding: 4,
-              color: 'rgba(255,255,255,0.6)',
+              color: this.getThemeColors().averageChartLine,
               backgroundColor: 'rgba(63,63,63,0.0)'
             }
           },
@@ -262,7 +265,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               position: "start",
               yAdjust: -12,
               padding: 4,
-              color:  'rgba(255,255,255,0.6)',
+              color: this.getThemeColors().averageChartLine,
               backgroundColor: 'rgba(63,63,63,0.0)'
             }
           },
@@ -278,7 +281,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
               display: true,
               position: "start",
               padding: 4,
-              color: 'rgba(255,255,255,0.6)',
+              color: this.getThemeColors().chartValue,
               backgroundColor: 'rgba(63,63,63,0.7)'
             }
           }
@@ -296,7 +299,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private getThemeColors(): IChartColors {
-    const widgetColor = this.widgetProperties.config.textColor;
+    const widgetColor = this.widgetProperties.config.color;
     const colors: IChartColors = {
       valueLine: null,
       valueFill: null,
@@ -308,78 +311,148 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     };
 
     switch (widgetColor) {
-      case "text":
+      case "white":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.textDark;
-          colors.valueFill = this.theme.textDark.replace(/[\d\.]+\)$/g, '0.15)');
-          colors.averageLine = this.theme.text;
-          colors.averageFill = this.theme.text;
+          colors.valueLine = this.theme.whiteDimmer;
+          colors.valueFill = this.theme.whiteDimmer;
+          colors.averageLine = this.theme.white;
+          colors.averageFill = this.theme.white;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.text;
-          colors.valueFill = this.theme.text;
-          colors.averageLine = this.theme.textDark;
-          colors.averageFill = this.theme.textDark.replace(/[\d\.]+\)$/g, '0.15)');
-          colors.chartValue = this.theme.text;
+          colors.valueLine = this.theme.white;
+          colors.valueFill = this.theme.white;
+          colors.averageLine = this.theme.whiteDimmer;
+          colors.averageFill = this.theme.whiteDimmer;
+          colors.chartValue = this.theme.white;
         }
-        colors.averageChartLine = this.theme.textDark;
-        colors.chartLabel = this.theme.textDark;
-
+        colors.averageChartLine = this.theme.whiteDim;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
-      case "primary":
+      case "blue":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.textPrimaryDark;
-          colors.valueFill = this.theme.textPrimaryDark.replace(/[\d\.]+\)$/g, '0.25)');
-          colors.averageLine = this.theme.textPrimaryLight;
-          colors.averageFill = this.theme.textPrimaryLight;
+          colors.valueLine = this.theme.blueDimmer;
+          colors.valueFill = this.theme.blueDimmer;
+          colors.averageLine = this.theme.blue;
+          colors.averageFill = this.theme.blue;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.textPrimaryLight;
-          colors.valueFill = this.theme.textPrimaryLight;
-          colors.averageLine = this.theme.textPrimaryDark;
-          colors.averageFill = this.theme.textPrimaryDark.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.blue;
+          colors.valueFill = this.theme.blue;
+          colors.averageLine = this.theme.blueDimmer;
+          colors.averageFill = this.theme.blueDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.textDark;
-        colors.chartLabel = this.theme.textDark;
+        colors.averageChartLine = this.theme.blueDim;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
-      case "accent":
+      case "green":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.textAccentDark;
-          colors.valueFill = this.theme.textAccentDark.replace(/[\d\.]+\)$/g, '0.25)');
-          colors.averageLine = this.theme.textAccentLight;
-          colors.averageFill = this.theme.textAccentLight;
+          colors.valueLine = this.theme.greenDimmer;
+          colors.valueFill = this.theme.greenDimmer;
+          colors.averageLine = this.theme.green;
+          colors.averageFill = this.theme.green;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.textAccentLight;
-          colors.valueFill = this.theme.textAccentLight;
-          colors.averageLine = this.theme.textAccentDark;
-          colors.averageFill = this.theme.textAccentDark.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.green;
+          colors.valueFill = this.theme.green;
+          colors.averageLine = this.theme.greenDimmer;
+          colors.averageFill = this.theme.greenDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.textDark;
-        colors.chartLabel = this.theme.textDark;
+        colors.averageChartLine = this.theme.greenDim;
+        colors.chartLabel = this.theme.whiteDim;
         break;
 
-      case "warn":
+      case "pink":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.textWarnDark;
-          colors.valueFill = this.theme.textWarnDark.replace(/[\d\.]+\)$/g, '0.25)');
-          colors.averageLine = this.theme.textWarnLight;
-          colors.averageFill = this.theme.textWarnLight;
+          colors.valueLine = this.theme.pinkDimmer;
+          colors.valueFill = this.theme.pinkDimmer;
+          colors.averageLine = this.theme.pink;
+          colors.averageFill = this.theme.pink;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.textWarnLight;
-          colors.valueFill = this.theme.textWarnLight;
-          colors.averageLine = this.theme.textWarnDark;
-          colors.averageFill = this.theme.textWarnDark.replace(/[\d\.]+\)$/g, '0.25)');
+          colors.valueLine = this.theme.pink;
+          colors.valueFill = this.theme.pink;
+          colors.averageLine = this.theme.pinkDimmer;
+          colors.averageFill = this.theme.pinkDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.textDark;
-        colors.chartLabel = this.theme.textDark;
+        colors.averageChartLine = this.theme.pinkDim;
+        colors.chartLabel = this.theme.whiteDim;
+        break;
 
+      case "orange":
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.orangeDimmer;
+          colors.valueFill = this.theme.orangeDimmer;
+          colors.averageLine = this.theme.orange;
+          colors.averageFill = this.theme.orange;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.orange;
+          colors.valueFill = this.theme.orange;
+          colors.averageLine = this.theme.orangeDimmer;
+          colors.averageFill = this.theme.orangeDimmer;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.orangeDim;
+        colors.chartLabel = this.theme.whiteDim;
+        break;
+
+      case "purple":
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.purpleDimmer;
+          colors.valueFill = this.theme.purpleDimmer;
+          colors.averageLine = this.theme.purple;
+          colors.averageFill = this.theme.purple;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.purple;
+          colors.valueFill = this.theme.purple;
+          colors.averageLine = this.theme.purpleDimmer;
+          colors.averageFill = this.theme.purpleDimmer;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.purpleDim;
+        colors.chartLabel = this.theme.whiteDim;
+        break;
+
+      case "grey":
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.greyDimmer;
+          colors.valueFill = this.theme.greyDimmer;
+          colors.averageLine = this.theme.grey;
+          colors.averageFill = this.theme.grey;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.grey;
+          colors.valueFill = this.theme.grey;
+          colors.averageLine = this.theme.greyDimmer;
+          colors.averageFill = this.theme.greyDimmer;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.greyDim;
+        colors.chartLabel = this.theme.whiteDim;
+        break;
+
+      case "yellow":
+        if (this.widgetProperties.config.trackAgainstAverage) {
+          colors.valueLine = this.theme.yellowDimmer;
+          colors.valueFill = this.theme.yellowDimmer;
+          colors.averageLine = this.theme.yellow;
+          colors.averageFill = this.theme.yellow;
+          colors.chartValue = colors.averageLine;
+        } else {
+          colors.valueLine = this.theme.yellow;
+          colors.valueFill = this.theme.yellow;
+          colors.averageLine = this.theme.yellowDimmer;
+          colors.averageFill = this.theme.yellowDimmer;
+          colors.chartValue = colors.valueFill;
+        }
+        colors.averageChartLine = this.theme.yellowDim;
+        colors.chartLabel = this.theme.whiteDim;
         break;
     }
     return colors;

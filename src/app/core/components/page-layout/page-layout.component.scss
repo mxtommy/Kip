@@ -1,4 +1,4 @@
-.as-split-gutter { //Added on all gutters.
+:host ::ng-deep .as-split-gutter { //Added on all gutters.
   background-color: transparent !important;
 }
 
@@ -6,39 +6,27 @@ as-split-area { // Added on all areas.
   overflow-y: hidden !important;
 }
 
-.as-disabled > .as-split-gutter > .as-split-gutter-icon { //Added when <as-split [disabled]="true">.
+:host ::ng-deep .as-disabled > .as-split-gutter > .as-split-gutter-icon { //Added when <as-split [disabled]="true">.
   visibility: hidden;
 
 }
-.splitArea {
+.split-area {
   width: 100%;
   height: 100%;
   position: relative;
   z-index: 500;
 }
 
-.splitMenu {
+.split-menu {
   position: absolute;
   left: 5%;
   bottom: 5%;
   z-index: 500;
 }
 
-.splitdelete {
+.split-delete {
   position: absolute;
   right: 5%;
   top: 5%;
   z-index: 500;
 }
-// TODO: Clean up the following styles once Drag & Drop is implemented
-// .cdk-drop-list-receiving {
-//   background-color: red;
-// }
-
-// .cdk-drop-list-dragging {
-//   background-color: blue;
-// }
-
-// .cdk-drop-list {
-//   border: 5px dotted gray;
-// }

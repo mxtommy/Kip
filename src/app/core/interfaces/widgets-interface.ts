@@ -1,5 +1,7 @@
+import { ITheme } from '../services/app-service';
 import { TValidSkUnits } from '../services/units.service';
-import { ISkZone, TFormat, TPolicy, TScaleType } from './signalk-interfaces';
+import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
+
 
 export enum ControlType {
   toggle = 0,
@@ -18,30 +20,6 @@ export interface DynamicWidget {
   theme: ITheme;
   defaultConfig: IWidgetSvcConfig;
   unlockStatus?: boolean; // only used by Tutorial
-}
-
-/**
- * Description of standard Angular Material Theme colors.
- *
- * @export
- * @interface ITheme
- */
-export interface ITheme {
-  primary: string;
-  accent: string;
-  warn: string;
-  primaryDark: string;
-  accentDark: string;
-  warnDark: string;
-  background: string;
-  text: string;
-  textDark: string;
-  textPrimaryLight: string;
-  textPrimaryDark: string;
-  textAccentLight: string;
-  textAccentDark: string;
-  textWarnLight: string;
-  textWarnDark: string;
 }
 
 /**
@@ -100,8 +78,8 @@ export interface IWidgetSvcConfig {
     power?: number;
   }
 
-  /** Property of selected theme color */
-  textColor?: string;
+  /** Display color  */
+  color?: string;
     /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */

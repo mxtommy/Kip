@@ -1,4 +1,6 @@
-<div class="sgWrapper" #sgWrapperDiv (onResize)="onResized($event)">
-  <canvas class="canvas-steel" id="{{widgetUUID}}" width="201" height="201">Browser does not support canvas element.</canvas>
+<div class="sgWrapper" #sgWrapperDiv [style.padding-top.px]="paddingTop" (onResize)="onResized($event)">
+  <canvas id="{{widgetUUID}}">
+    Browser does not support canvas element.
+  </canvas>
 </div>
 

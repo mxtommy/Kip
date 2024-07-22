@@ -12,6 +12,13 @@
       Enable full sunlight High Contrast, black and white display.
     </mat-checkbox>
     <br/><br/>
+    <p>Night Mode Brightness</p>
+    <mat-slider min="0" max="1" step="0.01" discrete>
+      <input #inputBrightness matSliderThumb
+      [value]="brightness"
+      (input)="setBrightness(+inputBrightness.value)">
+    </mat-slider>
+    <br/><br/>
     <h2>Notifications</h2>
     <p class="mat-card-subtitle">Notifications are integral to Signal K's data state messaging
       framework. They are designed to provide operators with important information, enabling

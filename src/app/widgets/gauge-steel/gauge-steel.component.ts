@@ -1,7 +1,7 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { ITheme } from '../../core/interfaces/widgets-interface';
+import { ITheme } from '../../core/services/app-service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
 declare let steelseries: any; // 3rd party
@@ -44,13 +44,11 @@ export const SteelFrameColors = {
 @Component({
     selector: 'gauge-steel',
     templateUrl: './gauge-steel.component.html',
-    styleUrls: ['./gauge-steel.component.css'],
+    styleUrls: ['./gauge-steel.component.scss'],
     standalone: true,
     imports: [NgxResizeObserverModule]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
-  private readonly WIDGET_SIZE_FACTOR: number = 0.97;
-
   @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
   @Input('widgetUUID') widgetUUID: string;
   @Input('subType') subType: string; // linear or radial
@@ -66,25 +64,15 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   @Input('value') value: number;
   @Input('themeColors') theme: ITheme;
 
-
-  gaugeWidth: number = 0;
-  gaugeHeight: number = 0;
-  isInResizeWindow: boolean = false;
-  gaugeStarted: boolean = false;
-  gauge;
-  gaugeOptions = {};
-  private resizeTimer = null;
-
-  sections;
+  private gaugeStarted: boolean = false;
+  private gauge;
+  private gaugeOptions = {};
+  protected paddingTop: number = 0;
 
   constructor(private unitsService: UnitsService) {
   }
 
   ngOnInit(): void {
-    const widgetSize = this.sgWrapperDiv.nativeElement.getBoundingClientRect();
-    this.gaugeOptions['size'] = (Math.min(widgetSize.height, widgetSize.width)) * this.WIDGET_SIZE_FACTOR; // radial uses size. takes only size as both the same
-    this.gaugeOptions['width'] = widgetSize.width * this.WIDGET_SIZE_FACTOR; // linear
-    this.gaugeOptions['height'] = widgetSize.height * this.WIDGET_SIZE_FACTOR; // linear
     this.buildOptions();
   }
 
@@ -132,19 +120,19 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
         let color: string;
         switch (zone.state) {
           case States.Emergency:
-            color = this.theme.warnDark;
+            color = this.theme.zoneEmergency;
             break;
           case States.Alarm:
-            color = this.theme.warnDark;
+            color = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            color = this.theme.textWarnLight;
+            color = this.theme.zoneWarn;
             break;
           case States.Alert:
-            color = this.theme.accentDark;
+            color = this.theme.zoneAlert;
             break;
           case States.Nominal:
-            color = this.theme.primaryDark;
+            color = this.theme.zoneNominal;
             break;
           default:
             color = "rgba(0,0,0,0)";
@@ -223,10 +211,20 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     if (event.contentRect.height < 50 || event.contentRect.width < 50) {
       return;
     }
-    this.gaugeOptions['size'] = (Math.min(event.contentRect.height, event.contentRect.width)) * this.WIDGET_SIZE_FACTOR; // radial uses size. takes only size as both the same
-    this.gaugeOptions['width'] = event.contentRect.width * this.WIDGET_SIZE_FACTOR; // linear
-    this.gaugeOptions['height'] = event.contentRect.height * this.WIDGET_SIZE_FACTOR; // linear
-    this.isInResizeWindow = false;
+    if (this.subType == 'radial') {
+      const size = Math.min(event.contentRect.height, event.contentRect.width);
+      const padding = size * 0.02;
+      this.gaugeOptions['size'] = size - size * 0.04; // radial uses size. takes only size as both the same
+      if (event.contentRect.height > event.contentRect.width) {
+        this.paddingTop = (event.contentRect.height - this.gaugeOptions['size']) / 2 + padding;
+      } else {
+        this.paddingTop = padding;
+      }
+
+    } else {
+      this.gaugeOptions['width'] = event.contentRect.width; // linear
+      this.gaugeOptions['height'] = event.contentRect.height; // linear
+    }
     this.startGauge();
   }
 

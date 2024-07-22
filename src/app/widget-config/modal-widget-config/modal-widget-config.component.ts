@@ -17,6 +17,7 @@ import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-opt
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
+import { AppService } from '../../core/services/app-service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
@@ -44,6 +45,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
   public isPathArray: boolean = false;
   public addPathEvent: IWidgetPath;
+  public colors = [];
 
   constructor(
     public dialog: MatDialog,
@@ -51,6 +53,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     private fb : UntypedFormBuilder,
     private DatasetService: DatasetService,
     private units: UnitsService,
+    private app: AppService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
   ) { }
 
@@ -59,6 +62,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.setFormOptions();
+    this.colors = this.app.configurableThemeColors;
   }
 
   private generateFormGroups(formData: Object, parent?: string): UntypedFormGroup {
@@ -349,8 +353,8 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('verticalGraph') as UntypedFormControl;
   }
 
-  get textColorToControl(): UntypedFormControl {
-    return this.formMaster.get('textColor') as UntypedFormControl;
+  get colorToControl(): UntypedFormControl {
+    return this.formMaster.get('color') as UntypedFormControl;
   }
 
   get dateFormatToControl(): UntypedFormControl {

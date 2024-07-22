@@ -1,27 +1,24 @@
-import { AppSettingsService } from '../../core/services/app-settings.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
-import { ISkMetadata } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'app-widget-gauge-steel',
     templateUrl: './widget-gauge-steel.component.html',
-    styleUrls: ['./widget-gauge-steel.component.css'],
+    styleUrls: ['./widget-gauge-steel.component.scss'],
     standalone: true,
     imports: [GaugeSteelComponent]
 })
 export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;
 
-  public zones = [];
+  protected zones = [];
 
   // Zones support
-  private meta: ISkMetadata = null;
   private metaSub: Subscription;
 
-  constructor(private settings: AppSettingsService) {
+  constructor() {
     super();
 
     this.defaultConfig = {
