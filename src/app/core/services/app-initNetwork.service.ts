@@ -44,6 +44,7 @@ export class AppNetworkInitService implements OnDestroy {
 
   public async initNetworkServices() {
     this.loadLocalStorageConfig();
+    this.preloadFonts();
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
@@ -110,6 +111,67 @@ export class AppNetworkInitService implements OnDestroy {
       this.config.configVersion = 10;
       this.setLocalStorageConfig();
       console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
+    }
+  }
+
+  private preloadFonts (): void {
+    // Preload fonts else browser can delay and cause canvas font issues
+    const fonts = [
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmSU5fChc4AMP6lbBP.woff2)",
+        options: {
+          weight: "300",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmSU5fBBc4AMP6lQ.woff2)",
+        options: {
+          weight: "300",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOmCnqEu92Fr1Mu7GxKKTU1Kvnz.woff2)",
+        options: {
+          weight: "400",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2)",
+        options: {
+          weight: "400",
+          style: "normal"
+        }
+      },
+    {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmEU9fChc4AMP6lbBP.woff2)",
+        options: {
+          weight: "500",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmEU9fBBc4AMP6lQ.woff2)",
+        options: {
+          weight: "500",
+          style: "normal"
+        }
+      }
+    ];
+
+    for (const {family, src, options} of fonts) {
+      const font = new FontFace(family, src, options);
+      font.load()
+        .then(() => document.fonts.add(font))
+        .catch(err => console.log(`[AppInit Network Service] Error loading fonts: ${err}`));
     }
   }
 

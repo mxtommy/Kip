@@ -148,6 +148,7 @@ app-root {
 }
 
 body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
   margin: 0;
   touch-action: none;
   filter: brightness(var(--kip-nightModeBrightness));

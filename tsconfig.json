@@ -19,7 +19,8 @@
     ],
     "lib": [
       "es2020",
-      "dom"
+      "DOM",
+      "DOM.Iterable"
     ],
     "module": "es2020",
     "baseUrl": "./",
