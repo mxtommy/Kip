@@ -1,0 +1,9 @@
+<div class="dialogue-header">
+  <h5 mat-dialog-title>{{data.title}}</h5>
+  <button mat-icon-button class="dialog-close-icon" [mat-dialog-close]="false">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<mat-dialog-content>
+  <ng-container *ngComponentOutlet="data.componentType"/>
+</mat-dialog-content>

@@ -65,7 +65,7 @@
 </mat-menu>
 
 <mat-menu #configMenu="matMenu" xPosition="before">
-  <button mat-menu-item routerLink="/settings">
+  <button mat-menu-item (click)="OpenSettingsDialog()">
     <mat-icon>settings</mat-icon>
     <span>Settings</span>
   </button>

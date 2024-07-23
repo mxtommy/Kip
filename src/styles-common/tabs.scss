@@ -9,3 +9,10 @@
   margin: 20px;
   margin-top: 10px;
 }
+
+.rounded-card {
+  margin-top: 10px;
+  // background-color: mat.m2-get-color-from-palette($foreground, dividers);
+  border-radius: 4px;
+  padding: 10px;
+}
