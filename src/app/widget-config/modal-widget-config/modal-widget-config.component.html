@@ -1,5 +1,5 @@
 <form (ngSubmit)="submitConfig()" [formGroup]="formMaster">
-  <span mat-dialog-title>{{titleDialog}}</span>
+  <h6 mat-dialog-title>{{titleDialog}}</h6>
   <mat-dialog-content>
     <mat-tab-group>
       <mat-tab label="Display">
@@ -386,7 +386,7 @@
   </mat-dialog-content>
   <mat-divider></mat-divider>
   <mat-dialog-actions>
-    <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
-    <button mat-raised-button type="submit" [disabled]="!formMaster.valid" >Save</button>
+    <button type="button" mat-dialog-close mat-flat-button>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="!formMaster.valid" >Save</button>
   </mat-dialog-actions>
 </form>

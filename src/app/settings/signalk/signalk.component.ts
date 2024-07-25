@@ -1,3 +1,4 @@
+import { MatIconModule } from '@angular/material/icon';
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
@@ -43,8 +44,8 @@ import ChartStreaming from '@robloche/chartjs-plugin-streaming';
         MatTooltip,
         MatButton,
         MatDivider,
-        NgIf,
         SlicePipe,
+        MatIconModule
     ],
 })
 

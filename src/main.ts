@@ -105,10 +105,8 @@ bootstrapApplication(AppComponent, {
     {
       provide: MAT_DIALOG_DEFAULT_OPTIONS,
       useValue: {
-        panelClass: "mat-dialog-panel",
-        backdropClass: "mat-dialog-backdrop",
-        minWidth: "60%",
-        minHeight: "50%",
+        hasBackdrop: true,
+        disableClose: true,
         autoFocus: "first-tabbable",
       },
     },

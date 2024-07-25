@@ -1,7 +1,7 @@
+import { ComponentType } from '@angular/cdk/portal';
 import { AuthenticationService } from './core/services/authentication.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './core/services/layout-splits.service';
@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { NotificationMenuComponent } from './core/components/notification-menu/notification-menu.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { DialogService } from './core/services/dialog.service';
 
 declare var NoSleep: any; //3rd party
 
@@ -28,30 +29,22 @@ declare var NoSleep: any; //3rd party
     imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule]
 })
 export class AppComponent implements OnInit, OnDestroy {
-
   noSleep = new NoSleep();
-
   pageName: string = '';
-
   unlockStatus: boolean = false;
   unlockStatusSub: Subscription;
-
   fullscreenStatus = false;
-
   themeName: string;
   //TODO: Still need this?
   // activeThemeClass: string = 'modern-dark fullheight';
   activeTheme: string;
   themeNameSub: Subscription;
-
   isNightMode: boolean = false;
-
   appNotificationSub: Subscription;
   connectionStatusSub: Subscription;
 
   constructor(
     private _snackBar: MatSnackBar,
-    private overlayContainer: OverlayContainer,
     private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
     public appSettingsService: AppSettingsService, // needs storage & AppInit
     private DatasetService: DatasetService, // needs AppSettingsService & SignalKDataService
@@ -59,6 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
+    private dialog: DialogService
     ) {}
 
 
@@ -188,6 +182,13 @@ export class AppComponent implements OnInit, OnDestroy {
     // } else {
     //   this.appSettingsService.setThemeName(this.themeName);
     // }
+  }
+
+  protected OpenSettingsDialog(): void {
+    this.dialog.openFrameDialog({
+      title: 'Settings',
+      component: 'settings',
+    }, true).subscribe();
   }
 
   unlockPage() {

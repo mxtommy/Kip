@@ -50,11 +50,11 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     ) { }
 
   ngOnInit() {
-    this.loadDatasets();
+    this.tableData.data = this.dsService.list();
   }
 
   private loadDatasets() {
-    this.tableData.data = this.dsService.list();
+
   }
 
   ngAfterViewInit() {
@@ -79,11 +79,13 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
       if (thisDataset) {
         dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
-          data: thisDataset
+          data: thisDataset,
+          disableClose: false,
         });
       }
     } else {
         dialogRef = this.dialog.open(SettingsDatasetsModalComponent, {
+          disableClose: false,
         });
     }
 

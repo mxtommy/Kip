@@ -1,17 +1,15 @@
-.flex-container {
+.chart-flex-container {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   margin: 15px 0px 15px 0px;
   gap: 15px;
   align-items: stretch;
 }
 
-.panel-group {
+.chart-panel-group {
   min-width: 250px;
   flex-grow: 1;
-}
-
-.panel-group-label {
-  width: 100%;
 }
 
 .no-margin {

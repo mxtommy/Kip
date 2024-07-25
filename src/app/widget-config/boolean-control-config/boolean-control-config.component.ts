@@ -9,6 +9,7 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AsyncPipe } from '@angular/common';
 import { ObjectKeysPipe } from './../../core/pipes/object-keys.pipe';
+import { MatIconModule } from '@angular/material/icon';
 
 export interface IDeleteEventObj {
   ctrlIndex: number,
@@ -20,7 +21,7 @@ export interface IDeleteEventObj {
     templateUrl: './boolean-control-config.component.html',
     styleUrls: ['./boolean-control-config.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, AsyncPipe, ObjectKeysPipe]
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, AsyncPipe, ObjectKeysPipe, MatIconModule]
 })
 export class BooleanControlConfigComponent implements OnInit {
   @Input() ctrlFormGroup!: UntypedFormGroup;

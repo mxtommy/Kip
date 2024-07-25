@@ -8,6 +8,7 @@ import { MatMiniFabButton } from '@angular/material/button';
 import { BooleanControlConfigComponent, IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { NgFor } from '@angular/common';
 import { Subscription } from 'rxjs';
+import { MatIconModule } from '@angular/material/icon';
 
 
 @Component({
@@ -21,6 +22,7 @@ import { Subscription } from 'rxjs';
         NgFor,
         BooleanControlConfigComponent,
         MatMiniFabButton,
+        MatIconModule
     ],
 })
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {

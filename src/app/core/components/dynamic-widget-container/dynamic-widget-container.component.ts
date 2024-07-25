@@ -98,7 +98,9 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   public selectWidget(): void {
     let dialogRef = this.dialog.open(DynamicWidgetContainerModalComponent, {
-      data: { currentType: this.splitWidgetSettings.type }
+      data: { currentType: this.splitWidgetSettings.type },
+      minWidth: "50vw",
+      maxWidth: "90vw"
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -117,7 +119,9 @@ export class DynamicWidgetContainerComponent implements OnInit, OnDestroy {
 
   public openWidgetSettings(): void {
     const dialogRef = this.dialog.open(ModalWidgetConfigComponent, {
-      data: cloneDeep(this.splitWidgetSettings.config)
+      data: cloneDeep(this.splitWidgetSettings.config),
+      minWidth: "50vw",
+      maxWidth: "90vw"
     });
 
     dialogRef.afterClosed().subscribe(result => {
