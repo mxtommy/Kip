@@ -64,7 +64,8 @@ const appRoutes: Routes = [
 export class kipHammerConfig extends HammerGestureConfig {
   // Override default hammerjs gestures configuration
   overrides = <any>{
-    // swipe: { direction: (window as any).Hammer.DIRECTION_ALL },
+    pan: { direction: (window as any).Hammer.DIRECTION_ALL },
+    swipe: { direction: (window as any).Hammer.DIRECTION_ALL },
   };
 }
 

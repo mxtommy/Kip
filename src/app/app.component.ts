@@ -1,7 +1,6 @@
-import { ComponentType } from '@angular/cdk/portal';
 import { AuthenticationService } from './core/services/authentication.service';
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Subscription, throwError } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './core/services/layout-splits.service';
@@ -17,6 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { NotificationMenuComponent } from './core/components/notification-menu/notification-menu.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { DialogService } from './core/services/dialog.service';
 
 declare var NoSleep: any; //3rd party
@@ -26,22 +26,25 @@ declare var NoSleep: any; //3rd party
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule]
+    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule]
 })
-export class AppComponent implements OnInit, OnDestroy {
-  noSleep = new NoSleep();
+export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('gestureZone') gestureZone!: ElementRef;
+  private noSleep = new NoSleep();
+  protected leftSidenavOpen = false;
+  protected rightSidenavOpen = false;
   pageName: string = '';
-  unlockStatus: boolean = false;
-  unlockStatusSub: Subscription;
-  fullscreenStatus = false;
-  themeName: string;
+  protected unlockStatus: boolean = false;
+  private unlockStatusSub: Subscription;
+  protected fullscreenStatus = false;
+  protected themeName: string;
   //TODO: Still need this?
   // activeThemeClass: string = 'modern-dark fullheight';
   activeTheme: string;
-  themeNameSub: Subscription;
+  private themeNameSub: Subscription;
   isNightMode: boolean = false;
-  appNotificationSub: Subscription;
-  connectionStatusSub: Subscription;
+  private appNotificationSub: Subscription;
+  private connectionStatusSub: Subscription;
 
   constructor(
     private _snackBar: MatSnackBar,
@@ -130,8 +133,11 @@ export class AppComponent implements OnInit, OnDestroy {
     );
   }
 
-  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
+  ngAfterViewInit(): void {
+    this.gestureZone.nativeElement.addEventListener('touchmove', this.preventSwipeDefault,{passive: false});
+  }
 
+  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
     switch (streamStatus.operation) {
       case 0: // not connected
         this.appService.sendSnackbarNotification("Not connected to server.", 5000, true);
@@ -155,21 +161,40 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected preventSwipeDefault(e: TouchEvent): void {
+    if (e.touches.length === 1 && e.changedTouches.length === 1) {
+      const touch = e.changedTouches[0];
+      if(Math.abs(touch.clientX) > 30) {
+        e.preventDefault();
+      }
+    }
+  }
+
   public onDoubleTap(e: any): void {
-    this.setNightMode(this.isNightMode ? false: true);
+    console.log("Double Tapped");
+    // this.setNightMode(this.isNightMode ? false: true);
   }
 
   public onSwipe(e: any): void {
     switch (e.direction) {
-      case 2:
+      case Hammer.DIRECTION_UP:
         this.pageUp();
         break;
 
-      case 4:
+      case Hammer.DIRECTION_DOWN:
         this.pageDown();
         break;
 
+      case Hammer.DIRECTION_LEFT:
+        this.leftSidenavOpen = true;
+        break;
+
+      case Hammer.DIRECTION_RIGHT:
+        this.rightSidenavOpen = true;
+        break;
+
       default:
+        console.warn(`Unknown Type ${e.type} direction. Direction: ${e.direction} Distance: ${e.distance} Angle: ${e.angle}`);
         break;
     }
   }
