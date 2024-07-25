@@ -35,6 +35,8 @@ export class DialogService {
     return this.dialog.open(DialogConfirmationComponent,
       {
         data: data,
+        minWidth: "35vw",
+        minHeight: "25vh",
       }
     ).afterClosed();
   }

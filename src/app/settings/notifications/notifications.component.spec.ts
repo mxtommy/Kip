@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { SettingsGeneralComponent } from './general.component';
+import { SettingsNotificationsComponent } from './notifications.component';
 
 describe('SettingsNotificationsComponent', () => {
-  let component: SettingsGeneralComponent;
-  let fixture: ComponentFixture<SettingsGeneralComponent>;
+  let component: SettingsNotificationsComponent;
+  let fixture: ComponentFixture<SettingsNotificationsComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [SettingsGeneralComponent]
+    imports: [SettingsNotificationsComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(SettingsGeneralComponent);
+    fixture = TestBed.createComponent(SettingsNotificationsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

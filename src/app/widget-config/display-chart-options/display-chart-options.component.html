@@ -1,7 +1,7 @@
-<div class="tab-content mat-typography">
-  <div class="flex-container">
+<div class="tab-content">
+  <div class="chart-flex-container">
 
-    <div class="panel-group">
+    <div class="chart-panel-group">
       <mat-form-field class="full-width">
         <mat-label>Widget Label</mat-label>
         <input matInput placeholder="Enter a label to display"
@@ -10,7 +10,7 @@
       </mat-form-field>
     </div>
 
-    <div class="panel-group">
+    <div class="chart-panel-group">
       <mat-checkbox class="full-width"
         name="showLabel"
         [formControl]="showLabel">
@@ -19,7 +19,7 @@
     </div>
   </div>
 
-  <div class="flex-container">
+  <div class="chart-flex-container">
     <mat-form-field class="full-width">
       <mat-label>Color</mat-label>
       <mat-select
@@ -34,9 +34,9 @@
     </mat-form-field>
   </div>
 
-  <div class="flex-container">
+  <div class="chart-flex-container">
 
-    <div class="flex-item">
+    <div class="flex-item-rounded-card rounded-card-color">
       <div>
         <p>Series</p>
         <mat-form-field style="margin-left: 10px;">
@@ -64,7 +64,7 @@
       </div>
     </div>
 
-    <div class="flex-item">
+    <div class="flex-item-rounded-card rounded-card-color">
       <div>
         <p class="no-margin">Data Scale</p>
         <span class="mat-caption">(Default node is automatic scale)</span>
@@ -126,7 +126,7 @@
       </div>
     </div>
 
-    <div class="flex-item">
+    <div class="flex-item-rounded-card rounded-card-color">
       <div>
         <p class="no-margin">Time Scale</p>
         <mat-checkbox class="full-width"
@@ -137,7 +137,7 @@
       </div>
     </div>
 
-    <div class="flex-item">
+    <div class="flex-item-rounded-card rounded-card-color">
       <div>
         <p class="no-margin">Dataset</p>
         <mat-checkbox class="full-width"

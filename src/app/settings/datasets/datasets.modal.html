@@ -1,4 +1,4 @@
-<h2 mat-dialog-title> {{titleDialog}} </h2>
+<h6 mat-dialog-title> {{titleDialog}} </h6>
 <mat-dialog-content>
   <form name="datasetForm" (ngSubmit)="closeForm()" #datasetForm="ngForm">
     <mat-horizontal-stepper>
@@ -85,12 +85,12 @@
               </mat-form-field>
             </div>
           </div>
-          <p class="mat-caption">Time scales define the data sampling rate and overall Dataset level
+          <p style="margin-top: 10px;">Time scales define the data sampling rate and overall Dataset level
             of precision. Select a Time Scale that is targeted to your intended usage.
             Shorter Time Scales have higher system resources
             costs, for both the data capture and widget rendering process.
           </p>
-          <ul class="mat-caption">
+          <ul>
             <li>Hours: per minute sampling rate. Intended for long sampling periods when slow
               refresh rate is acceptable and system resource usage should be minimized. Grafana is
               the perfect alternative to this Time Scale.

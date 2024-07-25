@@ -1,6 +1,35 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin dark-color($theme) {
+  .rounded-card-color {
+    background-color: var(--kip-white-dimmer-color);
+  }
+}
+
+@mixin light-color($theme) {
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    $theme-type: mat.get-theme-type($theme);
+    @if $theme-type == dark {
+      @include dark-color($theme);
+    } @else {
+      @include light-color($theme);
+    }
+  }
+}
+
 .tab-content {
   margin-top: 20px;
   margin-bottom: 10px;
+}
+
+.rounded-card {
+  margin-top: 10px;
+  border-radius: 15px;
+  padding: 10px;
 }
 
 .formActionFooter {
@@ -25,6 +54,12 @@
   align-items: center;
   align-content: flex-start;
   gap: 10px;
+}
+
+.flex-item-rounded-card {
+  flex: 1 1 29%;
+  padding: 10px 20px 10px 20px;
+  border-radius: 15px;
 }
 
 .flex-checkbox-30 {
@@ -87,6 +122,11 @@
   flex-direction: column;
   margin: 15px 0;
 }
+
 .radio-button {
   margin-left: 16px;
+}
+
+.full-width {
+  width: 100%;
 }

@@ -107,8 +107,6 @@ bootstrapApplication(AppComponent, {
       useValue: {
         hasBackdrop: true,
         disableClose: true,
-        minWidth: "35vw",
-        minHeight: "30vh",
         autoFocus: "first-tabbable",
       },
     },

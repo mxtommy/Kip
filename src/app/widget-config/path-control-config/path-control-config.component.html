@@ -1,5 +1,5 @@
 @if (pathFormGroup.value.isPathConfigurable) {
-  <div [formGroup]="pathFormGroup" class="flex-container rounded-card">
+  <div [formGroup]="pathFormGroup" class="flex-container rounded-card rounded-card-color">
     <div class="flex-field-100">
       <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
     </div>
