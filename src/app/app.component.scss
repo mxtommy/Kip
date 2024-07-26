@@ -15,3 +15,15 @@ mat-sidenav.sidenav-controls {
   width: 175px;
 }
 
+.toggle {
+  display: none;
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%);
+
+  height: 50px;
+  width: 50px;
+  background-color: red;
+}
+

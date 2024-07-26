@@ -1,5 +1,6 @@
 <mat-sidenav-container #gestureZone class="sidenav-container" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" (touchmove)="preventSwipeDefault($event)">
   <mat-sidenav class="sidenav-notifications" [(opened)]="rightSidenavOpen" mode="over" position="start">
+    <div class="toggle"></div>
     <notification-menu></notification-menu>
   </mat-sidenav>
   <mat-sidenav class="sidenav-controls" [(opened)]="leftSidenavOpen" mode="over" position="end">
