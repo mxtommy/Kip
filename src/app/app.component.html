@@ -1,67 +1,12 @@
 <mat-sidenav-container #gestureZone class="sidenav-container" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" (touchmove)="preventSwipeDefault($event)">
-  <mat-sidenav [(opened)]="rightSidenavOpen" mode="over" position="start">
+  <mat-sidenav class="sidenav-notifications" [(opened)]="rightSidenavOpen" mode="over" position="start">
     <notification-menu></notification-menu>
   </mat-sidenav>
-  <mat-sidenav [(opened)]="leftSidenavOpen" mode="over" position="end">
-    <button mat-menu-item routerLink="/help">
-      <mat-icon>help_center</mat-icon>
-      <span>Help</span>
-    </button>
-    <button mat-menu-item [matMenuTriggerFor]="configMenu">
-      <mat-icon>settings_applications</mat-icon>
-      <span>Configuration</span>
-    </button>
-    <button mat-menu-item routerLink="/data">
-      <mat-icon>troubleshoot</mat-icon>
-      <span>Data Browser</span>
-    </button>
-    @if (!isNightMode) {
-      <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
-        <mat-icon>nightlight</mat-icon>
-        <span>Night Mode</span>
-      </button>
-    } @else {
-      <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
-        <mat-icon>light_mode</mat-icon>
-        <span>Day Mode</span>
-      </button>
-    }
-    @if (!fullscreenStatus) {
-      <button mat-menu-item (click)="toggleFullScreen()">
-        <mat-icon>fullscreen</mat-icon>
-        <span>Full Screen</span>
-      </button>
-    } @else {
-      <button mat-menu-item (click)="toggleFullScreen()">
-        <mat-icon>close_fullscreen</mat-icon>
-        <span>Exit Full Screen</span>
-      </button>
-    }
+  <mat-sidenav class="sidenav-controls" [(opened)]="leftSidenavOpen" mode="over" position="end">
+    <app-nav-control></app-nav-control>
   </mat-sidenav>
   <mat-sidenav-content>
       <router-outlet class="router-outlet-container"></router-outlet>
-    <mat-menu #configMenu="matMenu" xPosition="before">
-      <button mat-menu-item (click)="OpenSettingsDialog()">
-        <mat-icon>settings</mat-icon>
-        <span>Settings</span>
-      </button>
-      @if (!unlockStatus) {
-        <button mat-menu-item (click)="unlockPage()">
-          <mat-icon>lock_open</mat-icon>
-          <span>Edit Layout</span>
-        </button>
-      } @else {
-        <button mat-menu-item (click)="unlockPage()">
-          <mat-icon>lock</mat-icon>
-          <span>Lock Layout</span>
-        </button>
-      }
-      <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
-        <mat-icon>dashboard_customize</mat-icon>
-        <span>Add Page</span>
-      </button>
-    </mat-menu>
-
   </mat-sidenav-content>
 </mat-sidenav-container>
 

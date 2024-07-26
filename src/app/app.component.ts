@@ -1,10 +1,9 @@
 import { AuthenticationService } from './core/services/authentication.service';
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
-import { Subscription, throwError } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Howl } from 'howler';
 import { LayoutSplitsService } from './core/services/layout-splits.service';
-import screenfull from 'screenfull';
 
 import { AppSettingsService } from './core/services/app-settings.service';
 import { DatasetService } from './core/services/data-set.service';
@@ -17,32 +16,25 @@ import { NotificationMenuComponent } from './core/components/notification-menu/n
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { DialogService } from './core/services/dialog.service';
-
-declare var NoSleep: any; //3rd party
+import { NavControlComponent } from './core/components/nav-control/nav-control.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule]
+    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, NavControlComponent ]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gestureZone') gestureZone!: ElementRef;
-  private noSleep = new NoSleep();
   protected leftSidenavOpen = false;
   protected rightSidenavOpen = false;
   pageName: string = '';
-  protected unlockStatus: boolean = false;
-  private unlockStatusSub: Subscription;
-  protected fullscreenStatus = false;
   protected themeName: string;
   //TODO: Still need this?
   // activeThemeClass: string = 'modern-dark fullheight';
   activeTheme: string;
   private themeNameSub: Subscription;
-  isNightMode: boolean = false;
   private appNotificationSub: Subscription;
   private connectionStatusSub: Subscription;
 
@@ -55,7 +47,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
-    private dialog: DialogService
     ) {}
 
 
@@ -65,11 +56,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       this.displayConnectionsStatusNotification(status);
       }
     );
-
-    // Page layout editing sub
-    this.unlockStatusSub = this.LayoutSplitsService.getEditLayoutObservable().subscribe(status => {
-      this.unlockStatus = status;
-    });
 
     // Theme operations sub
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
@@ -199,38 +185,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  setNightMode(nightMode: boolean) {
-    //TODO: See if yo still need this
-    // this.isNightMode = nightMode;
-    // if (this.isNightMode) {
-    //   this.appSettingsService.setThemeName("nightMode");
-    // } else {
-    //   this.appSettingsService.setThemeName(this.themeName);
-    // }
-  }
-
-  protected OpenSettingsDialog(): void {
-    this.dialog.openFrameDialog({
-      title: 'Settings',
-      component: 'settings',
-    }, true).subscribe();
-  }
-
-  unlockPage() {
-    if (this.unlockStatus) {
-      // console.log("Locking");
-      this.unlockStatus = false;
-    } else {
-      // console.log("Unlocking");
-      this.unlockStatus = true;
-    }
-    this.LayoutSplitsService.setEditLayoutStatus(this.unlockStatus);
-  }
-
-  newPage() {
-    this.LayoutSplitsService.newRootSplit();
-  }
-
   pageDown() {
     this.LayoutSplitsService.previousRoot();
   }
@@ -239,23 +193,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.LayoutSplitsService.nextRoot();
   }
 
-  toggleFullScreen() {
-    if (screenfull.isEnabled) {
-      if (!this.fullscreenStatus) {
-        screenfull.request();
-        this.noSleep.enable();
-      } else {
-        if (screenfull.isFullscreen) {
-          screenfull.exit();
-        }
-        this.noSleep.disable();
-      }
-    }
-    this.fullscreenStatus = !this.fullscreenStatus;
-  }
-
   ngOnDestroy() {
-    this.unlockStatusSub.unsubscribe();
     this.themeNameSub.unsubscribe();
     this.appNotificationSub.unsubscribe();
     this.connectionStatusSub.unsubscribe();

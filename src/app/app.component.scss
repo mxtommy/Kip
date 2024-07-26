@@ -2,6 +2,16 @@
   height: 100%;
   width: 100%;
 }
+
 .router-outlet-container {
   display: contents;
  }
+
+mat-sidenav.sidenav-notifications {
+  width: 230px;
+}
+
+mat-sidenav.sidenav-controls {
+  width: 175px;
+}
+

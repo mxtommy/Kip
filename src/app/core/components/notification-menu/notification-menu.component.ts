@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { NotificationsService, INotification, IAlarmInfo } from '../../services/notifications.service';
 import { Observable, Subscription, filter, map } from 'rxjs';
 import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
@@ -9,7 +9,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { NgIf, AsyncPipe, NgFor } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { MatActionList } from '@angular/material/list';
+import { MatActionList, MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 
 interface INotificationInfo extends IAlarmInfo{
@@ -22,7 +22,7 @@ interface INotificationInfo extends IAlarmInfo{
     templateUrl: './notification-menu.component.html',
     styleUrls: ['./notification-menu.component.scss'],
     standalone: true,
-    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, MatActionList, MatIconModule, NgFor, NgIf]
+    imports: [ MatListModule, MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, MatActionList, MatIconModule, NgFor, NgIf]
 })
 export class NotificationMenuComponent implements OnDestroy {
   private notificationServiceSettingsSubscription: Subscription = null;

@@ -2,6 +2,58 @@
 @use '@angular/material' as mat;
 
 @mixin color($theme) {
+  .icon-alert-color {
+    --mdc-list-list-item-leading-icon-color: var(--kip-zone-alert-color);
+  }
+
+  .icon-warn-color {
+    --mdc-list-list-item-leading-icon-color: var(--kip-zone-warn-color);
+  }
+
+  .icon-alarm-color {
+    --mdc-list-list-item-leading-icon-color: var(--kip-zone-alarm-color);
+  }
+
+  .icon-emergency-color {
+    --mdc-list-list-item-leading-icon-color: var(--kip-zone-emergency-color);
+  }
+
+  .navbar-button:not(:disabled) {
+    color: var(--sys-on-background);
+  }
+
+  // Alarm button when warning
+  .alarm-warning {
+    animation: blinking-alarm-warning 1.5s infinite;
+    background-color: var(--kip-orange-color);
+  }
+
+  @keyframes blinking-alarm-warning {
+    0%{		color: var(--kip-port-color);	}
+    50%{	color: transparent;	}
+    100%{	color: var(--kip-port-color);	}
+  }
+
+  // Alarm button when crit
+  .alarm-critical {
+    animation: blinking-alarm-critical 0.25s infinite;
+
+  }
+
+  @keyframes blinking-alarm-critical{
+    0%{
+      color: rgb(255, 232, 232);
+      background-color: var(--kip-port-color);
+    }
+    50%{
+      color: var(--kip-port-color);
+      background-color: rgb(255, 232, 232);
+    }
+    100%{
+      color: rgb(255, 232, 232);
+      background-color: var(--kip-port-color);
+    }
+  }
 }
 
 @mixin theme($theme) {

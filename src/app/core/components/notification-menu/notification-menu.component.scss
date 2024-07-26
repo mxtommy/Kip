@@ -1,57 +1,10 @@
+div[matListItemTitle] {
+  text-transform: capitalize;
+}
 
-:host {
+.notification-btn-container {
   display: inline-block;
-  height: 100%;
-  min-width: 64px;
-  padding: 0px 5px;
-}
-
-.button-elevation {
-  z-index: 1000;
-}
-
-.notification-menu-button {
-  height: 100%;
-}
-
-// Alarm button when warning
-.alarm-warning {
-  animation: blinking-alarm-warning 1.5s infinite;
-  background-color: #FFA500 !important
-}
-@keyframes blinking-alarm-warning {
-  0%{		color: rgb(179, 0, 0);	}
-  50%{	color: transparent;	}
-  100%{	color: rgb(179, 0, 0);	}
-}
-
-// Alarm button when crit
-.alarm-critical {
-  animation: blinking-alarm-critical 0.25s infinite;
-
-}
-@keyframes blinking-alarm-critical{
-  0%{
-    color: rgb(255, 232, 232);
-    background-color: rgb(179, 0, 0);
-  }
-  50%{
-
-    color: rgb(179, 0, 0);
-    background-color: rgb(255, 232, 232);
-  }
-  100%{
-    color: rgb(255, 232, 232);
-    background-color: rgb(179, 0, 0);
-  }
-}
-
-::ng-deep.mat-mdc-menu-panel {
-  max-width: max-content !important;
-}
-
-.menu-items-with-icons {
-  display: inline-block;
-  align-items: center;
-  width: max-content;
+  width: 50%;
+  height: 48px;
+  text-align: center;
 }
