@@ -90,7 +90,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     //TODO: simplify initialization
-    this.initWidget();
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
     this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
@@ -128,6 +127,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         this.radialGauge.update(option);
       }
     });
+
+    this.initWidget();
 
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
