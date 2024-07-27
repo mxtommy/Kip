@@ -143,6 +143,8 @@ export interface IWidgetSvcConfig {
     rotateFace?: boolean;
     /** Optional. GaugeSteel digital or bar */
     digitalMeter?: boolean;
+    /** Optional. Width of gauge highlights */
+    highlightsWidth?: number;
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
