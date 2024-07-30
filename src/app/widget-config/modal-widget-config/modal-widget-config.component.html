@@ -157,7 +157,6 @@
                   </mat-checkbox>
                 </div>
               } @else if ( ['measuring','capacity'].indexOf(formMaster.value.gauge.subType) > -1 ) {
-
                   <mat-form-field formGroupName="gauge" class="options-grid-span2">
                     <mat-label>Gauge Type</mat-label>
                     <mat-select
@@ -172,7 +171,6 @@
                     <mat-label>Highlights Width</mat-label>
                     <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
                   </mat-form-field>
-
               }
             }
 
@@ -186,6 +184,10 @@
                     <mat-option value="vertical">Vertical</mat-option>
                     <mat-option value="horizontal">Horizontal</mat-option>
                 </mat-select>
+              </mat-form-field>
+              <mat-form-field formGroupName="gauge" class="options-grid-span2">
+                <mat-label>Highlights Width</mat-label>
+                <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
               </mat-form-field>
             }
 
