@@ -24,13 +24,11 @@
             <div class="notification-btn-container">
               <button mat-icon-button (disabled)="!menuItem.value.method.includes('sound')" (click)="silence(menuItem.path)">
                 <mat-icon>music_off</mat-icon>
-                <!-- <span>Silence</span> -->
               </button>
             </div>
             <div class="notification-btn-container">
               <button mat-icon-button (click)="clear(menuItem.path)">
                 <mat-icon>published_with_changes</mat-icon>
-                <!-- <span>Resolve</span> -->
               </button>
             </div>
           </div>
@@ -45,13 +43,20 @@
       </mat-list-item>
     }
   } @empty {
-    <mat-list-item disabled="true" style="text-align: center;">
-      <i>"No Notification"</i>
-    </mat-list-item>
+    @if (notificationConfig.disableNotifications) {
+      <mat-list-item lines="3" disabled="true" style="text-align: center;">
+        <span matListItemTitle>Notifications Disabled</span>
+        <span><i>*Enable notifications in KIP Settings.</i></span>
+      </mat-list-item>
+    } @else {
+      <mat-list-item disabled="true" style="text-align: center;">
+        <i>"No Notification"</i>
+      </mat-list-item>
+    }
   }
 </mat-list>
-
-<mat-action-list style="position: absolute; bottom: 0px; width: 100%;">
+@if (!notificationConfig.disableNotifications) {
+  <mat-action-list class="notification-bottom-container">
     @if (isMuted) {
       <button mat-list-item matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option" (click)="mutePlayer(isMuted ? false : true)">
         <mat-icon matListItemIcon>volume_up</mat-icon>
@@ -63,15 +68,18 @@
         <span>Mute Audio</span>
       </button>
     }
-  <button mat-list-item class="navbar-button"
-    [class.alarm-critical]="notificationInfo.blinkCrit"
-    [class.alarm-warning]="notificationInfo.blinkWarn"
-    [disabled]="notificationConfig.disableNotifications">
-    <mat-icon matListItemIcon
+  </mat-action-list>
+}
+<div class="toggle" [style.visibility]="notificationsBtnVisibility">
+  <button mat-icon-button (click)="toggleSidenav.emit(true)"
+    [class.warn]="notificationInfo.isWarn"
+    [class.alarm-emergency-blink]="notificationInfo.isAlarmEmergency">
+    <mat-icon aria-hidden="false" class="icon-alert-color"
       [matBadgeHidden]="!notificationInfo.alarmCount"
       [matBadge]="notificationInfo.alarmCount"
       matBadgeSize="large"
       matBadgePosition="after"
-      matBadgeOverlap="true">notifications</mat-icon>
+      matBadgeOverlap="true">notifications
+    </mat-icon>
   </button>
-</mat-action-list>
+</div>

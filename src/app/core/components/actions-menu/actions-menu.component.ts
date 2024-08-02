@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { DialogService } from './../../services/dialog.service';
+import { DialogService } from '../../services/dialog.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -9,17 +9,18 @@ import screenfull from 'screenfull';
 import { AsyncPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
+import { MatDividerModule } from '@angular/material/divider';
 declare var NoSleep: any; //3rd party library
 
 @Component({
-  selector: 'app-nav-control',
+  selector: 'actions-menu',
   standalone: true,
-  imports: [ MatIconModule, MatMenuModule, MatButtonModule, RouterModule, MatListModule, AsyncPipe ],
-  templateUrl: './nav-control.component.html',
-  styleUrl: './nav-control.component.scss'
+  imports: [ MatIconModule, MatMenuModule, MatButtonModule, RouterModule, MatListModule, MatDividerModule, AsyncPipe ],
+  templateUrl: './actions-menu.component.html',
+  styleUrl: './actions-menu.component.scss'
 })
 
-export class NavControlComponent {
+export class ActionsMenuComponent {
   protected fullscreenStatus = false;
   protected noSleep = new NoSleep();
   protected isNightMode: boolean = false;
@@ -29,7 +30,7 @@ export class NavControlComponent {
   }
 
   protected setNightMode(nightMode: boolean): void {
-    //TODO: See if yo still need this
+    //TODO: See if yo still need this or fix new brightness
     // this.isNightMode = nightMode;
     // if (this.isNightMode) {
     //   this.appSettingsService.setThemeName("nightMode");

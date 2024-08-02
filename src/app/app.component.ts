@@ -1,35 +1,38 @@
-import { AuthenticationService } from './core/services/authentication.service';
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { style } from '@angular/animations';
+import { Component, OnInit, OnDestroy, signal, model, ViewChild, input, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { Howl } from 'howler';
+import { AuthenticationService } from './core/services/authentication.service';
 import { LayoutSplitsService } from './core/services/layout-splits.service';
-
 import { AppSettingsService } from './core/services/app-settings.service';
 import { DatasetService } from './core/services/data-set.service';
 import { NotificationsService } from './core/services/notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
 import { AppService } from './core/services/app-service';
+import { Howl } from 'howler';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { NotificationMenuComponent } from './core/components/notification-menu/notification-menu.component';
+import { NotificationsMenuComponent } from './core/components/notifications-menu/notifications-menu.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { NavControlComponent } from './core/components/nav-control/nav-control.component';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { ActionsMenuComponent } from './core/components/actions-menu/actions-menu.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, NavControlComponent ]
+    imports: [ NotificationsMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, ActionsMenuComponent ]
 })
-export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('gestureZone') gestureZone!: ElementRef;
-  protected leftSidenavOpen = false;
-  protected rightSidenavOpen = false;
-  pageName: string = '';
+export class AppComponent implements OnInit, OnDestroy {
+  @ViewChild('notificationsSidenav' ) notificationsSidenav: ElementRef<MatSidenav>;
+  protected actionsSidenavOpen = false;
+
+  protected notificationsSidenavOpened = signal<boolean>(false);
+  protected notificationsVisibility: string = 'hidden';
+  protected notificationsPresent: boolean = false;
+
   protected themeName: string;
   //TODO: Still need this?
   // activeThemeClass: string = 'modern-dark fullheight';
@@ -48,7 +51,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     private deltaService: SignalKDeltaService,
     private appService: AppService,
     ) {}
-
 
   ngOnInit() {
     // Connection Status Notification sub
@@ -119,8 +121,17 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  ngAfterViewInit(): void {
-    this.gestureZone.nativeElement.addEventListener('touchmove', this.preventSwipeDefault,{passive: false});
+  protected menuClosed(): void {
+    if (this.notificationsPresent) {
+      this.notificationsPresent = true;
+    }
+  }
+
+  protected notificationsPresence($event): void {
+    this.notificationsPresent = $event;
+    if (!this.notificationsSidenavOpened()) {
+      $event ? this.notificationsVisibility = "visible" : this.notificationsVisibility = "hidden";
+    }
   }
 
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
@@ -156,12 +167,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  public onDoubleTap(e: any): void {
+  protected onDoubleTap(e: any): void {
     console.log("Double Tapped");
     // this.setNightMode(this.isNightMode ? false: true);
   }
 
-  public onSwipe(e: any): void {
+  protected onSwipe(e: any): void {
     switch (e.direction) {
       case Hammer.DIRECTION_UP:
         this.pageUp();
@@ -172,24 +183,25 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
 
       case Hammer.DIRECTION_LEFT:
-        this.leftSidenavOpen = true;
+        this.actionsSidenavOpen = true;
         break;
 
       case Hammer.DIRECTION_RIGHT:
-        this.rightSidenavOpen = true;
+        this.notificationsSidenavOpened.set(true);
         break;
 
       default:
+        //TODO: Remove this console.warn
         console.warn(`Unknown Type ${e.type} direction. Direction: ${e.direction} Distance: ${e.distance} Angle: ${e.angle}`);
         break;
     }
   }
 
-  pageDown() {
+  protected pageDown() {
     this.LayoutSplitsService.previousRoot();
   }
 
-  pageUp() {
+  protected pageUp() {
     this.LayoutSplitsService.nextRoot();
   }
 

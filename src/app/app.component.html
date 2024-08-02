@@ -1,13 +1,16 @@
-<mat-sidenav-container #gestureZone class="sidenav-container" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" (touchmove)="preventSwipeDefault($event)">
-  <mat-sidenav class="sidenav-notifications" [(opened)]="rightSidenavOpen" mode="over" position="start">
-    <div class="toggle"></div>
-    <notification-menu></notification-menu>
+<mat-sidenav-container class="sidenav-container" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" (touchmove)="preventSwipeDefault($event)">
+
+  <mat-sidenav #notificationsSidenav class="sidenav-notifications" [style.visibility]="notificationsPresent ? 'visible' : 'hidden'" [(opened)]="notificationsSidenavOpened" (closed)="menuClosed()" mode="over" position="start" autoFocus="false">
+
+    <notifications-menu (toggleSidenav)="notificationsSidenav.toggle()" (hasNotifications)="notificationsPresence($event)" />
+
   </mat-sidenav>
-  <mat-sidenav class="sidenav-controls" [(opened)]="leftSidenavOpen" mode="over" position="end">
-    <app-nav-control></app-nav-control>
+  <mat-sidenav class="sidenav-controls" [(opened)]="actionsSidenavOpen" mode="over" position="end">
+    <actions-menu />
   </mat-sidenav>
   <mat-sidenav-content>
-      <router-outlet class="router-outlet-container"></router-outlet>
+    <router-outlet class="router-outlet-container"></router-outlet>
   </mat-sidenav-content>
 </mat-sidenav-container>
+
 

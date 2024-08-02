@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { NotificationMenuComponent } from './notification-menu.component';
+import { NotificationsMenuComponent } from './notifications-menu.component';
 
 describe('AlarmMenuComponent', () => {
-  let component: NotificationMenuComponent;
-  let fixture: ComponentFixture<NotificationMenuComponent>;
+  let component: NotificationsMenuComponent;
+  let fixture: ComponentFixture<NotificationsMenuComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [NotificationMenuComponent]
+    imports: [NotificationsMenuComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(NotificationMenuComponent);
+    fixture = TestBed.createComponent(NotificationsMenuComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

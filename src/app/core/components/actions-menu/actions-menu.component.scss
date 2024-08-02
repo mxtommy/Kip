@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.actions-container {
+  display:grid;
+  grid-auto-flow: column;
+}
+
+.actions-bottom-container {
+  position: absolute;
+  bottom: 4px;
+  width: 100%;
+}
+
+.action-button {
+  border-radius: 0px;
+}
+
+// TODO: Fix or cleanup - custom Icon styles for the actions menu
+@media screen and (min-width:720px) {
+  .icon-button {
+      height: 128px;
+      width: 112px;
+  }
+}
