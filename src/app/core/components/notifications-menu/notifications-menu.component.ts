@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { AsyncPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatActionList, MatListModule } from '@angular/material/list';
+import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 
 interface INotificationInfo extends IAlarmInfo{
@@ -20,7 +20,7 @@ interface INotificationInfo extends IAlarmInfo{
     templateUrl: './notifications-menu.component.html',
     styleUrls: ['./notifications-menu.component.scss'],
     standalone: true,
-    imports: [ MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, AsyncPipe, MatActionList, MatIconModule ]
+    imports: [ MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, AsyncPipe, MatIconModule ]
 })
 export class NotificationsMenuComponent implements OnDestroy {
   protected notificationServiceSettingsSubscription: Subscription = null;

@@ -1,5 +1,4 @@
-import { style } from '@angular/animations';
-import { Component, OnInit, OnDestroy, signal, model, ViewChild, input, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { LayoutSplitsService } from './core/services/layout-splits.service';
@@ -15,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { NotificationsMenuComponent } from './core/components/notifications-menu/notifications-menu.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { ActionsMenuComponent } from './core/components/actions-menu/actions-menu.component';
 
 @Component({
@@ -26,7 +25,6 @@ import { ActionsMenuComponent } from './core/components/actions-menu/actions-men
     imports: [ NotificationsMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, ActionsMenuComponent ]
 })
 export class AppComponent implements OnInit, OnDestroy {
-  @ViewChild('notificationsSidenav' ) notificationsSidenav: ElementRef<MatSidenav>;
   protected actionsSidenavOpen = false;
 
   protected notificationsSidenavOpened = signal<boolean>(false);
