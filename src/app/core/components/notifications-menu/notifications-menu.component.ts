@@ -1,34 +1,32 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, output } from '@angular/core';
 import { NotificationsService, INotification, IAlarmInfo } from '../../services/notifications.service';
-import { Observable, Subscription, filter, map } from 'rxjs';
+import { Observable, Subscription, filter, map, tap } from 'rxjs';
 import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
 import { Methods, States } from '../../interfaces/signalk-interfaces';
-import { MatDivider } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
-import { NgIf, AsyncPipe, NgFor } from '@angular/common';
-import { MatMenuModule } from '@angular/material/menu';
+import { AsyncPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatActionList } from '@angular/material/list';
+import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 
 interface INotificationInfo extends IAlarmInfo{
-  blinkWarn: boolean;
-  blinkCrit: boolean;
+  isWarn: boolean;
+  isAlarmEmergency: boolean;
 }
 
 @Component({
-    selector: 'notification-menu',
-    templateUrl: './notification-menu.component.html',
-    styleUrls: ['./notification-menu.component.scss'],
+    selector: 'notifications-menu',
+    templateUrl: './notifications-menu.component.html',
+    styleUrls: ['./notifications-menu.component.scss'],
     standalone: true,
-    imports: [MatButtonModule, MatMenuModule, MatBadgeModule, MatTooltipModule, MatDivider, AsyncPipe, MatActionList, MatIconModule, NgFor, NgIf]
+    imports: [ MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, AsyncPipe, MatIconModule ]
 })
-export class NotificationMenuComponent implements OnDestroy {
-  private notificationServiceSettingsSubscription: Subscription = null;
-  private notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
+export class NotificationsMenuComponent implements OnDestroy {
+  protected notificationServiceSettingsSubscription: Subscription = null;
+  protected notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
     filter(notification => notification !== null));
-  public menuNotifications$ = this.notifications$.pipe(
+  protected menuNotifications$ = this.notifications$.pipe(
     map(notifications => {
       // Define states filter
       const statesToFilter = [];
@@ -39,7 +37,7 @@ export class NotificationMenuComponent implements OnDestroy {
         statesToFilter.push(States.Nominal);
       }
 
-      // Filter the notifications based on the states
+      // Filter notifications based on the states
       return notifications.filter(
         item => item.value && item.value.state && !statesToFilter.includes(item.value.state)
       );
@@ -48,28 +46,45 @@ export class NotificationMenuComponent implements OnDestroy {
       item => item.value && item.value.method && item.value.method.includes(Methods.Visual)
     ))
   );
-  public notificationInfo$ = this.notificationsService.observerNotificationInfo().pipe(
+  protected notificationInfo$ = this.notificationsService.observerNotificationInfo().pipe(
     map((info: IAlarmInfo) => {
-      let blinkWarn = false;
-      let blinkCrit = false;
+      let isWarn = false;
+      let isAlarmEmergency = false;
 
       switch(info.visualSev) {
         case 1:
-          blinkWarn = true;
+          isWarn = true;
           break;
         case 2:
-          blinkCrit = true;
+          isAlarmEmergency = true;
           break;
       }
 
       return {
         ...info,
-        blinkWarn,
-        blinkCrit
+        isWarn,
+        isAlarmEmergency
       } as INotificationInfo;
-    }));
-  public notificationConfig: INotificationConfig;
-  public isMuted: boolean = false;
+    }),
+    tap((notificationInfo: INotificationInfo) => {
+      // Update notification visibility
+      if (notificationInfo.alarmCount <= 0) {
+        console.log('Hidden. Count: ' + notificationInfo.alarmCount);
+        this.hasNotifications.emit(false);
+        this.notificationsBtnVisibility = 'hidden';
+      } else {
+        console.log('Visible. Count: ' + notificationInfo.alarmCount);
+        this.hasNotifications.emit(true);
+        this.notificationsBtnVisibility = 'visible';
+      }
+    })
+
+  );
+  protected notificationConfig: INotificationConfig;
+  protected toggleSidenav = output<boolean>();
+  protected hasNotifications = output<boolean>();
+  protected notificationsBtnVisibility: string = 'hidden';
+  protected isMuted: boolean = false;
 
   constructor(private notificationsService: NotificationsService) {
     // Get service configuration
@@ -78,16 +93,16 @@ export class NotificationMenuComponent implements OnDestroy {
     });
   }
 
-  public mutePlayer(state: boolean): void {
+  protected mutePlayer(state: boolean): void {
     this.isMuted = state;
     this.notificationsService.mutePlayer(state);
   }
 
-  public silence(path: string): void {
+  protected silence(path: string): void {
     this.notificationsService.setSkMethod(path, [ Methods.Visual ]);
   }
 
-  public clear(path: string): void {
+  protected clear(path: string): void {
     this.notificationsService.setSkState(path, States.Normal);
   }
 

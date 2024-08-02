@@ -1,47 +1,43 @@
-import { ComponentType } from '@angular/cdk/portal';
-import { AuthenticationService } from './core/services/authentication.service';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { Howl } from 'howler';
+import { AuthenticationService } from './core/services/authentication.service';
 import { LayoutSplitsService } from './core/services/layout-splits.service';
-import screenfull from 'screenfull';
-
 import { AppSettingsService } from './core/services/app-settings.service';
 import { DatasetService } from './core/services/data-set.service';
 import { NotificationsService } from './core/services/notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
 import { AppService } from './core/services/app-service';
+import { Howl } from 'howler';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { NotificationMenuComponent } from './core/components/notification-menu/notification-menu.component';
+import { NotificationsMenuComponent } from './core/components/notifications-menu/notifications-menu.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { DialogService } from './core/services/dialog.service';
-
-declare var NoSleep: any; //3rd party
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { ActionsMenuComponent } from './core/components/actions-menu/actions-menu.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [NotificationMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule]
+    imports: [ NotificationsMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, ActionsMenuComponent ]
 })
 export class AppComponent implements OnInit, OnDestroy {
-  noSleep = new NoSleep();
-  pageName: string = '';
-  unlockStatus: boolean = false;
-  unlockStatusSub: Subscription;
-  fullscreenStatus = false;
-  themeName: string;
+  protected actionsSidenavOpen = false;
+
+  protected notificationsSidenavOpened = signal<boolean>(false);
+  protected notificationsVisibility: string = 'hidden';
+  protected notificationsPresent: boolean = false;
+
+  protected themeName: string;
   //TODO: Still need this?
   // activeThemeClass: string = 'modern-dark fullheight';
   activeTheme: string;
-  themeNameSub: Subscription;
-  isNightMode: boolean = false;
-  appNotificationSub: Subscription;
-  connectionStatusSub: Subscription;
+  private themeNameSub: Subscription;
+  private appNotificationSub: Subscription;
+  private connectionStatusSub: Subscription;
 
   constructor(
     private _snackBar: MatSnackBar,
@@ -52,9 +48,7 @@ export class AppComponent implements OnInit, OnDestroy {
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
-    private dialog: DialogService
     ) {}
-
 
   ngOnInit() {
     // Connection Status Notification sub
@@ -62,11 +56,6 @@ export class AppComponent implements OnInit, OnDestroy {
       this.displayConnectionsStatusNotification(status);
       }
     );
-
-    // Page layout editing sub
-    this.unlockStatusSub = this.LayoutSplitsService.getEditLayoutObservable().subscribe(status => {
-      this.unlockStatus = status;
-    });
 
     // Theme operations sub
     this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
@@ -130,8 +119,20 @@ export class AppComponent implements OnInit, OnDestroy {
     );
   }
 
-  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
+  protected menuClosed(): void {
+    if (this.notificationsPresent) {
+      this.notificationsPresent = true;
+    }
+  }
 
+  protected notificationsPresence($event): void {
+    this.notificationsPresent = $event;
+    if (!this.notificationsSidenavOpened()) {
+      $event ? this.notificationsVisibility = "visible" : this.notificationsVisibility = "hidden";
+    }
+  }
+
+  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
     switch (streamStatus.operation) {
       case 0: // not connected
         this.appService.sendSnackbarNotification("Not connected to server.", 5000, true);
@@ -155,82 +156,54 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  public onDoubleTap(e: any): void {
-    this.setNightMode(this.isNightMode ? false: true);
+  protected preventSwipeDefault(e: TouchEvent): void {
+    if (e.touches.length === 1 && e.changedTouches.length === 1) {
+      const touch = e.changedTouches[0];
+      if(Math.abs(touch.clientX) > 30) {
+        e.preventDefault();
+      }
+    }
   }
 
-  public onSwipe(e: any): void {
+  protected onDoubleTap(e: any): void {
+    console.log("Double Tapped");
+    // this.setNightMode(this.isNightMode ? false: true);
+  }
+
+  protected onSwipe(e: any): void {
     switch (e.direction) {
-      case 2:
+      case Hammer.DIRECTION_UP:
         this.pageUp();
         break;
 
-      case 4:
+      case Hammer.DIRECTION_DOWN:
         this.pageDown();
         break;
 
+      case Hammer.DIRECTION_LEFT:
+        this.actionsSidenavOpen = true;
+        break;
+
+      case Hammer.DIRECTION_RIGHT:
+        this.notificationsSidenavOpened.set(true);
+        break;
+
       default:
+        //TODO: Remove this console.warn
+        console.warn(`Unknown Type ${e.type} direction. Direction: ${e.direction} Distance: ${e.distance} Angle: ${e.angle}`);
         break;
     }
   }
 
-  setNightMode(nightMode: boolean) {
-    //TODO: See if yo still need this
-    // this.isNightMode = nightMode;
-    // if (this.isNightMode) {
-    //   this.appSettingsService.setThemeName("nightMode");
-    // } else {
-    //   this.appSettingsService.setThemeName(this.themeName);
-    // }
-  }
-
-  protected OpenSettingsDialog(): void {
-    this.dialog.openFrameDialog({
-      title: 'Settings',
-      component: 'settings',
-    }, true).subscribe();
-  }
-
-  unlockPage() {
-    if (this.unlockStatus) {
-      // console.log("Locking");
-      this.unlockStatus = false;
-    } else {
-      // console.log("Unlocking");
-      this.unlockStatus = true;
-    }
-    this.LayoutSplitsService.setEditLayoutStatus(this.unlockStatus);
-  }
-
-  newPage() {
-    this.LayoutSplitsService.newRootSplit();
-  }
-
-  pageDown() {
+  protected pageDown() {
     this.LayoutSplitsService.previousRoot();
   }
 
-  pageUp() {
+  protected pageUp() {
     this.LayoutSplitsService.nextRoot();
   }
 
-  toggleFullScreen() {
-    if (screenfull.isEnabled) {
-      if (!this.fullscreenStatus) {
-        screenfull.request();
-        this.noSleep.enable();
-      } else {
-        if (screenfull.isFullscreen) {
-          screenfull.exit();
-        }
-        this.noSleep.disable();
-      }
-    }
-    this.fullscreenStatus = !this.fullscreenStatus;
-  }
-
   ngOnDestroy() {
-    this.unlockStatusSub.unsubscribe();
     this.themeNameSub.unsubscribe();
     this.appNotificationSub.unsubscribe();
     this.connectionStatusSub.unsubscribe();

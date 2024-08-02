@@ -3,7 +3,7 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 @use './app/app.component-theme' as appRoot;
-@use './app/core/components/notification-menu/notification-menu.component-theme' as notificationMenu;
+@use './app/core/components/notifications-menu/notifications-menu.component-theme' as notificationsMenu;
 @use './app/core/components/dynamic-widget-container/dynamic-widget-container.component-theme' as widgetContainer;
 @use './app/core/components/page-layout/page-layout.component-theme' as pageLayout;
 @use './styles-common/settingsTabContent.scss' as settingsTabContent;
@@ -81,7 +81,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   @include mat.typography-hierarchy($dark-theme);
   // Apply KIP core component theming
   @include appRoot.theme($dark-theme);
-  @include notificationMenu.theme($dark-theme);
+  @include notificationsMenu.theme($dark-theme);
   @include widgetContainer.theme($dark-theme);
   @include pageLayout.theme($dark-theme);
   @include settingsTabContent.theme($dark-theme);

@@ -1,0 +1,54 @@
+@let dashboardEdit = (dashboardEdit$ | async);
+<div class="actions-container">
+  <button mat-button class="action-button" routerLink="/help">
+    <span class="material-icons">help_outline</span>
+  </button>
+  <button mat-button class="action-button" (click)="OpenSettingsDialog()">
+    <span class="material-icons">settings</span>
+  </button>
+</div>
+<mat-divider />
+<mat-action-list cdkFocusInitial>
+  <button mat-list-item routerLink="/data">
+    <mat-icon matListItemIcon>troubleshoot</mat-icon>
+    <span>Data Browser</span>
+  </button>
+  @if (!dashboardEdit) {
+    <button mat-list-item (click)="unlockPage(true)">
+      <mat-icon matListItemIcon>dashboard_customize</mat-icon>
+      <span>Edit Layout</span>
+    </button>
+  } @else {
+    <button mat-list-item (click)="unlockPage(false)">
+      <mat-icon matListItemIcon>exit_to_app</mat-icon>
+      <span>Save Layout</span>
+    </button>
+  }
+  <button mat-list-item [disabled]="!dashboardEdit" (click)="newPage()">
+    <mat-icon matListItemIcon>dashboard</mat-icon>
+    <span>Dashboards</span>
+  </button>
+</mat-action-list>
+<div class="actions-bottom-container">
+  <mat-divider />
+  <div class="actions-container">
+    @if (!fullscreenStatus) {
+      <button mat-button class="action-button" (click)="toggleFullScreen()">
+        <span class="material-icons">fullscreen</span>
+      </button>
+    } @else {
+      <button mat-button class="action-button" (click)="toggleFullScreen()">
+        <span class="material-icons">close_fullscreen</span>
+      </button>
+    }
+    @if (!isNightMode) {
+      <button mat-button class="action-button" (click)="setNightMode(isNightMode ? false : true)">
+        <span class="material-icons">mode_night</span>
+      </button>
+    } @else {
+      <button mat-button class="action-button" (click)="setNightMode(isNightMode ? false : true)">
+        <span class="material-icons">light_mode</span>
+      </button>
+    }
+  </div>
+</div>
