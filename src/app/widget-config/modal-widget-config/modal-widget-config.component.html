@@ -167,10 +167,6 @@
                       <mat-option value="capacity">Capacity</mat-option>
                     </mat-select>
                   </mat-form-field>
-                  <mat-form-field formGroupName="gauge" class="options-grid-span2">
-                    <mat-label>Highlights Width</mat-label>
-                    <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
-                  </mat-form-field>
               }
             }
 
@@ -185,6 +181,9 @@
                     <mat-option value="horizontal">Horizontal</mat-option>
                 </mat-select>
               </mat-form-field>
+            }
+
+            @if ( (widgetConfig.gauge?.type == 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType)) || widgetConfig.gauge?.type == 'ngLinear') {
               <mat-form-field formGroupName="gauge" class="options-grid-span2">
                 <mat-label>Highlights Width</mat-label>
                 <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>

@@ -82,6 +82,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
+    this.initWidget();
     this.setGaugeConfig();
 
     const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
@@ -129,8 +130,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.linearGauge.update(option);
       }
     });
-
-    this.initWidget();
 
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
