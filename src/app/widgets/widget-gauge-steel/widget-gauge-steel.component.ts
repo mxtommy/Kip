@@ -62,6 +62,7 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
   }
 
   ngOnInit() {
+    this.initWidget();
     this.observeDataStream('gaugePath', newValue => {
         if (newValue.data.value == null) {
           newValue.data.value = 0;
@@ -70,8 +71,6 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
         this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
       }
     );
-
-    this.initWidget();
 
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
