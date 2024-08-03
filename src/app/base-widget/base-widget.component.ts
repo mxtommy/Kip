@@ -41,7 +41,6 @@ export abstract class BaseWidgetComponent {
 
   protected initWidget(): void {
     this.validateConfig();
-    this.observeMeta();
   }
 
   private observeMeta(): void {
@@ -132,6 +131,8 @@ export abstract class BaseWidgetComponent {
     if (this.dataStream === undefined) {
       this.createDataObservable();
     }
+
+    this.observeMeta();
 
     const pathType = this.widgetProperties.config.paths[pathName].pathType;
     const path = this.widgetProperties.config.paths[pathName].path;
