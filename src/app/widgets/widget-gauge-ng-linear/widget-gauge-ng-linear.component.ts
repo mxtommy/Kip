@@ -253,7 +253,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       needleSide: "both",
 
       highlights: [],
-      highlightsWidth: this.widgetProperties.config.gauge.highlightsWidth !== undefined && this.widgetProperties.config.gauge.highlightsWidth !== null ? this.widgetProperties.config.gauge.highlightsWidth : 5,
+      highlightsWidth: this.widgetProperties.config.gauge.highlightsWidth,
 
       animation: true,
       animationRule: "linear",
