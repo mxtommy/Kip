@@ -130,7 +130,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     });
 
     this.metaSub = this.zones$.subscribe(zones => {
-      if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
+      if (zones && zones.length > 0 && ["capacity", "measuring"].includes(this.widgetProperties.config.gauge.subType)) {
         this.setHighlights(zones);
       }
     });
