@@ -77,7 +77,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         type: 'ngRadial', // capacity, measuring, marineCompass, baseplateCompass
         subType: 'measuring', // capacity, measuring, marineCompass, baseplateCompass
         enableTicks: true,
-        compassUseNumbers: false
+        compassUseNumbers: false,
+        highlightsWidth: 5,
       },
       numInt: 1,
       numDecimal: 0,
@@ -129,7 +130,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     });
 
     this.metaSub = this.zones$.subscribe(zones => {
-      if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
+      if (zones && zones.length > 0 && ["capacity", "measuring"].includes(this.widgetProperties.config.gauge.subType)) {
         this.setHighlights(zones);
       }
     });
@@ -171,7 +172,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2;
     this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1;
     this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2;
-    this.gaugeOptions.highlightsWidth = 0;
+    this.gaugeOptions.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
 
     this.gaugeOptions.animation = true;
     this.gaugeOptions.animateOnInit = false;
@@ -379,7 +380,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     };
     //@ts-ignore
     let highlights: LinearGaugeOptions = {};
-    highlights.highlightsWidth = 5;
+    highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.radialGauge.update(highlights);

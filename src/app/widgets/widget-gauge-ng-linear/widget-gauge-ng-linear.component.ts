@@ -70,6 +70,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         type: 'ngLinear',
         subType: 'vertical',    // vertical or horizontal
         enableTicks: true,
+        highlightsWidth: 5,
       },
       numInt: 1,
       numDecimal: 0,
@@ -252,7 +253,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       needleSide: "both",
 
       highlights: [],
-      highlightsWidth: 0,
+      highlightsWidth: this.widgetProperties.config.gauge.highlightsWidth,
 
       animation: true,
       animationRule: "linear",
@@ -358,7 +359,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     };
     //@ts-ignore
     let highlights: LinearGaugeOptions = {};
-    highlights.highlightsWidth = 5;
+    highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.linearGauge.update(highlights);
