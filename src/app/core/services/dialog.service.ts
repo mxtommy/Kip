@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { DialogComponentData, DialogConfirmationData } from '../interfaces/dialog-data';
+import { DialogComponentData, DialogConfirmationData, DialogNameData } from '../interfaces/dialog-data';
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
 import { SettingsTabsComponent } from '../../settings/tabs/tabs.component';
+import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +32,7 @@ export class DialogService {
     ).afterClosed();
   }
 
-  public openConfirmationDialog(data: DialogConfirmationData, fullscreen: boolean): Observable<boolean> {
+  public openConfirmationDialog(data: DialogConfirmationData): Observable<boolean> {
     return this.dialog.open(DialogConfirmationComponent,
       {
         data: data,
@@ -39,5 +40,15 @@ export class DialogService {
         minHeight: "25vh",
       }
     ).afterClosed();
+  }
+
+  public openNameDialog(data: DialogNameData): MatDialogRef<DialogNameComponent> {
+    return this.dialog.open(DialogNameComponent,
+      {
+        data: data,
+        minWidth: "20vw",
+        minHeight: "20vh",
+      }
+    );
   }
 }

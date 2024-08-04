@@ -13,14 +13,14 @@ import { MatDividerModule } from '@angular/material/divider';
 declare var NoSleep: any; //3rd party library
 
 @Component({
-  selector: 'actions-menu',
+  selector: 'menu-actions',
   standalone: true,
   imports: [ MatIconModule, MatMenuModule, MatButtonModule, RouterModule, MatListModule, MatDividerModule, AsyncPipe ],
-  templateUrl: './actions-menu.component.html',
-  styleUrl: './actions-menu.component.scss'
+  templateUrl: './menu-actions.component.html',
+  styleUrl: './menu-actions.component.scss'
 })
 
-export class ActionsMenuComponent {
+export class MenuActionsComponent {
   protected fullscreenStatus = false;
   protected noSleep = new NoSleep();
   protected isNightMode: boolean = false;
@@ -64,9 +64,5 @@ export class ActionsMenuComponent {
       title: 'Settings',
       component: 'settings',
     }, true).subscribe();
-  }
-
-  protected newPage(): void {
-    this.layout.newRootSplit();
   }
 }

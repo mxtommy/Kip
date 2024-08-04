@@ -1,6 +1,3 @@
-import { SignalKDeltaService } from './signalk-delta.service';
-import { DatasetService } from './data-set.service';
-import { StorageService } from './storage.service';
 /**
 * This Service uses the APP_INITIALIZER feature to dynamically load
 * network service (SignalKConnection & Authentication) when the app is initialized,
@@ -11,15 +8,16 @@ import { StorageService } from './storage.service';
 **/
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 import { Subscription } from 'rxjs';
 import { DataService } from './data.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { StorageService } from './storage.service';
 
-const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
 
 @Injectable()
