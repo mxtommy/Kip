@@ -2,11 +2,11 @@
 
   <mat-sidenav #notificationsSidenav class="sidenav-notifications" [style.visibility]="notificationsPresent ? 'visible' : 'hidden'" [(opened)]="notificationsSidenavOpened" (closed)="menuClosed()" mode="over" position="start" autoFocus="false">
 
-    <notifications-menu (toggleSidenav)="notificationsSidenav.toggle()" (hasNotifications)="notificationsPresence($event)" />
+    <menu-notifications (toggleSidenav)="notificationsSidenav.toggle()" (hasNotifications)="notificationsPresence($event)" />
 
   </mat-sidenav>
   <mat-sidenav class="sidenav-controls" [(opened)]="actionsSidenavOpen" mode="over" position="end">
-    <actions-menu />
+    <menu-actions />
   </mat-sidenav>
   <mat-sidenav-content>
     <router-outlet class="router-outlet-container"></router-outlet>

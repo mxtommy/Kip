@@ -9,17 +9,18 @@ import { IUnitDefaults } from './units.service';
 import { UUID } from '../utils/uuid';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
-import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
+import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultDashboardsConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig } from '../../../default-config/config.demo.const';
+import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
 
 import { StorageService } from './storage.service';
 import { IAuthorizationToken } from './authentication.service';
+import { Dashboard } from './dashboard.service';
 
 const defaultTheme = 'modern-dark';
-const configFileVersion: number = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
-const configVersion: number = 10; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
+const configFileVersion: number = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+const configVersion: number = 11; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
 
 @Injectable({
   providedIn: 'root'
@@ -37,13 +38,14 @@ export class AppSettingsService {
   private loginPassword: string;
   public useSharedConfig: boolean;
   private sharedConfigName: string;
-  private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null};
+  private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, dashboards: null};
 
   private kipUUID: string;
   public signalkUrl: ISignalKUrl;
   private widgets: Array<IWidget>;
   private splitSets: ISplitSet[] = [];
   private rootSplits: string[] = [];
+  private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
 
   constructor(
@@ -75,10 +77,12 @@ export class AppSettingsService {
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
 
-        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null};
+        //TODO: clean up
+        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, dashboards: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
         localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
         localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
+        localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
 
         this.activeConfig = this.validateAppConfig(localStorageConfig);
@@ -91,15 +95,8 @@ export class AppSettingsService {
     const config :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
 
     switch (config.configVersion) {
-      case 9:
-        // Upgrade to v10. No change required. Only AppConfig changes.
-        config.configVersion = 10;
-        localStorage.setItem("connectionConfig", JSON.stringify(config));
+      case 11:
         break;
-
-      case 10:
-        break;
-
       default:
         console.error(`[AppSettings Service] Invalid connectionConfig version ${config.configVersion}. Resetting and loading connection configuration default`);
         this.resetConnection();
@@ -122,6 +119,7 @@ export class AppSettingsService {
   }
 
   private validateAppConfig(config: IConfig): IConfig {
+    //TODO: Clean up
     if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
       if (config.app.configVersion === 6 || config.app.configVersion === 9) {
         // we need to upgrade config
@@ -252,8 +250,16 @@ public loadConfigFromLocalStorage(type: string) {
           config = this.getDefaultLayoutConfig();
           break;
 
+        case "dashboardsConfig":
+          config = this.getDefaultDashboardsConfig();
+          break;
+
         case "themeConfig":
           config = this.getDefaultThemeConfig();
+          break;
+
+        default:
+          console.error(`[AppSettings Service] Invalid ${type} default config requested`);
           break;
       }
     }
@@ -280,7 +286,6 @@ public loadConfigFromLocalStorage(type: string) {
     this.kipKNotificationConfig.next(this.activeConfig.app.notificationConfig);
     this.widgets = this.activeConfig.widget.widgets;
     this.splitSets = this.activeConfig.layout.splitSets;
-    this.rootSplits = this.activeConfig.layout.rootSplits;
 
     if (this.activeConfig.app.autoNightMode === undefined) {
       this.setAutoNightMode(false);
@@ -293,6 +298,8 @@ public loadConfigFromLocalStorage(type: string) {
     } else {
       this.nightModeBrightness.next(this.activeConfig.app.nightModeBrightness);
     }
+
+    this.activeConfig.dashboards === undefined ? this._dashboards = [] : this._dashboards = this.activeConfig.dashboards;
   }
 
   //UnitDefaults
@@ -342,8 +349,13 @@ public loadConfigFromLocalStorage(type: string) {
     return this.buildWidgetStorageObject();
   }
 
+  //TODO: clean up
   public getLayoutConfig(): ILayoutConfig {
     return this.buildLayoutStorageObject();
+  }
+
+  public getDashboardConfig(): Dashboard[] {
+    return this.buildDashboardStorageObject();
   }
 
   public getThemeConfig(): IThemeConfig {
@@ -444,8 +456,7 @@ public loadConfigFromLocalStorage(type: string) {
     this.splitSets = splitSets;
     if (this.useSharedConfig) {
       let layoutConfig: ILayoutConfig = {
-        splitSets: this.splitSets,
-        rootSplits: this.rootSplits,
+        splitSets: this.splitSets
         };
 
       this.storage.patchConfig('ILayoutConfig', layoutConfig);
@@ -454,12 +465,19 @@ public loadConfigFromLocalStorage(type: string) {
     }
   }
 
+  public saveDashboards(dashboards: Dashboard[]) {
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('Dashboards', dashboards);
+    } else {
+      this.saveLDashboardsConfigToLocalStorage(dashboards);
+    }
+  }
+
   public saveRootUUIDs(rootUUIDs) {
     this.rootSplits = rootUUIDs;
     if (this.useSharedConfig) {
       let layoutConfig: ILayoutConfig = {
-        splitSets: this.splitSets,
-        rootSplits: this.rootSplits,
+        splitSets: this.splitSets
         };
 
       this.storage.patchConfig('ILayoutConfig', layoutConfig);
@@ -500,11 +518,12 @@ public loadConfigFromLocalStorage(type: string) {
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
 
-    let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null};
+    let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null, dashboards: null};
     newDefaultConfig.app = this.getDefaultAppConfig();
     newDefaultConfig.widget = this.getDefaultWidgetConfig();
     newDefaultConfig.layout = this.getDefaultLayoutConfig();
     newDefaultConfig.theme = this.getDefaultThemeConfig();
+    newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
 
       if (this.useSharedConfig) {
         this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
@@ -545,6 +564,7 @@ public loadConfigFromLocalStorage(type: string) {
         app: DemoAppConfig,
         widget: DemoWidgetConfig,
         layout: DemoLayoutConfig,
+        dashboards: DemoDashboardsConfig.dashboards,
         theme: DemoThemeConfig
       };
       this.storage.setConfig('user', this.sharedConfigName, demoConfig);
@@ -563,7 +583,7 @@ public loadConfigFromLocalStorage(type: string) {
     console.log("[AppSettings Service] Reload app");
     location.replace("./");
   }
-  //// Storage Objects
+
   // builds config data oject from running data
   private buildAppStorageObject() {
 
@@ -602,10 +622,13 @@ public loadConfigFromLocalStorage(type: string) {
 
   private buildLayoutStorageObject() {
     let storageObject: ILayoutConfig = {
-      splitSets: this.splitSets,
-      rootSplits: this.rootSplits,
+      splitSets: this.splitSets
       }
     return storageObject;
+  }
+
+  private buildDashboardStorageObject() {
+    return this._dashboards;
   }
 
   private buildThemeStorageObject() {
@@ -631,6 +654,12 @@ public loadConfigFromLocalStorage(type: string) {
     localStorage.setItem('widgetConfig', JSON.stringify(this.buildWidgetStorageObject()));
   }
 
+  private saveLDashboardsConfigToLocalStorage(dashboards: Dashboard[]) {
+    console.log("[AppSettings Service] Saving Dashboard config to LocalStorage");
+    localStorage.setItem('dashboardsConfig', JSON.stringify(dashboards));
+  }
+
+  //TODO: retire in favor of saveDashboards
   private saveLayoutConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Layouts config to LocalStorage");
     localStorage.setItem('layoutConfig', JSON.stringify(this.buildLayoutStorageObject()));
@@ -668,6 +697,12 @@ public loadConfigFromLocalStorage(type: string) {
   private getDefaultLayoutConfig(): ILayoutConfig {
     let config: ILayoutConfig = DefaultLayoutConfig;
     localStorage.setItem("layoutConfig", JSON.stringify(config));
+    return config;
+  }
+
+  private getDefaultDashboardsConfig(): Dashboard[] {
+    let config = DefaultDashboardsConfig.dashboards;
+    localStorage.setItem("dashboardsConfig", JSON.stringify(config));
     return config;
   }
 

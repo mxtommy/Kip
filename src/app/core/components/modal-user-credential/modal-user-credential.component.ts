@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
     standalone: true,
     imports: [FormsModule, MatDialogTitle, MatDialogContent, NgIf, MatFormField, MatLabel, MatInput, MatError, MatDivider, MatDialogActions, MatButton, MatDialogClose]
 })
-export class ModalUserCredentialComponent implements OnInit {
+export class ModalUserCredentialComponent {
   titleDialog: string = "Sign in to Signal K";
 
   constructor(
@@ -22,11 +22,7 @@ export class ModalUserCredentialComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: {user: string, password: string, error: string}
   ) { }
 
-
-  ngOnInit(): void {
-  }
-
-  SaveCredential() {
+  protected saveCredential() {
     this.data.error = null;
     this.dialogRef.close(this.data);
   }

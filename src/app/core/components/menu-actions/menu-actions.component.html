@@ -8,10 +8,14 @@
   </button>
 </div>
 <mat-divider />
-<mat-action-list cdkFocusInitial>
-  <button mat-list-item routerLink="/data">
+<mat-action-list>
+  <button mat-list-item routerLink="/data" cdkFocusInitial>
     <mat-icon matListItemIcon>troubleshoot</mat-icon>
     <span>Data Browser</span>
+  </button>
+  <button mat-list-item routerLink="/dashboards">
+    <mat-icon matListItemIcon>dashboard</mat-icon>
+    <span>Manage Dashboards</span>
   </button>
   @if (!dashboardEdit) {
     <button mat-list-item (click)="unlockPage(true)">
@@ -24,10 +28,6 @@
       <span>Save Layout</span>
     </button>
   }
-  <button mat-list-item [disabled]="!dashboardEdit" (click)="newPage()">
-    <mat-icon matListItemIcon>dashboard</mat-icon>
-    <span>Dashboards</span>
-  </button>
 </mat-action-list>
 <div class="actions-bottom-container">
   <mat-divider />

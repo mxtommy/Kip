@@ -1,47 +1,38 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
 import { LayoutSplitsService } from '../../services/layout-splits.service';
 import { PageLayoutComponent } from '../page-layout/page-layout.component';
-
-
+import { DashboardService } from '../../services/dashboard.service';
 
 @Component({
     selector: 'page-root',
     templateUrl: './page-root.component.html',
     styleUrls: ['./page-root.component.scss'],
     standalone: true,
-    imports: [PageLayoutComponent]
+    imports: [ PageLayoutComponent ]
 })
 export class PageRootComponent implements OnInit, OnDestroy {
+  private dashboardNumber: number;
+  private pageNumberSub: Subscription;
 
-  rootUUIDSub: Subscription;
-  currentRootUUID: string = null;
-  pageNumber: number;
-  pageNumberSub: Subscription;
+  private unlockStatusSub: Subscription;
+  protected unlockStatus: boolean;
 
-
-  unlockStatusSub: Subscription;
-  unlockStatus: boolean;
+  protected readonly root = "root";
 
   constructor(
+    protected _dashboard: DashboardService,
     private LayoutSplitsService: LayoutSplitsService,
     private route: ActivatedRoute) { }
 
   ngOnInit() {
 
     this.pageNumberSub = this.route.params.subscribe(params => {
-      this.pageNumber = +params['id'];
-      this.LayoutSplitsService.setActiveRootIndex(this.pageNumber);
+      this.dashboardNumber = +params['id'];
+      this._dashboard.navigateTo(this.dashboardNumber);
     })
-
-    // when root uuid changes, update page.
-    this.rootUUIDSub = this.LayoutSplitsService.getActiveRootSub().subscribe(uuid => {
-      if (uuid === null) {return; }// no root UUID yet...
-      this.currentRootUUID = uuid;
-    });
 
     // get Unlock Status
     this.unlockStatusSub = this.LayoutSplitsService.getEditLayoutObservable().subscribe(unlockStatus => {
@@ -50,7 +41,6 @@ export class PageRootComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.rootUUIDSub.unsubscribe();
     this.unlockStatusSub.unsubscribe();
     this.pageNumberSub.unsubscribe();
   }

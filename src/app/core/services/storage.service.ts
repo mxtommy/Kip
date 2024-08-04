@@ -235,6 +235,15 @@ export class StorageService {
           }]
         break;
 
+      case "Dashboards":
+        document =
+          [{
+            "op": "replace",
+            "path": `/${this.sharedConfigName}/dashboards`,
+            "value": value
+          }]
+        break;
+
       case "Array<IUnitDefaults>":
         document =
           [{
@@ -249,24 +258,6 @@ export class StorageService {
           [{
             "op": "replace",
             "path": `/${this.sharedConfigName}/app/dataSets`,
-            "value": value
-          }]
-        break;
-
-      case "Array<IZone>":
-        document =
-          [{
-            "op": "replace",
-            "path": `/${this.sharedConfigName}/zones/zones`,
-            "value": value
-          }]
-        break;
-
-      case "IZonesConfig":
-        document =
-          [{
-            "op": "replace",
-            "path": `/${this.sharedConfigName}/zones`,
             "value": value
           }]
         break;

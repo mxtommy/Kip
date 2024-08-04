@@ -379,7 +379,9 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     let localConfig: IConfig = {
       "app": this.appSettingsService.getAppConfig(),
       "widget": this.appSettingsService.getWidgetConfig(),
+      //TODO: Clean up
       "layout": this.appSettingsService.getLayoutConfig(),
+      "dashboards": this.appSettingsService.getDashboardConfig(),
       "theme": this.appSettingsService.getThemeConfig(),
     };
     return localConfig;
@@ -389,7 +391,9 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     let localConfig: IConfig = {
       "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
       "widget": this.appSettingsService.loadConfigFromLocalStorage('widgetConfig'),
+      //TODO: Clean up
       "layout": this.appSettingsService.loadConfigFromLocalStorage('layoutConfig'),
+      "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardConfig'),
       "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
     };
     return localConfig;

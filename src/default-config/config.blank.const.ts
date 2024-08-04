@@ -1,10 +1,10 @@
-import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig, DashboardConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DefaultUnitsConfig } from "./config.blank.units.const";
 import { UUID } from "../app/core/utils/uuid";
 
 export const DefaultAppConfig: IAppConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "autoNightMode": false,
   "nightModeBrightness": 0.20,
   "dataSets": [],
@@ -23,12 +23,9 @@ export const DefaultWidgetConfig: IWidgetConfig = {
 }
 
 export const DefaultLayoutConfig: ILayoutConfig = {
-  "rootSplits": [
-    "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  ],
   "splitSets": [
     {
-      "uuid": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
+      "uuid": "root",
       "direction": "horizontal",
       "splitAreas": [
         {
@@ -41,6 +38,11 @@ export const DefaultLayoutConfig: ILayoutConfig = {
   ]
 }
 
+export const DefaultDashboardsConfig: DashboardConfig = {
+  "dashboards": [
+  ]
+}
+
 export const DefaultThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
 }
@@ -49,11 +51,12 @@ export const defaultConfig: IConfig = {
   "app": DefaultAppConfig,
   "widget": DefaultWidgetConfig,
   "layout": DefaultLayoutConfig,
-  "theme": DefaultThemeConfig
+  "theme": DefaultThemeConfig,
+  "dashboards": DefaultDashboardsConfig.dashboards
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,

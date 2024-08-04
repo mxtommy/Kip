@@ -11,18 +11,19 @@ import { Howl } from 'howler';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { NotificationsMenuComponent } from './core/components/notifications-menu/notifications-menu.component';
+import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { ActionsMenuComponent } from './core/components/actions-menu/actions-menu.component';
+import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
+import { DashboardService } from './core/services/dashboard.service';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [ NotificationsMenuComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, ActionsMenuComponent ]
+    imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
 export class AppComponent implements OnInit, OnDestroy {
   protected actionsSidenavOpen = false;
@@ -48,6 +49,7 @@ export class AppComponent implements OnInit, OnDestroy {
     public authenticationService: AuthenticationService,
     private deltaService: SignalKDeltaService,
     private appService: AppService,
+    private _dashboard: DashboardService
     ) {}
 
   ngOnInit() {
@@ -196,11 +198,11 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   protected pageDown() {
-    this.LayoutSplitsService.previousRoot();
+    this._dashboard.navigatePrevious();
   }
 
   protected pageUp() {
-    this.LayoutSplitsService.nextRoot();
+    this._dashboard.navigateNext();
   }
 
   ngOnDestroy() {

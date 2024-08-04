@@ -1,9 +1,9 @@
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig, DashboardConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { UUID } from "../app/core/utils/uuid"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "autoNightMode": false,
   "nightModeBrightness": 0.20,
   "dataSets": [
@@ -489,7 +489,7 @@ export const DemoWidgetConfig: IWidgetConfig = {
 export const DemoLayoutConfig: ILayoutConfig = {
   "splitSets": [
       {
-          "uuid": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
+          "uuid": "root",
           "direction": "horizontal",
           "splitAreas": [
               {
@@ -566,7 +566,7 @@ export const DemoLayoutConfig: ILayoutConfig = {
           ]
       },
       {
-          "uuid": "d735c561-d413-4f7e-93d9-2c494e16184e",
+          "uuid": "root",
           "direction": "horizontal",
           "splitAreas": [
               {
@@ -615,11 +615,11 @@ export const DemoLayoutConfig: ILayoutConfig = {
               }
           ]
       }
-  ],
-  "rootSplits": [
-      "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-      "d735c561-d413-4f7e-93d9-2c494e16184e"
   ]
+}
+
+export const DemoDashboardsConfig: DashboardConfig = {
+  "dashboards": []
 }
 
 export const DemoThemeConfig: IThemeConfig = {
@@ -630,11 +630,12 @@ export const DemoConfig: IConfig = {
   "app": DemoAppConfig,
   "widget": DemoWidgetConfig,
   "layout": DemoLayoutConfig,
+  "dashboards": DemoDashboardsConfig.dashboards,
   "theme": DemoThemeConfig,
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,

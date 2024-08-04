@@ -21,11 +21,11 @@ export class PageLayoutComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild(CdkDropList) dropList?: CdkDropList;
   @Input('unlockStatus') unlockStatus: boolean;
   @Input('splitUUID') splitUUID: string;
+  @Input('dashboard') dashboard: number;
 
   splitSet$: Observable<ISplitSet>;
 
   allowDropPredicate = (drag: CdkDrag, drop: CdkDropList) => {
-    return this.splits.isDropAllowed(drag, drop);
   };
 
   constructor(
@@ -36,9 +36,6 @@ export class PageLayoutComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngAfterViewInit(): void {
-    if (this.dropList) {
-      this.splits.register(this.dropList);
-    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -66,18 +63,6 @@ export class PageLayoutComponent implements OnInit, OnDestroy, OnChanges {
 
   public get connectedCdkDropLists() {
     return this.splits.dropLists;
-  }
-
-  public cdkDrop(uuid: string, event: CdkDragDrop<ISplitArea[]>): void {
-    this.splits.dropArea(uuid, event);
-  }
-
-  public cdkDragMoved(event: CdkDragMove<ISplitArea>) {
-    this.splits.dragMoved(event);
-  }
-
-  public cdkDragReleased(event: CdkDragRelease) {
-    this.splits.dragReleased(event);
   }
 
   ngOnDestroy() {

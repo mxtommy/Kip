@@ -16,13 +16,13 @@ interface INotificationInfo extends IAlarmInfo{
 }
 
 @Component({
-    selector: 'notifications-menu',
-    templateUrl: './notifications-menu.component.html',
-    styleUrls: ['./notifications-menu.component.scss'],
+    selector: 'menu-notifications',
+    templateUrl: './menu-notifications.component.html',
+    styleUrls: ['./menu-notifications.component.scss'],
     standalone: true,
     imports: [ MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, AsyncPipe, MatIconModule ]
 })
-export class NotificationsMenuComponent implements OnDestroy {
+export class MenuNotificationsComponent implements OnDestroy {
   protected notificationServiceSettingsSubscription: Subscription = null;
   protected notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
     filter(notification => notification !== null));

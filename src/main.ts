@@ -16,7 +16,9 @@ import { AppSettingsService } from './app/core/services/app-settings.service';
 import { UnitsService } from './app/core/services/units.service';
 import { WidgetManagerService } from './app/core/services/widget-manager.service';
 import { WidgetListService } from './app/core/services/widget-list.service';
+//TODO: cleanup after new grad design
 import { LayoutSplitsService } from './app/core/services/layout-splits.service';
+import { DashboardService } from './app/core/services/dashboard.service';
 import { DatasetService } from './app/core/services/data-set.service';
 import { SignalKDeltaService } from './app/core/services/signalk-delta.service';
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
@@ -29,6 +31,7 @@ import { AppNetworkInitService } from './app/core/services/app-initNetwork.servi
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
 import 'hammerjs';
+import { DashboardPagesComponent } from './app/core/components/dashboard-pages/dashboard-pages.component';
 
 
 /**
@@ -50,6 +53,7 @@ const appRoutes: Routes = [
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data', component: DataBrowserComponent },
+  { path: 'dashboards', component: DashboardPagesComponent },,
   { path: 'login', component: WidgetLoginComponent }
 ];
 
@@ -131,7 +135,9 @@ bootstrapApplication(AppComponent, {
     SignalKConnectionService,
     SignalKDeltaService,
     DatasetService,
+    //TODO: cleanup after new grad design
     LayoutSplitsService,
+    DashboardService,
     WidgetListService,
     WidgetManagerService,
     UnitsService,
