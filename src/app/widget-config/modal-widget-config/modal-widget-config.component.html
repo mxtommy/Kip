@@ -157,7 +157,7 @@
                   </mat-checkbox>
                 </div>
               } @else if ( ['measuring','capacity'].indexOf(formMaster.value.gauge.subType) > -1 ) {
-                  <mat-form-field formGroupName="gauge" class="options-grid-span2">
+                  <mat-form-field formGroupName="gauge">
                     <mat-label>Gauge Type</mat-label>
                     <mat-select
                       placeholder="Select Gauge Type..."
@@ -171,7 +171,7 @@
             }
 
             @if (widgetConfig.gauge?.type == 'ngLinear') {
-              <mat-form-field formGroupName="gauge" class="options-grid-span2">
+              <mat-form-field formGroupName="gauge">
                 <mat-label>Orientation</mat-label>
                 <mat-select
                     placeholder="Select type..."
@@ -184,7 +184,7 @@
             }
 
             @if ( (widgetConfig.gauge?.type == 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType)) || widgetConfig.gauge?.type == 'ngLinear') {
-              <mat-form-field formGroupName="gauge" class="options-grid-span2">
+              <mat-form-field formGroupName="gauge">
                 <mat-label>Highlights Width</mat-label>
                 <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
               </mat-form-field>

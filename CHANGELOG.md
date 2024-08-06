@@ -1,5 +1,8 @@
-
-
+# V 2.12.2
+## Improvements
+* Makes Radial and Linear gauge highlights width configurable by @jaredjensen 
+## Fixes
+* Metadata not being available on initial load by @jaredjensen
 # V 2.12.1
 ## Fixes
 * Numeric widget using seconds value not converting to HH:MM:SS format. Fixes #438
