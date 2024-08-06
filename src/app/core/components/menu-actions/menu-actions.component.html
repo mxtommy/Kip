@@ -17,6 +17,10 @@
     <mat-icon matListItemIcon>dashboard</mat-icon>
     <span>Manage Dashboards</span>
   </button>
+  <button mat-list-item routerLink="/dashboard">
+    <mat-icon matListItemIcon>dashboard</mat-icon>
+    <span>DASHBOARD</span>
+  </button>
   @if (!dashboardEdit) {
     <button mat-list-item (click)="unlockPage(true)">
       <mat-icon matListItemIcon>dashboard_customize</mat-icon>

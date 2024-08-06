@@ -9,13 +9,13 @@ import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, CdkDragHandle } fro
 
 
 @Component({
-  selector: 'dashboard-pages',
+  selector: 'dashboards-manage',
   standalone: true,
   imports: [ MatButtonModule, PageHeaderComponent, MatIconModule, MatMenuModule, CdkDropList, CdkDrag, CdkDragHandle ],
-  templateUrl: './dashboard-pages.component.html',
-  styleUrl: './dashboard-pages.component.scss'
+  templateUrl: './dashboards-manage.component.html',
+  styleUrl: './dashboards-manage.component.scss'
 })
-export class DashboardPagesComponent {
+export class DashboardsManageComponent {
   protected readonly pageTitle = 'Dashboards';
 
   constructor(protected _dashboard: DashboardService, private dialog: DialogService) {

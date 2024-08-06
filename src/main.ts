@@ -7,7 +7,6 @@ import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.co
 import { DataBrowserComponent } from './app/data-browser/data-browser.component';
 import { AppHelpComponent } from './app/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
-import { PageRootComponent } from './app/core/components/page-root/page-root.component';
 import { withHashLocation, provideRouter, Routes } from '@angular/router';
 import { StorageService } from './app/core/services/storage.service';
 import { TimersService } from './app/core/services/timers.service';
@@ -30,8 +29,9 @@ import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
+import { DashboardsManageComponent } from './app/core/components/dashboards-manage/dashboards-manage.component';
+import { DashboardComponent } from './app/core/components/dashboard/dashboard.component';
 import 'hammerjs';
-import { DashboardPagesComponent } from './app/core/components/dashboard-pages/dashboard-pages.component';
 
 
 /**
@@ -48,12 +48,12 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     .catch(res => { })
 };
 const appRoutes: Routes = [
-  { path: '', redirectTo: 'page/0', pathMatch: 'full' },
-  { path: 'page/:id', component: PageRootComponent },
+  { path: '', redirectTo: 'dashboard/0', pathMatch: 'full' },
+  { path: 'dashboard/:id', component: DashboardComponent },
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data', component: DataBrowserComponent },
-  { path: 'dashboards', component: DashboardPagesComponent },,
+  { path: 'dashboards', component: DashboardsManageComponent },,
   { path: 'login', component: WidgetLoginComponent }
 ];
 

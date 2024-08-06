@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.grid-stack {
+  background: yellow;
+}
+
+.grid-stack > .grid-stack-item > div.grid-stack-item-content {
+  text-align: center;
+  background-color: blue;
+  border: 1px solid red;
+}
+
+.grid-stack-item-content {
+  text-align: center;
+  background-color: blue;
+  border: 1px solid red;
+}

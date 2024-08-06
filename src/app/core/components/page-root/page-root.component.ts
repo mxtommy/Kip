@@ -11,7 +11,7 @@ import { DashboardService } from '../../services/dashboard.service';
     templateUrl: './page-root.component.html',
     styleUrls: ['./page-root.component.scss'],
     standalone: true,
-    imports: [ PageLayoutComponent ]
+    imports: [PageLayoutComponent ]
 })
 export class PageRootComponent implements OnInit, OnDestroy {
   private dashboardNumber: number;

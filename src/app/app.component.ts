@@ -42,7 +42,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     private _snackBar: MatSnackBar,
-    private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
+    //TODO: Clean up
+    // private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
     public appSettingsService: AppSettingsService, // needs storage & AppInit
     private DatasetService: DatasetService, // needs AppSettingsService & SignalKDataService
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService

@@ -1,14 +1,12 @@
-import { ControlType } from './../interfaces/widgets-interface';
 import { AppSettingsService } from './app-settings.service';
 import { effect, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import isEqual from 'lodash-es/isEqual';
-import { ISplitSet } from './layout-splits.service';
+import { NgGridStackOptions } from 'gridstack/dist/angular';
 
 export interface Dashboard {
-  name: string;
-  description: string | null;
-  layoutConfiguration: Array<ISplitSet> | null;
+  name?: string;
+  configuration?: NgGridStackOptions | null;
 }
 
 @Injectable({
@@ -26,22 +24,15 @@ export class DashboardService {
     });
   }
 
-  public add(name: string, description?: string, configuration?: any): void {
+  public add(name: string, configuration?: NgGridStackOptions): void {
     this.dashboards.update(dashboards =>
-      [ ...dashboards, {
-        name: name,
-        description: description,
-        layoutConfiguration: configuration}
-      ]
+      [ ...dashboards, { name: name, configuration: configuration} ]
     );
   }
 
-  public update(itemIndex: number, name?: string, description?: string, configuration?: any): void {
+  public update(itemIndex: number, name: string): void {
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
-      i === itemIndex
-        ? { name: name, description: description, layoutConfiguration: configuration }
-        : dashboard
-    ));
+      i === itemIndex ? { ...dashboard, name: name } : dashboard));
   }
 
   public delete(itemIndex: number): void {
@@ -54,11 +45,15 @@ export class DashboardService {
     this.dashboards.update(dashboards =>
       [ ...dashboards, {
         name: newName,
-        description: sourceDashboard.description,
-        layoutConfiguration: sourceDashboard.layoutConfiguration
+        configuration: sourceDashboard.configuration
       }
       ]
     );
+  }
+
+  public updateConfiguration(itemIndex: number, configuration: NgGridStackOptions): void {
+    this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
+      i === itemIndex ? { ...dashboard, configuration: configuration } : dashboard));
   }
 
   public navigateNext(): void {
@@ -67,24 +62,24 @@ export class DashboardService {
     } else {
       this.activeDashboard.set(this.activeDashboard() + 1);
     }
-    this.router.navigate(['/page', this.activeDashboard()]);
+    this.router.navigate(['/dashboard', this.activeDashboard()]);
   }
 
   public navigatePrevious(): void {
-    if ((this.activeDashboard() - 1) < (this.dashboards().length) - 1) {
+    if ((this.activeDashboard() - 1) < 0) {
       this.activeDashboard.set(this.dashboards().length - 1);
     } else {
       this.activeDashboard.set(this.activeDashboard() - 1);
     }
-    this.router.navigate(['/page', this.activeDashboard()]);
+    this.router.navigate(['/dashboard', this.activeDashboard()]);
   }
 
   public navigateToActive(): void {
-    this.router.navigate(['/page', this.activeDashboard()]);
+    this.router.navigate(['/dashboard', this.activeDashboard()]);
   }
 
   public navigateTo(index: number): void {
     this.activeDashboard.set(index);
-    this.router.navigate(['/page', this.activeDashboard()]);
+    this.router.navigate(['/dashboard', this.activeDashboard()]);
   }
 }
