@@ -5,7 +5,8 @@ import { UnitsService } from '../../services/units.service';
 import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
 import { ISkZone } from '../../interfaces/signalk-interfaces';
 import { cloneDeep, merge } from 'lodash-es';
-import { ITheme } from '../../services/app-service';
+import { AppService, ITheme } from '../../services/app-service';
+import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
 
 
 interface IWidgetDataStream {
@@ -16,13 +17,13 @@ interface IWidgetDataStream {
 @Component({
   template: ''
 })
-export abstract class BaseWidgetComponent {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export abstract class BaseWidgetComponent extends BaseWidget {
+  @Input({required: true}) protected widgetProperties!: IWidget;
 
   public displayName$ = new Subject<string>;
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
-
+  protected theme: ITheme = undefined;
+  private themeSubscription: Subscription = undefined;
 
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
   public defaultConfig: IWidgetSvcConfig = undefined;
@@ -36,8 +37,16 @@ export abstract class BaseWidgetComponent {
   protected DataService = inject(DataService);
   /** Unit conversion service to convert a wide range of numerical data formats */
   protected unitsService = inject(UnitsService);
+  /** Unit conversion service to convert a wide range of numerical data formats */
+  protected app = inject(AppService);
 
   constructor() {
+    super();
+    this.themeSubscription = this.app.cssThemeColorRoles$.subscribe(t => this.theme = t);
+  }
+
+  public override serialize(): NgCompInputs {
+    return { widgetProperties: this.widgetProperties}
   }
 
   protected initWidget(): void {
@@ -46,7 +55,7 @@ export abstract class BaseWidgetComponent {
   }
 
   private observeMeta(): void {
-    if (this.widgetProperties && this.widgetProperties.config?.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
+    if (this.widgetProperties && this.widgetProperties.config.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
       const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
       const path = this.widgetProperties.config.paths[firstKey].path;
 
@@ -96,7 +105,7 @@ export abstract class BaseWidgetComponent {
   protected createDataObservable(): void {
     // check if Widget has properties
     if (this.widgetProperties === undefined) return;
-    if (Object.keys(this.widgetProperties.config?.paths).length == 0) {
+    if (Object.keys(this.widgetProperties.config.paths).length == 0) {
       this.dataStream = undefined;
       return;
     } else {
@@ -288,6 +297,6 @@ export abstract class BaseWidgetComponent {
     }
 
     this.metaSubscriptions?.unsubscribe();
-    this.metaSubscriptions = undefined;
+    this.themeSubscription?.unsubscribe();
   }
 }

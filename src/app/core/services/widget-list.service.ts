@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-
 import { WidgetBlankComponent } from '../../widgets/widget-blank/widget-blank.component';
 import { WidgetUnknownComponent } from '../../widgets/widget-unknown/widget-unknown.component';
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
@@ -7,7 +6,6 @@ import { WidgetTextGenericComponent } from '../../widgets/widget-text-generic/wi
 import { WidgetDateGenericComponent } from '../../widgets/widget-date-generic/widget-date-generic.component';
 import { WidgetWindComponent } from '../../widgets/widget-wind/widget-wind.component';
 import { WidgetGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
-import { WidgetButtonComponent } from '../../widgets/widget-button/widget-button.component';
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component'
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
@@ -22,7 +20,7 @@ import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-com
 
 class widgetInfo {
   name: string;
-  componentName;
+  componentName: any;
   description: string;
 }
 
@@ -33,11 +31,7 @@ export class widgetList {
 
 @Injectable()
 export class WidgetListService {
-
-  constructor() { }
-
-
-  widgetList: widgetList = {
+  private _widgetList: widgetList = {
     'Basic': [
       {
         name: 'WidgetNumeric',
@@ -63,11 +57,6 @@ export class WidgetListService {
         name: 'WidgetBlank',
         componentName: WidgetBlankComponent,
         description: 'Blank',
-      },
-      {
-        name: 'WidgetStateComponent',
-        componentName: WidgetButtonComponent,
-        description: '(Deprecated) Boolean Button/Switch',
       }
     ],
     'Gauge': [
@@ -136,16 +125,24 @@ export class WidgetListService {
     ]
   };
 
-  getComponentName(typeName: string) {
-    for (let [group, widgetList] of Object.entries(this.widgetList)) {
+  constructor() { }
+
+  public getComponentName(typeName: string): any {
+    for (let [group, widgetList] of Object.entries(this._widgetList)) {
       let widget = widgetList.find(c => c.name == typeName);
       if (widget) { return widget.componentName; }
     }
     return WidgetUnknownComponent;
   }
 
+  public getAllWidgetComponentClass(): Array<any> {
+    const widgetClasses = Object.values(this._widgetList)
+      .flatMap(widgetGroup => widgetGroup.map(widget => widget.componentName));
+    return widgetClasses;
+  }
 
-  getList (){
-    return this.widgetList;
+
+  public getList(): widgetList {
+    return this._widgetList;
   }
 }

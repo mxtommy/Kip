@@ -56,6 +56,7 @@ export class WidgetManagerService {
     this.saveWidgets();
   }
 
+  //TODO: update or delete this method
   saveWidgets() {
     this.settings.saveWidgets(this.widgets);
   }

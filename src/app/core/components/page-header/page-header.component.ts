@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { DashboardService } from '../../services/dashboard.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'page-header',
@@ -13,9 +13,9 @@ import { DashboardService } from '../../services/dashboard.service';
 export class PageHeaderComponent {
   protected readonly pageTitle = input<string>();
 
-  constructor(private dashboards: DashboardService) { }
+  constructor(private router: Router) { }
 
   protected closePage() {
-    this.dashboards.navigateToActive();
+    this.router.navigate(['/dashboard']);
   }
 }

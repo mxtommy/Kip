@@ -1,19 +1,21 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+
 
 @Component({
-    selector: 'app-widget-numeric',
+    selector: 'widget-numeric',
     templateUrl: './widget-numeric.component.html',
     styleUrls: ['./widget-numeric.component.scss'],
-    standalone: true
+    standalone: true,
+    imports: [ WidgetHostComponent ]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasMM', {static: true, read: ElementRef}) canvasMM: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
   @ViewChild('NumWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
-
 
   dataValue: number = null;
   maxValue: number = null;

@@ -48,13 +48,13 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     .catch(res => { })
 };
 const appRoutes: Routes = [
-  { path: '', redirectTo: 'dashboard/0', pathMatch: 'full' },
-  { path: 'dashboard/:id', component: DashboardComponent },
+  { path: 'dashboard', component: DashboardComponent },
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data', component: DataBrowserComponent },
-  { path: 'dashboards', component: DashboardsManageComponent },,
-  { path: 'login', component: WidgetLoginComponent }
+  { path: 'dashboards', component: DashboardsManageComponent },
+  { path: 'login', component: WidgetLoginComponent },
+  { path: '**', component: DashboardComponent }
 ];
 
 /**
@@ -68,9 +68,10 @@ const appRoutes: Routes = [
 export class kipHammerConfig extends HammerGestureConfig {
   // Override default hammerjs gestures configuration
   overrides = <any>{
-    pan: { direction: (window as any).Hammer.DIRECTION_ALL },
-    swipe: { direction: (window as any).Hammer.DIRECTION_ALL },
-  };
+    // pan: { direction: (window as any).Hammer.DIRECTION_ALL },
+    swipe: { direction: (window as any).Hammer.DIRECTION_ALL, velocity: 1, threshold: 100 },
+    press: { time: 500 },
+  }
 }
 
 if (environment.production) {
@@ -104,7 +105,7 @@ bootstrapApplication(AppComponent, {
     // Binds KIP's Hammerjs configuration overrides to a provider
     {
       provide: HAMMER_GESTURE_CONFIG,
-      useClass: kipHammerConfig,
+      useClass: kipHammerConfig
     },
     // MatDialog App wide default config
     {

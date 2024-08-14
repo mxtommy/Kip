@@ -1,8 +1,4 @@
-<!-- <button (click)="add()">add item</button>
-<button (click)="delete()">remove item</button>
-<button (click)="modify()">modify item</button>
-<button (click)="newLayout()">new layout</button> -->
-<button (click)="saveDashboard()">Save</button>
-<!-- <button (click)="clearGrid()">Clear</button> -->
-<button (click)="loadDashboard()">Load</button>
-<gridstack [options]="gridOptions" />
+<gridstack [options]="gridOptions" (swipeup)="onSwipeUp($event)" (swipedown)="onSwipeDown($event)" (window:resize)="resizeGridColumns($event)">
+</gridstack>
+
+

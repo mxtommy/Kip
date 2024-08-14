@@ -19,3 +19,10 @@ export interface DialogNameData {
   confirmBtnText?: string;
   cancelBtnText: string;
 }
+
+export interface DialogWidgetOptionsData {
+  title: string;
+  config: any;
+  confirmBtnText: string;
+  cancelBtnText: string;
+}

@@ -29,7 +29,7 @@ export class DashboardsManageComponent {
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
       if (!data) {return} //clicked cancel
-      this._dashboard.add(data.name);
+      this._dashboard.add(data.name, []);
     });
   }
 

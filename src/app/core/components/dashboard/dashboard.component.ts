@@ -1,8 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild, effect } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { DashboardService } from '../../services/dashboard.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/internal/Subscription';
+import { WidgetNumericComponent } from '../../../widgets/widget-numeric/widget-numeric.component';
+import { WidgetService } from '../../services/widget.service';
+import { GridHTMLElement } from 'gridstack';
 
 @Component({
   selector: 'dashboard',
@@ -11,44 +13,73 @@ import { Subscription } from 'rxjs/internal/Subscription';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent {
   @ViewChild(GridstackComponent, {static: true}) gridstack?: GridstackComponent;
   protected gridOptions: NgGridStackOptions = {
     margin: 5,
-    minRow: 1, // don't let it collapse when empty
-    cellHeight: 80,
-    float: true
+    minRow: 12, // don't let it collapse when empty
+    maxRow: 12,
+    // cellHeight: "auto",
+    // cellHeight: "59.90",
+    // cellHeightUnit: "%",
+    float: true,
+
   }
-  private routeSubscription: Subscription;
   protected widgets: NgGridStackWidget[] = [
-    { x: 0, y: 0, minW: 2, id: 'widget1', content: 'Item 1 sdgfsdfgs dfg sdfg sd fg sd fg sd fg sd fg sdfg' },
+    { x: 0, y: 0, minW: 2, id: '7298b3be-232f-48bf-9b3d-3b445131a908', selector: 'widget-numeric' },
     { x: 2, y: 1, id: 'widget2', content: 'Item 2 sdfg sd fg sdf gs dfg' },
     { x: 2, y: 2, id: 'widget3', content: 'Item 3 sdf g sdfg sd fg' },
   ];
 
-  constructor(private _dashboard: DashboardService, private route: ActivatedRoute) {
-  }
+  private previousIsStaticState: boolean = true;
 
-  ngOnInit(): void {
-    this.routeSubscription = this.route.params.subscribe(params => {
-      this._dashboard.navigateTo(+params['id']);
+  constructor(
+    protected dashboard: DashboardService,
+    private _widget: WidgetService,
+    private route: ActivatedRoute
+  ) {
+    // TODO: make this more generic. Maybe from widget service
+    GridstackComponent.addComponentToSelectorType([WidgetNumericComponent]);
+    effect(() => {
       this.loadDashboard();
-    })
+    });
+
+    effect(() => {
+      const isStatic = this.dashboard.isDashboardStatic();
+      this.gridstack.grid?.setStatic(isStatic);
+
+      if (isStatic && (isStatic != this.previousIsStaticState)) {
+        this.saveDashboard();
+      }
+
+      this.previousIsStaticState = isStatic;
+    }, {allowSignalWrites: true});
   }
 
   protected loadDashboard(): void {
-    const dashboard = this._dashboard.dashboards()[this._dashboard.activeDashboard()];
+    const dashboard = this.dashboard.dashboards()[this.dashboard.activeDashboard()];
     this.gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
   }
 
   protected saveDashboard(): void {
-    const serializedData = this.gridstack.grid?.save(false, false, () => {
-      console.log('TODO Save callback to get widget config into the grid widget data structure');
-    }) as NgGridStackOptions || null;
-    this._dashboard.updateConfiguration(this._dashboard.activeDashboard(), serializedData);
+    const serializedData = this.gridstack.grid?.save(false, false) as NgGridStackWidget[] || null;
+    this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
-  ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
+  protected resizeGridColumns(e: Event): void {
+    const gridRect = this.gridstack?.grid.el.getBoundingClientRect();
+    const cellHeight = gridRect.height / this.gridstack?.grid.getRow();
+    this.gridstack?.grid.cellHeight(cellHeight, true);
+    console.log(cellHeight);
+  }
+
+  protected onSwipeUp(e: Event): void {
+    e.preventDefault();
+    this.dashboard.previousDashboard();
+  }
+
+  protected onSwipeDown(e: Event): void {
+    e.preventDefault();
+    this.dashboard.nextDashboard();
   }
 }

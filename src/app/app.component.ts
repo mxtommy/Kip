@@ -1,7 +1,6 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
-import { LayoutSplitsService } from './core/services/layout-splits.service';
 import { AppSettingsService } from './core/services/app-settings.service';
 import { DatasetService } from './core/services/data-set.service';
 import { NotificationsService } from './core/services/notifications.service';
@@ -14,7 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 
@@ -26,8 +25,8 @@ import { DashboardService } from './core/services/dashboard.service';
     imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
 export class AppComponent implements OnInit, OnDestroy {
+  protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
   protected actionsSidenavOpen = false;
-
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
   protected notificationsPresent: boolean = false;
@@ -42,8 +41,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     private _snackBar: MatSnackBar,
-    //TODO: Clean up
-    // private LayoutSplitsService: LayoutSplitsService, // needs AppSettingsService
     public appSettingsService: AppSettingsService, // needs storage & AppInit
     private DatasetService: DatasetService, // needs AppSettingsService & SignalKDataService
     private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
@@ -173,37 +170,39 @@ export class AppComponent implements OnInit, OnDestroy {
     // this.setNightMode(this.isNightMode ? false: true);
   }
 
-  protected onSwipe(e: any): void {
-    switch (e.direction) {
-      case Hammer.DIRECTION_UP:
-        this.pageUp();
-        break;
+  // protected onSwipe(e: any): void {
+  //   switch (e.direction) {
+  //     // case Hammer.DIRECTION_UP:
+  //     //   this.pageUp();
+  //     //   break;
 
-      case Hammer.DIRECTION_DOWN:
-        this.pageDown();
-        break;
+  //     // case Hammer.DIRECTION_DOWN:
+  //     //   this.pageDown();
+  //     //   break;
 
-      case Hammer.DIRECTION_LEFT:
-        this.actionsSidenavOpen = true;
-        break;
+  //     case Hammer.DIRECTION_LEFT:
+  //       this.actionsSidenavOpen = true;
+  //       break;
 
-      case Hammer.DIRECTION_RIGHT:
-        this.notificationsSidenavOpened.set(true);
-        break;
+  //     case Hammer.DIRECTION_RIGHT:
+  //       this.notificationsSidenavOpened.set(true);
+  //       break;
 
-      default:
-        //TODO: Remove this console.warn
-        console.warn(`Unknown Type ${e.type} direction. Direction: ${e.direction} Distance: ${e.distance} Angle: ${e.angle}`);
-        break;
-    }
+  //     default:
+  //       //TODO: Remove this console.warn
+  //       console.warn(`Unknown Type ${e.type} direction. Direction: ${e.direction} Distance: ${e.distance} Angle: ${e.angle}`);
+  //       break;
+  //   }
+  // }
+
+  protected onSwipeRight(e: Event): void {
+    e.preventDefault();
+    this.notificationsSidenavOpened.set(true);
   }
 
-  protected pageDown() {
-    this._dashboard.navigatePrevious();
-  }
-
-  protected pageUp() {
-    this._dashboard.navigateNext();
+  protected onSwipeLeft(e: Event): void {
+    e.preventDefault();
+    this.actionsSidenavOpen = true;
   }
 
   ngOnDestroy() {
