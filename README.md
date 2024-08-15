@@ -25,8 +25,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 - Swipe left and right to cycle trough your Page layouts.
 - Double tap to toggle Night / Day modes.
 
-### KIP Mobile App
-Run KIP in full screen, with no browser controls visible, just like regular mobile apps. This feature is supported on most mobile OS. Each browser has it's own way of handling PWA deployments.
+###Run KIP in full screen, with no browser controls visible, just like regular mobile apps. This feature is supported on most mobile OS. Each browser has it's own way of handling PWA deployments.
 
 ![KIP PWA mode](./images/kipPhone.png)
 

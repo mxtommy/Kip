@@ -1,3 +1,8 @@
+# V 2.12.3
+## Fixes
+* Linear widget "No Progress" color option missing.
+* Data Browser source and value not displayed. 
+* Processing of combined values and meta delta updates. Fixes #453
 # V 2.12.2
 ## Improvements
 * Makes Radial and Linear gauge highlights width configurable by @jaredjensen 
