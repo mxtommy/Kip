@@ -29,7 +29,6 @@ export class DataBrowserRowComponent implements OnInit {
   selectedUnit: string = "unitless"
 
   constructor(
-    private DataService: DataService,
     private unitsService: UnitsService,
     public dialog: MatDialog
   ) {
@@ -38,7 +37,7 @@ export class DataBrowserRowComponent implements OnInit {
 
   ngOnInit() {
     this.units = this.unitsService.getConversionsForPath(this.path);
-    this.selectedUnit = this.units.default;
+    this.selectedUnit = this.units.base;
   }
 
   convertValue(value: any) {

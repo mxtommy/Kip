@@ -268,10 +268,10 @@ export class SignalKDeltaService {
 
     updates.forEach(update => {
       if (update.meta !== undefined) {
-        // Meta message update
         update.meta.forEach(meta => this.parseSkMeta(meta, context));
-      } else {
-        // Source value updates
+      }
+
+      if (update.values !== undefined) {
         update.values.forEach(item => {
           if (item.path.startsWith("notifications.")) {  // It's a notification message, pass to notification service
             this._skNotificationsMsg$.next(item);
