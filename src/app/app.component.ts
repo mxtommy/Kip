@@ -202,6 +202,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.LayoutSplitsService.newRootSplit();
   }
 
+  removePage() {
+    this.LayoutSplitsService.removeRootSplit();
+  }
+
   pageDown() {
     this.LayoutSplitsService.previousRoot();
   }

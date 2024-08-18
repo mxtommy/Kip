@@ -59,6 +59,22 @@ export class LayoutSplitsService {
     }
   }
 
+  removeRootSplit() {
+    const rootUUIDs = this.AppSettingsService.getRootSplits()
+    const remaining = [];
+
+    rootUUIDs.forEach(uuid => {
+      if (uuid !== this.activeRoot.getValue()) {
+        remaining.push(uuid)
+      }
+    })
+
+    this.rootUUIDs = remaining;
+    this.saveRootUUIDs();
+
+    this.router.navigate(['/page', 0]);
+  }
+
   nextRoot() {
     let currentIndex = this.rootUUIDs.indexOf(this.activeRoot.getValue());
     if (this.router.url == "/settings" || this.router.url == "/data" || this.router.url == "/help") {

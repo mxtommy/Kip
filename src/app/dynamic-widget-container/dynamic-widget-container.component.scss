@@ -68,6 +68,8 @@
   padding: 0px;
   transition: none;
   transition-property: none;
+
+  --mdc-elevated-card-container-elevation: none !important;
 }
 
 .selectWidgetMenu {

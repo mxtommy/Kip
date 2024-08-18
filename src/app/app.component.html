@@ -55,6 +55,9 @@
   <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
     <div class="menu-items-with-icons"><i class="fa-solid fa-plus-square" aria-hidden="true"></i>&nbsp;Add Page</div>
   </button>
+  <button mat-menu-item [disabled]="!unlockStatus" (click)="removePage()">
+    <div class="menu-items-with-icons"><i class="fa-solid fa-minus-square" aria-hidden="true"></i>&nbsp;Remove current Page</div>
+  </button>
   <button mat-menu-item (click)="unlockPage()">
     <div class="menu-items-with-icons" *ngIf="!unlockStatus"><i class="fa-solid fa-columns" aria-hidden="true"></i>&nbsp;Edit Layout</div>
     <div class="menu-items-with-icons" *ngIf="unlockStatus"><i class="fa-solid fa-lock" aria-hidden="true"></i>&nbsp;Lock Layout</div>

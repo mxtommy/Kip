@@ -5,7 +5,7 @@ import Qty from 'js-quantities';
 import { AppSettingsService } from './app-settings.service';
 import { Subscription } from 'rxjs';
 
-export type TValidSkUnits = 's' | 'Hz' | 'm3' | 'm3/s' | 'kg/s' | 'kg/m3' | 'deg' | 'rad' | 'rad/s' | 'A' | 'C' | 'V' | 'W' | 'Nm' | 'J' | 'ohm' | 'm' | 'm/s' | 'm2' | 'K' | 'Pa' | 'kg' | 'ratio' | 'm/s2' | 'rad/s2' | 'N' | 'T' | 'Lux' | 'Pa/s' | 'Pa.s' | 'unitless' | null;
+export type TValidSkUnits = 's' | 'Hz' | 'm3' | 'm3/s' | 'kg/s' | 'kg/m3' | '°' | 'rad' | 'rad/s' | 'A' | 'C' | 'V' | 'W' | 'Nm' | 'J' | 'ohm' | 'm' | 'm/s' | 'm2' | 'K' | 'Pa' | 'kg' | 'ratio' | 'm/s2' | 'rad/s2' | 'N' | 'T' | 'Lux' | 'Pa/s' | 'Pa.s' | 'unitless' | null;
 
 /**
  * Interface for a list of possible Kip value type conversions for a given path.
@@ -88,7 +88,7 @@ export class UnitsService implements OnDestroy {
     ] },
     { group: 'Temperature', units: [
       { measure: 'K', description: "Kelvin (base)"},
-      { measure: 'celsius', description: "Celsius"},
+      { measure: '°C', description: "Celsius"},
       { measure: 'fahrenheit', description: "Fahrenheit"}
      ] },
     { group: 'Length', units: [
@@ -153,18 +153,18 @@ export class UnitsService implements OnDestroy {
     ] },
     { group: 'Angle', units: [
       { measure: 'rad', description: "Radians (base)" },
-      { measure: 'deg', description: "Degrees" },
+      { measure: '°', description: "Degrees" },
       { measure: 'grad', description: "Gradians" },
     ] },
     { group: 'Frequency', units: [
-      { measure: 'rpm', description: "RPM - Rotations per minute" },
+      { measure: 'RPM', description: "RPM - Rotations per minute" },
       { measure: 'Hz', description: "Hz - Hertz (base)" },
       { measure: 'KHz', description: "KHz - Kilohertz" },
       { measure: 'MHz', description: "MHz - Megahertz" },
       { measure: 'GHz', description: "GHz - Gigahertz" },
     ] },
     { group: 'Ratio', units: [
-      { measure: 'percent', description: "As percentage value" },
+      { measure: '%', description: "As percentage value" },
       { measure: 'percentraw', description: "As ratio 0-1 with % sign" },
       { measure: 'ratio', description: "Ratio 0-1 (base)" }
     ] },
@@ -220,7 +220,7 @@ export class UnitsService implements OnDestroy {
           description: "Density in kg per cubic meter"
         }
       },
-      { unit: "deg", properties: {
+      { unit: "°", properties: {
           display: "\u00b0",
           quantity: "Angle",
           quantityDisplay: "\u2220",
@@ -422,7 +422,7 @@ export class UnitsService implements OnDestroy {
     'g/h': Qty.swiftConverter("m^3/s", "gallon/hour"),
 //  temp
     "K": function(v) { return v; },
-    "celsius": Qty.swiftConverter("tempK", "tempC"),
+    "°C": Qty.swiftConverter("tempK", "tempC"),
     "fahrenheit": Qty.swiftConverter("tempK", "tempF"),
 //  length
     "m": function(v) { return v; },
@@ -479,17 +479,17 @@ export class UnitsService implements OnDestroy {
     "deg/s": Qty.swiftConverter('rad/s', 'deg/s'),
     "deg/min": Qty.swiftConverter('rad/s', 'deg/min'),
 //  frequency
-    "rpm": function(v) { return v*60; },
+    "RPM": function(v) { return v*60; },
     "Hz": function(v) { return v; },
     "KHz": function(v) { return v/1000; },
     "MHz": function(v) { return v/1000000; },
     "GHz": function(v) { return v/1000000000; },
 //  angle
     "rad": function(v) { return v; },
-    "deg": Qty.swiftConverter('rad', 'deg'),
+    "°": Qty.swiftConverter('rad', 'deg'),
     "grad": Qty.swiftConverter('rad', 'grad'),
 //   ratio
-    'percent': function(v) { return v * 100 },
+    '%': function(v) { return v * 100 },
     'percentraw': function(v) { return v },
     'ratio': function(v) { return v },
 // lat/lon

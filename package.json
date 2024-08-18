@@ -1,26 +1,22 @@
 {
-  "name": "@mxtommy/kip",
-  "version": "2.12.3",
-  "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
+  "name": "bim-signalk",
+  "version": "0.0.1",
+  "description": "BIM (Boat Instrument Menu) is an marine instrument package.",
   "license": "MIT",
   "author": {
-    "name": "Thomas St.Pierre, David Godin"
+    "name": "OGMatrix"
   },
   "contributors": [
     {
-      "name": "Thomas St.Pierre",
-      "email": "thomas@samoht.ca"
-    },
-    {
-      "name": "David Godin",
-      "email": "godind@hotmail.com"
+      "name": "OGMatrix",
+      "email": "matrix@ogmatrix.net"
     }
   ],
-  "homepage": "https://github.com/mxtommy/Kip",
-  "bugs": "https://github.com/mxtommy/Kip/issues",
+  "homepage": "https://github.com/ogmatrix/bim",
+  "bugs": "https://github.com/ogmatrix/bim/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mxtommy/Kip.git"
+    "url": "git+https://github.com/ogmatrix/bim.git"
   },
   "keywords": [
     "signalk-webapp",
@@ -30,14 +26,15 @@
     "instruments",
     "dashboard",
     "marine",
+    "bim",
     "nmea"
   ],
   "signalk": {
     "appIcon": "assets/icon-72x72.png",
-    "displayName": "KIP Instrument MFD"
+    "displayName": "bim"
   },
   "scripts": {
-    "dev": "ng serve --configuration=dev --serve-path=/@mxtommy/kip/",
+    "dev": "ng serve --configuration=dev --serve-path=/bim/",
     "build-dev": "ng build --configuration=dev",
     "build-prod": "ng build --configuration=production",
     "test": "ng test",

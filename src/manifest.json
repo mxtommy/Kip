@@ -1,13 +1,13 @@
 {
-  "id": "/@mxtommy/kip/",
+  "id": "/bim/",
   "theme_color": "#424242",
   "background_color": "#424242",
   "display": "fullscreen",
-  "scope": "/@mxtommy/kip/",
-  "start_url": "/@mxtommy/kip/",
-  "name": "KIP Instrument MFD",
-  "short_name": "KIP",
-  "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
+  "scope": "/bim/",
+  "start_url": "/bim/",
+  "name": "Boat Instrument Menu",
+  "short_name": "BIM",
+  "description": "Forked from @mxtommy/kip to use it for myself and change a view things.",
   "orientation": "landscape",
   "icons": [
     {
