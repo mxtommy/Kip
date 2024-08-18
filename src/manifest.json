@@ -1,13 +1,13 @@
 {
-  "id": "/bim/",
+  "id": "/bim-signalk/",
   "theme_color": "#424242",
   "background_color": "#424242",
   "display": "fullscreen",
-  "scope": "/bim/",
-  "start_url": "/bim/",
+  "scope": "/bim-signalk/",
+  "start_url": "/bim-signalk/",
   "name": "Boat Instrument Menu",
   "short_name": "BIM",
-  "description": "Forked from @mxtommy/kip to use it for myself and change a view things.",
+  "description": "Forked from @mxtommy/kip to use it for myself and change views and take in my ideas",
   "orientation": "landscape",
   "icons": [
     {

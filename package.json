@@ -1,6 +1,6 @@
 {
   "name": "bim-signalk",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "BIM (Boat Instrument Menu) is an marine instrument package.",
   "license": "MIT",
   "author": {
@@ -34,7 +34,7 @@
     "displayName": "bim"
   },
   "scripts": {
-    "dev": "ng serve --configuration=dev --serve-path=/bim/",
+    "dev": "ng serve --configuration=dev --serve-path=/bim-signalk/",
     "build-dev": "ng build --configuration=dev",
     "build-prod": "ng build --configuration=production",
     "test": "ng test",

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "kip": {
+    "bim": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -11,7 +11,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "baseHref": "/bim/",
+            "baseHref": "/bim-signalk/",
             "aot": true,
             "outputPath": "public",
             "index": "src/index.html",
@@ -64,21 +64,21 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "kip:build"
+            "buildTarget": "bim:build"
           },
           "configurations": {
             "production": {
-              "buildTarget": "kip:build:production"
+              "buildTarget": "bim:build:production"
             },
             "dev": {
-              "buildTarget": "kip:build:dev"
+              "buildTarget": "bim:build:dev"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "kip:build"
+            "buildTarget": "bim:build"
           }
         },
         "test": {
@@ -114,7 +114,7 @@
         }
       }
     },
-    "kip-e2e": {
+    "bim-e2e": {
       "root": "e2e",
       "sourceRoot": "e2e",
       "projectType": "application",
@@ -123,7 +123,7 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "./protractor.conf.js",
-            "devServerTarget": "kip:serve"
+            "devServerTarget": "bim:serve"
           }
         },
         "lint": {
