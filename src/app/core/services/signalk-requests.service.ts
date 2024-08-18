@@ -63,7 +63,7 @@ export class SignalkRequestsService {
       requestId: requestId,
       accessRequest: {
         clientId: this.appSettingsService.KipUUID,
-        description: "KIP Instrument MDF",
+        description: "BIM",
         permissions: "admin"
       }
     }
