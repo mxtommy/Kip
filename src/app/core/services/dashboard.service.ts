@@ -1,12 +1,19 @@
 import { AppSettingsService } from './app-settings.service';
 import { effect, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
-import { NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { UUID } from '../utils/uuid';
 
 export interface Dashboard {
+  id: string
   name?: string;
   configuration?: NgGridStackWidget[] | [];
+}
+
+export interface widgetOperation {
+  id: string;
+  operation: 'delete' | 'duplicate';
 }
 
 @Injectable({
@@ -15,12 +22,13 @@ export interface Dashboard {
 export class DashboardService {
   public dashboards = signal<Dashboard[]>([], {equal: isEqual});
   public activeDashboard = signal<number>(0);
+  public widgetAction = signal<widgetOperation>(null);
   public readonly isDashboardStatic = signal<boolean>(true);
-  public readonly blankDashboard: Dashboard[] = [ {name: 'Dashboard 1', configuration: []} ];
+  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: []} ];
 
   constructor(private settings: AppSettingsService, private router: Router,) {
     const dashboards = this.settings.getDashboardConfig();
-    dashboards.length == 0 ? this.dashboards.set(this.blankDashboard) : this.dashboards.set(this.settings.getDashboardConfig());
+    dashboards.length == 0 ? this.dashboards.set([...this.blankDashboard, {id: UUID.create()}]) : this.dashboards.set(this.settings.getDashboardConfig());
 
     effect(() => {
       this.settings.saveDashboards(this.dashboards());
@@ -33,7 +41,7 @@ export class DashboardService {
 
   public add(name: string, configuration: NgGridStackWidget[]): void {
     this.dashboards.update(dashboards =>
-      [ ...dashboards, { name: name, configuration: configuration} ]
+      [ ...dashboards, {id: UUID.create(), name: name, configuration: configuration} ]
     );
   }
 
@@ -43,19 +51,31 @@ export class DashboardService {
   }
 
   public delete(itemIndex: number): void {
-    this.dashboards.update(dashboards => dashboards.filter((_, i) => i !== itemIndex)
-    );
+    this.dashboards.update(dashboards => dashboards.filter((_, i) => i !== itemIndex));
+
+    if (this.dashboards().length === 0) {
+      this.add( 'Dashboard ' + (this.dashboards().length + 1), []);
+      this.activeDashboard.set(0);
+    } else if (this.activeDashboard() > this.dashboards().length - 1) {
+      this.activeDashboard.set(this.dashboards().length - 1);
+    }
   }
 
   public duplicate(itemIndex: number, newName: string): void {
     const sourceDashboard = this.dashboards()[itemIndex];
-    this.dashboards.update(dashboards =>
-      [ ...dashboards, {
+    const newConfiguration = sourceDashboard.configuration.map(item => ({
+      ...item,
+      id: UUID.create()
+    }));
+
+    this.dashboards.update(dashboards => [
+      ...dashboards,
+      {
+        id: UUID.create(),
         name: newName,
-        configuration: sourceDashboard.configuration
+        configuration: newConfiguration
       }
-      ]
-    );
+    ]);
   }
 
   public updateConfiguration(itemIndex: number, configuration: NgGridStackWidget[]): void {
@@ -88,5 +108,13 @@ export class DashboardService {
       return;
     }
     this.router.navigate(['/dashboard', index]);
+  }
+
+  public deleteWidget(id: string): void {
+    this.widgetAction.set({id: id, operation: 'delete'});
+  }
+
+  public duplicateWidget(id: string): void {
+    this.widgetAction.set({id: id, operation: 'duplicate'});
   }
 }

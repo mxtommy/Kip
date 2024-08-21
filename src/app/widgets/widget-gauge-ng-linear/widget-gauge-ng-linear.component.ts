@@ -12,6 +12,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { JsonPipe } from '@angular/common';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
@@ -21,11 +23,10 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
     standalone: true,
-    imports: [NgxResizeObserverModule, GaugesModule, JsonPipe]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule, JsonPipe]
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('linearWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('linearGauge', {static: true, read: LinearGauge}) protected linearGauge: LinearGauge;
 
   // Gauge text value for value box rendering
@@ -82,24 +83,15 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.initWidget();
-    this.setGaugeConfig();
-
-    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.isGaugeVertical = this.widgetProperties.config.gauge.subType === 'vertical';  // Save for resize event
-
-    if (this.isGaugeVertical) {
-      this.gaugeOptions.height = gaugeSize.height;
-      this.gaugeOptions.width = (gaugeSize.height * 0.3);
-      this.height = "0px";
-    }
-    else {
-      this.gaugeOptions.height = gaugeSize.width * 0.3;
-      this.gaugeOptions.width = gaugeSize.width;
-      this.height = ((gaugeSize.height - this.gaugeOptions.height) / 2).toString() + "px";
-    }
+    this.startWidget();
   }
 
-  ngAfterViewInit() {
+  protected startWidget(): void {
+    this.setGaugeConfig();
+
+    this.unsubscribeDataStream();
+    this.metaSub?.unsubscribe();
+
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.value = 0;
@@ -157,7 +149,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.linearGauge.update(option);
       }
     });
-
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
         this.setHighlights(zones);
@@ -165,7 +156,16 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     });
   }
 
-  public onResized(event) {
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+  ngAfterViewInit() {
+    this.startWidget();
+  }
+
+  public onResized(event: ResizeObserverEntry) {
     //@ts-ignore
     let resize: LinearGaugeOptions = {};
     if (this.isGaugeVertical) {

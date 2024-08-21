@@ -5,6 +5,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
@@ -14,17 +16,17 @@ import { NgFor, NgIf } from '@angular/common';
 
 
 @Component({
-    selector: 'app-widget-boolean-switch',
+    selector: 'widget-boolean-switch',
     templateUrl: './widget-boolean-switch.component.html',
     styleUrls: ['./widget-boolean-switch.component.scss'],
     standalone: true,
-    imports: [NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;
   @ViewChild('widgetContainer', {static: true, read: ElementRef}) widgetContainerElement: ElementRef;
 
-  public switchControls: IDynamicControl[] = [];
+  public switchControls: IDynamicControl[] = null;
   private skRequestSub = new Subscription; // Request result observer
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -56,12 +58,17 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   ngOnInit(): void {
     this.initWidget();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
     this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.color);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
     this.resizeWidget();
 
     // Build control array
+    this.switchControls = [];
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
       if (!ctrlConfig.isNumeric) {
         ctrlConfig.isNumeric = false;
@@ -71,6 +78,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     );
 
     // Start Observers as path Array
+    this.unsubscribeDataStream();
     for (const key in this.switchControls) {
       if (Object.prototype.hasOwnProperty.call(this.switchControls, key)) {
         const path = this.switchControls[key];
@@ -87,10 +95,16 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     }
 
     // Listen to PUT response msg
+    this.skRequestSub?.unsubscribe();
     this.subscribeSKRequest();
   }
 
-  onResized(event) {
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+  onResized(event: ResizeObserverEntry): void {
     let calcH: number = event.contentRect.height / this.nbCtrl; // divide by number of instantiated widget
     let ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
     let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;

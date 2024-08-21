@@ -1,30 +1,31 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
-import { MatMenuModule } from '@angular/material/menu';
 import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, CdkDragHandle } from '@angular/cdk/drag-drop';
+import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
+import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 
 
 @Component({
   selector: 'dashboards-manage',
   standalone: true,
-  imports: [ MatButtonModule, PageHeaderComponent, MatIconModule, MatMenuModule, CdkDropList, CdkDrag, CdkDragHandle ],
+  imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, CdkDragHandle ],
   templateUrl: './dashboards-manage.component.html',
   styleUrl: './dashboards-manage.component.scss'
 })
 export class DashboardsManageComponent {
   protected readonly pageTitle = 'Dashboards';
-
-  constructor(protected _dashboard: DashboardService, private dialog: DialogService) {
-  }
+  private _bottomSheet = inject(MatBottomSheet);
+  protected _dashboard = inject(DashboardService);
+  private _dialog = inject(DialogService);
 
   protected addDashboard(): void {
-    this.dialog.openNameDialog({
+    this._dialog.openNameDialog({
       title: 'New Dashboard',
-      name: `Dashboard-${this._dashboard.dashboards().length + 1}`,
+      name: `Dashboard ${this._dashboard.dashboards().length + 1}`,
       confirmBtnText: 'Create',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
@@ -33,8 +34,30 @@ export class DashboardsManageComponent {
     });
   }
 
-  protected renameDashboard(currentName: string, itemIndex: number): void {
-    this.dialog.openNameDialog({
+  protected openBottomSheet(index: number): void {
+    const sheetRef = this._bottomSheet.open(DashboardsManageBottomSheetComponent);
+    sheetRef.afterDismissed().subscribe((action) => {
+      switch (action) {
+        case 'delete':
+          this.deleteDashboard(index);
+          break;
+
+        case 'duplicate':
+          this.duplicateDashboard(index, `${this._dashboard.dashboards()[index].name}`);
+          break;
+
+        case 'rename':
+          this.renameDashboard(index, this._dashboard.dashboards()[index].name);
+          break;
+
+        default:
+          break;
+      }
+    });
+  }
+
+  protected renameDashboard(itemIndex: number, currentName: string, ): void {
+    this._dialog.openNameDialog({
       title: 'Rename Dashboard',
       name: currentName,
       confirmBtnText: 'Save',
@@ -50,9 +73,9 @@ export class DashboardsManageComponent {
   }
 
   protected duplicateDashboard(itemIndex: number, currentName: string): void {
-    this.dialog.openNameDialog({
+    this._dialog.openNameDialog({
       title: 'Duplicate Dashboard',
-      name: `${currentName}-copy`,
+      name: `${currentName} copy`,
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {

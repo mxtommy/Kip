@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 
 @Component({
@@ -7,7 +9,7 @@ import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-si
     templateUrl: './widget-simple-linear.component.html',
     styleUrls: ['./widget-simple-linear.component.css'],
     standalone: true,
-    imports: [SvgSimpleLinearGaugeComponent]
+    imports: [ WidgetHostComponent, SvgSimpleLinearGaugeComponent ]
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   protected unitsLabel:string = "";
@@ -55,6 +57,10 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
 
   ngOnInit(): void {
     this.initWidget();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
     this.updateGaugeSettings();
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gauge.unitLabelFormat == "abr") {
@@ -63,6 +69,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     }
 
+    this.unsubscribeDataStream();
     this.observeDataStream('gaugePath', newValue => {
       if (newValue.data.value == null) {
         this.dataValue = 0;
@@ -73,6 +80,12 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       }
     });
   }
+
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
 
   private updateGaugeSettings() {
     this.barColorBackground = this.theme.background;

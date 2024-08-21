@@ -4,8 +4,8 @@ import { AppComponent } from './app/app.component';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
-import { DataBrowserComponent } from './app/data-browser/data-browser.component';
-import { AppHelpComponent } from './app/app-help/app-help.component';
+import { DataBrowserComponent } from './app/core/components/data-browser/data-browser.component';
+import { AppHelpComponent } from './app/core/components/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
 import { withHashLocation, provideRouter, Routes } from '@angular/router';
 import { StorageService } from './app/core/services/storage.service';
@@ -13,10 +13,6 @@ import { TimersService } from './app/core/services/timers.service';
 import { NotificationsService } from './app/core/services/notifications.service';
 import { AppSettingsService } from './app/core/services/app-settings.service';
 import { UnitsService } from './app/core/services/units.service';
-import { WidgetManagerService } from './app/core/services/widget-manager.service';
-import { WidgetListService } from './app/core/services/widget-list.service';
-//TODO: cleanup after new grad design
-import { LayoutSplitsService } from './app/core/services/layout-splits.service';
 import { DashboardService } from './app/core/services/dashboard.service';
 import { DatasetService } from './app/core/services/data-set.service';
 import { SignalKDeltaService } from './app/core/services/signalk-delta.service';
@@ -136,11 +132,7 @@ bootstrapApplication(AppComponent, {
     SignalKConnectionService,
     SignalKDeltaService,
     DatasetService,
-    //TODO: cleanup after new grad design
-    LayoutSplitsService,
     DashboardService,
-    WidgetListService,
-    WidgetManagerService,
     UnitsService,
     AppSettingsService,
     NotificationsService,

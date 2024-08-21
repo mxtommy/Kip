@@ -54,6 +54,7 @@ export class MenuActionsComponent {
       case 'help':
         this._router.navigate(['/help']);
         break;
+
       case 'dashboards':
         this._router.navigate(['/dashboards']);
         break;
@@ -64,6 +65,14 @@ export class MenuActionsComponent {
 
       case 'toggleFullScreen':
         this.toggleFullScreen();
+        break;
+
+      case 'settings':
+        this.OpenSettingsDialog();
+        break;
+
+      case 'layout':
+        this.dashboard.toggleStaticDashboard();
         break;
 
       case 'dayNightMode':

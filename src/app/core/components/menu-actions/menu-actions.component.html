@@ -2,9 +2,15 @@
   <button mat-button class="action-button" (click)="onItemClicked('help')">
     <span class="material-icons">help_outline</span>
   </button>
-  <button mat-button class="action-button" (click)="OpenSettingsDialog()">
-    <span class="material-icons">settings</span>
-  </button>
+  @if (dashboard.isDashboardStatic()) {
+    <button mat-button class="action-button" (click)="onItemClicked('layout')">
+      <span class="material-icons">dashboard_customize</span>
+    </button>
+  } @else {
+    <button mat-button class="action-button" (click)="onItemClicked('layout')">
+      <span class="material-icons">exit_to_app</span>
+    </button>
+  }
 </div>
 <mat-divider />
 <mat-action-list>
@@ -16,17 +22,10 @@
     <mat-icon matListItemIcon>dashboard</mat-icon>
     <span>Dashboards</span>
   </button>
-  @if (dashboard.isDashboardStatic()) {
-    <button mat-list-item (click)="dashboard.toggleStaticDashboard()">
-      <mat-icon matListItemIcon>dashboard_customize</mat-icon>
-      <span>Edit Layout</span>
-    </button>
-  } @else {
-    <button mat-list-item (click)="dashboard.toggleStaticDashboard()">
-      <mat-icon matListItemIcon>exit_to_app</mat-icon>
-      <span>Save Layout</span>
-    </button>
-  }
+  <button mat-list-item (click)="onItemClicked('settings')">
+    <mat-icon matListItemIcon>settings</mat-icon>
+    <span>Settings</span>
+  </button>
 </mat-action-list>
 <div class="actions-bottom-container">
   <mat-divider />

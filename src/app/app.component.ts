@@ -1,9 +1,7 @@
-import { Component, OnInit, OnDestroy, signal, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
-import { DatasetService } from './core/services/data-set.service';
-import { NotificationsService } from './core/services/notifications.service';
 import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
 import { AppService } from './core/services/app-service';
 import { Howl } from 'howler';
@@ -15,7 +13,6 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
-import { DashboardService } from './core/services/dashboard.service';
 
 @Component({
     selector: 'app-root',
@@ -25,6 +22,12 @@ import { DashboardService } from './core/services/dashboard.service';
     imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
 export class AppComponent implements OnInit, OnDestroy {
+  private _snackBar = inject(MatSnackBar);
+  public appSettingsService = inject(AppSettingsService);
+  public authenticationService = inject(AuthenticationService);
+  private deltaService = inject(SignalKDeltaService);
+  private appService = inject(AppService);
+
   protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
   protected actionsSidenavOpen = false;
   protected notificationsSidenavOpened = signal<boolean>(false);
@@ -39,16 +42,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private appNotificationSub: Subscription;
   private connectionStatusSub: Subscription;
 
-  constructor(
-    private _snackBar: MatSnackBar,
-    public appSettingsService: AppSettingsService, // needs storage & AppInit
-    private DatasetService: DatasetService, // needs AppSettingsService & SignalKDataService
-    private notificationsService: NotificationsService, // needs AppSettingsService SignalKConnectionService
-    public authenticationService: AuthenticationService,
-    private deltaService: SignalKDeltaService,
-    private appService: AppService,
-    private _dashboard: DashboardService
-    ) {}
+  constructor() {}
 
   ngOnInit() {
     // Connection Status Notification sub
@@ -169,31 +163,6 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log("Double Tapped");
     // this.setNightMode(this.isNightMode ? false: true);
   }
-
-  // protected onSwipe(e: any): void {
-  //   switch (e.direction) {
-  //     // case Hammer.DIRECTION_UP:
-  //     //   this.pageUp();
-  //     //   break;
-
-  //     // case Hammer.DIRECTION_DOWN:
-  //     //   this.pageDown();
-  //     //   break;
-
-  //     case Hammer.DIRECTION_LEFT:
-  //       this.actionsSidenavOpen = true;
-  //       break;
-
-  //     case Hammer.DIRECTION_RIGHT:
-  //       this.notificationsSidenavOpened.set(true);
-  //       break;
-
-  //     default:
-  //       //TODO: Remove this console.warn
-  //       console.warn(`Unknown Type ${e.type} direction. Direction: ${e.direction} Distance: ${e.distance} Angle: ${e.angle}`);
-  //       break;
-  //   }
-  // }
 
   protected onSwipeRight(e: Event): void {
     e.preventDefault();

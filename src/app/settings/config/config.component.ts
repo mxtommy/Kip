@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, Reactive
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
-import { IConfig, IAppConfig, IConnectionConfig, IWidgetConfig, ILayoutConfig, IThemeConfig } from '../../core/interfaces/app-settings.interfaces';
+import { IConfig, IAppConfig } from '../../core/interfaces/app-settings.interfaces';
 import { StorageService } from '../../core/services/storage.service';
 import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -53,14 +53,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public saveConfigScope: string = null;
   public deleteConfigItem: IRemoteConfig;
 
-  // Raw Editor
-  public liveAppConfig: IAppConfig;
-  public liveConnectionConfig: IConnectionConfig;
-  public liveWidgetConfig: IWidgetConfig;
-  public liveLayoutConfig: ILayoutConfig;
-  public liveThemeConfig: IThemeConfig;
-  public showRawEditor = false;
-
   constructor(
     private appSettingsService: AppSettingsService,
     private storageSvc: StorageService,
@@ -105,7 +97,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
-    this.getLiveConfig();
     this.getServerConfigList();
     this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
@@ -184,8 +175,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
       } else {
         // remote to local
         this.appSettingsService.replaceConfig("appConfig", conf.app, false);
-        this.appSettingsService.replaceConfig("widgetConfig", conf.widget, false);
-        this.appSettingsService.replaceConfig("layoutConfig", conf.layout, false);
         this.appSettingsService.replaceConfig("themeConfig", conf.theme, false);
       }
     }
@@ -245,46 +234,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     });
   }
 
-  public rawConfigSave(configType: string) {
-    switch (configType) {
-      case "IConnectionConfig":
-          this.appSettingsService.replaceConfig('connectionConfig', this.liveConnectionConfig, true);
-        break;
-
-      case "IAppConfig":
-        if (this.hasToken && !this.isTokenTypeDevice) {
-          this.storageSvc.patchConfig(configType, this.liveAppConfig);
-        } else {
-        this.appSettingsService.replaceConfig('appConfig', this.liveAppConfig, true);
-        }
-        break;
-
-      case "IWidgetConfig":
-        if (this.hasToken && !this.isTokenTypeDevice) {
-          this.storageSvc.patchConfig(configType, this.liveWidgetConfig);
-        } else {
-        this.appSettingsService.replaceConfig('widgetConfig', this.liveWidgetConfig, true);
-        }
-        break;
-
-      case "ILayoutConfig":
-        if (this.hasToken && !this.isTokenTypeDevice) {
-          this.storageSvc.patchConfig(configType, this.liveLayoutConfig);
-        } else {
-        this.appSettingsService.replaceConfig('layoutConfig', this.liveLayoutConfig, true);
-        }
-        break;
-
-      case "IThemeConfig":
-        if (this.hasToken && !this.isTokenTypeDevice) {
-          this.storageSvc.patchConfig(configType, this.liveThemeConfig);
-        } else {
-        this.appSettingsService.replaceConfig('themeConfig', this.liveThemeConfig, true);
-        }
-        break;
-    }
-  }
-
   public resetConfigToDefault() {
     this.appSettingsService.resetSettings();
   }
@@ -295,74 +244,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   public loadDemoConfig() {
     this.appSettingsService.loadDemoConfig();
-  }
-
-  private getLiveConfig(): void {
-    this.liveAppConfig = this.appSettingsService.getAppConfig();
-    this.liveConnectionConfig = this.appSettingsService.getConnectionConfig();
-    this.liveWidgetConfig = this.appSettingsService.getWidgetConfig();
-    this.liveLayoutConfig = this.appSettingsService.getLayoutConfig();
-    this.liveThemeConfig = this.appSettingsService.getThemeConfig();
-  }
-
-  get jsonThemeConfig() {
-    return JSON.stringify(this.liveThemeConfig, null, 2);
-  }
-
-  set jsonThemeConfig(v) {
-    try{
-      this.liveThemeConfig = JSON.parse(v);}
-    catch(error) {
-      console.log(`JSON syntax error: ${error}`);
-    };
-  }
-
-  get jsonLayoutConfig() {
-    return JSON.stringify(this.liveLayoutConfig, null, 2);
-  }
-
-  set jsonLayoutConfig(v) {
-    try{
-      this.liveLayoutConfig = JSON.parse(v);}
-    catch(error) {
-      console.log(`JSON syntax error: ${error}`);
-    };
-  }
-
-  get jsonWidgetConfig() {
-    return JSON.stringify(this.liveWidgetConfig, null, 2);
-  }
-
-  set jsonWidgetConfig(v) {
-    try{
-      this.liveWidgetConfig = JSON.parse(v);}
-    catch(error) {
-      console.log(`JSON syntax error: ${error}`);
-    };
-  }
-
-  get jsonAppConfig() {
-    return JSON.stringify(this.liveAppConfig, null, 2);
-  }
-
-  set jsonAppConfig(v) {
-    try{
-      this.liveAppConfig = JSON.parse(v);}
-    catch(error) {
-      console.log(`JSON syntax error: ${error}`);
-    };
-  }
-
-  get jsonConnectionConfig() {
-    return JSON.stringify(this.liveConnectionConfig, null, 2);
-  }
-
-  set jsonConnectionConfig(v) {
-    try{
-      this.liveConnectionConfig = JSON.parse(v);}
-    catch(error) {
-      console.log(`JSON syntax error: ${error}`);
-    };
   }
 
   public getActiveConfig(): IConfig {
@@ -378,9 +259,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public getLocalConfigFromMemory(): IConfig {
     let localConfig: IConfig = {
       "app": this.appSettingsService.getAppConfig(),
-      "widget": this.appSettingsService.getWidgetConfig(),
-      //TODO: Clean up
-      "layout": this.appSettingsService.getLayoutConfig(),
       "dashboards": this.appSettingsService.getDashboardConfig(),
       "theme": this.appSettingsService.getThemeConfig(),
     };
@@ -390,9 +268,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public getLocalConfigFromLocalStorage(): IConfig {
     let localConfig: IConfig = {
       "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
-      "widget": this.appSettingsService.loadConfigFromLocalStorage('widgetConfig'),
-      //TODO: Clean up
-      "layout": this.appSettingsService.loadConfigFromLocalStorage('layoutConfig'),
       "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardConfig'),
       "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
     };

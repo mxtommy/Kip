@@ -23,7 +23,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   public displayName$ = new Subject<string>;
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
   protected theme: ITheme = undefined;
-  private themeSubscription: Subscription = undefined;
+  protected themeSubscription: Subscription = undefined;
 
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
   public defaultConfig: IWidgetSvcConfig = undefined;
@@ -32,7 +32,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   /** Single Observable Subscription object for all data paths */
   private dataSubscriptions: Subscription = undefined;
   /** Single Observable Subscription object for all data paths */
-  private metaSubscriptions: Subscription = undefined;
+  protected metaSubscriptions: Subscription = undefined;
   /** Signal K data stream service to obtain/observe server data */
   protected DataService = inject(DataService);
   /** Unit conversion service to convert a wide range of numerical data formats */
@@ -48,6 +48,9 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   public override serialize(): NgCompInputs {
     return { widgetProperties: this.widgetProperties}
   }
+
+  protected abstract startWidget(): void;
+  protected abstract updateConfig(config: IWidgetSvcConfig): void;
 
   protected initWidget(): void {
     this.validateConfig();
@@ -83,7 +86,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
    * @protected
    * @memberof BaseWidgetComponent
    */
-  private validateConfig() {
+  protected validateConfig() {
     this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
   }
 
@@ -139,7 +142,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
    * @memberof BaseWidgetComponent
    */
   protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void))  {
-    if (this.dataStream === undefined) {
+    if (this.dataStream === undefined || this.dataStream.length == 0) {
       this.createDataObservable();
     }
 
@@ -295,8 +298,5 @@ export abstract class BaseWidgetComponent extends BaseWidget {
       this.dataSubscriptions = undefined;
       this.dataStream = undefined;
     }
-
-    this.metaSubscriptions?.unsubscribe();
-    this.themeSubscription?.unsubscribe();
   }
 }

@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
@@ -13,7 +15,7 @@ import { MatButton } from '@angular/material/button';
     templateUrl: './widget-race-timer.component.html',
     styleUrls: ['./widget-race-timer.component.scss'],
     standalone: true,
-    imports: [NgxResizeObserverModule, MatButton, NgIf]
+    imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton, NgIf ]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
@@ -47,22 +49,30 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   ngOnInit(): void {
     this.initWidget();
-    this.getColors(this.widgetProperties.config.color);
     this.subscribeTimer();
+  }
+
+  protected startWidget(): void {
+    this.getColors(this.widgetProperties.config.color);
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
   }
 
-  onResized(event) {
-    const rect = this.canvasEl.nativeElement.getBoundingClientRect();
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+    this.updateCanvas();
+    this.updateCanvasBG();
+  }
 
-    if (rect.height < 50) { return; }
-    if (rect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) {
-      this.canvasEl.nativeElement.width = Math.floor(rect.width);
-      this.canvasEl.nativeElement.height = Math.floor(rect.height);
-      this.canvasBG.nativeElement.width = Math.floor(rect.width);
-      this.canvasBG.nativeElement.height = Math.floor(rect.height);
+  onResized(event: ResizeObserverEntry) {
+    if (event.contentRect.height < 50) { return; }
+    if (event.contentRect.width < 50) { return; }
+    if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
+      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
+      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
       this.currentValueLength = 0; //will force resetting the font size
       this.updateCanvas();
       this.updateCanvasBG();

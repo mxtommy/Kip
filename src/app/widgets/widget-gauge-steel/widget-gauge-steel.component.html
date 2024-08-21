@@ -1,4 +1,4 @@
-<div class="gaugeWrapper" #gaugeWrapperDiv>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <gauge-steel
     [widgetUUID]="widgetProperties.uuid"
     [subType]="widgetProperties.config.gauge.subType"
@@ -18,4 +18,4 @@
     [value]="dataValue"
     [themeColors]="this.theme"
   ></gauge-steel>
-</div>
+</widget-host>

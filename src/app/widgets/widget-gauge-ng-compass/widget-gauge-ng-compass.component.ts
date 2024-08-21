@@ -11,6 +11,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
 
 function rgbaToHex(rgba) {
@@ -30,7 +32,7 @@ function convertNegToPortDegree(degree: number) {
 @Component({
   selector: 'widget-gauge-ng-compass',
   standalone: true,
-  imports: [NgxResizeObserverModule, GaugesModule],
+  imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule],
   templateUrl: './widget-gauge-ng-compass.component.html',
   styleUrl: './widget-gauge-ng-compass.component.scss'
 })
@@ -51,7 +53,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   // Gauge value
   protected value: number = 0;
 
-  @ViewChild('ngCompassWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
   @ViewChild('compassGauge', { static: true }) compassGauge: RadialGauge;
 
   protected gaugeOptions = {} as RadialGaugeOptions;
@@ -105,15 +106,15 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnInit() {
     this.initWidget();
-    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
-    this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
-
-    this.setGaugeConfig();
+    this.startWidget();
   }
 
-  ngAfterViewInit(): void {
+  protected startWidget(): void {
+    this.setGaugeConfig();
     this.compassGauge.update(this.gaugeOptions);
+
+    this.unsubscribeDataStream();
+    this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
@@ -154,7 +155,16 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     });
   }
 
-  protected onResized(event): void {
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+  ngAfterViewInit(): void {
+    this.startWidget();
+  }
+
+  protected onResized(event: ResizeObserverEntry): void {
     //@ts-ignore
     let resize: RadialGaugeOptions = {};
     resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);

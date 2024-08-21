@@ -1,7 +1,9 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnDestroy, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 
 @Component({
@@ -9,13 +11,12 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
     templateUrl: './widget-numeric.component.html',
     styleUrls: ['./widget-numeric.component.scss'],
     standalone: true,
-    imports: [ WidgetHostComponent ]
+    imports: [ WidgetHostComponent, NgxResizeObserverModule ]
 })
-export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasMM', {static: true, read: ElementRef}) canvasMM: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
-  @ViewChild('NumWrapperDiv', {static: true, read: ElementRef}) wrapperDiv: ElementRef;
 
   dataValue: number = null;
   maxValue: number = null;
@@ -65,12 +66,17 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     };
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.initWidget();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.color);
+    this.unsubscribeDataStream();
     this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
 
@@ -95,21 +101,30 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       this.dataState = newValue.state;
       this.updateCanvas();
     });
-
-    this.resizeWidget();
   }
 
-  ngOnDestroy() {
-    this.unsubscribeDataStream();
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+    this.updateCanvas();
+    this.updateCanvasBG();
+  }
 
-    if (this.flashInterval) {
-      clearInterval(this.flashInterval);
-      this.flashInterval = null;
+  protected onResized(event: ResizeObserverEntry) {
+    if (event.contentRect.height < 50) { return; }
+    if (event.contentRect.width < 50) { return; }
+    if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
+      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
+      this.canvasMM.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasMM.nativeElement.height = Math.floor(event.contentRect.height);
+      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
+      this.currentValueLength = 0; //will force resetting the font size
+      this.currentMinMaxLength = 0;
+      this.updateCanvas();
+      this.updateCanvasBG();
     }
-  }
-
-  ngAfterViewChecked() {
-    this.resizeWidget();
   }
 
   private getColors(color: string): void {
@@ -153,26 +168,15 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     }
   }
 
-  private resizeWidget(): void {
-    let rect = this.wrapperDiv.nativeElement.getBoundingClientRect();
-
-    if (rect.height < 50) { return; }
-    if (rect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) {
-      this.canvasEl.nativeElement.width = Math.floor(rect.width);
-      this.canvasEl.nativeElement.height = Math.floor(rect.height);
-      this.canvasMM.nativeElement.width = Math.floor(rect.width);
-      this.canvasMM.nativeElement.height = Math.floor(rect.height);
-      this.canvasBG.nativeElement.width = Math.floor(rect.width);
-      this.canvasBG.nativeElement.height = Math.floor(rect.height);
-      this.currentValueLength = 0; //will force resetting the font size
-      this.currentMinMaxLength = 0;
-      this.updateCanvas();
-      this.updateCanvasBG();
+  ngOnDestroy() {
+    this.unsubscribeDataStream();
+    this.metaSubscriptions?.unsubscribe();
+    this.themeSubscription?.unsubscribe();
+    if (this.flashInterval) {
+      clearInterval(this.flashInterval);
+      this.flashInterval = null;
     }
-
   }
-
 
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
@@ -296,7 +300,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline="top";
     this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasBG.nativeElement.width*0.03,this.canvasBG.nativeElement.height*0.03, maxTextWidth);
+    this.canvasBGCtx.fillText(this.widgetProperties.config.displayName, this.canvasBG.nativeElement.width * 0.03, this.canvasBG.nativeElement.height * 0.03, maxTextWidth);
   }
 
   private drawUnit() {

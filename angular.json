@@ -144,11 +144,11 @@
   },
   "schematics": {
     "@schematics/angular:component": {
-      "prefix": "app",
+      "prefix": "",
       "style": "scss"
     },
     "@schematics/angular:directive": {
-      "prefix": "app"
+      "prefix": ""
     }
   },
   "cli": {

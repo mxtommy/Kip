@@ -1,6 +1,8 @@
-<div class="ngRadialWrapper" #ngRadialWrapperDiv (onResize)="onResized($event)">
-  <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #radialGauge
-    [options]="gaugeOptions"
-    [value]="value">
-  </radial-gauge>
-</div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div class="ngRadialWrapper" (onResize)="onResized($event)">
+    <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #radialGauge
+      [options]="gaugeOptions"
+      [value]="value">
+    </radial-gauge>
+  </div>
+</widget-host>

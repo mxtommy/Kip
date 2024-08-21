@@ -3,16 +3,15 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { cloneDeep } from "lodash-es";
 
 import { IDatasetServiceDatasetConfig } from './data-set.service';
-import { ISplitSet } from './layout-splits.service';
 import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
 import { UUID } from '../utils/uuid';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, IWidgetConfig, ILayoutConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
-import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultWidgetConfig, DefaultLayoutConfig, DefaultThemeConfig, DefaultDashboardsConfig } from '../../../default-config/config.blank.const';
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
+import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig, DefaultDashboardsConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { DemoAppConfig, DemoConnectionConfig, DemoWidgetConfig, DemoLayoutConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
+import { DemoAppConfig, DemoConnectionConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
 
 import { StorageService } from './storage.service';
 import { IAuthorizationToken } from './authentication.service';
@@ -38,13 +37,11 @@ export class AppSettingsService {
   private loginPassword: string;
   public useSharedConfig: boolean;
   private sharedConfigName: string;
-  private activeConfig: IConfig = {app: null, widget: null, layout: null, theme: null, dashboards: null};
+  private activeConfig: IConfig = {app: null, theme: null, dashboards: null};
 
   private kipUUID: string;
   public signalkUrl: ISignalKUrl;
   private widgets: Array<IWidget>;
-  private splitSets: ISplitSet[] = [];
-  private rootSplits: string[] = [];
   private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
 
@@ -76,12 +73,8 @@ export class AppSettingsService {
         this.pushSettings();
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
-
-        //TODO: clean up
-        let localStorageConfig: IConfig = {app: null, widget: null, layout: null, theme: null, dashboards: null};
+        let localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
-        localStorageConfig.widget = this.loadConfigFromLocalStorage("widgetConfig");
-        localStorageConfig.layout = this.loadConfigFromLocalStorage("layoutConfig");
         localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
 
@@ -145,6 +138,7 @@ export class AppSettingsService {
   }
 
   private upgradeAppConfig(config: any): void {
+    //TODO: Clean up
     console.warn("[AppSettings Service] Configuration upgrade required");
 
     let upgradedAppConfig: IAppConfig = {
@@ -242,14 +236,6 @@ public loadConfigFromLocalStorage(type: string) {
           config = this.getDefaultConnectionConfig();
           break;
 
-        case "widgetConfig":
-          config = this.getDefaultWidgetConfig();
-          break;
-
-        case "layoutConfig":
-          config = this.getDefaultLayoutConfig();
-          break;
-
         case "dashboardsConfig":
           config = this.getDefaultDashboardsConfig();
           break;
@@ -284,8 +270,6 @@ public loadConfigFromLocalStorage(type: string) {
     this.dataSets = this.activeConfig.app.dataSets;
     this.unitDefaults.next(this.activeConfig.app.unitDefaults);
     this.kipKNotificationConfig.next(this.activeConfig.app.notificationConfig);
-    this.widgets = this.activeConfig.widget.widgets;
-    this.splitSets = this.activeConfig.layout.splitSets;
 
     if (this.activeConfig.app.autoNightMode === undefined) {
       this.setAutoNightMode(false);
@@ -343,15 +327,6 @@ public loadConfigFromLocalStorage(type: string) {
   public setUseDeviceToken(useDeviceToken: boolean) {
     this.useDeviceToken = useDeviceToken;
     this.saveConnectionConfigToLocalStorage();
-  }
-
-  public getWidgetConfig(): IWidgetConfig {
-    return this.buildWidgetStorageObject();
-  }
-
-  //TODO: clean up
-  public getLayoutConfig(): ILayoutConfig {
-    return this.buildLayoutStorageObject();
   }
 
   public getDashboardConfig(): Dashboard[] {
@@ -429,60 +404,11 @@ public loadConfigFromLocalStorage(type: string) {
     return this.widgets;
   }
 
-  public saveWidgets(widgets: Array<IWidget>) {
-    this.widgets = widgets;
-    if (this.useSharedConfig) {
-      let widgetConfig: IWidgetConfig = {
-        widgets: this.widgets,
-        };
-
-      this.storage.patchConfig('IWidgetConfig', widgetConfig);
-    }
-    else {
-      this.saveWidgetConfigToLocalStorage();
-    }
-  }
-
-  // Layout SplitSets
-  public getSplitSets() {
-    return this.splitSets;
-  }
-
-  public getRootSplits() {
-    return this.rootSplits;
-  }
-
-  public saveSplitSets(splitSets) {
-    this.splitSets = splitSets;
-    if (this.useSharedConfig) {
-      let layoutConfig: ILayoutConfig = {
-        splitSets: this.splitSets
-        };
-
-      this.storage.patchConfig('ILayoutConfig', layoutConfig);
-    } else {
-      this.saveLayoutConfigToLocalStorage();
-    }
-  }
-
   public saveDashboards(dashboards: Dashboard[]) {
     if (this.useSharedConfig) {
       this.storage.patchConfig('Dashboards', dashboards);
     } else {
       this.saveLDashboardsConfigToLocalStorage(dashboards);
-    }
-  }
-
-  public saveRootUUIDs(rootUUIDs) {
-    this.rootSplits = rootUUIDs;
-    if (this.useSharedConfig) {
-      let layoutConfig: ILayoutConfig = {
-        splitSets: this.splitSets
-        };
-
-      this.storage.patchConfig('ILayoutConfig', layoutConfig);
-    } else {
-      this.saveLayoutConfigToLocalStorage();
     }
   }
 
@@ -518,10 +444,8 @@ public loadConfigFromLocalStorage(type: string) {
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
 
-    let newDefaultConfig: IConfig = {app: null, widget: null, layout: null, theme: null, dashboards: null};
+    let newDefaultConfig: IConfig = {app: null, theme: null, dashboards: null};
     newDefaultConfig.app = this.getDefaultAppConfig();
-    newDefaultConfig.widget = this.getDefaultWidgetConfig();
-    newDefaultConfig.layout = this.getDefaultLayoutConfig();
     newDefaultConfig.theme = this.getDefaultThemeConfig();
     newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
 
@@ -549,7 +473,7 @@ public loadConfigFromLocalStorage(type: string) {
    * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
    * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
-  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IWidgetConfig | ILayoutConfig | IThemeConfig, reloadApp?: boolean) {
+  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IThemeConfig, reloadApp?: boolean) {
     let jsonConfig = JSON.stringify(newConfig);
     localStorage.setItem(configType, jsonConfig);
     if (reloadApp) {
@@ -562,8 +486,6 @@ public loadConfigFromLocalStorage(type: string) {
     if (this.useSharedConfig) {
       let demoConfig: IConfig = {
         app: DemoAppConfig,
-        widget: DemoWidgetConfig,
-        layout: DemoLayoutConfig,
         dashboards: DemoDashboardsConfig.dashboards,
         theme: DemoThemeConfig
       };
@@ -573,8 +495,6 @@ public loadConfigFromLocalStorage(type: string) {
       localStorage.clear();
       this.replaceConfig("appConfig", DemoAppConfig);
       this.replaceConfig("connectionConfig", DemoConnectionConfig);
-      this.replaceConfig("widgetConfig", DemoWidgetConfig);
-      this.replaceConfig("layoutConfig", DemoLayoutConfig);
       this.replaceConfig("themeConfig", DemoThemeConfig, true);
     }
   }
@@ -613,20 +533,6 @@ public loadConfigFromLocalStorage(type: string) {
     return storageObject;
   }
 
-  private buildWidgetStorageObject() {
-    let storageObject: IWidgetConfig = {
-      widgets: this.widgets,
-      }
-    return storageObject;
-  }
-
-  private buildLayoutStorageObject() {
-    let storageObject: ILayoutConfig = {
-      splitSets: this.splitSets
-      }
-    return storageObject;
-  }
-
   private buildDashboardStorageObject() {
     return this._dashboards;
   }
@@ -649,20 +555,9 @@ public loadConfigFromLocalStorage(type: string) {
     localStorage.setItem('connectionConfig', JSON.stringify(this.buildConnectionStorageObject()));
   }
 
-  private saveWidgetConfigToLocalStorage() {
-    console.log("[AppSettings Service] Saving Widgets config to LocalStorage");
-    localStorage.setItem('widgetConfig', JSON.stringify(this.buildWidgetStorageObject()));
-  }
-
   private saveLDashboardsConfigToLocalStorage(dashboards: Dashboard[]) {
     console.log("[AppSettings Service] Saving Dashboard config to LocalStorage");
     localStorage.setItem('dashboardsConfig', JSON.stringify(dashboards));
-  }
-
-  //TODO: retire in favor of saveDashboards
-  private saveLayoutConfigToLocalStorage() {
-    console.log("[AppSettings Service] Saving Layouts config to LocalStorage");
-    localStorage.setItem('layoutConfig', JSON.stringify(this.buildLayoutStorageObject()));
   }
 
   private saveThemeConfigToLocalStorage() {
@@ -685,18 +580,6 @@ public loadConfigFromLocalStorage(type: string) {
     config.kipUUID = UUID.create();
     config.signalKUrl = window.location.origin;
     localStorage.setItem('connectionConfig', JSON.stringify(config));
-    return config;
-  }
-
-  private getDefaultWidgetConfig(): IWidgetConfig {
-    let config: IWidgetConfig = DefaultWidgetConfig;
-    localStorage.setItem("widgetConfig", JSON.stringify(config));
-    return config;
-  }
-
-  private getDefaultLayoutConfig(): ILayoutConfig {
-    let config: ILayoutConfig = DefaultLayoutConfig;
-    localStorage.setItem("layoutConfig", JSON.stringify(config));
     return config;
   }
 

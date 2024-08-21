@@ -1,32 +1,14 @@
 <page-header [pageTitle]="pageTitle" />
   <div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
-    @for (dashboard of _dashboard.dashboards(); track dashboard; let index = $index) {
-      <div class="dashboard-item" cdkDrag cdkDragBoundary=".dashboard-manage">
+    @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
+      <div class="dashboard-item"
+        cdkDrag
+        cdkDragBoundary=".dashboard-manage"
+        (press)="openBottomSheet(index)">
         <span style="display: block; width: 100%;">
           <div class="item-index">{{index + 1}}</div>
         </span>
         <p class="mat-title-large" style="margin-top: 25px;">{{dashboard.name}}</p>
-        <button mat-fab class="item-menu" [matMenuTriggerFor]="menu">
-          <mat-icon>menu</mat-icon>
-        </button>
-        <button mat-icon-button class="item-drag-handle" cdkDragHandle>
-          <mat-icon>open_with</mat-icon>
-        </button>
-        <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="renameDashboard(dashboard.name, index)">
-            <mat-icon>edit</mat-icon>
-            <span>Rename</span>
-          </button>
-          <button mat-menu-item (click)="duplicateDashboard(index, dashboard.name)">
-            <mat-icon>copy_all</mat-icon>
-            <span>Duplicate</span>
-          </button>
-          <button mat-menu-item (click)="deleteDashboard(index)">
-            <mat-icon>delete_forever</mat-icon>
-            <span>Delete</span>
-          </button>
-
-        </mat-menu>
       </div>
     }
     <div class="dashboard-item add-dashboard-btn">

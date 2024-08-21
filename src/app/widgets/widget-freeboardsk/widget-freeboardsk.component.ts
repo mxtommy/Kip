@@ -2,6 +2,8 @@ import { AuthenticationService } from './../../core/services/authentication.serv
 import { AppSettingsService } from './../../core/services/app-settings.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { Subscription } from 'rxjs';
 
@@ -10,7 +12,7 @@ import { Subscription } from 'rxjs';
     standalone: true,
     templateUrl: './widget-freeboardsk.component.html',
     styleUrl: './widget-freeboardsk.component.scss',
-    imports: [SafePipe]
+    imports: [WidgetHostComponent, SafePipe]
 })
 export class WidgetFreeboardskComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   public widgetUrl: string = null;
@@ -28,6 +30,12 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
     );
 
     this.widgetUrl = loginToken ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}` : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
+  }
+
+  protected startWidget(): void {
+  }
+
+  protected updateConfig(config: IWidgetSvcConfig): void {
   }
 
   ngOnDestroy(): void {

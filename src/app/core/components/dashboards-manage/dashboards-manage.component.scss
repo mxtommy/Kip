@@ -29,21 +29,6 @@
   text-align: center;
 }
 
-.item-menu {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  background-color: var(--mdc-elevated-card-container-color);
-  color: var(--kip-widget-action-button-foreground-color);
-}
-
-.item-drag-handle {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  cursor: move;
-}
-
 .item-index {
   display: inline-flex;
   flex-wrap: wrap;
