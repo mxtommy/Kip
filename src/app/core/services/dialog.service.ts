@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { DialogComponentData, DialogConfirmationData, DialogNameData } from '../interfaces/dialog-data';
+import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
 import { SettingsTabsComponent } from '../../settings/tabs/tabs.component';
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
+import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
 
 @Injectable({
   providedIn: 'root'
@@ -48,6 +49,16 @@ export class DialogService {
         data: data,
         minWidth: "20vw",
         minHeight: "20vh",
+      }
+    );
+  }
+
+  public openWidgetOptions(data: DialogWidgetOptionsData): MatDialogRef<ModalWidgetConfigComponent> {
+    return this.dialog.open(ModalWidgetConfigComponent,
+      {
+        data: data.config,
+        minWidth: "50vw",
+        maxWidth: "90vw"
       }
     );
   }

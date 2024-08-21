@@ -4,8 +4,6 @@
 @use '@angular/material' as mat;
 @use './app/app.component-theme' as appRoot;
 @use './app/core/components/menu-notifications/menu-notifications.component-theme' as MenuNotifications;
-@use './app/core/components/dynamic-widget-container/dynamic-widget-container.component-theme' as widgetContainer;
-@use './app/core/components/page-layout/page-layout.component-theme' as pageLayout;
 @use './styles-common/settingsTabContent.scss' as settingsTabContent;
 @use './app/settings/signalk/signalk.component.scss' as signalk;
 @use './app/settings/config/config.component-theme' as config;
@@ -19,6 +17,8 @@
 @import './assets/google-fonts/material-symbols-outlined.scss';
 @import './assets/google-fonts/material-icons.scss';
 @import './assets/google-fonts/roboto.scss';
+// Import GridStack styles
+@import "gridstack/dist/gridstack.min.css";
 // Import the Material Design typography and color palettes
 @import './themes/dark-m3-theme.scss';
 
@@ -82,8 +82,6 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   // Apply KIP core component theming
   @include appRoot.theme($dark-theme);
   @include MenuNotifications.theme($dark-theme);
-  @include widgetContainer.theme($dark-theme);
-  @include pageLayout.theme($dark-theme);
   @include settingsTabContent.theme($dark-theme);
   @include signalk.theme($dark-theme);
   @include config.theme($dark-theme);

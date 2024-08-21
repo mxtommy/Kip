@@ -1,14 +1,19 @@
-import { ControlType } from './../interfaces/widgets-interface';
 import { AppSettingsService } from './app-settings.service';
 import { effect, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
-import { ISplitSet } from './layout-splits.service';
+import { UUID } from '../utils/uuid';
 
 export interface Dashboard {
-  name: string;
-  description: string | null;
-  layoutConfiguration: Array<ISplitSet> | null;
+  id: string
+  name?: string;
+  configuration?: NgGridStackWidget[] | [];
+}
+
+export interface widgetOperation {
+  id: string;
+  operation: 'delete' | 'duplicate';
 }
 
 @Injectable({
@@ -16,75 +21,100 @@ export interface Dashboard {
 })
 export class DashboardService {
   public dashboards = signal<Dashboard[]>([], {equal: isEqual});
-  public readonly activeDashboard = signal<number>(0);
+  public activeDashboard = signal<number>(0);
+  public widgetAction = signal<widgetOperation>(null);
+  public readonly isDashboardStatic = signal<boolean>(true);
+  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: []} ];
 
   constructor(private settings: AppSettingsService, private router: Router,) {
-    this.dashboards.set(this.settings.getDashboardConfig());
+    const dashboards = this.settings.getDashboardConfig();
+    dashboards.length == 0 ? this.dashboards.set([...this.blankDashboard, {id: UUID.create()}]) : this.dashboards.set(this.settings.getDashboardConfig());
 
     effect(() => {
       this.settings.saveDashboards(this.dashboards());
     });
   }
 
-  public add(name: string, description?: string, configuration?: any): void {
+  public toggleStaticDashboard(): void {
+    this.isDashboardStatic.set(!this.isDashboardStatic());
+  }
+
+  public add(name: string, configuration: NgGridStackWidget[]): void {
     this.dashboards.update(dashboards =>
-      [ ...dashboards, {
-        name: name,
-        description: description,
-        layoutConfiguration: configuration}
-      ]
+      [ ...dashboards, {id: UUID.create(), name: name, configuration: configuration} ]
     );
   }
 
-  public update(itemIndex: number, name?: string, description?: string, configuration?: any): void {
+  public update(itemIndex: number, name: string): void {
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
-      i === itemIndex
-        ? { name: name, description: description, layoutConfiguration: configuration }
-        : dashboard
-    ));
+      i === itemIndex ? { ...dashboard, name: name } : dashboard));
   }
 
   public delete(itemIndex: number): void {
-    this.dashboards.update(dashboards => dashboards.filter((_, i) => i !== itemIndex)
-    );
+    this.dashboards.update(dashboards => dashboards.filter((_, i) => i !== itemIndex));
+
+    if (this.dashboards().length === 0) {
+      this.add( 'Dashboard ' + (this.dashboards().length + 1), []);
+      this.activeDashboard.set(0);
+    } else if (this.activeDashboard() > this.dashboards().length - 1) {
+      this.activeDashboard.set(this.dashboards().length - 1);
+    }
   }
 
   public duplicate(itemIndex: number, newName: string): void {
     const sourceDashboard = this.dashboards()[itemIndex];
-    this.dashboards.update(dashboards =>
-      [ ...dashboards, {
+    const newConfiguration = sourceDashboard.configuration.map(item => ({
+      ...item,
+      id: UUID.create()
+    }));
+
+    this.dashboards.update(dashboards => [
+      ...dashboards,
+      {
+        id: UUID.create(),
         name: newName,
-        description: sourceDashboard.description,
-        layoutConfiguration: sourceDashboard.layoutConfiguration
+        configuration: newConfiguration
       }
-      ]
-    );
+    ]);
   }
 
-  public navigateNext(): void {
+  public updateConfiguration(itemIndex: number, configuration: NgGridStackWidget[]): void {
+    this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
+      i === itemIndex ? { ...dashboard, configuration: configuration } : dashboard));
+  }
+
+  public nextDashboard(): void {
     if ((this.activeDashboard() + 1) > (this.dashboards().length) - 1) {
       this.activeDashboard.set(0);
     } else {
       this.activeDashboard.set(this.activeDashboard() + 1);
     }
-    this.router.navigate(['/page', this.activeDashboard()]);
   }
 
-  public navigatePrevious(): void {
-    if ((this.activeDashboard() - 1) < (this.dashboards().length) - 1) {
+  public previousDashboard(): void {
+    if ((this.activeDashboard() - 1) < 0) {
       this.activeDashboard.set(this.dashboards().length - 1);
     } else {
       this.activeDashboard.set(this.activeDashboard() - 1);
     }
-    this.router.navigate(['/page', this.activeDashboard()]);
   }
 
   public navigateToActive(): void {
-    this.router.navigate(['/page', this.activeDashboard()]);
+    this.router.navigate(['/dashboard', this.activeDashboard()]);
   }
 
   public navigateTo(index: number): void {
-    this.activeDashboard.set(index);
-    this.router.navigate(['/page', this.activeDashboard()]);
+    if (index < 0 || index > this.dashboards().length - 1) {
+      return;
+    }
+    this.router.navigate(['/dashboard', index]);
+  }
+
+  public deleteWidget(id: string): void {
+    this.widgetAction.set({id: id, operation: 'delete'});
+  }
+
+  public duplicateWidget(id: string): void {
+    this.widgetAction.set({id: id, operation: 'duplicate'});
   }
 }

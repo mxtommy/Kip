@@ -5,6 +5,8 @@ import { MatButton, MatMiniFabButton } from '@angular/material/button';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { WidgetManagerService} from '../../core/services/widget-manager.service';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MatBadge } from '@angular/material/badge';
 import { NgIf } from '@angular/common';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
@@ -42,7 +44,7 @@ const timeoutBlink = 250;
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
-    imports: [MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge, MatIcon]
+    imports: [WidgetHostComponent, MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge, MatIcon]
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   // AP keypad
@@ -225,6 +227,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     // this.demoMode(); // demo mode for troubleshooting
   }
 
+  protected startWidget(): void {
+  }
+
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+  }
+
   demoMode() {
     // this.setNotificationMessage('{"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift"}}');
   }
@@ -232,7 +241,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy() {
     this.unsubscribeDataStream();
     this.unsubscribeSKRequest();
-    // this.unsubscribeAPNotification();
     console.log("Autopilot Subs Stopped");
   }
 
@@ -257,9 +265,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           this.currentAppWindAngle = null;
           return;
         }
-        // 0-180+ for stb
-        // -0 to -180 for port
-        // need in 0-360
 
         if (newValue.data.value < 0) {// stb
           this.currentAppWindAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
@@ -298,26 +303,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     // this.unsubscribeAPNotification();
     console.log("Autopilot Subs Stopped");
   }
-
-  // subscribeAPNotification() {
-  //   if (typeof(this.widgetProperties.config.paths['apNotifications'].path) != 'string') { return } // nothing to sub to...
-  //   this.skApNotificationSub = this.DataService.subscribePath(this.widgetProperties.config.paths['apNotifications'].path, this.widgetProperties.config.paths['apNotifications'].source).subscribe(
-  //     newValue => {
-  //         if (!newValue.data.value == null) {
-  //         this.setNotificationMessage(newValue.data.value);
-  //         console.log(newValue.data.value);
-  //         }
-  //       }
-  //   );
-  // }
-
-  // unsubscribeAPNotification() {
-  //   if (this.skApNotificationSub !== null) {
-  //     this.skApNotificationSub.unsubscribe();
-  //     this.skApNotificationSub = null;
-  //     this.DataService.unsubscribePath(this.widgetProperties.config.paths['apNotifications'].path);
-  //   }
-  // }
 
   subscribeSKRequest() {
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {

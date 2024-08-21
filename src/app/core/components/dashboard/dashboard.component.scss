@@ -1,0 +1,13 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 100%;
+  width: 100%;
+}
+
+.grid-stack {
+  width: 100%;
+}
+
+// gridstack bug: move to styles.scss until fixed

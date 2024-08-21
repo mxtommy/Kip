@@ -1,8 +1,10 @@
-<div class="ngCompassWrapper" #ngCompassWrapperDiv (onResize)="onResized($event)">
-  <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #compassGauge
-    [options]="gaugeOptions"
-    [value]="value"
-    [attr.value-text]="textValue"
-    [attr.color-stroke-ticks]="colorStrokeTicks"
-  ></radial-gauge>
-</div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div class="ngCompassWrapper" (onResize)="onResized($event)">
+    <radial-gauge class="radialGauge" id="{{widgetProperties.uuid}}" #compassGauge
+      [options]="gaugeOptions"
+      [value]="value"
+      [attr.value-text]="textValue"
+      [attr.color-stroke-ticks]="colorStrokeTicks"
+    ></radial-gauge>
+  </div>
+</widget-host>

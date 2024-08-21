@@ -1,5 +1,5 @@
 <div class="sgWrapper" #sgWrapperDiv [style.padding-top.px]="paddingTop" (onResize)="onResized($event)">
-  <canvas id="{{widgetUUID}}">
+  <canvas id="{{widgetUUID}}" style="z-index: inherit;">
     Browser does not support canvas element.
   </canvas>
 </div>

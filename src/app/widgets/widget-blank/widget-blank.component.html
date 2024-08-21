@@ -1,3 +1,3 @@
-<div class="blankGenericWrapper">
-  <div class="text mat-typography">{{ widgetProperties.config.displayName }}</div>
-</div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div class="text mat-typography blankGenericWrapper">{{ widgetProperties.config.displayName }}</div>
+</widget-host>

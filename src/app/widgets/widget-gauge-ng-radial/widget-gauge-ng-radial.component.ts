@@ -13,6 +13,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
@@ -21,7 +23,7 @@ import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
     templateUrl: './widget-gauge-ng-radial.component.html',
     styleUrls: ['./widget-gauge-ng-radial.component.scss'],
     standalone: true,
-    imports: [NgxResizeObserverModule, GaugesModule, AsyncPipe]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule, AsyncPipe]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   // Gauge option setting constant
@@ -29,15 +31,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
   private readonly WIDGET_SIZE_FACTOR: number = 1;
 
-  @ViewChild('ngRadialWrapperDiv', {static: true, read: ElementRef}) wrapper: ElementRef;
   @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
 
   // Gauge text value for value box rendering
   public textValue: string = "--";
   // Gauge value
   public value: number = 0;
-
-  private displayScaleSub: Subscription;
 
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
@@ -88,16 +87,17 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
-    //TODO: simplify initialization
     this.initWidget();
-    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = Math.floor(gaugeSize.height * this.WIDGET_SIZE_FACTOR);
-    this.gaugeOptions.width = Math.floor(gaugeSize.width * this.WIDGET_SIZE_FACTOR);
     this.setGaugeConfig();
   }
 
-  ngAfterViewInit(): void {
+  protected startWidget(): void {
+    this.setGaugeConfig();
     this.radialGauge.update(this.gaugeOptions);
+
+    this.unsubscribeDataStream();
+    this.metaSub?.unsubscribe();
+
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.value = 0;
@@ -139,7 +139,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         this.radialGauge.update(option);
       }
     });
-
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
         this.setHighlights(zones);
@@ -147,7 +146,16 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     });
   }
 
-  public onResized(event): void {
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+  ngAfterViewInit(): void {
+    this.startWidget();
+  }
+
+  public onResized(event: ResizeObserverEntry): void {
       //@ts-ignore
       let resize: RadialGaugeOptions = {};
       resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);
@@ -408,6 +416,5 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngOnDestroy() {
     this.unsubscribeDataStream();
     this.metaSub?.unsubscribe();
-    this.displayScaleSub?.unsubscribe();
   }
 }

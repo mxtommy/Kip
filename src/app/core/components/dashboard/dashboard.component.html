@@ -1,0 +1,16 @@
+<gridstack
+  [options]="gridOptions"
+  (swipeup)="previousDashboard($event)"
+  (swipedown)="nextDashboard($event)"
+  (window:resize)="resizeGridColumns()"
+  />
+<dashboard-editor [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'" />
+<div>
+  <button style="height: 30px; width: 75px;" [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'" (click)="addWidget('widget-numeric')">num</button>
+  <button style="height: 30px; width: 75px;" [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'" (click)="addWidget('widget-text')">txt</button>
+  <button style="height: 30px; width: 75px;" [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'" (click)="addWidget('widget-datetime')">date</button>
+  <button style="height: 30px; width: 75px;" [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'" (click)="addWidget('widget-boolean-switch')">switch</button>
+</div>
+<dashboard-scroller
+  [activePage]="dashboard.activeDashboard()"
+  [dashboards]="dashboard.dashboards()" />

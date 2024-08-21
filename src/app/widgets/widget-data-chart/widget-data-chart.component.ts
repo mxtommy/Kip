@@ -1,6 +1,8 @@
 import { IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
 import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
@@ -28,7 +30,7 @@ interface IDataSetRow {
 @Component({
   selector: 'widget-data-chart',
   standalone: true,
-  imports: [],
+  imports: [WidgetHostComponent],
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss'
 })
@@ -93,14 +95,18 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
    }
 
   ngOnInit(): void {
+    this.initWidget();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
     this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
-    this.initWidget();
-
 
     if (this.datasetConfig) {
       this.setChartOptions();
 
+      this.chart?.destroy();
       this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
         type: this.lineChartType,
         data: this.lineChartData,
@@ -109,6 +115,12 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
       this.startStreaming();
     }
+  }
+
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+
   }
 
   private setChartOptions() {
@@ -493,6 +505,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private startStreaming(): void {
+    this.dsServiceSub?.unsubscribe();
     this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
       (dsPoint: IDatasetServiceDatapoint) => {
 

@@ -1,52 +1,50 @@
-@let dashboardEdit = (dashboardEdit$ | async);
 <div class="actions-container">
-  <button mat-button class="action-button" routerLink="/help">
+  <button mat-button class="action-button" (click)="onItemClicked('help')">
     <span class="material-icons">help_outline</span>
   </button>
-  <button mat-button class="action-button" (click)="OpenSettingsDialog()">
-    <span class="material-icons">settings</span>
-  </button>
+  @if (dashboard.isDashboardStatic()) {
+    <button mat-button class="action-button" (click)="onItemClicked('layout')">
+      <span class="material-icons">dashboard_customize</span>
+    </button>
+  } @else {
+    <button mat-button class="action-button" (click)="onItemClicked('layout')">
+      <span class="material-icons">exit_to_app</span>
+    </button>
+  }
 </div>
 <mat-divider />
 <mat-action-list>
-  <button mat-list-item routerLink="/data" cdkFocusInitial>
+  <button mat-list-item (click)="onItemClicked('databrowser')" cdkFocusInitial>
     <mat-icon matListItemIcon>troubleshoot</mat-icon>
     <span>Data Browser</span>
   </button>
-  <button mat-list-item routerLink="/dashboards">
+  <button mat-list-item (click)="onItemClicked('dashboards')">
     <mat-icon matListItemIcon>dashboard</mat-icon>
-    <span>Manage Dashboards</span>
+    <span>Dashboards</span>
   </button>
-  @if (!dashboardEdit) {
-    <button mat-list-item (click)="unlockPage(true)">
-      <mat-icon matListItemIcon>dashboard_customize</mat-icon>
-      <span>Edit Layout</span>
-    </button>
-  } @else {
-    <button mat-list-item (click)="unlockPage(false)">
-      <mat-icon matListItemIcon>exit_to_app</mat-icon>
-      <span>Save Layout</span>
-    </button>
-  }
+  <button mat-list-item (click)="onItemClicked('settings')">
+    <mat-icon matListItemIcon>settings</mat-icon>
+    <span>Settings</span>
+  </button>
 </mat-action-list>
 <div class="actions-bottom-container">
   <mat-divider />
   <div class="actions-container">
     @if (!fullscreenStatus) {
-      <button mat-button class="action-button" (click)="toggleFullScreen()">
+      <button mat-button class="action-button" (click)="onItemClicked('toggleFullScreen')">
         <span class="material-icons">fullscreen</span>
       </button>
     } @else {
-      <button mat-button class="action-button" (click)="toggleFullScreen()">
+      <button mat-button class="action-button" (click)="onItemClicked('toggleFullScreen')">
         <span class="material-icons">close_fullscreen</span>
       </button>
     }
     @if (!isNightMode) {
-      <button mat-button class="action-button" (click)="setNightMode(isNightMode ? false : true)">
+      <button mat-button class="action-button" (click)="onItemClicked('dayNightMode')">
         <span class="material-icons">mode_night</span>
       </button>
     } @else {
-      <button mat-button class="action-button" (click)="setNightMode(isNightMode ? false : true)">
+      <button mat-button class="action-button" (click)="onItemClicked('dayNightMode')">
         <span class="material-icons">light_mode</span>
       </button>
     }

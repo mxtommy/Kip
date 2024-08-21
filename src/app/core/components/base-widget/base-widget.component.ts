@@ -5,7 +5,8 @@ import { UnitsService } from '../../services/units.service';
 import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
 import { ISkZone } from '../../interfaces/signalk-interfaces';
 import { cloneDeep, merge } from 'lodash-es';
-import { ITheme } from '../../services/app-service';
+import { AppService, ITheme } from '../../services/app-service';
+import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
 
 
 interface IWidgetDataStream {
@@ -16,13 +17,13 @@ interface IWidgetDataStream {
 @Component({
   template: ''
 })
-export abstract class BaseWidgetComponent {
-  @Input() theme!: ITheme;
-  @Input() widgetProperties!: IWidget;
+export abstract class BaseWidgetComponent extends BaseWidget {
+  @Input({required: true}) protected widgetProperties!: IWidget;
 
   public displayName$ = new Subject<string>;
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
-
+  protected theme: ITheme = undefined;
+  protected themeSubscription: Subscription = undefined;
 
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
   public defaultConfig: IWidgetSvcConfig = undefined;
@@ -31,14 +32,25 @@ export abstract class BaseWidgetComponent {
   /** Single Observable Subscription object for all data paths */
   private dataSubscriptions: Subscription = undefined;
   /** Single Observable Subscription object for all data paths */
-  private metaSubscriptions: Subscription = undefined;
+  protected metaSubscriptions: Subscription = undefined;
   /** Signal K data stream service to obtain/observe server data */
   protected DataService = inject(DataService);
   /** Unit conversion service to convert a wide range of numerical data formats */
   protected unitsService = inject(UnitsService);
+  /** Unit conversion service to convert a wide range of numerical data formats */
+  protected app = inject(AppService);
 
   constructor() {
+    super();
+    this.themeSubscription = this.app.cssThemeColorRoles$.subscribe(t => this.theme = t);
   }
+
+  public override serialize(): NgCompInputs {
+    return { widgetProperties: this.widgetProperties}
+  }
+
+  protected abstract startWidget(): void;
+  protected abstract updateConfig(config: IWidgetSvcConfig): void;
 
   protected initWidget(): void {
     this.validateConfig();
@@ -46,7 +58,7 @@ export abstract class BaseWidgetComponent {
   }
 
   private observeMeta(): void {
-    if (this.widgetProperties && this.widgetProperties.config?.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
+    if (this.widgetProperties && this.widgetProperties.config.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
       const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
       const path = this.widgetProperties.config.paths[firstKey].path;
 
@@ -74,7 +86,7 @@ export abstract class BaseWidgetComponent {
    * @protected
    * @memberof BaseWidgetComponent
    */
-  private validateConfig() {
+  protected validateConfig() {
     this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
   }
 
@@ -96,7 +108,7 @@ export abstract class BaseWidgetComponent {
   protected createDataObservable(): void {
     // check if Widget has properties
     if (this.widgetProperties === undefined) return;
-    if (Object.keys(this.widgetProperties.config?.paths).length == 0) {
+    if (Object.keys(this.widgetProperties.config.paths).length == 0) {
       this.dataStream = undefined;
       return;
     } else {
@@ -130,7 +142,7 @@ export abstract class BaseWidgetComponent {
    * @memberof BaseWidgetComponent
    */
   protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void))  {
-    if (this.dataStream === undefined) {
+    if (this.dataStream === undefined || this.dataStream.length == 0) {
       this.createDataObservable();
     }
 
@@ -286,8 +298,5 @@ export abstract class BaseWidgetComponent {
       this.dataSubscriptions = undefined;
       this.dataStream = undefined;
     }
-
-    this.metaSubscriptions?.unsubscribe();
-    this.metaSubscriptions = undefined;
   }
 }

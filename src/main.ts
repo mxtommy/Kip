@@ -4,20 +4,15 @@ import { AppComponent } from './app/app.component';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
-import { DataBrowserComponent } from './app/data-browser/data-browser.component';
-import { AppHelpComponent } from './app/app-help/app-help.component';
+import { DataBrowserComponent } from './app/core/components/data-browser/data-browser.component';
+import { AppHelpComponent } from './app/core/components/app-help/app-help.component';
 import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
-import { PageRootComponent } from './app/core/components/page-root/page-root.component';
 import { withHashLocation, provideRouter, Routes } from '@angular/router';
 import { StorageService } from './app/core/services/storage.service';
 import { TimersService } from './app/core/services/timers.service';
 import { NotificationsService } from './app/core/services/notifications.service';
 import { AppSettingsService } from './app/core/services/app-settings.service';
 import { UnitsService } from './app/core/services/units.service';
-import { WidgetManagerService } from './app/core/services/widget-manager.service';
-import { WidgetListService } from './app/core/services/widget-list.service';
-//TODO: cleanup after new grad design
-import { LayoutSplitsService } from './app/core/services/layout-splits.service';
 import { DashboardService } from './app/core/services/dashboard.service';
 import { DatasetService } from './app/core/services/data-set.service';
 import { SignalKDeltaService } from './app/core/services/signalk-delta.service';
@@ -30,8 +25,9 @@ import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
+import { DashboardsManageComponent } from './app/core/components/dashboards-manage/dashboards-manage.component';
+import { DashboardComponent } from './app/core/components/dashboard/dashboard.component';
 import 'hammerjs';
-import { DashboardPagesComponent } from './app/core/components/dashboard-pages/dashboard-pages.component';
 
 
 /**
@@ -48,13 +44,13 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     .catch(res => { })
 };
 const appRoutes: Routes = [
-  { path: '', redirectTo: 'page/0', pathMatch: 'full' },
-  { path: 'page/:id', component: PageRootComponent },
+  { path: 'dashboard', component: DashboardComponent },
   { path: 'settings', component: SettingsTabsComponent },
   { path: 'help', component: AppHelpComponent },
   { path: 'data', component: DataBrowserComponent },
-  { path: 'dashboards', component: DashboardPagesComponent },,
-  { path: 'login', component: WidgetLoginComponent }
+  { path: 'dashboards', component: DashboardsManageComponent },
+  { path: 'login', component: WidgetLoginComponent },
+  { path: '**', component: DashboardComponent }
 ];
 
 /**
@@ -68,9 +64,10 @@ const appRoutes: Routes = [
 export class kipHammerConfig extends HammerGestureConfig {
   // Override default hammerjs gestures configuration
   overrides = <any>{
-    pan: { direction: (window as any).Hammer.DIRECTION_ALL },
-    swipe: { direction: (window as any).Hammer.DIRECTION_ALL },
-  };
+    // pan: { direction: (window as any).Hammer.DIRECTION_ALL },
+    swipe: { direction: (window as any).Hammer.DIRECTION_ALL, velocity: 1, threshold: 100 },
+    press: { time: 500 },
+  }
 }
 
 if (environment.production) {
@@ -104,7 +101,7 @@ bootstrapApplication(AppComponent, {
     // Binds KIP's Hammerjs configuration overrides to a provider
     {
       provide: HAMMER_GESTURE_CONFIG,
-      useClass: kipHammerConfig,
+      useClass: kipHammerConfig
     },
     // MatDialog App wide default config
     {
@@ -135,11 +132,7 @@ bootstrapApplication(AppComponent, {
     SignalKConnectionService,
     SignalKDeltaService,
     DatasetService,
-    //TODO: cleanup after new grad design
-    LayoutSplitsService,
     DashboardService,
-    WidgetListService,
-    WidgetManagerService,
     UnitsService,
     AppSettingsService,
     NotificationsService,

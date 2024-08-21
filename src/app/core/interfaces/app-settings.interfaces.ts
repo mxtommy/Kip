@@ -1,5 +1,4 @@
 import { IDatasetServiceDatasetConfig } from '../services/data-set.service';
-import { ISplitSet } from '../services/layout-splits.service';
 import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from '../services/units.service';
 import { Dashboard } from './../services/dashboard.service';
@@ -17,8 +16,6 @@ export interface IConnectionConfig {
 }
 export interface IConfig {
   app: IAppConfig;
-  widget: IWidgetConfig;
-  layout: ILayoutConfig;
   theme: IThemeConfig;
   dashboards: Dashboard[];
 }
@@ -34,14 +31,6 @@ export interface IAppConfig {
 
 export interface IThemeConfig {
   themeName: string;
-}
-
-export interface IWidgetConfig {
-  widgets: Array<IWidget>;
-}
-
-export interface ILayoutConfig {
-  splitSets: ISplitSet[];
 }
 
 export interface DashboardConfig {
