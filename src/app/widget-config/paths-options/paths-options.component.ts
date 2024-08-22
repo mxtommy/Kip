@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { IWidgetPath } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { ObjectKeysPipe } from '../../core/pipes/object-keys.pipe';
 import { ModalPathControlConfigComponent } from '../path-control-config/path-control-config.component';
 import { MatInput } from '@angular/material/input';

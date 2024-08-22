@@ -1,12 +1,13 @@
 import { cloneDeep } from 'lodash-es';
-import { Component, OnInit, Inject, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Inject, AfterViewInit, ViewChild, ChangeDetectorRef, inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
 import { DataService } from '../../core/services/data.service';
-import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { DatasetService } from '../../core/services/data-set.service';
+import type { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
@@ -43,11 +44,9 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   tableData = new MatTableDataSource([]);
   displayedColumns: string[] = ['path', 'pathSource', 'timeScaleFormat', 'period', 'actions'];
 
-  constructor(
-    public dialog: MatDialog,
-    private cdRef: ChangeDetectorRef,
-    private dsService: DatasetService
-    ) { }
+  public dialog = inject(MatDialog);
+  private cdRef = inject(ChangeDetectorRef);
+  private dsService = inject(DatasetService);
 
   ngOnInit() {
     this.tableData.data = this.dsService.list();
