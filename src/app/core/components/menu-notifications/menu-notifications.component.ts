@@ -1,4 +1,4 @@
-import { Component, OnDestroy, output } from '@angular/core';
+import { Component, inject, OnDestroy, output } from '@angular/core';
 import { NotificationsService, INotification, IAlarmInfo } from '../../services/notifications.service';
 import { Observable, Subscription, filter, map, tap } from 'rxjs';
 import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
@@ -23,6 +23,7 @@ interface INotificationInfo extends IAlarmInfo{
     imports: [ MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, AsyncPipe, MatIconModule ]
 })
 export class MenuNotificationsComponent implements OnDestroy {
+  private notificationsService = inject(NotificationsService);
   protected notificationServiceSettingsSubscription: Subscription = null;
   protected notifications$: Observable<INotification[]> = this.notificationsService.observe().pipe(
     filter(notification => notification !== null));
@@ -86,7 +87,7 @@ export class MenuNotificationsComponent implements OnDestroy {
   protected notificationsBtnVisibility: string = 'hidden';
   protected isMuted: boolean = false;
 
-  constructor(private notificationsService: NotificationsService) {
+  constructor() {
     // Get service configuration
     this.notificationServiceSettingsSubscription = this.notificationsService.observeNotificationConfiguration().subscribe((config: INotificationConfig) => {
       this.notificationConfig = config;

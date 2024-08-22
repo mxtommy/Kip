@@ -71,7 +71,6 @@
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^18.19.30",
     "gridstack": "^10.3.1",
-    "angular-split": "^17.2.0",
     "chart.js": "^4.4.2",
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.0.1",
