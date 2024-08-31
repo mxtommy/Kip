@@ -1,9 +1,18 @@
 import { Injectable } from '@angular/core';
 
-interface widgetInfo {
+const categories = ["Basic", "Gauge", "Component"] as ["Basic", "Gauge", "Component"];
+export type TWidgetCategories = typeof categories[number];
+export enum WidgetCategories {
+  Basic = "Basic",
+  Gauge = "Gauge",
+  Component = "Component"
+}
+export interface WidgetDescription {
   name: string;
   description: string;
-  category: string;
+  image?: string;
+  icon?: string;
+  category: TWidgetCategories;
   selector: string;
   componentClassName: string;
 }
@@ -12,10 +21,12 @@ interface widgetInfo {
   providedIn: 'root'
 })
 export class WidgetService {
-  private _widgetDefinition: Array<widgetInfo> = [
+  private readonly _widgetCategories = ["Basic", "Gauge", "Component"];
+  private _widgetDefinition: Array<WidgetDescription> = [
     {
       name: 'Numeric',
       description: 'Displays numeric data',
+      icon: 'pin',
       category: 'Basic',
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
@@ -23,6 +34,7 @@ export class WidgetService {
     {
       name: 'Text',
       description: 'Displays numeric data',
+      icon: 'text_fields',
       category: 'Basic',
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
@@ -30,103 +42,122 @@ export class WidgetService {
     {
       name: 'Date & Time',
       description: 'Displays Date & Time data',
+      icon: 'calendar_month',
       category: 'Basic',
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
     },
     {
-      name: 'Multi Switch Control Panel',
+      name: 'Switch Panel',
       description: 'A multi switch control panel',
+      icon: 'toggle_on',
       category: 'Basic',
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
-    // {
-    //   name: 'Blank Widget',
-    //   description: 'A widget that can optionally display a static text',
-    //   category: 'Basic',
-    //   componentClassName: 'WidgetBlankComponent'
-    // },
-    // {
-    //   name: 'Simple Linear',
-    //   description: "A simple horizontal linear gauge with a large value label",
-    //   category: 'Gauge',
-    //   componentClassName: 'WidgetSimpleLinearComponent'
-    // },
-    // {
-    //   name: 'Linear',
-    //   description: 'A horizontal or vertical linear gauge',
-    //   category: 'Gauge',
-    //   componentClassName: 'WidgetGaugeNgLinearComponent'
-    // },
-    // {
-    //   name: 'Radial',
-    //   description: 'A typical radial',
-    //   category: 'Gauge',
-    //   componentClassName: 'WidgetGaugeNgRadialComponent'
-    // },
-    // {
-    //   name: 'Compass',
-    //   description: "A faceplate or card rotating compass",
-    //   category: 'Gauge',
-    //   componentClassName: 'WidgetGaugeNgCompassComponent'
-    // },
-    // {
-    //   name: 'Linear & Radial Steel Style',
-    //   description: "Traditional steel looking linear & radial gauges",
-    //   category: 'Gauge',
-    //   componentClassName: 'WidgetGaugeComponent'
-    // },
-    // {
-    //   name: 'Wind Steering Display',
-    //   description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
-    //   category: 'Component',
-    //   componentClassName: 'WidgetWindComponent'
-    // },
-    // {
-    //   name: 'Freeboard-SK Chart Plotter',
-    //   description: 'Freeboard-SK Chart Plotter integration widget',
-    //   category: 'Component',
-    //   componentClassName: 'WidgetFreeboardskComponent'
-    // },
-    // {
-    //   name: 'Autopilot Head',
-    //   description: 'An Autopilot Head for supported Signal K autopilot devices',
-    //   category: 'Component',
-    //   componentClassName: 'WidgetAutopilotComponent'
-    // },
-    // {
-    //   name: 'Data Chart',
-    //   description: 'Visualize data on a chart with multiple series. Requires KIP Dataset configuration.',
-    //   category: 'Component',
-    //   componentClassName: 'WidgetDataChartComponent'
-    // },
-    // {
-    //   name: 'Race Timer',
-    //   description: "A simple race start countdown timer",
-    //   category: 'Component',
-    //   componentClassName: 'WidgetRaceTimerComponent',
-    // },
-    // {
-    //   name: 'Embed Webpage',
-    //   description: 'Use to embed webpage any accessible web page',
-    //   category: 'Component',
-    //   componentClassName: 'WidgetIframeComponent',
-    // },
-    // {
-    //   name: 'Tutorial',
-    //   description: "KIP's getting started introduction tutorial widget",
-    //   category: 'Component',
-    //   componentClassName: 'WidgetTutorialComponent',
-    // }
+    {
+      name: 'Simple Linear',
+      description: "A simple horizontal linear gauge with a large value label",
+      icon: 'speed',
+      category: 'Gauge',
+      selector: 'widget-simple-linear',
+      componentClassName: 'WidgetSimpleLinearComponent'
+    },
+    {
+      name: 'Linear',
+      description: 'A horizontal or vertical linear gauge',
+      icon: 'speed',
+      category: 'Gauge',
+      selector: 'widget-gauge-ng-linear',
+      componentClassName: 'WidgetGaugeNgLinearComponent'
+    },
+    {
+      name: 'Radial',
+      description: 'A typical radial gauge',
+      icon: 'speed',
+      category: 'Gauge',
+      selector: 'widget-gauge-ng-radial',
+      componentClassName: 'WidgetGaugeNgRadialComponent'
+    },
+    {
+      name: 'Compass',
+      description: 'A faceplate or card rotating compass',
+      icon: 'speed',
+      category: 'Gauge',
+      selector: 'widget-gauge-ng-compass',
+      componentClassName: 'WidgetGaugeNgCompassComponent'
+    },
+    {
+      name: 'Steel Style',
+      description: 'Traditional steel looking linear & radial gauges',
+      icon: 'speed',
+      category: 'Gauge',
+      selector: 'widget-gauge-steel',
+      componentClassName: 'WidgetSteelGaugeComponent'
+    },
+    {
+      name: 'Wind Steering',
+      description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-wind-steer',
+      componentClassName: 'WidgetWindComponent'
+    },
+    {
+      name: 'Freeboard-SK',
+      description: 'Freeboard-SK Chart Plotter integration widget',
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-freeboardsk',
+      componentClassName: 'WidgetFreeboardskComponent'
+    },
+    {
+      name: 'Autopilot Head',
+      description: 'An Autopilot Head for supported Signal K autopilot devices',
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-autopilot',
+      componentClassName: 'WidgetAutopilotComponent'
+    },
+    {
+      name: 'Data Chart',
+      description: 'Visualize data on a chart with multiple series. Requires KIP Dataset configuration.',
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-data-chart',
+      componentClassName: 'WidgetDataChartComponent'
+    },
+    {
+      name: 'Race Timer',
+      description: "A simple race start countdown timer",
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-racetimer',
+      componentClassName: 'WidgetRaceTimerComponent',
+    },
+    {
+      name: 'Embed Webpage',
+      description: 'Use to embed webpage any accessible web page',
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-iframe',
+      componentClassName: 'WidgetIframeComponent',
+    },
+    {
+      name: 'Tutorial',
+      description: "KIP's getting started introduction tutorial widget",
+      icon: 'analytics',
+      category: 'Component',
+      selector: 'widget-tutorial',
+      componentClassName: 'WidgetTutorialComponent',
+    }
   ];
 
-  constructor() {
-
-  }
-
-  get getWidgetDefinition(): Array<widgetInfo> {
+  get kipWidgets(): Array<WidgetDescription> {
     return this._widgetDefinition;
   }
 
+  get categories(): string[] {
+    return this._widgetCategories;
+  }
 }

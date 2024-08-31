@@ -7,7 +7,7 @@ import { SvgWindComponent } from '../svg-wind/svg-wind.component';
 
 
 @Component({
-    selector: 'app-widget-wind',
+    selector: 'widget-wind-steer',
     templateUrl: './widget-wind.component.html',
     standalone: true,
     imports: [ SvgWindComponent, WidgetHostComponent ]

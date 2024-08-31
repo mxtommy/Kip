@@ -13,6 +13,8 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
+import { DashboardService } from './core/services/dashboard.service';
+
 
 @Component({
     selector: 'app-root',
@@ -23,10 +25,11 @@ import { MenuActionsComponent } from './core/components/menu-actions/menu-action
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _snackBar = inject(MatSnackBar);
+  private _deltaService = inject(SignalKDeltaService);
+  private _app = inject(AppService);
+  private _dashboard = inject(DashboardService);
   public appSettingsService = inject(AppSettingsService);
   public authenticationService = inject(AuthenticationService);
-  private deltaService = inject(SignalKDeltaService);
-  private appService = inject(AppService);
 
   protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
   protected actionsSidenavOpen = false;
@@ -42,11 +45,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private appNotificationSub: Subscription;
   private connectionStatusSub: Subscription;
 
-  constructor() {}
-
   ngOnInit() {
     // Connection Status Notification sub
-    this.connectionStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
+    this.connectionStatusSub = this._deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
       this.displayConnectionsStatusNotification(status);
       }
     );
@@ -79,7 +80,7 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     // Snackbar Notifications sub
-    this.appNotificationSub = this.appService.getSnackbarAppNotifications().subscribe(appNotification => {
+    this.appNotificationSub = this._app.getSnackbarAppNotifications().subscribe(appNotification => {
         this._snackBar.open(appNotification.message, 'dismiss', {
           duration: appNotification.duration,
           verticalPosition: 'top'
@@ -129,23 +130,23 @@ export class AppComponent implements OnInit, OnDestroy {
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
     switch (streamStatus.operation) {
       case 0: // not connected
-        this.appService.sendSnackbarNotification("Not connected to server.", 5000, true);
+        this._app.sendSnackbarNotification("Not connected to server.", 5000, true);
         break;
 
       case 1: // connecting
-        this.appService.sendSnackbarNotification("Connecting to server.", 2000, true);
+        this._app.sendSnackbarNotification("Connecting to server.", 2000, true);
        break;
 
       case 2: // connected
-        this.appService.sendSnackbarNotification("Connection successful.", 2000, false);
+        this._app.sendSnackbarNotification("Connection successful.", 2000, false);
         break;
 
       case 3: // connection error
-        this.appService.sendSnackbarNotification("Error connecting to server.", 0, false);
+        this._app.sendSnackbarNotification("Error connecting to server.", 0, false);
         break;
 
       default:
-        this.appService.sendSnackbarNotification("Unknown stream connection status.", 0, false);
+        this._app.sendSnackbarNotification("Unknown stream connection status.", 0, false);
         break;
     }
   }
@@ -159,19 +160,18 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected onDoubleTap(e: any): void {
-    console.log("Double Tapped");
-    // this.setNightMode(this.isNightMode ? false: true);
-  }
-
   protected onSwipeRight(e: Event): void {
-    e.preventDefault();
-    this.notificationsSidenavOpened.set(true);
+    if (this._dashboard.isDashboardStatic()) {
+      e.preventDefault();
+      this.notificationsSidenavOpened.set(true);
+    }
   }
 
   protected onSwipeLeft(e: Event): void {
-    e.preventDefault();
-    this.actionsSidenavOpen = true;
+    if (this._dashboard.isDashboardStatic()) {
+      e.preventDefault();
+      this.actionsSidenavOpen = true;
+    }
   }
 
   ngOnDestroy() {

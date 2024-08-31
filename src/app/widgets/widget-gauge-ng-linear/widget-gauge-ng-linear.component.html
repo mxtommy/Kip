@@ -1,9 +1,6 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-    <div class="ngLinearWrapper" (onResize)="onResized($event)">
-      <div [style.height]="height" style="width: 100%;"></div>
-      <linear-gauge class="linearGauge" id="{{widgetProperties.uuid}}" #linearGauge
-        [options]="gaugeOptions"
-        [value]="value"
-      ></linear-gauge>
-  </div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" #host>
+  <linear-gauge class="linearGauge" id="{{widgetProperties.uuid}}" #linearGauge (onResize)="onResized($event)"
+    [options]="gaugeOptions"
+    [value]="value"
+    ></linear-gauge>
 </widget-host>

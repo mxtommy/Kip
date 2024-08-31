@@ -1,7 +1,7 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { ITheme } from '../../core/services/app-service';
+import type { ITheme } from '../../core/services/app-service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
 declare let steelseries: any; // 3rd party
@@ -48,8 +48,7 @@ export const SteelFrameColors = {
     standalone: true,
     imports: [NgxResizeObserverModule]
 })
-export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
-  @ViewChild('sgWrapperDiv', {static: true, read: ElementRef}) sgWrapperDiv: ElementRef<HTMLDivElement>;
+export class GaugeSteelComponent implements OnInit, OnChanges {
   @Input('widgetUUID') widgetUUID: string;
   @Input('subType') subType: string; // linear or radial
   @Input('barGauge') barGauge: boolean;
@@ -87,20 +86,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
 
     // Radial Arc size
     if (this.subType == 'radial') {
-      switch(this.radialSize) {
-        case 'quarter':
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE1;
-          break;
-        case 'half':
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE2;
-          break;
-        case 'three-quarter':
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE3;
-          break;
-        case 'full':
-        default:
-          this.gaugeOptions['gaugeType'] = steelseries.GaugeType.TYPE4;
-      }
+      this.gaugeOptions['gaugeType'] = this.setGaugeType(this.radialSize);
     }
 
     // Zones
@@ -192,6 +178,20 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     this.gaugeOptions['ledVisible'] = false;
   }
 
+  private setGaugeType(radialSize: string): string {
+    switch (radialSize) {
+      case 'quarter':
+        return steelseries.GaugeType.TYPE1;
+      case 'half':
+        return steelseries.GaugeType.TYPE2;
+      case 'three-quarter':
+        return steelseries.GaugeType.TYPE3;
+      case 'full':
+      default:
+        return steelseries.GaugeType.TYPE4;
+    }
+  }
+
   private startGauge() {
     this.gaugeStarted = true;
     this.buildOptions();
@@ -213,13 +213,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     }
     if (this.subType == 'radial') {
       const size = Math.min(event.contentRect.height, event.contentRect.width);
-      const padding = size * 0.02;
-      this.gaugeOptions['size'] = size - size * 0.04; // radial uses size. takes only size as both the same
-      if (event.contentRect.height > event.contentRect.width) {
-        this.paddingTop = (event.contentRect.height - this.gaugeOptions['size']) / 2 + padding;
-      } else {
-        this.paddingTop = padding;
-      }
+      this.gaugeOptions['size'] = size; // radial uses size. takes only size as both are the same
 
     } else {
       this.gaugeOptions['width'] = event.contentRect.width; // linear
@@ -230,16 +224,29 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.gaugeStarted) { return; }
-
     if (changes.value && !changes.value.firstChange) {
         this.gauge.setValueAnimated(changes.value.currentValue);
     }
-
     if (changes.zones) {
       this.startGauge(); //reset
     }
-  }
-
-  ngOnDestroy(): void {
+    if (changes.title) {
+      this.gauge.setTitleString(changes.title.currentValue);
+    }
+    if(changes.backgroundColor) {
+      this.gauge.setBackgroundColor(SteelBackgroundColors[changes.backgroundColor.currentValue]);
+    }
+    if(changes.frameColor) {
+      this.gauge.setFrameDesign(SteelFrameColors[changes.frameColor.currentValue]);
+    }
+    if (changes.radialSize){
+      this.startGauge(); //reset
+    }
+    if(changes.minValue) {
+      this.gauge.setMinValue(changes.minValue.currentValue);
+    }
+    if(changes.maxValue) {
+      this.gauge.setMaxValue(changes.maxValue.currentValue);
+    }
   }
 }

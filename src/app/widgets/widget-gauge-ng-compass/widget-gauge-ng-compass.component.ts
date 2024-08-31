@@ -46,7 +46,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   private readonly BORDER_INNER_WIDTH: number = 2;
   private readonly ANIMATION_TARGET_PLATE:string = "plate";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
-  private readonly WIDGET_SIZE_FACTOR: number = 0.97;
 
   // Gauge text value for value box rendering
   protected textValue: string = "--";
@@ -167,8 +166,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   protected onResized(event: ResizeObserverEntry): void {
     //@ts-ignore
     let resize: RadialGaugeOptions = {};
-    resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);
-    resize.width = Math.floor(event.contentRect.width * this.WIDGET_SIZE_FACTOR);
+    resize.height = Math.floor(event.contentRect.height);
+    resize.width = Math.floor(event.contentRect.width);
 
     this.compassGauge.update(resize);
   }

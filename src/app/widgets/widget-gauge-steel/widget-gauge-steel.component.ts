@@ -6,13 +6,13 @@ import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
 
 @Component({
-    selector: 'app-widget-gauge-steel',
+    selector: 'widget-gauge-steel',
     templateUrl: './widget-gauge-steel.component.html',
     styleUrls: ['./widget-gauge-steel.component.scss'],
     standalone: true,
     imports: [WidgetHostComponent, GaugeSteelComponent]
 })
-export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;
 
   protected zones = [];

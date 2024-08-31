@@ -127,6 +127,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
+    this.lineChartData.datasets = [];
     this.lineChartData.datasets.push(
       {
         label: 'Value',

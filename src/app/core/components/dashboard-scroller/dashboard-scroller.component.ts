@@ -22,7 +22,7 @@ interface DashboardPage {
         style({ opacity: 0 }),
         animate(100, style({ opacity: 1 })),
         style({ opacity: 1 }),
-        animate('150ms 800ms', style({ opacity: 0 })),
+        animate('250ms 1000ms', style({ opacity: 0 })),
       ])
     ])
   ]

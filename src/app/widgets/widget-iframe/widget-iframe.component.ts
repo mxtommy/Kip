@@ -6,7 +6,7 @@ import { NgIf } from '@angular/common';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 
 @Component({
-    selector: 'app-widget-iframe',
+    selector: 'widget-iframe',
     templateUrl: './widget-iframe.component.html',
     styleUrls: ['./widget-iframe.component.css'],
     standalone: true,

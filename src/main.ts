@@ -63,11 +63,14 @@ const appRoutes: Routes = [
 @Injectable()
 export class kipHammerConfig extends HammerGestureConfig {
   // Override default hammerjs gestures configuration
-  overrides = <any>{
-    // pan: { direction: (window as any).Hammer.DIRECTION_ALL },
-    swipe: { direction: (window as any).Hammer.DIRECTION_ALL, velocity: 1, threshold: 100 },
+  overrides = {
+    // pan: { direction: Hammer.DIRECTION_ALL },
+    swipe: { direction: Hammer.DIRECTION_ALL, velocity: 0.3, threshold: 10, domEvents: true },
     press: { time: 500 },
-  }
+  };
+  options = {
+    domEvents: true,
+  };
 }
 
 if (environment.production) {
