@@ -1,6 +1,5 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div id="{{widgetProperties.uuid}}" #simpleLinear style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
-    <svg-simple-linear-gauge class="simpleLinearGauge"
+    <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
       [displayName]="widgetProperties.config.displayName"
       [displayNameColor]="theme.whiteDim"
       [unitLabel]="unitsLabel"
@@ -12,5 +11,4 @@
       [gaugeMaxValue]="widgetProperties.config.displayScale.upper"
       [gaugeMinValue]="widgetProperties.config.displayScale.lower"
     ></svg-simple-linear-gauge>
-  </div>
 </widget-host>

@@ -1,18 +1,27 @@
-<mat-list>
-  <!-- @for (message of messages; track message) { -->
-    <mat-list-item class="sidebar grid-stack-item">
-      <mat-icon matListItemIcon>folder</mat-icon>
-      <h3 matListItemTitle>Numeric</h3>
-      <p matListItemLine>
-        <span>Subject</span>
-        <span class="demo-2"> -- message.content</span>
-      </p>
-    </mat-list-item>
-  <!-- } -->
-</mat-list>
-
-<div class="sidebar grid-stack-item">
-  <div class="grid-stack-item-content" style="padding: 5px;">
-      <p>Drag me in the dashboard!</p>
-  </div>
+<div>
+  <mat-form-field class="filter" appearance="fill">
+    <mat-label>Category</mat-label>
+    <mat-select #widgetCategory
+      name="widgetFilter"
+      value="Basic"
+      required>
+      @for (category of widget.categories; track category) {
+        <mat-option [value]="category" selected>{{category}}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <button mat-icon-button (click)="saveLayout()">
+    <mat-icon>close</mat-icon>
+  </button>
 </div>
+<mat-action-list class="widget-list">
+  @for (widget of widget.kipWidgets; track widget) {
+    @if (widgetCategory.value === widget.category) {
+      <button mat-list-item (click)="newWidget(widget.selector)">
+        <mat-icon matListItemIcon>{{widget.icon}}</mat-icon>
+        <span matListItemTitle>{{widget.name}}</span>
+        <span matListItemLine>{{widget.description}}</span>
+      </button>
+    }
+  }
+</mat-action-list>

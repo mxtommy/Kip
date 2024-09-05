@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -19,7 +19,7 @@ import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 
 @Component({
-    selector: 'app-widget-gauge-ng-linear',
+    selector: 'widget-gauge-ng-linear',
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
     standalone: true,
@@ -28,6 +28,7 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('linearGauge', {static: true, read: LinearGauge}) protected linearGauge: LinearGauge;
+  @ViewChild('linearGauge', {static: true, read: ElementRef}) protected gauge: ElementRef;
 
   // Gauge text value for value box rendering
   public textValue: string = "--";
@@ -37,7 +38,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   // Gauge options
   public gaugeOptions = {} as LinearGaugeOptions;
   private isGaugeVertical: Boolean = true;
-  public height: string = "";
 
   // Zones support
   private metaSub: Subscription;
@@ -88,6 +88,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   protected startWidget(): void {
     this.setGaugeConfig();
+    this.linearGauge.update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
     this.metaSub?.unsubscribe();
@@ -158,6 +159,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    // this.onResized({});
     this.startWidget();
   }
 
@@ -168,15 +170,13 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public onResized(event: ResizeObserverEntry) {
     //@ts-ignore
     let resize: LinearGaugeOptions = {};
-    if (this.isGaugeVertical) {
+    if (this.widgetProperties.config.gauge.subType === 'vertical') {
       resize.height = event.contentRect.height;
       resize.width = (event.contentRect.height * 0.3);
-      this.height = "0px";
     }
     else {
       resize.height = event.contentRect.width * 0.3;
       resize.width = event.contentRect.width;
-      this.height = ((event.contentRect.height - resize.height) / 2).toString() + "px";
     }
     this.linearGauge.update(resize);
   }
@@ -184,7 +184,19 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   private setGaugeConfig() {
     const isVertical = this.widgetProperties.config.gauge.subType === 'vertical';
     const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+    const rect = this.gauge.nativeElement.getBoundingClientRect();
+    let height, width: number = null;
+    if (this.widgetProperties.config.gauge.subType === 'vertical') {
+      height = rect.height;
+      width = rect.height * 0.3;
+    }
+    else {
+      height = rect.width * 0.3;
+      width = rect.width;
+    }
     const defaultOptions = {
+      height: height,
+      width: width,
       minValue: scale.min,
       maxValue: scale.max,
       valueInt: this.widgetProperties.config.numInt,

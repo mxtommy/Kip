@@ -12,11 +12,6 @@ export const DefaultAppConfig: IAppConfig = {
   "notificationConfig": DefaultNotificationConfig,
 }
 
-export const DefaultDashboardsConfig: DashboardConfig = {
-  "dashboards": [
-  ]
-}
-
 export const DefaultThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
 }
@@ -24,7 +19,7 @@ export const DefaultThemeConfig: IThemeConfig = {
 export const defaultConfig: IConfig = {
   "app": DefaultAppConfig,
   "theme": DefaultThemeConfig,
-  "dashboards": DefaultDashboardsConfig.dashboards
+  "dashboards": []
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {

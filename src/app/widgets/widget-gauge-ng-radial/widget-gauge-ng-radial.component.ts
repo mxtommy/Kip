@@ -19,7 +19,7 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
-    selector: 'app-widget-gauge-ng-radial',
+    selector: 'widget-gauge-ng-radial',
     templateUrl: './widget-gauge-ng-radial.component.html',
     styleUrls: ['./widget-gauge-ng-radial.component.scss'],
     standalone: true,
@@ -29,7 +29,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   // Gauge option setting constant
   private readonly LINE: string = "line";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
-  private readonly WIDGET_SIZE_FACTOR: number = 1;
 
   @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
 
@@ -158,8 +157,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   public onResized(event: ResizeObserverEntry): void {
       //@ts-ignore
       let resize: RadialGaugeOptions = {};
-      resize.height = Math.floor(event.contentRect.height * this.WIDGET_SIZE_FACTOR);
-      resize.width = Math.floor(event.contentRect.width * this.WIDGET_SIZE_FACTOR);
+      resize.height = event.contentRect.height;
+      resize.width = event.contentRect.width;
 
       this.radialGauge.update(resize);
   }

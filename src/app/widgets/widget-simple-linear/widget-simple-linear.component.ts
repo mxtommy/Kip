@@ -5,7 +5,7 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 
 @Component({
-    selector: 'app-widget-simple-linear',
+    selector: 'widget-simple-linear',
     templateUrl: './widget-simple-linear.component.html',
     styleUrls: ['./widget-simple-linear.component.css'],
     standalone: true,

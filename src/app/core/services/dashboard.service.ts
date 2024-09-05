@@ -24,11 +24,35 @@ export class DashboardService {
   public activeDashboard = signal<number>(0);
   public widgetAction = signal<widgetOperation>(null);
   public readonly isDashboardStatic = signal<boolean>(true);
-  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: []} ];
+  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: [
+    {
+      "w": 12,
+      "h": 12,
+      "id": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc",
+      "selector": "widget-tutorial",
+      "input": {
+        "widgetProperties": {
+          "type": "widget-tutorial",
+          "uuid": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc"
+        }
+      },
+      "x": 0,
+      "y": 0
+    }
+  ]} ];
 
   constructor(private settings: AppSettingsService, private router: Router,) {
     const dashboards = this.settings.getDashboardConfig();
-    dashboards.length == 0 ? this.dashboards.set([...this.blankDashboard, {id: UUID.create()}]) : this.dashboards.set(this.settings.getDashboardConfig());
+
+    if (dashboards.length === 0) {
+      const newBlankDashboard = this.blankDashboard.map(dashboard => ({
+          ...dashboard,
+          id: UUID.create()
+      }));
+      this.dashboards.set([...newBlankDashboard]);
+    } else {
+      this.dashboards.set(this.settings.getDashboardConfig());
+    }
 
     effect(() => {
       this.settings.saveDashboards(this.dashboards());

@@ -6,27 +6,42 @@
 
 .dashboard-manage {
   box-sizing: border-box;
-  margin-left: 24px;
-  width: calc(100% - 48px);
+  padding: 0px 60px;
+  width: calc(100%);
   height: calc(100% - 75px - 24px);
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-around;
-  overflow-y: auto;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
 }
 
-.dashboard-item {
+.dashboard-card {
   position: relative;
   height: 200px;
   width: 300px;
   margin: 10px;
-  background-color: var(--kip-widget-action-button-color);
-  border: 1px solid var(--mdc-outlined-button-outline-color);
   border-radius: 15px;
   padding: 10px;
   align-content: center;
   text-align: center;
+}
+
+.dashboard-item {
+  background-color: var(--kip-widget-card-background-color);
+  border: 1px solid var(--sys-surface-container-highest);
+}
+
+.dashboard-item-add {
+  background-color: var(--sys-surface-container);
+  border: 1px solid var(--sys-surface-container-highest);
+}
+
+.dashboard-add-btn {
+  align-content: center;
+  text-align: center;
+  border: dashed 1px var(--mdc-outlined-button-outline-color);
 }
 
 .item-index {
@@ -41,12 +56,6 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-}
-
-.add-dashboard-btn {
-  align-content: center;
-  text-align: center;
-  border: dashed 1px var(--mdc-outlined-button-outline-color);
 }
 
 .cdk-drag-preview {

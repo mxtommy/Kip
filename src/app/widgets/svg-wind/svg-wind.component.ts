@@ -11,7 +11,8 @@ interface ISVGRotationObject {
 
 @Component({
     selector: 'app-svg-wind',
-    templateUrl: './svg-wind.component.html',
+    templateUrl: './svg-wind.component.svg',
+    styleUrl: './svg-wind.component.scss',
     standalone: true,
     imports: [NgIf]
 })

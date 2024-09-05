@@ -2,7 +2,7 @@
 <mat-tab-group class="tabGroups mat-typography" style="opacity: 0.8;">
   <mat-tab label="Configuration Management">
     <div class="tabGroupPanel">
-      <h2>Where does KIP save my configuration?</h2>
+      <h5>Where does KIP save my configuration?</h5>
       <p>KIP has a "Signal K Authentication" option that can either be enabled or disabled. This
          option sets the configuration storage location. The "Signal K Authentication"
          configuration option is located in the "Signal K" tab under the Configuration/Settings
@@ -13,7 +13,7 @@
           Signal K server.</li>
       </ul>
 
-      <h3>Local Storage</h3>
+      <h6>Local Storage</h6>
       <p>If you don't enable "Signal K Authentication", KIP saves your configuration locally.
         In this mode, KIP automatically saves and retrieves all configuration
         changes (application settings, pages, layouts, Widget Options,
@@ -21,7 +21,7 @@
         has its own independent KIP configuration.</p>
       <p>In this mode, your KIP configuration <strong>is not shared</strong> between instances of KIP.</p>
 
-      <h3>Storage on the Signal K Server</h3>
+      <h6>Storage on the Signal K Server</h6>
         <p><i>In this mode, your KIP configuration is shared with all devices
           <strong>as long as you authenticate to Signal K using the same User ID</strong>.
           It's that simple!</i></p>
@@ -44,7 +44,7 @@
             station, crew roles, etc. Keeping all those concepts in mind, plan carefully and leverage KIP's
             configuration management flexibility to its fullest.</p>
 
-        <h3>Remote Storage Scopes</h3>
+        <h6>Remote Storage Scopes</h6>
         <ul>
           <li><p>User Storage Scope: When connecting to a server with "Signal K Authentication" enabled, Signal K stores
             configuration under the logged in user's storage space.
@@ -63,7 +63,7 @@
         </ul>
         <p>Note that KIP will <strong>never load and execute configurations
         from the Global Scope</strong>, even if the configuration is named "default".</p>
-      <h3>Creating a Signal K user</h3>
+      <h6>Creating a Signal K user</h6>
         <p>To authenticate to Signal K, a user must first be created. To create a Signal K User:
         </p>
         <ol>
@@ -82,14 +82,14 @@
   <mat-tab label="Editing Layout">
     <div class="tabGroupPanel">
       <div *ngIf="!unlockStatus">
-        <h3>Unlocking</h3>
+        <h6>Unlocking</h6>
         <p>
           The layout is "Locked" by default. This is to prevent accidental interaction from touch screens from changing anything.
           You can unlock KIP using the hamburger icon in the lower right corner and selecting "Configuration > Edit Layout". Go Ahead try it now!
         </p>
       </div>
       <div *ngIf="unlockStatus">
-        <h3>Configuring Layout</h3>
+        <h6>Configuring Layout</h6>
         <p>
           Now that KIP is unlocked, you can do a few actions.
         </p>
@@ -149,19 +149,6 @@
                   </mat-expansion-panel-header>
                   <iframe width="560" height="315" src="https://www.youtube.com/embed/S8FbtwBwW3w" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </mat-expansion-panel>
-
-                <mat-expansion-panel [expanded]="step === 3" (opened)="setStep(3)">
-                  <mat-expansion-panel-header>
-                    <mat-panel-title>
-                      Setting up zones
-                    </mat-panel-title>
-                    <mat-panel-description>
-                      Warnings and Alarms (by Boating with the Baileys)
-                    </mat-panel-description>
-                  </mat-expansion-panel-header>
-                  <iframe width="560" height="315" src="https://www.youtube.com/embed/BJFjLzjlpuY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </mat-expansion-panel>
-
               </mat-accordion>
             </div>
           </mat-tab>

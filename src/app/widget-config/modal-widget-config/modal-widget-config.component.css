@@ -4,5 +4,5 @@
    Only add non-common/single case styles to this file */
 
 .warning {
-  color: red;
+  color: var(--sys-error-container);
 }

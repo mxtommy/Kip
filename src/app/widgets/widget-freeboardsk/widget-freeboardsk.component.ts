@@ -8,7 +8,7 @@ import { SafePipe } from "../../core/pipes/safe.pipe";
 import { Subscription } from 'rxjs';
 
 @Component({
-    selector: 'app-widget-freeboardsk',
+    selector: 'widget-freeboardsk',
     standalone: true,
     templateUrl: './widget-freeboardsk.component.html',
     styleUrl: './widget-freeboardsk.component.scss',

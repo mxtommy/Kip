@@ -3,6 +3,7 @@ import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges } fro
 @Component({
     selector: 'svg-simple-linear-gauge',
     templateUrl: './svg-simple-linear-gauge.component.svg',
+    styleUrl: './svg-simple-linear-gauge.component.scss',
     standalone: true
 })
 export class SvgSimpleLinearGaugeComponent implements OnChanges {

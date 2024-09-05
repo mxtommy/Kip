@@ -7,8 +7,8 @@ import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
 import { UUID } from '../utils/uuid';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
-import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig, DefaultDashboardsConfig } from '../../../default-config/config.blank.const';
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl, DashboardConfig } from "../interfaces/app-settings.interfaces";
+import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { DemoAppConfig, DemoConnectionConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
@@ -469,11 +469,11 @@ public loadConfigFromLocalStorage(type: string) {
    *
    * IMPORTANT NOTE: Kip does not apply config unless app is reloaded
    *
-   * @param configType String of either connectionConfig, appConfig, widgetConfig, layoutConfig or themeConfig.
-   * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, ILayoutConfig or IThemeConfig
+   * @param configType String of either connectionConfig, appConfig, widgetConfig, dashboardConfig or themeConfig.
+   * @param newConfig Object containing config. Of type IAppConfig, IWidgetConfig, Dashboard[] or IThemeConfig
    * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
-  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IThemeConfig, reloadApp?: boolean) {
+  public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IThemeConfig | Dashboard[], reloadApp?: boolean) {
     let jsonConfig = JSON.stringify(newConfig);
     localStorage.setItem(configType, jsonConfig);
     if (reloadApp) {
@@ -482,19 +482,21 @@ public loadConfigFromLocalStorage(type: string) {
   }
 
   public loadDemoConfig() {
-    console.log("[AppSettings Service] Loading Demo Configuration Settings as shared Config: " + this.useSharedConfig + " and reloading app.");
     if (this.useSharedConfig) {
       let demoConfig: IConfig = {
         app: DemoAppConfig,
-        dashboards: DemoDashboardsConfig.dashboards,
+        dashboards: DemoDashboardsConfig,
         theme: DemoThemeConfig
       };
+      console.log("[AppSettings Service] Loading Demo configuration settings as remote config: " + this.useSharedConfig + " and reloading app.");
       this.storage.setConfig('user', this.sharedConfigName, demoConfig);
       this.reloadApp();
     } else {
       localStorage.clear();
+      console.log("[AppSettings Service] Loading Demo configuration settings to LocalStorage");
       this.replaceConfig("appConfig", DemoAppConfig);
       this.replaceConfig("connectionConfig", DemoConnectionConfig);
+      this.replaceConfig("dashboardsConfig", DemoDashboardsConfig);
       this.replaceConfig("themeConfig", DemoThemeConfig, true);
     }
   }
@@ -584,7 +586,7 @@ public loadConfigFromLocalStorage(type: string) {
   }
 
   private getDefaultDashboardsConfig(): Dashboard[] {
-    let config = DefaultDashboardsConfig.dashboards;
+    let config = [];
     localStorage.setItem("dashboardsConfig", JSON.stringify(config));
     return config;
   }

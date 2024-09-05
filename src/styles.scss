@@ -145,6 +145,13 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
 }
 
 // Set base app style
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
 html,
 body,
 app-root {

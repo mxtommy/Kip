@@ -1,7 +1,7 @@
 <page-header [pageTitle]="pageTitle" />
   <div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
     @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
-      <div class="dashboard-item"
+      <div class="dashboard-card dashboard-item"
         cdkDrag
         cdkDragBoundary=".dashboard-manage"
         (press)="openBottomSheet(index)">
@@ -11,7 +11,7 @@
         <p class="mat-title-large" style="margin-top: 25px;">{{dashboard.name}}</p>
       </div>
     }
-    <div class="dashboard-item add-dashboard-btn">
+    <div class="dashboard-card dashboard-item-add dashboard-add-btn">
       <button mat-fab (click)="addDashboard()">
         <mat-icon>add_box</mat-icon>
       </button>

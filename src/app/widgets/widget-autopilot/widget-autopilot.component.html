@@ -2,7 +2,7 @@
   <div id="{{widgetProperties.uuid}}" #autopilot class="autopilotWidget">
     <div class="headerAutopilot">
       <div class="apTitle">
-        <span>N2K Autopilot</span>
+        <span>{{widgetProperties.config.displayName}}</span>
       </div>
       <div class="apPower">
         <button mat-flat-button class="powerBtn" id="powerBtn" #powerBtn disabled="false" (click)="powerBtnClick($event)">

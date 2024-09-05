@@ -3,7 +3,6 @@ import { Subscription } from 'rxjs';
 import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
-import { WidgetManagerService} from '../../core/services/widget-manager.service';
 import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -40,7 +39,7 @@ const countDownDefault: number = 5;
 const timeoutBlink = 250;
 
 @Component({
-    selector: 'app-widget-autopilot',
+    selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
@@ -95,8 +94,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   notificationTest = {};
 
   constructor(
-    public signalkRequestsService: SignalkRequestsService,
-    public widgetManagerService: WidgetManagerService) {
+    public signalkRequestsService: SignalkRequestsService) {
       super();
 
       this.defaultConfig = {
@@ -337,8 +335,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   startApHead() {
     this.startAllSubscriptions();
     this.widgetProperties.config.autoStart = true; // save power-on state to autostart or not
-    this.widgetManagerService.updateWidgetConfig(this.widgetProperties.uuid, this.widgetProperties.config);
-
     this.isApConnected = true;
     this.muteBtn.disabled = true;
     this.messageBtn.disabled = false;
@@ -363,7 +359,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.isApConnected = false; // hide ap screen
     this.stopAllSubscriptions();
     this.widgetProperties.config.autoStart = false; // save power on state to autostart or not
-    this.widgetManagerService.updateWidgetConfig(this.widgetProperties.uuid, this.widgetProperties.config);
   }
 
   SetKeyboardMode(apMode: string) {

@@ -282,7 +282,10 @@
         <div class="tab-content">
           <div>
             <ng-template mat-tab-label>
-              <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Paths
+              <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning material-icons">
+                error
+              </span>
+              &nbsp;Paths
             </ng-template>
           </div>
           <paths-options

@@ -11,7 +11,7 @@ import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 
 @Component({
-    selector: 'app-widget-race-timer',
+    selector: 'widget-racetimer',
     templateUrl: './widget-race-timer.component.html',
     styleUrls: ['./widget-race-timer.component.scss'],
     standalone: true,
@@ -50,6 +50,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnInit(): void {
     this.initWidget();
     this.subscribeTimer();
+    this.startWidget();
   }
 
   protected startWidget(): void {
