@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject, delay, Observable , retryWhen, Subject, takeUntil, tap } from 'rxjs';
+import { BehaviorSubject, delay, Observable , of, retry, retryWhen, Subject, takeUntil, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
@@ -51,8 +51,9 @@ export class SignalKDeltaService {
 
   // Websocket config
   private endpointWS: string = null;
-  private WS_RECONNECT_INTERVAL = 5000;                 // connection error retry interval
-  private WS_CONNECTION_ARGUMENT = "?subscribe=all&sendMeta=all"; // default but we could use none + specific paths in the future
+  private readonly WS_RECONNECT_INTERVAL = 3000;                 // connection error retry interval
+  private readonly WS_RETRY_COUNT = 3;                 // connection error retry interval
+  private readonly WS_CONNECTION_ARGUMENT = "?subscribe=all&sendMeta=all"; // default but we could use none + specific paths in the future
   private socketWS$: WebSocketSubject<any>;
   public socketWSCloseEvent$ = new Subject<CloseEvent>();
   public socketWSOpenEvent$ = new Subject<Event>();
@@ -165,19 +166,20 @@ export class SignalKDeltaService {
     this.streamEndpoint$.next(this.streamEndpoint);
 
     this.socketWS$ = this.getNewWebSocket();
-    // Every WebSocket onmessage listener event (data coming in) generates fires a ChangeDetection cycles that is not relevant in KIP. KIP sends socket messages to internal service data array only, so no UI updates (change detection) are necessary. UI Updates observing the internal data array updates. Running outside zones.js to eliminate unnecessary changedetection cycle.
+
+    // Running outside Angular's zone to prevent unnecessary change detection cycles
     this.zones.runOutsideAngular(() => {
       this.socketWS$.pipe(
-        retryWhen(errors =>
-          errors.pipe(
-            tap(err => {
-              console.error("[Delta Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
-            }),
-            delay(this.WS_RECONNECT_INTERVAL)
-          )
-        )
-      ).subscribe(msgWS => {
-        this.processWebsocketMessage(msgWS);
+        retry({
+          count: this.WS_RETRY_COUNT,
+          delay: (error, retryCount) => {
+            console.error(`[Delta Service] WebSocket error (attempt ${retryCount}): ${JSON.stringify(error, ["code", "message", "type"])}`);
+            return of(error).pipe(delay(this.WS_RECONNECT_INTERVAL));
+          }
+        })
+      ).subscribe({
+        next: msgWS => this.processWebsocketMessage(msgWS),
+        error: err => console.error('[Delta Service] WebSocket connection failed after maximum retries:', err)
       });
     });
   }

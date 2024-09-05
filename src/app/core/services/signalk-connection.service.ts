@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, catchError, lastValueFrom, throwError, timeout } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ISignalKUrl } from '../interfaces/app-settings.interfaces';
 
@@ -40,7 +40,7 @@ export interface IEndpointStatus {
   providedIn: 'root'
 })
 export class SignalKConnectionService {
-
+  private readonly TIMEOUT_DURATION = 10000;
 
   public serverServiceEndpoint$: BehaviorSubject<IEndpointStatus> = new BehaviorSubject<IEndpointStatus>({
     operation: 0,
@@ -98,7 +98,17 @@ export class SignalKConnectionService {
 
     try {
       console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
-      const endpointResponse = await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}));
+      const endpointResponse = await lastValueFrom(
+        this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}).pipe(
+          timeout(this.TIMEOUT_DURATION),
+          catchError(err => {
+            if (err.name === 'TimeoutError') {
+              console.error('[Connection Service] Connection request timed out after ' + this.TIMEOUT_DURATION + 'ms');
+            }
+            return throwError(err);
+          })
+        )
+      );
 
       console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
       this.serverVersion$.next(endpointResponse.body.server.version);
