@@ -1,13 +1,10 @@
 import { enableProdMode, APP_INITIALIZER, Injectable, importProvidersFrom } from '@angular/core';
+import { routes } from './app/app.routes';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { WidgetLoginComponent } from './app/widgets/widget-login/widget-login.component';
-import { DataBrowserComponent } from './app/core/components/data-browser/data-browser.component';
-import { AppHelpComponent } from './app/core/components/app-help/app-help.component';
-import { SettingsTabsComponent } from './app/settings/tabs/tabs.component';
-import { withHashLocation, provideRouter, Routes } from '@angular/router';
+import { withHashLocation, provideRouter } from '@angular/router';
 import { StorageService } from './app/core/services/storage.service';
 import { TimersService } from './app/core/services/timers.service';
 import { NotificationsService } from './app/core/services/notifications.service';
@@ -25,8 +22,6 @@ import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
-import { DashboardsManageComponent } from './app/core/components/dashboards-manage/dashboards-manage.component';
-import { DashboardComponent } from './app/core/components/dashboard/dashboard.component';
 import 'hammerjs';
 
 
@@ -43,15 +38,6 @@ const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
     .then(res => { })
     .catch(res => { })
 };
-const appRoutes: Routes = [
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'settings', component: SettingsTabsComponent },
-  { path: 'help', component: AppHelpComponent },
-  { path: 'data', component: DataBrowserComponent },
-  { path: 'dashboards', component: DashboardsManageComponent },
-  { path: 'login', component: WidgetLoginComponent },
-  { path: '**', component: DashboardComponent }
-];
 
 /**
  * Injectable class that override Hammerjs default gesture configuration.
@@ -142,7 +128,7 @@ bootstrapApplication(AppComponent, {
     TimersService,
     StorageService,
     provideHttpClient(withInterceptorsFromDi()),
-    provideRouter(appRoutes, withHashLocation()),
+    provideRouter(routes, withHashLocation()),
     provideAnimations(),
   ],
 });

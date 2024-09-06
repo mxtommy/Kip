@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
-import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
-import { AppService } from '../../core/services/app-service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
-import { IConfig, IAppConfig } from '../../core/interfaces/app-settings.interfaces';
-import { StorageService } from '../../core/services/storage.service';
+import { AuthenticationService, IAuthorizationToken } from '../../services/authentication.service';
+import { AppService } from '../../services/app-service';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { IConfig, IAppConfig } from '../../interfaces/app-settings.interfaces';
+import { StorageService } from '../../services/storage.service';
 import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow } from '@angular/material/expansion';
@@ -20,6 +20,7 @@ import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { NgIf, NgFor } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { PageHeaderComponent } from '../page-header/page-header.component';
 
 
 interface IRemoteConfig {
@@ -32,10 +33,10 @@ interface IRemoteConfig {
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
     standalone: true,
-    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, MatRadioGroup, MatRadioButton, MatCheckbox, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow]
+    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, MatRadioGroup, MatRadioButton, MatCheckbox, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow, PageHeaderComponent]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy{
-
+  protected readonly pageTitle: string = "Configurations";
   public hasToken: boolean = false;
   public isTokenTypeDevice: boolean = false;
   private tokenSub: Subscription;
@@ -43,7 +44,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public supportApplicationData: boolean = false;
   public serverConfigList: IRemoteConfig[] = [];
   public serverUpgradableConfigList: IRemoteConfig[] = [];
-
 
   public copyConfigForm: UntypedFormGroup;
   public storageLocation: string = null;

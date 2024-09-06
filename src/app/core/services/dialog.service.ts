@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
-import { SettingsTabsComponent } from '../../settings/tabs/tabs.component';
+import { AppSettingsComponent } from '../../settings/settings/settings.component';
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
 import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
 
@@ -18,7 +18,7 @@ export class DialogService {
   public openFrameDialog(data: DialogComponentData, fullscreen: boolean): Observable<boolean> {
     switch (data.component) {
       case 'settings':
-        data.componentType = SettingsTabsComponent;
+        data.componentType = AppSettingsComponent;
         break;
     }
 

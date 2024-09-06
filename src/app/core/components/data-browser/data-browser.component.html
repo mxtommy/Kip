@@ -1,5 +1,5 @@
 <page-header [pageTitle]="pageTitle" />
-<div class="full-display"  (window:resize)="onResize($event)">
+<div class="full-display page-content-wrapper"  (window:resize)="onResize($event)">
   <mat-form-field class="filter-field">
     <mat-label>Filter</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="self." #input>

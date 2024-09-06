@@ -1,9 +1,16 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <div style="padding: 10px;">
     @if (dashboard.isDashboardStatic()) {
-      <h3>Getting Started</h3>
-      <h5>Two options are available:</h5>
-      <ol>
+      <h5>Welcome to KIP</h5>
+      <h6>Gestures</h6>
+      <ul>
+        <li><strong>Swipe up / down</strong> to cycle trough dashboards (Only one dashboard is present by default)</li>
+        <li><strong>Swipe right</strong> to access the actions menu</li>
+        <li><strong>Swipe left</strong> to access the notifications menu</li>
+      </ul>
+
+      <h6>Getting Started</h6>
+      <ul>
         <li>Load Live Demo
           <p>To dive right in and see what KIP can do!
             Load the demo configuration with simulated data from demo.signalk.org. Note that an
@@ -11,7 +18,7 @@
           <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
           <br/><br/>
         </li>
-        <li>Connect to a Signal K server, then start configuring instruments
+        <li>Connect to a Signal K server, then start configuring widgets
           <p>
             Configure KIP's Signal K server URL connection and connect to receive data. Use the
             "Set Sign In credentials" button to authenticate to the server with a pre existing
@@ -20,31 +27,50 @@
             by all devices that you log in from. See
             <a routerLink="/help">Configuration Management Help</a> for more instructions.
           </p>
-          <button mat-raised-button routerLink="/settings">//TODO: Needs to be fixed!!!</button>
+          <p>Swipe right to open the Actions menu and hit the Edit dashboard button in the upper
+            right hand corner.
+          </p>
+          <p>You can also add more dashboards using the Dashboards option from the
+            Actions menu. Dashboards can be reordered, duplicated and renamed using Drag & Drop and Long Press actions menu.</p>
+          <button mat-raised-button routerLink="/settings">Connectivity settings</button>
           <br/>
         </li>
-      </ol>
-      <h4>Then start editing dashboards</h4>
+      </ul>
+      <h6>Start editing dashboards</h6>
         <p>
           Dashboards are "Locked" by default. This is to prevent accidental touch
-          screens interaction from changing anything.
-          A page layout is a screen where you can add, configure and remove widgets such as
-          gauges and components. Multiple dashboards can be added to facilitate organization.
-          To edit dashboards or widget layouts, you first need to access the Actions menu.
-          To access the actions menu swipe left. Go Ahead try it now!
+          screens interaction from changing anything. To edit, add, remove
+          and configure widgets in dashboards, you first need to access the Actions menu by swiping left
+          and hit the edit dashboard button in the upper right hand corner. Go Ahead try it now!
         </p>
+        <p>Once you are editing a dashboard, you can:</p>
+          <ol>
+            <li>Touch and Drag to move widgets</li>
+            <li>Drag the corners and sides to resize widgets</li>
+            <li>Double Tap on a widget to configure it</li>
+            <li>Long Press on a widget to access additional options such as delete amd duplicate</li>
+          </ol>
     } @else {
-      <h3>Editing Dashboard Layouts</h3>
+      <h5>Editing Dashboard Layouts</h5>
       <p>
         Possible gesture and actions:
       </p>
-      <ul>
-        <li>Add widgets using an option from the left menu.</li>
+      <p>
+        From the left editing menu you can:
+      </p>
+      <ol>
+        <li>Filter and add widgets</li>
+        <li>Exit the dashboard edit mode using the X button</li>
+      </ol>
+      <p>
+        With the widgets themselves you can:
+      </p>
+      <ol>
         <li>Drag the widget to change it's position.</li>
         <li>Use the widget corners handles to change its size.</li>
         <li>Double tap/double click a widget to access its configuration options</li>
         <li>Long press a widget access additional widget operations such as delete and duplicate</li>
-      </ul>
+      </ol>
     }
     </div>
 </widget-host>

@@ -4,7 +4,7 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
-import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';

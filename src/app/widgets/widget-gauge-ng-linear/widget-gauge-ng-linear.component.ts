@@ -11,7 +11,7 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
-import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { JsonPipe } from '@angular/common';

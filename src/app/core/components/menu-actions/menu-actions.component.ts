@@ -63,12 +63,24 @@ export class MenuActionsComponent {
         this._router.navigate(['/data']);
         break;
 
+      case 'datasets':
+        this._router.navigate(['/datasets']);
+        break;
+
+      case 'configurations':
+        this._router.navigate(['/configurations']);
+        break;
+
+      case 'reset':
+      this._router.navigate(['/reset']);
+        break;
+
       case 'toggleFullScreen':
         this.toggleFullScreen();
         break;
 
       case 'settings':
-        this.OpenSettingsDialog();
+        this._router.navigate(['/settings']);
         break;
 
       case 'layout':

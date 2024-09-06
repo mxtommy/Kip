@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
-import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MatBadge } from '@angular/material/badge';
