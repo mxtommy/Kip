@@ -1,25 +1,15 @@
-<mat-tab-group>
+<page-header [pageTitle]="pageTitle" />
+<mat-tab-group class="page-content-wrapper">
   <mat-tab label="Connectivity">
       <settings-signalk></settings-signalk>
   </mat-tab>
-
   <mat-tab label="Display">
     <settings-display></settings-display>
   </mat-tab>
   <mat-tab label="Notifications">
     <settings-notifications></settings-notifications>
   </mat-tab>
-
   <mat-tab label="Units">
       <settings-units></settings-units>
   </mat-tab>
-  <mat-tab label="Datasets">
-    <settings-datasets></settings-datasets>
-  </mat-tab>
-  <mat-tab label="Configurations">
-    <settings-config></settings-config>
-  </mat-tab>
-  <mat-tab label="Reset">
-        <settings-reset></settings-reset>
-    </mat-tab>
   </mat-tab-group>

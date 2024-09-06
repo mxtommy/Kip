@@ -14,17 +14,29 @@
 </div>
 <mat-divider />
 <mat-action-list>
-  <button mat-list-item (click)="onItemClicked('databrowser')" cdkFocusInitial>
-    <mat-icon matListItemIcon>troubleshoot</mat-icon>
-    <span>Data Browser</span>
-  </button>
   <button mat-list-item (click)="onItemClicked('dashboards')">
     <mat-icon matListItemIcon>dashboard</mat-icon>
     <span>Dashboards</span>
   </button>
+  <button mat-list-item (click)="onItemClicked('datasets')" cdkFocusInitial>
+    <mat-icon matListItemIcon>dataset</mat-icon>
+    <span>Datasets</span>
+  </button>
+  <button mat-list-item (click)="onItemClicked('databrowser')" cdkFocusInitial>
+    <mat-icon matListItemIcon>troubleshoot</mat-icon>
+    <span>Data Browser</span>
+  </button>
   <button mat-list-item (click)="onItemClicked('settings')">
-    <mat-icon matListItemIcon>settings</mat-icon>
+    <mat-icon matListItemIcon>tune</mat-icon>
     <span>Settings</span>
+  </button>
+  <button mat-list-item (click)="onItemClicked('configurations')" cdkFocusInitial>
+    <mat-icon matListItemIcon>engineering</mat-icon>
+    <span>Configurations</span>
+  </button>
+  <button mat-list-item (click)="onItemClicked('reset')" cdkFocusInitial>
+    <mat-icon matListItemIcon>restart_alt</mat-icon>
+    <span>Reset</span>
   </button>
 </mat-action-list>
 <div class="actions-bottom-container">

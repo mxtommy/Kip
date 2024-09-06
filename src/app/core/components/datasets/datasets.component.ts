@@ -5,10 +5,10 @@ import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeader
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 
-import { DataService } from '../../core/services/data.service';
-import { DatasetService } from '../../core/services/data-set.service';
-import type { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
-import { FilterSelfPipe } from '../../core/pipes/filter-self.pipe';
+import { DataService } from '../../services/data.service';
+import { DatasetService } from '../../services/data-set.service';
+import type { IDatasetServiceDatasetConfig } from '../../services/data-set.service';
+import { FilterSelfPipe } from '../../pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
 import { NgFor } from '@angular/common';
@@ -20,6 +20,7 @@ import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatRadioModule } from '@angular/material/radio';
+import { PageHeaderComponent } from '../page-header/page-header.component';
 
 interface settingsForm {
   selectedPath: string;
@@ -33,12 +34,14 @@ interface settingsForm {
     templateUrl: './datasets.component.html',
     styleUrls: ['./datasets.component.scss'],
     standalone: true,
-    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider]
+    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider, PageHeaderComponent]
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
+
+  protected readonly pageTitle: string = "Datasets";
 
   selectedDataset: string;
   tableData = new MatTableDataSource([]);

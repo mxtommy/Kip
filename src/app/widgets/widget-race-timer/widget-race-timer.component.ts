@@ -4,7 +4,7 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
-import { BaseWidgetComponent } from '../../core/components/base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { NgIf } from '@angular/common';

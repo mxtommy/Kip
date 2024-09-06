@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { SettingsTabsComponent } from './tabs.component';
+import { AppSettingsComponent } from './settings.component';
 
 describe('SettingsTabsComponent', () => {
-  let component: SettingsTabsComponent;
-  let fixture: ComponentFixture<SettingsTabsComponent>;
+  let component: AppSettingsComponent;
+  let fixture: ComponentFixture<AppSettingsComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [SettingsTabsComponent]
+    imports: [AppSettingsComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(SettingsTabsComponent);
+    fixture = TestBed.createComponent(AppSettingsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

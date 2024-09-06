@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { BaseWidgetComponent } from './base-widget.component';
 
 describe('BaseWidgetComponent', () => {

@@ -1,0 +1,224 @@
+<page-header [pageTitle]="pageTitle" />
+<div class="page-content-wrapper">
+  <p class="mat-card-subtitle description-text">
+    Recommended Reading: To understand configuration management and storage
+    options, consult the
+    <a routerLink="/help">Configuration Management Help</a> section.
+  </p>
+  <div class="flex-container">
+    <div class="flex-item-upgrade flex-item-upgrade-color" *ngIf="serverUpgradableConfigList.length != 0">
+      <form
+        name="upgradeConfigForm"
+        (ngSubmit)="upgradeConfig()"
+        #upgradeConfigForm="ngForm">
+        <h6>Upgradable Configurations Found</h6>
+        <p style="margin-bottom: 16px;">Previous versions of configurations have been found. Click to
+          Upgrade update them to the latest version. Once upgrade completed, refresh the configuration's list
+          using the button and
+          confirm old configurations are present in respective User and/or Global scopes.</p>
+        <p style="margin-bottom: 16px;">Test your configurations then proceed with deletion.</p>
+        <div *ngIf="hasToken; else elseBlock">
+          <div *ngIf="!hasToken">
+            Writing to the server requires user Authentication or a Device token.
+          </div>
+        </div>
+        <ng-template #elseBlock>
+          <div class="no-token-notice">
+            <p>Authentication or Device Token required</p>
+          </div>
+        </ng-template>
+        <div class="formActionFooter">
+          <mat-divider class="formActionDivider"></mat-divider>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="!hasToken || !upgradeConfigForm.valid"
+            color="accent">
+              Upgrade
+          </button>
+          <button style="margin-left: 10px;"
+            mat-flat-button
+            type="button"
+            [disabled]="!hasToken || !upgradeConfigForm.valid"
+            color="accent"
+            (click)="refreshConfig()">
+              Refresh
+          </button>
+          <button style="margin-left: 10px;"
+            mat-flat-button
+            type="button"
+            [disabled]="!hasToken || !upgradeConfigForm.valid"
+            color="accent"
+            (click)="deleteOldConfig()">
+              DELETE
+        </button>
+        </div>
+      </form>
+    </div>
+    <div class="flex-item-rounded-card rounded-card-color">
+      <form
+        name="saveConfigForm"
+        (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
+        #saveConfigForm="ngForm">
+        <h6>Save</h6>
+        <p style="margin-bottom: 16px;">Save current configuration to server</p>
+        <div *ngIf="hasToken; else elseBlock">
+          <mat-form-field style="width: 25%;">
+            <mat-label>Scope</mat-label>
+            <mat-select
+              name="serverConfiScope"
+              [(ngModel)]="saveConfigScope"
+              required>
+              <mat-option value="global">
+                Global
+              </mat-option>
+              <mat-option value="user">
+                User
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field style="width: 70%; padding-left: 3%;">
+            <mat-label>Configuration Name</mat-label>
+            <input
+              matInput
+              name="serverConfigName"
+              placeholder="Enter a name for the configuration"
+              [(ngModel)]="saveConfigName"
+              [ngModelOptions]="{ standalone: false }"
+              required
+            />
+          </mat-form-field>
+          <div *ngIf="!hasToken">
+            Writing to the server requires user Authentication or a Device token
+          </div>
+        </div>
+        <ng-template #elseBlock>
+          <div class="no-token-notice">
+            <p>Authentication or Device Token required</p>
+          </div>
+        </ng-template>
+        <div class="formActionFooter">
+          <mat-divider class="formActionDivider"></mat-divider>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="!hasToken || !saveConfigForm.valid"
+            color="accent">
+              Save
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="flex-item-rounded-card rounded-card-color">
+      <form
+        name="deleteConfigForm"
+        (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name )"
+        #deleteConfigForm="ngForm">
+        <h6>Delete</h6>
+        <p style="margin-bottom: 16px;">Delete a configuration from the server</p>
+        <div *ngIf="hasToken; else elseBlock">
+          <mat-form-field style="width: 100%;">
+            <mat-label>Configuration</mat-label>
+            <mat-select name="selectedDeleteItem" [(ngModel)]="deleteConfigItem" required>
+              <mat-option
+                *ngFor="let config of serverConfigList" [value]="config">
+                {{ config.scope }} / {{ config.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <ng-template #elseBlock>
+          <div class="no-token-notice">
+            <p>Authentication or Device Token required</p>
+          </div>
+        </ng-template>
+        <div class="formActionFooter">
+          <mat-divider class="formActionDivider"></mat-divider>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="!hasToken || !deleteConfigForm.valid"
+            color="accent">
+              Delete
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="flex-item-copy rounded-card-color">
+      <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
+      <h6>Copy</h6>
+      <p style="margin-bottom: 16px;">Create, duplicate and overwrite configurations.</p>
+        <div class="config-row" *ngIf="hasToken; else elseBlock">
+          <div class="config-column">
+            <label id="sources-radio-group-label">Source</label>
+            <mat-radio-group
+              formControlName="copySource"
+              aria-labelledby="sources-radio-group-label"
+              class="sources-radio-group"
+              (change)="onSourceSelectChange($event)">
+              <mat-radio-button
+                class="sources-radio-button"
+                *ngFor="let location of locations"
+                [value]="location">
+                  {{ location }}
+              </mat-radio-button>
+            </mat-radio-group>
+            <mat-form-field class="select-config">
+              <mat-label>Configuration</mat-label>
+              <mat-select formControlName="sourceTarget">
+                <mat-option
+                  *ngFor="let config of serverConfigList"
+                  [value]="config">
+                    {{ config.scope }} / {{ config.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="config-column">
+            <label id="sources-radio-group-label">Destination</label>
+            <mat-radio-group
+              formControlName="copyDestination"
+              aria-labelledby="sources-radio-group-label"
+              class="sources-radio-group"
+              (change)="onDestinationSelectChange($event)"
+            >
+              <mat-radio-button
+                class="sources-radio-button"
+                *ngFor="let location of locations"
+                [value]="location"
+              >
+                {{ location }}
+              </mat-radio-button>
+            </mat-radio-group>
+            <mat-form-field class="select-config">
+              <mat-label>Configuration</mat-label>
+              <mat-select formControlName="destinationTarget">
+                <mat-option
+                  *ngFor="let config of serverConfigList"
+                  [value]="config"
+                >
+                  {{ config.scope }} / {{ config.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+        <ng-template #elseBlock>
+          <div class="no-token-notice">
+            <p>Authentication or Device Token required</p>
+          </div>
+        </ng-template>
+        <div class="formActionFooter">
+          <mat-divider class="formActionDivider"></mat-divider>
+          <button
+            mat-flat-button
+            type="submit"
+            color="accent"
+            [disabled]="!this.copyConfigForm.valid">
+              Copy
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
