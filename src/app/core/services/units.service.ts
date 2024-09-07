@@ -86,6 +86,12 @@ export class UnitsService implements OnDestroy {
       { measure: 'g/min', description: "Gallons per minute"},
       { measure: 'g/h', description: "Gallons per hour"}
     ] },
+    { group: 'Economy', units: [
+      { measure: 'm/m3', description: "Meters per cubic meter (base)"},
+      { measure: 'nm/l', description: "Nautical Miles per liter"},
+      { measure: 'nm/g', description: "Nautical Miles per gallon"},
+      { measure: 'km/l', description: "Kilometers per liter"},
+      { measure: 'mpg', description: "Miles per Gallon"},
     { group: 'Temperature', units: [
       { measure: 'K', description: "Kelvin (base)"},
       { measure: 'celsius', description: "Celsius"},
@@ -420,6 +426,12 @@ export class UnitsService implements OnDestroy {
     'l/h': Qty.swiftConverter("m^3/s", "liter/hour"),
     'g/min': Qty.swiftConverter("m^3/s", "gallon/minute"),
     'g/h': Qty.swiftConverter("m^3/s", "gallon/hour"),
+//  economy
+    'm3/m': function(v) { return v; },
+    'nm/l': Qty.swiftConverter('m/m^3', 'naut-mile/liter'),
+    'nm/g': Qty.swiftConverter('m/m^3', 'naut-mile/gallon'),
+    'km/l': Qty.swiftConverter('m/m^3', 'km/liter'),
+    'mpg': Qty.swiftConverter('m/m^3', 'mile/gallon'),
 //  temp
     "K": function(v) { return v; },
     "celsius": Qty.swiftConverter("tempK", "tempC"),
