@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
@@ -72,67 +72,23 @@ export class AppService implements OnDestroy {
     {label: "Purple", value: "purple"},
     {label: "Grey", value: "grey"}
   ];
-  public autoNightMode: boolean; // from Config value
-  private _lastMode: string = 'day';
+  public isNightMode = signal<boolean>(false);
+  private _autoNightDeltaStatus: Subscription = null;
+  private _autoNightModeSubscription: Subscription = null;
+  private _environmentModePathSubscription: Subscription = null;
+  private _autoNightModeThemeSubscription: Subscription = null;
 
-  private autoNightDeltaStatus: Subscription = null;
-  private autoNightModeSubscription: Subscription = null;
-  private autoNightModePathSubscription: Subscription = null;
-  private autoNightModeThemeSubscription: Subscription = null;
   public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
-  private pathTimer = null;
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
   private readonly _cssThemeColorRoles: ITheme = null;
+  private _settings = inject(AppSettingsService);
+  private _delta = inject(SignalKDeltaService);
+  private _data = inject(DataService);
 
-  constructor(
-    private settings: AppSettingsService,
-    private delta: SignalKDeltaService,
-    private data: DataService,
-  ) {
-    this.autoNightMode = this.settings.getAutoNightMode();
+  constructor() {
     this.autoNightModeObserver();
     this.readThemeCssRoleVariables();
     this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
-  }
-
-  private autoNightModeObserver(): void {
-    const deltaStatus = this.delta.getDataStreamStatusAsO(); // wait for delta service to start
-    this.autoNightDeltaStatus = deltaStatus.subscribe(stat => {
-      stat as IStreamStatus;
-      if(stat.operation == 2) {
-
-        this.pathTimer = setTimeout(() => { // Wait for path data to come in on startup
-          const autoNightMode: Observable<boolean> = this.settings.getAutoNightModeAsO();
-
-          this.autoNightModeSubscription = autoNightMode.subscribe(mode => {
-            this.autoNightMode = mode;
-            if (mode) {
-              if (this.data.getPathObject(modePath) !== null) {
-                this.autoNightModePathSubscription = this.data.subscribePath(modePath, 'default').subscribe(path => {
-                if (path !== null && path.data.value !== this._lastMode) {
-                    this._lastMode = path.data.value;
-                    const brightness = path.data.value === 'night' ? this.settings.getNightModeBrightness() : 1;
-                    this.setBrightness(brightness);
-                  }
-                });
-              }
-            }
-          });
-        }, 1500);
-      }
-    });
-  }
-
-  public validateAutoNightModeSupported(): boolean {
-    if (!this.data.getPathObject(modePath)) {
-      this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
-      return false;
-    }
-    return true;
-  }
-
-  public set autoNightModeConfig(isEnabled : boolean) {
-    this.settings.setAutoNightMode(isEnabled);
   }
 
   /**
@@ -201,23 +157,69 @@ export class AppService implements OnDestroy {
     this.cssThemeColorRoles$.next(cssThemeRolesColor);
   }
 
-
   public get cssThemeColors() : ITheme {
     return this._cssThemeColorRoles;
   }
-
 
   public setBrightness(brightness: number): void {
     const root = document.documentElement;
     root.style.setProperty('--kip-nightModeBrightness', `${brightness}`);
   }
 
+  public toggleDayNightMode(mode: string): void {
+    switch (mode) {
+      case 'day':
+        this.setBrightness(1);
+        this.isNightMode.set(false);
+        break;
+
+      case 'night':
+        this.setBrightness(this._settings.getNightModeBrightness());
+        this.isNightMode.set(true);
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  private autoNightModeObserver(): void {
+    this._autoNightModeSubscription = this._settings.getAutoNightModeAsO().subscribe(modeEnabled => {
+      if (modeEnabled) {
+        this.environmentModeObserver();
+      } else {
+        this._environmentModePathSubscription?.unsubscribe();
+      }
+    });
+  }
+
+  private environmentModeObserver(): void {
+    const deltaStatus = this._delta.getDataStreamStatusAsO(); // wait for delta service to start
+    this._autoNightDeltaStatus = deltaStatus.subscribe(stat => {
+      stat as IStreamStatus;
+      if(stat.operation == 2) {
+          this._environmentModePathSubscription = this._data.subscribePath(modePath, 'default').subscribe(path => {
+            if (this._settings.getAutoNightMode()) {
+              path.data.value === 'night' ? this.toggleDayNightMode('night') : this.toggleDayNightMode('day');
+            }
+          });
+      }
+    });
+  }
+
+  public  validateAutoNightModeSupported(): boolean {
+    if (!this._data.getPathObject(modePath)) {
+      this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
+      return false;
+    }
+    return true;
+  }
+
   ngOnDestroy(): void {
-    this.autoNightModeSubscription?.unsubscribe();
-    this.autoNightModePathSubscription?.unsubscribe();
-    this.autoNightModeThemeSubscription?.unsubscribe();
-    this.autoNightDeltaStatus?.unsubscribe();
-    clearTimeout(this.pathTimer);
+    this._autoNightModeSubscription?.unsubscribe();
+    this._environmentModePathSubscription?.unsubscribe();
+    this._autoNightModeThemeSubscription?.unsubscribe();
+    this._autoNightDeltaStatus?.unsubscribe();
   }
 
 }

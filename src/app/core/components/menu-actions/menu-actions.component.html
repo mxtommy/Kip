@@ -51,12 +51,12 @@
         <span class="material-icons">close_fullscreen</span>
       </button>
     }
-    @if (!isNightMode) {
-      <button mat-button class="action-button" (click)="onItemClicked('dayNightMode')">
+    @if (!app.isNightMode()) {
+      <button mat-button class="action-button" (click)="onItemClicked('nightMode')">
         <span class="material-icons">mode_night</span>
       </button>
     } @else {
-      <button mat-button class="action-button" (click)="onItemClicked('dayNightMode')">
+      <button mat-button class="action-button" (click)="onItemClicked('dayMode')">
         <span class="material-icons">light_mode</span>
       </button>
     }
