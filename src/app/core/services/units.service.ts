@@ -86,12 +86,20 @@ export class UnitsService implements OnDestroy {
       { measure: 'g/min', description: "Gallons per minute"},
       { measure: 'g/h', description: "Gallons per hour"}
     ] },
-    { group: 'Economy', units: [
+    { group: 'Fuel Distance', units: [
       { measure: 'm/m3', description: "Meters per cubic meter (base)"},
       { measure: 'nm/l', description: "Nautical Miles per liter"},
       { measure: 'nm/g', description: "Nautical Miles per gallon"},
       { measure: 'km/l', description: "Kilometers per liter"},
       { measure: 'mpg', description: "Miles per Gallon"},
+    ] },
+    { group: 'Energy Distance', units: [
+      { measure: 'm/J', description: "Meters per Joule (base)"},
+      { measure: 'nm/J', description: "Nautical Miles per Joule"},
+      { measure: 'km/J', description: "Kiolmeters per Joule"},
+      { measure: 'nm/kWh', description: "Nautical Miles per Kilowatt-hour"},
+      { measure: 'km/kWh', description: "Kilometers per Kilowatt-hour"},
+    ] },
     { group: 'Temperature', units: [
       { measure: 'K', description: "Kelvin (base)"},
       { measure: 'celsius', description: "Celsius"},
@@ -426,12 +434,18 @@ export class UnitsService implements OnDestroy {
     'l/h': Qty.swiftConverter("m^3/s", "liter/hour"),
     'g/min': Qty.swiftConverter("m^3/s", "gallon/minute"),
     'g/h': Qty.swiftConverter("m^3/s", "gallon/hour"),
-//  economy
-    'm3/m': function(v) { return v; },
+//  fuel consumption
+    'm/m3': function(v) { return v; },
     'nm/l': Qty.swiftConverter('m/m^3', 'naut-mile/liter'),
     'nm/g': Qty.swiftConverter('m/m^3', 'naut-mile/gallon'),
     'km/l': Qty.swiftConverter('m/m^3', 'km/liter'),
     'mpg': Qty.swiftConverter('m/m^3', 'mile/gallon'),
+//  energy consumption
+    'm/J': function(v) { return v; },
+    'nm/J': Qty.swiftConverter('m/J', 'naut-mile/J'),
+    'km/J': Qty.swiftConverter('km/J', 'km/J'),
+    'nm/kWh': Qty.swiftConverter('m/J', 'naut-mile/kWh'),
+    'km/kWh': Qty.swiftConverter('m/J', 'km/kWh'),
 //  temp
     "K": function(v) { return v; },
     "celsius": Qty.swiftConverter("tempK", "tempC"),
