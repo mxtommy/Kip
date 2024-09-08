@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { DialogService } from '../../services/dialog.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { DashboardService } from '../../services/dashboard.service';
 import { MatSidenav } from '@angular/material/sidenav';
+import { AppService } from '../../services/app-service';
 declare var NoSleep: any; //3rd party library
 
 @Component({
@@ -24,12 +25,10 @@ export class MenuActionsComponent {
   protected fullscreenStatus = false;
   protected noSleep = new NoSleep();
   protected isNightMode: boolean = false;
-
-  constructor(
-    private _dialog: DialogService,
-    private _router: Router,
-    protected dashboard: DashboardService
-  ) { }
+  private _dialog = inject(DialogService);
+  private _router = inject(Router);
+  protected dashboard = inject(DashboardService);
+  protected app = inject(AppService);
 
   protected setNightMode(nightMode: boolean): void {
     //TODO: See if yo still need this or fix new brightness
@@ -87,7 +86,12 @@ export class MenuActionsComponent {
         this.dashboard.toggleStaticDashboard();
         break;
 
-      case 'dayNightMode':
+      case 'nightMode':
+        this.app.toggleDayNightMode('night');
+        break;
+
+      case 'dayMode':
+        this.app.toggleDayNightMode('day');
         break;
 
       default:

@@ -1,21 +1,23 @@
 <form (ngSubmit)="saveAllSettings()" #displayForm="ngForm" id="displaySetting">
-  <mat-checkbox class="full-width"
-    [(ngModel)]="autoNightModeConfig"
+  <mat-checkbox class="full-width" (change)="isAutoNightModeSupported($event)"
+    [(ngModel)]="autoNightMode"
     name="autoNightMode">
-    Automatically change between Day and Night Modes based on sun phases preserving your night vision.
+    Automatically activate Day and Night Modes based on sun phases.
   </mat-checkbox>
+  <div style="padding-left: 10px;">
+    <label class="mat-body-medium">Night Mode Brightness</label>
+    <br/>
+    <mat-slider min="0" max="1" step="0.01" discrete>
+      <input #inputBrightness matSliderThumb
+      [value]="nightBrightness"
+      (input)="setBrightness(+inputBrightness.value)">
+    </mat-slider>
+  </div>
   <mat-checkbox class="full-width"
     [(ngModel)]="enableHighContrast"
     name="enableHighContrast">
     Enable full sunlight High Contrast, black and white display.
   </mat-checkbox>
-  <br/><br/>
-  <p>Night Mode Brightness</p>
-  <mat-slider min="0" max="1" step="0.01" discrete>
-    <input #inputBrightness matSliderThumb
-    [value]="brightness"
-    (input)="setBrightness(+inputBrightness.value)">
-  </mat-slider>
   <div class="formActionFooter">
     <mat-divider class="formActionDivider"></mat-divider>
     <button mat-flat-button type="submit" class="formActionButton" [disabled]="!displayForm.form.dirty">Save</button>
