@@ -159,9 +159,10 @@ $background: mat.get-theme-color($dark-theme, neutral, 10);
 
 $kip-dark-color: (
   blue: #3298ff, blue-dim: #359affc6, blue-dimmer: #063b7178,
-  green: #00f500, green-dim: #00f500b6, green-dimmer: #00680078,
+  //green: #00f500, green-dim: #00f500b6, green-dimmer: #00680078,
+  green: #00d000, green-dim: #00d000b6, green-dimmer: #00680078,
   purple: #A020F0, purple-dim: #A020F0b6, purple-dimmer: #4a0f6e78,
-  yellow: #fff700, yellow-dim: #fff700b6, yellow-dimmer: #726e0078,
+  yellow: #ffdf00, yellow-dim: #ffdf00b6, yellow-dimmer: #726e0078,
   pink: #FC0FC0, pink-dim: #FC0FC0b6, pink-dimmer: #6d075378,
   orange: #FFA500, orange-dim: #FFA500b6, orange-dimmer: #714a0078,
   white: #FFFFFF, white-dim: #ffffffb6, white-dimmer: #ffffff29,
