@@ -1,19 +1,19 @@
 .page-scroll-title {
   position: absolute;
   top: 50%;
-  right: 55px;
+  right: 54px;
   transform: translate(0%, -50%);
   z-index: 100;
   cursor: default;
   text-align: center;
-  padding: 5px;
-  color: var(--mdc-text-button-label-text-color);
+  padding: 10px;
+  color: var(--sys-tertiary);
 }
 
 .page-scroll-page-number {
   position: absolute;
   top: 50%;
-  right: 25px;
+  right: 15px;
   transform: translate(0%, -50%);
   z-index: 100;
   cursor: default;
@@ -23,9 +23,9 @@
 
 .page-scroll-container {
   opacity: 0;
-  background-color: var(--kip-widget-card-background-color);
-  border-radius: 25px;
-  border: 1px solid var(--kip-widget-action-button-color);
+  background-color: var(--sys-inverse-on-surface);
+  border-radius: 10px;
+  border: 1px solid var(--sys-inverse-on-surface);
 }
 
 .page-icon {
