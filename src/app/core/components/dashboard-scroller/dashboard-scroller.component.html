@@ -1,8 +1,8 @@
 <div class="page-scroll-title page-scroll-container" [@fadeInOut]="activePage()">
-  {{ dashboards()[activePage()].name }}
+  <span style="font-size: x-large;">{{ dashboards()[activePage()].name }}</span>
 </div>
 <div class="page-scroll-page-number page-scroll-container" [@fadeInOut]="activePage()">
   @for (page of dashboards(); track page; let index = $index) {
-    <mat-icon class="page-icon" [style.color]="activePage() === index ? 'var(--mdc-text-button-label-text-color)' : ''">fiber_manual_record</mat-icon>
+    <mat-icon class="page-icon" [style.color]="activePage() === index ? 'var(--sys-tertiary)' : ''">fiber_manual_record</mat-icon>
   }
 </div>
