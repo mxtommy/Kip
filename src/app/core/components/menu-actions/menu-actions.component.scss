@@ -9,12 +9,27 @@
   grid-auto-flow: column;
 }
 
+.actions-top-container {
+  position: absolute;
+  top: 0px;
+  width: 100%;
+}
+
 .actions-bottom-container {
   position: absolute;
-  bottom: 4px;
+  bottom: 0px;
   width: 100%;
 }
 
 .action-button {
   border-radius: 0px;
 }
+
+.menu-item-container {
+  position: absolute;
+  top: 40px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: calc(100% - 80px);
+}
+
