@@ -1,0 +1,15 @@
+div:hover {
+  background-color: var(--sys-inverse-on-surface);
+}
+
+.large-icon-tile-container {
+  text-align: center;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  cursor: pointer;
+  padding: 10px;
+}
+
+.large-icon-tile-label {
+  cursor: pointer;
+  color: var(--sys-outline);
+}

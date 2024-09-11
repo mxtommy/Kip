@@ -2,20 +2,22 @@ import { Component, inject, input } from '@angular/core';
 import { DialogService } from '../../services/dialog.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import screenfull from 'screenfull';
-import { Router, RouterModule } from '@angular/router';
-import { MatListModule } from '@angular/material/list';
-import { MatDividerModule } from '@angular/material/divider';
+import { Router } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
+import { LargeIconTile, LargeIconTileComponent } from '../large-icon-tile/large-icon-tile.component';
 declare var NoSleep: any; //3rd party library
+
+interface MenuActionItem extends LargeIconTile {
+  action: string;
+}
 
 @Component({
   selector: 'menu-actions',
   standalone: true,
-  imports: [ MatIconModule, MatMenuModule, MatButtonModule, RouterModule, MatListModule, MatDividerModule ],
+  imports: [ MatIconModule, MatButtonModule, LargeIconTileComponent ],
   templateUrl: './menu-actions.component.html',
   styleUrl: './menu-actions.component.scss'
 })
@@ -30,15 +32,17 @@ export class MenuActionsComponent {
   protected dashboard = inject(DashboardService);
   protected app = inject(AppService);
 
-  protected setNightMode(nightMode: boolean): void {
-    //TODO: See if yo still need this or fix new brightness
-    // this.isNightMode = nightMode;
-    // if (this.isNightMode) {
-    //   this.appSettingsService.setThemeName("nightMode");
-    // } else {
-    //   this.appSettingsService.setThemeName(this.themeName);
-    // }
-  }
+  protected readonly menuItems: MenuActionItem[]  = [
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
+    { svgIcon: 'tune', iconSize:  48, label: 'Configurations', action: 'configurations' },
+    { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
+
+    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
+    { svgIcon: 'tune', iconSize:  48, label: 'Configurations', action: 'configurations' },
+    { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
+  ];
 
   protected OpenSettingsDialog(): void {
     this._dialog.openFrameDialog({

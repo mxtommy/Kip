@@ -22,7 +22,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 })
 export class SettingsDisplayComponent implements OnInit {
   @ViewChild('displayForm') displayForm: NgForm;
-  public nightBrightness: number = 0.2;
+  public nightBrightness: number = 0.3;
   public autoNightMode: boolean = false;
   public enableHighContrast: boolean = false;
   private app = inject(AppService);

@@ -1,64 +1,39 @@
-<div class="actions-container">
-  <button mat-button class="action-button" (click)="onItemClicked('help')">
-    <span class="material-icons">help_outline</span>
+<div class="actions-container actions-top-container">
+  <button mat-flat-button class="action-button" (click)="onItemClicked('settings')">
+    <span class="material-icons">settings</span>
   </button>
   @if (dashboard.isDashboardStatic()) {
-    <button mat-button class="action-button" (click)="onItemClicked('layout')">
+    <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
       <span class="material-icons">dashboard_customize</span>
     </button>
   } @else {
-    <button mat-button class="action-button" (click)="onItemClicked('layout')">
+    <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
       <span class="material-icons">exit_to_app</span>
     </button>
   }
 </div>
-<mat-divider />
-<mat-action-list>
-  <button mat-list-item (click)="onItemClicked('dashboards')">
-    <mat-icon matListItemIcon>dashboard</mat-icon>
-    <span>Dashboards</span>
-  </button>
-  <button mat-list-item (click)="onItemClicked('datasets')" cdkFocusInitial>
-    <mat-icon matListItemIcon>dataset</mat-icon>
-    <span>Datasets</span>
-  </button>
-  <button mat-list-item (click)="onItemClicked('databrowser')" cdkFocusInitial>
-    <mat-icon matListItemIcon>troubleshoot</mat-icon>
-    <span>Data Browser</span>
-  </button>
-  <button mat-list-item (click)="onItemClicked('settings')">
-    <mat-icon matListItemIcon>tune</mat-icon>
-    <span>Settings</span>
-  </button>
-  <button mat-list-item (click)="onItemClicked('configurations')" cdkFocusInitial>
-    <mat-icon matListItemIcon>engineering</mat-icon>
-    <span>Configurations</span>
-  </button>
-  <button mat-list-item (click)="onItemClicked('reset')" cdkFocusInitial>
-    <mat-icon matListItemIcon>restart_alt</mat-icon>
-    <span>Reset</span>
-  </button>
-</mat-action-list>
-<div class="actions-bottom-container">
-  <mat-divider />
-  <div class="actions-container">
-    @if (!fullscreenStatus) {
-      <button mat-button class="action-button" (click)="onItemClicked('toggleFullScreen')">
-        <span class="material-icons">fullscreen</span>
-      </button>
-    } @else {
-      <button mat-button class="action-button" (click)="onItemClicked('toggleFullScreen')">
-        <span class="material-icons">close_fullscreen</span>
-      </button>
-    }
-    @if (!app.isNightMode()) {
-      <button mat-button class="action-button" (click)="onItemClicked('nightMode')">
-        <span class="material-icons">mode_night</span>
-      </button>
-    } @else {
-      <button mat-button class="action-button" (click)="onItemClicked('dayMode')">
-        <span class="material-icons">light_mode</span>
-      </button>
-    }
-  </div>
+<div class="menu-item-container">
+  @for (item of menuItems; track item) {
+    <large-icon-tile [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onItemClicked(item.action)"/>
+  }
+</div>
+<div class="actions-container actions-bottom-container">
+  @if (!fullscreenStatus) {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('toggleFullScreen')">
+      <span class="material-icons">fullscreen</span>
+    </button>
+  } @else {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('toggleFullScreen')">
+      <span class="material-icons">close_fullscreen</span>
+    </button>
+  }
+  @if (!app.isNightMode()) {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('nightMode')">
+      <span class="material-icons">mode_night</span>
+    </button>
+  } @else {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('dayMode')">
+      <span class="material-icons">light_mode</span>
+    </button>
+  }
 </div>
