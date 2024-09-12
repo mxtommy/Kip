@@ -1,4 +1,4 @@
-<div>
+<div class="editor-top-container">
   <mat-form-field class="filter" appearance="fill">
     <mat-label>Category</mat-label>
     <mat-select #widgetCategory
@@ -10,18 +10,16 @@
       }
     </mat-select>
   </mat-form-field>
-  <button mat-icon-button (click)="saveLayout()">
-    <mat-icon>close</mat-icon>
-  </button>
 </div>
-<mat-action-list class="widget-list">
+<div class="menu-item-container">
   @for (widget of widget.kipWidgets; track widget) {
     @if (widgetCategory.value === widget.category) {
-      <button mat-list-item (click)="newWidget(widget.selector)">
-        <mat-icon matListItemIcon>{{widget.icon}}</mat-icon>
-        <span matListItemTitle>{{widget.name}}</span>
-        <span matListItemLine>{{widget.description}}</span>
-      </button>
+      <large-icon-tile tabindex="0" [svgIcon]="widget.icon" [iconSize]="48" [label]="widget.name" (click)="newWidget(widget.selector)"/>
     }
   }
-</mat-action-list>
+</div>
+<div class="editor-bottom-container">
+  <button mat-flat-button class="action-button" (click)="saveLayout()">
+    <span class="material-icons">exit_to_app</span>
+  </button>
+</div>

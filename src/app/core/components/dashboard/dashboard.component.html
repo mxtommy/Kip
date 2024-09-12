@@ -1,4 +1,4 @@
-<gridstack
+<gridstack [style.width]="dashboard.isDashboardStatic() ? '100%' : 'calc(100% - 135px)'"
   [options]="gridOptions"
   (swipeup)="previousDashboard($event)"
   (swipedown)="nextDashboard($event)"
