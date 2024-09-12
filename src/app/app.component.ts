@@ -36,6 +36,8 @@ export class AppComponent implements OnInit, OnDestroy {
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
   protected notificationsPresent: boolean = false;
+  protected initialTouchX: number | null = null;
+  protected initialTouchY: number | null = null;
 
   protected themeName: string;
   //TODO: Still need this?
@@ -151,11 +153,20 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected preventSwipeDefault(e: TouchEvent): void {
-    if (e.touches.length === 1 && e.changedTouches.length === 1) {
-      const touch = e.changedTouches[0];
-      if(Math.abs(touch.clientX) > 30) {
-        e.preventDefault();
+  protected preventBrowserHistorySwipeGestures(e: TouchEvent): void{
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+
+      if (e.type === 'touchstart') {
+        this.initialTouchX = touch.clientX;
+        this.initialTouchY = touch.clientY;
+      } else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
+        const deltaX = Math.abs(touch.clientX - this.initialTouchX);
+        const deltaY = Math.abs(touch.clientY - this.initialTouchY);
+
+        if (deltaX > deltaY && (touch.clientX < 20 || touch.clientX > window.innerWidth - 20)) {
+          e.preventDefault();
+        }
       }
     }
   }

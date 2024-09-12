@@ -1,4 +1,4 @@
-<mat-sidenav-container class="sidenav-container" (swipeleft)="onSwipeLeft($event)" (swiperight)="onSwipeRight($event)">
+<mat-sidenav-container class="sidenav-container" (swipeleft)="onSwipeLeft($event)" (swiperight)="onSwipeRight($event)" (touchstart)="preventBrowserHistorySwipeGestures($event)" (touchmove)="preventBrowserHistorySwipeGestures($event)">
 
   <mat-sidenav #notificationsSidenav class="sidenav-notifications" [style.visibility]="notificationsPresent ? 'visible' : 'hidden'" [(opened)]="notificationsSidenavOpened" (closed)="menuClosed()" mode="over" position="start" autoFocus="false">
 
