@@ -38,10 +38,6 @@ export class MenuActionsComponent {
     { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
     { svgIcon: 'tune', iconSize:  48, label: 'Configurations', action: 'configurations' },
     { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
-
-    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
-    { svgIcon: 'tune', iconSize:  48, label: 'Configurations', action: 'configurations' },
-    { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
   ];
 
   protected OpenSettingsDialog(): void {
