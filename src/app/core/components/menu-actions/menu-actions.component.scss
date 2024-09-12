@@ -23,13 +23,16 @@
 
 .action-button {
   border-radius: 0px;
+  height: 48px
 }
 
 .menu-item-container {
   position: absolute;
-  top: 40px;
+  top: 48px;
+  width: 135px;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  height: calc(100% - 80px);
+  height: calc(100% - 96px);
 }
 

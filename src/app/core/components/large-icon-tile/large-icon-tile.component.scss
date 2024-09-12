@@ -1,12 +1,18 @@
-div:hover {
-  background-color: var(--sys-inverse-on-surface);
-}
-
-.large-icon-tile-container {
+:host {
+  display: block;
   text-align: center;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   cursor: pointer;
   padding: 10px;
+}
+
+:host(:hover) {
+  background-color: var(--sys-inverse-on-surface);
+}
+
+:host(:focus-visible) {
+  background-color: var(--sys-surface-bright);
+  outline: -webkit-focus-ring-color auto 0px;
 }
 
 .large-icon-tile-label {
