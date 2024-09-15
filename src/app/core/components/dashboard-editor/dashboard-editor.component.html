@@ -4,9 +4,10 @@
     <mat-select #widgetCategory
       name="widgetFilter"
       value="Basic"
+      (selectionChange)="widgetCategoryChange()"
       required>
       @for (category of widget.categories; track category) {
-        <mat-option [value]="category" selected>{{category}}</mat-option>
+        <mat-option [value]="category">{{category}}</mat-option>
       }
     </mat-select>
   </mat-form-field>
@@ -14,7 +15,9 @@
 <div class="menu-item-container">
   @for (widget of widget.kipWidgets; track widget) {
     @if (widgetCategory.value === widget.category) {
-      <large-icon-tile tabindex="0" [svgIcon]="widget.icon" [iconSize]="48" [label]="widget.name" (click)="newWidget(widget.selector)"/>
+      <tile-widget-drag class="newWidget grid-stack-item" tabindex="0" [svgIcon]="widget.icon" [iconSize]="48" [label]="widget.name" />
+    } @else {
+      <tile-widget-drag class="newWidget grid-stack-item" tabindex="0" [svgIcon]="widget.icon" [iconSize]="48" [label]="widget.name" style="display: none" />
     }
   }
 </div>

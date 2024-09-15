@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ViewChild, effect, inject } from '@angular/core';
-import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
-import { GridItemHTMLElement, GridStack } from 'gridstack';
+import { droppedCB, GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { GridItemHTMLElement, GridStack, GridStackNode } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
 import { DashboardEditorComponent } from "../dashboard-editor/dashboard-editor.component";
@@ -104,28 +104,12 @@ export class DashboardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     //TODO: clean up this function
-    GridStack.setupDragIn('.sidebar', { helper: this.createWidget});
-
+    this.setupDragIn();
     this.resizeGridColumns();
   }
 
-  //TODO: clean up this function
-  private createWidget = (event): any => {
-    const widget: GridItemHTMLElement = event.target;
-
-    const ID = UUID.create();
-    widget.gridstackNode = {
-      w: 2, h: 2,
-      id: ID,
-      selector: 'widget-numeric',
-      input: {
-        widgetProperties: {
-        type: 'widget-numeric',
-        uuid: ID,
-        }
-      }
-    } as NgGridStackWidget;
-    return widget;
+  protected setupDragIn(): void {
+    GridStack.setupDragIn('.newWidget', {helper: 'clone'});
   }
 
   protected resizeGridColumns(): void {
@@ -142,20 +126,21 @@ export class DashboardComponent implements AfterViewInit {
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
-  public addWidget(selector: string): void {
+  protected addWidget(dropped: droppedCB): void {
+    this.deleteWidget(dropped.newNode.el);
     const ID = UUID.create();
-    const widget = {
-      autoPosition: true,
-      w: 2, h: 2,
+    const widget: NgGridStackWidget = {
+      w: dropped.newNode.w, h: dropped.newNode.h,
+      x: dropped.newNode.x, y: dropped.newNode.y,
       id: ID,
-      selector: selector,
+      selector: 'widget-gauge-ng-radial',
       input: {
         widgetProperties: {
-        type: selector,
+        type: 'widget-gauge-ng-radial',
         uuid: ID,
         }
       }
-    } as NgGridStackWidget;
+    };
 
     if (this.gridstack.grid.willItFit(widget)){
       this.gridstack.grid.addWidget(widget);

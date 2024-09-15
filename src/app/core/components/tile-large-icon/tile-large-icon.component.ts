@@ -1,6 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+import { MatCardModule } from '@angular/material/card';
 
 export interface LargeIconTile {
   svgIcon: string;
@@ -9,13 +10,13 @@ export interface LargeIconTile {
 }
 
 @Component({
-  selector: 'large-icon-tile',
+  selector: 'tile-large-icon',
   standalone: true,
-  imports: [MatIconModule],
-  templateUrl: './large-icon-tile.component.html',
-  styleUrl: './large-icon-tile.component.scss'
+  imports: [MatIconModule, MatCardModule],
+  templateUrl: './tile-large-icon.component.html',
+  styleUrl: './tile-large-icon.component.scss'
 })
-export class LargeIconTileComponent {
+export class TileLargeIconComponent {
   public svgIcon = input.required<string>();
   public iconSize = input.required<number>();
   public label = input.required<string>();

@@ -53,6 +53,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   protected value: number = 0;
 
   @ViewChild('compassGauge', { static: true }) compassGauge: RadialGauge;
+  @ViewChild('compassGauge', { static: true, read: ElementRef }) gauge: ElementRef;
 
   protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
@@ -105,6 +106,9 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnInit() {
     this.initWidget();
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    this.gaugeOptions.height = gaugeSize.height;
+    this.gaugeOptions.width = gaugeSize.width;
     this.startWidget();
   }
 

@@ -14,7 +14,7 @@
 </div>
 <div class="menu-item-container">
   @for (item of menuItems; track item) {
-    <large-icon-tile tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onItemClicked(item.action)"/>
+    <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onItemClicked(item.action)"/>
   }
 </div>
 <div class="actions-container actions-bottom-container">

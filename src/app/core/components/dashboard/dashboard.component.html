@@ -1,11 +1,12 @@
 <gridstack [style.width]="dashboard.isDashboardStatic() ? '100%' : 'calc(100% - 135px)'"
   [options]="gridOptions"
+  (droppedCB)="addWidget($event)"
   (swipeup)="previousDashboard($event)"
   (swipedown)="nextDashboard($event)"
   (window:resize)="resizeGridColumns()"
   />
 <dashboard-editor [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'"
-  (onNewWidget)="addWidget($event)" />
+   />
 @if (dashboard.isDashboardStatic()) {
   <dashboard-scroller
     [activePage]="dashboard.activeDashboard()"
