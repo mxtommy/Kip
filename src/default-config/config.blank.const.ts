@@ -1,4 +1,4 @@
-import { IConfig ,IAppConfig, IConnectionConfig, IThemeConfig, DashboardConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig ,IAppConfig, IConnectionConfig, IThemeConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DefaultUnitsConfig } from "./config.blank.units.const";
 import { UUID } from "../app/core/utils/uuid";
@@ -27,6 +27,7 @@ export const DefaultConnectionConfig: IConnectionConfig = {
   "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,
+  "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,

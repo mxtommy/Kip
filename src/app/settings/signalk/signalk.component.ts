@@ -157,13 +157,13 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     });
   }
 
-  public connectToServer() {
+  public  connectToServer() {
     if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
       this.openUserCredentialModal("Credentials required");
       return;
     }
 
-    if ((this.connectionConfig.signalKUrl !== this.appSettingsService.signalkUrl.url) || (this.connectionConfig.proxyEnabled !== this.appSettingsService.proxyEnabled )) {
+    if ((this.connectionConfig.signalKUrl !== this.appSettingsService.signalkUrl.url) || (this.connectionConfig.proxyEnabled !== this.appSettingsService.proxyEnabled ) || (this.connectionConfig.signalKSubscribeAll !== this.appSettingsService.signalKSubscribeAll )) {
       this.appSettingsService.setConnectionConfig(this.connectionConfig);
 
       if (this.connectionConfig.useSharedConfig) {

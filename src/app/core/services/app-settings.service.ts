@@ -32,6 +32,7 @@ export class AppSettingsService {
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
 
   public proxyEnabled: boolean = false;
+  public signalKSubscribeAll: boolean = false;
   private useDeviceToken: boolean = false;
   private loginName: string;
   private loginPassword: string;
@@ -98,6 +99,7 @@ export class AppSettingsService {
 
     this.signalkUrl = {url: config.signalKUrl, new: false};
     this.proxyEnabled = config.proxyEnabled;
+    this.signalKSubscribeAll = config.signalKSubscribeAll;
     this.useDeviceToken = config.useDeviceToken;
     this.loginName = config.loginName;
     this.loginPassword = config.loginPassword;
@@ -317,6 +319,7 @@ public loadConfigFromLocalStorage(type: string) {
     this.loginPassword = value.loginPassword;
     this.useSharedConfig = value.useSharedConfig;
     this.proxyEnabled = value.proxyEnabled;
+    this.signalKSubscribeAll = value.signalKSubscribeAll;
     this.signalkUrl.url = value.signalKUrl;
     if (!value.useSharedConfig) {
       this.useDeviceToken = true;
@@ -526,6 +529,7 @@ public loadConfigFromLocalStorage(type: string) {
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl.url,
       proxyEnabled: this.proxyEnabled,
+      signalKSubscribeAll: this.signalKSubscribeAll,
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
       loginPassword: this.loginPassword,

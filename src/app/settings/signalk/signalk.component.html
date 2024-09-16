@@ -1,6 +1,5 @@
 <form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
-  <p class="mat-card-subtitle description-text">Set server connection properties, Sign in credential and manage Device Authorization token.</p>
-
+  <br />
   <table class="connect-table">
     <tr class="connect-table">
       <td class="url-cell">
@@ -33,11 +32,13 @@
           [ngModelOptions]="{standalone: true}"
           [disabled]="!connectionConfig.signalKUrl"
           (change)="useSharedConfigToggleClick($event)">
-            Signal K Authentication
+            Login to server
         </mat-slide-toggle>
         <button mat-flat-button type="button" class="credentials-btn" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
-          Set Credentials
+          Set Credential
         </button>
+        <br />
+        <mat-checkbox [(ngModel)]="connectionConfig.signalKSubscribeAll" [ngModelOptions]="{standalone: false}" name="signalKSubscribeAll">Subscribe to remote sources messages such as AIS and DSC targets. <i>Warning: this maybe generate heavy traffic.</i></mat-checkbox>
       </td>
     </tr>
   </table>
