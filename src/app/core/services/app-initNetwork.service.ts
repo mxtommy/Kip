@@ -6,7 +6,7 @@
 * @usage must return a Promise in all cases or will block app from loading.
 * All execution in this service delays app start. Keep code small and simple.
 **/
-import { Injectable, OnDestroy } from '@angular/core';
+import { inject, Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
@@ -26,15 +26,14 @@ export class AppNetworkInitService implements OnDestroy {
   private isLoggedIn: boolean = null;
   private loggedInSubscription: Subscription = null;
 
-  constructor (
-    private connection: SignalKConnectionService,
-    private auth: AuthenticationService,
-    private router: Router,
-    private delta: SignalKDeltaService, // Init to get data before app starts
-    private data: DataService, // Init to get data before app starts
-    private storage: StorageService, // Init to get data before app starts
-  )
-  {
+  private connection = inject(SignalKConnectionService);
+  private auth = inject(AuthenticationService);
+  private router = inject(Router);
+  private delta = inject(SignalKDeltaService); // Init to get data before app starts
+  private data = inject(DataService); // Init to get data before app starts
+  private storage = inject(StorageService); // Init to get data before app starts
+
+  constructor () {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
       this.isLoggedIn = isLoggedIn;
     })
@@ -46,7 +45,7 @@ export class AppNetworkInitService implements OnDestroy {
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
-        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled);
+        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled, this.config.signalKSubscribeAll);
       }
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {

@@ -436,6 +436,7 @@ export const DemoConnectionConfig: IConnectionConfig = {
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,
+  "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,
