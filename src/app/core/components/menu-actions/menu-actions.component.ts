@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
-import { LargeIconTile, LargeIconTileComponent } from '../large-icon-tile/large-icon-tile.component';
+import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
 declare var NoSleep: any; //3rd party library
 
 interface MenuActionItem extends LargeIconTile {
@@ -17,7 +17,7 @@ interface MenuActionItem extends LargeIconTile {
 @Component({
   selector: 'menu-actions',
   standalone: true,
-  imports: [ MatIconModule, MatButtonModule, LargeIconTileComponent ],
+  imports: [ MatIconModule, MatButtonModule, TileLargeIconComponent ],
   templateUrl: './menu-actions.component.html',
   styleUrl: './menu-actions.component.scss'
 })

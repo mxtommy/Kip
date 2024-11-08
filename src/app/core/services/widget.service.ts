@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 
-const categories = ["Basic", "Gauge", "Component"] as ["Basic", "Gauge", "Component"];
+const categories = ["Basic", "Gauges", "Components"] as ["Basic", "Gauges", "Components"];
 export type TWidgetCategories = typeof categories[number];
 export enum WidgetCategories {
   Basic = "Basic",
-  Gauge = "Gauge",
-  Component = "Component"
+  Gauges = "Gauges",
+  Components = "Components"
 }
 export interface WidgetDescription {
   name: string;
@@ -21,12 +21,12 @@ export interface WidgetDescription {
   providedIn: 'root'
 })
 export class WidgetService {
-  private readonly _widgetCategories = ["Basic", "Gauge", "Component"];
+  private readonly _widgetCategories = ["Basic", "Gauges", "Components"];
   private _widgetDefinition: Array<WidgetDescription> = [
     {
       name: 'Numeric',
       description: 'Displays numeric data',
-      icon: 'pin',
+      icon: 'numericWidget',
       category: 'Basic',
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
@@ -34,7 +34,7 @@ export class WidgetService {
     {
       name: 'Text',
       description: 'Displays numeric data',
-      icon: 'text_fields',
+      icon: 'textWidget',
       category: 'Basic',
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
@@ -42,7 +42,7 @@ export class WidgetService {
     {
       name: 'Date & Time',
       description: 'Displays Date & Time data',
-      icon: 'calendar_month',
+      icon: 'datetimeWidget',
       category: 'Basic',
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
@@ -50,7 +50,7 @@ export class WidgetService {
     {
       name: 'Switch Panel',
       description: 'A multi switch control panel',
-      icon: 'toggle_on',
+      icon: 'switchpanelWidget',
       category: 'Basic',
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
@@ -58,96 +58,96 @@ export class WidgetService {
     {
       name: 'Simple Linear',
       description: "A simple horizontal linear gauge with a large value label",
-      icon: 'speed',
-      category: 'Gauge',
+      icon: 'simpleLinearGauge',
+      category: 'Gauges',
       selector: 'widget-simple-linear',
       componentClassName: 'WidgetSimpleLinearComponent'
     },
     {
       name: 'Linear',
       description: 'A horizontal or vertical linear gauge',
-      icon: 'speed',
-      category: 'Gauge',
+      icon: 'linearGauge',
+      category: 'Gauges',
       selector: 'widget-gauge-ng-linear',
       componentClassName: 'WidgetGaugeNgLinearComponent'
     },
     {
       name: 'Radial',
       description: 'A typical radial gauge',
-      icon: 'speed',
-      category: 'Gauge',
+      icon: 'radialGauge',
+      category: 'Gauges',
       selector: 'widget-gauge-ng-radial',
       componentClassName: 'WidgetGaugeNgRadialComponent'
     },
     {
       name: 'Compass',
       description: 'A faceplate or card rotating compass',
-      icon: 'speed',
-      category: 'Gauge',
+      icon: 'compassGauge',
+      category: 'Gauges',
       selector: 'widget-gauge-ng-compass',
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
     {
       name: 'Steel Style',
       description: 'Traditional steel looking linear & radial gauges',
-      icon: 'speed',
-      category: 'Gauge',
+      icon: 'steelGauge',
+      category: 'Gauges',
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
     },
     {
       name: 'Wind Steering',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'windsteeringWidget',
+      category: 'Components',
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
     },
     {
       name: 'Freeboard-SK',
       description: 'Freeboard-SK Chart Plotter integration widget',
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'freeboardWidget',
+      category: 'Components',
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
     },
     {
       name: 'Autopilot Head',
       description: 'An Autopilot Head for supported Signal K autopilot devices',
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'autopilotWidget',
+      category: 'Components',
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
     {
       name: 'Data Chart',
       description: 'Visualize data on a chart with multiple series. Requires KIP Dataset configuration.',
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'datachartWidget',
+      category: 'Components',
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
     },
     {
       name: 'Race Timer',
       description: "A simple race start countdown timer",
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'racetimerWidget',
+      category: 'Components',
       selector: 'widget-racetimer',
       componentClassName: 'WidgetRaceTimerComponent',
     },
     {
       name: 'Embed Webpage',
       description: 'Use to embed webpage any accessible web page',
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'embedWidget',
+      category: 'Components',
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
     },
     {
       name: 'Tutorial',
       description: "KIP's getting started introduction tutorial widget",
-      icon: 'analytics',
-      category: 'Component',
+      icon: 'tutorialWidget',
+      category: 'Components',
       selector: 'widget-tutorial',
       componentClassName: 'WidgetTutorialComponent',
     }

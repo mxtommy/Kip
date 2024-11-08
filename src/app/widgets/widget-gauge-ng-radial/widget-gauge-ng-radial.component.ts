@@ -31,6 +31,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
 
   @ViewChild('radialGauge', { static: true }) radialGauge: RadialGauge;
+  @ViewChild('radialGauge', { static: true, read: ElementRef }) gauge: ElementRef;
 
   // Gauge text value for value box rendering
   public textValue: string = "--";
@@ -87,6 +88,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.initWidget();
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    this.gaugeOptions.height = gaugeSize.height;
+    this.gaugeOptions.width = gaugeSize.width;
     this.setGaugeConfig();
   }
 

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { AppHelpComponent } from './core/components/app-help/app-help.component';
-import { SettingsConfigComponent } from './core/components/configurations/config.component';
+import { SettingsConfigComponent } from './core/components/configuration/config.component';
 import { DashboardComponent } from './core/components/dashboard/dashboard.component';
 import { DashboardsManageComponent } from './core/components/dashboards-manage/dashboards-manage.component';
 import { DataBrowserComponent } from './core/components/data-browser/data-browser.component';

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {  LargeIconTileComponent } from './large-icon-tile.component';
+import {  TileLargeIconComponent } from './tile-large-icon.component';
 
-describe(' LargeIconTileComponent', () => {
-  let component:  LargeIconTileComponent;
-  let fixture: ComponentFixture< LargeIconTileComponent>;
+describe(' TileLargeIconComponent', () => {
+  let component:  TileLargeIconComponent;
+  let fixture: ComponentFixture< TileLargeIconComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ LargeIconTileComponent]
+      imports: [ TileLargeIconComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent( LargeIconTileComponent);
+    fixture = TestBed.createComponent( TileLargeIconComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

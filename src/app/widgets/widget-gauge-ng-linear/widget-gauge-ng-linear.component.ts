@@ -83,6 +83,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.initWidget();
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    this.gaugeOptions.height = gaugeSize.height;
+    this.gaugeOptions.width = gaugeSize.width;
     this.startWidget();
   }
 

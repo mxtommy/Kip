@@ -1,24 +1,36 @@
 :host {
-  width: 175px;
+  width: 135px !important;
   height: 100%;
+}
+
+.editor-top-container {
+  position: absolute;
+  top: 0px;
+  width: 135px;
 }
 
 .filter {
   width: 135px;
 }
 
-.widget-list {
-  height: calc(100% - 72px);
-  overflow: auto;
+.menu-item-container {
+  position: absolute;
+  top: 56px;
+  height: calc(100% - 56px - 48px);
+  width: 135px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-.grid-stack-item {
-  width: 100px;
-  height: 30px;
-  border: 2px dashed green;
-  text-align: center;
-  line-height: 35px;
-  background: rgba(0, 255, 0, 0.1);
-  cursor: grab;
-  display: block;
+.editor-bottom-container {
+  position: absolute;
+  bottom: 0px;
+  width: 135px;
+}
+
+.action-button {
+  border-radius: 0px;
+  width: 135px;
+  height: 48px
 }
