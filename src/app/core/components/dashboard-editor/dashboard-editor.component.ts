@@ -1,4 +1,4 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, inject, OnInit, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { DashboardService } from '../../services/dashboard.service';
@@ -18,7 +18,8 @@ import { TileWidgetDragComponent } from '../tile-widget-drag/tile-widget-drag.co
 })
 export class DashboardEditorComponent {
   protected onNewWidget = output<string>();
-  protected onWidgetCategory = output<void>();
+  //TODO: remove below if not necessary
+  protected onWidgetCategory = output<string>();
   protected dashboard = inject(DashboardService);
   protected widget = inject(WidgetService);
 
@@ -29,11 +30,12 @@ export class DashboardEditorComponent {
     this.dashboard.isDashboardStatic.set(true);
   }
 
-  protected newWidget(selector: string): void {
-    this.onNewWidget.emit(selector);
-  }
+  //TODO: remove below if not necessary
+  // protected newWidget(selector: string): void {
+  //   this.onNewWidget.emit(selector);
+  // }
 
-  protected widgetCategoryChange(): void {
-    this.onWidgetCategory.emit();
+  protected widgetCategoryChange(category: string): void {
+    this.onWidgetCategory.emit(category);
   }
 }

@@ -6,7 +6,7 @@
   (window:resize)="resizeGridColumns()"
   />
 <dashboard-editor [style.display]="dashboard.isDashboardStatic() ? 'none' : 'block'"
-   />
+   (onWidgetCategory)="setupDragIn($event)"/>
 @if (dashboard.isDashboardStatic()) {
   <dashboard-scroller
     [activePage]="dashboard.activeDashboard()"
