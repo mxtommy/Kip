@@ -1,7 +1,7 @@
-import { Component, computed, effect, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Dashboard } from './../../services/dashboard.service';
 import { MatIcon } from '@angular/material/icon';
-import { trigger, state, style, animate, transition, query, group } from '@angular/animations';
+import { trigger, style, animate, transition } from '@angular/animations';
 
 
 interface DashboardPage {
