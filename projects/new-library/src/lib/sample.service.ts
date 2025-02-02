@@ -9,4 +9,8 @@ export class SampleService {
   getSampleData(): string {
     return 'This is sample data from the SampleService.';
   }
+
+  getAdditionalData(): string {
+    return 'This is additional data from the SampleService.';
+  }
 }
