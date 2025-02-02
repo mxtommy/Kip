@@ -1,0 +1,22 @@
+{
+  "name": "new-library",
+  "version": "1.0.0",
+  "description": "A new Angular library",
+  "main": "bundles/new-library.umd.js",
+  "module": "fesm5/new-library.js",
+  "es2015": "fesm2015/new-library.js",
+  "esm5": "esm5/new-library.js",
+  "esm2015": "esm2015/new-library.js",
+  "fesm5": "fesm5/new-library.js",
+  "fesm2015": "fesm2015/new-library.js",
+  "typings": "new-library.d.ts",
+  "metadata": "new-library.metadata.json",
+  "sideEffects": false,
+  "dependencies": {
+    "tslib": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "^12.0.0",
+    "@angular/core": "^12.0.0"
+  }
+}
