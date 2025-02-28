@@ -1,8 +1,8 @@
-import { Component, inject, OnInit, output } from '@angular/core';
+import { AfterViewInit, Component, inject, output, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { DashboardService } from '../../services/dashboard.service';
-import { WidgetService } from '../../services/widget.service';
+import { WidgetDescription, WidgetService } from '../../services/widget.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,26 +16,33 @@ import { TileWidgetDragComponent } from '../tile-widget-drag/tile-widget-drag.co
   templateUrl: './dashboard-editor.component.html',
   styleUrl: './dashboard-editor.component.scss'
 })
-export class DashboardEditorComponent {
-  protected onNewWidget = output<string>();
-  //TODO: remove below if not necessary
-  protected onWidgetCategory = output<string>();
+export class DashboardEditorComponent implements AfterViewInit {
+  protected OnChangeWidgetCategory = output<string>();
   protected dashboard = inject(DashboardService);
   protected widget = inject(WidgetService);
+  protected widgets: WidgetDescription[] = [];
+  private widgetCategory = signal<string>("Basic");
 
   constructor() {
+    this.widgets = this.widget.kipWidgets.filter((widget) => widget.category === this.widgetCategory());
+  }
+
+  ngAfterViewInit() {
+    this.OnChangeWidgetCategory.emit(this.widgetCategory());
   }
 
   protected saveLayout() {
     this.dashboard.isDashboardStatic.set(true);
   }
 
-  //TODO: remove below if not necessary
-  // protected newWidget(selector: string): void {
-  //   this.onNewWidget.emit(selector);
-  // }
-
   protected widgetCategoryChange(category: string): void {
-    this.onWidgetCategory.emit(category);
+    this.widgets = this.widget.kipWidgets.filter((widget) => widget.category === category);
+    this.widgetCategory.set(category);
+    // Must use setTimeout to ensure the event is emitted only after the widgetCategory is set
+    // else the event will be emitted before the DOM is fully loaded and GridStack.setupDragIn()
+    // will fail
+    setTimeout(() => {
+      this.OnChangeWidgetCategory.emit(this.widgetCategory()), 500
+    });
   }
 }
