@@ -4,7 +4,6 @@ import { GridItemHTMLElement, GridStack } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
 import { DashboardEditorComponent } from "../dashboard-editor/dashboard-editor.component";
-import { AppService } from '../../services/app-service';
 import { UUID } from '../../utils/uuid';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
@@ -34,8 +33,6 @@ import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.co
 export class DashboardComponent implements AfterViewInit {
   @ViewChild(GridstackComponent, {static: true}) gridstack?: GridstackComponent;
   protected dashboard = inject(DashboardService);
-  // TODO: remove below if not necessary
-  private _app = inject(AppService);
   private previousIsStaticState: boolean = true;
   protected gridOptions: NgGridStackOptions = {
     margin: 4,
@@ -64,8 +61,8 @@ export class DashboardComponent implements AfterViewInit {
 
   protected componentsWidgets: NgGridStackWidget[] = [
     {selector: 'widget-wind-steer', w:2, h:3},
-    {selector: 'widget-freeboardsk', w:2, h:3},
-    {selector: 'widget-autopilot', w:2, h:3},
+    {selector: 'widget-freeboardsk', w:6, h:8},
+    {selector: 'widget-autopilot', w:4, h:9},
     {selector: 'widget-data-chart', w:2, h:3},
     {selector: 'widget-racetimer', w:3, h:6},
     {selector: 'widget-iframe', w:2, h:3},
@@ -149,8 +146,6 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    //TODO: clean up this function
-    this.setupDragIn('All');
     this.resizeGridColumns();
   }
 
