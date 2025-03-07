@@ -6,7 +6,6 @@
  * instantiated gauge config.
  */
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -23,7 +22,7 @@ import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
     templateUrl: './widget-gauge-ng-radial.component.html',
     styleUrls: ['./widget-gauge-ng-radial.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule, AsyncPipe]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   // Gauge option setting constant
