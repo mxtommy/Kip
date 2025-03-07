@@ -1,6 +1,5 @@
 <gridstack [style.width]="dashboard.isDashboardStatic() ? '100%' : 'calc(100% - 135px)'"
   [options]="gridOptions"
-  (droppedCB)="addWidget($event)"
   (swipeup)="previousDashboard($event)"
   (swipedown)="nextDashboard($event)"
   (window:resize)="resizeGridColumns()"

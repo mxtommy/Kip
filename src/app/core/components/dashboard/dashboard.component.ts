@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ViewChild, effect, inject } from '@angular/core';
-import { droppedCB, GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement, GridStack } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
@@ -26,7 +26,7 @@ import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.co
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [GridstackModule, DashboardEditorComponent, DashboardScrollerComponent, DashboardScrollerComponent, DashboardEditorComponent],
+  imports: [ GridstackModule, DashboardEditorComponent, DashboardScrollerComponent, DashboardScrollerComponent, DashboardEditorComponent ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -43,7 +43,6 @@ export class DashboardComponent implements AfterViewInit {
     resizable: {handles: 'all'}
   }
 
-  //TODO: use loop to generate below and not static variables
   protected basicWidgets: NgGridStackWidget[] = [
     {selector: 'widget-numeric', w:2, h:3},
     {selector: 'widget-text', w:2, h:3},
@@ -89,7 +88,6 @@ export class DashboardComponent implements AfterViewInit {
   ];
 
   constructor() {
-    // TODO: make this more generic. Maybe from widget service
     GridstackComponent.addComponentToSelectorType([
       WidgetNumericComponent,
       WidgetTextComponent,
@@ -152,16 +150,16 @@ export class DashboardComponent implements AfterViewInit {
   protected setupDragIn(widgetType: string): void {
     switch (widgetType) {
       case "Basic":
-        GridStack.setupDragIn('.newWidget', undefined, this.basicWidgets);
+        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.basicWidgets);
         break;
       case "Gauges":
-        GridStack.setupDragIn('.newWidget', undefined, this.gaugesWidgets);
+        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.gaugesWidgets);
         break;
       case "Components":
-        GridStack.setupDragIn('.newWidget', undefined, this.componentsWidgets);
+        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.componentsWidgets);
         break;
       default:
-        GridStack.setupDragIn('.newWidget', undefined, this.allWidgets);
+        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.allWidgets);
         break;
     }
   }
@@ -180,23 +178,22 @@ export class DashboardComponent implements AfterViewInit {
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
-  protected addWidget(dropped: droppedCB): void {
-    const newNode = dropped.newNode as NgGridStackNode;
-    this.deleteWidget(newNode.el);
-    const ID = UUID.create();
-    const widget: NgGridStackWidget = {
-      w: dropped.newNode.w, h: dropped.newNode.h,
-      x: dropped.newNode.x, y: dropped.newNode.y,
-      id: ID,
-      selector: newNode.selector,
-      input: {
-        widgetProperties: {
-        type: newNode.selector,
-        uuid: ID,
-        }
+  protected makeWidget(draggedItem: GridItemHTMLElement): GridItemHTMLElement {
+    const clone = draggedItem.cloneNode(true);
+    const opt = draggedItem.gridstackNode as NgGridStackWidget;
+
+    opt.id = UUID.create();
+    opt.input = {
+      ...opt.input,
+      widgetProperties: {
+        ...opt.input?.widgetProperties,
+        type: opt.selector,
+        uuid: opt.id
       }
     };
-    this.gridstack.grid.addWidget(widget);
+
+    (clone as GridItemHTMLElement).gridstackNode = opt;
+    return clone as GridItemHTMLElement;
   }
 
   private duplicateWidget(item: GridItemHTMLElement): void {
