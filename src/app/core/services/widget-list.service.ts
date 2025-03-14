@@ -11,6 +11,7 @@ import { WidgetButtonComponent } from '../../widgets/widget-button/widget-button
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component'
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
+import { WidgetPositionComponent } from '../../widgets/widget-position/widget-position.component';
 import { WidgetGaugeNgLinearComponent} from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgRadialComponent} from '../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { WidgetAutopilotComponent } from "../../widgets/widget-autopilot/widget-autopilot.component";
@@ -132,6 +133,11 @@ export class WidgetListService {
         name: 'WidgetTutorial',
         componentName: WidgetTutorialComponent,
         description: 'Tutorial'
+      },
+      {
+        name: "WidgetPositionComponent",
+        componentName: WidgetPositionComponent,
+        description: 'Position component',
       }
     ]
   };
