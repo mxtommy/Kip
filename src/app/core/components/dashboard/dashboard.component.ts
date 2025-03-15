@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild, effect, inject } from '@angular/core';
+import { AfterViewInit, Component, effect, inject, viewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement, GridStack } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
@@ -22,6 +22,7 @@ import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/wid
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
+import { AppService } from '../../services/app-service';
 
 @Component({
   selector: 'dashboard',
@@ -31,9 +32,10 @@ import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.co
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit {
-  @ViewChild(GridstackComponent, {static: true}) gridstack?: GridstackComponent;
+  private _gridstack = viewChild(GridstackComponent);
+  private _app = inject(AppService);
   protected dashboard = inject(DashboardService);
-  private previousIsStaticState: boolean = true;
+  private _previousIsStaticState: boolean = true;
   protected gridOptions: NgGridStackOptions = {
     margin: 4,
     minRow: 12,
@@ -113,19 +115,19 @@ export class DashboardComponent implements AfterViewInit {
 
     effect(() => {
       const isStatic = this.dashboard.isDashboardStatic();
-      this.gridstack.grid?.setStatic(isStatic);
+      this._gridstack().grid.setStatic(isStatic);
 
-      if (isStatic && (isStatic != this.previousIsStaticState)) {
+      if (isStatic && (isStatic != this._previousIsStaticState)) {
         this.saveDashboard();
       }
 
-      this.previousIsStaticState = isStatic;
+      this._previousIsStaticState = isStatic;
     }, {allowSignalWrites: true});
 
     effect(() => {
       const widgetAction = this.dashboard.widgetAction();
       if (widgetAction) {
-        this.gridstack?.grid?.getGridItems().forEach((item: GridItemHTMLElement) => {
+        this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
           if (item.gridstackNode.id === widgetAction.id) {
             switch (widgetAction.operation) {
               case 'delete':
@@ -165,16 +167,16 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   protected resizeGridColumns(): void {
-    this.gridstack?.grid.cellHeight(window.innerHeight / this.gridstack?.grid.getRow());
+    this._gridstack().grid.cellHeight(window.innerHeight / this._gridstack().grid.getRow());
   }
 
   protected loadDashboard(): void {
     const dashboard = this.dashboard.dashboards()[this.dashboard.activeDashboard()];
-    this.gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
+    this._gridstack().grid.load(dashboard.configuration as NgGridStackWidget[]);
   }
 
   protected saveDashboard(): void {
-    const serializedData = this.gridstack.grid?.save(false, false) as NgGridStackWidget[] || null;
+    const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
@@ -199,8 +201,7 @@ export class DashboardComponent implements AfterViewInit {
   private duplicateWidget(item: GridItemHTMLElement): void {
     const ID = UUID.create();
     const source: NgGridStackWidget = item.gridstackNode;
-
-    this.gridstack?.grid?.addWidget({
+    const newItem = {
       w: source.w, h: source.h,
       id: ID,
       selector: source.selector,
@@ -211,11 +212,23 @@ export class DashboardComponent implements AfterViewInit {
           config: source.input.widgetProperties.config
         }
       }
-    } as NgGridStackWidget);
+    } as NgGridStackWidget;
+
+    if(this._gridstack()?.grid?.willItFit(newItem)) {
+      this._gridstack()?.grid?.addWidget(newItem);
+    } else {
+      newItem.h = 2;
+      newItem.w = 2;
+      if(this._gridstack()?.grid?.willItFit(newItem)) {
+        this._gridstack()?.grid?.addWidget(newItem);
+      } else {
+       this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+      }
+    }
   }
 
   private deleteWidget(item: GridItemHTMLElement): void {
-    this.gridstack?.grid?.removeWidget(item);
+    this._gridstack()?.grid?.removeWidget(item);
   }
 
   protected nextDashboard(e: any): void {

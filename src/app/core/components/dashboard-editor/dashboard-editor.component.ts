@@ -21,14 +21,14 @@ export class DashboardEditorComponent implements AfterViewInit {
   protected dashboard = inject(DashboardService);
   protected widget = inject(WidgetService);
   protected widgets: WidgetDescription[] = [];
-  private widgetCategory = signal<string>("Basic");
+  private _widgetCategory = signal<string>("Basic");
 
   constructor() {
-    this.widgets = this.widget.kipWidgets.filter((widget) => widget.category === this.widgetCategory());
+    this.widgets = this.widget.kipWidgets.filter((widget) => widget.category === this._widgetCategory());
   }
 
   ngAfterViewInit() {
-    this.OnChangeWidgetCategory.emit(this.widgetCategory());
+    this.OnChangeWidgetCategory.emit(this._widgetCategory());
   }
 
   protected saveLayout() {
@@ -37,12 +37,12 @@ export class DashboardEditorComponent implements AfterViewInit {
 
   protected widgetCategoryChange(category: string): void {
     this.widgets = this.widget.kipWidgets.filter((widget) => widget.category === category);
-    this.widgetCategory.set(category);
+    this._widgetCategory.set(category);
     // Must use setTimeout to ensure the event is emitted only after the widgetCategory is set
     // else the event will be emitted before the DOM is fully loaded and GridStack.setupDragIn()
     // will fail
     setTimeout(() => {
-      this.OnChangeWidgetCategory.emit(this.widgetCategory()), 500
+      this.OnChangeWidgetCategory.emit(this._widgetCategory()), 500
     });
   }
 }

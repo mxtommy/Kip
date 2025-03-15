@@ -1,6 +1,6 @@
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { SafePipe } from '../../core/pipes/safe.pipe';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -15,10 +15,10 @@ import { AppSettingsService } from '../../core/services/app-settings.service';
 })
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   protected _dashboard = inject(DashboardService);
-  private appSettings = inject(AppSettingsService);
+  private _appSettings = inject(AppSettingsService);
   protected widgetUrl: string = null;
-  protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
-  @ViewChild(WidgetHostComponent, { static: true }) widgetHost: WidgetHostComponent;
+  protected iframe = viewChild<ElementRef<HTMLIFrameElement>>('plainIframe');
+  private _widgetHost = viewChild(WidgetHostComponent);
 
   constructor() {
     super();
@@ -35,7 +35,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngAfterViewInit() {
-    if (this.iframe) {
+    if (this.iframe() && this.iframe()?.nativeElement) {
       this.iframe().nativeElement.onload = () => this.injectHammerJS();
     }
   }
@@ -70,10 +70,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
           window.document.dispatchEvent(rightSidebarEvent);
         break;
       case 'press':
-        this.widgetHost.openBottomSheet();
+        this._widgetHost()?.openBottomSheet();
         break;
       case 'doubletap':
-        this.widgetHost.openWidgetOptions();
+        this._widgetHost()?.openWidgetOptions();
         break;
       default:
         break;
@@ -85,7 +85,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     const iframeDocument = this.iframe().nativeElement.contentDocument;
 
     if (!iframeDocument || !iframeWindow) {
-      console.error('[IFrame Widget] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue or iframe not fully loaded.');
+      console.error('[IFrame Widget] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue, bad or empty widget URL.');
       return;
     }
 
@@ -96,7 +96,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
     // Inject HammerJS
     const hammerScript = iframeDocument.createElement('script');
-    hammerScript.src = `${this.appSettings.signalkUrl.url}/@mxtommy/kip/assets/hammer.min.js`;
+    hammerScript.src = `${this._appSettings.signalkUrl.url}/@mxtommy/kip/assets/hammer.min.js`;
     hammerScript.onload = () => this.injectSwipeHandler();
     iframeDocument.body.appendChild(hammerScript);
   }

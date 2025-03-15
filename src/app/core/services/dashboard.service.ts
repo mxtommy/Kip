@@ -1,5 +1,5 @@
 import { AppSettingsService } from './app-settings.service';
-import { effect, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
@@ -20,6 +20,8 @@ export interface widgetOperation {
   providedIn: 'root'
 })
 export class DashboardService {
+  private _settings = inject(AppSettingsService);
+  private _router = inject(Router);
   public dashboards = signal<Dashboard[]>([], {equal: isEqual});
   public activeDashboard = signal<number>(0);
   public widgetAction = signal<widgetOperation>(null);
@@ -41,8 +43,8 @@ export class DashboardService {
     }
   ]} ];
 
-  constructor(private settings: AppSettingsService, private router: Router,) {
-    const dashboards = this.settings.getDashboardConfig();
+  constructor() {
+    const dashboards = this._settings.getDashboardConfig();
 
     if (dashboards.length === 0) {
       const newBlankDashboard = this.blankDashboard.map(dashboard => ({
@@ -51,11 +53,11 @@ export class DashboardService {
       }));
       this.dashboards.set([...newBlankDashboard]);
     } else {
-      this.dashboards.set(this.settings.getDashboardConfig());
+      this.dashboards.set(this._settings.getDashboardConfig());
     }
 
     effect(() => {
-      this.settings.saveDashboards(this.dashboards());
+      this._settings.saveDashboards(this.dashboards());
     });
   }
 
@@ -86,16 +88,17 @@ export class DashboardService {
   }
 
   public duplicate(itemIndex: number, newName: string): void {
+    const newId = UUID.create();
     const sourceDashboard = this.dashboards()[itemIndex];
     const newConfiguration = sourceDashboard.configuration.map(item => ({
       ...item,
-      id: UUID.create()
+      id: newId
     }));
 
     this.dashboards.update(dashboards => [
       ...dashboards,
       {
-        id: UUID.create(),
+        id: newId,
         name: newName,
         configuration: newConfiguration
       }
@@ -124,14 +127,14 @@ export class DashboardService {
   }
 
   public navigateToActive(): void {
-    this.router.navigate(['/dashboard', this.activeDashboard()]);
+    this._router.navigate(['/dashboard', this.activeDashboard()]);
   }
 
   public navigateTo(index: number): void {
     if (index < 0 || index > this.dashboards().length - 1) {
       return;
     }
-    this.router.navigate(['/dashboard', index]);
+    this._router.navigate(['/dashboard', index]);
   }
 
   public deleteWidget(id: string): void {
