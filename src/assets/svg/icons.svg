@@ -4,7 +4,7 @@
       <path fill="currentColor" d="M5 5h4v6H5zm10 8h4v6h-4zM5 17h4v2H5zM15 5h4v2h-4z" opacity="0.3" />
       <path fill="currentColor" d="M3 13h8V3H3zm2-8h4v6H5zm8 16h8V11h-8zm2-8h4v6h-4zM13 3v6h8V3zm6 4h-4V5h4zM3 21h8v-6H3zm2-4h4v2H5z" />
     </svg>
-    <svg id="dataset" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <svg id="data" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <path fill="currentColor" d="M5 19h14V5H5zm8-12h4v4h-4zm0 6h4v4h-4zM7 7h4v4H7zm0 6h4v4H7z" opacity="0.3" />
       <path fill="currentColor" d="M7 13h4v4H7zm6 0h4v4h-4z" />
       <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V5h14z" />
@@ -25,7 +25,21 @@
     <svg id="tune" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <path fill="currentColor" d="M3 5h10v2H3zm4 6H3v2h4v2h2V9H7zm6 4h-2v6h2v-2h8v-2h-8zM3 17h6v2H3zm8-6h10v2H11zm6-8h-2v6h2V7h4V5h-4z" />
     </svg>
-
+    <svg id="configuration" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <path fill="currentColor" fill-opacity="0.25" fill-rule="evenodd" d="M14 4.92V3H8.4c-.84 0-1.26 0-1.581.163a1.5 1.5 0 0 0-.656.656C6 4.139 6 4.559 6 5.4V8h2.264c.232 0 .495-.001.753.06a2.2 2.2 0 0 1 .635.264c.226.139.412.325.576.49l.042.041l1.875 1.875a8 8 0 0 0 .25.243q.025.014.052.02q.007.002.046.004c.063.003.147.003.302.003H18l.001-.4V7h-1.92c-.263 0-.49 0-.677-.015a1.5 1.5 0 0 1-.584-.148a1.5 1.5 0 0 1-.655-.656a1.5 1.5 0 0 1-.149-.583C14 5.41 14 5.183 14 4.919M12.611 13a2.8 2.8 0 0 1-.628-.06a2.2 2.2 0 0 1-.635-.264c-.227-.139-.412-.325-.576-.49l-.042-.041l-1.875-1.875a7 7 0 0 0-.25-.243a.2.2 0 0 0-.052-.02l-.047-.004A8 8 0 0 0 8.205 10H6v.6c0 .84 0 1.26.163 1.581a1.5 1.5 0 0 0 .656.656c.32.163.74.163 1.581.163zM15 4.9V3.09q.056.026.108.057c.101.062.188.149.36.322l2.063 2.062c.173.173.26.26.322.36q.032.054.057.109H16.1c-.288 0-.474 0-.616-.012a.6.6 0 0 1-.211-.043a.5.5 0 0 1-.218-.218a.6.6 0 0 1-.043-.21A9 9 0 0 1 15 4.9" clip-rule="evenodd" />
+      <path fill="currentColor" d="M3 11.4c0-.84 0-1.26.163-1.581a1.5 1.5 0 0 1 .656-.656C4.139 9 4.559 9 5.4 9h2.805c.293 0 .44 0 .578.033q.185.045.347.144c.121.074.225.178.432.385l1.876 1.876c.207.207.311.311.432.385a1.2 1.2 0 0 0 .347.144c.138.033.285.033.578.033H18.6c.84 0 1.26 0 1.581.164a1.5 1.5 0 0 1 .656.655c.163.32.163.74.163 1.581v5.2c0 .84 0 1.26-.163 1.581a1.5 1.5 0 0 1-.656.656c-.32.163-.74.163-1.581.163H5.4c-.84 0-1.26 0-1.581-.163a1.5 1.5 0 0 1-.656-.656C3 20.861 3 20.441 3 19.6z" />
+    </svg>
+    <svg id="dataset" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48">
+      <defs>
+        <mask id="ipTDataSheet0">
+          <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4">
+            <rect width="40" height="32" x="4" y="8" fill="#555555" rx="2" />
+            <path d="M32 25v7m-8-16v16m-8-12v12" />
+          </g>
+        </mask>
+      </defs>
+      <path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTDataSheet0)" />
+    </svg>
 
     <svg id="numericWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32">
       <path
