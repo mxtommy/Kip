@@ -9,8 +9,6 @@ import { IConfig, IAppConfig } from '../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../services/storage.service';
 import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow } from '@angular/material/expansion';
-import { MatCheckbox } from '@angular/material/checkbox';
 import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
 import { MatInput } from '@angular/material/input';
 import { MatOption } from '@angular/material/core';
@@ -33,7 +31,7 @@ interface IRemoteConfig {
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
     standalone: true,
-    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, MatRadioGroup, MatRadioButton, MatCheckbox, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelActionRow, PageHeaderComponent]
+    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, MatRadioGroup, MatRadioButton, PageHeaderComponent]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy{
   protected readonly pageTitle: string = "Configurations";

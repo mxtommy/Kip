@@ -20,8 +20,8 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
   protected auth = inject(AuthenticationService);
   protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('freeboardSkIframe');
   public widgetUrl: string = null;
-  private authTokenSubscription: Subscription = null;
-  protected _dashboard = inject(DashboardService);
+  private _authTokenSubscription: Subscription = null;
+  protected dashboard = inject(DashboardService);
 
   constructor() {
     super();
@@ -29,7 +29,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
   ngOnInit(): void {
     let loginToken: string = null;
-    this.authTokenSubscription = this.auth.authToken$.subscribe(AuthServiceToken => {
+    this._authTokenSubscription = this.auth.authToken$.subscribe(AuthServiceToken => {
         loginToken = AuthServiceToken?.token;
       }
     );
@@ -55,13 +55,13 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
     switch (event.data.gesture) {
       case 'swipeup':
-        if (this._dashboard.isDashboardStatic()) {
-          this._dashboard.previousDashboard();
+        if (this.dashboard.isDashboardStatic()) {
+          this.dashboard.previousDashboard();
         }
         break;
       case 'swipedown':
-        if (this._dashboard.isDashboardStatic()) {
-          this._dashboard.nextDashboard();
+        if (this.dashboard.isDashboardStatic()) {
+          this.dashboard.nextDashboard();
         }
         break;
       case 'swipeleft':
@@ -206,6 +206,6 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
   ngOnDestroy(): void {
     window.removeEventListener('message', this.handleIframeGesture);
-    this.authTokenSubscription?.unsubscribe();
+    this._authTokenSubscription?.unsubscribe();
   }
 }

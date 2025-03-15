@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -12,10 +12,11 @@ import { Router } from '@angular/router';
 })
 export class PageHeaderComponent {
   protected readonly pageTitle = input<string>();
+  private _router = inject(Router);
 
-  constructor(private router: Router) { }
+  constructor() { }
 
   protected closePage() {
-    this.router.navigate(['/dashboard']);
+    this._router.navigate(['/dashboard']);
   }
 }
