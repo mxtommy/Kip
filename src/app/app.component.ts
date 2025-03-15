@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -30,6 +30,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private _dashboard = inject(DashboardService);
   public appSettingsService = inject(AppSettingsService);
   public authenticationService = inject(AuthenticationService);
+  public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
 
   protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
   protected actionsSidenavOpen = false;
@@ -114,6 +115,9 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       }
     );
+
+    window.addEventListener('openLeftSidenav', this.onSwipeLeft.bind(this));
+    window.addEventListener('openRightSidenav', this.onSwipeRight.bind(this));
   }
 
   protected menuClosed(): void {
@@ -189,6 +193,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.themeNameSub.unsubscribe();
     this.appNotificationSub.unsubscribe();
     this.connectionStatusSub.unsubscribe();
+    window.removeEventListener('openLeftSidenav', this.onSwipeLeft);
+    window.removeEventListener('openRightSidenav', this.onSwipeRight);
   }
-
 }

@@ -33,7 +33,8 @@
             "allowedCommonJsDependencies": [
               "@godind/canvas-gauges",
               "howler",
-              "js-quantities"
+              "js-quantities",
+              "hammerjs"
             ],
             "browser": "src/main.ts"
           },

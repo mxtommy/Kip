@@ -218,7 +218,7 @@ export class DashboardComponent implements AfterViewInit {
     this.gridstack?.grid?.removeWidget(item);
   }
 
-  protected nextDashboard(e: Event): void {
+  protected nextDashboard(e: any): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.previousDashboard();
@@ -228,7 +228,7 @@ export class DashboardComponent implements AfterViewInit {
   protected previousDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-    this.dashboard.nextDashboard();
+      this.dashboard.nextDashboard();
     }
   }
 }

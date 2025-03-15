@@ -14,7 +14,6 @@ import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { JsonPipe } from '@angular/common';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 
@@ -23,7 +22,7 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule, JsonPipe]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule]
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
