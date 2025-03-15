@@ -34,9 +34,10 @@ export class MenuActionsComponent {
 
   protected readonly menuItems: MenuActionItem[]  = [
     { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
     { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
-    { svgIcon: 'tune', iconSize:  48, label: 'Configurations', action: 'configurations' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'configuration', iconSize:  48, label: 'Configurations', action: 'configurations' },
+    { svgIcon: 'settings', iconSize:  48, label: 'Settings', action: 'settings' },
     { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
   ];
 
