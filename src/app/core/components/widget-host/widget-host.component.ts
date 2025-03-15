@@ -23,7 +23,7 @@ export class WidgetHostComponent {
   constructor() {
   }
 
-  protected openWidgetOptions(e: Event): void {
+  public openWidgetOptions(): void {
     if (!this._dashboard.isDashboardStatic()) {
       this._dialog.openWidgetOptions({
         title: 'Widget Options',
@@ -38,7 +38,7 @@ export class WidgetHostComponent {
     }
   }
 
-  protected openBottomSheet(): void {
+  public openBottomSheet(): void {
     if (!this._dashboard.isDashboardStatic()) {
       const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent);
       sheetRef.afterDismissed().subscribe((action) => {
