@@ -57,7 +57,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -221,7 +221,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngOnDestroy(): void {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
   }
 }

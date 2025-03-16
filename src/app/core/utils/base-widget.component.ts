@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { BehaviorSubject, Observable, Observer, Subject, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, Observable, Observer, Subscription, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer } from 'rxjs';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import type { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
@@ -20,9 +20,9 @@ interface IWidgetDataStream {
 export abstract class BaseWidgetComponent extends BaseWidget {
   @Input({required: true}) protected widgetProperties!: IWidget;
 
-  public displayName$ = new Subject<string>;
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
   protected theme: ITheme = undefined;
+  //TODO: Do we still need theme subscription?
   protected themeSubscription: Subscription = undefined;
 
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
@@ -52,25 +52,36 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   protected abstract startWidget(): void;
   protected abstract updateConfig(config: IWidgetSvcConfig): void;
 
-  protected initWidget(): void {
-    this.validateConfig();
-    this.observeMeta();
-  }
-
-  private observeMeta(): void {
+  protected observeMetaStream(): void {
     if (this.widgetProperties && this.widgetProperties.config.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
       const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
       const path = this.widgetProperties.config.paths[firstKey].path;
 
       this.metaSubscriptions = this.DataService.getPathMetaObservable(path).subscribe(
         (meta) => {
-          if (!meta) return;
-          if (meta.zones) {
+          if (!meta) {
+            this.zones$.next([]);
+          } else if (meta.zones) {
             this.zones$.next(meta.zones);
+          } else {
+            this.zones$.next([]);
           }
         }
       );
     }
+  }
+
+  /**
+   * Call this method to automatically unsubscribe all Widget Meta Observers, cleanup KIP's Observable
+   * registry and reset Widget Subscriptions to free resources.
+   *
+   * Should be called in ngOnDestroy().
+   *
+   * @protected
+   * @memberof BaseWidgetComponent
+   */
+  protected unsubscribeMetaStream(): void {
+    this.metaSubscriptions?.unsubscribe();
   }
 
   /**
@@ -129,7 +140,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   }
 
   /**
-   * Use this method the subscribe to a Signal K data path Observable and receive a
+   * Use this method to subscribe to a Signal K data path Observable and receive a
    * live data stream from the server. This method apply
    * a combination of widgetProperties.config and widgetProperties.config.paths[pathName]
    * objects properties to setup the Observer. Ex: Widget min/max, decimal, combined with
@@ -141,7 +152,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
    * @return {*}
    * @memberof BaseWidgetComponent
    */
-  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void))  {
+  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void)): any  {
     if (this.dataStream === undefined || this.dataStream.length == 0) {
       this.createDataObservable();
     }
@@ -249,6 +260,21 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     }
   }
 
+  /**
+  * Call this method to automatically unsubscribe all Widget Observers, cleanup KIP's Observable
+  * registry and reset Widget Subscriptions to free resources.
+  *
+  * Should be called in ngOnDestroy().
+  *
+  * @protected
+  * @memberof BaseWidgetComponent
+  */
+  protected unsubscribeDataStream(): void {
+    this.dataSubscriptions?.unsubscribe();
+    this.dataSubscriptions = undefined;
+    this.dataStream = undefined;
+  }
+
   private buildObserver(pathKey: string, subscribeNextFunction: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
     const observer: Observer<IPathUpdate> = {
       next: (value) => subscribeNextFunction(value),
@@ -284,19 +310,15 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   }
 
   /**
-   * Call this method to automatically unsubscribe all Widget Observers, cleanup KIP's Observable
-   * registry and reset Widget Subscriptions to free resources.
-   *
-   * Should be called in ngOnDestroy().
-   *
+   * @description This method is used to destroy all Widget Observables and free resources.
+   * This method should be called in component ngOnDestroy() to ensure all data layer
+   * resources are freed.
    * @protected
    * @memberof BaseWidgetComponent
    */
-  protected unsubscribeDataStream(): void {
-    if (this.dataSubscriptions) {
-      this.dataSubscriptions.unsubscribe();
-      this.dataSubscriptions = undefined;
-      this.dataStream = undefined;
-    }
+  protected destroyDataStreams(): void {
+    this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
+    this.themeSubscription?.unsubscribe();
   }
 }

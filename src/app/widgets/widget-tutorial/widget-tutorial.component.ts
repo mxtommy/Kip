@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -14,7 +14,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
     standalone: true,
     imports: [ WidgetHostComponent, NgIf, MatButton, RouterLink]
 })
-export class WidgetTutorialComponent extends BaseWidgetComponent {
+export class WidgetTutorialComponent extends BaseWidgetComponent implements OnDestroy {
   protected dashboard = inject(DashboardService);
   protected settings = inject(AppSettingsService);
 
@@ -30,5 +30,9 @@ export class WidgetTutorialComponent extends BaseWidgetComponent {
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
+  }
+
+  ngOnDestroy(): void {
+    this.destroyDataStreams();
   }
 }

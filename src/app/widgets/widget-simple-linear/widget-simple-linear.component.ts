@@ -56,7 +56,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -129,6 +129,6 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
   }
 }

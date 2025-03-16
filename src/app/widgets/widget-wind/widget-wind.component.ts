@@ -128,7 +128,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
    }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -222,7 +222,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.stopWindSectors();
   }
 

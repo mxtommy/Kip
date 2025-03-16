@@ -218,7 +218,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     if (this.widgetProperties.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
@@ -237,7 +237,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.unsubscribeSKRequest();
     console.log("Autopilot Subs Stopped");
   }

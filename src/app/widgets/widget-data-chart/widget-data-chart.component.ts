@@ -95,7 +95,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
    }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -569,6 +569,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   };
 
   ngOnDestroy(): void {
+    this.destroyDataStreams();
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();

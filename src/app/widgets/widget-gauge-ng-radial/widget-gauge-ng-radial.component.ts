@@ -86,7 +86,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     this.setCanvasHight();
     this.setGaugeConfig();
   }
@@ -96,6 +96,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.radialGauge.update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
@@ -144,6 +145,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         this.radialGauge.update(option);
       }
     });
+
+    this.observeMetaStream();
+
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
         this.setHighlights(zones);
@@ -429,7 +433,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.metaSub?.unsubscribe();
   }
 }

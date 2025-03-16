@@ -207,5 +207,6 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
   ngOnDestroy(): void {
     window.removeEventListener('message', this.handleIframeGesture);
     this._authTokenSubscription?.unsubscribe();
+    this.destroyDataStreams();
   }
 }

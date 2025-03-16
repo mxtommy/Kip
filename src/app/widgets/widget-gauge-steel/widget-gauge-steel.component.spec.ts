@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { WidgetGaugeComponent } from './widget-gauge-steel.component';
+import { WidgetSteelGaugeComponent } from './widget-gauge-steel.component';
 
 describe('WidgetGaugeComponent', () => {
-  let component: WidgetGaugeComponent;
-  let fixture: ComponentFixture<WidgetGaugeComponent>;
+  let component: WidgetSteelGaugeComponent;
+  let fixture: ComponentFixture<WidgetSteelGaugeComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [WidgetGaugeComponent]
+    imports: [WidgetSteelGaugeComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(WidgetGaugeComponent);
+    fixture = TestBed.createComponent(WidgetSteelGaugeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -105,7 +105,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     this.setCanvasHight();
     this.setGaugeConfig();
   }
@@ -115,7 +115,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.compassGauge.update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
-    this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
@@ -312,7 +311,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   ngOnDestroy(): void {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.metaSub?.unsubscribe();
   }
 }

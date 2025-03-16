@@ -81,11 +81,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
     this.gaugeOptions.height = gaugeSize.height;
     this.gaugeOptions.width = gaugeSize.width;
-    this.startWidget();
   }
 
   protected startWidget(): void {
@@ -93,6 +92,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.linearGauge.update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
@@ -162,6 +162,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         this.linearGauge.update(option);
       }
     });
+
+    this.observeMetaStream();
+
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
         this.setHighlights(zones);
@@ -444,7 +447,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.metaSub?.unsubscribe();
   }
 }
