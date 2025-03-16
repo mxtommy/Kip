@@ -112,41 +112,51 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           case States.Emergency:
             if (this.widgetProperties.config.color != 'nobar') {
               option.colorBarProgress = this.theme.zoneEmergency;
+              option.colorValueText = this.theme.zoneEmergency;
             } else {
               option.colorBarProgress = '';
               option.colorNeedle = this.theme.zoneEmergency;
+              option.colorValueText = this.theme.zoneEmergency;
             }
             break;
           case States.Alarm:
             if (this.widgetProperties.config.color != 'nobar') {
               option.colorBarProgress = this.theme.zoneAlarm;
+              option.colorValueText = this.theme.zoneAlarm;
             } else {
               option.colorBarProgress = '';
               option.colorNeedle = this.theme.zoneAlarm;
+              option.colorValueText = this.theme.zoneAlarm;
             }
             break;
           case States.Warn:
             if (this.widgetProperties.config.color != 'nobar') {
               option.colorBarProgress = this.theme.zoneWarn;
+              option.colorValueText = this.theme.zoneWarn;
             } else {
               option.colorBarProgress = '';
               option.colorNeedle = this.theme.zoneWarn;
+              option.colorValueText = this.theme.zoneWarn;
             }
             break;
           case States.Alert:
             if(this.widgetProperties.config.color != 'nobar') {
               option.colorBarProgress = this.theme.zoneAlert;
+              option.colorValueText = this.theme.zoneAlert;
             } else {
               option.colorBarProgress = '';
               option.colorNeedle = this.theme.zoneAlert;
+              option.colorValueText = this.theme.zoneAlert;
             }
             break;
           default:
             if (this.widgetProperties.config.color != 'nobar') {
               option.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
+              option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
             } else {
               option.colorBarProgress = '';
-              option.colorNeedle = this.getColors('white').color;
+              option.colorNeedle = this.getColors('blue').color;
+              option.colorValueText = this.getColors('blue').color;
             }
         }
         this.linearGauge.update(option);
@@ -161,7 +171,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    // this.onResized({});
     this.startWidget();
   }
 
@@ -258,9 +267,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorPlate: this.theme.cardColor,
       colorBar: this.theme.background,
 
-      colorMajorTicks: this.getColors(this.widgetProperties.config.color).dim,
-      colorMinorTicks: this.getColors(this.widgetProperties.config.color).dim,
-      colorNumbers: this.getColors(this.widgetProperties.config.color).dim,
+      colorMajorTicks: this.getColors('white').dim,
+      colorMinorTicks: this.getColors('white').dim,
+      colorNumbers: this.getColors('white').dim,
 
       colorNeedleEnd: "",
       colorNeedleShadowUp: "",
@@ -368,7 +377,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
       "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
       "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer },
-      "nobar": { color: "", dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer }
+      "nobar": { color: this.theme.blue, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer }
     };
     return themePalette[color];
   }

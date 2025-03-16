@@ -87,9 +87,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.initWidget();
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = gaugeSize.height;
-    this.gaugeOptions.width = gaugeSize.width;
+    this.setCanvasHight();
     this.setGaugeConfig();
   }
 
@@ -155,7 +153,17 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    this.setCanvasHight();
     this.startWidget();
+  }
+
+  private setCanvasHight(): void {
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const resize: RadialGaugeOptions = {};
+    resize.height = gaugeSize.height;
+    resize.width = gaugeSize.width;
+
+    this.radialGauge.update(resize);
   }
 
   ngAfterViewInit(): void {
@@ -164,7 +172,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   public onResized(event: ResizeObserverEntry): void {
       //@ts-ignore
-      let resize: RadialGaugeOptions = {};
+      const resize: RadialGaugeOptions = {};
       resize.height = event.contentRect.height;
       resize.width = event.contentRect.width;
 
