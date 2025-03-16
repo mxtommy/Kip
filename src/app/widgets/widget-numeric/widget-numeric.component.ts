@@ -28,7 +28,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   currentMinMaxLength: number = 0;
   valueFontSize: number = 1;
   minMaxFontSize: number = 1;
-  flashOn: boolean = false;
+  flashOn: boolean = true;
   flashInterval = null;
   dataState: string = States.Normal;
 
@@ -87,18 +87,33 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
         this.maxValue = this.dataValue;
       }
 
-      // Start flashing if alarm
-      if ((newValue.state == States.Alarm || newValue.state == States.Warn) && !this.flashInterval) {
-        this.flashInterval = setInterval(() => {
-          this.flashOn = !this.flashOn;
-        }, 350); // Used to flash stuff in alarm
-      } else if (newValue.state == States.Normal && this.flashInterval) {
-        // Stop alarming if not in alarm state
+      if (this.dataState != newValue.state) {
         clearInterval(this.flashInterval);
         this.flashInterval = null;
+        this.dataState = newValue.state;
+
+        switch (newValue.state) {
+          case States.Alarm:
+            this.flashInterval = setInterval(() => {
+              this.updateCanvasBG();
+            }, 100);
+            break;
+          case States.Warn:
+            this.flashInterval = setInterval(() => {
+              this.updateCanvasBG();
+            }, 300);
+            break;
+          case States.Alert:
+            this.flashInterval = setInterval(() => {
+              this.updateCanvasBG();
+            }, 750);
+          break;
+          default:
+            this.updateCanvasBG();
+            break;
+        }
       }
 
-      this.dataState = newValue.state;
       this.updateCanvas();
     });
   }
@@ -193,7 +208,42 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
   private updateCanvasBG() {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0,0,this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+
+      switch (this.dataState) {
+        case States.Alarm:
+          if (this.flashOn) {
+            this.canvasBGCtx.fillStyle = this.theme.zoneAlarm;
+            this.canvasBGCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          } else {
+            this.canvasBGCtx.clearRect(0,0,this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+          }
+          break;
+
+        case States.Warn:
+          if (this.flashOn) {
+            this.canvasBGCtx.fillStyle = this.theme.zoneWarn;
+            this.canvasBGCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          } else {
+            this.canvasBGCtx.clearRect(0,0,this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+          }
+          break;
+
+        case States.Alert:
+          if (this.flashOn) {
+            this.canvasBGCtx.fillStyle = this.theme.zoneAlert;
+            this.canvasBGCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          } else {
+            this.canvasBGCtx.clearRect(0,0,this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+          }
+          break;
+
+        default:
+          this.canvasBGCtx.clearRect(0,0,this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+          break;
+      }
+
+      this.flashOn = !this.flashOn;
+
       this.drawTitle();
       this.drawUnit();
     }
@@ -238,35 +288,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
       }
     }
 
-    // get color based on zone
-    switch (this.dataState) {
-      case States.Alarm:
-        if (this.flashOn) {
-          this.canvasValCtx.fillStyle = this.valueColor;
-        } else {
-          // draw warn background
-          this.canvasValCtx.fillStyle = this.theme.zoneWarn;
-          this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-          this.canvasValCtx.fillStyle = this.valueColor;
-        }
-        break;
-
-      case States.Warn:
-        if (this.flashOn) {
-          this.canvasValCtx.fillStyle = this.valueColor;
-        } else {
-          // draw warn background
-          this.canvasValCtx.fillStyle = this.theme.zoneWarn;
-          this.canvasValCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-          this.canvasValCtx.fillStyle = this.valueColor;
-        }
-        break;
-
-      default:
-        this.canvasValCtx.fillStyle = this.valueColor;
-        break;
-    }
-
+    this.canvasValCtx.fillStyle = this.valueColor;
     this.canvasValCtx.textAlign = "center";
     this.canvasValCtx.textBaseline = "middle";
     this.canvasValCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height * 0.5)+(this.valueFontSize/15), maxTextWidth);
