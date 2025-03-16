@@ -49,7 +49,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -72,7 +72,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
   }
 
   private getColors(color: string): void {

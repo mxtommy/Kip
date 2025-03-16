@@ -29,7 +29,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     this.widgetUrl = this.widgetProperties.config.widgetUrl;
     window.addEventListener('message', this.handleIframeGesture);
   }
@@ -253,5 +253,6 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
   ngOnDestroy(): void {
     window.removeEventListener('message', this.handleIframeGesture);
+    this.destroyDataStreams();
   }
 }

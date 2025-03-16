@@ -27,14 +27,14 @@ import { AppService } from '../../services/app-service';
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [ GridstackModule, DashboardEditorComponent, DashboardScrollerComponent, DashboardScrollerComponent, DashboardEditorComponent ],
+  imports: [GridstackModule, DashboardEditorComponent, DashboardScrollerComponent, DashboardScrollerComponent, DashboardEditorComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit {
-  private _gridstack = viewChild(GridstackComponent);
   private _app = inject(AppService);
   protected dashboard = inject(DashboardService);
+  private _gridstack = viewChild.required(GridstackComponent);
   private _previousIsStaticState: boolean = true;
   protected gridOptions: NgGridStackOptions = {
     margin: 4,
@@ -44,23 +44,20 @@ export class DashboardComponent implements AfterViewInit {
     acceptWidgets: true,
     resizable: {handles: 'all'}
   }
-
-  protected basicWidgets: NgGridStackWidget[] = [
+  private basicWidgets: NgGridStackWidget[] = [
     {selector: 'widget-numeric', w:2, h:3},
     {selector: 'widget-text', w:2, h:3},
     {selector: 'widget-datetime', w:2, h:3},
     {selector: 'widget-boolean-switch', w:2, h:3},
   ];
-
-  protected gaugesWidgets: NgGridStackWidget[] = [
+  private gaugesWidgets: NgGridStackWidget[] = [
     {selector: 'widget-simple-linear', w:2, h:3},
     {selector: 'widget-gauge-ng-linear', w:2, h:3},
     {selector: 'widget-gauge-ng-radial', w:2, h:3},
     {selector: 'widget-gauge-ng-compass', w:2, h:3},
     {selector: 'widget-gauge-steel', w:2, h:3},
   ];
-
-  protected componentsWidgets: NgGridStackWidget[] = [
+  private componentsWidgets: NgGridStackWidget[] = [
     {selector: 'widget-wind-steer', w:2, h:3},
     {selector: 'widget-freeboardsk', w:6, h:8},
     {selector: 'widget-autopilot', w:4, h:9},
@@ -69,8 +66,7 @@ export class DashboardComponent implements AfterViewInit {
     {selector: 'widget-iframe', w:2, h:3},
     {selector: 'widget-tutorial', w:2, h:3}
   ];
-
-  protected allWidgets: NgGridStackWidget[] = [
+  private allWidgets: NgGridStackWidget[] = [
     {selector: 'widget-numeric', w:2, h:3},
     {selector: 'widget-text', w:2, h:3},
     {selector: 'widget-datetime', w:2, h:3},
@@ -214,13 +210,13 @@ export class DashboardComponent implements AfterViewInit {
       }
     } as NgGridStackWidget;
 
-    if(this._gridstack()?.grid?.willItFit(newItem)) {
-      this._gridstack()?.grid?.addWidget(newItem);
+    if(this._gridstack().grid.willItFit(newItem)) {
+      this._gridstack().grid.addWidget(newItem);
     } else {
       newItem.h = 2;
       newItem.w = 2;
-      if(this._gridstack()?.grid?.willItFit(newItem)) {
-        this._gridstack()?.grid?.addWidget(newItem);
+      if(this._gridstack().grid.willItFit(newItem)) {
+        this._gridstack().grid.addWidget(newItem);
       } else {
        this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
       }
@@ -228,7 +224,7 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   private deleteWidget(item: GridItemHTMLElement): void {
-    this._gridstack()?.grid?.removeWidget(item);
+    this._gridstack().grid.removeWidget(item);
   }
 
   protected nextDashboard(e: any): void {

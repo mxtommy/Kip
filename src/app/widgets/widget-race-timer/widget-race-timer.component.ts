@@ -48,7 +48,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
     this.subscribeTimer();
     this.startWidget();
   }
@@ -215,6 +215,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
     clearInterval(this.flashInterval);
+    this.destroyDataStreams();
   }
 
 /* ******************************************************************************************* */

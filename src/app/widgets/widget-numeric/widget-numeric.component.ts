@@ -67,7 +67,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -169,9 +169,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
-    this.metaSubscriptions?.unsubscribe();
-    this.themeSubscription?.unsubscribe();
+    this.destroyDataStreams();
     if (this.flashInterval) {
       clearInterval(this.flashInterval);
       this.flashInterval = null;

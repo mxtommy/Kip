@@ -54,7 +54,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
@@ -78,7 +78,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
   }
 
   private getColors(color: string): void {
@@ -232,8 +232,4 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
       maxTextWidth);
 
   }
-
-
-
-
 }

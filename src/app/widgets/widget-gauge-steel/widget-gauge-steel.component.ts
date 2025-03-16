@@ -61,12 +61,13 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
     this.startWidget();
   }
 
   protected startWidget(): void {
     this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
@@ -77,9 +78,17 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
       this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
     });
 
+    this.observeMetaStream();
+
     this.metaSub = this.zones$.subscribe(zones => {
-      if (zones && zones.length > 0) {
+      if (zones) {
+        if (zones.length > 0) {
         this.zones = zones;
+        } else {
+          this.zones = [];
+        }
+      } else {
+        this.zones = [];
       }
     });
   }
@@ -90,7 +99,7 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.metaSub?.unsubscribe();
   }
 }
