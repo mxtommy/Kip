@@ -87,9 +87,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.initWidget();
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = gaugeSize.height;
-    this.gaugeOptions.width = gaugeSize.width;
+    this.setCanvasHight();
     this.setGaugeConfig();
   }
 
@@ -117,26 +115,31 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
             option.colorBorderOuter = this.theme.zoneEmergency;
             option.colorBorderMiddle = this.theme.zoneEmergency;
             option.colorBarProgress = this.theme.zoneEmergency;
+            option.colorValueText = this.theme.zoneEmergency;
             break;
           case States.Alarm:
             option.colorBorderOuter = this.theme.zoneAlarm;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.theme.zoneAlarm;
+            option.colorValueText = this.theme.zoneAlarm;
             break;
           case States.Warn:
             option.colorBorderOuter = this.theme.cardColor;
-            option.colorBorderMiddle = this.theme.zoneWarn;
+            option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.theme.zoneWarn;
+            option.colorValueText = this.theme.zoneWarn;
             break;
           case States.Alert:
             option.colorBorderOuter = this.theme.cardColor;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.theme.zoneAlert;
+            option.colorValueText = this.theme.zoneAlert;
             break;
           default:
             option.colorBorderOuter = this.theme.cardColor;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.widgetProperties.config.gauge.subType == 'measuring' ? this.getColors(this.widgetProperties.config.color).color : this.getColors(this.widgetProperties.config.color).dim;
+            option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
         }
         this.radialGauge.update(option);
       }
@@ -150,7 +153,17 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    this.setCanvasHight();
     this.startWidget();
+  }
+
+  private setCanvasHight(): void {
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const resize: RadialGaugeOptions = {};
+    resize.height = gaugeSize.height;
+    resize.width = gaugeSize.width;
+
+    this.radialGauge.update(resize);
   }
 
   ngAfterViewInit(): void {
@@ -159,7 +172,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   public onResized(event: ResizeObserverEntry): void {
       //@ts-ignore
-      let resize: RadialGaugeOptions = {};
+      const resize: RadialGaugeOptions = {};
       resize.height = event.contentRect.height;
       resize.width = event.contentRect.width;
 
@@ -213,10 +226,10 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorUnits = this.theme.whiteDim;
     this.gaugeOptions.colorValueText = this.getColors(this.widgetProperties.config.color).color;
     // Ticks
-    this.colorStrokeTicks = this.getColors(this.widgetProperties.config.color).dim; // missing property in gaugeOptions
-    this.gaugeOptions.colorMinorTicks = this.getColors(this.widgetProperties.config.color).dim;
-    this.gaugeOptions.colorNumbers = this.getColors(this.widgetProperties.config.color).dim;
-    this.gaugeOptions.colorMajorTicks = this.getColors(this.widgetProperties.config.color).dim;
+    this.colorStrokeTicks = this.theme.whiteDim; // missing property in gaugeOptions
+    this.gaugeOptions.colorMinorTicks = this.theme.whiteDim;
+    this.gaugeOptions.colorNumbers = this.theme.whiteDim;
+    this.gaugeOptions.colorMajorTicks = this.theme.whiteDim;
     // Plate
     this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.theme.cardColor;
     this.gaugeOptions.colorBar = this.theme.background;

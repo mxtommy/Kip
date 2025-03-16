@@ -106,10 +106,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnInit() {
     this.initWidget();
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = gaugeSize.height;
-    this.gaugeOptions.width = gaugeSize.width;
-    this.startWidget();
+    this.setCanvasHight();
+    this.setGaugeConfig();
   }
 
   protected startWidget(): void {
@@ -160,7 +158,17 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    this.setCanvasHight();
     this.startWidget();
+  }
+
+  private setCanvasHight(): void {
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const resize: RadialGaugeOptions = {};
+    resize.height = gaugeSize.height;
+    resize.width = gaugeSize.width;
+
+    this.compassGauge.update(resize);
   }
 
   ngAfterViewInit(): void {
@@ -169,9 +177,9 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   protected onResized(event: ResizeObserverEntry): void {
     //@ts-ignore
-    let resize: RadialGaugeOptions = {};
-    resize.height = Math.floor(event.contentRect.height);
-    resize.width = Math.floor(event.contentRect.width);
+    const resize: RadialGaugeOptions = {};
+    resize.height = event.contentRect.height;
+    resize.width = event.contentRect.width;
 
     this.compassGauge.update(resize);
   }
