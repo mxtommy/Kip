@@ -9,9 +9,8 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MatBadge } from '@angular/material/badge';
 import { NgIf } from '@angular/common';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
-import { MatIcon } from '@angular/material/icon';
 
-const defaultPpreferedDisplayMode = {
+const defaultPreferredDisplayMode = {
   wind: 'windAngleApparent',
   route: 'headingMag',
   auto: 'headingMag',
@@ -43,7 +42,7 @@ const timeoutBlink = 250;
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge, MatIcon]
+    imports: [WidgetHostComponent, MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge]
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   // AP keypad
@@ -84,7 +83,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   countDownValue: number = 0;
   actionToBeConfirmed: string = "";
   skPathToAck: string = "";
-  preferedDisplayMode = defaultPpreferedDisplayMode;
   isWChecked: boolean = false;       // used for Wind toggle
   isTChecked: boolean = false;       // used for Track toggle
   isApConnected: boolean = false;

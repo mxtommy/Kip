@@ -4,7 +4,6 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
-import { NgIf } from '@angular/common';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 
@@ -12,7 +11,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
     selector: 'widget-tutorial',
     templateUrl: './widget-tutorial.component.html',
     standalone: true,
-    imports: [ WidgetHostComponent, NgIf, MatButton, RouterLink]
+    imports: [ WidgetHostComponent, MatButton, RouterLink]
 })
 export class WidgetTutorialComponent extends BaseWidgetComponent implements OnDestroy {
   protected dashboard = inject(DashboardService);

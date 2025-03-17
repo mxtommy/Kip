@@ -184,7 +184,7 @@ export class DashboardComponent implements AfterViewInit {
     opt.input = {
       ...opt.input,
       widgetProperties: {
-        ...opt.input?.widgetProperties,
+        // ...opt.input?.widgetProperties,
         type: opt.selector,
         uuid: opt.id
       }
