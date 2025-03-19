@@ -1,9 +1,8 @@
 import { AfterViewInit, Component, effect, inject, viewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
-import { GridItemHTMLElement, GridStack } from 'gridstack';
+import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
-import { DashboardEditorComponent } from "../dashboard-editor/dashboard-editor.component";
 import { UUID } from '../../utils/uuid';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
@@ -23,17 +22,21 @@ import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-line
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { AppService } from '../../services/app-service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [GridstackModule, DashboardEditorComponent, DashboardScrollerComponent, DashboardScrollerComponent, DashboardEditorComponent],
+  imports: [GridstackModule, DashboardScrollerComponent, DashboardScrollerComponent, MatIconModule, MatButtonModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit {
   private _app = inject(AppService);
   protected dashboard = inject(DashboardService);
+  private _dialog = inject(DialogService);
   private _gridstack = viewChild.required(GridstackComponent);
   private _previousIsStaticState: boolean = true;
   protected gridOptions: NgGridStackOptions = {
@@ -41,49 +44,10 @@ export class DashboardComponent implements AfterViewInit {
     minRow: 12,
     maxRow: 12,
     float: true,
-    acceptWidgets: true,
-    resizable: {handles: 'all'}
+    acceptWidgets: false,
+    resizable: {handles: 'all'
+    }
   }
-  private basicWidgets: NgGridStackWidget[] = [
-    {selector: 'widget-numeric', w:2, h:3},
-    {selector: 'widget-text', w:2, h:3},
-    {selector: 'widget-datetime', w:2, h:3},
-    {selector: 'widget-boolean-switch', w:2, h:3},
-  ];
-  private gaugesWidgets: NgGridStackWidget[] = [
-    {selector: 'widget-simple-linear', w:2, h:3},
-    {selector: 'widget-gauge-ng-linear', w:2, h:3},
-    {selector: 'widget-gauge-ng-radial', w:2, h:3},
-    {selector: 'widget-gauge-ng-compass', w:2, h:3},
-    {selector: 'widget-gauge-steel', w:2, h:3},
-  ];
-  private componentsWidgets: NgGridStackWidget[] = [
-    {selector: 'widget-wind-steer', w:2, h:3},
-    {selector: 'widget-freeboardsk', w:6, h:8},
-    {selector: 'widget-autopilot', w:4, h:9},
-    {selector: 'widget-data-chart', w:2, h:3},
-    {selector: 'widget-racetimer', w:3, h:6},
-    {selector: 'widget-iframe', w:2, h:3},
-    {selector: 'widget-tutorial', w:2, h:3}
-  ];
-  private allWidgets: NgGridStackWidget[] = [
-    {selector: 'widget-numeric', w:2, h:3},
-    {selector: 'widget-text', w:2, h:3},
-    {selector: 'widget-datetime', w:2, h:3},
-    {selector: 'widget-boolean-switch', w:2, h:3},
-    {selector: 'widget-simple-linear', w:2, h:3},
-    {selector: 'widget-gauge-ng-linear', w:2, h:3},
-    {selector: 'widget-gauge-ng-radial', w:2, h:3},
-    {selector: 'widget-gauge-ng-compass', w:2, h:3},
-    {selector: 'widget-gauge-steel', w:2, h:3},
-    {selector: 'widget-wind-steer', w:2, h:3},
-    {selector: 'widget-freeboardsk', w:2, h:3},
-    {selector: 'widget-autopilot', w:2, h:3},
-    {selector: 'widget-data-chart', w:2, h:3},
-    {selector: 'widget-racetimer', w:3, h:6},
-    {selector: 'widget-iframe', w:2, h:3},
-    {selector: 'widget-tutorial', w:2, h:3}
-  ];
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -145,23 +109,6 @@ export class DashboardComponent implements AfterViewInit {
     this.resizeGridColumns();
   }
 
-  protected setupDragIn(widgetType: string): void {
-    switch (widgetType) {
-      case "Basic":
-        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.basicWidgets);
-        break;
-      case "Gauges":
-        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.gaugesWidgets);
-        break;
-      case "Components":
-        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.componentsWidgets);
-        break;
-      default:
-        GridStack.setupDragIn('.newWidget', {helper: this.makeWidget}, this.allWidgets);
-        break;
-    }
-  }
-
   protected resizeGridColumns(): void {
     this._gridstack().grid.cellHeight(window.innerHeight / this._gridstack().grid.getRow());
   }
@@ -176,22 +123,52 @@ export class DashboardComponent implements AfterViewInit {
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
-  protected makeWidget(draggedItem: GridItemHTMLElement): GridItemHTMLElement {
-    const clone = draggedItem.cloneNode(true);
-    const opt = draggedItem.gridstackNode as NgGridStackWidget;
+  protected saveLayoutChanges(): void {
+    this.dashboard.isDashboardStatic.set(true);
+  }
 
-    opt.id = UUID.create();
-    opt.input = {
-      ...opt.input,
-      widgetProperties: {
-        // ...opt.input?.widgetProperties,
-        type: opt.selector,
-        uuid: opt.id
+  protected cancelLayoutChanges(): void {
+    this.loadDashboard();
+    this.dashboard.isDashboardStatic.set(true);
+  }
+
+  protected addNewWidget(e: any): void {
+    if (!this.dashboard.isDashboardStatic()) {
+      const inputX = (e as HammerInput).center.x;
+      const inputY = (e as HammerInput).center.y;
+      const gridCell = this._gridstack().grid.getCellFromPixel({left: inputX, top: inputY});
+      const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
+
+      if (isCellEmpty) {
+        if (this._gridstack().grid.willItFit({x: gridCell.x, y: gridCell.y, w: 2, h: 3})) {
+          this._dialog.openFrameDialog({
+            title: 'Add Widget',
+            component: 'select-widget',
+          }, true).subscribe(data => {
+            if (!data) {return} //clicked cancel
+            const ID = UUID.create();
+            const newWidget: NgGridStackWidget = {
+              x: gridCell.x,
+              y: gridCell.y,
+              w: 2,
+              h: 3,
+              id: ID,
+              // @ts-ignore
+              selector: data,
+              input: {
+                widgetProperties: {
+                  type: data,
+                  uuid: ID,
+                }
+              }
+            };
+            this._gridstack().grid.addWidget(newWidget);
+          });
+        } else {
+          this._app.sendSnackbarNotification('Add Widget Error: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
+        }
       }
-    };
-
-    (clone as GridItemHTMLElement).gridstackNode = opt;
-    return clone as GridItemHTMLElement;
+    }
   }
 
   private duplicateWidget(item: GridItemHTMLElement): void {

@@ -1,0 +1,26 @@
+<div>
+  <mat-button-toggle-group
+    name="widgetCategories"
+    aria-label="Widget categories"
+    [value]="_widgetCategory()"
+    (change)="onCategoryChange($event)"
+    class="list-filter"
+  >
+    @for (category of _widgets.categories; track category) {
+      <mat-button-toggle [value]="category">
+        {{ category }}
+      </mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  <div>
+    @for (widgetType of widgetsList; track widgetType.selector) {
+      <widget-list-card
+        [svgIcon]="widgetType.icon"
+        [iconSize]="48"
+        [name]="widgetType.name"
+        [description]="widgetType.description"
+        (click)="onSelectWidget(widgetType.selector)"
+      />
+    }
+  </div>
+</div>

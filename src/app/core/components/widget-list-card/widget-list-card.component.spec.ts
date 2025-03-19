@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DashboardEditorComponent } from './dashboard-editor.component';
+import { WidgetListCardComponent } from './widget-list-card.component';
 
-describe('DashboardEditorComponent', () => {
-  let component: DashboardEditorComponent;
-  let fixture: ComponentFixture<DashboardEditorComponent>;
+describe('WidgetListCardComponent', () => {
+  let component: WidgetListCardComponent;
+  let fixture: ComponentFixture<WidgetListCardComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DashboardEditorComponent]
+      imports: [WidgetListCardComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(DashboardEditorComponent);
+    fixture = TestBed.createComponent(WidgetListCardComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

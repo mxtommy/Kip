@@ -70,10 +70,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
           window.document.dispatchEvent(rightSidebarEvent);
         break;
       case 'press':
-        this._widgetHost()?.openBottomSheet();
+        this._widgetHost()?.openBottomSheet(event);
         break;
       case 'doubletap':
-        this._widgetHost()?.openWidgetOptions();
+        this._widgetHost()?.openWidgetOptions(event);
         break;
       default:
         break;

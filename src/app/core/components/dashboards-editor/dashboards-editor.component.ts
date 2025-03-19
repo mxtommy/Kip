@@ -10,13 +10,13 @@ import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-s
 
 
 @Component({
-  selector: 'dashboards-manage',
+  selector: 'dashboards-editor',
   standalone: true,
   imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, CdkDragHandle ],
-  templateUrl: './dashboards-manage.component.html',
-  styleUrl: './dashboards-manage.component.scss'
+  templateUrl: './dashboards-editor.component.html',
+  styleUrl: './dashboards-editor.component.scss'
 })
-export class DashboardsManageComponent {
+export class DashboardsEditorComponent {
   protected readonly pageTitle = 'Dashboards';
   private _bottomSheet = inject(MatBottomSheet);
   protected _dashboard = inject(DashboardService);

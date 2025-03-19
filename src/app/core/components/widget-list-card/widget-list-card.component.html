@@ -1,0 +1,14 @@
+<div class="item-container">
+  <div class="item-icon">
+    <mat-icon
+      [svgIcon]="svgIcon()"
+      [style.width.px]="iconSize()"
+      [style.height.px]="iconSize()"
+      aria-hidden="false"
+    ></mat-icon>
+  </div>
+  <div class="item-label">
+    <p class="title">{{ name() }}</p>
+    <span class="description">{{ description() }}</span>
+  </div>
+</div>

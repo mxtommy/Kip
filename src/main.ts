@@ -24,7 +24,6 @@ import { AuthenticationInterceptor } from './app/core/interceptors/authenticatio
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
 import 'hammerjs';
 
-
 /**
  * Bootstrap function used by AppInitService provider at app initialization
  * that start network, authentication and storage service pre-app.component
@@ -53,7 +52,7 @@ export class kipHammerConfig extends HammerGestureConfig {
     // Override default hammerjs gestures configuration
     // pan: { direction: Hammer.DIRECTION_ALL },
     swipe: { direction: Hammer.DIRECTION_ALL, velocity: 0.3, threshold: 10, domEvents: true },
-    press: { time: 500 },
+    press: { time: 500, domEvents: true },
   };
   options = {
     domEvents: true,

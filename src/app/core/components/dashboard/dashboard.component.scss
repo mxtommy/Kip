@@ -10,7 +10,14 @@
   width: 100%;
 }
 
-//TODO:Remove this
-.test {
-  background-color: red;;
+.edit-layout-close-icon {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  cursor: pointer;
+  z-index: 100;
+}
+.layout-action-btn {
+  color: var(--mdc-filled-button-label-text-color, var(--mat-app-on-primary));
+  background-color: var(--mdc-filled-button-container-color, var(--mat-app-primary));
 }

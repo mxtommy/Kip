@@ -41,13 +41,6 @@ export class MenuActionsComponent {
     { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
   ];
 
-  protected OpenSettingsDialog(): void {
-    this._dialog.openFrameDialog({
-      title: 'Settings',
-      component: 'settings',
-    }, true).subscribe();
-  }
-
   protected onItemClicked(action: string): void {
     this.actionsSidenav().close();
     switch (action) {

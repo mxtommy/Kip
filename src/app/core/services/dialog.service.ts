@@ -4,9 +4,9 @@ import { Observable } from 'rxjs';
 import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
-import { AppSettingsComponent } from '../../settings/settings/settings.component';
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
 import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
+import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
 
 @Injectable({
   providedIn: 'root'
@@ -17,8 +17,8 @@ export class DialogService {
 
   public openFrameDialog(data: DialogComponentData, fullscreen: boolean): Observable<boolean> {
     switch (data.component) {
-      case 'settings':
-        data.componentType = AppSettingsComponent;
+      case 'select-widget':
+        data.componentType = WidgetsListComponent;
         break;
     }
 
@@ -28,7 +28,7 @@ export class DialogService {
         height: fullscreen ? "calc(100% - 30px)" : "",
         width: fullscreen ? "calc(100% - 30px)" : "",
         maxWidth: fullscreen ? "100%" : "",
-        maxHeight: fullscreen ? "100%" : ""
+        maxHeight: fullscreen ? "100%" : "",
       }
     ).afterClosed();
   }
