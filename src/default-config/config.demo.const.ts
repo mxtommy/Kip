@@ -211,7 +211,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
       },
       {
         "w": 4,
-        "h": 4,
+        "h": 6,
         "id": "24406c15-7738-4dc1-a206-7a4862c2931d",
         "selector": "widget-gauge-ng-radial",
         "input": {
@@ -296,7 +296,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
       },
       {
         "w": 4,
-        "h": 8,
+        "h": 6,
         "id": "973c8804-be09-4923-bb5d-48c13b65db69",
         "selector": "widget-data-chart",
         "input": {
@@ -332,7 +332,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
           }
         },
         "x": 8,
-        "y": 4
+        "y": 6
       },
       {
         "w": 3,
