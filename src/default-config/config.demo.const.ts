@@ -64,7 +64,7 @@ export const DemoAppConfig: IAppConfig = {
 export const DemoDashboardsConfig: Dashboard[] = [
   {
     "id": "3e0825ee-95fd-4ad4-8802-e0507845b668",
-    "name": "Demo",
+    "name": "Sailing",
     "configuration": [
       {
         "w": 3,
@@ -416,6 +416,238 @@ export const DemoDashboardsConfig: Dashboard[] = [
         },
         "x": 3,
         "y": 10
+      }
+    ]
+  },
+  {
+    "id": "7c67c8c5-dc55-4e1d-9fc5-3dd95fd41bea",
+    "name": "Charting",
+    "configuration": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 12,
+        "id": "488d620a-37d4-4b98-849d-304cd18003e9",
+        "selector": "widget-freeboardsk",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-freeboardsk",
+            "uuid": "488d620a-37d4-4b98-849d-304cd18003e9"
+          }
+        }
+      },
+      {
+        "x": 8,
+        "y": 0,
+        "w": 2,
+        "h": 3,
+        "id": "26a2a150-5af8-4f1d-aaab-0cb2a406fc17",
+        "selector": "widget-gauge-ng-compass",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-gauge-ng-compass",
+            "uuid": "26a2a150-5af8-4f1d-aaab-0cb2a406fc17",
+            "config": {
+              "displayName": "COG (T)",
+              "filterSelfPaths": true,
+              "paths": {
+                "gaugePath": {
+                  "description": "Numeric Data",
+                  "path": "self.navigation.courseOverGroundTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "isConvertUnitToConfigurable": false,
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                }
+              },
+              "gauge": {
+                "type": "ngRadial",
+                "subType": "marineCompass",
+                "enableTicks": true,
+                "compassUseNumbers": true,
+                "showValueBox": false
+              },
+              "enableTimeout": false,
+              "color": "purple",
+              "dataTimeout": 5
+            }
+          }
+        }
+      },
+      {
+        "x": 10,
+        "y": 0,
+        "w": 2,
+        "h": 3,
+        "id": "caf9ca47-fcf6-4736-a314-2b5210edaf03",
+        "selector": "widget-datetime",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-datetime",
+            "uuid": "caf9ca47-fcf6-4736-a314-2b5210edaf03",
+            "config": {
+              "displayName": "Next WP Arrival",
+              "filterSelfPaths": true,
+              "paths": {
+                "gaugePath": {
+                  "description": "String Data",
+                  "path": "self.navigation.datetime",
+                  "source": "default",
+                  "pathType": "Date",
+                  "isPathConfigurable": true,
+                  "sampleTime": 500
+                }
+              },
+              "dateFormat": "dd/MM HH:mm",
+              "dateTimezone": "America/Toronto",
+              "color": "white",
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        }
+      },
+      {
+        "x": 8,
+        "y": 3,
+        "w": 4,
+        "h": 9,
+        "id": "daa21350-009e-4d99-8209-364f9b99caee",
+        "selector": "widget-autopilot",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-autopilot",
+            "uuid": "daa21350-009e-4d99-8209-364f9b99caee",
+            "config": {
+              "displayName": "N2k Autopilot",
+              "filterSelfPaths": true,
+              "paths": {
+                "apState": {
+                  "description": "Autopilot State",
+                  "path": "self.steering.autopilot.state",
+                  "source": "default",
+                  "pathType": "string",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "convertUnitTo": "",
+                  "sampleTime": 500
+                },
+                "apTargetHeadingMag": {
+                  "description": "Autopilot Target Heading Mag",
+                  "path": "self.steering.autopilot.target.headingMagnetic",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "apTargetWindAngleApp": {
+                  "description": "Autopilot Target Wind Angle Apparent",
+                  "path": "self.steering.autopilot.target.windAngleApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "headingMag": {
+                  "description": "Heading Magnetic",
+                  "path": "self.navigation.headingMagnetic",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "headingTrue": {
+                  "description": "Heading True",
+                  "path": "self.navigation.headingTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "windAngleApparent": {
+                  "description": "Wind Angle Apparent",
+                  "path": "self.environment.wind.angleApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "windAngleTrueWater": {
+                  "description": "Wind Angle True Water",
+                  "path": "self.environment.wind.angleTrueWater",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "rudderAngle": {
+                  "description": "Rudder Angle",
+                  "path": "self.steering.rudderAngle",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                }
+              },
+              "usage": {
+                "headingMag": [
+                  "wind",
+                  "route",
+                  "auto",
+                  "standby"
+                ],
+                "headingTrue": [
+                  "wind",
+                  "route",
+                  "auto",
+                  "standby"
+                ],
+                "windAngleApparent": [
+                  "wind"
+                ],
+                "windAngleTrueWater": [
+                  "wind"
+                ]
+              },
+              "typeVal": {
+                "headingMag": "Mag",
+                "headingTrue": "True",
+                "windAngleApparent": "AWA",
+                "windAngleTrueWater": "TWA"
+              },
+              "barColor": "accent",
+              "autoStart": false,
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        }
       }
     ]
   }
