@@ -25,7 +25,7 @@ export class WidgetService {
   private _widgetDefinition: Array<WidgetDescription> = [
     {
       name: 'Numeric',
-      description: 'Displays numeric data',
+      description: 'Displays numeric data in a clear and concise format with option to display minimum and maximum recorded values.',
       icon: 'numericWidget',
       category: 'Basic',
       selector: 'widget-numeric',
@@ -33,7 +33,7 @@ export class WidgetService {
     },
     {
       name: 'Text',
-      description: 'Displays numeric data',
+      description: 'Displays text data with customizable color formatting option.',
       icon: 'textWidget',
       category: 'Basic',
       selector: 'widget-text',
@@ -41,7 +41,7 @@ export class WidgetService {
     },
     {
       name: 'Date & Time',
-      description: 'Displays Date & Time data',
+      description: 'Displays date and time data with fully custom formatting options and timezone correction.',
       icon: 'datetimeWidget',
       category: 'Basic',
       selector: 'widget-datetime',
@@ -49,7 +49,7 @@ export class WidgetService {
     },
     {
       name: 'Switch Panel',
-      description: 'A multi switch control panel',
+      description: 'A switch panel group with multiple controls including toggle switches, indicator lights, and press buttons for digital switching ond other operations.',
       icon: 'switchpanelWidget',
       category: 'Basic',
       selector: 'widget-boolean-switch',
@@ -57,7 +57,7 @@ export class WidgetService {
     },
     {
       name: 'Simple Linear',
-      description: "A simple horizontal linear gauge with a large value label",
+      description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
       icon: 'simpleLinearGauge',
       category: 'Gauges',
       selector: 'widget-simple-linear',
@@ -65,7 +65,7 @@ export class WidgetService {
     },
     {
       name: 'Linear',
-      description: 'A horizontal or vertical linear gauge',
+      description: 'A horizontal or vertical linear gauge that supports zones highlights. ',
       icon: 'linearGauge',
       category: 'Gauges',
       selector: 'widget-gauge-ng-linear',
@@ -73,7 +73,7 @@ export class WidgetService {
     },
     {
       name: 'Radial',
-      description: 'A typical radial gauge',
+      description: 'A radial gauge that supports various configurations, including capacity and measurement dials and zones highlight.',
       icon: 'radialGauge',
       category: 'Gauges',
       selector: 'widget-gauge-ng-radial',
@@ -81,7 +81,7 @@ export class WidgetService {
     },
     {
       name: 'Compass',
-      description: 'A faceplate or card rotating compass',
+      description: 'A faceplate or card rotating compass gauge with various cardinal point indicator options.',
       icon: 'compassGauge',
       category: 'Gauges',
       selector: 'widget-gauge-ng-compass',
@@ -89,7 +89,7 @@ export class WidgetService {
     },
     {
       name: 'Steel Style',
-      description: 'Traditional steel looking linear & radial gauges',
+      description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',
       category: 'Gauges',
       selector: 'widget-gauge-steel',
@@ -105,7 +105,7 @@ export class WidgetService {
     },
     {
       name: 'Freeboard-SK',
-      description: 'Freeboard-SK Chart Plotter integration widget',
+      description: 'Add Freeboard-SK Chart Plotter as a widget with auto sign-in to your dashboard.',
       icon: 'freeboardWidget',
       category: 'Components',
       selector: 'widget-freeboardsk',
@@ -113,7 +113,7 @@ export class WidgetService {
     },
     {
       name: 'Autopilot Head',
-      description: 'An Autopilot Head for supported Signal K autopilot devices',
+      description: 'An Autopilot Head for supported Signal K autopilot devices.',
       icon: 'autopilotWidget',
       category: 'Components',
       selector: 'widget-autopilot',
@@ -121,7 +121,7 @@ export class WidgetService {
     },
     {
       name: 'Data Chart',
-      description: 'Visualize data on a chart with multiple series. Requires KIP Dataset configuration.',
+      description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
       icon: 'datachartWidget',
       category: 'Components',
       selector: 'widget-data-chart',
@@ -129,7 +129,7 @@ export class WidgetService {
     },
     {
       name: 'Race Timer',
-      description: "A simple race start countdown timer",
+      description: "A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.",
       icon: 'racetimerWidget',
       category: 'Components',
       selector: 'widget-racetimer',
@@ -137,7 +137,7 @@ export class WidgetService {
     },
     {
       name: 'Embed Webpage',
-      description: 'Use to embed webpage any accessible web page',
+      description: 'Use this widget to embed external web based applications, such as Grafana or Node-RED, in your dashboard for a seamless integration.',
       icon: 'embedWidget',
       category: 'Components',
       selector: 'widget-iframe',
@@ -145,7 +145,7 @@ export class WidgetService {
     },
     {
       name: 'Tutorial',
-      description: "KIP's getting started introduction tutorial widget",
+      description: "KIP's getting started tutorial widget.",
       icon: 'tutorialWidget',
       category: 'Components',
       selector: 'widget-tutorial',

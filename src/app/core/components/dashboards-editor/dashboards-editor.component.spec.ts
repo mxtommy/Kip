@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DashboardsManageComponent } from './dashboards-manage.component';
+import { DashboardsEditorComponent } from './dashboards-editor.component';
 
 describe('DashboardsManageComponent', () => {
-  let component: DashboardsManageComponent;
-  let fixture: ComponentFixture<DashboardsManageComponent>;
+  let component: DashboardsEditorComponent;
+  let fixture: ComponentFixture<DashboardsEditorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DashboardsManageComponent]
+      imports: [DashboardsEditorComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(DashboardsManageComponent);
+    fixture = TestBed.createComponent(DashboardsEditorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

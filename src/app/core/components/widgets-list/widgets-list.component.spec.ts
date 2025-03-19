@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {  TileWidgetDragComponent } from './tile-widget-drag.component';
+import { WidgetsListComponent } from './widgets-list.component';
 
-describe(' TileWidgetDragComponent', () => {
-  let component:  TileWidgetDragComponent;
-  let fixture: ComponentFixture< TileWidgetDragComponent>;
+describe('WidgetsListComponent', () => {
+  let component: WidgetsListComponent;
+  let fixture: ComponentFixture<WidgetsListComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ TileWidgetDragComponent]
+      imports: [WidgetsListComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent( TileWidgetDragComponent);
+    fixture = TestBed.createComponent(WidgetsListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

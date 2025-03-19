@@ -1,5 +1,5 @@
 <mat-card appearance="raised" class="widget-container kip-widget-card-colors" [style.border]="_dashboard.isDashboardStatic() ? '' : '1px dashed var(--mdc-outlined-button-outline-color)'"
-  (doubletap)="openWidgetOptions()"
-  (press)="openBottomSheet()">
+  (doubletap)="openWidgetOptions($event)"
+  (press)="openBottomSheet($event)">
   <ng-content></ng-content>
 </mat-card>
