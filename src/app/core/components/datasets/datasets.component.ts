@@ -52,11 +52,11 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   private dsService = inject(DatasetService);
 
   ngOnInit() {
-    this.tableData.data = this.dsService.list();
+    this.loadDatasets();
   }
 
   private loadDatasets() {
-
+    this.tableData.data = this.dsService.list();
   }
 
   ngAfterViewInit() {
@@ -109,10 +109,12 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
     this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label);
+    this.loadDatasets();
   }
 
   private editDataset(dataset: IDatasetServiceDatasetConfig) {
     this.dsService.edit(dataset);
+    this.loadDatasets();
   }
 
   public deleteDataset(uuid: string) {
