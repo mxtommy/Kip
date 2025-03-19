@@ -45,7 +45,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   public copyConfigForm: UntypedFormGroup;
   public storageLocation: string = null;
-  public locations: string[] = ["Local Storage", "Remote Storage"];
+  public locations: string[] = ["Local Storage", "Server Storage"];
 
   public saveConfigName: string = null;
   public saveConfigScope: string = null;
@@ -85,7 +85,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     // set control form options
     if (!this.hasToken) {
       let src = this.copyConfigForm.get('copySource');
-      src.setValue('Remote Storage');
+      src.setValue('Server Storage');
       src.disable();
       this.copyConfigForm.get('sourceTarget').enable();
 
@@ -140,7 +140,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
 
   public async copyConfig() {
     if (this.copyConfigForm.value.copySource === 'Local Storage') {
-      if (this.copyConfigForm.value.copyDestination === 'Remote Storage') {
+      if (this.copyConfigForm.value.copyDestination === 'Server Storage') {
         // local to remote
         this.saveConfig(this.getLocalConfigFromLocalStorage(), this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
         if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
@@ -164,7 +164,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
         return;
       }
 
-      if (this.copyConfigForm.value.copyDestination === 'Remote Storage') {
+      if (this.copyConfigForm.value.copyDestination === 'Server Storage') {
         //remote to remote
         this.saveConfig(conf, this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
         if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
