@@ -96,7 +96,7 @@ export class UnitsService implements OnDestroy {
     { group: 'Energy Distance', units: [
       { measure: 'm/J', description: "Meters per Joule (base)"},
       { measure: 'nm/J', description: "Nautical Miles per Joule"},
-      { measure: 'km/J', description: "Kiolmeters per Joule"},
+      { measure: 'km/J', description: "Kilometers per Joule"},
       { measure: 'nm/kWh', description: "Nautical Miles per Kilowatt-hour"},
       { measure: 'km/kWh', description: "Kilometers per Kilowatt-hour"},
     ] },
