@@ -1,0 +1,36 @@
+<div class="actions-container actions-top-container">
+  @if (!fullscreenStatus) {
+    <button mat-flat-button class="action-button" tabindex="0" (click)="onItemClicked('toggleFullScreen')">
+      <span class="material-icons">fullscreen</span>
+    </button>
+  } @else {
+    <button mat-flat-button class="action-button" tabindex="0" (click)="onItemClicked('toggleFullScreen')">
+      <span class="material-icons">close_fullscreen</span>
+    </button>
+  }
+  @if (!app.isNightMode()) {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('nightMode')">
+      <span class="material-icons">mode_night</span>
+    </button>
+  } @else {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('dayMode')">
+      <span class="material-icons">light_mode</span>
+    </button>
+  }
+</div>
+<div class="menu-item-container">
+  @for (item of menuItems; track item) {
+    <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onItemClicked(item.action)"/>
+  }
+</div>
+<div class="actions-container actions-bottom-container">
+  @if (dashboard.isDashboardStatic()) {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
+      <span class="material-icons">dashboard_customize</span>
+    </button>
+  } @else {
+    <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
+      <span class="material-icons">exit_to_app</span>
+    </button>
+  }
+</div>

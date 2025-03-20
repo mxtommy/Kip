@@ -1,62 +1,16 @@
-<div [class]="activeThemeClass">
-  <div class="mainContainer app-defaults">
-    <div class="mainWindow" (swipe)="onSwipe($event)" (doubletap)="onDoubleTap($event)" >
-        <router-outlet></router-outlet>
-    </div>
-    <div class="menuBar">
-      <div class="menuBarContainer theme-menu">
-        <div class="menuBarButtonGroups">
-          <app-alarm-menu></app-alarm-menu>
-        </div>
-        <div class="menuBarButtonGroups">
-          <button color="accent"mat-flat-button class="menuBarNavButtons" (click)="pageDown()">
-            <i class="fa-solid fa-chevron-left fa-2x" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="menuBarButtonGroups">
-          <button color="accent" mat-flat-button class="menuBarNavButtons" (click)="pageUp()">
-            <i class="fa-solid fa-chevron-right fa-2x" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="menuBarButtonGroups">
-            <button color="accent" mat-flat-button class="menuBarSettingsButton" [matMenuTriggerFor]="settingsMenu" >
-              <i class="fa-solid fa-bars fa-2x" aria-hidden="true"></i>
-            </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<mat-sidenav-container class="sidenav-container" (swipeleft)="onSwipeLeft($event)" (swiperight)="onSwipeRight($event)" (touchstart)="preventBrowserHistorySwipeGestures($event)" (touchmove)="preventBrowserHistorySwipeGestures($event)">
 
-<mat-menu #settingsMenu="matMenu">
-  <button mat-menu-item routerLink="/help">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-question-circle" aria-hidden="true"></i>&nbsp;Help</div>
-  </button>
-  <button mat-menu-item [matMenuTriggerFor]="configMenu">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-cog" aria-hidden="true"></i>&nbsp;Configuration</div>
-  </button>
-  <button mat-menu-item routerLink="/data">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-info" aria-hidden="true"></i>&nbsp;Data Browser</div>
-  </button>
-  <button mat-menu-item (click)="setNightMode(isNightMode ? false : true)">
-    <div class="menu-items-with-icons" *ngIf="!isNightMode"><i class="fa-solid fa-moon" aria-hidden="true"></i>&nbsp;Night Mode</div>
-    <div class="menu-items-with-icons" *ngIf="isNightMode"><i class="fa-solid fa-sun" aria-hidden="true"></i>&nbsp;Day Mode</div>
-  </button>
-  <button mat-menu-item (click)="toggleFullScreen()">
-    <div class="menu-items-with-icons" *ngIf="!fullscreenStatus"><i class="fa-solid fa-window-maximize" aria-hidden="true"></i>&nbsp;Fullscreen</div>
-    <div class="menu-items-with-icons" *ngIf="fullscreenStatus"><i class="fa-solid fa-window-restore" aria-hidden="true"></i>&nbsp;Exit Fullscreen</div>
-  </button>
-</mat-menu>
+  <mat-sidenav #notificationsSidenav class="sidenav-notifications" [style.visibility]="notificationsPresent ? 'visible' : 'hidden'" [(opened)]="notificationsSidenavOpened" (closed)="menuClosed()" mode="over" position="start" autoFocus="false">
 
-<mat-menu #configMenu="matMenu" xPosition="before">
-  <button mat-menu-item routerLink="/settings">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-sliders" aria-hidden="true"></i>&nbsp;Settings</div>
-  </button>
-  <button mat-menu-item [disabled]="!unlockStatus" (click)="newPage()">
-    <div class="menu-items-with-icons"><i class="fa-solid fa-plus-square" aria-hidden="true"></i>&nbsp;Add Page</div>
-  </button>
-  <button mat-menu-item (click)="unlockPage()">
-    <div class="menu-items-with-icons" *ngIf="!unlockStatus"><i class="fa-solid fa-columns" aria-hidden="true"></i>&nbsp;Edit Layout</div>
-    <div class="menu-items-with-icons" *ngIf="unlockStatus"><i class="fa-solid fa-lock" aria-hidden="true"></i>&nbsp;Lock Layout</div>
-  </button>
-</mat-menu>
+    <menu-notifications (toggleSidenav)="notificationsSidenav.toggle()" (hasNotifications)="notificationsPresence($event)" />
+
+  </mat-sidenav>
+  <mat-sidenav #actionsSidenav class="sidenav-controls" [(opened)]="actionsSidenavOpen" mode="over" position="end">
+    <menu-actions [actionsSidenav]="actionsSidenav" />
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <router-outlet class="router-outlet-container"></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+

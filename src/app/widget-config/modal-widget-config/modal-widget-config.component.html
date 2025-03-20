@@ -1,5 +1,5 @@
 <form (ngSubmit)="submitConfig()" [formGroup]="formMaster">
-  <span mat-dialog-title>{{titleDialog}}</span>
+  <h6 mat-dialog-title>{{titleDialog}}</h6>
   <mat-dialog-content>
     <mat-tab-group>
       <mat-tab label="Display">
@@ -26,7 +26,7 @@
           [yScaleMax]="yScaleMaxToControl"
           [numDecimal]="numDecimalToControl"
           [verticalGraph]="verticalGraphToControl"
-          [textColor]="textColorToControl"
+          [color]="colorToControl"
           >
         </config-display-chart-options>
 
@@ -203,17 +203,16 @@
               </mat-form-field>
             }
 
-            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.textColor !== undefined)">
+            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.color !== undefined)">
               <mat-label>Color</mat-label>
               <mat-select
                 placeholder="Select Color..."
-                formControlName="textColor"
-                name="textColor"
+                formControlName="color"
+                name="color"
                 required>
-                <mat-option value='text'>Font</mat-option>
-                <mat-option value='primary'>Primary</mat-option>
-                <mat-option value='accent'>Accent</mat-option>
-                <mat-option value='warn'>Warn</mat-option>
+                @for(color of colors; track color) {
+                  <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
+                }
                 @if (widgetConfig.gauge) {
                   <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinear') || (widgetConfig.gauge?.type == 'ngLinear')" value='nobar'>No Progress</mat-option>
                 }
@@ -295,7 +294,10 @@
         <div class="tab-content">
           <div>
             <ng-template mat-tab-label>
-              <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Paths
+              <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning material-icons">
+                error
+              </span>
+              &nbsp;Paths
             </ng-template>
           </div>
           <paths-options
@@ -399,7 +401,7 @@
   </mat-dialog-content>
   <mat-divider></mat-divider>
   <mat-dialog-actions>
-    <button type="button" mat-dialog-close mat-raised-button>Cancel</button>
-    <button mat-raised-button color="accent" type="submit" [disabled]="!formMaster.valid" >Save</button>
+    <button type="button" mat-dialog-close mat-flat-button>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="!formMaster.valid" >Save</button>
   </mat-dialog-actions>
 </form>

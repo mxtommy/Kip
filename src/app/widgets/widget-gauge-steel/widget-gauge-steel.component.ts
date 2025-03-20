@@ -1,27 +1,26 @@
-import { AppSettingsService } from '../../core/services/app-settings.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
-import { ISkMetadata } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
-    selector: 'app-widget-gauge-steel',
+    selector: 'widget-gauge-steel',
     templateUrl: './widget-gauge-steel.component.html',
-    styleUrls: ['./widget-gauge-steel.component.css'],
+    styleUrls: ['./widget-gauge-steel.component.scss'],
     standalone: true,
-    imports: [GaugeSteelComponent]
+    imports: [WidgetHostComponent, GaugeSteelComponent]
 })
-export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   dataValue: any = 0;
 
-  public zones = [];
+  protected zones = [];
 
   // Zones support
-  private meta: ISkMetadata = null;
   private metaSub: Subscription;
 
-  constructor(private settings: AppSettingsService) {
+  constructor() {
     super();
 
     this.defaultConfig = {
@@ -62,25 +61,45 @@ export class WidgetGaugeComponent extends BaseWidgetComponent implements OnInit,
   }
 
   ngOnInit() {
-    this.initWidget();
+    this.validateConfig();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
+    this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
+    this.metaSub?.unsubscribe();
+
     this.observeDataStream('gaugePath', newValue => {
-        if (newValue.data.value == null) {
-          newValue.data.value = 0;
-        }
-        // Compound value to displayScale
-        this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+      if (newValue.data.value == null) {
+        newValue.data.value = 0;
       }
-    );
+      // Compound value to displayScale
+      this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+    });
+
+    this.observeMetaStream();
 
     this.metaSub = this.zones$.subscribe(zones => {
-      if (zones && zones.length > 0) {
+      if (zones) {
+        if (zones.length > 0) {
         this.zones = zones;
+        } else {
+          this.zones = [];
+        }
+      } else {
+        this.zones = [];
       }
     });
   }
 
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.metaSub?.unsubscribe();
   }
 }

@@ -7,7 +7,7 @@
 
   .pathMetaDescription {
     font: small-caption;
-    color: mat.get-color-from-palette($themeForeground, disabled-text);
+    color: mat.m2-get-color-from-palette($themeForeground, disabled-text);
   }
 }
 

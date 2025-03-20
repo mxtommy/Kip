@@ -1,46 +1,7 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-
-@mixin widget-autopilot-theme($theme) {
-
-  $background: map-get($theme, background);
-  $foreground: map-get($theme, foreground);
-  $wind: map-get($theme, wind);
-
-  DIV.apScreen {
-    display: block;
-    position: relative;
-    width: 360px;
-    height: calc(202px + 18.5px); // add status bar
-    margin: auto;
-    text-align: center;
-    border-radius: 5px;
-    border: 1px solid mat.get-color-from-palette($foreground, divider);
-    // box-shadow: inset 0px 2px 1px -1px rgba(0, 0, 0, 0.2), inset 0px 1px 1px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
-    background-color: mat.get-color-from-palette($foreground, dividers);
-  }
-
-  .apScreen .apStencil {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    width: 100%;
-    height: 100%;
-    margin: auto;
-    border-radius: 5px;
-    z-index: 10;
-    vertical-align: middle;
-    background-color: mat.get-color-from-palette($background, background);
-  }
-
-  .apText {
-    fill: mat.get-color-from-palette($foreground, text);
-  }
-
-  .apCompassOrnaments {
-    fill: mat.get-color-from-palette($wind, heading-background);
-    stroke: mat.get-color-from-palette($wind, heading-background);
-  }
+:root {
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 .apStencil.confirmCommand {
@@ -53,7 +14,7 @@
   visibility: hidden;
 }
 
-.apScreen .apCompass {
+.apCompass {
   position: relative;
   width: 360px;
   height: 202px;
@@ -61,12 +22,12 @@
   border-radius: 5px;
 }
 
-.apStatusBar {
+div.apStatusBar {
   width: 360px;
   height: 18.5px;
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
-  background-color: black;
+  background-color: red;
 }
 
 .apStatusBar, .apStatusBar DIV {
@@ -105,17 +66,13 @@ div.autopilotWidget {
   margin: 0px;
 }
 
-.powerBtn {
-
-}
-
-.autoPilotBtn {
+.auto-pilot-btn-width {
   width:85px;
 }
 
 .activityIcon {
   opacity: 40%;
-  color: white;
+  color: red;
   width:25px;
 }
 
@@ -132,12 +89,13 @@ div.autopilotWidget {
     "port minus1  plus1 starboard"
     "windmode minus10 plus10 trackmode"
     "standby . . auto1";
-  row-gap: 0px;
-  column-gap: 2px;
+  row-gap: 6px;
+  column-gap: 4px;
   justify-items: center;
   align-items: center;
   justify-content: center;
   align-content: start;
+  --mdc-filled-button-container-shape: 5px;
 }
 
 .itemStbTack {

@@ -1,18 +1,3 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-
-@mixin widget-numeric-theme($theme) {
-  $warn: map-get($theme, warn);
-
-  .warn {
-    color: mat.get-color-from-palette($warn, 500);
-  }
-
-  .warn-contrast {
-    color: mat.get-contrast-color-from-palette($warn, 500);
-  }
-}
-
 .textGenericWrapper {
   position: relative;
   width: 100%;
@@ -23,4 +8,5 @@
   position: absolute;
   top: 0;
   left: 0;
+  z-index: inherit;
 }

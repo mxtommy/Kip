@@ -1,10 +1,12 @@
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, ILayoutConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
-import { UUID } from "../app/utils/uuid"
+import { Dashboard } from "../app/core/services/dashboard.service"
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { UUID } from "../app/core/utils/uuid"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "autoNightMode": false,
+  "nightModeBrightness": 0.27,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
@@ -60,567 +62,597 @@ export const DemoAppConfig: IAppConfig = {
   }
 }
 
-export const DemoWidgetConfig: IWidgetConfig = {
-    "widgets": [
-        {
-            "uuid": "7298b3be-232f-48bf-9b3d-3b445131a908",
-            "type": "WidgetNumeric",
-            "config": {
-                "displayName": "Depth",
-                "filterSelfPaths": true,
-                "paths": {
-                    "numericPath": {
-                        "description": "Numeric Data",
-                        "path": "self.environment.depth.belowTransducer",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "m",
-                        "sampleTime": 500
-                    }
-                },
-                "showMax": false,
-                "showMin": false,
-                "numDecimal": 1,
-                "numInt": 1,
-                "textColor": "accent",
-                "enableTimeout": false
-            }
-        },
-        {
-            "uuid": "7298b3be-232f-48bf-9b3d-3b433131a908",
-            "type": "WidgetWindComponent",
-            "config": {
-                "paths": {
-                    "headingPath": {
-                        "description": "Heading",
-                        "path": "self.navigation.headingTrue",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "deg",
-                        "sampleTime": 500
-                    },
-                    "courseOverGround": {
-                        "description": "Course Over Ground",
-                        "path": "self.navigation.courseOverGroundTrue",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "deg",
-                        "sampleTime": 500
-                    },
-                    "trueWindAngle": {
-                        "description": "True Wind Angle",
-                        "path": "self.environment.wind.angleTrueWater",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "deg",
-                        "sampleTime": 500
-                    },
-                    "trueWindSpeed": {
-                        "description": "True Wind Speed",
-                        "path": "self.environment.wind.speedTrue",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "knots",
-                        "sampleTime": 500
-                    },
-                    "appWindAngle": {
-                        "description": "Apparent Wind Angle",
-                        "path": "self.environment.wind.angleApparent",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "deg",
-                        "sampleTime": 500
-                    },
-                    "appWindSpeed": {
-                        "description": "Apparent Wind Speed",
-                        "path": "self.environment.wind.speedApparent",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "knots",
-                        "sampleTime": 500
-                    },
-                    "nextWaypointBearing": {
-                        "description": "Next Waypoint Bearing",
-                        "path": "self.navigation.courseGreatCircle.nextPoint.bearingTrue",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "deg",
-                        "sampleTime": 500
-                    }
-                },
-                "windSectorEnable": true,
-                "windSectorWindowSeconds": 5,
-                "laylineEnable": true,
-                "laylineAngle": 40,
-                "waypointEnable": true,
-                "courseOverGroundEnable": true,
-                "sailSetupEnable": false,
-                "enableTimeout": false,
-                "dataTimeout": 5
-            }
-        },
-        {
-            "uuid": "912b86e4-e068-49e9-9f75-a2292d772578",
-            "type": "WidgetGaugeNgRadialComponent",
-            "config": {
-                "displayName": "SOG",
-                "filterSelfPaths": true,
-                "paths": {
-                    "gaugePath": {
-                        "description": "Numeric Data",
-                        "path": "self.navigation.speedOverGround",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "knots",
-                        "sampleTime": 500
-                    }
-                },
-                "displayScale": {
-                    "lower": 0,
-                    "upper": 10,
-                    "type": "linear"
-                },
-                "gauge": {
-                    "type": "measuring",
-                    "enableTicks": true,
-                    "compassUseNumbers": false
-                },
-                "numInt": 1,
-                "numDecimal": 0,
-                "textColor": "accent"
-            }
-        },
-        {
-            "uuid": "85525ebc-c40c-41e6-8379-05d573a331e1",
-            "type": "WidgetSimpleLinearComponent",
-            "config": {
-                "displayName": "House Bank",
-                "filterSelfPaths": true,
-                "paths": {
-                    "gaugePath": {
-                        "description": "Numeric Data",
-                        "path": "self.electrical.batteries.1.voltage",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "V",
-                        "sampleTime": 500
-                    }
-                },
-                "displayScale": {
-                    "lower": 9,
-                    "upper": 15,
-                    "type": "linear"
-                },
-                "gauge": {
-                    "type": "simpleLinear",
-                    "unitLabelFormat": "full"
-                },
-                "numInt": 1,
-                "numDecimal": 2,
-                "textColor": "warn",
-                "enableTimeout": false
-            }
-        },
-        {
-            "uuid": "a49a59c6-b83d-40e0-b759-9d153da69105",
-            "type": "WidgetNumeric",
-            "config": {
-                "displayName": "Speed",
-                "filterSelfPaths": true,
-                "paths": {
-                    "numericPath": {
-                        "description": "Numeric Data",
-                        "path": "self.navigation.speedThroughWater",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "knots",
-                        "sampleTime": 500
-                    }
-                },
-                "showMax": true,
-                "showMin": true,
-                "numDecimal": 1,
-                "numInt": 1,
-                "textColor": "text",
-                "enableTimeout": false
-            }
-        },
-        {
-            "uuid": "62fa8155-10fd-49cb-a495-cee6e9491b8a",
-            "type": "WidgetNumeric",
-            "config": {
-                "displayName": "Temp Outside",
-                "filterSelfPaths": true,
-                "paths": {
-                    "numericPath": {
-                        "description": "Numeric Data",
-                        "path": "self.electrical.batteries.1.temperature",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "celsius",
-                        "sampleTime": 500
-                    }
-                },
-                "showMax": true,
-                "showMin": true,
-                "numDecimal": 1,
-                "numInt": 1,
-                "textColor": "primary",
-                "enableTimeout": false
-            }
-        },
-        {
-            "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
-            "type": "WidgetDataChart",
-            "config": {
-                "displayName": "AWS",
-                "filterSelfPaths": true,
-                "convertUnitTo": "knots",
-                "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-                "invertData": false,
-                "datasetAverageArray": "sma",
-                "showAverageData": true,
-                "trackAgainstAverage": false,
-                "showDatasetMinimumValueLine": false,
-                "showDatasetMaximumValueLine": false,
-                "showDatasetAverageValueLine": false,
-                "showDatasetAngleAverageValueLine": false,
-                "showLabel": true,
-                "showTimeScale": true,
-                "startScaleAtZero": true,
-                "verticalGraph": false,
-                "showYScale": true,
-                "yScaleSuggestedMin": null,
-                "yScaleSuggestedMax": null,
-                "enableMinMaxScaleLimit": false,
-                "numDecimal": 1,
-                "textColor": "primary",
-                "minValue": null,
-                "maxValue": null
-            }
-        },
-        {
-            "uuid": "66eb9453-73a2-4f69-9fc6-ececd3f96ce6",
-            "type": "WidgetFreeboardskComponent",
-            "config": {}
-        },
-        {
-            "uuid": "bd80f868-b1e2-46e9-a408-5cb8f1458a37",
-            "type": "WidgetGaugeNgRadialComponent",
-            "config": {
-                "displayName": "COG (T)",
-                "filterSelfPaths": true,
-                "paths": {
-                    "gaugePath": {
-                        "description": "Numeric Data",
-                        "path": "self.navigation.courseOverGroundTrue",
-                        "source": "default",
-                        "pathType": "number",
-                        "isPathConfigurable": true,
-                        "convertUnitTo": "deg",
-                        "sampleTime": 500
-                    }
-                },
-                "displayScale": {
-                    "lower": 0,
-                    "upper": 360,
-                    "type": "linear"
-                },
-                "gauge": {
-                    "type": "baseplateCompass",
-                    "enableTicks": false,
-                    "compassUseNumbers": false
-                },
-                "numInt": 1,
-                "numDecimal": 0,
-                "textColor": "accent",
-                "enableTimeout": false
-            }
-        },
-        {
-            "uuid": "956a40e8-9097-409d-b382-5c5cfc3a413b",
-            "type": "WidgetAutopilotComponent",
-            "config": {
-                "displayName": "N2k Autopilot",
-                "filterSelfPaths": true,
-                "paths": {
-                    "apState": {
-                        "description": "Autopilot State",
-                        "path": "self.steering.autopilot.state",
-                        "source": "default",
-                        "pathType": "string",
-                        "isPathConfigurable": false,
-                        "convertUnitTo": "",
-                        "sampleTime": 500
-                    },
-                    "apTargetHeadingMag": {
-                        "description": "Autopilot Target Heading Mag",
-                        "path": "self.steering.autopilot.target.headingMagnetic",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    },
-                    "apTargetWindAngleApp": {
-                        "description": "Autopilot Target Wind Angle Apparent",
-                        "path": "self.steering.autopilot.target.windAngleApparent",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    },
-                    "headingMag": {
-                        "description": "Heading Magnetic",
-                        "path": "self.navigation.headingMagnetic",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    },
-                    "headingTrue": {
-                        "description": "Heading True",
-                        "path": "self.navigation.headingTrue",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    },
-                    "windAngleApparent": {
-                        "description": "Wind Angle Apparent",
-                        "path": "self.environment.wind.angleApparent",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    },
-                    "windAngleTrueWater": {
-                        "description": "Wind Angle True Water",
-                        "path": "self.environment.wind.angleTrueWater",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    },
-                    "rudderAngle": {
-                        "description": "Rudder Angle",
-                        "path": "self.steering.rudderAngle",
-                        "source": "default",
-                        "pathType": "number",
-                        "convertUnitTo": "deg",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    }
-                },
-                "usage": {
-                    "headingMag": [
-                        "wind",
-                        "route",
-                        "auto",
-                        "standby"
-                    ],
-                    "headingTrue": [
-                        "wind",
-                        "route",
-                        "auto",
-                        "standby"
-                    ],
-                    "windAngleApparent": [
-                        "wind"
-                    ],
-                    "windAngleTrueWater": [
-                        "wind"
-                    ]
-                },
-                "typeVal": {
-                    "headingMag": "Mag",
-                    "headingTrue": "True",
-                    "windAngleApparent": "AWA",
-                    "windAngleTrueWater": "TWA"
-                },
-                "barColor": "accent",
-                "autoStart": false,
-                "enableTimeout": false,
-                "dataTimeout": 5
-            }
-        },
-        {
-            "uuid": "7ba4e2d1-2d63-41f5-b2e9-1a41886796a4",
-            "type": "WidgetDateGeneric",
-            "config": {
-                "displayName": "Next WP Arrival",
-                "filterSelfPaths": true,
-                "paths": {
-                    "gaugePath": {
-                        "description": "String Data",
-                        "path": "self.navigation.datetime",
-                        "source": "default",
-                        "pathType": "Date",
-                        "isPathConfigurable": true,
-                        "sampleTime": 500
-                    }
-                },
-                "dateFormat": "dd/MM HH:mm",
-                "dateTimezone": "America/Toronto",
-                "textColor": "text",
-                "enableTimeout": false
-            }
-        }
-    ]
-}
-
-export const DemoLayoutConfig: ILayoutConfig = {
-  "splitSets": [
+export const DemoDashboardsConfig: Dashboard[] = [
+  {
+    "id": "3e0825ee-95fd-4ad4-8802-e0507845b668",
+    "name": "Sailing",
+    "configuration": [
       {
-          "uuid": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-          "direction": "horizontal",
-          "splitAreas": [
-              {
-                  "uuid": "d107e54d-2db5-4abf-aba7-b96ce19f5abd",
-                  "type": "splitSet",
-                  "size": 30.079353380503136
+        "w": 3,
+        "h": 4,
+        "id": "339698a7-2cff-4ab9-9b50-d8056f971471",
+        "selector": "widget-numeric",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-numeric",
+            "uuid": "339698a7-2cff-4ab9-9b50-d8056f971471",
+            "config": {
+              "displayName": "Depth",
+              "filterSelfPaths": true,
+              "paths": {
+                "numericPath": {
+                  "description": "Numeric Data",
+                  "path": "self.environment.depth.belowTransducer",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "convertUnitTo": "m",
+                  "showPathSkUnitsFilter": true,
+                  "pathSkUnitsFilter": null,
+                  "sampleTime": 500
+                }
               },
-              {
-                  "uuid": "9249373f-7aa4-4673-8004-3e4e900e0b3d",
-                  "type": "splitSet",
-                  "size": 38.1436713836478
-              },
-              {
-                  "uuid": "d5be7f74-28c0-484c-a0cd-e623eb5db837",
-                  "type": "splitSet",
-                  "size": 31.776975235849058
-              }
-          ]
+              "showMax": false,
+              "showMin": false,
+              "numDecimal": 1,
+              "numInt": 1,
+              "color": "yellow",
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        },
+        "x": 0,
+        "y": 0
       },
       {
-          "uuid": "9249373f-7aa4-4673-8004-3e4e900e0b3d",
-          "parentUUID": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-          "direction": "vertical",
-          "splitAreas": [
-              {
-                  "uuid": "7298b3be-232f-48bf-9b3d-3b433131a908",
-                  "type": "widget",
-                  "size": 71.69133771929825
+        "w": 5,
+        "h": 10,
+        "id": "a44028e0-dfee-4492-895b-2b03a60f3a69",
+        "selector": "widget-wind-steer",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-wind-steer",
+            "uuid": "a44028e0-dfee-4492-895b-2b03a60f3a69",
+            "config": {
+              "filterSelfPaths": true,
+              "paths": {
+                "headingPath": {
+                  "description": "Heading",
+                  "path": "self.navigation.headingTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                },
+                "courseOverGround": {
+                  "description": "Course Over Ground",
+                  "path": "self.navigation.courseOverGroundTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                },
+                "trueWindAngle": {
+                  "description": "True Wind Angle",
+                  "path": "self.environment.wind.angleTrueWater",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                },
+                "trueWindSpeed": {
+                  "description": "True Wind Speed",
+                  "path": "self.environment.wind.speedTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "m/s",
+                  "convertUnitTo": "knots",
+                  "sampleTime": 500
+                },
+                "appWindAngle": {
+                  "description": "Apparent Wind Angle",
+                  "path": "self.environment.wind.angleApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                },
+                "appWindSpeed": {
+                  "description": "Apparent Wind Speed",
+                  "path": "self.environment.wind.speedApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "m/s",
+                  "convertUnitTo": "knots",
+                  "sampleTime": 500
+                },
+                "nextWaypointBearing": {
+                  "description": "Next Waypoint Bearing",
+                  "path": "self.navigation.courseGreatCircle.nextPoint.bearingTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                }
               },
-              {
-                  "uuid": "85525ebc-c40c-41e6-8379-05d573a331e1",
-                  "type": "widget",
-                  "size": 28.308662280701753
-              }
-          ]
+              "windSectorEnable": true,
+              "windSectorWindowSeconds": 5,
+              "laylineEnable": true,
+              "laylineAngle": 40,
+              "waypointEnable": true,
+              "courseOverGroundEnable": true,
+              "sailSetupEnable": false,
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        },
+        "x": 3,
+        "y": 0
       },
       {
-          "uuid": "d107e54d-2db5-4abf-aba7-b96ce19f5abd",
-          "parentUUID": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-          "direction": "vertical",
-          "splitAreas": [
-              {
-                  "uuid": "7298b3be-232f-48bf-9b3d-3b445131a908",
-                  "type": "widget",
-                  "size": 33.13526570048309
+        "w": 4,
+        "h": 6,
+        "id": "24406c15-7738-4dc1-a206-7a4862c2931d",
+        "selector": "widget-gauge-ng-radial",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-gauge-ng-radial",
+            "uuid": "24406c15-7738-4dc1-a206-7a4862c2931d",
+            "config": {
+              "displayName": "SOG",
+              "filterSelfPaths": true,
+              "paths": {
+                "gaugePath": {
+                  "description": "Numeric Data",
+                  "path": "self.navigation.speedOverGround",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": true,
+                  "pathSkUnitsFilter": null,
+                  "convertUnitTo": "knots",
+                  "sampleTime": 500
+                }
               },
-              {
-                  "uuid": "a49a59c6-b83d-40e0-b759-9d153da69105",
-                  "type": "widget",
-                  "size": 33.432367149758456
+              "displayScale": {
+                "lower": 0,
+                "upper": 10,
+                "type": "linear"
               },
-              {
-                  "uuid": "62fa8155-10fd-49cb-a495-cee6e9491b8a",
-                  "type": "widget",
-                  "size": 33.432367149758456
-              }
-          ]
+              "gauge": {
+                "type": "ngRadial",
+                "subType": "measuring",
+                "enableTicks": true,
+                "compassUseNumbers": false
+              },
+              "numInt": 1,
+              "numDecimal": 1,
+              "enableTimeout": false,
+              "color": "yellow",
+              "dataTimeout": 5
+            }
+          }
+        },
+        "x": 8,
+        "y": 0
       },
       {
-          "uuid": "d5be7f74-28c0-484c-a0cd-e623eb5db837",
-          "parentUUID": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-          "direction": "vertical",
-          "splitAreas": [
-              {
-                  "uuid": "912b86e4-e068-49e9-9f75-a2292d772578",
-                  "type": "widget",
-                  "size": 25
+        "w": 3,
+        "h": 4,
+        "id": "c6bcaa53-afa1-42c7-ad92-d5f7dba14734",
+        "selector": "widget-numeric",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-numeric",
+            "uuid": "c6bcaa53-afa1-42c7-ad92-d5f7dba14734",
+            "config": {
+              "displayName": "STW",
+              "filterSelfPaths": true,
+              "paths": {
+                "numericPath": {
+                  "description": "Numeric Data",
+                  "path": "self.navigation.speedThroughWater",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "convertUnitTo": "knots",
+                  "showPathSkUnitsFilter": true,
+                  "pathSkUnitsFilter": null,
+                  "sampleTime": 500
+                }
               },
-              {
-                  "uuid": "42de0119-481c-4466-8b50-1407533ac2aa",
-                  "type": "widget",
-                  "size": 25
-              }
-          ]
+              "showMax": true,
+              "showMin": true,
+              "numDecimal": 1,
+              "numInt": 1,
+              "color": "white",
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        },
+        "x": 0,
+        "y": 4
       },
       {
-          "uuid": "d735c561-d413-4f7e-93d9-2c494e16184e",
-          "direction": "horizontal",
-          "splitAreas": [
-              {
-                  "uuid": "66eb9453-73a2-4f69-9fc6-ececd3f96ce6",
-                  "type": "widget",
-                  "size": 73.53760445682451
-              },
-              {
-                  "uuid": "0dd2388a-2e59-46ba-9af2-4203a3b97016",
-                  "type": "splitSet",
-                  "size": 26.46239554317549
-              }
-          ]
+        "w": 4,
+        "h": 6,
+        "id": "973c8804-be09-4923-bb5d-48c13b65db69",
+        "selector": "widget-data-chart",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-data-chart",
+            "uuid": "973c8804-be09-4923-bb5d-48c13b65db69",
+            "config": {
+              "displayName": "Chart Label",
+              "filterSelfPaths": true,
+              "convertUnitTo": "knots",
+              "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
+              "invertData": false,
+              "datasetAverageArray": "sma",
+              "showAverageData": true,
+              "trackAgainstAverage": false,
+              "showDatasetMinimumValueLine": false,
+              "showDatasetMaximumValueLine": false,
+              "showDatasetAverageValueLine": true,
+              "showDatasetAngleAverageValueLine": false,
+              "showLabel": false,
+              "showTimeScale": true,
+              "startScaleAtZero": false,
+              "verticalGraph": false,
+              "showYScale": true,
+              "yScaleSuggestedMin": null,
+              "yScaleSuggestedMax": null,
+              "enableMinMaxScaleLimit": false,
+              "yScaleMin": null,
+              "yScaleMax": null,
+              "numDecimal": 1,
+              "color": "green"
+            }
+          }
+        },
+        "x": 8,
+        "y": 6
       },
       {
-          "uuid": "0dd2388a-2e59-46ba-9af2-4203a3b97016",
-          "parentUUID": "d735c561-d413-4f7e-93d9-2c494e16184e",
-          "direction": "vertical",
-          "splitAreas": [
-              {
-                  "uuid": "400935ce-a3b0-4671-bf67-11874d10bfec",
-                  "type": "splitSet",
-                  "size": 32.7893175074184
+        "w": 3,
+        "h": 4,
+        "id": "05414722-733a-4483-89b0-07f3945ffd97",
+        "selector": "widget-numeric",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-numeric",
+            "uuid": "05414722-733a-4483-89b0-07f3945ffd97",
+            "config": {
+              "displayName": "Engine Room",
+              "filterSelfPaths": true,
+              "paths": {
+                "numericPath": {
+                  "description": "Numeric Data",
+                  "path": "self.environment.inside.engineRoom.temperature",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "convertUnitTo": "celsius",
+                  "showPathSkUnitsFilter": true,
+                  "pathSkUnitsFilter": null,
+                  "sampleTime": 500
+                }
               },
-              {
-                  "uuid": "956a40e8-9097-409d-b382-5c5cfc3a413b",
-                  "type": "widget",
-                  "size": 67.2106824925816
-              }
-          ]
+              "showMax": false,
+              "showMin": false,
+              "numDecimal": 1,
+              "numInt": 1,
+              "color": "blue",
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        },
+        "x": 0,
+        "y": 8
       },
       {
-          "uuid": "400935ce-a3b0-4671-bf67-11874d10bfec",
-          "parentUUID": "0dd2388a-2e59-46ba-9af2-4203a3b97016",
-          "direction": "horizontal",
-          "splitAreas": [
-              {
-                  "uuid": "bd80f868-b1e2-46e9-a408-5cb8f1458a37",
-                  "type": "widget",
-                  "size": 25
+        "w": 5,
+        "h": 2,
+        "id": "1a7a3f79-2eb4-4092-a0c3-9a61db8a8586",
+        "selector": "widget-simple-linear",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-simple-linear",
+            "uuid": "1a7a3f79-2eb4-4092-a0c3-9a61db8a8586",
+            "config": {
+              "displayName": "House Bank",
+              "filterSelfPaths": true,
+              "paths": {
+                "gaugePath": {
+                  "description": "Numeric Data",
+                  "path": "self.electrical.batteries.0.voltage",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": true,
+                  "pathSkUnitsFilter": "V",
+                  "convertUnitTo": "V",
+                  "sampleTime": 500
+                }
               },
-              {
-                  "uuid": "7ba4e2d1-2d63-41f5-b2e9-1a41886796a4",
-                  "type": "widget",
-                  "size": 25
-              }
-          ]
+              "displayScale": {
+                "lower": 0,
+                "upper": 15,
+                "type": "linear"
+              },
+              "gauge": {
+                "type": "simpleLinear",
+                "unitLabelFormat": "full"
+              },
+              "numInt": 1,
+              "numDecimal": 2,
+              "color": "green",
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        },
+        "x": 3,
+        "y": 10
       }
-  ],
-  "rootSplits": [
-      "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-      "d735c561-d413-4f7e-93d9-2c494e16184e"
-  ]
-}
+    ]
+  },
+  {
+    "id": "7c67c8c5-dc55-4e1d-9fc5-3dd95fd41bea",
+    "name": "Charting",
+    "configuration": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 12,
+        "id": "488d620a-37d4-4b98-849d-304cd18003e9",
+        "selector": "widget-freeboardsk",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-freeboardsk",
+            "uuid": "488d620a-37d4-4b98-849d-304cd18003e9"
+          }
+        }
+      },
+      {
+        "x": 8,
+        "y": 0,
+        "w": 2,
+        "h": 3,
+        "id": "26a2a150-5af8-4f1d-aaab-0cb2a406fc17",
+        "selector": "widget-gauge-ng-compass",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-gauge-ng-compass",
+            "uuid": "26a2a150-5af8-4f1d-aaab-0cb2a406fc17",
+            "config": {
+              "displayName": "COG (T)",
+              "filterSelfPaths": true,
+              "paths": {
+                "gaugePath": {
+                  "description": "Numeric Data",
+                  "path": "self.navigation.courseOverGroundTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "isConvertUnitToConfigurable": false,
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                }
+              },
+              "gauge": {
+                "type": "ngRadial",
+                "subType": "marineCompass",
+                "enableTicks": true,
+                "compassUseNumbers": true,
+                "showValueBox": false
+              },
+              "enableTimeout": false,
+              "color": "purple",
+              "dataTimeout": 5
+            }
+          }
+        }
+      },
+      {
+        "x": 10,
+        "y": 0,
+        "w": 2,
+        "h": 3,
+        "id": "caf9ca47-fcf6-4736-a314-2b5210edaf03",
+        "selector": "widget-datetime",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-datetime",
+            "uuid": "caf9ca47-fcf6-4736-a314-2b5210edaf03",
+            "config": {
+              "displayName": "Next WP Arrival",
+              "filterSelfPaths": true,
+              "paths": {
+                "gaugePath": {
+                  "description": "String Data",
+                  "path": "self.navigation.datetime",
+                  "source": "default",
+                  "pathType": "Date",
+                  "isPathConfigurable": true,
+                  "sampleTime": 500
+                }
+              },
+              "dateFormat": "dd/MM HH:mm",
+              "dateTimezone": "America/Toronto",
+              "color": "white",
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        }
+      },
+      {
+        "x": 8,
+        "y": 3,
+        "w": 4,
+        "h": 9,
+        "id": "daa21350-009e-4d99-8209-364f9b99caee",
+        "selector": "widget-autopilot",
+        "input": {
+          "widgetProperties": {
+            "type": "widget-autopilot",
+            "uuid": "daa21350-009e-4d99-8209-364f9b99caee",
+            "config": {
+              "displayName": "N2k Autopilot",
+              "filterSelfPaths": true,
+              "paths": {
+                "apState": {
+                  "description": "Autopilot State",
+                  "path": "self.steering.autopilot.state",
+                  "source": "default",
+                  "pathType": "string",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "convertUnitTo": "",
+                  "sampleTime": 500
+                },
+                "apTargetHeadingMag": {
+                  "description": "Autopilot Target Heading Mag",
+                  "path": "self.steering.autopilot.target.headingMagnetic",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "apTargetWindAngleApp": {
+                  "description": "Autopilot Target Wind Angle Apparent",
+                  "path": "self.steering.autopilot.target.windAngleApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "headingMag": {
+                  "description": "Heading Magnetic",
+                  "path": "self.navigation.headingMagnetic",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "headingTrue": {
+                  "description": "Heading True",
+                  "path": "self.navigation.headingTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "windAngleApparent": {
+                  "description": "Wind Angle Apparent",
+                  "path": "self.environment.wind.angleApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "windAngleTrueWater": {
+                  "description": "Wind Angle True Water",
+                  "path": "self.environment.wind.angleTrueWater",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                },
+                "rudderAngle": {
+                  "description": "Rudder Angle",
+                  "path": "self.steering.rudderAngle",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "sampleTime": 500
+                }
+              },
+              "usage": {
+                "headingMag": [
+                  "wind",
+                  "route",
+                  "auto",
+                  "standby"
+                ],
+                "headingTrue": [
+                  "wind",
+                  "route",
+                  "auto",
+                  "standby"
+                ],
+                "windAngleApparent": [
+                  "wind"
+                ],
+                "windAngleTrueWater": [
+                  "wind"
+                ]
+              },
+              "typeVal": {
+                "headingMag": "Mag",
+                "headingTrue": "True",
+                "windAngleApparent": "AWA",
+                "windAngleTrueWater": "TWA"
+              },
+              "barColor": "accent",
+              "autoStart": false,
+              "enableTimeout": false,
+              "dataTimeout": 5
+            }
+          }
+        }
+      }
+    ]
+  }
+]
 
 export const DemoThemeConfig: IThemeConfig = {
   "themeName": "modern-dark"
@@ -628,16 +660,16 @@ export const DemoThemeConfig: IThemeConfig = {
 
 export const DemoConfig: IConfig = {
   "app": DemoAppConfig,
-  "widget": DemoWidgetConfig,
-  "layout": DemoLayoutConfig,
+  "dashboards": DemoDashboardsConfig,
   "theme": DemoThemeConfig,
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,
+  "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,

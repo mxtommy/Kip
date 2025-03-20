@@ -5,28 +5,29 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
-import { JsonPipe } from '@angular/common';
-import { ISkMetadata, ISkZone, States } from '../../core/interfaces/signalk-interfaces';
-import { adjustLinearScaleAndMajorTicks } from '../../utils/dataScales';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
+import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 
 @Component({
-    selector: 'app-widget-gauge-ng-linear',
+    selector: 'widget-gauge-ng-linear',
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
     standalone: true,
-    imports: [AngularResizeEventModule, GaugesModule, JsonPipe]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule]
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('linearWrapperDiv', {static: true, read: ElementRef}) private wrapper: ElementRef;
   @ViewChild('linearGauge', {static: true, read: LinearGauge}) protected linearGauge: LinearGauge;
+  @ViewChild('linearGauge', {static: true, read: ElementRef}) protected gauge: ElementRef;
 
   // Gauge text value for value box rendering
   public textValue: string = "--";
@@ -36,7 +37,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   // Gauge options
   public gaugeOptions = {} as LinearGaugeOptions;
   private isGaugeVertical: Boolean = true;
-  public height: string = "";
 
   // Zones support
   private metaSub: Subscription;
@@ -74,7 +74,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       },
       numInt: 1,
       numDecimal: 0,
-      textColor: 'accent',
+      color: 'white',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -82,25 +82,20 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit() {
-    this.initWidget();
-    this.setGaugeConfig();
-
-    const gaugeSize = this.wrapper.nativeElement.getBoundingClientRect();
-    this.isGaugeVertical = this.widgetProperties.config.gauge.subType === 'vertical';  // Save for resize event
-
-    if (this.isGaugeVertical) {
-      this.gaugeOptions.height = gaugeSize.height;
-      this.gaugeOptions.width = (gaugeSize.height * 0.3);
-      this.height = "0px";
-    }
-    else {
-      this.gaugeOptions.height = gaugeSize.width * 0.3;
-      this.gaugeOptions.width = gaugeSize.width;
-      this.height = ((gaugeSize.height - this.gaugeOptions.height) / 2).toString() + "px";
-    }
+    this.validateConfig();
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    this.gaugeOptions.height = gaugeSize.height;
+    this.gaugeOptions.width = gaugeSize.width;
   }
 
-  ngAfterViewInit() {
+  protected startWidget(): void {
+    this.setGaugeConfig();
+    this.linearGauge.update(this.gaugeOptions);
+
+    this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
+    this.metaSub?.unsubscribe();
+
     this.observeDataStream('gaugePath', newValue => {
       if (!newValue.data) {
         this.value = 0;
@@ -116,20 +111,60 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.warnDark;
+            if (this.widgetProperties.config.color != 'nobar') {
+              option.colorBarProgress = this.theme.zoneEmergency;
+              option.colorValueText = this.theme.zoneEmergency;
+            } else {
+              option.colorBarProgress = '';
+              option.colorNeedle = this.theme.zoneEmergency;
+              option.colorValueText = this.theme.zoneEmergency;
+            }
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.warnDark;
+            if (this.widgetProperties.config.color != 'nobar') {
+              option.colorBarProgress = this.theme.zoneAlarm;
+              option.colorValueText = this.theme.zoneAlarm;
+            } else {
+              option.colorBarProgress = '';
+              option.colorNeedle = this.theme.zoneAlarm;
+              option.colorValueText = this.theme.zoneAlarm;
+            }
             break;
           case States.Warn:
-            option.colorValueText = this.theme.textWarnLight;
+            if (this.widgetProperties.config.color != 'nobar') {
+              option.colorBarProgress = this.theme.zoneWarn;
+              option.colorValueText = this.theme.zoneWarn;
+            } else {
+              option.colorBarProgress = '';
+              option.colorNeedle = this.theme.zoneWarn;
+              option.colorValueText = this.theme.zoneWarn;
+            }
+            break;
+          case States.Alert:
+            if(this.widgetProperties.config.color != 'nobar') {
+              option.colorBarProgress = this.theme.zoneAlert;
+              option.colorValueText = this.theme.zoneAlert;
+            } else {
+              option.colorBarProgress = '';
+              option.colorNeedle = this.theme.zoneAlert;
+              option.colorValueText = this.theme.zoneAlert;
+            }
             break;
           default:
-            option.colorValueText = this.theme.text;
+            if (this.widgetProperties.config.color != 'nobar') {
+              option.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
+              option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
+            } else {
+              option.colorBarProgress = '';
+              option.colorNeedle = this.getColors('blue').color;
+              option.colorValueText = this.getColors('blue').color;
+            }
         }
         this.linearGauge.update(option);
       }
     });
+
+    this.observeMetaStream();
 
     this.metaSub = this.zones$.subscribe(zones => {
       if (zones && zones.length > 0) {
@@ -138,28 +173,45 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     });
   }
 
-  public onResized(event: ResizedEvent) {
-    if (!event.isFirst) {
-      //@ts-ignore
-      let resize: LinearGaugeOptions = {};
-      if (this.isGaugeVertical) {
-        resize.height = event.newRect.height;
-        resize.width = (event.newRect.height * 0.3);
-        this.height = "0px";
-      }
-      else {
-        resize.height = event.newRect.width * 0.3;
-        resize.width = event.newRect.width;
-        this.height = ((event.newRect.height - resize.height) / 2).toString() + "px";
-      }
-      this.linearGauge.update(resize);
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+  ngAfterViewInit() {
+    this.startWidget();
+  }
+
+  public onResized(event: ResizeObserverEntry) {
+    //@ts-ignore
+    let resize: LinearGaugeOptions = {};
+    if (this.widgetProperties.config.gauge.subType === 'vertical') {
+      resize.height = event.contentRect.height;
+      resize.width = (event.contentRect.height * 0.3);
     }
+    else {
+      resize.height = event.contentRect.width * 0.3;
+      resize.width = event.contentRect.width;
+    }
+    this.linearGauge.update(resize);
   }
 
   private setGaugeConfig() {
     const isVertical = this.widgetProperties.config.gauge.subType === 'vertical';
     const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+    const rect = this.gauge.nativeElement.getBoundingClientRect();
+    let height, width: number = null;
+    if (this.widgetProperties.config.gauge.subType === 'vertical') {
+      height = rect.height;
+      width = rect.height * 0.3;
+    }
+    else {
+      height = rect.width * 0.3;
+      width = rect.width;
+    }
     const defaultOptions = {
+      height: height,
+      width: width,
       minValue: scale.min,
       maxValue: scale.max,
 
@@ -168,7 +220,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       title: this.widgetProperties.config.displayName,
       fontTitleSize: 40,
-      fontTitle: "arial",
+      fontTitle: "Roboto",
       fontTitleWeight: "bold",
 
       barLength: isVertical ? 80 : 90,
@@ -183,7 +235,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
 
       units: this.widgetProperties.config.paths['gaugePath'].convertUnitTo,
-      fontUnits: "arial",
+      fontUnits: "Roboto",
       fontUnitsWeight: "normal",
       borders: false,
       borderOuterWidth: 0,
@@ -205,24 +257,24 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorValueBoxRectEnd: "",
       colorValueBoxBackground: this.theme.background,
       fontValueSize: 50,
-      fontValue: "arial",
+      fontValue: "Roboto",
       fontValueWeight: "bold",
       valueTextShadow: false,
 
       colorValueBoxShadow: "",
-      fontNumbers: "arial",
+      fontNumbers: "Roboto",
       fontNumbersWeight: "normal",
       fontUnitsSize: this.isGaugeVertical ? 40 : 35,
 
-      colorTitle: this.theme.textDark,
-      colorUnits: this.theme.text,
-      colorValueText: this.theme.text,
-      colorPlate: window.getComputedStyle(this.wrapper.nativeElement).backgroundColor,
+      colorTitle: this.getColors('white').dim,
+      colorUnits: this.getColors('white').dim,
+      colorValueText: this.getColors(this.widgetProperties.config.color).color,
+      colorPlate: this.theme.cardColor,
       colorBar: this.theme.background,
 
-      colorMajorTicks: this.theme.text,
-      colorMinorTicks: this.theme.text,
-      colorNumbers: this.theme.text,
+      colorMajorTicks: this.getColors('white').dim,
+      colorMinorTicks: this.getColors('white').dim,
+      colorNumbers: this.getColors('white').dim,
 
       colorNeedleEnd: "",
       colorNeedleShadowUp: "",
@@ -271,37 +323,70 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     let themePaletteColor = "";
     let themePaletteDarkColor = "";
 
-    switch (this.widgetProperties.config.textColor) {
-      case "text":
-        themePaletteColor = this.theme.textDark;
-        themePaletteDarkColor = this.theme.text;
+    switch (this.widgetProperties.config.color) {
+      case "white":
+        themePaletteColor = this.theme.white;
+        themePaletteDarkColor = this.theme.whiteDim;
         break;
-      case "primary":
-        themePaletteColor = this.theme.primary;
-        themePaletteDarkColor = this.theme.primaryDark;
+      case "blue":
+        themePaletteColor = this.theme.blue;
+        themePaletteDarkColor = this.theme.blueDim;
         break;
-      case "accent":
-        themePaletteColor = this.theme.accent;
-        themePaletteDarkColor = this.theme.accentDark;
+      case "green":
+        themePaletteColor = this.theme.green;
+        themePaletteDarkColor = this.theme.greenDim;
         break;
-      case "warn":
-        themePaletteColor = this.theme.warn;
-        themePaletteDarkColor = this.theme.warnDark;
+      case "pink":
+        themePaletteColor = this.theme.pink;
+        themePaletteDarkColor = this.theme.pinkDim;
+        break;
+      case "orange":
+        themePaletteColor = this.theme.orange;
+        themePaletteDarkColor = this.theme.orangeDim;
+        break;
+      case "purple":
+        themePaletteColor = this.theme.purple;
+        themePaletteDarkColor = this.theme.purpleDim;
+        break;
+      case "grey":
+        themePaletteColor = this.theme.grey;
+        themePaletteDarkColor = this.theme.greyDim;
+        break;
+      case "yellow":
+        themePaletteColor = this.theme.yellow;
+        themePaletteDarkColor = this.theme.yellowDim;
         break;
       case "nobar":
         themePaletteColor = "";
-        themePaletteDarkColor = this.theme.accentDark;
+        themePaletteDarkColor = this.theme.blue;
         break;
       default:
+        themePaletteColor = this.theme.white;
+        themePaletteDarkColor = this.theme.whiteDim;
         break;
     }
 
     Object.assign(this.gaugeOptions, {
       colorBarProgress: themePaletteColor,
-      colorBarProgressEnd: themePaletteColor,
+      colorBarProgressEnd: '',
       colorNeedle: themePaletteDarkColor,
-      needleWidth: this.widgetProperties.config.textColor === "nobar" ? 20 : 5,
+      needleWidth: this.widgetProperties.config.color === "nobar" ? 10 : 0,
     });
+  }
+
+  private getColors(color: string): { color: string, dim: string, dimmer: string } {
+    const themePalette = {
+      "white": { color: this.theme.white, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer },
+      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
+      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
+      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
+      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
+      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
+      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
+      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer },
+      "nobar": { color: this.theme.blue, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer }
+    };
+    return themePalette[color];
   }
 
   private setHighlights(zones: ISkZone[]): void {
@@ -315,19 +400,19 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       let color: string;
       switch (zone.state) {
         case States.Emergency:
-          color = this.theme.warnDark;
+          color = this.theme.zoneEmergency;
           break;
         case States.Alarm:
-          color = this.theme.warnDark;
+          color = this.theme.zoneAlarm;
           break;
         case States.Warn:
-          color = this.theme.textWarnLight;
+          color = this.theme.zoneWarn;
           break;
         case States.Alert:
-          color = this.theme.accentDark;
+          color = this.theme.zoneAlert;
           break;
         case States.Nominal:
-          color = this.theme.primaryDark;
+          color = this.theme.zoneNominal;
           break;
         default:
           color = "rgba(0,0,0,0)";
@@ -366,7 +451,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.metaSub?.unsubscribe();
   }
 }

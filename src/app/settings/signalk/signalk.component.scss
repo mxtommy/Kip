@@ -1,14 +1,11 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 
-@mixin theme-settings-sk($theme) {
-  $background: map-get($theme, background);
-  $foreground: map-get($theme, foreground);
-
-  .serverStatus {
-    background-color: mat.get-color-from-palette($background, card);
+@mixin theme($theme) {
+  .server-status {
+    background-color: var(--kip-white-dimmer-color);
     margin-top: 20px;
-    margin: 5% 5% 0% 5%;
+    margin: 1% 5% 0% 5%;
     padding: 10px 20px 20px 20px;
   }
 
@@ -19,8 +16,15 @@
     height: 150px;
     width: 100%;
     border: 2px inset;
-    border-color: mat.get-color-from-palette($foreground, text);
+    border-color: var(--kip-white-color)
   }
+}
+.connect-btn {
+  margin-left: 15px;
+}
+
+.credentials-btn {
+  margin: 7px 0px 4px 20px;
 }
 
 .connect-table {

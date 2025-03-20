@@ -1,3 +1,4 @@
+import { MatIconModule } from '@angular/material/icon';
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
@@ -8,7 +9,7 @@ import { IDeltaUpdate, DataService } from '../../core/services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { ModalUserCredentialComponent } from '../../modal-user-credential/modal-user-credential.component';
+import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -43,8 +44,8 @@ import ChartStreaming from '@robloche/chartjs-plugin-streaming';
         MatTooltip,
         MatButton,
         MatDivider,
-        NgIf,
         SlicePipe,
+        MatIconModule
     ],
 })
 
@@ -156,13 +157,13 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
     });
   }
 
-  public connectToServer() {
+  public  connectToServer() {
     if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
       this.openUserCredentialModal("Credentials required");
       return;
     }
 
-    if ((this.connectionConfig.signalKUrl !== this.appSettingsService.signalkUrl.url) || (this.connectionConfig.proxyEnabled !== this.appSettingsService.proxyEnabled )) {
+    if ((this.connectionConfig.signalKUrl !== this.appSettingsService.signalkUrl.url) || (this.connectionConfig.proxyEnabled !== this.appSettingsService.proxyEnabled ) || (this.connectionConfig.signalKSubscribeAll !== this.appSettingsService.signalKSubscribeAll )) {
       this.appSettingsService.setConnectionConfig(this.connectionConfig);
 
       if (this.connectionConfig.useSharedConfig) {

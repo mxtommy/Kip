@@ -1,0 +1,67 @@
+div[matListItemTitle] {
+  text-transform: capitalize;
+}
+
+.notification-btn-container {
+  display: inline-block;
+  width: 50%;
+  height: 48px;
+  text-align: center;
+}
+
+.notification-bottom-container {
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+}
+
+.toggle {
+  position: absolute;
+  display: block;
+  top: 50%;
+  right: -48px;
+  transform: translateY(-50%);
+
+  height: 48px;
+  width: 48px;
+  text-align: center;
+  align-content: center;
+  border-radius: 0px 20px 20px 0px;
+  background-color: var(--mat-sidenav-container-background-color);
+}
+
+.icon-alert-color {
+  --mdc-list-list-item-leading-icon-color: var(--kip-zone-alert-color);
+}
+
+.icon-warn-color {
+  --mdc-list-list-item-leading-icon-color: var(--kip-zone-warn-color);
+}
+
+.icon-alarm-color {
+  --mdc-list-list-item-leading-icon-color: var(--kip-zone-alarm-color);
+}
+
+.icon-emergency-color {
+  --mdc-list-list-item-leading-icon-color: var(--kip-zone-emergency-color);
+}
+
+.navbar-button:not(:disabled) {
+  color: var(--sys-on-background);
+}
+
+ // Blink button on Alarm or Emergency state
+ .alarm-emergency-blink {
+  animation: blinking-emergency 1.5s infinite;
+}
+
+@keyframes blinking-emergency {
+  0%{		background-color: var(--kip-zone-alarm-color);	}
+  50%{	background-color: transparent;	}
+  100%{	background-color: var(--kip-zone-alarm-color);	}
+}
+
+// Change icon color based on warn state
+.warn {
+  color: var(--kip-zone-warn-color);
+}

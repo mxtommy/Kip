@@ -1,5 +1,5 @@
-import { Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject, delay, Observable , retryWhen, Subject, takeUntil, tap } from 'rxjs';
+import { inject, Injectable, NgZone } from '@angular/core';
+import { BehaviorSubject, delay, Observable, of, retry, Subject, takeUntil, Subscription } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
@@ -51,8 +51,11 @@ export class SignalKDeltaService {
 
   // Websocket config
   private endpointWS: string = null;
-  private WS_RECONNECT_INTERVAL = 5000;                 // connection error retry interval
-  private WS_CONNECTION_ARGUMENT = "?subscribe=all&sendMeta=all"; // default but we could use none + specific paths in the future
+  private SubscriptionType: string = "self";
+  private readonly WS_RECONNECT_INTERVAL = 3000;                 // connection error retry interval
+  private readonly WS_RETRY_COUNT = 3;                 // connection error retry interval
+  private readonly WS_CONNECTION_SUBSCRIBE = "?subscribe=";
+  private readonly WS_CONNECTION_META = "&sendMeta=all"; // default but we could use none + specific paths in the future
   private socketWS$: WebSocketSubject<any>;
   public socketWSCloseEvent$ = new Subject<CloseEvent>();
   public socketWSOpenEvent$ = new Subject<Event>();
@@ -66,37 +69,39 @@ export class SignalKDeltaService {
   // Array to store the timeout IDs
   private timeoutIds: NodeJS.Timeout[] = [];
 
-  constructor(
-    private server: SignalKConnectionService,
-    private auth: AuthenticationService,
-    private zones: NgZone // NgZone to run outside Angular zone - NOT to be confused with SK zones
-    )
+  private server = inject(SignalKConnectionService);
+  private auth = inject(AuthenticationService);
+  private zones = inject(NgZone); // NgZone to run outside Angular zone - NOT to be confused with SK zones
+
+  constructor()
     {
       // Monitor Connection Service Endpoint Status
       this.server.serverServiceEndpoint$
         .pipe(takeUntil(this._destroyed$))
         .subscribe((endpointStatus: IEndpointStatus) => {
         let reason: string = null;
-        if (endpointStatus.operation === 2) {
-          reason = "New endpoint";
-        } else {
-          reason = "Connection stopped";
-        }
-
-        if (endpointStatus.operation === 2) {
-          this.endpointWS = endpointStatus.WsServiceUrl;
-
-          if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
-            this.closeWS(reason);
+          if (endpointStatus.operation === 2) {
+            reason = "New endpoint";
+          } else {
+            reason = "Connection stopped";
           }
 
-          this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
+          if (endpointStatus.operation === 2) {
+            this.endpointWS = endpointStatus.WsServiceUrl;
 
-        } else {
-          if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
-            this.closeWS(reason);
+            if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
+              this.closeWS(reason);
+            }
+
+            this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
+
+          } else {
+            if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
+              this.closeWS(reason);
+            }
           }
-        }
+
+          endpointStatus.subscribeAll ? this.SubscriptionType = "all" : this.SubscriptionType = "self"; // set subscription type
         });
 
       // Monitor Token changes
@@ -165,19 +170,20 @@ export class SignalKDeltaService {
     this.streamEndpoint$.next(this.streamEndpoint);
 
     this.socketWS$ = this.getNewWebSocket();
-    // Every WebSocket onmessage listener event (data coming in) generates fires a ChangeDetection cycles that is not relevant in KIP. KIP sends socket messages to internal service data array only, so no UI updates (change detection) are necessary. UI Updates observing the internal data array updates. Running outside zones.js to eliminate unnecessary changedetection cycle.
+
+    // Running outside Angular's zone to prevent unnecessary change detection cycles
     this.zones.runOutsideAngular(() => {
       this.socketWS$.pipe(
-        retryWhen(errors =>
-          errors.pipe(
-            tap(err => {
-              console.error("[Delta Service] WebSocket error: " + JSON.stringify(err, ["code", "message", "type"]))
-            }),
-            delay(this.WS_RECONNECT_INTERVAL)
-          )
-        )
-      ).subscribe(msgWS => {
-        this.processWebsocketMessage(msgWS);
+        retry({
+          count: this.WS_RETRY_COUNT,
+          delay: (error, retryCount) => {
+            console.error(`[Delta Service] WebSocket error (attempt ${retryCount}): ${JSON.stringify(error, ["code", "message", "type"])}`);
+            return of(error).pipe(delay(this.WS_RECONNECT_INTERVAL));
+          }
+        })
+      ).subscribe({
+        next: msgWS => this.processWebsocketMessage(msgWS),
+        error: err => console.error('[Delta Service] WebSocket connection failed after maximum retries:', err)
       });
     });
   }
@@ -186,12 +192,11 @@ export class SignalKDeltaService {
    * Handles connection arguments, token and links socket Open/Close Observers
    */
   private getNewWebSocket() {
-    let args: string;
+    let args = this.WS_CONNECTION_SUBSCRIBE + this.SubscriptionType + this.WS_CONNECTION_META;
     if (this.authToken != null) {
-      args = this.WS_CONNECTION_ARGUMENT + "&token=" + this.authToken.token;
+      args += "&token=" + this.authToken.token;
       this.streamEndpoint.hasToken = true;
     } else {
-      args = this.WS_CONNECTION_ARGUMENT;
       this.streamEndpoint.hasToken = false;
     }
     return webSocket({

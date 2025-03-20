@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
@@ -14,17 +16,17 @@ import { NgFor, NgIf } from '@angular/common';
 
 
 @Component({
-    selector: 'app-widget-boolean-switch',
+    selector: 'widget-boolean-switch',
     templateUrl: './widget-boolean-switch.component.html',
-    styleUrls: ['./widget-boolean-switch.component.css'],
+    styleUrls: ['./widget-boolean-switch.component.scss'],
     standalone: true,
-    imports: [AngularResizeEventModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;
   @ViewChild('widgetContainer', {static: true, read: ElementRef}) widgetContainerElement: ElementRef;
 
-  public switchControls: IDynamicControl[] = [];
+  public switchControls: IDynamicControl[] = null;
   private skRequestSub = new Subscription; // Request result observer
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -47,7 +49,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         paths: [],
         enableTimeout: false,
         dataTimeout: 5,
-        textColor: "text",
+        color: "white",
         putEnable: true,
         putMomentary: false,
         multiChildCtrls: []
@@ -55,13 +57,18 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
     this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
-    this.getColors(this.widgetProperties.config.textColor);
+    this.getColors(this.widgetProperties.config.color);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
     this.resizeWidget();
 
     // Build control array
+    this.switchControls = [];
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
       if (!ctrlConfig.isNumeric) {
         ctrlConfig.isNumeric = false;
@@ -71,6 +78,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     );
 
     // Start Observers as path Array
+    this.unsubscribeDataStream();
     for (const key in this.switchControls) {
       if (Object.prototype.hasOwnProperty.call(this.switchControls, key)) {
         const path = this.switchControls[key];
@@ -87,14 +95,20 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     }
 
     // Listen to PUT response msg
+    this.skRequestSub?.unsubscribe();
     this.subscribeSKRequest();
   }
 
-  onResized(event: ResizedEvent) {
-    let calcH: number = event.newRect.height / this.nbCtrl; // divide by number of instantiated widget
-    let ctrlHeightProportion = (35 * event.newRect.width / 180); //check control height not over width proportions
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+  onResized(event: ResizeObserverEntry): void {
+    let calcH: number = event.contentRect.height / this.nbCtrl; // divide by number of instantiated widget
+    let ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
     let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
-    this.ctrlDimensions = { width: event.newRect.width, height: h};
+    this.ctrlDimensions = { width: event.contentRect.width, height: h};
     this.resizeWidget();
   }
 
@@ -156,10 +170,10 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     if (this.widgetProperties.config.displayName === null) { return; }
     let fontSize = 1;
 
-    this.canvasLabelCtx.font = 'bold ' + fontSize.toString() + 'px Arial'; // need to init it, so we do loop at least once :)
+    this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto'; // need to init it, so we do loop at least once :)
     while ( (this.canvasLabelCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
         fontSize++;
-        this.canvasLabelCtx.font = 'bold ' + fontSize.toString() + 'px Arial';
+        this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto';
     }
 
     this.canvasLabelCtx.textAlign = 'left';
@@ -176,30 +190,38 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): void {
     switch (color) {
-      case "text":
-        this.labelColor = this.theme.textDark;
+      case "white":
+        this.labelColor = this.theme.whiteDim;
         break;
-
-      case "primary":
-        this.labelColor = this.theme.textPrimaryDark;
+      case "blue":
+        this.labelColor = this.theme.blueDim;
         break;
-
-      case "accent":
-        this.labelColor = this.theme.textAccentDark;
+      case "green":
+        this.labelColor = this.theme.greenDim;
         break;
-
-      case "warn":
-        this.labelColor = this.theme.textWarnDark;
+      case "pink":
+        this.labelColor = this.theme.pinkDim;
         break;
-
+      case "orange":
+        this.labelColor = this.theme.orangeDim;
+        break;
+      case "purple":
+        this.labelColor = this.theme.purpleDim;
+        break;
+      case "grey":
+        this.labelColor = this.theme.greyDim;
+        break;
+      case "yellow":
+        this.labelColor = this.theme.yellowDim;
+        break;
       default:
-        this.labelColor = this.theme.textDark;
+        this.labelColor = this.theme.whiteDim;
         break;
     }
   }
 
   ngOnDestroy(): void {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
   }
 }

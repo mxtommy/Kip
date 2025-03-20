@@ -1,43 +1,15 @@
-import { IConfig ,IAppConfig, IConnectionConfig, ILayoutConfig, IThemeConfig, IWidgetConfig } from "../app/core/interfaces/app-settings.interfaces"
+import { IConfig ,IAppConfig, IConnectionConfig, IThemeConfig } from "../app/core/interfaces/app-settings.interfaces"
 import { DefaultNotificationConfig } from './config.blank.notification.const';
 import { DefaultUnitsConfig } from "./config.blank.units.const";
-import { UUID } from "../app/utils/uuid";
+import { UUID } from "../app/core/utils/uuid";
 
 export const DefaultAppConfig: IAppConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "autoNightMode": false,
+  "nightModeBrightness": 0.27,
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,
-}
-
-export const DefaultWidgetConfig: IWidgetConfig = {
-  "widgets": [
-    {
-      "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
-      "type": "WidgetTutorial",
-      "config": null
-    }
-  ]
-}
-
-export const DefaultLayoutConfig: ILayoutConfig = {
-  "rootSplits": [
-    "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  ],
-  "splitSets": [
-    {
-      "uuid": "isplitsx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
-      "direction": "horizontal",
-      "splitAreas": [
-        {
-          "uuid": "widgetno-1xxx-4xxx-yxxx-xxxxxxxxxxxx",
-          "type": "widget",
-          "size": 100
-        }
-      ]
-    }
-  ]
 }
 
 export const DefaultThemeConfig: IThemeConfig = {
@@ -46,16 +18,16 @@ export const DefaultThemeConfig: IThemeConfig = {
 
 export const defaultConfig: IConfig = {
   "app": DefaultAppConfig,
-  "widget": DefaultWidgetConfig,
-  "layout": DefaultLayoutConfig,
-  "theme": DefaultThemeConfig
+  "theme": DefaultThemeConfig,
+  "dashboards": []
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {
-  "configVersion": 10,
+  "configVersion": 11,
   "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,
+  "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
   "loginPassword": null,

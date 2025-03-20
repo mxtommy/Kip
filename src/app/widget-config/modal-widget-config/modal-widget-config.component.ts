@@ -4,21 +4,21 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialog, MatDialogTitle, MatDialogCont
 
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
-import { MatOption, MatOptgroup } from '@angular/material/core';
+import { MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
 
 import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
+import { AppService } from '../../core/services/app-service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
-import { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
@@ -28,7 +28,7 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     templateUrl: './modal-widget-config.component.html',
     styleUrls: ['./modal-widget-config.component.css'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, NgIf, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatRadioGroup, MatRadioButton, NgFor, MatOptgroup, MatDivider, MatDialogActions, MatButton, MatDialogClose,
+    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, NgIf, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose,
       DisplayDatetimeComponent,
       DisplayChartOptionsComponent,
       DatasetChartOptionsComponent,
@@ -44,6 +44,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
   public isPathArray: boolean = false;
   public addPathEvent: IWidgetPath;
+  public colors = [];
 
   constructor(
     public dialog: MatDialog,
@@ -51,6 +52,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     private fb : UntypedFormBuilder,
     private DatasetService: DatasetService,
     private units: UnitsService,
+    private app: AppService,
     @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
   ) { }
 
@@ -59,6 +61,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
     this.setFormOptions();
+    this.colors = this.app.configurableThemeColors;
   }
 
   private generateFormGroups(formData: Object, parent?: string): UntypedFormGroup {
@@ -209,36 +212,6 @@ export class ModalWidgetConfigComponent implements OnInit {
       const ctrlGrp = this.formMaster.get('paths.courseOverGround');
       this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
     }
-
-    if (this.formMaster.contains('windSectorEnable')) {
-      const checkCtrl = this.formMaster.get('windSectorEnable');
-      const valCtrl = this.formMaster.get('windSectorWindowSeconds');
-
-      checkCtrl.value ? valCtrl.enable() : valCtrl.disable();
-
-      checkCtrl.valueChanges.subscribe(v => {
-        if (v) {
-          valCtrl.enable();
-        } else {
-          valCtrl.disable();
-        }
-      });
-    }
-
-    if (this.formMaster.contains('laylineEnable')) {
-      const checkCtrl = this.formMaster.get('laylineEnable');
-      const valCtrl = this.formMaster.get('laylineAngle');
-
-      checkCtrl.value ? valCtrl.enable() : valCtrl.disable();
-
-      checkCtrl.valueChanges.subscribe(v => {
-        if (v) {
-          valCtrl.enable();
-        } else {
-          valCtrl.disable();
-        }
-      });
-    }
   }
 
   get convertUnitToControl(): UntypedFormControl {
@@ -349,8 +322,8 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('verticalGraph') as UntypedFormControl;
   }
 
-  get textColorToControl(): UntypedFormControl {
-    return this.formMaster.get('textColor') as UntypedFormControl;
+  get colorToControl(): UntypedFormControl {
+    return this.formMaster.get('color') as UntypedFormControl;
   }
 
   get dateFormatToControl(): UntypedFormControl {

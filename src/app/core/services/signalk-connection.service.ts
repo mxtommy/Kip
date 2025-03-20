@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, lastValueFrom } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { BehaviorSubject, catchError, lastValueFrom, throwError, timeout } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ISignalKUrl } from '../interfaces/app-settings.interfaces';
 
@@ -34,13 +34,14 @@ export interface IEndpointStatus {
   serverDescription: string;
   httpServiceUrl: string;
   WsServiceUrl: string;
+  subscribeAll?: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalKConnectionService {
-
+  private readonly TIMEOUT_DURATION = 10000;
 
   public serverServiceEndpoint$: BehaviorSubject<IEndpointStatus> = new BehaviorSubject<IEndpointStatus>({
     operation: 0,
@@ -55,26 +56,27 @@ export class SignalKConnectionService {
   private serverName: string;
   public serverVersion$ = new BehaviorSubject<string>(null);
   private serverRoles: Array<string> = [];
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  //// constructor, mostly sub to stuff for changes.
-  constructor(
-      private http: HttpClient
-    )
-  {
-  }
+  private http = inject(HttpClient);
 
   /**
-   * Retrieves and publishes target server information and supported service
-   * endpoint addresses.
-   *
-   * @UsageNote Resetting connection is a trigger for many
-   * services & components (Delta, Signalk-Settings, etc.).
-   *
-   * @return {*}  {Promise<void>}
-   * @memberof SignalKConnectionService
-   */
-  public async resetSignalK(skUrl: ISignalKUrl, proxyEnabled?: boolean): Promise<void> {
+ * Retrieves and publishes target server information and supported service
+ * endpoint addresses.
+ *
+ * This method resets the Signal K connection by connecting to the specified
+ * Signal K server URL, retrieving the server's endpoint information, and
+ * publishing the server's status and endpoint addresses. It also handles
+ * proxy mode if enabled and sets the delta service subscription mode.
+ *
+ * @UsageNote Resetting the connection is a trigger for many
+ * services & components (Delta, Settings, etc.).
+ *
+ * @param {ISignalKUrl} skUrl - The Signal K server URL object.
+ * @param {boolean} [proxyEnabled] - Optional flag to enable proxy mode.
+ * @param {boolean} [subscribeAll] - Optional flag to subscribe to all Delta messages. If false, only subscribes to self.*.
+ * @return {Promise<void>} - A promise that resolves when the operation is complete.
+ * @memberof SignalKConnectionService
+ */
+  public async resetSignalK(skUrl: ISignalKUrl, proxyEnabled?: boolean, subscribeAll?: boolean): Promise<void> {
     if (!skUrl.url) {
       console.log("[Connection Service] Connection reset called with null or empty URL value");
       return;
@@ -98,7 +100,17 @@ export class SignalKConnectionService {
 
     try {
       console.log("[Connection Service] Connecting to: " + this.signalKURL.url);
-      const endpointResponse = await lastValueFrom(this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}));
+      const endpointResponse = await lastValueFrom(
+        this.http.get<ISignalKEndpointResponse>(fullURL, {observe: 'response'}).pipe(
+          timeout(this.TIMEOUT_DURATION),
+          catchError(err => {
+            if (err.name === 'TimeoutError') {
+              console.error('[Connection Service] Connection request timed out after ' + this.TIMEOUT_DURATION + 'ms');
+            }
+            return throwError(err);
+          })
+        )
+      );
 
       console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
       this.serverVersion$.next(endpointResponse.body.server.version);
@@ -126,6 +138,7 @@ export class SignalKConnectionService {
       serverServiceEndpoints.message = error.message;
       this.handleError(error);
     } finally {
+      subscribeAll ? serverServiceEndpoints.subscribeAll = true : serverServiceEndpoints.subscribeAll = false;
       this.serverServiceEndpoint$.next(serverServiceEndpoints);
     }
   }

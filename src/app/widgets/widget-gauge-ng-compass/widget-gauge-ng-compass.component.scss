@@ -1,8 +1,16 @@
-.ngCompassWrapper {
+::ng-deep radial-gauge {
+  display: block;
   position: relative;
-  top: 2%;
-  left: 2%;
-  width: 96%;
-  height: 96%;
-  text-align: center;
- }
+  width: 100%;
+  height: 100%;
+  > canvas {
+    display: block;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 10px;
+  }
+}

@@ -1,4 +1,5 @@
-<div class="sgWrapper" #sgWrapperDiv (resized)="onResized($event)">
-  <canvas class="canvas-steel" id="{{widgetUUID}}" width="201" height="201">Browser does not support canvas element.</canvas>
+<div class="wrapper" (onResize)="onResized($event)">
+  <canvas #gauge id="{{widgetUUID}}" style="z-index: inherit;">
+    Browser does not support canvas element.
+  </canvas>
 </div>
-

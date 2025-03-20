@@ -1,16 +1,19 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, inject } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgWindComponent } from '../svg-wind/svg-wind.component';
 
 
 @Component({
-    selector: 'app-widget-wind',
+    selector: 'widget-wind-steer',
     templateUrl: './widget-wind.component.html',
     standalone: true,
-    imports: [SvgWindComponent]
+    imports: [ SvgWindComponent, WidgetHostComponent ]
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
+  private zones = inject(NgZone);
   currentHeading: number = 0;
   courseOverGroundAngle: number = 0;
   appWindAngle: number = 0;
@@ -28,7 +31,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   private windSectorObservableSub: Subscription = null;
 
-  constructor(private zones: NgZone) {
+  constructor() {
     super();
 
     this.defaultConfig = {
@@ -125,7 +128,14 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
    }
 
   ngOnInit(): void {
-    this.initWidget();
+    this.validateConfig();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
+    this.unsubscribeDataStream();
+    this.stopWindSectors();
+
     this.observeDataStream('headingPath', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
         newValue.data.value = 0
@@ -147,7 +157,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         this.waypointAngle = newValue.data.value;
       }
     }
-  );
+    );
 
     this.observeDataStream('appWindAngle', newValue => {
         if (newValue.data.value == null) { // act upon data timeout of null
@@ -205,8 +215,14 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     this.startWindSectors();
   }
 
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+  }
+
+
   ngOnDestroy() {
-    this.unsubscribeDataStream();
+    this.destroyDataStreams();
     this.stopWindSectors();
   }
 
@@ -255,8 +271,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   stopWindSectors() {
-
-      this.windSectorObservableSub?.unsubscribe();
+    this.windSectorObservableSub?.unsubscribe();
   }
 
   addHeading(h1: number, h2: number) {

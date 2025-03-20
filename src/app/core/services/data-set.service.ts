@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
-import { UUID } from'../../utils/uuid'
+import { UUID } from'../utils/uuid'
 import { cloneDeep } from 'lodash-es';
 
 

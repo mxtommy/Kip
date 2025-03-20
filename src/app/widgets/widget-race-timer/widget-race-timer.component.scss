@@ -1,4 +1,4 @@
-.wrapper {
+.raceWrapper {
   height: 100%;
   width: 100%;
 }
@@ -8,6 +8,7 @@
     height: 100%;
     top: 0;
     left: 0;
+    z-index: inherit;
 }
 
 .timerBarContainer {
@@ -29,6 +30,7 @@
 .timer-button-groups {
   min-width: 247px;
   max-width: 100%;
+  --mdc-filled-button-container-shape: 5px;
 }
 
 .timer-adjusters-group {
@@ -59,4 +61,3 @@
 .timer-adjust-buttons {
   width: calc(30% - 10px);
 }
-

@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash-es';
 import { Component, DoCheck, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IDynamicControl, ITheme } from '../../core/interfaces/widgets-interface';
+import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
+import type { ITheme } from '../../core/services/app-service';
 
 interface IDimensions {
   height: number,
@@ -68,31 +69,50 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
 
   private getColors(color: string): void {
     switch (color) {
-      case "text":
-        this.labelColorEnabled = "black";
-        this.labelColorDisabled = this.theme.text;
-        this.valueColor = this.theme.text;
+      case "white":
+        this.labelColorEnabled = 'black';
+        this.labelColorDisabled = this.theme.whiteDim;
+        this.valueColor = this.theme.white;
         break;
-
-      case "primary":
-        this.labelColorEnabled = this.theme.text;
-        this.labelColorDisabled = this.theme.textPrimaryLight;
-        this.valueColor = this.theme.textPrimaryLight;
+      case "blue":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.blueDim;
+        this.valueColor = this.theme.blue;
         break;
-
-      case "accent":
-        this.labelColorEnabled = this.theme.text;
-        this.labelColorDisabled = this.theme.textAccentLight;
-        this.valueColor = this.theme.textAccentLight;
+      case "green":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.greenDim;
+        this.valueColor = this.theme.green;
         break;
-
-      case "warn":
-        this.labelColorEnabled = this.theme.text;
-        this.labelColorDisabled = this.theme.textWarnLight;
-        this.valueColor = this.theme.textWarnLight;
+      case "pink":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.pinkDim;
+        this.valueColor = this.theme.pink;
         break;
-
+      case "orange":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.orangeDim;
+        this.valueColor = this.theme.orange;
+        break;
+      case "purple":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.purpleDim;
+        this.valueColor = this.theme.purple;
+        break;
+      case "grey":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.greyDim;
+        this.valueColor = this.theme.grey;
+        break;
+      case "yellow":
+        this.labelColorEnabled = this.theme.white;
+        this.labelColorDisabled = this.theme.yellowDim;
+        this.valueColor = this.theme.yellow;
+        break;
       default:
+        this.labelColorEnabled = 'black';
+        this.labelColorDisabled = this.theme.whiteDim;
+        this.valueColor = this.theme.white;
         break;
     }
   }

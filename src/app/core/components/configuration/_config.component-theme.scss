@@ -1,0 +1,22 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin dark-color($theme) {
+  .flex-item-upgrade-color {
+    background-color: var(--kip-port-color);
+  }
+}
+
+@mixin light-color($theme) {
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    $theme-type: mat.get-theme-type($theme);
+    @if $theme-type == dark {
+      @include dark-color($theme);
+    } @else {
+      @include light-color($theme);
+    }
+  }
+}

@@ -1,0 +1,33 @@
+.page-scroll-title {
+  position: absolute;
+  top: 50%;
+  right: 54px;
+  transform: translate(0%, -50%);
+  z-index: 100;
+  cursor: default;
+  text-align: center;
+  padding: 10px;
+  color: var(--sys-tertiary);
+}
+
+.page-scroll-page-number {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translate(0%, -50%);
+  z-index: 100;
+  cursor: default;
+  display: grid;
+  padding: 0px;
+}
+
+.page-scroll-container {
+  opacity: 0;
+  background-color: var(--sys-inverse-on-surface);
+  border-radius: 10px;
+  border: 1px solid var(--sys-inverse-on-surface);
+}
+
+.page-icon {
+  transform: scale(0.75);
+}

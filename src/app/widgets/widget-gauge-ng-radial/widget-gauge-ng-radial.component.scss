@@ -1,0 +1,14 @@
+::ng-deep radial-gauge {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  > canvas {
+    display: block;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0px;
+    top: 0px;
+  }
+}

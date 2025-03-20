@@ -1,0 +1,27 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+gauge-steel {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+::ng-deep .wrapper {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  > canvas {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}

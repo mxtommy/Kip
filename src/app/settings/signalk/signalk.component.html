@@ -1,129 +1,118 @@
-<div class="mat-typography">
-  <form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
-    <h1>Connection</h1>
-    <p class="mat-card-subtitle">Set server connection properties, Sign in credential and manage Device Authorization token.</p>
-
-    <table class="connect-table">
-      <tr class="connect-table">
-        <td class="url-cell">
-          <mat-form-field class="connectUrlInput">
-            <mat-label>Signal K URL</mat-label>
-            <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
-            <mat-error>
-              Valid URL is required. Ex. "https://demo.signalK.org" or "http://my.server.com:3000"
-            </mat-error>
-          </mat-form-field>
-        </td>
-        <td class="connect-cell">
-          <button mat-raised-button type="submit" color="accent" class="formActionButton" [disabled]="!connectionForm.form.valid">
-            Connect
-          </button>
-        </td>
-      </tr>
-      <tr class="connect-table">
-        <td colspan="2">
-          <mat-checkbox [(ngModel)]="connectionConfig.proxyEnabled" [ngModelOptions]="{standalone: false}" name="isProxyEnabled">Signal K server is behind a Proxy</mat-checkbox>
-        </td>
-      </tr>
-      <tr class="connect-table">
-        <td colspan="2">
-          <mat-divider class="formActionDivider"></mat-divider>
-          <mat-slide-toggle style="padding-bottom: 10px;" #useSharedConfigToggle
-            name="useSharedConfigToggle"
-            matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
-            [(ngModel)]="connectionConfig.useSharedConfig"
-            [ngModelOptions]="{standalone: true}"
-            [disabled]="!connectionConfig.signalKUrl"
-            (change)="useSharedConfigToggleClick($event)"
-            color="primary">
-              Signal K Authentication
-          </mat-slide-toggle>
-          <button style="margin-left: 20px;" mat-raised-button type="button" color="accent" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
-            Set Credentials
-          </button>
-        </td>
-      </tr>
-    </table>
-
-    <br/>
-    <div >
-      <span *ngIf="(!connectionConfig.useSharedConfig && (authToken && !isLoggedIn))">
-        <mat-divider class="formActionDivider"></mat-divider>
-        <p>Device Authorization token</p>
-        <button style="margin-left: 25px;" color="primary" class="formActionButton" matTooltip="Delete Signal K Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
-          Delete Token
+<form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
+  <br />
+  <table class="connect-table">
+    <tr class="connect-table">
+      <td class="url-cell">
+        <mat-form-field class="connectUrlInput">
+          <mat-label>Signal K URL</mat-label>
+          <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
+          <mat-error>
+            Valid URL is required. Ex. "https://demo.signalK.org" or "http://my.server.com:3000"
+          </mat-error>
+        </mat-form-field>
+      </td>
+      <td class="connect-cell">
+        <button mat-flat-button class="connect-btn" type="submit" [disabled]="!connectionForm.form.valid">
+          Connect
         </button>
-      </span>
-      <span *ngIf="(!connectionConfig.useSharedConfig && (!authToken))">
-        <mat-divider class="formActionDivider"></mat-divider>
-        <p>Device Authorization token</p>
-        <button style="margin-left: 25px;" mat-raised-button type="button" color="primary" matTooltip="Request a Device Authorization token. EXPLANATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotely. USAGE: Once a Device Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
-          Request Token
+      </td>
+    </tr>
+    <tr class="connect-table">
+      <td colspan="2">
+        <mat-checkbox [(ngModel)]="connectionConfig.proxyEnabled" [ngModelOptions]="{standalone: false}" name="isProxyEnabled">Signal K server is behind a Proxy</mat-checkbox>
+      </td>
+    </tr>
+    <tr class="connect-table">
+      <td colspan="2">
+        <mat-divider></mat-divider>
+        <mat-slide-toggle #useSharedConfigToggle
+          name="useSharedConfigToggle"
+          matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
+          [(ngModel)]="connectionConfig.useSharedConfig"
+          [ngModelOptions]="{standalone: true}"
+          [disabled]="!connectionConfig.signalKUrl"
+          (change)="useSharedConfigToggleClick($event)">
+            Login to server
+        </mat-slide-toggle>
+        <button mat-flat-button type="button" class="credentials-btn" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
+          Set Credential
         </button>
-      </span>
+        <br />
+        <mat-checkbox [(ngModel)]="connectionConfig.signalKSubscribeAll" [ngModelOptions]="{standalone: false}" name="signalKSubscribeAll">Subscribe to remote sources messages such as AIS and DSC targets. <i>Warning: this maybe generate heavy traffic.</i></mat-checkbox>
+      </td>
+    </tr>
+  </table>
+  <div>
+    @if (!connectionConfig.useSharedConfig && (authToken && !isLoggedIn)) {
+      <mat-divider style="padding-bottom: 10px;"></mat-divider>
+      <p>Device Authorization token</p>
+      <button mat-flat-button style="margin-left: 25px;" matTooltip="Delete Signal K Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
+        Delete Token
+      </button>
+    }
+    @if (!connectionConfig.useSharedConfig && (!authToken)) {
+      <mat-divider style="padding-bottom: 10px;"></mat-divider>
+      <p>Device Authorization token</p>
+      <button mat-flat-button style="margin-left: 25px;" matTooltip="Request a Device Authorization token. EXPLANATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotely. USAGE: Once a Device Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
+        Request Token
+      </button>
+    }
+  </div>
+</form>
+
+<div class="server-status">
+  <p class="mat-card-subtitle" style="margin: 0px;">
+    <strong>Connection Status</strong>
+  </p>
+  <div class="flex-container">
+    <div class="flex-item-detail">
+      <table class="fit">
+        <tr>
+          <td class="mat-card-subtitle tableCellLabel">
+            Version:
+          </td>
+          <td class="mat-card-subtitle tableCellData">
+            {{ endpointServiceStatus.serverDescription }}
+          </td>
+        </tr>
+        <tr>
+          <td class="mat-card-subtitle tableCellLabel">
+            Authorization:
+          </td>
+          <td class="mat-card-subtitle tableCellData">
+            @if (authToken) {
+              @if (authToken.isDeviceAccessToken) {
+                Device Access Token
+              } @else {
+                Session Token
+              }
+              Token: {{authToken.token| slice : 0 : 20}}...
+            }
+            @if (!authToken) {
+              No Authorization Token
+            }
+          </td>
+        </tr>
+        <tr>
+          <td class="mat-card-subtitle tableCellLabel">
+            API Endpoint:
+          </td>
+          <td class="mat-card-subtitle tableCellData">
+            {{ endpointServiceStatus.message }}
+          </td>
+        </tr>
+        <tr>
+          <td class="mat-card-subtitle tableCellLabel">
+            Data Stream:
+          </td>
+          <td class="mat-card-subtitle tableCellData">
+            {{ streamStatus.message }} - Token: {{ streamStatus.hasToken }}
+          </td>
+        </tr>
+      </table>
     </div>
-  </form>
-
-  <div class="serverStatus">
-    <h3 class="mat-card-subtitle" style="margin: 0px;">
-      Connection Status
-    </h3>
-    <div class="flex-container">
-      <div class="flex-item-detail">
-        <table class="fit">
-          <tr>
-            <td class="mat-card-subtitle tableCellLabel">
-              Version:
-            </td>
-            <td class="mat-card-subtitle tableCellData">
-              {{ endpointServiceStatus.serverDescription }}
-            </td>
-          </tr>
-          <tr>
-            <td class="mat-card-subtitle tableCellLabel">
-              Authorization:
-            </td>
-            <td class="mat-card-subtitle tableCellData">
-              <div *ngIf="authToken">
-
-                <div *ngIf="!authToken.isDeviceAccessToken">
-                  Type: Session
-                </div>
-                <div *ngIf="authToken.isDeviceAccessToken">
-                  Type: Device Access
-                </div>
-                Token: {{authToken.token| slice : 0 : 20}}...
-              </div>
-              <div *ngIf="!authToken">
-                No Authorization Token
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="mat-card-subtitle tableCellLabel">
-              API Endpoint:
-            </td>
-            <td class="mat-card-subtitle tableCellData">
-              <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="endpointServiceStatus.operation === 2"></i>
-              <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="endpointServiceStatus.operation !== 2"></i>
-              {{ endpointServiceStatus.message }}
-            </td>
-          </tr>
-          <tr>
-            <td class="mat-card-subtitle tableCellLabel">
-              Data Stream:
-            </td>
-            <td class="mat-card-subtitle tableCellData">
-              <i class="fa-solid fa-check" style="color:green;" aria-hidden="true" *ngIf="streamStatus.operation === 2"></i>
-              <i class="fa-solid fa-times-circle" style="color:red;" aria-hidden="true" *ngIf="streamStatus.operation !== 2"></i>
-              {{ streamStatus.message }} - Token: {{ streamStatus.hasToken }}
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div class="flex-item-chart">
-        <canvas #lineGraph></canvas>
-      </div>
+    <div class="flex-item-chart">
+      <canvas style="z-index: inherit;" #lineGraph></canvas>
     </div>
   </div>
 </div>

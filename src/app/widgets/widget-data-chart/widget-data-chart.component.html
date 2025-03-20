@@ -1,4 +1,3 @@
-<div class="chart-wrapper">
-  <canvas #widgetDataChart
-  ></canvas>
-</div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <canvas style="z-index: inherit;" #widgetDataChart></canvas>
+</widget-host>

@@ -1,24 +1,14 @@
-<div id="{{widgetProperties.uuid}}" #simpleLinear style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
-
-<svg-simple-linear-gauge class="simpleLinearGauge"
-  [displayName]="widgetProperties.config.displayName"
-  [displayNameColor]="theme.textDark"
-  [unitLabel]="unitsLabel"
-  [dataValue]="dataLabelValue"
-  [barColor]="barColor"
-  [barColorGradient]="barColorGradient"
-  [barColorBackground]="barColorBackground"
-  [gaugeValue]="dataLabelValue"
-  [gaugeMaxValue]="widgetProperties.config.displayScale.upper"
-  [gaugeMinValue]="widgetProperties.config.displayScale.lower"
-  ></svg-simple-linear-gauge>
-
-<div #primary class='primary' style="display: none;"></div>
-<div #accent class='accent' style="display: none;"></div>
-<div #warn class='warn' style="display: none;"></div>
-<div #primaryDark class='primaryDark' style="display: none;"></div>
-<div #accentDark class='accentDark' style="display: none;"></div>
-<div #warnDark class='warnDark' style="display: none;"></div>
-<div #background class='background' style="display: none;"></div>
-<div #text class='text' style="display: none;"></div>
-</div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+    <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
+      [displayName]="widgetProperties.config.displayName"
+      [displayNameColor]="theme.whiteDim"
+      [unitLabel]="unitsLabel"
+      [dataValue]="dataLabelValue"
+      [barColor]="barColor"
+      [barColorGradient]="barColorGradient"
+      [barColorBackground]="barColorBackground"
+      [gaugeValue]="dataLabelValue"
+      [gaugeMaxValue]="widgetProperties.config.displayScale.upper"
+      [gaugeMinValue]="widgetProperties.config.displayScale.lower"
+    ></svg-simple-linear-gauge>
+</widget-host>

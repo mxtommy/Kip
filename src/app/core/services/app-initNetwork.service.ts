@@ -1,6 +1,3 @@
-import { SignalKDeltaService } from './signalk-delta.service';
-import { DatasetService } from './data-set.service';
-import { StorageService } from './storage.service';
 /**
 * This Service uses the APP_INITIALIZER feature to dynamically load
 * network service (SignalKConnection & Authentication) when the app is initialized,
@@ -9,17 +6,18 @@ import { StorageService } from './storage.service';
 * @usage must return a Promise in all cases or will block app from loading.
 * All execution in this service delays app start. Keep code small and simple.
 **/
-import { Injectable, OnDestroy } from '@angular/core';
+import { inject, Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 import { Subscription } from 'rxjs';
 import { DataService } from './data.service';
+import { SignalKDeltaService } from './signalk-delta.service';
+import { StorageService } from './storage.service';
 
-const configFileVersion = 9; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
 
 @Injectable()
@@ -28,15 +26,14 @@ export class AppNetworkInitService implements OnDestroy {
   private isLoggedIn: boolean = null;
   private loggedInSubscription: Subscription = null;
 
-  constructor (
-    private connection: SignalKConnectionService,
-    private auth: AuthenticationService,
-    private router: Router,
-    private delta: SignalKDeltaService, // Init to get data before app starts
-    private data: DataService, // Init to get data before app starts
-    private storage: StorageService, // Init to get data before app starts
-  )
-  {
+  private connection = inject(SignalKConnectionService);
+  private auth = inject(AuthenticationService);
+  private router = inject(Router);
+  private delta = inject(SignalKDeltaService); // Init to get data before app starts
+  private data = inject(DataService); // Init to get data before app starts
+  private storage = inject(StorageService); // Init to get data before app starts
+
+  constructor () {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
       this.isLoggedIn = isLoggedIn;
     })
@@ -44,10 +41,11 @@ export class AppNetworkInitService implements OnDestroy {
 
   public async initNetworkServices() {
     this.loadLocalStorageConfig();
+    this.preloadFonts();
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
-        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled);
+        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled, this.config.signalKSubscribeAll);
       }
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
@@ -110,6 +108,67 @@ export class AppNetworkInitService implements OnDestroy {
       this.config.configVersion = 10;
       this.setLocalStorageConfig();
       console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
+    }
+  }
+
+  private preloadFonts (): void {
+    // Preload fonts else browser can delay and cause canvas font issues
+    const fonts = [
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmSU5fChc4AMP6lbBP.woff2)",
+        options: {
+          weight: "300",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmSU5fBBc4AMP6lQ.woff2)",
+        options: {
+          weight: "300",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOmCnqEu92Fr1Mu7GxKKTU1Kvnz.woff2)",
+        options: {
+          weight: "400",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2)",
+        options: {
+          weight: "400",
+          style: "normal"
+        }
+      },
+    {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmEU9fChc4AMP6lbBP.woff2)",
+        options: {
+          weight: "500",
+          style: "normal"
+        }
+      },
+      {
+        family: "Roboto",
+        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmEU9fBBc4AMP6lQ.woff2)",
+        options: {
+          weight: "500",
+          style: "normal"
+        }
+      }
+    ];
+
+    for (const {family, src, options} of fonts) {
+      const font = new FontFace(family, src, options);
+      font.load()
+        .then(() => document.fonts.add(font))
+        .catch(err => console.log(`[AppInit Network Service] Error loading fonts: ${err}`));
     }
   }
 

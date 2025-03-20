@@ -1,5 +1,5 @@
 @if (pathFormGroup.value.isPathConfigurable) {
-  <div [formGroup]="pathFormGroup" class="flex-container rounded-card">
+  <div [formGroup]="pathFormGroup" class="flex-container rounded-card rounded-card-color">
     <div class="flex-field-100">
       <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
     </div>
@@ -51,7 +51,7 @@
               </mat-error>
             }
           <mat-autocomplete #pathAutoComplete="matAutocomplete">
-            @for (option of filteredPaths | async; track option) {
+            @for (option of filteredPaths | async; track option.path) {
               <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
                 @if (option.meta != undefined) {
                   <span>{{option.path}}</span>

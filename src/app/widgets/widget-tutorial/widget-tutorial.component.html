@@ -1,72 +1,76 @@
-<div class="tabGroupPanel mat-typography">
-  <div *ngIf="!unlockStatus">
-    <h3>Kip Installation Notes</h3>
-    <p>For complete functionality, certain Signal K plugins should be installed on the server
-      you are connecting to:
-    </p>
-    <ul>
-      <li>&#64;signalk-alarm-silencer: To silence Notifications on the server. This enables Kip
-        to instruct the Signal K server to silence said alarm for on all devices supporting
-        Signal K Notifications, else Kip will be silenced.</li>
-      <li>&#64;signalk/signalk-autopilot: required for the N2k Autopilot to function.
-        <br/><b>Use the Kip N2k autopilot at your own risk. Use with caution and constant
-          supervision.</b></li>
-    </ul>
-  </div>
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div style="padding: 10px;">
+    @if (dashboard.isDashboardStatic()) {
+      <h5>Welcome to KIP</h5>
+      <h6>Gestures</h6>
+      <ul>
+        <li><strong>Swipe up / down</strong> to cycle trough dashboards (Only one dashboard is present by default)</li>
+        <li><strong>Swipe right</strong> to access the actions menu</li>
+        <li><strong>Swipe left</strong> to access the notifications menu</li>
+      </ul>
 
-  <div *ngIf="!unlockStatus">
-    <h3>Getting Started</h3>
-    <h4>Two options are available:</h4>
-    <ol>
-      <li>Load Live Demo
-        <p>To dive right in and see what KIP can do!
-          Load the demo configuration with simulated data from demo.signalk.org. Note that an
-          internet connection is required.</p>
-        <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
-        <br/><br/>
-      </li>
-      <li>Connect to a Signal K server, then start configuring instruments
+      <h6>Getting Started</h6>
+      <ul>
+        <li>Load Live Demo
+          <p>To dive right in and see what KIP can do!
+            Load the demo configuration with simulated data from demo.signalk.org. Note that an
+            internet connection is required.</p>
+          <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
+          <br/><br/>
+        </li>
+        <li>Connect to a Signal K server, then start configuring widgets
+          <p>
+            Configure KIP's Signal K server URL connection and connect to receive data. Use the
+            "Set Sign In credentials" button to authenticate to the server with a pre existing
+            Signal K user/password. This setting also tells KIP to save the widget configuration
+            on the Signal K server under your user profile, so your widget configuration is shared
+            by all devices that you log in from. See
+            <a routerLink="/help">Configuration Management Help</a> for more instructions.
+          </p>
+          <p>Swipe right to open the Actions menu and hit the Edit dashboard button in the upper
+            right hand corner.
+          </p>
+          <p>You can also add more dashboards using the Dashboards option from the
+            Actions menu. Dashboards can be reordered, duplicated and renamed using Drag & Drop and Long Press actions menu.</p>
+          <button mat-raised-button routerLink="/settings">Connectivity settings</button>
+          <br/>
+        </li>
+      </ul>
+      <h6>Start editing dashboards</h6>
         <p>
-          Configure KIP's Signal K server URL connection and connect to receive data. Use the
-          "Set Sign In credentials" button to authenticate to the server with a pre existing
-          Signal K user/password. This setting also tells KIP to save the widget configuration
-          on the Signal K server under your user profile, so your widget configuration is shared 
-          by all devices that you log in from. See
-          <a routerLink="/help">Configuration Management Help</a> for more instructions.
+          Dashboards are "Locked" by default. This is to prevent accidental touch
+          screens interaction from changing anything. To edit, add, remove
+          and configure widgets in dashboards, you first need to access the Actions menu by swiping left
+          and hit the edit dashboard button in the upper right hand corner. Go Ahead try it now!
         </p>
-        <button mat-raised-button routerLink="/settings">Configure</button>
-        <br/>
-      </li>
-    </ol>
-    <h4>Then start editing Page Layouts</h4>
+        <p>Once you are editing a dashboard, you can:</p>
+          <ol>
+            <li>Touch and Drag to move widgets</li>
+            <li>Drag the corners and sides to resize widgets</li>
+            <li>Double Tap on a widget to configure it</li>
+            <li>Long Press on a widget to access additional options such as delete amd duplicate</li>
+          </ol>
+    } @else {
+      <h5>Editing Dashboard Layouts</h5>
       <p>
-        Page layouts are "Locked" by default. This is to prevent accidental touch
-        screens interaction from changing anything.
-        A page layout is a screen where you can add, configure and remove the various
-        avalable widgets such as gauges and components.
-        Multiple pages can be added to facilitate organization.
-        You can unlock page layout using the hamburger icon in the lower right corner
-        and selecting "Configuration -> Edit Layout". Go Ahead try it now!
+        Possible gesture and actions:
       </p>
+      <p>
+        From the left editing menu you can:
+      </p>
+      <ol>
+        <li>Filter and add widgets</li>
+        <li>Exit the dashboard edit mode using the X button</li>
+      </ol>
+      <p>
+        With the widgets themselves you can:
+      </p>
+      <ol>
+        <li>Drag the widget to change it's position.</li>
+        <li>Use the widget corners handles to change its size.</li>
+        <li>Double tap/double click a widget to access its configuration options</li>
+        <li>Long press a widget access additional widget operations such as delete and duplicate</li>
+      </ol>
+    }
     </div>
-
-  <div *ngIf="unlockStatus">
-    <h1>Next Steps...</h1>
-    <h2>Configuring Page Layout</h2>
-    <p>
-      Now that the page layout is unlocked, you can do a few actions:
-    </p>
-    <ul>
-      <li>The icon in the lower right can be used to select the Widget you would like to display</li>
-      <li>The icon in the lower left can be used to "split" the pages into various areas.
-        You can use area to display different widgets on one page. Areas can be resized
-        to better fit designs</li>
-      <li>The "X" in the upper right can be used to delete an area (basically undoing a split)</li>
-      <li>Once a widget is selected, there will be a gear in the lower middle. Clicking
-        it will allow you to setup the widget parameters</li>
-    </ul>
-    <h2>Getting Data from Signalk</h2>
-    <p>The next steps is to configure your connection to a Signal K server using the hamburger icon in the lower right corner
-      and selecting "Configuration -> Settings".</p>
-  </div>
-</div>
+</widget-host>

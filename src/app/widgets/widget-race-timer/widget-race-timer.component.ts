@@ -1,19 +1,21 @@
 import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResizedEvent, AngularResizeEventModule } from 'angular-resize-event';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 
 @Component({
-    selector: 'app-widget-race-timer',
+    selector: 'widget-racetimer',
     templateUrl: './widget-race-timer.component.html',
     styleUrls: ['./widget-race-timer.component.scss'],
     standalone: true,
-    imports: [AngularResizeEventModule, MatButton, NgIf]
+    imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton, NgIf ]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
@@ -41,38 +43,41 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
     this.defaultConfig = {
       timerLength: 300,
-      textColor: 'text',
+      color: 'white',
     };
   }
 
   ngOnInit(): void {
-    this.initWidget();
-    this.getColors(this.widgetProperties.config.textColor);
+    this.validateConfig();
     this.subscribeTimer();
+    this.startWidget();
+  }
+
+  protected startWidget(): void {
+    this.getColors(this.widgetProperties.config.color);
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-    // this.resizeWidget();
   }
 
-  onResized(event: ResizedEvent) {
-    this.resizeWidget();
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+    this.updateCanvas();
+    this.updateCanvasBG();
   }
 
-  private resizeWidget() {
-    let rect = this.canvasEl.nativeElement.getBoundingClientRect();
-
-    if (rect.height < 50) { return; }
-    if (rect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(rect.width)) || (this.canvasEl.nativeElement.height != Math.floor(rect.height))) {
-      this.canvasEl.nativeElement.width = Math.floor(rect.width);
-      this.canvasEl.nativeElement.height = Math.floor(rect.height);
-      this.canvasBG.nativeElement.width = Math.floor(rect.width);
-      this.canvasBG.nativeElement.height = Math.floor(rect.height);
+  onResized(event: ResizeObserverEntry) {
+    if (event.contentRect.height < 50) { return; }
+    if (event.contentRect.width < 50) { return; }
+    if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
+      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
+      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
+      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
       this.currentValueLength = 0; //will force resetting the font size
       this.updateCanvas();
       this.updateCanvasBG();
     }
-
   }
 
   private subscribeTimer() {
@@ -153,36 +158,52 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       this.TimersService.setTimer(this.timeName, this.dataValue - 600);
   }
 
-  private getColors(themeColor: string) {
-    switch (themeColor) {
-      case "text":
-        this.textColor = this.theme.text;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+  private getColors(color: string) {
+    switch (color) {
+      case "white":
+        this.textColor = this.theme.white;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
-
-      case "primary":
-        this.textColor = this.theme.textPrimaryLight;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+      case "blue":
+        this.textColor = this.theme.blue;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
-
-      case "accent":
-        this.textColor = this.theme.textAccentLight;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+      case "green":
+        this.textColor = this.theme.green;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;;
         break;
-
-      case "warn":
-        this.textColor = this.theme.textWarnLight;
-        this.warnColor = this.theme.text;
-        this.warmContrast = this.theme.text;
+      case "pink":
+        this.textColor = this.theme.pink;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
-
+      case "orange":
+        this.textColor = this.theme.orange;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
+      case "purple":
+        this.textColor = this.theme.purple;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
+      case "grey":
+        this.textColor = this.theme.grey;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
+      case "yellow":
+        this.textColor = this.theme.yellow;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
+        break;
       default:
-        this.textColor = this.theme.text;
-        this.warnColor = this.theme.warn;
-        this.warmContrast = this.theme.warnDark;
+        this.textColor = this.theme.white;
+        this.warnColor = this.theme.zoneAlarm;
+        this.warmContrast = this.theme.zoneAlarm;
         break;
     }
   }
@@ -194,6 +215,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
     clearInterval(this.flashInterval);
+    this.destroyDataStreams();
   }
 
 /* ******************************************************************************************* */
@@ -241,28 +263,28 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     } else {
       valueText = "--";
     }
-    //check if length of string has changed since laste time.
+    //check if length of string has changed since last time.
     if (this.currentValueLength != valueText.length) {
       //we need to set font size...
       this.currentValueLength = valueText.length;
 
       // start with large font, no sense in going bigger than the size of the canvas :)
       this.valueFontSize = maxTextHeight;
-      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Roboto";
       let measure = this.canvasCtx.measureText(valueText).width;
 
       // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
       if (measure > maxTextWidth) {
         let estimateRatio = maxTextWidth / measure;
         this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Roboto";
       }
       // now decrease by 1 to in case still too big
       let loopCount = 0;
       while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
         loopCount++;
         this.valueFontSize--;
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Roboto";
       }
       // console.log(`Recalculated font size, loops: ${loopCount}`);
     }
@@ -290,7 +312,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         this.canvasCtx.fillStyle = this.textColor;
     }
 
-    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Arial";
+    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Roboto";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
     this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height * 0.45)+(this.valueFontSize/15), maxTextWidth);

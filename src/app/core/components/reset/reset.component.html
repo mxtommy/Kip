@@ -1,0 +1,55 @@
+<page-header [pageTitle]="pageTitle" />
+<div class="config-row page-content-wrapper">
+  <div class="config-operation-container" style="margin-top: 20px;">
+    <div class="demo-txt">
+      <span class="descriptiveTexts"
+        >Load Demo configuration and connect to Signal K demo server to
+        see Kip in action. Warning: this will reset your connection
+        settings and local layout configuration.
+      </span>
+    </div>
+    <div class="demo-btn btn-div">
+      <button
+        mat-flat-button
+        type="button"
+        (click)="loadDemoConfig()"
+      >
+        Load demo
+      </button>
+    </div>
+    <div class="reset-txt">
+      <span class="descriptiveTexts"
+        >Reset the current application configuration (Layouts, Widgets,
+        etc.) and restores defaults. The default configuration has a
+        single Getting Started instruction widget to get you started.
+        The SignalK server connection settings will be kept.
+      </span>
+    </div>
+    <div class="reset-btn btn-div">
+      <button
+        mat-flat-button
+        type="button"
+        (click)="resetConfigToDefault()"
+      >
+        Reset app
+      </button>
+    </div>
+    <div class="config-txt">
+      <span class="descriptiveTexts"
+        >Reset the current connection configuration to defaults. The
+        default connection configuration is empty and ready for
+        configuration. This will not affect the app configuration
+        (Layouts, widgets, etc.).
+      </span>
+    </div>
+    <div class="config-btn btn-div">
+      <button
+        mat-flat-button
+        type="button"
+        (click)="resetConnectionToDefault()"
+      >
+        Reset connection
+      </button>
+    </div>
+  </div>
+</div>

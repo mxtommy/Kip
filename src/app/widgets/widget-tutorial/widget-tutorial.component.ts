@@ -1,26 +1,37 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { BaseWidgetComponent } from '../../base-widget/base-widget.component';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
-import { NgIf } from '@angular/common';
 import { AppSettingsService } from '../../core/services/app-settings.service';
+import { DashboardService } from '../../core/services/dashboard.service';
 
 @Component({
-    selector: 'app-widget-tutorial',
+    selector: 'widget-tutorial',
     templateUrl: './widget-tutorial.component.html',
     standalone: true,
-    imports: [NgIf, MatButton, RouterLink]
+    imports: [ WidgetHostComponent, MatButton, RouterLink]
 })
-export class WidgetTutorialComponent extends BaseWidgetComponent {
-  @Input() unlockStatus: boolean;
+export class WidgetTutorialComponent extends BaseWidgetComponent implements OnDestroy {
+  protected dashboard = inject(DashboardService);
+  protected settings = inject(AppSettingsService);
 
-  defaultConfig: IWidgetSvcConfig = {};
-  constructor( private appSettings: AppSettingsService,) {
+  constructor() {
     super();
    }
 
    public loadDemoConfig() {
-    this.appSettings.loadDemoConfig();
+    this.settings.loadDemoConfig();
+  }
+
+  protected startWidget(): void {
+  }
+
+  protected updateConfig(config: IWidgetSvcConfig): void {
+  }
+
+  ngOnDestroy(): void {
+    this.destroyDataStreams();
   }
 }

@@ -1,4 +1,4 @@
-<div [formGroup]="ctrlFormGroup" class="ctrl-grid rounded-card">
+<div [formGroup]="ctrlFormGroup" class="ctrl-grid rounded-card rounded-card-color">
   <div class="controls flex-container">
     <div class="flex-label">
       <mat-form-field class="full-width">
@@ -31,10 +31,9 @@
           formControlName="color"
           name="color"
           required>
-          <mat-option value='text'>Font</mat-option>
-          <mat-option value='primary'>Primary</mat-option>
-          <mat-option value='accent'>Accent</mat-option>
-          <mat-option value='warn'>Warn</mat-option>
+          @for(color of colors; track color) {
+            <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
@@ -49,17 +48,17 @@
     <div class="flex-actions">
       <div class="btn-grid">
         @if (controlIndex !== 0) {
-          <button class="up" type="button" mat-icon-button color="primary" (click)="moveCtrlUp()" aria-label="Move control up in the list">
-            <i class="fa-solid fa-caret-up"></i>
+          <button mat-icon-button class="up" type="button" (click)="moveCtrlUp()" aria-label="Move control up in the list">
+            <mat-icon>arrow_drop_up</mat-icon>
           </button>
         }
         @if (controlIndex !== arrayLength - 1) {
-          <button class="down" type="button" mat-icon-button color="primary" (click)="moveCtrlDown()" aria-label="Move control down in the list">
-            <i class="fa-solid fa-caret-down"></i>
+          <button mat-icon-button class="down" type="button" (click)="moveCtrlDown()" aria-label="Move control down in the list">
+            <mat-icon>arrow_drop_down</mat-icon>
           </button>
         }
-        <button class="delete" type="button" mat-icon-button color="primary" (click)="deleteControl()" aria-label="Delete control">
-          <i class="fa-solid fa-trash-can"></i>
+        <button mat-icon-button class="delete" type="button" (click)="deleteControl()" aria-label="Delete control">
+          <mat-icon>delete</mat-icon>
         </button>
       </div>
     </div>
