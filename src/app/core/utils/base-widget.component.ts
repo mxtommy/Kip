@@ -18,7 +18,7 @@ interface IWidgetDataStream {
   template: ''
 })
 export abstract class BaseWidgetComponent extends BaseWidget {
-  @Input({required: true}) protected widgetProperties!: IWidget;
+  @Input({ required: true }) protected widgetProperties!: IWidget;
 
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
   protected theme: ITheme = undefined;
@@ -41,15 +41,19 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   protected app = inject(AppService);
 
   constructor() {
+    super();
+    this.themeSubscription = this.app.cssThemeColorRoles$.subscribe(t => this.theme = t);
   }
 
-  protected initWidget(): void {
-    this.validateConfig();
-    this.observeMeta();
+  public override serialize(): NgCompInputs {
+    return { widgetProperties: this.widgetProperties }
   }
 
-  private observeMeta(): void {
-    if (this.widgetProperties && this.widgetProperties.config?.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
+  protected abstract startWidget(): void;
+  protected abstract updateConfig(config: IWidgetSvcConfig): void;
+
+  protected observeMetaStream(): void {
+    if (this.widgetProperties && this.widgetProperties.config.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
       const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
       const path = this.widgetProperties.config.paths[firstKey].path;
 
@@ -81,37 +85,37 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   }
 
   /**
-   * This method is used to insure Widget configuration property model changes (not value)
-   * are added to older versions of Widget configuration and limit breaking changes.
-   *
-   * The method compares Widget configuration (from saved storage config) with Widget
-   * defaultConfig, adds missing defaultConfig properties and values recursively to
-   * configuration.
-   *
-   * The changes are not persisted until the configuration is saved.
-   *
-   * @protected
-   * @memberof BaseWidgetComponent
-   */
+    * This method is used to insure Widget configuration property model changes (not value)
+    * are added to older versions of Widget configuration and limit breaking changes.
+    *
+    * The method compares Widget configuration (from saved storage config) with Widget
+    * defaultConfig, adds missing defaultConfig properties and values recursively to
+    * configuration.
+    *
+    * The changes are not persisted until the configuration is saved.
+    *
+    * @protected
+    * @memberof BaseWidgetComponent
+    */
   protected validateConfig() {
     this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
   }
 
   /**
-   * Will iterate and creates all Widget Observables based on the Widget's widgetProperties.config.paths
-   * child Objects definitions. If no widgetProperties.config.paths child Objects definitions
-   * exists, execution returns without further execution.
-   *
-   * This method will be automatically called by observeDataStream() if it finds that no Observable
-   * have been created.
-   *
-   * This method can be called manually if you are not using observeDataStream() and you are manually
-   * handling Observer operations for your custom needs.
-   *
-   * @protected
-   * @return {*}  {void}
-   * @memberof BaseWidgetComponent
-   */
+    * Will iterate and creates all Widget Observables based on the Widget's widgetProperties.config.paths
+    * child Objects definitions. If no widgetProperties.config.paths child Objects definitions
+    * exists, execution returns without further execution.
+    *
+    * This method will be automatically called by observeDataStream() if it finds that no Observable
+    * have been created.
+    *
+    * This method can be called manually if you are not using observeDataStream() and you are manually
+    * handling Observer operations for your custom needs.
+    *
+    * @protected
+    * @return {*}  {void}
+    * @memberof BaseWidgetComponent
+    */
   protected createDataObservable(): void {
     // check if Widget has properties
     if (this.widgetProperties === undefined) return;
@@ -124,7 +128,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
 
     Object.keys(this.widgetProperties.config.paths).forEach(pathKey => {
       // check if Widget has valid path
-      if (typeof(this.widgetProperties.config.paths[pathKey].path) != 'string' || this.widgetProperties.config.paths[pathKey].path == '' || this.widgetProperties.config.paths[pathKey].path == null) {
+      if (typeof (this.widgetProperties.config.paths[pathKey].path) != 'string' || this.widgetProperties.config.paths[pathKey].path == '' || this.widgetProperties.config.paths[pathKey].path == null) {
         return;
       } else {
         this.dataStream.push({
@@ -136,24 +140,22 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   }
 
   /**
-   * Use this method to subscribe to a Signal K data path Observable and receive a
-   * live data stream from the server. This method apply
-   * a combination of widgetProperties.config and widgetProperties.config.paths[pathName]
-   * objects properties to setup the Observer. Ex: Widget min/max, decimal, combined with
-   * path sampleTimes and conversions.
-   *
-   * @protected
-   * @param {string} pathName the [key: string] name of the path IWidgetPath Object ie. paths: { "numericPath"... Look at you this.defaultConfig Object to identify the string key to use.
-   * @param {((value) => void)} subscribeNextFunction The callback function for the Next notification delivered by the Observer. The function has the same properties as a standard subscribe callback function. ie. observer.subscribe( x => { console.log(x) } ).
-   * @return {*}
-   * @memberof BaseWidgetComponent
-   */
-  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void)): any  {
+     * Use this method to subscribe to a Signal K data path Observable and receive a
+    * live data stream from the server. This method apply
+    * a combination of widgetProperties.config and widgetProperties.config.paths[pathName]
+    * objects properties to setup the Observer. Ex: Widget min/max, decimal, combined with
+    * path sampleTimes and conversions.
+    *
+    * @protected
+    * @param {string} pathName the [key: string] name of the path IWidgetPath Object ie. paths: { "numericPath"... Look at you this.defaultConfig Object to identify the string key to use.
+    * @param {((value) => void)} subscribeNextFunction The callback function for the Next notification delivered by the Observer. The function has the same properties as a standard subscribe callback function. ie. observer.subscribe( x => { console.log(x) } ).
+    * @return {*}
+    * @memberof BaseWidgetComponent
+    */
+  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void)): any {
     if (this.dataStream === undefined || this.dataStream.length == 0) {
       this.createDataObservable();
     }
-
-    this.observeMeta();
 
     const pathType = this.widgetProperties.config.paths[pathName].pathType;
     const path = this.widgetProperties.config.paths[pathName].path;
@@ -161,8 +163,8 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     const widgetSample = this.widgetProperties.config.paths[pathName].sampleTime;
     const dataTimeout = this.widgetProperties.config.dataTimeout * 1000;
     const retryDelay = 5000;
-    const timeoutErrorMsg = `[Widget] ${this.widgetProperties.config.displayName} - ${dataTimeout/1000} second data update timeout reached for `;
-    const retryErrorMsg = `[Widget] ${this.widgetProperties.config.displayName} - Retrying in ${retryDelay/1000} secondes`;
+    const timeoutErrorMsg = `[Widget] ${this.widgetProperties.config.displayName} - ${dataTimeout / 1000} second data update timeout reached for `;
+    const retryErrorMsg = `[Widget] ${this.widgetProperties.config.displayName} - Retrying in ${retryDelay / 1000} secondes`;
 
 
     const observer = this.buildObserver(pathName, subscribeNextFunction);
@@ -192,9 +194,9 @@ export abstract class BaseWidgetComponent extends BaseWidget {
             each: dataTimeout,
             with: () =>
               throwError(() => {
-                  console.log(timeoutErrorMsg + path);
-                  this.DataService.timeoutPathObservable(path, pathType)
-                }
+                console.log(timeoutErrorMsg + path);
+                this.DataService.timeoutPathObservable(path, pathType)
+              }
               )
           }),
           retryWhen(error =>
@@ -226,9 +228,9 @@ export abstract class BaseWidgetComponent extends BaseWidget {
             each: dataTimeout,
             with: () =>
               throwError(() => {
-                  console.log(timeoutErrorMsg + path);
-                  this.DataService.timeoutPathObservable(path, pathType)
-                }
+                console.log(timeoutErrorMsg + path);
+                this.DataService.timeoutPathObservable(path, pathType)
+              }
               )
           }),
           retryWhen(error =>
@@ -283,15 +285,15 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   }
 
   /**
-   * This method will automatically ensure that Widget min/max values and decimal places
-   * are applied. To respect decimal places a string must be returned, else trailing
-   * zeros are stripped.
-   *
-   * @protected
-   * @param {number} v the value to format
-   * @return {*}  {string} the final output to display
-   * @memberof BaseWidgetComponent
-   */
+    * This method will automatically ensure that Widget min/max values and decimal places
+    * are applied. To respect decimal places a string must be returned, else trailing
+    * zeros are stripped.
+    *
+    * @protected
+    * @param {number} v the value to format
+    * @return {*}  {string} the final output to display
+    * @memberof BaseWidgetComponent
+    */
   protected formatWidgetNumberValue(v: any): string {
     // Check if v is not a number or is null or undefined
     if (typeof v !== 'number' || v == null) {
@@ -308,12 +310,12 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   }
 
   /**
-   * @description This method is used to destroy all Widget Observables and free resources.
-   * This method should be called in component ngOnDestroy() to ensure all data layer
-   * resources are freed.
-   * @protected
-   * @memberof BaseWidgetComponent
-   */
+     * @description This method is used to destroy all Widget Observables and free resources.
+     * This method should be called in component ngOnDestroy() to ensure all data layer
+     * resources are freed.
+    * @protected
+    * @memberof BaseWidgetComponent
+    */
   protected destroyDataStreams(): void {
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
