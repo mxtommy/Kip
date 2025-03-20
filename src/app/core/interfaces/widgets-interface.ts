@@ -123,6 +123,8 @@ export interface IWidgetSvcConfig {
     rotateFace?: boolean;
     /** Optional. GaugeSteel digital or bar */
     digitalMeter?: boolean;
+    /** Optional. Width of gauge highlights */
+    highlightsWidth?: number;
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
@@ -167,8 +169,10 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Used by multiple gauge Widget */
+  /** Used by autopilot Widget to autostart the AP widget */
   autoStart?: boolean;
+  /** Used by autopilot Widget to invert rudder angle value */
+  invertRudder?: boolean;
 
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;

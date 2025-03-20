@@ -70,6 +70,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         type: 'ngLinear',
         subType: 'vertical',    // vertical or horizontal
         enableTicks: true,
+        highlightsWidth: 5,
       },
       numInt: 1,
       numDecimal: 0,
@@ -213,8 +214,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       width: width,
       minValue: scale.min,
       maxValue: scale.max,
-      valueInt: this.widgetProperties.config.numInt,
-      valueDec: this.widgetProperties.config.numDecimal,
+
+      valueInt: this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1,
+      valueDec: this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2,
 
       title: this.widgetProperties.config.displayName,
       fontTitleSize: 40,
@@ -279,8 +281,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorNeedleShadowDown: "black",
 
       majorTicks: scale.majorTicks,
-      majorTicksInt: this.widgetProperties.config.numInt,
-      majorTicksDec: this.widgetProperties.config.numDecimal,
+
+
+      majorTicksInt: this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1,
+      majorTicksDec: this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2,
       numberSide: "left",
       fontNumbersSize: 25,
       numbersMargin: isVertical ? 8 : 4,
@@ -301,7 +305,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       needleSide: "both",
 
       highlights: [],
-      highlightsWidth: 0,
+      highlightsWidth: this.widgetProperties.config.gauge.highlightsWidth,
 
       animation: true,
       animationRule: "linear",
@@ -440,7 +444,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     };
     //@ts-ignore
     let highlights: LinearGaugeOptions = {};
-    highlights.highlightsWidth = 5;
+    highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.linearGauge.update(highlights);

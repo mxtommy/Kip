@@ -42,7 +42,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public availableSources: Array<string>;
 
   // Units control
-  public unitList: IConversionPathList = {default: '', conversions: []};
+  public unitList: IConversionPathList = {base: '', conversions: []};
   public showPathSkUnitsFilter: boolean = false;
   public pathSkUnitsFilterControl = new FormControl<ISkBaseUnit | null>(null);
   public pathSkUnitsFiltersList: ISkBaseUnit[];
@@ -142,7 +142,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
         this.unitList = this.units.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
         if (setValues) {
-          this.pathFormGroup.controls['convertUnitTo'].setValue(this.unitList.default, {onlySelf: true});
+          this.pathFormGroup.controls['convertUnitTo'].setValue(this.unitList.base, {onlySelf: true});
         }
         this.pathFormGroup.controls['convertUnitTo'].enable({onlySelf: false});
       }
@@ -153,6 +153,9 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
           if (this.pathFormGroup.controls['source'].value != 'default') {
             this.pathFormGroup.controls['source'].setValue('default', {onlySelf: true});
           }
+        }
+        else if (this.pathFormGroup.controls['source'].value != 'default') {
+          this.pathFormGroup.controls['source'].setValue('', {onlySelf: true});
         }
       } else if (Object.keys(pathObject.sources).length > 1) {
         this.availableSources = Object.keys(pathObject.sources);

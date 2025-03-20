@@ -54,7 +54,7 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
         digitalMeter: false,
       },
       // numInt: 1,
-      // numDecimal: 1,
+      numDecimal: 2,
       enableTimeout: false,
       dataTimeout: 5
     };

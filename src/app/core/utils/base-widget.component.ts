@@ -41,19 +41,15 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   protected app = inject(AppService);
 
   constructor() {
-    super();
-    this.themeSubscription = this.app.cssThemeColorRoles$.subscribe(t => this.theme = t);
   }
 
-  public override serialize(): NgCompInputs {
-    return { widgetProperties: this.widgetProperties}
+  protected initWidget(): void {
+    this.validateConfig();
+    this.observeMeta();
   }
 
-  protected abstract startWidget(): void;
-  protected abstract updateConfig(config: IWidgetSvcConfig): void;
-
-  protected observeMetaStream(): void {
-    if (this.widgetProperties && this.widgetProperties.config.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
+  private observeMeta(): void {
+    if (this.widgetProperties && this.widgetProperties.config?.paths && Object.keys(this.widgetProperties.config.paths).length > 0) {
       const firstKey = Object.keys(this.widgetProperties.config.paths)[0];
       const path = this.widgetProperties.config.paths[firstKey].path;
 
@@ -156,6 +152,8 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     if (this.dataStream === undefined || this.dataStream.length == 0) {
       this.createDataObservable();
     }
+
+    this.observeMeta();
 
     const pathType = this.widgetProperties.config.paths[pathName].pathType;
     const path = this.widgetProperties.config.paths[pathName].path;

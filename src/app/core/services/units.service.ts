@@ -14,7 +14,7 @@ export type TValidSkUnits = 's' | 'Hz' | 'm3' | 'm3/s' | 'kg/s' | 'kg/m3' | 'deg
  * @interface IConversionPathList
  */
 export interface IConversionPathList {
-  default: string;
+  base: string;
   conversions: IUnitGroup[];
 }
 /**
@@ -77,22 +77,22 @@ export class UnitsService implements OnDestroy {
       { measure: 'knots', description: "Knots - Nautical miles per hour"},
       { measure: 'kph', description: "kph - Kilometers per hour"},
       { measure: 'mph', description: "mph - Miles per hour"},
-      { measure: 'm/s', description: "m/s - Meters per second (default)"}
+      { measure: 'm/s', description: "m/s - Meters per second (base)"}
     ] },
     { group: 'Flow', units: [
-      { measure: 'm3/s', description: "Cubic meters per second (default)"},
+      { measure: 'm3/s', description: "Cubic meters per second (base)"},
       { measure: 'l/min', description: "Liters per minute"},
       { measure: 'l/h', description: "Liters per hour"},
       { measure: 'g/min', description: "Gallons per minute"},
       { measure: 'g/h', description: "Gallons per hour"}
     ] },
     { group: 'Temperature', units: [
-      { measure: 'K', description: "Kelvin (default)"},
+      { measure: 'K', description: "Kelvin (base)"},
       { measure: 'celsius', description: "Celsius"},
       { measure: 'fahrenheit', description: "Fahrenheit"}
      ] },
     { group: 'Length', units: [
-      { measure: 'm', description: "Meters (default)"},
+      { measure: 'm', description: "Meters (base)"},
       { measure: 'fathom', description: "Fathoms"},
       { measure: 'feet', description: "Feet"},
       { measure: 'km', description: "Kilometers"},
@@ -100,60 +100,65 @@ export class UnitsService implements OnDestroy {
       { measure: 'mi', description: "Miles"},
     ] },
     { group: 'Volume', units: [
-      { measure: 'liter', description: "Liters (default)"},
+      { measure: 'liter', description: "Liters (base)"},
       { measure: 'm3', description: "Cubic Meters"},
       { measure: 'gallon', description: "Gallons"},
      ] },
     { group: 'Current', units: [
-      { measure: 'A', description: "Amperes"},
+      { measure: 'A', description: "Amperes (base)"},
       { measure: 'mA', description: "Milliamperes"}
     ] },
     { group: 'Potential', units: [
-      { measure: 'V', description: "Volts"},
+      { measure: 'V', description: "Volts (base)"},
       { measure: 'mV', description: "Millivolts"}
     ] },
     { group: 'Charge', units: [
-      { measure: 'C', description: "Coulomb"},
+      { measure: 'C', description: "Coulomb (base)"},
       { measure: 'Ah', description: "Ampere*Hours"},
     ] },
     { group: 'Power', units: [
-      { measure: 'W', description: "Watts"},
+      { measure: 'W', description: "Watts (base)"},
       { measure: 'mW', description: "Milliwatts"},
     ] },
     { group: 'Energy', units: [
-      { measure: 'J', description: "Joules"},
+      { measure: 'J', description: "Joules (base)"},
       { measure: 'kWh', description: "Kilowatt*Hours"},
     ] },
+    { group: 'Resistance', units: [
+      { measure: 'ohm', description: "\u2126 (base)"},
+      { measure: 'kiloohm', description: "k\u2126"},
+    ] },
     { group: 'Pressure', units: [
-      { measure: 'Pa', description: "Pascal (default)" },
+      { measure: 'Pa', description: "Pa (base)" },
+      { measure: 'kPa', description: "kPa" },
+      { measure: 'hPa', description: "hPa" },
+      { measure: 'mbar', description: "mbar" },
       { measure: 'bar', description: "Bars" },
       { measure: 'psi', description: "psi" },
       { measure: 'mmHg', description: "mmHg" },
       { measure: 'inHg', description: "inHg" },
-      { measure: 'hPa', description: "hPa" },
-      { measure: 'mbar', description: "mbar" },
     ] },
-    { group: 'Density', units: [ { measure: 'kg/m3', description: "Air density - kg/cubic meter"} ] },
+    { group: 'Density', units: [ { measure: 'kg/m3', description: "Air density - kg/cubic meter (base)"} ] },
     { group: 'Time', units: [
-      { measure: 's', description: "Seconds (default)" },
+      { measure: 's', description: "Seconds (base)" },
       { measure: 'Minutes', description: "Minutes" },
       { measure: 'Hours', description: "Hours" },
       { measure: 'Days', description: "Days" },
       { measure: 'HH:MM:SS', description: "Hours:Minute:seconds"}
     ] },
     { group: 'Angular Velocity', units: [
-      { measure: 'rad/s', description: "Radians per second" },
+      { measure: 'rad/s', description: "Radians per second (base)" },
       { measure: 'deg/s', description: "Degrees per second" },
       { measure: 'deg/min', description: "Degrees per minute" },
     ] },
     { group: 'Angle', units: [
-      { measure: 'rad', description: "Radians" },
+      { measure: 'rad', description: "Radians (base)" },
       { measure: 'deg', description: "Degrees" },
       { measure: 'grad', description: "Gradians" },
     ] },
     { group: 'Frequency', units: [
       { measure: 'rpm', description: "RPM - Rotations per minute" },
-      { measure: 'Hz', description: "Hz - Hertz (default)" },
+      { measure: 'Hz', description: "Hz - Hertz (base)" },
       { measure: 'KHz', description: "KHz - Kilohertz" },
       { measure: 'MHz', description: "MHz - Megahertz" },
       { measure: 'GHz', description: "GHz - Gigahertz" },
@@ -161,7 +166,7 @@ export class UnitsService implements OnDestroy {
     { group: 'Ratio', units: [
       { measure: 'percent', description: "As percentage value" },
       { measure: 'percentraw', description: "As ratio 0-1 with % sign" },
-      { measure: 'ratio', description: "Ratio 0-1 (default)" }
+      { measure: 'ratio', description: "Ratio 0-1 (base)" }
     ] },
     { group: 'Position', units: [
       { measure: 'latitudeMin', description: "Latitude in minutes" },
@@ -441,6 +446,9 @@ export class UnitsService implements OnDestroy {
 // Energy
     "J": function(v) { return v; },
     "kWh": Qty.swiftConverter('J', 'kWh'),
+// Resistance
+    "ohm": function(v) { return v; },
+    "kiloohm": function(v) { return v / 1000; },
 //  pressure
     "Pa": function(v) { return v; },
     "bar": Qty.swiftConverter('Pa', 'bar'),
@@ -448,6 +456,7 @@ export class UnitsService implements OnDestroy {
     "mmHg": Qty.swiftConverter('Pa', 'mmHg'),
     "inHg": Qty.swiftConverter('Pa', 'inHg'),
     "hPa": Qty.swiftConverter('Pa', 'hPa'),
+    "kPa": Qty.swiftConverter('Pa', 'kPa'),
     "mbar": Qty.swiftConverter('Pa', 'millibar'),
 // Density - Description: Current outside air density
     "kg/m3": function(v) { return v; },
@@ -548,7 +557,7 @@ export class UnitsService implements OnDestroy {
   }
 
   /**
-   * Returns the list KIP default unit conversion settings applied before presentation.
+   * Returns the list KIP base unit conversion settings applied before presentation.
    * See KIP's Units Settings configuration.
    *
    * Ex: If a Signal K path's meta Units is set to 'm/s', could KIP automatically
@@ -577,8 +586,8 @@ export class UnitsService implements OnDestroy {
   /**
    * Obtain a list of possible Kip value type conversions for a given path. ie,.: Speed conversion group
    * (kph, Knots, etc.). The conversion list will be trimmed to only the conversions for the group in question.
-   * If a default value type (provided by server) for a path cannot be found,
-   * the full list is returned and with 'unitless' as the default. Same goes if the value type exists,
+   * If a base value type (provided by server) for a path cannot be found,
+   * the full list is returned and with 'unitless' as the base. Same goes if the value type exists,
    * but Kip does not handle it...yet.
    *
    * @param path The Signal K path of the value
@@ -590,7 +599,7 @@ export class UnitsService implements OnDestroy {
     let defaultUnit: string = "unitless";
 
     if (pathUnitType === null) {
-      return { default: UNITLESS, conversions: this._conversionList };
+      return { base: UNITLESS, conversions: this._conversionList };
     } else {
       const groupList = this._conversionList.filter(unitGroup => {
         if (unitGroup.group == 'Position' && (path.includes('position.latitude') || path.includes('position.longitude'))) {
@@ -607,11 +616,11 @@ export class UnitsService implements OnDestroy {
       });
 
       if (groupList.length > 0) {
-        return { default: defaultUnit, conversions: groupList };
+        return { base: defaultUnit, conversions: groupList };
       }
 
       console.log("[Units Service] Unit type: " + pathUnitType + ", found for path: " + path + "\nbut Kip does not support it.");
-      return { default: UNITLESS, conversions: this._conversionList };
+      return { base: UNITLESS, conversions: this._conversionList };
     }
   }
 

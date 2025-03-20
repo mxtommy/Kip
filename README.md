@@ -16,7 +16,7 @@ The idea is to replicate the functionality of MFDs such as the B&G Triton, Rayma
 
 # Features
 ## Access from Phones, Tablets, Raspberry Pi and Computers
-  Simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip` to load KIP and enjoy it's features remotely on any device.
+  Once installed on the Signal K server, simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip` to load KIP and enjoy it's features remotely on any device.
 
 ### Responsive Design
   KIP adjusts to the device type and form factor for the best possible user experience.
@@ -55,7 +55,7 @@ KIP is now installed and available on your home screen
   Easy basic widget configuration.
   ![Gauges Configuration Image](./images/KipConfig-display-1024x488.png) 
   
-  See what Signal K has to offer that you can leverage with widgets. Select it and tweak the display options your your purpose.
+  See what Signal K has to offer that you can leverage with widgets. Select it and tweak the display options to your purpose.
   ![Paths Configuration Image](./images/KipWidgetConfig-paths-1024x488.png)
   
   Many units are supported. Choose your preferred App defaults, than tweak it widget-by-widget as necessary. KIP will automatically convert the units for you.
@@ -70,7 +70,8 @@ KIP is now installed and available on your home screen
 
   - Linear gauge: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery remaining capacity, etc.
   - Linear electrical gauge: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
-  - Radial gauge: Visually display any numerical data on a radial scale - heading, compass, Speed, etc.
+  - Radial gauge: Visually display any numerical data on a radial scale - Boat Speed,Eond Speed, engine RPM,etc.
+  - Compass gauge: A card or marine compass to display directionnal data such as heading, bearing to next waypoint, wind angle, etc.
   - Radial and linear Steel gauge: Old school look & fell gauges.
 
   - Wind Steering Display: Your typical sailboat wind gauge.

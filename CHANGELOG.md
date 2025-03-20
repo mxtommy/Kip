@@ -1,11 +1,42 @@
+# V 2.12.3
+## Fixes
+* Linear widget "No Progress" color option missing.
+* Data Browser source and value not displayed. 
+* Processing of combined values and meta delta updates. Fixes #453
+# V 2.12.2
+## Improvements
+* Makes Radial and Linear gauge highlights width configurable by @jaredjensen 
+## Fixes
+* Metadata not being available on initial load by @jaredjensen
+# V 2.12.1
+## Fixes
+* Numeric widget using seconds value not converting to HH:MM:SS format. Fixes #438
+# V 2.12.0
+## New features
+* Add Kilo Pascal (kPa) format to Pressure units.
+* Add Resistance Unit with Ohm (ohm) and Kilo Ohm ((kiloohm)) formats.
+# V 2.11.1
+## Fixes
+* Path not available in numeric Widget Options when first emitted value is null. Fixes #408
+* Linear & Radial Steel Style gauge support for decimal places. Fixes #433  
+# V 2.11.0
+## New features
+* Autopilot invert rudder angle support and matching Display tab widget Option 
+# V 2.10.1
+## Fixes
+* Values jumping between sources. Fixes #420
 # V 2.10.0
+## BREAKING CHANGE
+* Requires Signal K v2.8+
+* Retired existing KIP zones in favor of Signal K metadata defined zones.
+* Radial and linear gauge scale min/max range configuration discarded. Reconfiguration using new Scale Start/Scale End required. 
 ## New features
 * Boolean Control Panel Widget: Support for numeric paths (0/1 PUT values)
 * New Compass Gauge Widget with support for rad units using negative to port values. Compass needle or faceplate rotation support
 * Signal K Metadata support for Zones configuration, Display Name and Display Scale. IMPORTANT: Exiting gauges Min Value & Max Value setting will be lost on upgrade and require manual configuration of new Scale Start and Scale End Widget Options. 
 * Ability to filter Widget Option's path selection list based on Signal K Units type
 ## Improvements
-* Linear Gauge Widget support for tick bar numbers improving readability
+* Linear Gauge Widget support for autoscaling and tick bar numbers improving readability
 * Refactoring of Signal K Notification support with improved integration. Includes Notification options to Silence and Clear messages on the server. Also fixes existing ghost messages issue and normal state notifications that generated unwarranted prompts.
 ## Fixes
 * Chromium browser side scrollbar always visible

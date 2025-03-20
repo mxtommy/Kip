@@ -62,12 +62,12 @@
             }
 
             <mat-form-field *ngIf="(widgetConfig.numInt !== undefined)">
-              <mat-label>Minimum Integer Places</mat-label>
-              <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numInt"  formControlName="numInt">
+              <mat-label>Integer Places</mat-label>
+              <input type="number" min="1" max="5" matInput placeholder="Enter or select number..." name="numInt"  formControlName="numInt" required>
             </mat-form-field>
-            <mat-form-field *ngIf="(widgetConfig.numInt !== undefined)">
-              <mat-label>Maximum Decimal Places</mat-label>
-              <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal">
+            <mat-form-field *ngIf="(widgetConfig.numDecimal !== undefined)" [class.options-grid-span2]="!widgetConfig.numInt">
+              <mat-label>Decimal Places</mat-label>
+              <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal" required>
             </mat-form-field>
 
             <mat-checkbox *ngIf="(widgetConfig.showMin !== undefined)"
@@ -85,6 +85,13 @@
               [dateFormat]="dateFormatToControl"
               [dateTimezone]="dateTimezoneToControl">
             </display-datetime-options>
+
+            <!-- AP gauge stuff -->
+            <mat-checkbox class="fields" *ngIf="(widgetConfig.invertRudder !== undefined)"
+              name="invertRudder"
+              formControlName="invertRudder">
+                Invert Rudder angle
+            </mat-checkbox>
 
             <!-- sail gauge stuff -->
             <mat-checkbox class="fields" *ngIf="(widgetConfig.laylineEnable !== undefined)"
@@ -150,8 +157,7 @@
                   </mat-checkbox>
                 </div>
               } @else if ( ['measuring','capacity'].indexOf(formMaster.value.gauge.subType) > -1 ) {
-
-                  <mat-form-field formGroupName="gauge" class="options-grid-span2">
+                  <mat-form-field formGroupName="gauge">
                     <mat-label>Gauge Type</mat-label>
                     <mat-select
                       placeholder="Select Gauge Type..."
@@ -161,12 +167,11 @@
                       <mat-option value="capacity">Capacity</mat-option>
                     </mat-select>
                   </mat-form-field>
-
               }
             }
 
             @if (widgetConfig.gauge?.type == 'ngLinear') {
-              <mat-form-field formGroupName="gauge" class="options-grid-span2">
+              <mat-form-field formGroupName="gauge">
                 <mat-label>Orientation</mat-label>
                 <mat-select
                     placeholder="Select type..."
@@ -175,6 +180,13 @@
                     <mat-option value="vertical">Vertical</mat-option>
                     <mat-option value="horizontal">Horizontal</mat-option>
                 </mat-select>
+              </mat-form-field>
+            }
+
+            @if ( (widgetConfig.gauge?.type == 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType)) || widgetConfig.gauge?.type == 'ngLinear') {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Highlights Width</mat-label>
+                <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
               </mat-form-field>
             }
 

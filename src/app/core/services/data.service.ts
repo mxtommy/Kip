@@ -169,9 +169,9 @@ export class DataService implements OnDestroy {
   }
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
-    const entry = this._pathRegister.find(entry => entry.path == path);
-    if (entry) {
-      return entry.pathDataUpdate$;
+    const matchingPaths = this._pathRegister.find(item => item.path === path && item.source === source);
+    if (matchingPaths) {
+      return matchingPaths.pathDataUpdate$;
     }
 
     let currentValue: string = null;
@@ -301,13 +301,22 @@ export class DataService implements OnDestroy {
     }
 
     // Update path register Subjects with new data
-    const item = this._pathRegister.find(item => item.path == updatePath);
-    if (item) {
-        const pathData: IPathData = {
-          value: pathItem.pathValue,
-          timestamp: new Date(pathItem.pathTimestamp)
-        };
-        item._pathData$.next(pathData);
+    const pathRegisterItems = this._pathRegister.filter(item => item.path === updatePath);
+    if (pathRegisterItems.length) {
+      const pathData: IPathData = {
+        value: pathItem.pathValue,
+        timestamp: new Date(pathItem.pathTimestamp)
+      };
+
+      const defaultSource = pathRegisterItems.find(item => item.source === "default");
+      if (defaultSource) {
+        defaultSource._pathData$.next(pathData);
+      }
+
+      const thisSource = pathRegisterItems.find(item => item.source === dataPath.source);
+      if (thisSource) {
+        thisSource._pathData$.next(pathData);
+      }
     }
 
     // Push full tree if data-browser or Zones component are observing
@@ -328,7 +337,7 @@ export class DataService implements OnDestroy {
           path: metaPath,
           pathValue: undefined,
           pathTimestamp: undefined,
-          type: undefined,
+          type: meta.meta.units ? "number" : undefined,
           state: States.Normal,
           defaultSource: undefined,
           sources: {},
@@ -336,6 +345,9 @@ export class DataService implements OnDestroy {
         };
         this._skData.push(pathObject);
       } else {
+        if (pathObject.type === 'object' && meta.meta.units) {
+          pathObject.type = "number";
+        }
         pathObject.meta = merge(pathObject.meta, meta.meta);
       }
 

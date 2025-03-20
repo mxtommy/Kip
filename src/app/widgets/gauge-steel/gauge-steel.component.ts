@@ -57,6 +57,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
   @Input('frameColor') frameColor: string;
   @Input('minValue') minValue: number;
   @Input('maxValue') maxValue: number;
+  @Input('decimals') decimals?: number;
   @Input('zones') zones: Array<any>;
   @Input('title') title: string;
   @Input('units') units: string;
@@ -79,6 +80,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
     //minMax
     this.gaugeOptions['minValue'] = this.minValue;
     this.gaugeOptions['maxValue'] = this.maxValue;
+    this.gaugeOptions['lcdDecimals'] = this.decimals !== undefined && this.decimals !== null ? this.decimals : 2;
 
     //labels
     this.gaugeOptions['titleString'] = this.title;

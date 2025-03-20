@@ -210,6 +210,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         },
         barColor: 'accent',     // theme palette to select
         autoStart: false,
+        invertRudder: true,
         enableTimeout: false,
         dataTimeout: 5
       };
@@ -274,7 +275,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         if (newValue.data.value === null) {
           this.currentRudder = 0;
         } else {
-          this.currentRudder = newValue.data.value;
+          this.currentRudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
         }
       }
     );
