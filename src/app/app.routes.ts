@@ -5,7 +5,6 @@ import { DashboardComponent } from './core/components/dashboard/dashboard.compon
 import { DashboardsEditorComponent } from './core/components/dashboards-editor/dashboards-editor.component';
 import { DataBrowserComponent } from './core/components/data-browser/data-browser.component';
 import { SettingsDatasetsComponent } from './core/components/datasets/datasets.component';
-import { SettingsResetComponent } from './core/components/reset/reset.component';
 import { AppSettingsComponent } from './settings/settings/settings.component';
 import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
 
@@ -17,7 +16,6 @@ export const routes: Routes = [
   { path: 'dashboards', component: DashboardsEditorComponent },
   { path: 'datasets', component: SettingsDatasetsComponent },
   { path: 'configurations', component: SettingsConfigComponent },
-  { path: 'reset', component: SettingsResetComponent },
   { path: 'login', component: WidgetLoginComponent },
   { path: '**', component: DashboardComponent }
 ];

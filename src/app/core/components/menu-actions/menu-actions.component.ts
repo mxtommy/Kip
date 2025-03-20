@@ -64,10 +64,6 @@ export class MenuActionsComponent {
         this._router.navigate(['/configurations']);
         break;
 
-      case 'reset':
-      this._router.navigate(['/reset']);
-        break;
-
       case 'toggleFullScreen':
         this.toggleFullScreen();
         break;
