@@ -4,7 +4,7 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
-import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, CdkDragHandle } from '@angular/cdk/drag-drop';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 
@@ -12,7 +12,7 @@ import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-s
 @Component({
   selector: 'dashboards-editor',
   standalone: true,
-  imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, CdkDragHandle ],
+  imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag ],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })
@@ -46,20 +46,16 @@ export class DashboardsEditorComponent {
           this.duplicateDashboard(index, `${this._dashboard.dashboards()[index].name}`);
           break;
 
-        case 'rename':
-          this.renameDashboard(index, this._dashboard.dashboards()[index].name);
-          break;
-
         default:
           break;
       }
     });
   }
 
-  protected renameDashboard(itemIndex: number, currentName: string, ): void {
+  protected editDashboard(itemIndex: number): void {
     this._dialog.openNameDialog({
       title: 'Rename Dashboard',
-      name: currentName,
+      name: this._dashboard.dashboards()[itemIndex].name,
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
