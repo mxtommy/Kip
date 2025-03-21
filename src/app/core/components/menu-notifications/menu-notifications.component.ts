@@ -70,11 +70,11 @@ export class MenuNotificationsComponent implements OnDestroy {
     tap((notificationInfo: INotificationInfo) => {
       // Update notification visibility
       if (notificationInfo.alarmCount <= 0) {
-        console.log('Hidden. Count: ' + notificationInfo.alarmCount);
+        // console.log('Hidden. Count: ' + notificationInfo.alarmCount);
         this.hasNotifications.emit(false);
         this.notificationsBtnVisibility = 'hidden';
       } else {
-        console.log('Visible. Count: ' + notificationInfo.alarmCount);
+        // console.log('Visible. Count: ' + notificationInfo.alarmCount);
         this.hasNotifications.emit(true);
         this.notificationsBtnVisibility = 'visible';
       }

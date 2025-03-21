@@ -1,5 +1,12 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <radial-gauge id="{{widgetProperties.uuid}}" #compassGauge (onResize)="onResized($event)"
+<widget-host
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)"
+>
+  <radial-gauge
+    id="{{ widgetProperties.uuid }}"
+    #compassGauge
+    (onResize)="onResized($event)"
     [options]="gaugeOptions"
     [value]="value"
     [attr.value-text]="textValue"

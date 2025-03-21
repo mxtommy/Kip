@@ -46,3 +46,8 @@
   cursor: pointer;
   color: var(--sys-outline);
 }
+
+.no-text-select {
+  -webkit-user-select: none;
+  user-select: none;
+}

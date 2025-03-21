@@ -1,6 +1,15 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <radial-gauge id="{{widgetProperties.uuid}}" #radialGauge (onResize)="onResized($event)"
+<widget-host
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)"
+
+>
+  <radial-gauge
+    id="{{ widgetProperties.uuid }}"
+    #radialGauge
     [options]="gaugeOptions"
-    [value]="value">
+    [value]="value"
+    (onResize)="onResized($event)"
+  >
   </radial-gauge>
 </widget-host>

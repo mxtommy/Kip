@@ -19,7 +19,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
   dataValue: any = null;
   dataTimestamp: number = Date.now();
   valueFontSize = 1;
-  private readonly fontString = "px Roboto";
+  private readonly fontString = "Roboto";
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentValueLength = 0;
@@ -161,43 +161,25 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
     let valueText: string;
 
     if (this.dataValue === null) {
-      valueText = '--';
+        valueText = '--';
     } else {
-
-      valueText = this.dataValue;
-      try {
-        let date = formatDate(valueText, this.widgetProperties.config.dateFormat, 'en-US', this.widgetProperties.config.dateTimezone);
-        valueText = date;
-      } catch (error) {
-        valueText = error;
-        console.log("[Date Value Widget]: " + error);
-      }
+        valueText = this.dataValue;
+        try {
+            let date = formatDate(valueText, this.widgetProperties.config.dateFormat, 'en-US', this.widgetProperties.config.dateTimezone);
+            valueText = date;
+        } catch (error) {
+            valueText = error;
+            console.log("[Date Value Widget]: " + error);
+        }
     }
 
-    // check if length of string has changed since last time.
-    if (this.currentValueLength != valueText.length) {
-      // we need to set font size...
-      this.currentValueLength = valueText.length;
-
-      // start with large font, no sense in going bigger than the size of the canvas :)
-      this.valueFontSize = maxTextHeight;
-      this.canvasCtx.font = 'bold ' + this.valueFontSize.toString() + this.fontString;
-      const measure = this.canvasCtx.measureText(valueText).width;
-
-      // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
-      if (measure > maxTextWidth) {
-        const estimateRatio = maxTextWidth / measure;
-        this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
-        this.canvasCtx.font = 'bold ' + this.valueFontSize.toString() + this.fontString;
-      }
-      // now decrease by 1 to in case still too big
-      while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
-        this.valueFontSize--;
-        this.canvasCtx.font = 'bold ' + this.valueFontSize.toString() + this.fontString;
-      }
+    // Check if length of string has changed since last time.
+    if (this.currentValueLength !== valueText.length) {
+        this.currentValueLength = valueText.length;
+        this.valueFontSize = this.calculateFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasCtx);
     }
 
-    this.canvasCtx.font = 'bold ' + this.valueFontSize.toString() + this.fontString;
+    this.canvasCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
     this.canvasCtx.textAlign = 'center';
     this.canvasCtx.textBaseline = 'middle';
     this.canvasCtx.fillStyle = this.valueColor;
@@ -209,27 +191,36 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
     );
   }
 
-  drawTitle() {
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
-    // set font small and make bigger until we hit a max.
-    if (this.widgetProperties.config.displayName === null) { return; }
-    let fontSize = 1;
+  private calculateFontSize(text: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
+    let minFontSize = 1;
+    let maxFontSize = maxHeight;
+    let fontSize = maxFontSize;
 
-    this.canvasBGCtx.font = 'normal ' + fontSize.toString() + this.fontString; // need to init it, so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
-        this.canvasBGCtx.font = 'normal ' + fontSize.toString() + this.fontString;
+    while (minFontSize <= maxFontSize) {
+        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
+        ctx.font = `bold ${fontSize}px ${this.fontString}`;
+        const measure = ctx.measureText(text).width;
+
+        if (measure > maxWidth) {
+            maxFontSize = fontSize - 1;
+        } else {
+            minFontSize = fontSize + 1;
+        }
     }
 
+    return maxFontSize;
+  }
+
+  drawTitle() {
+    const displayName = this.widgetProperties.config.displayName;
+    if (displayName === null) { return; }
+    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
+    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
+    const fontSize = this.calculateFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
+    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
     this.canvasBGCtx.textAlign = 'left';
     this.canvasBGCtx.textBaseline = 'top';
     this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(
-      this.widgetProperties.config.displayName,
-      this.canvasEl.nativeElement.width * 0.03,
-      this.canvasEl.nativeElement.height * 0.03,
-      maxTextWidth);
-
+    this.canvasBGCtx.fillText(displayName, this.canvasEl.nativeElement.width * 0.03, this.canvasEl.nativeElement.height * 0.03, maxTextWidth);
   }
 }
