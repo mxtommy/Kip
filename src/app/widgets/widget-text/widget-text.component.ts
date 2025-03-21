@@ -16,7 +16,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements OnInit, 
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
 
-  private readonly fontString = "px Roboto";
+  private readonly fontString = "Roboto";
   dataValue: any = null;
   dataTimestamp: number = Date.now();
   valueFontSize: number = 1;
@@ -151,59 +151,56 @@ export class WidgetTextComponent extends BaseWidgetComponent implements OnInit, 
   drawValue() {
     const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
-    let valueText : string;
+    let valueText: string;
 
     if (this.dataValue === null) {
-      valueText = "--";
+        valueText = "--";
     } else {
-      valueText = this.dataValue;
-    }
-    //check if length of string has changed since laste time.
-    if (this.currentValueLength != valueText.length) {
-      //we need to set font size...
-      this.currentValueLength = valueText.length;
-
-      // start with large font, no sense in going bigger than the size of the canvas :)
-      this.valueFontSize = maxTextHeight;
-      this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
-      let measure = this.canvasCtx.measureText(valueText).width;
-
-      // if we are not too wide, we stop there, maxHeight was our limit... if we're too wide, we need to scale back
-      if (measure > maxTextWidth) {
-        let estimateRatio = maxTextWidth / measure;
-        this.valueFontSize = Math.floor(this.valueFontSize * estimateRatio);
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
-      }
-      // now decrease by 1 to in case still too big
-      while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
-        this.valueFontSize--;
-        this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
-      }
+        valueText = this.dataValue;
     }
 
-    this.canvasCtx.font = "bold " + this.valueFontSize.toString() + this.fontString;
+    // Check if length of string has changed since last time.
+    if (this.currentValueLength !== valueText.length) {
+        this.currentValueLength = valueText.length;
+        this.valueFontSize = this.calculateFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasCtx);
+    }
+
+    this.canvasCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
     this.canvasCtx.textAlign = "center";
-    this.canvasCtx.textBaseline="middle";
+    this.canvasCtx.textBaseline = "middle";
     this.canvasCtx.fillStyle = this.valueColor;
-    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height/2)+(this.valueFontSize/15), maxTextWidth);
+    this.canvasCtx.fillText(valueText, this.canvasEl.nativeElement.width / 2, (this.canvasEl.nativeElement.height / 2) + (this.valueFontSize / 15), maxTextWidth);
+  }
+
+  private calculateFontSize(text: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
+    let minFontSize = 1;
+    let maxFontSize = maxHeight;
+    let fontSize = maxFontSize;
+
+    while (minFontSize <= maxFontSize) {
+      fontSize = Math.floor((minFontSize + maxFontSize) / 2);
+      ctx.font = `bold ${fontSize}px ${this.fontString}`;
+      const measure = ctx.measureText(text).width;
+
+      if (measure > maxWidth) {
+          maxFontSize = fontSize - 1;
+      } else {
+          minFontSize = fontSize + 1;
+      }
+    }
+    return maxFontSize;
   }
 
   drawTitle() {
+    const displayName = this.widgetProperties.config.displayName;
+    if (displayName === null) { return; }
     const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
-    // set font small and make bigger until we hit a max.
-    if (this.widgetProperties.config.displayName === null) { return; }
-    let fontSize = 1;
-
-    this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString; // need to init it so we do loop at least once :)
-    while ( (this.canvasBGCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
-        this.canvasBGCtx.font = "normal " + fontSize.toString() + this.fontString;
-    }
-
+    const fontSize = this.calculateFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
+    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
     this.canvasBGCtx.textAlign = "left";
-    this.canvasBGCtx.textBaseline="top";
+    this.canvasBGCtx.textBaseline = "top";
     this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(this.widgetProperties.config.displayName,this.canvasEl.nativeElement.width*0.03,this.canvasEl.nativeElement.height*0.03, maxTextWidth);
+    this.canvasBGCtx.fillText(displayName, this.canvasEl.nativeElement.width * 0.03, this.canvasEl.nativeElement.height * 0.03, maxTextWidth);
   }
 }
