@@ -97,8 +97,10 @@ bootstrapApplication(AppComponent, {
       provide: MAT_DIALOG_DEFAULT_OPTIONS,
       useValue: {
         hasBackdrop: true,
-        disableClose: true,
+        disableClose: false,
         autoFocus: "first-tabbable",
+        delayFocusTrap: true,
+        backdropClass: "dialogBackdrop"
       },
     },
     {

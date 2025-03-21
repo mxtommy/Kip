@@ -170,6 +170,10 @@ app-root {
   display: block;
 }
 
+.dialogBackdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
 /*
 *  Loading Spinner styles. Used during app bootstrap process (while
 *  executing app-initNetwork.service but before Angular has fully loaded)
