@@ -1,76 +1,50 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div style="padding: 10px;">
+  <div class="tutorial-container">
     @if (dashboard.isDashboardStatic()) {
-      <h5>Welcome to KIP</h5>
-      <h6>Gestures</h6>
+      <h3>Getting Started</h3>
+      <p>Welcome to KIP! Here are some basic gestures to help you navigate the application:</p>
       <ul>
-        <li><strong>Swipe up / down</strong> to cycle trough dashboards (Only one dashboard is present by default)</li>
-        <li><strong>Swipe right</strong> to access the actions menu</li>
-        <li><strong>Swipe left</strong> to access the notifications menu</li>
+        <li><strong>Swipe up/down</strong> to cycle through dashboards (Only one dashboard is present by default)</li>
+        <li><strong>Swipe left</strong> to access the actions menu</li>
+        <li><strong>Swipe right</strong> to access the notifications menu</li>
       </ul>
-
-      <h6>Getting Started</h6>
-      <ul>
-        <li>Load Live Demo
-          <p>To dive right in and see what KIP can do!
-            Load the demo configuration with simulated data from demo.signalk.org. Note that an
-            internet connection is required.</p>
-          <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
-          <br/><br/>
-        </li>
-        <li>Connect to a Signal K server, then start configuring widgets
-          <p>
-            Configure KIP's Signal K server URL connection and connect to receive data. Use the
-            "Set Sign In credentials" button to authenticate to the server with a pre existing
-            Signal K user/password. This setting also tells KIP to save the widget configuration
-            on the Signal K server under your user profile, so your widget configuration is shared
-            by all devices that you log in from. See
-            <a routerLink="/help">Configuration Management Help</a> for more instructions.
-          </p>
-          <p>Swipe right to open the Actions menu and hit the Edit dashboard button in the upper
-            right hand corner.
-          </p>
-          <p>You can also add more dashboards using the Dashboards option from the
-            Actions menu. Dashboards can be reordered, duplicated and renamed using Drag & Drop and Long Press actions menu.</p>
-          <button mat-raised-button routerLink="/settings">Connectivity settings</button>
-          <br/>
-        </li>
-      </ul>
-      <h6>Start editing dashboards</h6>
-        <p>
-          Dashboards are "Locked" by default. This is to prevent accidental touch
-          screens interaction from changing anything. To edit, add, remove
-          and configure widgets in dashboards, you first need to access the Actions menu by swiping left
-          and hit the edit dashboard button in the upper right hand corner. Go Ahead try it now!
-        </p>
-        <p>Once you are editing a dashboard, you can:</p>
-          <ol>
-            <li>Touch and Drag to move widgets</li>
-            <li>Drag the corners and sides to resize widgets</li>
-            <li>Double Tap on a widget to configure it</li>
-            <li>Long Press on a widget to access additional options such as delete amd duplicate</li>
-          </ol>
+      <h6>Load Demonstration Dashboards</h6>
+      <p>
+        Try out the sample Dashboard with simulated data from demo.signalk.org
+        (<i>internet connection is required to receive data</i>).
+        <br/>
+        <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
+      </p>
+      <h6>Create Your Own Layout</h6>
+      <p>
+        First, configure Signal K server authentication (<i>a pre-existing Signal K
+          server user/password is required</i>). Swipe left to open the Actions menu and hit
+        Settings, then the "Set Credential" button.
+      </p>
+      <p>
+        Dashboards (individual layout pages) are "Locked" by default. This is to prevent accidental modifications.
+        Edit the dashboard by swiping left to open the Actions menu and hit the bottom
+        unlock button. You can later add and manage dashboards using the Dashboards option
+        from the Actions menu.
+      </p>
+      <p><strong>Try editing the Dashboard now to receive further instructions!</strong></p>
     } @else {
-      <h5>Editing Dashboard Layouts</h5>
+      <h6>Build Your Layout</h6>
       <p>
-        Possible gesture and actions:
+        First, resize this Tutorial widget using the now visible dashed borders so
+        it does not take up all the screen. Then, to add a widget, in an empty dashboard area, press and hold. This will open the
+        widget selection menu. Here you can choose from a variety of widgets.
       </p>
-      <p>
-        From the left editing menu you can:
-      </p>
-      <ol>
-        <li>Filter and add widgets</li>
-        <li>Exit the dashboard edit mode using the X button</li>
-      </ol>
-      <p>
-        With the widgets themselves you can:
-      </p>
-      <ol>
-        <li>Drag the widget to change it's position.</li>
-        <li>Use the widget corners handles to change its size.</li>
-        <li>Double tap/double click a widget to access its configuration options</li>
-        <li>Long press a widget access additional widget operations such as delete and duplicate</li>
-      </ol>
+      <p>To manage widgets, you can:</p>
+      <ul>
+        <li><strong>Touch and drag</strong> to move widgets</li>
+        <li><strong>Drag the corners and sides</strong> to resize widgets</li>
+        <li><strong>Double tap</strong> on a widget to configure it</li>
+        <li><strong>Long press</strong> on a widget to delete or duplicate widgets</li>
+      </ul>
+      <h6>Exit Dashboard Edit Mode</h6>
+      <p>Use the Save or Cancel buttons in the lower right corner to either persist
+        your changes or revert back all changes.</p>
     }
-    </div>
+  </div>
 </widget-host>
