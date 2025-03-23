@@ -4,6 +4,13 @@ import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
 import { UUID } from '../../utils/uuid';
+import { AppService } from '../../services/app-service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { DialogService } from '../../services/dialog.service';
+import { NotificationBadgeComponent } from "../notification-badge/notification-badge.component";
+import { NotificationsService } from '../../services/notifications.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
 import { WidgetNumericComponent } from '../../../widgets/widget-numeric/widget-numeric.component';
@@ -21,22 +28,21 @@ import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/wid
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
-import { AppService } from '../../services/app-service';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { DialogService } from '../../services/dialog.service';
+
 
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [GridstackModule, DashboardScrollerComponent, DashboardScrollerComponent, MatIconModule, MatButtonModule],
+  imports: [GridstackModule, DashboardScrollerComponent, DashboardScrollerComponent, MatIconModule, MatButtonModule, NotificationBadgeComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit {
   private _app = inject(AppService);
-  protected dashboard = inject(DashboardService);
   private _dialog = inject(DialogService);
+  protected dashboard = inject(DashboardService);
+  private _notifications = inject(NotificationsService);
+  protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   private _gridstack = viewChild.required(GridstackComponent);
   private _previousIsStaticState: boolean = true;
   protected gridOptions: NgGridStackOptions = {

@@ -36,7 +36,6 @@ export class AppComponent implements OnInit, OnDestroy {
   protected actionsSidenavOpen = false;
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
-  protected notificationsPresent: boolean = false;
   protected initialTouchX: number | null = null;
   protected initialTouchY: number | null = null;
 
@@ -118,19 +117,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
     window.addEventListener('openLeftSidenav', this.onSwipeLeft.bind(this));
     window.addEventListener('openRightSidenav', this.onSwipeRight.bind(this));
-  }
-
-  protected menuClosed(): void {
-    if (this.notificationsPresent) {
-      this.notificationsPresent = true;
-    }
-  }
-
-  protected notificationsPresence($event): void {
-    this.notificationsPresent = $event;
-    if (!this.notificationsSidenavOpened()) {
-      $event ? this.notificationsVisibility = "visible" : this.notificationsVisibility = "hidden";
-    }
   }
 
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {

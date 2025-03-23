@@ -1,0 +1,15 @@
+<div>
+  <button mat-fab
+    (click)="openNotificationMenu()"
+    class="layout-action-btn"
+    [class.warn]="notificationsInfo().isWarn"
+    [class.alarm-emergency-blink]="notificationsInfo().isAlarmEmergency">
+    <mat-icon aria-hidden="false" class="icon-alert-color"
+      [matBadgeHidden]="!notificationsInfo().alarmCount"
+      [matBadge]="notificationsInfo().alarmCount"
+      matBadgeSize="large"
+      matBadgePosition="after"
+      matBadgeOverlap="true">notifications
+    </mat-icon>
+  </button>
+</div>

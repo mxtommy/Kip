@@ -1,18 +1,18 @@
-div[matListItemTitle] {
-  text-transform: capitalize;
-}
-
-.notification-btn-container {
-  display: inline-block;
-  width: 50%;
-  height: 48px;
-  text-align: center;
-}
-
-.notification-bottom-container {
+:host {
+  z-index: 1000;
   position: absolute;
-  bottom: 0px;
-  width: 100%;
+  display: block;
+  bottom: 20px;
+  left: 20px;
+  height: 56px;
+  width: 56px;
+  text-align: center;
+  align-content: center;
+}
+
+.layout-action-btn {
+  color: var(--mdc-filled-button-label-text-color, var(--mat-app-on-primary));
+  background-color: var(--mdc-filled-button-container-color, var(--mat-app-primary));
 }
 
 .icon-alert-color {
@@ -38,7 +38,7 @@ div[matListItemTitle] {
 
 @keyframes blinking-emergency {
   0%{		background-color: var(--kip-zone-alarm-color);	}
-  50%{	background-color: transparent;	}
+  50%{	background-color: var(--mdc-filled-button-container-color, var(--mat-app-primary));	}
   100%{	background-color: var(--kip-zone-alarm-color);	}
 }
 
