@@ -24,13 +24,7 @@
   }
 </div>
 <div class="actions-container actions-bottom-container">
-  @if (dashboard.isDashboardStatic()) {
-    <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
-      <span class="material-icons">dashboard_customize</span>
-    </button>
-  } @else {
-    <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
-      <span class="material-icons">exit_to_app</span>
-    </button>
-  }
+  <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
+    <span class="material-icons">lock_open</span>
+  </button>
 </div>
