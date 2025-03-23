@@ -2,7 +2,8 @@
  * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { signal } from '@angular/core';
+import { BehaviorSubject, filter, map, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
@@ -17,11 +18,11 @@ import { IMeta } from '../interfaces/app-interfaces';
 
 
 const alarmTrack = {
-  1000 : 'notification', //filler
-  1001 : 'alert',
-  1002 : 'warn',
-  1003 : 'alarm',
-  1004 : 'emergency',
+  1000: 'notification', //filler
+  1001: 'alert',
+  1002: 'warn',
+  1003: 'alarm',
+  1004: 'emergency',
 };
 
 export interface INotification {
@@ -38,6 +39,11 @@ export interface IAlarmInfo {
   visualSev: number;
   alarmCount: number;
   isMuted: boolean;
+}
+
+export interface INotificationInfo extends IAlarmInfo {
+  isWarn: boolean;
+  isAlarmEmergency: boolean;
 }
 
 interface ISeverityLevel {
@@ -72,7 +78,7 @@ export class NotificationsService implements OnDestroy {
 
   private _notifications: INotification[] = []; // local array of Alarms with path as index key
   private _notifications$ = new BehaviorSubject<INotification[] | null>(null);
-  private _alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false});
+  private _alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({ audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false });
 
   // sounds properties
   private _howlPlayer: Howl;
@@ -87,7 +93,7 @@ export class NotificationsService implements OnDestroy {
     private settings: AppSettingsService,
     private data: DataService,
     private requests: SignalkRequestsService
-    ) {
+  ) {
     // Observer of Notification Service configuration changes
     this._notificationSettingsSubscription = this.settings.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this._notificationConfig = config;
@@ -97,7 +103,7 @@ export class NotificationsService implements OnDestroy {
         this.stopNotificationStream();
       }
       if (!this._notificationConfig.disableNotifications && (this._notificationDataStreamSubscription === null || this._notificationDataStreamSubscription?.closed)) {
-          this.startNotificationStream();
+        this.startNotificationStream();
       }
       if (this._notificationConfig.sound.disableSound) {
         this.playAlarm(1000); // will stop any playing track if any
@@ -107,12 +113,12 @@ export class NotificationsService implements OnDestroy {
     });
 
     this._resetServiceSubscription = this.data.isResetService().subscribe(reset => {
-        reset ? this.reset() : null;
-      });
+      reset ? this.reset() : null;
+    });
 
     // Init audio player
     this._howlPlayer = this.getPlayer(1000);
-   }
+  }
 
   private startNotificationStream() {
     this._notificationDataStreamSubscription = this.data.getNotificationMsgObservable().subscribe((msg: ISignalKDataValueUpdate) => {
@@ -125,9 +131,9 @@ export class NotificationsService implements OnDestroy {
   }
 
   private stopNotificationStream() {
-  this._notificationDataStreamSubscription?.unsubscribe();
-  this._notificationMetaStreamSubscription?.unsubscribe();
-  this.reset();
+    this._notificationDataStreamSubscription?.unsubscribe();
+    this._notificationMetaStreamSubscription?.unsubscribe();
+    this.reset();
   }
 
   /**
@@ -142,10 +148,11 @@ export class NotificationsService implements OnDestroy {
   }
 
   /**
-   * Returns a notification Observable of notification or null.
+   * Returns a notification Observable of an array of notifications or null.
    */
-  public observe(): Observable<INotification[] | null> {
-    return this._notifications$.asObservable();
+  public observeNotifications(): Observable<INotification[] | null> {
+    return this._notifications$.pipe(
+      filter(notification => notification !== null));
   }
 
   private addValue(msg: ISignalKDataValueUpdate) {
@@ -157,7 +164,7 @@ export class NotificationsService implements OnDestroy {
   private updateValue(msg: ISignalKDataValueUpdate) {
     const notificationToUpdate = this._notifications.find(item => item.path == msg.path);
     if (notificationToUpdate) {
-      notificationToUpdate.value = {...msg.value};
+      notificationToUpdate.value = { ...msg.value };
       this.updateNotificationsState();
       this._notifications$.next(this._notifications);
     } else {
@@ -190,7 +197,7 @@ export class NotificationsService implements OnDestroy {
       }
 
       if ((alarm.value['state'] === States.Normal && !this._notificationConfig.devices.showNormalState) ||
-          (alarm.value['state'] === States.Nominal && !this._notificationConfig.devices.showNominalState)) {
+        (alarm.value['state'] === States.Nominal && !this._notificationConfig.devices.showNominalState)) {
         continue;
       }
 
@@ -235,9 +242,9 @@ export class NotificationsService implements OnDestroy {
         if (!existingNotification.value) {
           this.updateValue(notificationDelta);
         } else {
-          if ( (existingNotification.value['state'] !== notificationDelta.value['state'])
+          if ((existingNotification.value['state'] !== notificationDelta.value['state'])
             || (existingNotification.value['message'] !== notificationDelta.value['message'])
-            || !isEqual(existingNotification.value['method'], notificationDelta.value['method']) ) {
+            || !isEqual(existingNotification.value['method'], notificationDelta.value['method'])) {
             this.updateValue(notificationDelta);
           }
         }
@@ -252,7 +259,7 @@ export class NotificationsService implements OnDestroy {
     if (existingNotification) {
       existingNotification.meta = metaDelta.meta;
     } else {
-      this._notifications.push({path: metaDelta.path, meta: metaDelta.meta});
+      this._notifications.push({ path: metaDelta.path, meta: metaDelta.meta });
     }
     this._notifications$.next(this._notifications);
   }
@@ -316,9 +323,36 @@ export class NotificationsService implements OnDestroy {
       UUID.create()
     );
   }
+  /**
+   * @description Returns a short status of the notification service messages such as
+   * number of active notifications, highest severity, is sound is enabled, etc.
+   * @return {*}  {Observable<INotificationInfo>}
+   * @memberof NotificationsService
+  */
+  public observerNotificationsInfo(): Observable<INotificationInfo> {
+    const NotificationInfo$ = this._alarmsInfo$.pipe(
+      map((info: IAlarmInfo) => {
+        let isWarn = false;
+        let isAlarmEmergency = false;
 
-  public observerNotificationInfo() {
-    return this._alarmsInfo$.asObservable();
+        switch (info.visualSev) {
+          case 1:
+            isWarn = true;
+            break;
+          case 2:
+            isAlarmEmergency = true;
+            break;
+        }
+
+        return {
+          ...info,
+          isWarn,
+          isAlarmEmergency
+        } as INotificationInfo;
+      })
+    );
+
+    return NotificationInfo$;
   }
 
   /**
@@ -328,23 +362,23 @@ export class NotificationsService implements OnDestroy {
   getPlayer(track: number): Howl {
     this._activeAlarmSoundtrack = track;
     const player = new Howl({
-        src: ['assets/' + alarmTrack[track] + '.mp3'],
-        autoplay: false,
-        preload: true,
-        loop: true,
-        onend: function() {
-          // console.log('Finished!');
-        },
-        onloaderror: function() {
-          console.log("player onload error");
-        },
-        onplayerror: function() {
-          console.log("player locked");
-          this._howlPlayer.once('unlock', function() {
-            this._howlPlayer.play();
-          });
-        }
-      });
+      src: ['assets/' + alarmTrack[track] + '.mp3'],
+      autoplay: false,
+      preload: true,
+      loop: true,
+      onend: function () {
+        // console.log('Finished!');
+      },
+      onloaderror: function () {
+        console.log("player onload error");
+      },
+      onplayerror: function () {
+        console.log("player locked");
+        this._howlPlayer.once('unlock', function () {
+          this._howlPlayer.play();
+        });
+      }
+    });
     return player;
   }
 
@@ -359,11 +393,11 @@ export class NotificationsService implements OnDestroy {
     this.updateNotificationsState(); //make sure to push updated info to alarm menu
   }
 
-   /**
-   * play audio notification sound
-   * @param trackId track to play
-   */
-   playAlarm(trackId: number) {
+  /**
+  * play audio notification sound
+  * @param trackId track to play
+  */
+  playAlarm(trackId: number) {
     if (this._activeAlarmSoundtrack == trackId) {   // same track, do nothing
       return;
     }

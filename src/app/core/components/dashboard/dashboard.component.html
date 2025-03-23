@@ -6,26 +6,29 @@
   (window:resize)="resizeGridColumns()"
 />
 @if (!dashboard.isDashboardStatic()) {
-<div class="edit-layout-close-icon">
-  <button
-    mat-fab
-    class="layout-action-btn"
-    style="margin-right: 10px"
-    (click)="saveLayoutChanges()"
-  >
-    <mat-icon>done</mat-icon>
-  </button>
-  <button
-    mat-fab
-    class="layout-action-btn"
-    (click)="cancelLayoutChanges()"
-  >
-    <mat-icon>close</mat-icon>
-  </button>
-</div>
-} @if (dashboard.isDashboardStatic()) {
-<dashboard-scroller
-  [activePage]="dashboard.activeDashboard()"
-  [dashboards]="dashboard.dashboards()"
-/>
+  <div class="edit-layout-close-icon">
+    <button
+      mat-fab
+      class="layout-action-btn"
+      style="margin-right: 10px"
+      (click)="saveLayoutChanges()"
+    >
+      <mat-icon>done</mat-icon>
+    </button>
+    <button
+      mat-fab
+      class="layout-action-btn"
+      (click)="cancelLayoutChanges()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+} @else {
+  <dashboard-scroller
+    [activePage]="dashboard.activeDashboard()"
+    [dashboards]="dashboard.dashboards()"
+  />
+  @if (notificationsInfo().alarmCount > 0) {
+    <notification-badge />
+  }
 }

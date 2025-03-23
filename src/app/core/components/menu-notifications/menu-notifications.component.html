@@ -1,6 +1,5 @@
-@let notificationInfo = notificationInfo$ | async;
 <mat-list>
-  @for(menuItem of menuNotifications$ | async; track menuItem.path) {
+  @for(menuItem of menuNotifications(); track menuItem.path) {
     @if(menuItem.value.state !== "normal" && menuItem.value.state !== "nominal") {
       <mat-list-item lines="4">
         @switch (menuItem.value.state) {
@@ -70,16 +69,3 @@
     }
   </mat-action-list>
 }
-<div class="toggle" [style.visibility]="notificationsBtnVisibility">
-  <button mat-icon-button (click)="toggleSidenav.emit(true)"
-    [class.warn]="notificationInfo.isWarn"
-    [class.alarm-emergency-blink]="notificationInfo.isAlarmEmergency">
-    <mat-icon aria-hidden="false" class="icon-alert-color"
-      [matBadgeHidden]="!notificationInfo.alarmCount"
-      [matBadge]="notificationInfo.alarmCount"
-      matBadgeSize="large"
-      matBadgePosition="after"
-      matBadgeOverlap="true">notifications
-    </mat-icon>
-  </button>
-</div>
