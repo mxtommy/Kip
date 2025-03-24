@@ -1,5 +1,4 @@
-import { Component, inject, input } from '@angular/core';
-import { DialogService } from '../../services/dialog.service';
+import { Component, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import screenfull from 'screenfull';
@@ -24,14 +23,14 @@ interface MenuActionItem extends LargeIconTile {
 
 export class MenuActionsComponent {
   protected actionsSidenav = input.required<MatSidenav>();
-  protected fullscreenStatus = false;
-  protected noSleep = new NoSleep();
-  protected isNightMode: boolean = false;
-  private _dialog = inject(DialogService);
+  protected fullscreenStatus = signal<boolean>(false);
+  protected fullscreenSupported = signal<boolean>(true);
+  protected noSleepStatus = signal<boolean>(false);
+  protected noSleepSupported = signal<boolean>(true);
+  private noSleep = new NoSleep();
   private _router = inject(Router);
-  protected dashboard = inject(DashboardService);
+  private dashboard = inject(DashboardService);
   protected app = inject(AppService);
-
   protected readonly menuItems: MenuActionItem[]  = [
     { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
     { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
@@ -40,6 +39,43 @@ export class MenuActionsComponent {
     { svgIcon: 'settings', iconSize:  48, label: 'Settings', action: 'settings' },
     { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
   ];
+
+  constructor() {
+    if (screenfull.isEnabled) {
+      screenfull.on('change', () => {
+        this.fullscreenStatus.set(screenfull.isFullscreen);
+        if (!screenfull.isFullscreen) {
+          this.noSleep.disable();
+        }
+      });
+    } else {
+      this.fullscreenSupported.set(false);
+      console.warn('[Actions Menu] Fullscreen mode is not supported by this device/browser.');
+    }
+
+    this.checkNoSleepSupport();
+    if (this.checkPwaMode() && this.noSleepSupported() && !this.noSleepStatus()) {
+      this.toggleNoSleep();
+    }
+  }
+
+  private checkNoSleepSupport(): void {
+    try {
+      this.noSleep = new NoSleep();
+      if (typeof this.noSleep.enable !== 'function' || typeof this.noSleep.disable !== 'function') {
+        throw new Error('[Actions Menu] NoSleep methods not available');
+      }
+    } catch (error) {
+      this.noSleepSupported.set(false);
+      console.warn('[Actions Menu] NoSleep is not supported by this device/browser.');
+    }
+  }
+
+  private checkPwaMode(): boolean {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone !== undefined;
+    console.log('[Actions Menu] PWA mode:', isStandalone);
+    return isStandalone;
+  }
 
   protected onItemClicked(action: string): void {
     this.actionsSidenav().close();
@@ -77,11 +113,11 @@ export class MenuActionsComponent {
         break;
 
       case 'nightMode':
-        this.app.toggleDayNightMode('night');
+        this.app.toggleDayNightMode();
         break;
 
       case 'dayMode':
-        this.app.toggleDayNightMode('day');
+        this.app.toggleDayNightMode();
         break;
 
       default:
@@ -89,9 +125,9 @@ export class MenuActionsComponent {
     }
   }
 
-  private toggleFullScreen(): void {
+  protected toggleFullScreen(): void {
     if (screenfull.isEnabled) {
-      if (!this.fullscreenStatus) {
+      if (!this.fullscreenStatus()) {
         screenfull.request();
         this.noSleep.enable();
       } else {
@@ -100,7 +136,22 @@ export class MenuActionsComponent {
         }
         this.noSleep.disable();
       }
+      this.fullscreenStatus.set(!this.fullscreenStatus());
+    } else {
+      this.fullscreenSupported.set(false);
+      console.warn('[Actions Menu] Fullscreen mode is not supported by this browser.');
     }
-    this.fullscreenStatus = !this.fullscreenStatus;
+  }
+
+  protected toggleNoSleep(): void {
+    if (this.noSleepSupported()) {
+      if (!this.noSleepStatus()) {
+        this.noSleep.enable();
+      } else {
+        this.noSleep.disable();
+      }
+      this.noSleepStatus.set(!this.noSleepStatus());
+      console.log('[Actions Menu] NoSleep:', this.noSleepStatus());
+    }
   }
 }

@@ -166,21 +166,9 @@ export class AppService implements OnDestroy {
     root.style.setProperty('--kip-nightModeBrightness', `${brightness}`);
   }
 
-  public toggleDayNightMode(mode: string): void {
-    switch (mode) {
-      case 'day':
-        this.setBrightness(1);
-        this.isNightMode.set(false);
-        break;
-
-      case 'night':
-        this.setBrightness(this._settings.getNightModeBrightness());
-        this.isNightMode.set(true);
-        break;
-
-      default:
-        break;
-    }
+  public toggleDayNightMode(): void {
+    this.isNightMode() ? this.setBrightness(1) : this.setBrightness(this._settings.getNightModeBrightness());
+    this.isNightMode.set(!this.isNightMode());
   }
 
   private autoNightModeObserver(): void {
@@ -200,7 +188,7 @@ export class AppService implements OnDestroy {
       if(stat.operation == 2) {
           this._environmentModePathSubscription = this._data.subscribePath(modePath, 'default').subscribe(path => {
             if (this._settings.getAutoNightMode()) {
-              path.data.value === 'night' ? this.toggleDayNightMode('night') : this.toggleDayNightMode('day');
+              path.data.value === 'night' ? this.toggleDayNightMode() : this.toggleDayNightMode();
             }
           });
       }
