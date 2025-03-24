@@ -2,7 +2,6 @@
  * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy } from '@angular/core';
-import { signal } from '@angular/core';
 import { BehaviorSubject, filter, map, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
@@ -192,7 +191,7 @@ export class NotificationsService implements OnDestroy {
     let activeNotifications: number = 0;
 
     for (const alarm of this._notifications) {
-      if (!alarm.value || !('method' in alarm.value)) {
+      if (!alarm.value || !('method' in alarm.value)  || alarm.value.method.length === 0) {
         continue;
       }
 
@@ -230,7 +229,7 @@ export class NotificationsService implements OnDestroy {
    */
   private processNotificationDeltaMsg(notificationDelta: ISignalKDataValueUpdate) {
     if (notificationDelta.path.startsWith("notifications.security")) {
-      return; // as per sbender this part is not ready in the spec - Don't add to alarms
+      return; // as per Scott B. this part is not ready in the spec - Don't add to alarms
     }
 
     if (notificationDelta.value === null) {

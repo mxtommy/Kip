@@ -1,69 +1,70 @@
 <mat-list>
   @for(menuItem of menuNotifications(); track menuItem.path) {
-    @if(menuItem.value.state !== "normal" && menuItem.value.state !== "nominal") {
-      <mat-list-item lines="4">
-        @switch (menuItem.value.state) {
-          @case ("alert") {
-            <mat-icon matListItemIcon class="icon-alert-color">report</mat-icon>
-          }
-          @case ("warn") {
-            <mat-icon matListItemIcon class="icon-warn-color">warning</mat-icon>
-          }
-          @case ("alarm") {
-            <mat-icon matListItemIcon class="icon-alarm-color">error</mat-icon>
-          }
-          @case ("emergency") {
-            <mat-icon matListItemIcon class="icon-emergency-color">emergency_home</mat-icon>
-          }
-        }
-        <div matListItemTitle>{{ menuItem.value.state }}</div>
-        <div matListItemLine>{{ menuItem.value.message }}</div>
-        <span matListItemLine>
-          <div style="display: inline-block; width: 100%;">
-            <div class="notification-btn-container">
-              <button mat-icon-button (disabled)="!menuItem.value.method.includes('sound')" (click)="silence(menuItem.path)">
-                <mat-icon>music_off</mat-icon>
-              </button>
-            </div>
-            <div class="notification-btn-container">
-              <button mat-icon-button (click)="clear(menuItem.path)">
-                <mat-icon>published_with_changes</mat-icon>
-              </button>
-            </div>
-          </div>
-          <mat-divider></mat-divider>
-        </span>
-      </mat-list-item>
-    } @else {
-      <mat-list-item>
-          <mat-icon matListItemIcon>info</mat-icon>
-          <div matListItemTitle>{{ menuItem.value.state }}</div>
-          <div matListItemLine>{{ menuItem.value.message }}</div>
-      </mat-list-item>
-    }
-  } @empty {
-    @if (notificationConfig.disableNotifications) {
-      <mat-list-item lines="3" disabled="true" style="text-align: center;">
-        <span matListItemTitle>Notifications Disabled</span>
-        <span><i>*Enable notifications in KIP Settings.</i></span>
-      </mat-list-item>
-    } @else {
-      <mat-list-item disabled="true" style="text-align: center;">
-        <i>"No Notification"</i>
-      </mat-list-item>
-    }
-  }
+    <div class="notification-container">
+      @switch (menuItem.value.state) { @case ("nominal") {
+      <mat-icon>info</mat-icon>
+      } @case ("normal") {
+      <mat-icon>info</mat-icon>
+      } @case ("alert") {
+      <mat-icon class="icon-alert-color">report</mat-icon>
+      } @case ("warn") {
+      <mat-icon class="icon-warn-color">warning</mat-icon>
+      } @case ("alarm") {
+      <mat-icon class="icon-alarm-color">error</mat-icon>
+      } @case ("emergency") {
+      <mat-icon class="icon-emergency-color">emergency_home</mat-icon>
+      } }
+      <div class="notification-title">{{ menuItem.value.state }}</div>
+      <div class="notification-path">{{ menuItem.path | slice : 14 }}</div>
+      <div class="notification-text">{{ menuItem.value.message }}</div>
+
+      <button
+        mat-icon-button
+        class="notification-action-btn"
+        (disabled)="!menuItem.value.method.includes('sound')"
+        (click)="silence(menuItem.path)"
+      >
+        <mat-icon>music_off</mat-icon>
+      </button>
+
+      <button
+        mat-icon-button
+        class="notification-action-btn"
+        (click)="clear(menuItem.path)"
+      >
+        <mat-icon>published_with_changes</mat-icon>
+      </button>
+    </div>
+    <mat-divider class="notification-divider"></mat-divider>
+  } @empty { @if (notificationConfig.disableNotifications) {
+    <mat-list-item lines="3" disabled="true" style="text-align: center">
+      <span matListItemTitle>Notifications Disabled</span>
+      <span><i>*Enable notifications in KIP Settings.</i></span>
+    </mat-list-item>
+  } @else {
+    <mat-list-item disabled="true" style="text-align: center">
+      <i>"No Notification"</i>
+    </mat-list-item>
+  } }
 </mat-list>
 @if (!notificationConfig.disableNotifications) {
   <mat-action-list class="notification-bottom-container">
     @if (isMuted) {
-      <button mat-list-item matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option" (click)="mutePlayer(isMuted ? false : true)">
-        <mat-icon matListItemIcon>volume_up</mat-icon>
+      <button
+        mat-list-item
+        matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option"
+        (click)="mutePlayer(isMuted ? false : true)"
+      >
+        <mat-icon>volume_up</mat-icon>
         <span>Unmute Audio</span>
       </button>
     } @else {
-      <button mat-list-item matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option" (click)="mutePlayer(isMuted ? false : true)">
-        <mat-icon matListItemIcon>volume_off</mat-icon>
+      <button
+        mat-list-item
+        matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option"
+        (click)="mutePlayer(isMuted ? false : true)"
+      >
+        <mat-icon>volume_off</mat-icon>
         <span>Mute Audio</span>
       </button>
     }
