@@ -3,11 +3,44 @@
     @if (dashboard.isDashboardStatic()) {
       <h3>Getting Started</h3>
       <p>Welcome to KIP! Here are some basic gestures to help you navigate the application:</p>
-      <ul>
-        <li><strong>Swipe up/down</strong> to cycle through dashboards (Only one dashboard is present by default)</li>
-        <li><strong>Swipe left</strong> to access the actions menu</li>
-        <li><strong>Swipe right</strong> to access the notifications menu</li>
-      </ul>
+      <table>
+        <tr>
+            <th>Actions</th>
+            <th>Gestures</th>
+            <th>Keyboard Shortcuts</th>
+        </tr>
+        <tr>
+          <td>Cycle through dashboards</td>
+          <td>Swipe Up/Down</td>
+          <td>Up/Down Arrow</td>
+        </tr>
+        <tr>
+          <td>Open Actions menu</td>
+          <td>Swipe left</td>
+          <td>Right Arrow</td>
+        </tr>
+        <tr>
+          <td>Open Notification menu</td>
+          <td>Swipe right</td>
+          <td>Left Arrow</td>
+        </tr>
+        <tr>
+          <td>Toggle Fullscreen</td>
+          <td>N/A</td>
+          <td>Atl + Ctrl + f</td>
+        </tr>
+        <tr>
+          <td>Toggle Night mode</td>
+          <td>N/A</td>
+          <td>Atl + Ctrl + n</td>
+        </tr>
+        <tr>
+          <td>Toggle Dashboard edit mode</td>
+          <td>N/A</td>
+          <td>Atl + Ctrl + e</td>
+        </tr>
+      </table>
+      <br />
       <h6>Load Demonstration Dashboards</h6>
       <p>
         Try out the sample Dashboard with simulated data from demo.signalk.org
@@ -18,8 +51,8 @@
       <h6>Create Your Own Layout</h6>
       <p>
         First, configure Signal K server authentication (<i>a pre-existing Signal K
-          server user/password is required</i>). Swipe left to open the Actions menu and hit
-        Settings, then the "Set Credential" button.
+          server user/password is required</i>). Swipe left to open the Actions menu, toggle
+          Login to server switch enter you pre-existing Signal K server credentials.
       </p>
       <p>
         Dashboards (individual layout pages) are "Locked" by default. This is to prevent accidental modifications.
@@ -38,9 +71,9 @@
       <p>To manage widgets, you can:</p>
       <ul>
         <li><strong>Touch and drag</strong> to move widgets</li>
-        <li><strong>Drag the corners and sides</strong> to resize widgets</li>
-        <li><strong>Double tap</strong> on a widget to configure it</li>
-        <li><strong>Long press</strong> on a widget to delete or duplicate widgets</li>
+        <li><strong>Drag corners and sides</strong> to resize widgets</li>
+        <li><strong>Double Tap</strong> on a widget to configure it</li>
+        <li><strong>Press and Hold</strong> on a widget to delete or duplicate widgets</li>
       </ul>
       <h6>Exit Dashboard Edit Mode</h6>
       <p>Use the Save or Cancel buttons in the lower right corner to either persist
