@@ -5,7 +5,7 @@ import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
 import { Methods, States } from '../../interfaces/signalk-interfaces';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
-import { AsyncPipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,7 +16,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
     templateUrl: './menu-notifications.component.html',
     styleUrls: ['./menu-notifications.component.scss'],
     standalone: true,
-    imports: [MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, MatIconModule]
+    imports: [MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, MatIconModule, SlicePipe]
 })
 export class MenuNotificationsComponent implements OnDestroy {
   private notificationsService = inject(NotificationsService);
