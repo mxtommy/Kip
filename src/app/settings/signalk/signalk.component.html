@@ -19,12 +19,6 @@
     </tr>
     <tr class="connect-table">
       <td colspan="2">
-        <mat-checkbox [(ngModel)]="connectionConfig.proxyEnabled" [ngModelOptions]="{standalone: false}" name="isProxyEnabled">Signal K server is behind a Proxy</mat-checkbox>
-      </td>
-    </tr>
-    <tr class="connect-table">
-      <td colspan="2">
-        <mat-divider></mat-divider>
         <mat-slide-toggle #useSharedConfigToggle
           name="useSharedConfigToggle"
           matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
@@ -41,23 +35,12 @@
         <mat-checkbox [(ngModel)]="connectionConfig.signalKSubscribeAll" [ngModelOptions]="{standalone: false}" name="signalKSubscribeAll">Subscribe to remote sources messages such as AIS and DSC targets. <i>Warning: this maybe generate heavy traffic.</i></mat-checkbox>
       </td>
     </tr>
+    <tr class="connect-table">
+      <td colspan="2">
+        <mat-checkbox [(ngModel)]="connectionConfig.proxyEnabled" [ngModelOptions]="{standalone: false}" name="isProxyEnabled">Signal K server is behind a Proxy</mat-checkbox>
+      </td>
+    </tr>
   </table>
-  <div>
-    @if (!connectionConfig.useSharedConfig && (authToken && !isLoggedIn)) {
-      <mat-divider style="padding-bottom: 10px;"></mat-divider>
-      <p>Device Authorization token</p>
-      <button mat-flat-button style="margin-left: 25px;" matTooltip="Delete Signal K Authorization Token" (click)="deleteToken()" [disabled]="!authToken">
-        Delete Token
-      </button>
-    }
-    @if (!connectionConfig.useSharedConfig && (!authToken)) {
-      <mat-divider style="padding-bottom: 10px;"></mat-divider>
-      <p>Device Authorization token</p>
-      <button mat-flat-button style="margin-left: 25px;" matTooltip="Request a Device Authorization token. EXPLANATION: Device Authorization token is only needed when Kip is used to send data to the server (ie. Using State, Switch, Autopilot Widgets) or when saving Kip configuration remotely. USAGE: Once a Device Authorization token request is submitted, the request must be approved from the server. See Signal K Server - Security/Access Requests menu. Once approved, Kip will complete the process automatically." (click)="requestDeviceAccessToken()" [disabled]="streamStatus.operation !== 2">
-        Request Token
-      </button>
-    }
-  </div>
 </form>
 
 <div class="server-status">
