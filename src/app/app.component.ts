@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -23,7 +23,7 @@ import { DashboardService } from './core/services/dashboard.service';
     standalone: true,
     imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private _snackBar = inject(MatSnackBar);
   private _deltaService = inject(SignalKDeltaService);
   private _app = inject(AppService);
@@ -119,6 +119,23 @@ export class AppComponent implements OnInit, OnDestroy {
     window.addEventListener('openRightSidenav', this.onSwipeRight.bind(this));
   }
 
+  ngAfterViewInit(): void {
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    switch (event.key) {
+      case 'ArrowRight':
+        this.onSwipeRight(event);
+        break;
+      case 'ArrowLeft':
+        this.onSwipeLeft(event);
+        break;
+      default:
+        break;
+    }
+  }
+
   private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
     switch (streamStatus.operation) {
       case 0: // not connected
@@ -181,5 +198,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.connectionStatusSub.unsubscribe();
     window.removeEventListener('openLeftSidenav', this.onSwipeLeft);
     window.removeEventListener('openRightSidenav', this.onSwipeRight);
+    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
   }
 }

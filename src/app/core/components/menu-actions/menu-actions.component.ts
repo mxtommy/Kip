@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, inject, input, OnDestroy, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import screenfull from 'screenfull';
@@ -21,7 +21,7 @@ interface MenuActionItem extends LargeIconTile {
   styleUrl: './menu-actions.component.scss'
 })
 
-export class MenuActionsComponent {
+export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected actionsSidenav = input.required<MatSidenav>();
   protected fullscreenStatus = signal<boolean>(false);
   protected fullscreenSupported = signal<boolean>(true);
@@ -59,6 +59,39 @@ export class MenuActionsComponent {
     }
   }
 
+  ngAfterViewInit(): void {
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    // Normaliser la touche pour éviter des différences entre les navigateurs
+  const key = event.key.toLowerCase();
+
+  // Vérification stricte des touches enfoncées
+  const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey pour Mac (Cmd)
+  const isShiftPressed = event.shiftKey;
+
+  if (isCtrlPressed && isShiftPressed) {
+    switch (key) {
+      case 'e':
+        this.onItemClicked('layout');
+        break;
+      case 'f':
+        this.onItemClicked('toggleFullScreen');
+        break;
+      case 'n':
+        this.onItemClicked('nightMode');
+        break;
+      default:
+        break;
+    }
+  }
+  }
+
   private checkNoSleepSupport(): void {
     try {
       this.noSleep = new NoSleep();
@@ -83,43 +116,30 @@ export class MenuActionsComponent {
       case 'help':
         this._router.navigate(['/help']);
         break;
-
       case 'dashboards':
         this._router.navigate(['/dashboards']);
         break;
-
       case 'databrowser':
         this._router.navigate(['/data']);
         break;
-
       case 'datasets':
         this._router.navigate(['/datasets']);
         break;
-
       case 'configurations':
         this._router.navigate(['/configurations']);
         break;
-
       case 'toggleFullScreen':
         this.toggleFullScreen();
         break;
-
       case 'settings':
         this._router.navigate(['/settings']);
         break;
-
       case 'layout':
         this.dashboard.toggleStaticDashboard();
         break;
-
       case 'nightMode':
         this.app.toggleDayNightMode();
         break;
-
-      case 'dayMode':
-        this.app.toggleDayNightMode();
-        break;
-
       default:
         break;
     }

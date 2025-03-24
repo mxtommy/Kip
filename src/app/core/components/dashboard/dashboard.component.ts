@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, inject, OnDestroy, viewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService } from '../../services/dashboard.service';
@@ -37,7 +37,7 @@ import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.co
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements AfterViewInit {
+export class DashboardComponent implements AfterViewInit, OnDestroy{
   private _app = inject(AppService);
   private _dialog = inject(DialogService);
   protected dashboard = inject(DashboardService);
@@ -113,6 +113,24 @@ export class DashboardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.resizeGridColumns();
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    switch (event.key) {
+      case 'ArrowUp':
+        this.previousDashboard(event);
+        break;
+      case 'ArrowDown':
+        this.nextDashboard(event);
+        break;
+      default:
+        break;
+    }
   }
 
   protected resizeGridColumns(): void {
