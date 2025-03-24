@@ -97,8 +97,10 @@
     </div>
     <div class="flex-item-copy rounded-card-color">
       <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
-      <h6>Copy</h6>
-      <p style="margin-bottom: 16px;">Duplicate/overwrite configurations between storage locations. The storage locations are Local Storage, used when connection "Login to Server" is disabled, and Server Storage, used for storage when connection "Login to Server" enabled.</p>
+      <h6>Restore</h6>
+      <p style="margin-bottom: 16px;">Restore previously backed up configurations. User
+        storage shows saved configurations accessible only to the currently logged in
+        user. Global storage shows configurations accessible to all users.</p>
         <div class="config-row" *ngIf="hasToken; else elseBlock">
           <div class="config-column">
             <label id="sources-radio-group-label">Source</label>
@@ -230,7 +232,5 @@
       </div>
 
     </div>
-
-
   </div>
 </div>
