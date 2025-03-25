@@ -36,8 +36,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpen = false;
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
-  protected initialTouchX: number | null = null;
-  protected initialTouchY: number | null = null;
+  private initialTouchX: number | null = null;
+  private initialTouchY: number | null = null;
 
   protected themeName: string;
   //TODO: Still need this?
@@ -115,12 +115,16 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     );
 
-    window.addEventListener('openLeftSidenav', this.onSwipeLeft.bind(this));
-    window.addEventListener('openRightSidenav', this.onSwipeRight.bind(this));
+    document.addEventListener('openLeftSidenav', this.onSwipeLeft.bind(this));
+    document.addEventListener('openRightSidenav', this.onSwipeRight.bind(this));
+    document.addEventListener('touchstart', this.preventBrowserHistorySwipeGestures.bind(this), { passive: false });
+    document.addEventListener('touchmove', this.preventBrowserHistorySwipeGestures.bind(this), { passive: false });
+    document.addEventListener('touchend', this.preventBrowserHistorySwipeGestures.bind(this));
+    document.addEventListener('touchcancel', this.preventBrowserHistorySwipeGestures.bind(this));
   }
 
   ngAfterViewInit(): void {
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+    document.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
@@ -160,20 +164,29 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected preventBrowserHistorySwipeGestures(e: TouchEvent): void{
+  protected preventBrowserHistorySwipeGestures(e: TouchEvent): void {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
 
       if (e.type === 'touchstart') {
         this.initialTouchX = touch.clientX;
         this.initialTouchY = touch.clientY;
-      } else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
+        // Block swipe gestures from the left and right edges of the screen for mobile browsers
+        if (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20) {
+          e.preventDefault();
+        }
+      }
+      else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
         const deltaX = Math.abs(touch.clientX - this.initialTouchX);
         const deltaY = Math.abs(touch.clientY - this.initialTouchY);
 
-        if (deltaX > deltaY && (touch.clientX < 20 || touch.clientX > window.innerWidth - 20)) {
+        if (deltaX > deltaY && (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20)) {
           e.preventDefault();
         }
+      }
+      else if (e.type === 'touchend' || e.type === 'touchcancel') {
+        this.initialTouchX = null;
+        this.initialTouchY = null;
       }
     }
   }
@@ -196,8 +209,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.themeNameSub.unsubscribe();
     this.appNotificationSub.unsubscribe();
     this.connectionStatusSub.unsubscribe();
-    window.removeEventListener('openLeftSidenav', this.onSwipeLeft);
-    window.removeEventListener('openRightSidenav', this.onSwipeRight);
-    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    document.removeEventListener('openLeftSidenav', this.onSwipeLeft);
+    document.removeEventListener('openRightSidenav', this.onSwipeRight);
+    document.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    document.removeEventListener('touchstart', this.preventBrowserHistorySwipeGestures.bind(this));
+    document.removeEventListener('touchmove', this.preventBrowserHistorySwipeGestures.bind(this));
+    document.removeEventListener('touchend', this.preventBrowserHistorySwipeGestures.bind(this));
+    document.removeEventListener('touchcancel', this.preventBrowserHistorySwipeGestures.bind(this));
   }
 }

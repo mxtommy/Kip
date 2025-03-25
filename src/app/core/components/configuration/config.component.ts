@@ -5,18 +5,16 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, Reactive
 import { AuthenticationService, IAuthorizationToken } from '../../services/authentication.service';
 import { AppService } from '../../services/app-service';
 import { AppSettingsService } from '../../services/app-settings.service';
-import { IConfig, IAppConfig } from '../../interfaces/app-settings.interfaces';
+import { IConfig } from '../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../services/storage.service';
-import { cloneDeep } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
-import { MatInput } from '@angular/material/input';
+import { MatInput, MatInputModule } from '@angular/material/input';
 import { MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf, NgFor, JsonPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 
@@ -31,9 +29,9 @@ interface IRemoteConfig {
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
     standalone: true,
-    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, MatRadioGroup, MatRadioButton, PageHeaderComponent]
+    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
 })
-export class SettingsConfigComponent implements OnInit, OnDestroy{
+export class SettingsConfigComponent implements OnInit, OnDestroy {
   protected readonly pageTitle: string = "Configurations";
   public hasToken: boolean = false;
   public isTokenTypeDevice: boolean = false;
@@ -50,6 +48,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public saveConfigName: string = null;
   public saveConfigScope: string = null;
   public deleteConfigItem: IRemoteConfig;
+  public jsonData: IConfig = null; // In-memory variable to store the JSON content
 
   constructor(
     private appSettingsService: AppSettingsService,
@@ -76,38 +75,26 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     });
 
     this.copyConfigForm = this.fb.group({
-      copySource: ['', Validators.required],
-      sourceTarget: [{value: '', disabled: true}, Validators.required],
-      copyDestination: ['', Validators.required],
-      destinationTarget: [{value: '', disabled: true}, Validators.required],
+      sourceTarget: [{value: '', disabled: false}, Validators.required]
     });
-
-    // set control form options
-    if (!this.hasToken) {
-      let src = this.copyConfigForm.get('copySource');
-      src.setValue('Server Storage');
-      src.disable();
-      this.copyConfigForm.get('sourceTarget').enable();
-
-      let dest = this.copyConfigForm.get('copyDestination');
-      dest.setValue('Local Storage');
-      dest.disable();
-    }
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     this.getServerConfigList();
-    this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
+    // this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
 
   public getServerConfigList(configFileVersionName?: number) {
     if (this.supportApplicationData) {
       this.storageSvc.listConfigs(configFileVersionName)
       .then((configs) => {
+        // Filter out entries with scope 'user' and name 'default'
+        const filteredConfigs = configs.filter(config => !(config.scope === 'user' && config.name === 'default'));
+
         // see if we have an old config file
         if(configFileVersionName) {
-          this.serverUpgradableConfigList = configs;
+          this.serverUpgradableConfigList = filteredConfigs;
         } else {
-          this.serverConfigList = configs;
+          this.serverConfigList = filteredConfigs;
         }
       })
       .catch((error: HttpErrorResponse) => {
@@ -125,11 +112,17 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
   }
 
-  public saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean) {
+  public saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean, forceSave?: boolean) {
     if (this.supportApplicationData) {
+      // Prevent saving with scope 'user' and name 'default'
+      if ((scope === 'user' && name === 'default') && !forceSave) {
+        this.appService.sendSnackbarNotification("Saving configuration with scope 'user' and name 'default' is not allowed.", 5000, false);
+        return;
+      }
+
       if (this.storageSvc.setConfig(scope, name, conf)) {
         this.appService.sendSnackbarNotification(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
-        if (!dontRefreshConfigList) {
+        if (!dontRefreshConfigList || undefined) {
           this.getServerConfigList();
         }
       } else {
@@ -138,44 +131,29 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
     }
   }
 
+  /**
+   * Save config to local storage
+   */
+  public saveToLocalstorage(config: IConfig) {
+    this.appSettingsService.replaceConfig("appConfig", config.app, false);
+    this.appSettingsService.replaceConfig("dashboardsConfig", config.dashboards, false);
+    this.appSettingsService.replaceConfig("themeConfig", config.theme, false);
+  }
+
   public async copyConfig() {
-    if (this.copyConfigForm.value.copySource === 'Local Storage') {
-      if (this.copyConfigForm.value.copyDestination === 'Server Storage') {
-        // local to remote
-        this.saveConfig(this.getLocalConfigFromLocalStorage(), this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
-        if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
-          this.appSettingsService.reloadApp();
-        }
-      }
-      else if(this.copyConfigForm.value.copyDestination === 'Local Storage') {
-        // local to local
-        this.appService.sendSnackbarNotification("Local Storage cannot be copies to Local Storage ", 0, false);
-      }
-
-    } else {
-      let conf: IConfig = null;
-      try {
-        await this.storageSvc.getConfig(this.copyConfigForm.value.sourceTarget.scope, this.copyConfigForm.value.sourceTarget.name)
-        .then((config: IConfig) => {
-          conf = config
-        });
-      } catch (error) {
-        this.appService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
-        return;
-      }
-
-      if (this.copyConfigForm.value.copyDestination === 'Server Storage') {
-        //remote to remote
-        this.saveConfig(conf, this.copyConfigForm.value.destinationTarget.scope, this.copyConfigForm.value.destinationTarget.name);
-        if (this.copyConfigForm.value.destinationTarget.scope === 'user' && this.copyConfigForm.value.destinationTarget.name === 'default' && this.hasToken && !this.isTokenTypeDevice) {
-          this.appSettingsService.reloadApp();
-        }
-      } else {
-        // remote to local
-        this.appSettingsService.replaceConfig("appConfig", conf.app, false);
-        this.appSettingsService.replaceConfig("themeConfig", conf.theme, false);
-      }
+    let conf: IConfig = null;
+    try {
+      await this.storageSvc.getConfig(this.copyConfigForm.value.sourceTarget.scope, this.copyConfigForm.value.sourceTarget.name)
+      .then((config: IConfig) => {
+        conf = config
+      });
+    } catch (error) {
+      this.appService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
+      return;
     }
+
+    this.saveConfig(conf, 'user', 'default', false, true);
+    this.appSettingsService.reloadApp();
   }
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
@@ -220,25 +198,47 @@ export class SettingsConfigComponent implements OnInit, OnDestroy{
   public getLocalConfigFromLocalStorage(): IConfig {
     let localConfig: IConfig = {
       "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
-      "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardConfig'),
+      "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardsConfig'),
       "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
     };
     return localConfig;
   }
 
-  public onSourceSelectChange(event): void {
-    if (event.value === 'Local Storage') {
-      this.copyConfigForm.get('sourceTarget').disable();
-    } else {
-      this.copyConfigForm.get('sourceTarget').enable();
-    }
+  public downloadJsonConfig(): void {
+    const jsonData = this.getActiveConfig();
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+
+    const downloadURL = window.URL.createObjectURL(blob); // Generate a temporary download URL
+
+    // Create an invisible <a> element and trigger the download
+    const a = document.createElement('a');
+    a.href = downloadURL;
+    a.download = 'KipConfig.json'; // File name
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    window.URL.revokeObjectURL(downloadURL); // Cleanup memory
   }
 
-  public onDestinationSelectChange(event): void {
-    if (event.value === 'Local Storage') {
-      this.copyConfigForm.get('destinationTarget').disable();
+  public uploadJsonConfig(event: any) {
+    const file = event.target.files[0]; // Get the selected file
+    if (file && file.type === "application/json") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          this.jsonData = JSON.parse(e.target?.result as string); // Parse JSON
+          this.hasToken ? this.saveConfig(this.jsonData, 'user', 'default', false, true) : this.saveToLocalstorage(this.jsonData);
+          this.appSettingsService.reloadApp();
+        } catch (error) {
+          this.appService.sendSnackbarNotification("Invalid JSON file", 3000, false);
+          console.error("Invalid JSON file:", error);
+        }
+      };
+      reader.readAsText(file); // Read the file as text
     } else {
-      this.copyConfigForm.get('destinationTarget').enable();
+      this.appService.sendSnackbarNotification("Please select a valid JSON file", 0, false);
     }
   }
 

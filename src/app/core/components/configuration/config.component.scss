@@ -89,11 +89,29 @@ a:link, a:visited {
   grid-template-columns: [col-start] auto [col1-end] min-content [col2-end];
   grid-template-rows: [row-start] max-content [row1-end] max-content [row2-end];
   grid-template-areas:
+    "download-txt download-btn"
+    "upload-txt upload-btn"
     "demo-txt demo-btn"
     "reset-txt reset-btn"
     "config-txt config-btn";
   row-gap: 20px;
   column-gap: 10px;
+}
+
+.upload-txt {
+  grid-area: upload-txt;
+}
+
+.upload-btn {
+  grid-area: upload-btn;
+}
+
+.download-txt {
+  grid-area: download-txt;
+}
+
+.download-btn {
+  grid-area: download-btn;
 }
 
 .demo-txt {
