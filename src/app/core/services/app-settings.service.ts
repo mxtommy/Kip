@@ -7,7 +7,7 @@ import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
 import { UUID } from '../utils/uuid';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl, DashboardConfig } from "../interfaces/app-settings.interfaces";
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
 import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
@@ -413,6 +413,7 @@ public loadConfigFromLocalStorage(type: string) {
     } else {
       this.saveLDashboardsConfigToLocalStorage(dashboards);
     }
+    this._dashboards = dashboards;
   }
 
   // DataSets

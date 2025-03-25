@@ -55,7 +55,7 @@
             type="submit"
             [disabled]="!hasToken || !saveConfigForm.valid"
             color="accent">
-              Save
+              Create
           </button>
         </div>
       </form>
@@ -95,64 +95,21 @@
         </div>
       </form>
     </div>
-    <div class="flex-item-copy rounded-card-color">
+    <div class="flex-item-rounded-card rounded-card-color">
       <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
-      <h6>Copy</h6>
-      <p style="margin-bottom: 16px;">Duplicate/overwrite configurations between storage locations. The storage locations are Local Storage, used when connection "Login to Server" is disabled, and Server Storage, used for storage when connection "Login to Server" enabled.</p>
-        <div class="config-row" *ngIf="hasToken; else elseBlock">
-          <div class="config-column">
-            <label id="sources-radio-group-label">Source</label>
-            <mat-radio-group
-              formControlName="copySource"
-              aria-labelledby="sources-radio-group-label"
-              class="sources-radio-group"
-              (change)="onSourceSelectChange($event)">
-              <mat-radio-button
-                class="sources-radio-button"
-                *ngFor="let location of locations"
-                [value]="location">
-                  {{ location }}
-              </mat-radio-button>
-            </mat-radio-group>
-            <mat-form-field class="select-config">
-              <mat-label>Configuration</mat-label>
-              <mat-select formControlName="sourceTarget">
-                <mat-option
-                  *ngFor="let config of serverConfigList"
-                  [value]="config">
-                    {{ config.scope }} / {{ config.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <div class="config-column">
-            <label id="sources-radio-group-label">Destination</label>
-            <mat-radio-group
-              formControlName="copyDestination"
-              aria-labelledby="sources-radio-group-label"
-              class="sources-radio-group"
-              (change)="onDestinationSelectChange($event)"
-            >
-              <mat-radio-button
-                class="sources-radio-button"
-                *ngFor="let location of locations"
-                [value]="location"
-              >
-                {{ location }}
-              </mat-radio-button>
-            </mat-radio-group>
-            <mat-form-field class="select-config">
-              <mat-label>Configuration</mat-label>
-              <mat-select formControlName="destinationTarget">
-                <mat-option
-                  *ngFor="let config of serverConfigList"
-                  [value]="config"
-                >
+        <h6>Restore</h6>
+        <p style="margin-bottom: 16px;">Replace the current configuration with a backup from the server.</p>
+        <div *ngIf="hasToken; else elseBlock">
+          <mat-form-field style="width: 100%;">
+            <mat-label>Configuration</mat-label>
+            <mat-select formControlName="sourceTarget">
+              <mat-option
+                *ngFor="let config of serverConfigList"
+                [value]="config">
                   {{ config.scope }} / {{ config.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
         <ng-template #elseBlock>
           <div class="no-token-notice">
@@ -166,22 +123,40 @@
             type="submit"
             color="accent"
             [disabled]="!this.copyConfigForm.valid">
-              Copy
+              Restore
           </button>
         </div>
       </form>
     </div>
-
-
     <div class="flex-item-reset rounded-card-color">
-      <h6>Reset</h6>
-
+      <h6>Advanced</h6>
       <div class="config-operation-container" style="margin-top: 20px;">
+        <div class="download-txt">
+          <span class="descriptiveTexts"
+            >Download the active configuration.
+          </span>
+        </div>
+        <div class="download-btn btn-div">
+          <button mat-flat-button type="button" (click)="downloadJsonConfig()">Download</button>
+        </div>
+        <div class="upload-txt">
+          <span class="descriptiveTexts"
+            >Select a configuration file to upload. The file must be a valid KIP configuration
+            file of JSON format.
+          </span>
+        </div>
+        <div class="upload-btn btn-div">
+           <!-- Hidden file input -->
+           <input type="file" #fileInput (change)="uploadJsonConfig($event)" accept=".json" hidden />
+           <!-- Material button to trigger file input -->
+           <button mat-flat-button (click)="fileInput.click()">
+             Upload
+           </button>
+        </div>
         <div class="demo-txt">
           <span class="descriptiveTexts"
-            >Load Demo configuration and connect to Signal K demo server to
-            see Kip in action. Warning: this will reset your connection
-            settings and local layout configuration.
+            >Load the demonstration configuration and connection to Signal K demo server. Warning:
+            THIS WILL COMPLETELY RESET ALL YOUR SETTINGS.
           </span>
         </div>
         <div class="demo-btn btn-div">
@@ -190,15 +165,14 @@
             type="button"
             (click)="loadDemoConfig()"
           >
-            Load demo
+            Demo
           </button>
         </div>
         <div class="reset-txt">
           <span class="descriptiveTexts"
-            >Reset the current application configuration (Layouts, Widgets,
-            etc.) and restores defaults. The default configuration has a
-            single Getting Started instruction widget to get you started.
-            The SignalK server connection settings will be kept.
+            >Reset all your settings to default. The default configuration has a
+            single Getting Started instruction widget.
+            Your Signal K server connection settings will remain.
           </span>
         </div>
         <div class="reset-btn btn-div">
@@ -207,15 +181,12 @@
             type="button"
             (click)="resetConfigToDefault()"
           >
-            Reset app
+            Default
           </button>
         </div>
         <div class="config-txt">
           <span class="descriptiveTexts"
-            >Reset the current connection configuration to defaults. The
-            default connection configuration is empty and ready for
-            configuration. This will not affect the app configuration
-            (Layouts, widgets, etc.).
+            >Clear the current connection configuration. This only affects Connectivity tab settings.
           </span>
         </div>
         <div class="config-btn btn-div">
@@ -224,13 +195,11 @@
             type="button"
             (click)="resetConnectionToDefault()"
           >
-            Reset connection
+            Connection
           </button>
         </div>
       </div>
 
     </div>
-
-
   </div>
 </div>
