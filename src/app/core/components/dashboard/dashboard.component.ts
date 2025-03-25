@@ -17,6 +17,7 @@ import { WidgetGaugeNgLinearComponent } from '../../../widgets/widget-gauge-ng-l
 import { WidgetGaugeNgRadialComponent } from '../../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { WidgetSteelGaugeComponent } from '../../../widgets/widget-gauge-steel/widget-gauge-steel.component';
 import { WidgetIframeComponent } from '../../../widgets/widget-iframe/widget-iframe.component';
+import { WidgetPositionComponent } from '../../../widgets/widget-position/widget-position.component';
 import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
@@ -66,7 +67,8 @@ export class DashboardComponent implements AfterViewInit {
       WidgetRaceTimerComponent,
       WidgetIframeComponent,
       WidgetTutorialComponent,
-      WidgetWindComponent
+      WidgetWindComponent,
+      WidgetPositionComponent,
     ]);
 
     effect(() => {
