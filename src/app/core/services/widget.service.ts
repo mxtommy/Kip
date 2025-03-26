@@ -48,6 +48,14 @@ export class WidgetService {
       componentClassName: 'WidgetDatetimeComponent'
     },
     {
+      name: 'Position',
+      description: 'Displays latitude and longitude for location tracking and navigation.',
+      icon: 'positionWidget',
+      category: 'Basic',
+      selector: 'widget-position',
+      componentClassName: 'WidgetPositionComponent',
+    },
+    {
       name: 'Switch Panel',
       description: 'A switch panel group with multiple controls including toggle switches, indicator lights, and press buttons for digital switching ond other operations.',
       icon: 'switchpanelWidget',
@@ -112,20 +120,20 @@ export class WidgetService {
       componentClassName: 'WidgetFreeboardskComponent'
     },
     {
-      name: 'Autopilot Head',
-      description: 'An Autopilot Head for supported Signal K autopilot devices.',
-      icon: 'autopilotWidget',
-      category: 'Components',
-      selector: 'widget-autopilot',
-      componentClassName: 'WidgetAutopilotComponent'
-    },
-    {
       name: 'Data Chart',
       description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
       icon: 'datachartWidget',
       category: 'Components',
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
+    },
+    {
+      name: 'Autopilot Head',
+      description: 'An Autopilot Head for supported Signal K autopilot devices.',
+      icon: 'autopilotWidget',
+      category: 'Components',
+      selector: 'widget-autopilot',
+      componentClassName: 'WidgetAutopilotComponent'
     },
     {
       name: 'Race Timer',
@@ -150,14 +158,6 @@ export class WidgetService {
       category: 'Components',
       selector: 'widget-tutorial',
       componentClassName: 'WidgetTutorialComponent',
-    },
-    {
-      name: 'Position',
-      description: 'Displays latitude and longitude for location tracking and navigation.',
-      icon: 'positionWidget',
-      category: 'Components',
-      selector: 'widget-position',
-      componentClassName: 'WidgetPositionComponent',
     }
   ];
 
