@@ -150,6 +150,14 @@ export class WidgetService {
       category: 'Components',
       selector: 'widget-tutorial',
       componentClassName: 'WidgetTutorialComponent',
+    },
+    {
+      name: 'Position',
+      description: 'Displays latitude and longitude for location tracking and navigation.',
+      icon: 'positionWidget',
+      category: 'Components',
+      selector: 'widget-position',
+      componentClassName: 'WidgetPositionComponent',
     }
   ];
 
