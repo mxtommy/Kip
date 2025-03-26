@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { Component, OnDestroy, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -13,29 +13,27 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
     standalone: true,
     imports: [ WidgetHostComponent, NgxResizeObserverModule ]
 })
-export class WidgetNumericComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasMM', {static: true, read: ElementRef}) canvasMM: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
 
-  dataValue: number = null;
-  maxValue: number = null;
-  minValue: number = null;
-  labelColor: string = undefined;
-  valueColor: string = undefined;
-  dataTimestamp: number = Date.now();
-  currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  currentMinMaxLength: number = 0;
-  valueFontSize: number = 1;
-  minMaxFontSize: number = 1;
-  flashOn: boolean = true;
-  flashInterval = null;
-  dataState: string = States.Normal;
+  private dataValue: number = null;
+  private maxValue: number = null;
+  private minValue: number = null;
+  private labelColor: string = undefined;
+  private valueColor: string = undefined;
+  private valueStateColor: string = undefined;
+  private currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  private currentMinMaxLength: number = 0;
+  private valueFontSize: number = 1;
+  private minMaxFontSize: number = 1;
+  private flashInterval = null;
 
-  private readonly fontString = "Roboto";
-  canvasValCtx: CanvasRenderingContext2D;
-  canvasMMCtx: CanvasRenderingContext2D;
-  canvasBGCtx: CanvasRenderingContext2D;
+  private readonly fontString = "'Roboto'";
+  protected canvasValCtx: CanvasRenderingContext2D;
+  protected canvasMMCtx: CanvasRenderingContext2D;
+  protected canvasBGCtx: CanvasRenderingContext2D;
 
   constructor() {
     super();
@@ -68,18 +66,26 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
   ngOnInit(): void {
     this.validateConfig();
-    this.startWidget();
   }
 
-  protected startWidget(): void {
+  ngAfterViewInit(): void {
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-    this.getColors(this.widgetProperties.config.color);
+    document.fonts.ready.then(() => {
+      this.getColors(this.widgetProperties.config.color);
+      this.startWidget();
+      this.updateCanvasBG();
+    });
+  }
+
+  protected startWidget(): void {
     this.unsubscribeDataStream();
+    this.minValue = null;
+    this.maxValue = null;
+    this.dataValue = null;
     this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
-
       // Initialize min/max
       if (this.minValue === null || this.dataValue < this.minValue) {
         this.minValue = this.dataValue;
@@ -87,31 +93,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
         this.maxValue = this.dataValue;
       }
 
-      if (this.dataState != newValue.state) {
-        clearInterval(this.flashInterval);
-        this.flashInterval = null;
-        this.dataState = newValue.state;
-
-        switch (newValue.state) {
-          case States.Alarm:
-            this.flashInterval = setInterval(() => {
-              this.updateCanvasBG();
-            }, 200);
-            break;
-          case States.Warn:
-            this.flashInterval = setInterval(() => {
-              this.updateCanvasBG();
-            }, 400);
-            break;
-          case States.Alert:
-            this.flashInterval = setInterval(() => {
-              this.updateCanvasBG();
-            }, 800);
+      switch (newValue.state) {
+        case States.Alarm:
+          this.valueStateColor = this.theme.zoneAlarm;
           break;
-          default:
-            this.updateCanvasBG();
-            break;
-        }
+        case States.Warn:
+          this.valueStateColor = this.theme.zoneWarn;
+          break;
+        case States.Alert:
+          this.valueStateColor = this.theme.zoneAlert;
+          break;
+        default:
+          this.valueStateColor = this.valueColor;
+          break;
       }
       this.updateCanvas();
     });
@@ -207,33 +201,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
   private updateCanvasBG() {
     if (this.canvasBGCtx) {
-      switch (this.dataState) {
-          case States.Alarm:
-              this.handleFlash(this.theme.zoneAlarm);
-              break;
-          case States.Warn:
-              this.handleFlash(this.theme.zoneWarn);
-              break;
-          case States.Alert:
-              this.handleFlash(this.theme.zoneAlert);
-              break;
-          default:
-              this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
-              break;
-      }
-
-      this.flashOn = !this.flashOn;
+      this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
       this.drawTitle();
       this.drawUnit();
-    }
-  }
-
-  private handleFlash(color: string) {
-    if (this.flashOn) {
-        this.canvasBGCtx.fillStyle = color;
-        this.canvasBGCtx.fillRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-    } else {
-        this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
     }
   }
 
@@ -244,10 +214,10 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
     if (this.currentValueLength !== valueText.length) {
         this.currentValueLength = valueText.length;
-        this.valueFontSize = this.calculateOptimalFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasValCtx);
+        this.valueFontSize = this.calculateOptimalFontSize(valueText, "bold", maxTextWidth, maxTextHeight, this.canvasValCtx);
     }
     this.canvasValCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
-    this.canvasValCtx.fillStyle = this.valueColor;
+    this.canvasValCtx.fillStyle = this.valueStateColor;
     this.canvasValCtx.textAlign = "center";
     this.canvasValCtx.textBaseline = "middle";
     this.canvasValCtx.fillText(valueText, this.canvasEl.nativeElement.width / 2, (this.canvasEl.nativeElement.height * 0.5) + (this.valueFontSize / 15), maxTextWidth);
@@ -265,53 +235,53 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
     return this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
   }
 
-  private calculateOptimalFontSize(text: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-      let minFontSize = 1;
-      let maxFontSize = maxHeight;
-      let fontSize = maxFontSize;
+  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
+    let minFontSize = 1;
+    let maxFontSize = maxHeight;
+    let fontSize = maxFontSize;
 
-      while (minFontSize <= maxFontSize) {
-          fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-          ctx.font = `bold ${fontSize}px ${this.fontString}`;
-          const measure = ctx.measureText(text).width;
+    while (minFontSize <= maxFontSize) {
+        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
+        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
+        const measure = ctx.measureText(text).width;
 
-          if (measure > maxWidth) {
-              maxFontSize = fontSize - 1;
-          } else {
-              minFontSize = fontSize + 1;
-          }
-      }
-
-      return maxFontSize;
+        if (measure > maxWidth) {
+            maxFontSize = fontSize - 1;
+        } else {
+            minFontSize = fontSize + 1;
+        }
     }
 
-    private drawTitle() {
-      const displayName = this.widgetProperties.config.displayName;
-      if (displayName === null) { return; }
-      const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.94);
-      const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.1);
-      const fontSize = this.calculateOptimalFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
-      this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
-      this.canvasBGCtx.textAlign = "left";
-      this.canvasBGCtx.textBaseline = "top";
-      this.canvasBGCtx.fillStyle = this.labelColor;
-      this.canvasBGCtx.fillText(displayName, this.canvasBG.nativeElement.width * 0.03, this.canvasBG.nativeElement.height * 0.03, maxTextWidth);
-    }
+    return maxFontSize;
+  }
 
-    private drawUnit() {
-      const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-      if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) { return; }
+  private drawTitle() {
+    const displayName = this.widgetProperties.config.displayName;
+    if (displayName === null) { return; }
+    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.94);
+    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.1);
+    const fontSize = this.calculateOptimalFontSize(displayName, "normal", maxTextWidth, maxTextHeight, this.canvasBGCtx);
+    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
+    this.canvasBGCtx.textAlign = "left";
+    this.canvasBGCtx.textBaseline = "top";
+    this.canvasBGCtx.fillStyle = this.labelColor;
+    this.canvasBGCtx.fillText(displayName, this.canvasBG.nativeElement.width * 0.03, this.canvasBG.nativeElement.height * 0.03, maxTextWidth);
+  }
 
-      const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.35);
-      const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.15);
-      const fontSize = this.calculateOptimalFontSize(unit, maxTextWidth, maxTextHeight, this.canvasBGCtx);
+  private drawUnit() {
+    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) { return; }
 
-      this.canvasBGCtx.font = `bold ${fontSize}px ${this.fontString}`;
-      this.canvasBGCtx.textAlign = "right";
-      this.canvasBGCtx.textBaseline="bottom";
-      this.canvasBGCtx.fillStyle = this.valueColor;
-      this.canvasBGCtx.fillText(unit,this.canvasBG.nativeElement.width*0.97,this.canvasBG.nativeElement.height*0.97, maxTextWidth);
-    }
+    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.35);
+    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.15);
+    const fontSize = this.calculateOptimalFontSize(unit, "bold", maxTextWidth, maxTextHeight, this.canvasBGCtx);
+
+    this.canvasBGCtx.font = `bold ${fontSize}px ${this.fontString}`;
+    this.canvasBGCtx.textAlign = "right";
+    this.canvasBGCtx.textBaseline="bottom";
+    this.canvasBGCtx.fillStyle = this.valueColor;
+    this.canvasBGCtx.fillText(unit,this.canvasBG.nativeElement.width*0.97,this.canvasBG.nativeElement.height*0.97, maxTextWidth);
+  }
 
     private drawMinMax() {
       if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; }
@@ -330,14 +300,14 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements OnIni
 
       if (this.currentMinMaxLength !== valueText.length) {
           this.currentMinMaxLength = valueText.length;
-          this.minMaxFontSize = this.calculateOptimalFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasMMCtx);
+          this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", maxTextWidth, maxTextHeight, this.canvasMMCtx);
       }
 
       this.canvasMMCtx.font = `normal ${this.minMaxFontSize}px ${this.fontString}`;
       this.canvasMMCtx.textAlign = "left";
       this.canvasMMCtx.textBaseline = "bottom";
       this.canvasMMCtx.fillStyle = this.valueColor;
-      this.canvasMMCtx.fillText(valueText, this.canvasMM.nativeElement.width * 0.03, this.canvasMM.nativeElement.height * 0.95, maxTextWidth);
+      this.canvasMMCtx.fillText(valueText, this.canvasMM.nativeElement.width * 0.03, this.canvasMM.nativeElement.height * 0.9559, maxTextWidth);
   }
 
   private applyDecorations(txtValue: string): string {

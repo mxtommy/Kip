@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -12,7 +12,7 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
     imports: [WidgetHostComponent, NgxResizeObserverModule],
     standalone: true
 })
-export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
 
@@ -55,14 +55,19 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements OnIn
 
   ngOnInit() {
     this.validateConfig();
-    this.startWidget();
+  }
+
+  ngAfterViewInit(): void {
+    this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
+    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    document.fonts.ready.then(() => {
+      this.getColors(this.widgetProperties.config.color);
+      this.startWidget();
+    });
   }
 
   protected startWidget(): void {
-    this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.color);
-
     this.unsubscribeDataStream();
     this.observeDataStream('gaugePath', newValue => {
       this.dataValue = newValue.data.value;
