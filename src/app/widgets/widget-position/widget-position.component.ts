@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -12,17 +12,17 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
     imports: [ WidgetHostComponent, NgxResizeObserverModule ]
 })
 
-export class WidgetPositionComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
-  latPos = 0;
-  longPos = 0;
-  labelColor: string = undefined;
-  valueColor: string = undefined;
-  currentValueLength = 0; // length (in characters) of value text to be displayed.
-  valueFontSize = 1;
-  canvasValCtx: CanvasRenderingContext2D;
-  canvasBGCtx: CanvasRenderingContext2D;
+  private latPos: string = "";
+  private longPos: string = "";
+  private labelColor: string = undefined;
+  private valueColor: string = undefined;
+  private currentValueLength = 0; // length (in characters) of value text to be displayed.
+  private valueFontSize = 1;
+  private canvasValCtx: CanvasRenderingContext2D;
+  private canvasBGCtx: CanvasRenderingContext2D;
   private readonly fontString = 'Roboto';
 
   constructor() {
@@ -62,8 +62,16 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements OnIn
 
   ngOnInit() {
     this.validateConfig();
-    this.startWidget();
+  }
 
+  ngAfterViewInit(): void {
+    this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
+    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    document.fonts.ready.then(() => {
+      this.getColors(this.widgetProperties.config.color);
+      this.startWidget();
+      this.updateCanvasBG();
+    });
   }
 
   protected startWidget(): void {
@@ -78,7 +86,6 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements OnIn
       this.latPos = newValue.data.value;
       this.updateCanvas();
     });
-    this.updateCanvasBG();
   }
 
   ngOnDestroy() {
@@ -172,8 +179,8 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements OnIn
   private drawValue() {
     const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85) / 2; // we use two lines
-    const latPosText = this.latPos.toString();
-    const longPosText = this.longPos.toString();
+    const latPosText = this.latPos;
+    const longPosText = this.longPos;
     let longestString: string;
     if (latPosText.length > longPosText.length) {
       longestString = latPosText;
@@ -186,7 +193,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements OnIn
       this.valueFontSize = this.calculateFontSize(longestString, maxTextWidth, maxTextHeight, this.canvasValCtx);
     }
     const center  = this.canvasEl.nativeElement.width / 2;
-    const middle = this.canvasEl.nativeElement.height / 2;
+    const middle = this.canvasEl.nativeElement.height * 0.55;
     const fs = this.valueFontSize / 2;
     this.canvasValCtx.textAlign = 'center';
     this.canvasValCtx.textBaseline = 'middle';
@@ -200,7 +207,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements OnIn
     const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.94);
     const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.1);
     if (this.widgetProperties.config.displayName === null) { return; }
-    this.canvasBGCtx.font = 'bold ' + this.calculateFontSize(this.widgetProperties.config.displayName,
+    this.canvasBGCtx.font = 'normal ' + this.calculateFontSize(this.widgetProperties.config.displayName,
       maxTextWidth, maxTextHeight, this.canvasBGCtx).toString() + 'px ' + `${this.fontString}`;
     this.canvasBGCtx.textAlign = 'left';
     this.canvasBGCtx.textBaseline = 'top';
