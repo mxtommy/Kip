@@ -113,32 +113,22 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         let option: RadialGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
-          case States.Emergency:
-            option.colorBorderOuter = this.theme.zoneEmergency;
-            option.colorBorderMiddle = this.theme.zoneEmergency;
-            option.colorBarProgress = this.theme.zoneEmergency;
-            option.colorValueText = this.theme.zoneEmergency;
-            break;
           case States.Alarm:
-            option.colorBorderOuter = this.theme.zoneAlarm;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.theme.zoneAlarm;
             option.colorValueText = this.theme.zoneAlarm;
             break;
           case States.Warn:
-            option.colorBorderOuter = this.theme.cardColor;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.theme.zoneWarn;
             option.colorValueText = this.theme.zoneWarn;
             break;
           case States.Alert:
-            option.colorBorderOuter = this.theme.cardColor;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.theme.zoneAlert;
             option.colorValueText = this.theme.zoneAlert;
             break;
           default:
-            option.colorBorderOuter = this.theme.cardColor;
             option.colorBorderMiddle = this.theme.cardColor;
             option.colorBarProgress = this.widgetProperties.config.gauge.subType == 'measuring' ? this.getColors(this.widgetProperties.config.color).color : this.getColors(this.widgetProperties.config.color).dim;
             option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
