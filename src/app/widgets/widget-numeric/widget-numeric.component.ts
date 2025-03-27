@@ -73,7 +73,6 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     document.fonts.ready.then(() => {
-      this.getColors(this.widgetProperties.config.color);
       this.startWidget();
       this.updateCanvasBG();
     });
@@ -84,6 +83,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
+    this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
       // Initialize min/max
