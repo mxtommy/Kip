@@ -11,6 +11,7 @@ import { DialogService } from '../../services/dialog.service';
 import { NotificationBadgeComponent } from "../notification-badge/notification-badge.component";
 import { NotificationsService } from '../../services/notifications.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
 import { WidgetNumericComponent } from '../../../widgets/widget-numeric/widget-numeric.component';
@@ -208,7 +209,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
         widgetProperties: {
           type: source.input.widgetProperties.type,
           uuid: ID,
-          config: source.input.widgetProperties.config
+          config: cloneDeep(source.input.widgetProperties.config)
         }
       }
     } as NgGridStackWidget;

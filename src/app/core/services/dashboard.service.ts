@@ -3,6 +3,7 @@ import { effect, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { UUID } from '../utils/uuid';
 
 export interface Dashboard {
@@ -91,7 +92,7 @@ export class DashboardService {
     const newId = UUID.create();
     const sourceDashboard = this.dashboards()[itemIndex];
     const newConfiguration = sourceDashboard.configuration.map(item => ({
-      ...item,
+      ...cloneDeep(item),
       id: newId
     }));
 
