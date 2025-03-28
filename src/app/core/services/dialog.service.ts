@@ -49,6 +49,7 @@ export class DialogService {
         data: data,
         minWidth: "20vw",
         minHeight: "20vh",
+        disableClose: true,
       }
     );
   }

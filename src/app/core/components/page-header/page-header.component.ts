@@ -15,22 +15,15 @@ export class PageHeaderComponent {
   private _router = inject(Router);
 
   ngAfterViewInit(): void {
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+    // window.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    // window.removeEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    switch (event.key) {
-      case 'Escape':
-        this.closePage();
-        break;
-      default:
-        break;
-    }
-  }
+  // private handleKeyDown(event: KeyboardEvent): void {
+  // }
 
   protected closePage() {
     this._router.navigate(['/dashboard']);
