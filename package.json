@@ -93,7 +93,7 @@
     "ng-packagr": "^18.0.0",
     "ngx-resize-observer": "^2.7.0",
     "protractor": "~7.0.0",
-    "pwa-asset-generator": "^6.3.1",
+    "pwa-asset-generator": "^8.0.2",
     "rx-dom-html": "^7.0.3",
     "rxjs": "^7.5.7",
     "sass": "^1.49.9",
