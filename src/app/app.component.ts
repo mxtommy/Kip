@@ -128,15 +128,19 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    switch (event.key) {
-      case 'ArrowRight':
-        this.onSwipeRight(event);
-        break;
-      case 'ArrowLeft':
-        this.onSwipeLeft(event);
-        break;
-      default:
-        break;
+    // Avoid executing shortcuts when an input field is focused
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (event.ctrlKey && event.ctrlKey) {
+      switch (event.key) {
+        case 'ArrowRight':
+          this.onSwipeRight(event);
+          break;
+        case 'ArrowLeft':
+          this.onSwipeLeft(event);
+          break;
+        default:
+          break;
+      }
     }
   }
 
