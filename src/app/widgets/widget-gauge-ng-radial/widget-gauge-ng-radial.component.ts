@@ -82,7 +82,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       numDecimal: 0,
       enableTimeout: false,
       color: "white",
-      dataTimeout: 5
+      dataTimeout: 5,
+      ignoreZones: false
     };
   }
 
@@ -111,39 +112,42 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         this.state = newValue.state;
         //@ts-ignore
         let option: RadialGaugeOptions = {};
-        // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-        switch (newValue.state) {
-          case States.Alarm:
-            option.colorBorderMiddle = this.theme.cardColor;
-            option.colorBarProgress = this.theme.zoneAlarm;
-            option.colorValueText = this.theme.zoneAlarm;
-            break;
-          case States.Warn:
-            option.colorBorderMiddle = this.theme.cardColor;
-            option.colorBarProgress = this.theme.zoneWarn;
-            option.colorValueText = this.theme.zoneWarn;
-            break;
-          case States.Alert:
-            option.colorBorderMiddle = this.theme.cardColor;
-            option.colorBarProgress = this.theme.zoneAlert;
-            option.colorValueText = this.theme.zoneAlert;
-            break;
-          default:
-            option.colorBorderMiddle = this.theme.cardColor;
-            option.colorBarProgress = this.widgetProperties.config.gauge.subType == 'measuring' ? this.getColors(this.widgetProperties.config.color).color : this.getColors(this.widgetProperties.config.color).dim;
-            option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
+        if (!this.widgetProperties.config.ignoreZones) {
+          // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
+          switch (newValue.state) {
+            case States.Alarm:
+              option.colorBorderMiddle = this.theme.cardColor;
+              option.colorBarProgress = this.theme.zoneAlarm;
+              option.colorValueText = this.theme.zoneAlarm;
+              break;
+            case States.Warn:
+              option.colorBorderMiddle = this.theme.cardColor;
+              option.colorBarProgress = this.theme.zoneWarn;
+              option.colorValueText = this.theme.zoneWarn;
+              break;
+            case States.Alert:
+              option.colorBorderMiddle = this.theme.cardColor;
+              option.colorBarProgress = this.theme.zoneAlert;
+              option.colorValueText = this.theme.zoneAlert;
+              break;
+            default:
+              option.colorBorderMiddle = this.theme.cardColor;
+              option.colorBarProgress = this.widgetProperties.config.gauge.subType == 'measuring' ? this.getColors(this.widgetProperties.config.color).color : this.getColors(this.widgetProperties.config.color).dim;
+              option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
+          }
         }
         this.radialGauge.update(option);
       }
     });
 
-    this.observeMetaStream();
-
-    this.metaSub = this.zones$.subscribe(zones => {
-      if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
-        this.setHighlights(zones);
-      }
-    });
+    if (!this.widgetProperties.config.ignoreZones) {
+      this.observeMetaStream();
+      this.metaSub = this.zones$.subscribe(zones => {
+        if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
+          this.setHighlights(zones);
+        }
+      });
+    }
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {

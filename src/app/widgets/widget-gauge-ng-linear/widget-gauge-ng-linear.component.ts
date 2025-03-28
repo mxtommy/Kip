@@ -76,7 +76,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       numDecimal: 0,
       color: 'white',
       enableTimeout: false,
-      dataTimeout: 5
+      dataTimeout: 5,
+      ignoreZones: false
     };
 
   }
@@ -109,68 +110,70 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         //@ts-ignore
         let option: LinearGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-        switch (newValue.state) {
-          case States.Emergency:
-            if (this.widgetProperties.config.color != 'nobar') {
-              option.colorBarProgress = this.theme.zoneEmergency;
-              option.colorValueText = this.theme.zoneEmergency;
-            } else {
-              option.colorBarProgress = '';
-              option.colorNeedle = this.theme.zoneEmergency;
-              option.colorValueText = this.theme.zoneEmergency;
-            }
-            break;
-          case States.Alarm:
-            if (this.widgetProperties.config.color != 'nobar') {
-              option.colorBarProgress = this.theme.zoneAlarm;
-              option.colorValueText = this.theme.zoneAlarm;
-            } else {
-              option.colorBarProgress = '';
-              option.colorNeedle = this.theme.zoneAlarm;
-              option.colorValueText = this.theme.zoneAlarm;
-            }
-            break;
-          case States.Warn:
-            if (this.widgetProperties.config.color != 'nobar') {
-              option.colorBarProgress = this.theme.zoneWarn;
-              option.colorValueText = this.theme.zoneWarn;
-            } else {
-              option.colorBarProgress = '';
-              option.colorNeedle = this.theme.zoneWarn;
-              option.colorValueText = this.theme.zoneWarn;
-            }
-            break;
-          case States.Alert:
-            if(this.widgetProperties.config.color != 'nobar') {
-              option.colorBarProgress = this.theme.zoneAlert;
-              option.colorValueText = this.theme.zoneAlert;
-            } else {
-              option.colorBarProgress = '';
-              option.colorNeedle = this.theme.zoneAlert;
-              option.colorValueText = this.theme.zoneAlert;
-            }
-            break;
-          default:
-            if (this.widgetProperties.config.color != 'nobar') {
-              option.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
-              option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
-            } else {
-              option.colorBarProgress = '';
-              option.colorNeedle = this.getColors('blue').color;
-              option.colorValueText = this.getColors('blue').color;
-            }
+        if (!this.widgetProperties.config.ignoreZones) {
+          switch (newValue.state) {
+            case States.Emergency:
+              if (this.widgetProperties.config.color != 'nobar') {
+                option.colorBarProgress = this.theme.zoneEmergency;
+                option.colorValueText = this.theme.zoneEmergency;
+              } else {
+                option.colorBarProgress = '';
+                option.colorNeedle = this.theme.zoneEmergency;
+                option.colorValueText = this.theme.zoneEmergency;
+              }
+              break;
+            case States.Alarm:
+              if (this.widgetProperties.config.color != 'nobar') {
+                option.colorBarProgress = this.theme.zoneAlarm;
+                option.colorValueText = this.theme.zoneAlarm;
+              } else {
+                option.colorBarProgress = '';
+                option.colorNeedle = this.theme.zoneAlarm;
+                option.colorValueText = this.theme.zoneAlarm;
+              }
+              break;
+            case States.Warn:
+              if (this.widgetProperties.config.color != 'nobar') {
+                option.colorBarProgress = this.theme.zoneWarn;
+                option.colorValueText = this.theme.zoneWarn;
+              } else {
+                option.colorBarProgress = '';
+                option.colorNeedle = this.theme.zoneWarn;
+                option.colorValueText = this.theme.zoneWarn;
+              }
+              break;
+            case States.Alert:
+              if(this.widgetProperties.config.color != 'nobar') {
+                option.colorBarProgress = this.theme.zoneAlert;
+                option.colorValueText = this.theme.zoneAlert;
+              } else {
+                option.colorBarProgress = '';
+                option.colorNeedle = this.theme.zoneAlert;
+                option.colorValueText = this.theme.zoneAlert;
+              }
+              break;
+            default:
+              if (this.widgetProperties.config.color != 'nobar') {
+                option.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
+                option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
+              } else {
+                option.colorBarProgress = '';
+                option.colorNeedle = this.getColors('blue').color;
+                option.colorValueText = this.getColors('blue').color;
+              }
+          }
         }
         this.linearGauge.update(option);
       }
     });
-
-    this.observeMetaStream();
-
-    this.metaSub = this.zones$.subscribe(zones => {
-      if (zones && zones.length > 0) {
-        this.setHighlights(zones);
-      }
-    });
+    if (!this.widgetProperties.config.ignoreZones) {
+      this.observeMetaStream();
+      this.metaSub = this.zones$.subscribe(zones => {
+        if (zones && zones.length > 0) {
+          this.setHighlights(zones);
+        }
+      });
+    }
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
