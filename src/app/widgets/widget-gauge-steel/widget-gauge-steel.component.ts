@@ -56,7 +56,8 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
       // numInt: 1,
       numDecimal: 2,
       enableTimeout: false,
-      dataTimeout: 5
+      dataTimeout: 5,
+      ignoreZones: false
     };
   }
 
@@ -78,19 +79,22 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
       this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
     });
 
-    this.observeMetaStream();
-
-    this.metaSub = this.zones$.subscribe(zones => {
-      if (zones) {
-        if (zones.length > 0) {
-        this.zones = zones;
+    if (!this.widgetProperties.config.ignoreZones) {
+      this.observeMetaStream();
+      this.metaSub = this.zones$.subscribe(zones => {
+        if (zones) {
+          if (zones.length > 0) {
+          this.zones = zones;
+          } else {
+            this.zones = [];
+          }
         } else {
           this.zones = [];
         }
-      } else {
-        this.zones = [];
-      }
-    });
+      });
+    } else {
+      this.zones = [];
+    }
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {

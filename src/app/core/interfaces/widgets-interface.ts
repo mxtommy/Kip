@@ -131,6 +131,9 @@ export interface IWidgetSvcConfig {
   /** Used by numeric data Widget: Display maximum registered value since started */
   showMax?: boolean;
 
+  /** Used by Widgets that support zones: Indicates if SK metadata zones should be applied or not */
+  ignoreZones?: boolean;
+
   /** Option for widget that supports Signal K PUT command */
   putEnable?: boolean;
   /** Option for widget that supports Signal K PUT command */

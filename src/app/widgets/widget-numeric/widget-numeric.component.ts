@@ -60,7 +60,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       numInt: 1,
       color: 'white',
       enableTimeout: false,
-      dataTimeout: 5
+      dataTimeout: 5,
+      ignoreZones: false
     };
   }
 
@@ -92,21 +93,23 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       } else if (this.maxValue === null || this.dataValue > this.maxValue) {
         this.maxValue = this.dataValue;
       }
-
-      switch (newValue.state) {
-        case States.Alarm:
-          this.valueStateColor = this.theme.zoneAlarm;
-          break;
-        case States.Warn:
-          this.valueStateColor = this.theme.zoneWarn;
-          break;
-        case States.Alert:
-          this.valueStateColor = this.theme.zoneAlert;
-          break;
-        default:
-          this.valueStateColor = this.valueColor;
-          break;
+      if (!this.widgetProperties.config.ignoreZones) {
+        switch (newValue.state) {
+          case States.Alarm:
+            this.valueStateColor = this.theme.zoneAlarm;
+            break;
+          case States.Warn:
+            this.valueStateColor = this.theme.zoneWarn;
+            break;
+          case States.Alert:
+            this.valueStateColor = this.theme.zoneAlert;
+            break;
+          default:
+            this.valueStateColor = this.valueColor;
+            break;
+        }
       }
+
       this.updateCanvas();
     });
   }
@@ -174,6 +177,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
         this.valueColor = this.theme.white;
         break;
     }
+    this.valueStateColor = this.valueColor;
   }
 
   ngOnDestroy() {
