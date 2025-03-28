@@ -127,15 +127,19 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    switch (event.key) {
-      case 'ArrowUp':
-        this.previousDashboard(event);
-        break;
-      case 'ArrowDown':
-        this.nextDashboard(event);
-        break;
-      default:
-        break;
+    // Avoid executing shortcuts when an input field is focused
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (event.ctrlKey && event.ctrlKey) {
+      switch (event.key) {
+        case 'ArrowUp':
+          this.previousDashboard(event);
+          break;
+        case 'ArrowDown':
+          this.nextDashboard(event);
+          break;
+        default:
+          break;
+      }
     }
   }
 
