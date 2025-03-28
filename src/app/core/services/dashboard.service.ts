@@ -5,6 +5,8 @@ import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { UUID } from '../utils/uuid';
+import { BehaviorSubject } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface Dashboard {
   id: string
@@ -24,9 +26,12 @@ export class DashboardService {
   private _settings = inject(AppSettingsService);
   private _router = inject(Router);
   public dashboards = signal<Dashboard[]>([], {equal: isEqual});
-  public activeDashboard = signal<number>(0);
-  public widgetAction = signal<widgetOperation>(null);
-  public readonly isDashboardStatic = signal<boolean>(true);
+  public readonly activeDashboard = signal<number>(0);
+  private _widgetAction = new BehaviorSubject<widgetOperation>(null);
+  public widgetAction$ = this._widgetAction.asObservable();
+  private _isDashboardStatic = new BehaviorSubject<boolean>(true);
+  public isDashboardStatic$ = this._isDashboardStatic.asObservable();
+  public readonly isDashboardStatic = toSignal(this.isDashboardStatic$);
   public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: [
     {
       "w": 12,
@@ -63,7 +68,7 @@ export class DashboardService {
   }
 
   public toggleStaticDashboard(): void {
-    this.isDashboardStatic.set(!this.isDashboardStatic());
+    this._isDashboardStatic.next(!this._isDashboardStatic.value);
   }
 
   public add(name: string, configuration: NgGridStackWidget[]): void {
@@ -139,10 +144,14 @@ export class DashboardService {
   }
 
   public deleteWidget(id: string): void {
-    this.widgetAction.set({id: id, operation: 'delete'});
+    this._widgetAction.next({id: id, operation: 'delete'});
   }
 
   public duplicateWidget(id: string): void {
-    this.widgetAction.set({id: id, operation: 'duplicate'});
+    this._widgetAction.next({id: id, operation: 'duplicate'});
+  }
+
+  public setStaticDashboard(isStatic: boolean): void {
+    this._isDashboardStatic.next(isStatic);
   }
 }
