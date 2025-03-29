@@ -80,9 +80,16 @@ export interface IWidgetSvcConfig {
     power?: number;
   }
 
-  /** Display color  */
+  /** Color from KIP selection tool to use as main display color */
   color?: string;
-    /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
+  /** Color from KIP selection tool to use as background color */
+  bgColor?: string;
+  /** Don't apply any display color */
+  noColor?: boolean;
+  /** Don't apply any background color */
+  noBgColor?: boolean;
+
+  /** Enables data stream to emit null values (permitting Widgets to reset) after a given timeout smoothingPeriod. See dataTimeout */
   enableTimeout?: boolean;
   /** Sets data stream no-data timeout notification in minutes */
   dataTimeout?: number;

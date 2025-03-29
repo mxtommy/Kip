@@ -135,17 +135,17 @@
             </mat-form-field>
 
             <mat-checkbox *ngIf="(widgetConfig.ignoreZones !== undefined)"
-            name="ignoreZones"
-            formControlName="ignoreZones">
-            Ignore Zones configuration
-          </mat-checkbox>
+              name="ignoreZones"
+              formControlName="ignoreZones">
+              Ignore Zones configuration
+            </mat-checkbox>
 
-          @if ( (widgetConfig.gauge?.type == 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType)) || widgetConfig.gauge?.type == 'ngLinear') {
-            <mat-form-field formGroupName="gauge">
-              <mat-label>Highlights Width</mat-label>
-              <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
-            </mat-form-field>
-          }
+            @if ( (widgetConfig.gauge?.type == 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType)) || widgetConfig.gauge?.type == 'ngLinear') {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Highlights Width</mat-label>
+                <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
+              </mat-form-field>
+            }
 
             @if (widgetConfig.gauge?.type == 'ngRadial') {
               @if (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.subType) > -1) {
@@ -170,16 +170,16 @@
                   </mat-checkbox>
                 </div>
               } @else if ( ['measuring','capacity'].indexOf(formMaster.value.gauge.subType) > -1 ) {
-                  <mat-form-field formGroupName="gauge">
-                    <mat-label>Gauge Type</mat-label>
-                    <mat-select
-                      placeholder="Select Gauge Type..."
-                      formControlName="subType"
-                      name="subType">
-                      <mat-option value="measuring">Measuring</mat-option>
-                      <mat-option value="capacity">Capacity</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                <mat-form-field formGroupName="gauge">
+                  <mat-label>Gauge Type</mat-label>
+                  <mat-select
+                    placeholder="Select Gauge Type..."
+                    formControlName="subType"
+                    name="subType">
+                    <mat-option value="measuring">Measuring</mat-option>
+                    <mat-option value="capacity">Capacity</mat-option>
+                  </mat-select>
+                </mat-form-field>
               }
             }
 
@@ -221,6 +221,22 @@
                 }
                 @if (widgetConfig.gauge) {
                   <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinear') || (widgetConfig.gauge?.type == 'ngLinear')" value='nobar'>No Progress</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox *ngIf="(widgetConfig.noBgColor !== undefined)" name="noBgColor" formControlName="noBgColor">
+              Disable background color
+            </mat-checkbox>
+            <mat-form-field *ngIf="(widgetConfig.bgColor !== undefined)">
+              <mat-label>Background Color</mat-label>
+              <mat-select
+                placeholder="Select Color..."
+                formControlName="bgColor"
+                name="bgColor"
+                required>
+                @for(color of colors; track color) {
+                  <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
