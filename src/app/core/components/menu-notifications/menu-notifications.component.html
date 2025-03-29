@@ -37,7 +37,7 @@
     </div>
     <mat-divider class="notification-divider"></mat-divider>
   } @empty {
-    @if (notificationConfig.disableNotifications) {
+    @if (notificationConfig().disableNotifications) {
       <mat-list-item lines="3" disabled="true" style="text-align: center">
         <span matListItemTitle>Notifications Disabled</span>
         <span><i>*Enable notifications in Settings.</i></span>
@@ -50,7 +50,7 @@
   }
 </mat-list>
 <div class="actions-container actions-bottom-container">
-@if (!notificationConfig.disableNotifications) {
+@if (!notificationConfig().disableNotifications) {
   @if (isMuted) {
     <button mat-flat-button
       class="action-button"
