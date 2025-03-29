@@ -10,6 +10,18 @@ mat-icon {
   margin-right: 10px;
 }
 
+.scrollable-text {
+  overflow: hidden; /* Hide overflowing content */
+  white-space: nowrap; /* Prevent text from wrapping */
+  text-overflow: ellipsis; /* Add ellipsis (...) for overflow */
+}
+
+.scrollable-text:hover {
+  overflow: auto; /* Allow scrolling on hover */
+  white-space: normal; /* Allow text to wrap */
+  word-wrap: break-word; /* Break long words if necessary */
+}
+
 .notification-title {
   text-transform: capitalize;
   font-size: var(--sys-headline-small-size);
@@ -26,6 +38,9 @@ mat-icon {
   font-size: var(--sys-body-small-line-height);
   font-style: italic;
   width: 100%;
+  overflow: auto; /* Allow scrolling on hover */
+  white-space: normal; /* Allow text to wrap */
+  word-wrap: break-word; /* Break long words if necessary */
 }
 
 .notification-action-btn {
@@ -39,10 +54,37 @@ mat-icon {
   text-align: center;
 }
 
+.menu-item-container {
+  width: 230px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  height: calc(100% - 48px);
+}
+
 .notification-bottom-container {
   position: absolute;
   bottom: 0px;
   width: 100%;
+  background-color: var(--sys-surface-container);
+}
+
+.actions-container {
+  display:grid;
+  grid-auto-flow: column;
+}
+
+.actions-bottom-container {
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  height: 48px;
+}
+
+.action-button {
+  border-radius: 0px;
+  height: 48px;
+  border-bottom-right-radius: var(--mat-sidenav-container-shape, var(--mat-app-corner-large));
 }
 
 .icon-alert-color {
