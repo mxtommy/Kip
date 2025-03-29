@@ -109,28 +109,38 @@ export class uiEventService {
   }
 
   public preventBrowserHistorySwipeGestures(e: TouchEvent): void {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
+  if (e.touches.length === 1) {
+    const touch = e.touches[0];
 
-      if (e.type === 'touchstart') {
-        this.initialTouchX = touch.clientX;
-        this.initialTouchY = touch.clientY;
-        if (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20) {
-          e.preventDefault();
-        }
-      } else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
-        const deltaX = Math.abs(touch.clientX - this.initialTouchX);
-        const deltaY = Math.abs(touch.clientY - this.initialTouchY);
+    if (e.type === 'touchstart') {
+      this.initialTouchX = touch.clientX;
+      this.initialTouchY = touch.clientY;
 
-        if (deltaX > deltaY && (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20)) {
-          e.preventDefault();
-        }
-      } else if (e.type === 'touchend' || e.type === 'touchcancel') {
-        this.initialTouchX = null;
-        this.initialTouchY = null;
+      // Prevent default screen edge left, right, up, down swipe gestures
+      if (
+        this.initialTouchX < 20 ||
+        this.initialTouchX > window.innerWidth - 20 ||
+        this.initialTouchY < 50 ||
+        this.initialTouchY > window.innerHeight - 50
+      ) {
+        e.preventDefault();
       }
+    } else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
+      const deltaX = Math.abs(touch.clientX - this.initialTouchX);
+      const deltaY = Math.abs(touch.clientY - this.initialTouchY);
+
+      if (
+        (deltaX > deltaY && (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20)) ||
+        (deltaY > deltaX && this.initialTouchY < 50) // Detect downward swipe
+      ) {
+        e.preventDefault();
+      }
+    } else if (e.type === 'touchend' || e.type === 'touchcancel') {
+      this.initialTouchX = null;
+      this.initialTouchY = null;
     }
   }
+}
 
   public addHotkeyListener(callback: (event: KeyboardEvent) => void): void {
     document.addEventListener('keydown', callback);
