@@ -13,11 +13,6 @@
       (input)="setBrightness(+inputBrightness.value)">
     </mat-slider>
   </div>
-  <mat-checkbox class="full-width"
-    [(ngModel)]="enableHighContrast"
-    name="enableHighContrast">
-    Enable full sunlight High Contrast, black and white display.
-  </mat-checkbox>
   <div class="formActionFooter">
     <mat-divider class="formActionDivider"></mat-divider>
     <button mat-flat-button type="submit" class="formActionButton" [disabled]="!displayForm.form.dirty">Save</button>
