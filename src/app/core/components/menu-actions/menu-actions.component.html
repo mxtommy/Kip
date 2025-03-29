@@ -1,32 +1,32 @@
 <div class="actions-container actions-top-container">
-  @if (fullscreenSupported()) {
-    @if (!fullscreenStatus()) {
-      <button mat-flat-button class="action-button" tabindex="0" (click)="onItemClicked('toggleFullScreen')">
+  @if (uiEvent.fullscreenSupported()) {
+    @if (!uiEvent.fullscreenStatus()) {
+      <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
         <span class="material-icons">fullscreen</span>
       </button>
     } @else {
-    <button mat-flat-button class="action-button" tabindex="0" (click)="onItemClicked('toggleFullScreen')">
+    <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
         <span class="material-icons">close_fullscreen</span>
       </button>
     }
   }
   @if (!app.isNightMode()) {
-    <button mat-flat-button class="action-button" (click)="onItemClicked('nightMode')">
+    <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
       <span class="material-icons">mode_night</span>
     </button>
   } @else {
-    <button mat-flat-button class="action-button" (click)="onItemClicked('nightMode')">
+    <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
       <span class="material-icons">light_mode</span>
     </button>
   }
 </div>
 <div class="menu-item-container">
   @for (item of menuItems; track item) {
-    <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onItemClicked(item.action)"/>
+    <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onActionItem(item.action)"/>
   }
 </div>
 <div class="actions-container actions-bottom-container">
-  <button mat-flat-button class="action-button" (click)="onItemClicked('layout')">
+  <button mat-flat-button class="action-button" (click)="onActionItem('layout')">
     <span class="material-icons">lock_open</span>
   </button>
 </div>

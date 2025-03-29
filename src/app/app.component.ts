@@ -38,8 +38,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpen = false;
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
-  private initialTouchX: number | null = null;
-  private initialTouchY: number | null = null;
+
 
   protected themeName: string;
   //TODO: Still need this?
@@ -132,7 +131,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private handleKeyDown(event: KeyboardEvent): void {
     // Avoid executing shortcuts when an input field is focused
-    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (['INPUT', 'TEXTAREA', 'MAT-SELECT'].includes(document.activeElement.tagName)) return;
     if (event.ctrlKey && event.ctrlKey) {
       switch (event.key) {
         case 'ArrowRight':
@@ -168,33 +167,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       default:
         this._app.sendSnackbarNotification("Unknown stream connection status.", 0, false);
         break;
-    }
-  }
-
-  protected preventBrowserHistorySwipeGestures(e: TouchEvent): void {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-
-      if (e.type === 'touchstart') {
-        this.initialTouchX = touch.clientX;
-        this.initialTouchY = touch.clientY;
-        // Block swipe gestures from the left and right edges of the screen for mobile browsers
-        if (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20) {
-          e.preventDefault();
-        }
-      }
-      else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
-        const deltaX = Math.abs(touch.clientX - this.initialTouchX);
-        const deltaY = Math.abs(touch.clientY - this.initialTouchY);
-
-        if (deltaX > deltaY && (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20)) {
-          e.preventDefault();
-        }
-      }
-      else if (e.type === 'touchend' || e.type === 'touchcancel') {
-        this.initialTouchX = null;
-        this.initialTouchY = null;
-      }
     }
   }
 
