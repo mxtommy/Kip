@@ -12,7 +12,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
   styleUrl: './widget-label.component.scss'
 })
 export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit, AfterViewInit {
-  private canvasEl = viewChild<ElementRef>('canvasEl');
+  private canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
+  private wrapper = viewChild<ElementRef<HTMLDivElement>>('wrapper');
   private canvasCtx = CanvasRenderingContext2D = null;
   private readonly fontString = "'Roboto'";
 
@@ -22,7 +23,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     this.defaultConfig = {
       displayName: "Label",
       color: 'white',
-      bgColor: 'grey',
+      bgColor: 'blue',
       noColor: false,
       noBgColor: false
     };
@@ -33,8 +34,10 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
    }
 
    ngAfterViewInit(): void {
-     this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
-     this.updateCanvas();
+    this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
+    this.canvasEl().nativeElement.width = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().width);
+    this.canvasEl().nativeElement.height = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().height);
+    this.updateCanvas();
    }
 
   protected startWidget(): void {
@@ -109,7 +112,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     this.canvasCtx.fillStyle = this.getColors(this.widgetProperties.config.color);
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline = "middle";
-    this.canvasCtx.fillText(this.widgetProperties.config.displayName, this.canvasEl().nativeElement.width / 2, (this.canvasEl().nativeElement.height * 0.5) + (valueFontSize / 15), maxTextWidth);
+    this.canvasCtx.fillText(this.widgetProperties.config.displayName, this.canvasEl().nativeElement.width / 2, (this.canvasEl().nativeElement.height / 2) + (valueFontSize / 15), maxTextWidth);
   }
 
   private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
