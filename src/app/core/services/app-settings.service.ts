@@ -363,6 +363,7 @@ public loadConfigFromLocalStorage(type: string) {
     }
   }
 
+  // TODO: Do we still need this?
   public getThemeName(): string {
     return this.themeName.getValue();;
   }

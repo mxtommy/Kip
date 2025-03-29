@@ -84,63 +84,59 @@ export class uiEventService {
 
   public addGestureListeners(
     onSwipeLeft: (e: Event) => void,
-    onSwipeRight: (e: Event) => void,
-    preventBrowserHistorySwipeGestures: (e: TouchEvent) => void
+    onSwipeRight: (e: Event) => void
   ): void {
+    const boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
     document.addEventListener('openLeftSidenav', onSwipeLeft);
     document.addEventListener('openRightSidenav', onSwipeRight);
-    document.addEventListener('touchstart', preventBrowserHistorySwipeGestures, { passive: false });
-    document.addEventListener('touchmove', preventBrowserHistorySwipeGestures, { passive: false });
-    document.addEventListener('touchend', preventBrowserHistorySwipeGestures);
-    document.addEventListener('touchcancel', preventBrowserHistorySwipeGestures);
+    document.addEventListener('touchstart', boundPreventGestures, { passive: false });
+    document.addEventListener('touchmove', boundPreventGestures, { passive: false });
+    document.addEventListener('touchend', boundPreventGestures);
+    document.addEventListener('touchcancel', boundPreventGestures);
   }
 
   public removeGestureListeners(
     onSwipeLeft: (e: Event) => void,
-    onSwipeRight: (e: Event) => void,
-    preventBrowserHistorySwipeGestures: (e: TouchEvent) => void
+    onSwipeRight: (e: Event) => void
   ): void {
+    const boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
     document.removeEventListener('openLeftSidenav', onSwipeLeft);
     document.removeEventListener('openRightSidenav', onSwipeRight);
-    document.removeEventListener('touchstart', preventBrowserHistorySwipeGestures);
-    document.removeEventListener('touchmove', preventBrowserHistorySwipeGestures);
-    document.removeEventListener('touchend', preventBrowserHistorySwipeGestures);
-    document.removeEventListener('touchcancel', preventBrowserHistorySwipeGestures);
+    document.removeEventListener('touchstart', boundPreventGestures);
+    document.removeEventListener('touchmove', boundPreventGestures);
+    document.removeEventListener('touchend', boundPreventGestures);
+    document.removeEventListener('touchcancel', boundPreventGestures);
   }
 
   public preventBrowserHistorySwipeGestures(e: TouchEvent): void {
-  if (e.touches.length === 1) {
-    const touch = e.touches[0];
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const edgeThreshold = 30; // More reliable threshold
 
-    if (e.type === 'touchstart') {
-      this.initialTouchX = touch.clientX;
-      this.initialTouchY = touch.clientY;
+      if (e.type === 'touchstart') {
+        this.initialTouchX = touch.clientX;
+        this.initialTouchY = touch.clientY;
+      } else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
+        const deltaX = Math.abs(touch.clientX - this.initialTouchX);
+        const deltaY = Math.abs(touch.clientY - this.initialTouchY);
 
-      // Prevent default screen edge left, right, up, down swipe gestures
-      if (
-        this.initialTouchX < 20 ||
-        this.initialTouchX > window.innerWidth - 20 ||
-        this.initialTouchY < 50 ||
-        this.initialTouchY > window.innerHeight - 50
-      ) {
-        e.preventDefault();
+        // Prevent only strong horizontal swipes from the screen edges
+        if (
+          deltaX > 10 && deltaX > deltaY && (this.initialTouchX < edgeThreshold || this.initialTouchX > window.innerWidth - edgeThreshold)
+        ) {
+          e.preventDefault();
+        }
+
+        // Prevent downward swipe (pull-to-refresh)
+        if (deltaY > 10 && this.initialTouchY < 50) {
+          e.preventDefault();
+        }
+      } else if (e.type === 'touchend' || e.type === 'touchcancel') {
+        this.initialTouchX = null;
+        this.initialTouchY = null;
       }
-    } else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
-      const deltaX = Math.abs(touch.clientX - this.initialTouchX);
-      const deltaY = Math.abs(touch.clientY - this.initialTouchY);
-
-      if (
-        (deltaX > deltaY && (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20)) ||
-        (deltaY > deltaX && this.initialTouchY < 50) // Detect downward swipe
-      ) {
-        e.preventDefault();
-      }
-    } else if (e.type === 'touchend' || e.type === 'touchcancel') {
-      this.initialTouchX = null;
-      this.initialTouchY = null;
     }
   }
-}
 
   public addHotkeyListener(callback: (event: KeyboardEvent) => void): void {
     document.addEventListener('keydown', callback);

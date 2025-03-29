@@ -99,6 +99,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         this.dashboard.toggleStaticDashboard();
         break;
       case 'nightMode':
+        this.app.isNightMode.set(!this.app.isNightMode());
         this.app.toggleDayNightMode();
         break;
       default:

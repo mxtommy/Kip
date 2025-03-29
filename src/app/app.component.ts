@@ -119,8 +119,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     // Add event listeners for swipe gestures
     this._uiEvent.addGestureListeners(
       this.onSwipeLeft.bind(this),
-      this.onSwipeRight.bind(this),
-      this._uiEvent.preventBrowserHistorySwipeGestures.bind(this)
+      this.onSwipeRight.bind(this)
     );
   }
 
@@ -190,8 +189,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.connectionStatusSub.unsubscribe();
     this._uiEvent.removeGestureListeners(
       this.onSwipeLeft.bind(this),
-      this.onSwipeRight.bind(this),
-      this._uiEvent.preventBrowserHistorySwipeGestures.bind(this)
+      this.onSwipeRight.bind(this)
     );
     this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
   }

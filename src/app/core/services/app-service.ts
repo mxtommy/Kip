@@ -167,8 +167,7 @@ export class AppService implements OnDestroy {
   }
 
   public toggleDayNightMode(): void {
-    this.isNightMode() ? this.setBrightness(1) : this.setBrightness(this._settings.getNightModeBrightness());
-    this.isNightMode.set(!this.isNightMode());
+    this.isNightMode() ? this.setBrightness(this._settings.getNightModeBrightness()) : this.setBrightness(1);
   }
 
   private autoNightModeObserver(): void {
@@ -186,11 +185,19 @@ export class AppService implements OnDestroy {
     this._autoNightDeltaStatus = deltaStatus.subscribe(stat => {
       stat as IStreamStatus;
       if(stat.operation == 2) {
-          this._environmentModePathSubscription = this._data.subscribePath(modePath, 'default').subscribe(path => {
-            if (this._settings.getAutoNightMode()) {
-              path.data.value === 'night' ? this.toggleDayNightMode() : this.toggleDayNightMode();
+        this._environmentModePathSubscription = this._data.subscribePath(modePath, 'default').subscribe(path => {
+          if (this._settings.getAutoNightMode()) {
+            if (path.data.value) {
+              if (path.data.value === "night") {
+                this.isNightMode.set(true);
+                this.toggleDayNightMode();
+              } else if (path.data.value === "day") {
+                this.isNightMode.set(false);
+                this.toggleDayNightMode();
+              }
             }
-          });
+          }
+        });
       }
     });
   }
@@ -209,5 +216,4 @@ export class AppService implements OnDestroy {
     this._autoNightModeThemeSubscription?.unsubscribe();
     this._autoNightDeltaStatus?.unsubscribe();
   }
-
 }
