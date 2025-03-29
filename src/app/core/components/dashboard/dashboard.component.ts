@@ -30,6 +30,7 @@ import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/wid
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
+import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 
 
 @Component({
@@ -77,6 +78,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetTutorialComponent,
       WidgetWindComponent,
       WidgetPositionComponent,
+      WidgetLabelComponent
     ]);
 
     effect(() => {

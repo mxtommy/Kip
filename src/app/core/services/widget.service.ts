@@ -64,6 +64,14 @@ export class WidgetService {
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
     {
+      name: 'Static Label',
+      description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
+      icon: 'labelWidget',
+      category: 'Basic',
+      selector: 'widget-label',
+      componentClassName: 'WidgetLabelComponent'
+    },
+    {
       name: 'Simple Linear',
       description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
       icon: 'simpleLinearGauge',
