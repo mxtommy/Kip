@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
+import { uiEventService } from './core/services/uiEvent.service';
 
 
 @Component({
@@ -28,6 +29,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private _deltaService = inject(SignalKDeltaService);
   private _app = inject(AppService);
   private _dashboard = inject(DashboardService);
+  private _uiEvent = inject(uiEventService);
   public appSettingsService = inject(AppSettingsService);
   public authenticationService = inject(AuthenticationService);
   public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
@@ -36,8 +38,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpen = false;
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
-  private initialTouchX: number | null = null;
-  private initialTouchY: number | null = null;
+
 
   protected themeName: string;
   //TODO: Still need this?
@@ -115,21 +116,22 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     );
 
-    document.addEventListener('openLeftSidenav', this.onSwipeLeft.bind(this));
-    document.addEventListener('openRightSidenav', this.onSwipeRight.bind(this));
-    document.addEventListener('touchstart', this.preventBrowserHistorySwipeGestures.bind(this), { passive: false });
-    document.addEventListener('touchmove', this.preventBrowserHistorySwipeGestures.bind(this), { passive: false });
-    document.addEventListener('touchend', this.preventBrowserHistorySwipeGestures.bind(this));
-    document.addEventListener('touchcancel', this.preventBrowserHistorySwipeGestures.bind(this));
+    // Add event listeners for swipe gestures
+    this._uiEvent.addGestureListeners(
+      this.onSwipeLeft.bind(this),
+      this.onSwipeRight.bind(this),
+      this._uiEvent.preventBrowserHistorySwipeGestures.bind(this)
+    );
   }
 
   ngAfterViewInit(): void {
-    document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    // Add keyboard shortcut listener
+    this._uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
     // Avoid executing shortcuts when an input field is focused
-    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (['INPUT', 'TEXTAREA', 'MAT-SELECT'].includes(document.activeElement.tagName)) return;
     if (event.ctrlKey && event.ctrlKey) {
       switch (event.key) {
         case 'ArrowRight':
@@ -168,42 +170,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected preventBrowserHistorySwipeGestures(e: TouchEvent): void {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-
-      if (e.type === 'touchstart') {
-        this.initialTouchX = touch.clientX;
-        this.initialTouchY = touch.clientY;
-        // Block swipe gestures from the left and right edges of the screen for mobile browsers
-        if (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20) {
-          e.preventDefault();
-        }
-      }
-      else if (e.type === 'touchmove' && this.initialTouchX !== null && this.initialTouchY !== null) {
-        const deltaX = Math.abs(touch.clientX - this.initialTouchX);
-        const deltaY = Math.abs(touch.clientY - this.initialTouchY);
-
-        if (deltaX > deltaY && (this.initialTouchX < 20 || this.initialTouchX > window.innerWidth - 20)) {
-          e.preventDefault();
-        }
-      }
-      else if (e.type === 'touchend' || e.type === 'touchcancel') {
-        this.initialTouchX = null;
-        this.initialTouchY = null;
-      }
-    }
-  }
-
   protected onSwipeRight(e: Event): void {
-    if (this._dashboard.isDashboardStatic()) {
+    if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
       this.notificationsSidenavOpened.set(true);
     }
   }
 
   protected onSwipeLeft(e: Event): void {
-    if (this._dashboard.isDashboardStatic()) {
+    if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
       this.actionsSidenavOpen = true;
     }
@@ -213,12 +188,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.themeNameSub.unsubscribe();
     this.appNotificationSub.unsubscribe();
     this.connectionStatusSub.unsubscribe();
-    document.removeEventListener('openLeftSidenav', this.onSwipeLeft);
-    document.removeEventListener('openRightSidenav', this.onSwipeRight);
-    document.removeEventListener('keydown', this.handleKeyDown.bind(this));
-    document.removeEventListener('touchstart', this.preventBrowserHistorySwipeGestures.bind(this));
-    document.removeEventListener('touchmove', this.preventBrowserHistorySwipeGestures.bind(this));
-    document.removeEventListener('touchend', this.preventBrowserHistorySwipeGestures.bind(this));
-    document.removeEventListener('touchcancel', this.preventBrowserHistorySwipeGestures.bind(this));
+    this._uiEvent.removeGestureListeners(
+      this.onSwipeLeft.bind(this),
+      this.onSwipeRight.bind(this),
+      this._uiEvent.preventBrowserHistorySwipeGestures.bind(this)
+    );
+    this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
   }
 }

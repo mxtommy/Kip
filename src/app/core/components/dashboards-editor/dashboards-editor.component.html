@@ -4,6 +4,7 @@
       <div class="dashboard-card dashboard-item"
         cdkDrag
         cdkDragBoundary=".dashboard-manage"
+        (cdkDragStarted)="dragStart($event)" (cdkDragEnded)="dragEnd($event)"
         (press)="openBottomSheet(index)"
         (doubletap)="editDashboard(index)">
         <span style="display: block; width: 100%;">

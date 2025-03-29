@@ -4,9 +4,10 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
-import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, CdkDragStart, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import { uiEventService } from '../../services/uiEvent.service';
 
 
 @Component({
@@ -20,6 +21,7 @@ export class DashboardsEditorComponent {
   protected readonly pageTitle = 'Dashboards';
   private _bottomSheet = inject(MatBottomSheet);
   protected _dashboard = inject(DashboardService);
+  private _uiEvent = inject(uiEventService);
   private _dialog = inject(DialogService);
 
   protected addDashboard(): void {
@@ -86,5 +88,13 @@ export class DashboardsEditorComponent {
       moveItemInArray(updatedDashboards, event.previousIndex, event.currentIndex);
       return updatedDashboards;
     });
+  }
+
+  protected dragStart(e: CdkDragStart): void {
+    this._uiEvent.isDragging.set(true);
+  }
+
+  protected dragEnd(e: CdkDragEnd): void {
+    this._uiEvent.isDragging.set(false);
   }
 }

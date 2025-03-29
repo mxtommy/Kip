@@ -1,13 +1,12 @@
-import { AfterViewInit, Component, inject, input, OnDestroy, signal } from '@angular/core';
+import { AfterViewInit, Component, inject, input, OnDestroy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import screenfull from 'screenfull';
 import { Router } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
 import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
-declare var NoSleep: any; //3rd party library
+import { uiEventService } from '../../services/uiEvent.service';
 
 interface MenuActionItem extends LargeIconTile {
   action: string;
@@ -23,12 +22,8 @@ interface MenuActionItem extends LargeIconTile {
 
 export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected actionsSidenav = input.required<MatSidenav>();
-  protected fullscreenStatus = signal<boolean>(false);
-  protected fullscreenSupported = signal<boolean>(true);
-  protected noSleepStatus = signal<boolean>(false);
-  protected noSleepSupported = signal<boolean>(true);
-  private noSleep = new NoSleep();
   private _router = inject(Router);
+  protected uiEvent = inject(uiEventService);
   private dashboard = inject(DashboardService);
   protected app = inject(AppService);
   protected readonly menuItems: MenuActionItem[]  = [
@@ -41,76 +36,42 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   ];
 
   constructor() {
-    if (screenfull.isEnabled) {
-      screenfull.on('change', () => {
-        this.fullscreenStatus.set(screenfull.isFullscreen);
-        if (!screenfull.isFullscreen) {
-          this.noSleep.disable();
-        }
-      });
-    } else {
-      this.fullscreenSupported.set(false);
-      console.warn('[Actions Menu] Fullscreen mode is not supported by this device/browser.');
-    }
-
-    this.checkNoSleepSupport();
-    if (this.checkPwaMode() && this.noSleepSupported() && !this.noSleepStatus()) {
-      this.toggleNoSleep();
-    }
   }
 
   ngAfterViewInit(): void {
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+    this.uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    this.uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));;
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    // Normaliser la touche pour éviter des différences entre les navigateurs
-  const key = event.key.toLowerCase();
+    // Normalize key to lowercase
+    const key = event.key.toLowerCase();
 
-  // Vérification stricte des touches enfoncées
-  const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey pour Mac (Cmd)
-  const isShiftPressed = event.shiftKey;
+    // Check if Ctrl and Shift are pressed
+    const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey for Mac (Cmd)
+    const isShiftPressed = event.shiftKey;
 
-  if (isCtrlPressed && isShiftPressed) {
-    switch (key) {
-      case 'e':
-        this.onItemClicked('layout');
-        break;
-      case 'f':
-        this.onItemClicked('toggleFullScreen');
-        break;
-      case 'n':
-        this.onItemClicked('nightMode');
-        break;
-      default:
-        break;
-    }
-  }
-  }
-
-  private checkNoSleepSupport(): void {
-    try {
-      this.noSleep = new NoSleep();
-      if (typeof this.noSleep.enable !== 'function' || typeof this.noSleep.disable !== 'function') {
-        throw new Error('[Actions Menu] NoSleep methods not available');
+    if (isCtrlPressed && isShiftPressed) {
+      switch (key) {
+        case 'e':
+          this.onActionItem('layout');
+          break;
+        case 'f':
+          this.onActionItem('toggleFullScreen');
+          break;
+        case 'n':
+          this.onActionItem('nightMode');
+          break;
+        default:
+          break;
       }
-    } catch (error) {
-      this.noSleepSupported.set(false);
-      console.warn('[Actions Menu] NoSleep is not supported by this device/browser.');
     }
   }
 
-  private checkPwaMode(): boolean {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone !== undefined;
-    console.log('[Actions Menu] PWA mode:', isStandalone);
-    return isStandalone;
-  }
-
-  protected onItemClicked(action: string): void {
+  protected onActionItem(action: string): void {
     this.actionsSidenav().close();
     switch (action) {
       case 'help':
@@ -129,7 +90,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         this._router.navigate(['/configurations']);
         break;
       case 'toggleFullScreen':
-        this.toggleFullScreen();
+        this.uiEvent.toggleFullScreen();
         break;
       case 'settings':
         this._router.navigate(['/settings']);
@@ -142,36 +103,6 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         break;
       default:
         break;
-    }
-  }
-
-  protected toggleFullScreen(): void {
-    if (screenfull.isEnabled) {
-      if (!this.fullscreenStatus()) {
-        screenfull.request();
-        this.noSleep.enable();
-      } else {
-        if (screenfull.isFullscreen) {
-          screenfull.exit();
-        }
-        this.noSleep.disable();
-      }
-      this.fullscreenStatus.set(!this.fullscreenStatus());
-    } else {
-      this.fullscreenSupported.set(false);
-      console.warn('[Actions Menu] Fullscreen mode is not supported by this browser.');
-    }
-  }
-
-  protected toggleNoSleep(): void {
-    if (this.noSleepSupported()) {
-      if (!this.noSleepStatus()) {
-        this.noSleep.enable();
-      } else {
-        this.noSleep.disable();
-      }
-      this.noSleepStatus.set(!this.noSleepStatus());
-      console.log('[Actions Menu] NoSleep:', this.noSleepStatus());
     }
   }
 }
