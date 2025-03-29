@@ -1,4 +1,4 @@
-<mat-list>
+<mat-list class="menu-item-container">
   @for(menuItem of menuNotifications(); track menuItem.path) {
     <div class="notification-container">
       @switch (menuItem.value.state) { @case ("nominal") {
@@ -15,7 +15,7 @@
       <mat-icon class="icon-emergency-color">emergency_home</mat-icon>
       } }
       <div class="notification-title">{{ menuItem.value.state }}</div>
-      <div class="notification-path">{{ menuItem.path | slice : 14 }}</div>
+      <div class="notification-path scrollable-text">{{ menuItem.path | slice : 14 }}</div>
       <div class="notification-text">{{ menuItem.value.message }}</div>
 
       <button
@@ -36,37 +36,36 @@
       </button>
     </div>
     <mat-divider class="notification-divider"></mat-divider>
-  } @empty { @if (notificationConfig.disableNotifications) {
-    <mat-list-item lines="3" disabled="true" style="text-align: center">
-      <span matListItemTitle>Notifications Disabled</span>
-      <span><i>*Enable notifications in KIP Settings.</i></span>
-    </mat-list-item>
-  } @else {
-    <mat-list-item disabled="true" style="text-align: center">
-      <i>"No Notification"</i>
-    </mat-list-item>
-  } }
-</mat-list>
-@if (!notificationConfig.disableNotifications) {
-  <mat-action-list class="notification-bottom-container">
-    @if (isMuted) {
-      <button
-        mat-list-item
-        matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option"
-        (click)="mutePlayer(isMuted ? false : true)"
-      >
-        <mat-icon>volume_up</mat-icon>
-        <span>Unmute Audio</span>
-      </button>
+  } @empty {
+    @if (notificationConfig.disableNotifications) {
+      <mat-list-item lines="3" disabled="true" style="text-align: center">
+        <span matListItemTitle>Notifications Disabled</span>
+        <span><i>*Enable notifications in Settings.</i></span>
+      </mat-list-item>
     } @else {
-      <button
-        mat-list-item
-        matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option"
-        (click)="mutePlayer(isMuted ? false : true)"
-      >
-        <mat-icon>volume_off</mat-icon>
-        <span>Mute Audio</span>
-      </button>
+      <mat-list-item disabled="true" style="text-align: center">
+        <i>"No Notification"</i>
+      </mat-list-item>
     }
-  </mat-action-list>
+  }
+</mat-list>
+<div class="actions-container actions-bottom-container">
+@if (!notificationConfig.disableNotifications) {
+  @if (isMuted) {
+    <button mat-flat-button
+      class="action-button"
+      matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option"
+      (click)="mutePlayer(isMuted ? false : true)">
+      <span class="material-icons">volume_up</span> Unmute Audio
+    </button>
+  } @else {
+    <button mat-flat-button
+      class="action-button"
+      matTooltip="Temporally toggle all notification audio. To permanently disable/enable notification audio, use the configuration settings option"
+      (click)="mutePlayer(isMuted ? false : true)"
+    >
+      <span class="material-icons">volume_off</span> Mute Audio
+    </button>
+  }
 }
+</div>
