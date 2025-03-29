@@ -79,11 +79,11 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('longPath', newValue => {
-      this.longPos = newValue.data.value;
+      newValue.data.value ? this.longPos = newValue.data.value.toString() : this.longPos = "";
       this.updateCanvas();
     });
     this.observeDataStream('latPath', newValue => {
-      this.latPos = newValue.data.value;
+      newValue.data.value ? this.latPos = newValue.data.value.toString() : this.latPos = "";
       this.updateCanvas();
     });
   }

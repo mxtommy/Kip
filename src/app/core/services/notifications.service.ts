@@ -76,7 +76,7 @@ export class NotificationsService implements OnDestroy {
   private _notificationConfig$: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
   private _notifications: INotification[] = []; // local array of Alarms with path as index key
-  private _notifications$ = new BehaviorSubject<INotification[] | null>(null);
+  private _notifications$ = new BehaviorSubject<INotification[]>([]);
   private _alarmsInfo$: BehaviorSubject<IAlarmInfo> = new BehaviorSubject<IAlarmInfo>({ audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false });
 
   // sounds properties
@@ -149,9 +149,8 @@ export class NotificationsService implements OnDestroy {
   /**
    * Returns a notification Observable of an array of notifications or null.
    */
-  public observeNotifications(): Observable<INotification[] | null> {
-    return this._notifications$.pipe(
-      filter(notification => notification !== null));
+  public observeNotifications(): Observable<INotification[]> {
+    return this._notifications$;
   }
 
   private addValue(msg: ISignalKDataValueUpdate) {
