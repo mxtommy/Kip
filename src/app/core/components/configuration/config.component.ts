@@ -14,7 +14,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { NgIf, NgFor, JsonPipe } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 

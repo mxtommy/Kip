@@ -28,11 +28,11 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected app = inject(AppService);
   protected readonly menuItems: MenuActionItem[]  = [
     { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
-    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Browser', action: 'databrowser' },
+    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Inspector', action: 'datainspector' },
     { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
     { svgIcon: 'configuration', iconSize:  48, label: 'Configurations', action: 'configurations' },
     { svgIcon: 'settings', iconSize:  48, label: 'Settings', action: 'settings' },
-    { svgIcon: 'help-center', iconSize:  48, label: 'Help Center', action: 'help' },
+    { svgIcon: 'help-center', iconSize:  48, label: 'Help', action: 'help' }
   ];
 
   constructor() {
@@ -75,12 +75,12 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
     this.actionsSidenav().close();
     switch (action) {
       case 'help':
-        this._router.navigate(['/help']);
+      this._router.navigate(['/help']);
         break;
       case 'dashboards':
         this._router.navigate(['/dashboards']);
         break;
-      case 'databrowser':
+      case 'datainspector':
         this._router.navigate(['/data']);
         break;
       case 'datasets':
