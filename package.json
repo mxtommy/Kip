@@ -45,10 +45,9 @@
     "e2e": "ng e2e"
   },
   "devDependencies": {
-    "@angular/cdk": "19.2.7",
-    "@angular/material": "19.2.7",
     "@angular-devkit/build-angular": "^19.2.5",
     "@angular/animations": "19.2.4",
+    "@angular/cdk": "19.2.7",
     "@angular/cli": "^19.2.5",
     "@angular/common": "19.2.4",
     "@angular/compiler": "19.2.4",
@@ -56,6 +55,7 @@
     "@angular/core": "19.2.4",
     "@angular/forms": "19.2.4",
     "@angular/language-service": "19.2.4",
+    "@angular/material": "19.2.7",
     "@angular/platform-browser": "19.2.4",
     "@angular/platform-browser-dynamic": "19.2.4",
     "@angular/router": "19.2.4",
@@ -96,6 +96,7 @@
     "pwa-asset-generator": "^6.3.1",
     "rx-dom-html": "^7.0.3",
     "rxjs": "^7.5.7",
+    "ngx-markdown": "^19.1.1",
     "sass": "^1.49.9",
     "screenfull": "^6.0.2",
     "ts-node": "^8.10.2",
@@ -104,5 +105,6 @@
     "typescript": "^5.8.2",
     "zone.js": "~0.15.0"
   },
-  "dependencies": {}
+  "dependencies": {
+  }
 }
