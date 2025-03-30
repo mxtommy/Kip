@@ -82,8 +82,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     ]);
 
     effect(() => {
-      this.dashboard.activeDashboard();
-      this.loadDashboard();
+      this.loadDashboard(this.dashboard.activeDashboard());
     });
   }
 
@@ -91,7 +90,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
       if (isStatic) {
         this._gridstack.grid.setStatic(isStatic);
-        if (isStatic && (isStatic !== this._previousIsStaticState)) {
+        if (isStatic !== this._previousIsStaticState) {
           this.saveDashboard();
           this._previousIsStaticState = isStatic;
         }
@@ -122,6 +121,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
     this.resizeGridColumns();
     window.addEventListener('keydown', this.handleKeyDown.bind(this));
+
+    setTimeout(() => {
+      this.loadDashboard(this.dashboard.activeDashboard());
+    });
   }
 
   ngOnDestroy(): void {
@@ -149,9 +152,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this._gridstack.grid.cellHeight(window.innerHeight / this._gridstack.grid.getRow());
   }
 
-  protected loadDashboard(): void {
-    const dashboard = this.dashboard.dashboards()[this.dashboard.activeDashboard()];
-    this._gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+  protected loadDashboard(dashboardId: number): void {
+    const dashboard = this.dashboard.dashboards()[dashboardId];
+    this._gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
   }
 
   protected saveDashboard(): void {
@@ -164,7 +167,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   protected cancelLayoutChanges(): void {
-    this.loadDashboard();
+    this.loadDashboard(this.dashboard.activeDashboard());
     this.dashboard.setStaticDashboard(true);
   }
 

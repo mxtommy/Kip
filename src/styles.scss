@@ -91,58 +91,59 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   @include widgetRaceTimer.theme($dark-theme);
 
   // Set app background color
-  &{--sys-background: #{$background};
+  &{
+    --sys-background: #{$background};
 
-  // Create KIP global CSS variables
-  --kip-nightModeBrightness: 1;
-  --kip-widget-card-background-color: #{$kip-widget-card-background-color};
-  --kip-widget-card-border-color: #{$kip-widget-card-border-color};
-  --kip-widget-card-border-style: solid;
-  --kip-widget-card-border-width: 2px;
-  --kip-widget-action-button-color: #{$kip-widget-action-button-color};
-  --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
-  --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
+    // Create KIP global CSS variables
+    --kip-nightModeBrightness: 1;
+    --kip-widget-card-background-color: #{$kip-widget-card-background-color};
+    --kip-widget-card-border-color: #{$kip-widget-card-border-color};
+    --kip-widget-card-border-style: solid;
+    --kip-widget-card-border-width: 2px;
+    --kip-widget-action-button-color: #{$kip-widget-action-button-color};
+    --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
+    --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
 
-  --kip-blue-color: #{$blue};
-  --kip-blue-dim-color: #{$blueDim};
-  --kip-blue-dimmer-color: #{$blueDimmer};
+    --kip-blue-color: #{$blue};
+    --kip-blue-dim-color: #{$blueDim};
+    --kip-blue-dimmer-color: #{$blueDimmer};
 
-  --kip-green-color: #{$green};
-  --kip-green-dim-color: #{$greenDim};
-  --kip-green-dimmer-color: #{$greenDimmer};
+    --kip-green-color: #{$green};
+    --kip-green-dim-color: #{$greenDim};
+    --kip-green-dimmer-color: #{$greenDimmer};
 
-  --kip-purple-color: #{$purple};
-  --kip-purple-dim-color: #{$purpleDim};
-  --kip-purple-dimmer-color: #{$purpleDimmer};
+    --kip-purple-color: #{$purple};
+    --kip-purple-dim-color: #{$purpleDim};
+    --kip-purple-dimmer-color: #{$purpleDimmer};
 
-  --kip-yellow-color: #{$yellow};
-  --kip-yellow-dim-color: #{$yellowDim};
-  --kip-yellow-dimmer-color: #{$yellowDimmer};
+    --kip-yellow-color: #{$yellow};
+    --kip-yellow-dim-color: #{$yellowDim};
+    --kip-yellow-dimmer-color: #{$yellowDimmer};
 
-  --kip-pink-color: #{$pink};
-  --kip-pink-dim-color: #{$pinkDim};
-  --kip-pink-dimmer-color: #{$pinkDimmer};
+    --kip-pink-color: #{$pink};
+    --kip-pink-dim-color: #{$pinkDim};
+    --kip-pink-dimmer-color: #{$pinkDimmer};
 
-  --kip-orange-color: #{$orange};
-  --kip-orange-dim-color: #{$orangeDim};
-  --kip-orange-dimmer-color: #{$orangeDimmer};
+    --kip-orange-color: #{$orange};
+    --kip-orange-dim-color: #{$orangeDim};
+    --kip-orange-dimmer-color: #{$orangeDimmer};
 
-  --kip-white-color: #{$white};
-  --kip-white-dim-color: #{$whiteDim};
-  --kip-white-dimmer-color: #{$whiteDimmer};
+    --kip-white-color: #{$white};
+    --kip-white-dim-color: #{$whiteDim};
+    --kip-white-dimmer-color: #{$whiteDimmer};
 
-  --kip-grey-color: #{$grey};
-  --kip-grey-dim-color: #{$greyDim};
-  --kip-grey-dimmer-color: #{$greyDimmer};
+    --kip-grey-color: #{$grey};
+    --kip-grey-dim-color: #{$greyDim};
+    --kip-grey-dimmer-color: #{$greyDimmer};
 
-  --kip-port-color: #{$port};
-  --kip-starboard-color: #{$starboard};
-  --kip-zone-nominal-color: #{$zone-nominal};
-  --kip-zone-alert-color: #{$zone-alert};
-  --kip-zone-warn-color: #{$zone-warn};
-  --kip-zone-alarm-color: #{$zone-alarm};
-  --kip-zone-emergency-color: #{$zone-emergency};
-}
+    --kip-port-color: #{$port};
+    --kip-starboard-color: #{$starboard};
+    --kip-zone-nominal-color: #{$zone-nominal};
+    --kip-zone-alert-color: #{$zone-alert};
+    --kip-zone-warn-color: #{$zone-warn};
+    --kip-zone-alarm-color: #{$zone-alarm};
+    --kip-zone-emergency-color: #{$zone-emergency};
+  }
 }
 
 // Set base app style
