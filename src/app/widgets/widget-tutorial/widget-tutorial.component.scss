@@ -5,10 +5,10 @@
 }
 
 table, th, td {
-  border: 1px solid var(--sys-on-background);
+  border: 1px solid var(--mat-sys-on-background);
   border-collapse: collapse;
 }
 
 tr:nth-child(even) {
-  background-color: var(--sys-surface-container-high);
+  background-color: var(--mat-sys-surface-container-high);
 }

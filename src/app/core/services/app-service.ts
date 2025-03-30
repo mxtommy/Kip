@@ -120,7 +120,7 @@ export class AppService implements OnDestroy {
     const root = document.documentElement;
     const computedStyle = getComputedStyle(root);
     const cssThemeRolesColor: ITheme = {
-      background: computedStyle.getPropertyValue('--sys-background').trim(),
+      background: computedStyle.getPropertyValue('--mat-sys-background').trim(),
       cardColor: computedStyle.getPropertyValue('--kip-widget-card-background-color').trim(),
       blue: computedStyle.getPropertyValue('--kip-blue-color').trim(),
       blueDim: computedStyle.getPropertyValue('--kip-blue-dim-color').trim(),

@@ -51,7 +51,6 @@ export class kipHammerConfig extends HammerGestureConfig {
   // see: https://angular.dev/api/platform-browser/HammerGestureConfig
   overrides = {
     // Override default hammerjs gestures configuration
-    // pan: { direction: Hammer.DIRECTION_ALL },
     swipe: { direction: Hammer.DIRECTION_ALL, velocity: 0.6, threshold: 20, domEvents: true },
     press: { time: 500, domEvents: true },
   };

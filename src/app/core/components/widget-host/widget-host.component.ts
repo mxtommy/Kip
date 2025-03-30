@@ -38,7 +38,7 @@ export class WidgetHostComponent {
     }
   }
 
-  public openBottomSheet(e: any): void {
+  public openBottomSheet(): void {
     if (!this._dashboard.isDashboardStatic()) {
       const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent);
       sheetRef.afterDismissed().subscribe((action) => {

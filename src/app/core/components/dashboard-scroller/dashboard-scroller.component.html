@@ -3,6 +3,6 @@
 </div>
 <div class="page-scroll-page-number page-scroll-container" [@fadeInOut]="activePage()">
   @for (page of dashboards(); track page; let index = $index) {
-    <mat-icon class="page-icon" [style.color]="activePage() === index ? 'var(--sys-tertiary)' : ''">fiber_manual_record</mat-icon>
+    <mat-icon class="page-icon" [style.color]="activePage() === index ? 'var(--mat-sys-tertiary)' : ''">fiber_manual_record</mat-icon>
   }
 </div>

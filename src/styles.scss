@@ -92,7 +92,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
 
   // Set app background color
   &{
-    --sys-background: #{$background};
+    --mat-sys-background: #{$background};
 
     // Create KIP global CSS variables
     --kip-nightModeBrightness: 1;
@@ -181,24 +181,24 @@ app-root {
 */
 
 .markdown-content a {
-  color: var(--sys-primary);
+  color: var(--mat-sys-primary);
 }
 
 .markdown-content table {
-  border: 1px solid var(--sys-on-background);
+  border: 1px solid var(--mat-sys-on-background);
   border-collapse: collapse;
   width: 100%;
 }
 
 .markdown-content table th,
 .markdown-content table td {
-  border: 1px solid var(--sys-on-background);
+  border: 1px solid var(--mat-sys-on-background);
   padding: 8px;
   text-align: left;
 }
 
 .markdown-content table tr:nth-child(even) {
-  background-color: var(--sys-surface-container-high);
+  background-color: var(--mat-sys-surface-container-high);
 }
 
 /*
@@ -208,7 +208,7 @@ app-root {
 .loader-container {
   height: 100%;
   width: 100%;
-  background-color: var(--sys-background);
+  background-color: var(--mat-sys-background);
 }
 
 #loader {

@@ -11,7 +11,7 @@
   cursor: default;
   text-align: center;
   padding: 10px;
-  color: var(--sys-tertiary);
+  color: var(--mat-sys-tertiary);
 }
 
 .page-scroll-page-number {
@@ -27,9 +27,9 @@
 
 .page-scroll-container {
   opacity: 0;
-  background-color: var(--sys-inverse-on-surface);
+  background-color: var(--mat-sys-inverse-on-surface);
   border-radius: 10px;
-  border: 1px solid var(--sys-inverse-on-surface);
+  border: 1px solid var(--mat-sys-inverse-on-surface);
 }
 
 .page-icon {
