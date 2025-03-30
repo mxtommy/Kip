@@ -14,16 +14,16 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 
 
 @Component({
-    selector: 'data-browser',
-    templateUrl: './data-browser.component.html',
-    styleUrls: ['./data-browser.component.css'],
+    selector: 'data-inspector',
+    templateUrl: './data-inspector.component.html',
+    styleUrls: ['./data-inspector.component.css'],
     standalone: true,
     imports: [ MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgFor, DataBrowserRowComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, KeyValuePipe, PageHeaderComponent]
 })
-export class DataBrowserComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DataInspectorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
-  protected readonly pageTitle = 'Data Browser';
+  protected readonly pageTitle = 'Data Inspector';
   private pathsSubscription: Subscription = null;
   private dataTableTimer: NodeJS.Timeout = null;
 

@@ -6,6 +6,7 @@ import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { withHashLocation, provideRouter } from '@angular/router';
 import { StorageService } from './app/core/services/storage.service';
+import { provideMarkdown } from 'ngx-markdown';
 import { TimersService } from './app/core/services/timers.service';
 import { NotificationsService } from './app/core/services/notifications.service';
 import { AppSettingsService } from './app/core/services/app-settings.service';
@@ -129,6 +130,7 @@ bootstrapApplication(AppComponent, {
     NotificationsService,
     TimersService,
     StorageService,
+    provideMarkdown(),
     provideHttpClient(withInterceptorsFromDi()),
     provideRouter(routes, withHashLocation()),
     provideAnimations(),

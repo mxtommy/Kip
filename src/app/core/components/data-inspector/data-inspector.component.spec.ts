@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { DataBrowserComponent } from './data-browser.component';
+import { DataInspectorComponent } from './data-inspector.component';
 
 describe('DataBrowserComponent', () => {
-  let component: DataBrowserComponent;
-  let fixture: ComponentFixture<DataBrowserComponent>;
+  let component: DataInspectorComponent;
+  let fixture: ComponentFixture<DataInspectorComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [DataBrowserComponent]
+    imports: [DataInspectorComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DataBrowserComponent);
+    fixture = TestBed.createComponent(DataInspectorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -21,11 +21,11 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     super();
 
     this.defaultConfig = {
-      displayName: "Label",
-      color: 'white',
-      bgColor: 'blue',
+      displayName: "Static Label",
+      color: 'green',
+      bgColor: 'grey',
       noColor: false,
-      noBgColor: false
+      noBgColor: true
     };
    }
 
@@ -37,7 +37,9 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
     this.canvasEl().nativeElement.width = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().width);
     this.canvasEl().nativeElement.height = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().height);
-    this.updateCanvas();
+    document.fonts.ready.then(() => {
+      this.updateCanvas();
+    });
    }
 
   protected startWidget(): void {
