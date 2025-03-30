@@ -91,7 +91,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   @include widgetRaceTimer.theme($dark-theme);
 
   // Set app background color
-  --sys-background: #{$background};
+  &{--sys-background: #{$background};
 
   // Create KIP global CSS variables
   --kip-nightModeBrightness: 1;
@@ -142,6 +142,7 @@ $zone-emergency: map-get($kip-dark-color, zone-emergency);
   --kip-zone-warn-color: #{$zone-warn};
   --kip-zone-alarm-color: #{$zone-alarm};
   --kip-zone-emergency-color: #{$zone-emergency};
+}
 }
 
 // Set base app style

@@ -14,7 +14,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { SlicePipe } from '@angular/common';
-import { MatDivider } from '@angular/material/divider';
 import { MatButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
@@ -42,7 +41,6 @@ import 'chartjs-adapter-date-fns';
         MatSlideToggle,
         MatTooltip,
         MatButton,
-        MatDivider,
         SlicePipe,
         MatIconModule
     ],

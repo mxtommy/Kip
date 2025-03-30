@@ -6,7 +6,6 @@ import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-inte
 import { UUID } from '../../core/utils/uuid';
 import { MatMiniFabButton } from '@angular/material/button';
 import { BooleanControlConfigComponent, IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
-import { NgFor } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -19,7 +18,6 @@ import { MatIconModule } from '@angular/material/icon';
     imports: [
         FormsModule,
         ReactiveFormsModule,
-        NgFor,
         BooleanControlConfigComponent,
         MatMiniFabButton,
         MatIconModule
