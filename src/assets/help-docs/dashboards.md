@@ -1,14 +1,14 @@
-#### Managing Dashboard
+# Managing Dashboard
 You can organize your dashboards from the Dashboard page. To edit a dashboard layout, visualize the dashboard and unlock it.
 
-##### Dashboard Pages
+## Dashboard Pages
 On the Dashboards page, you can add, reorder, delete, rename, and duplicate dashboards. The dashboard name is briefly visible when you cycle through dashboards. Available actions include:
 - **Long press** a dashboard to delete or duplicate it.
 - **Double tap** a dashboard to rename it.
 - **Touch and drag** to reorder dashboards.
 - Use the **(+)** button to add a new dashboard.
 
-##### Editing Layout
+## Editing Layout
 To edit a dashboard's widgets and arrangement, you need to unlock its layout. View the desired dashboard, access the **Actions menu** on the right-hand side, and tap the unlock button. The widgets will become surrounded by dashed borders, indicating you are in edit mode. Actions you can perform while editing a layout include:
 - **Long press** an empty area of the dashboard to add a widget (you may need to free up space first).
 - **Double tap** a widget to edit its configuration.
@@ -17,7 +17,7 @@ To edit a dashboard's widgets and arrangement, you need to unlock its layout. Vi
 - **Long press** a widget to delete or duplicate it.
 - Tap the **Check button** to save changes or the **X button** to discard changes.
 
-#### Widget Gallery
+## Widget Gallery
 KIP's widgets are versatile visual presentation controls with advanced configuration options to suit your needs. Below is a list of available widgets:
 
 - **Numeric Display**: Create gauges to display any numerical data sent by your system, such as SOG, depth, wind speed, VMG, refrigerator temperature, or weather data.

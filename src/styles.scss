@@ -5,14 +5,7 @@
 
 @use './themes/m3dark.scss' as dark;
 
-@use './app/app.component-theme' as appRoot;
-@use './app/core/components/menu-notifications/menu-notifications.component-theme' as MenuNotifications;
 @use './styles-common/settingsTabContent.scss' as settingsTabContent;
-@use './app/settings/signalk/signalk.component.scss' as signalk;
-@use './app/core/components/configuration/config.component-theme' as config;
-@use './app/widgets/widget-wind/widget-wind.component-theme' as widgetWind;
-@use './app/widgets/widget-autopilot/widget-autopilot.component-theme' as widgetAp;
-@use './app/widgets/widget-race-timer/widget-race-timer.component-theme' as widgetRaceTimer;
 
 // Import GridStack styles
 @use "gridstack/dist/gridstack.min.css";
@@ -20,17 +13,6 @@
 @use '@angular/material' as mat;
 
 :root {
-  // // Apply KIP core component theming
-  // @include appRoot.theme(mat.$theme);
-  // @include MenuNotifications.theme($dark-theme);
-  // @include settingsTabContent.theme($dark-theme);
-  // @include signalk.theme($dark-theme);
-  // @include config.theme($dark-theme);
-  // // Apply widget theming
-  // @include widgetWind.theme($dark-theme);
-  // @include widgetAp.theme($dark-theme);
-  // @include widgetRaceTimer.theme($dark-theme);
-
   // Create KIP M3 token variables
   --mat-sys-background: #{dark.$background};
 

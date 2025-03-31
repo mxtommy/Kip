@@ -1,7 +1,7 @@
-#### Loading KIP on Phones, Tablets, Raspberry Pi, and Computers
+# Loading KIP on Phones, Tablets, Raspberry Pi, and Computers
 Simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip/` to load KIP and enjoy its features remotely on any device.
 
-#### Touch, Mouse, and Keyboard Navigation
+## Touch, Mouse, and Keyboard Navigation
 KIP supports multiple input modes for seamless navigation across devices.
 
 | Actions                      | Gestures       | Mouse                  | Keyboard Shortcuts           |
@@ -15,7 +15,7 @@ KIP supports multiple input modes for seamless navigation across devices.
 
 <br/>
 
-#### Mobile App
+## Mobile App
 Run KIP in full screen, without browser controls, just like a regular mobile app. This feature is supported on most mobile operating systems. Each browser has its own way of handling Progressive Web App (PWA) installations.
 
 **iOS**
@@ -30,11 +30,11 @@ KIP is now installed and available on your home screen.
 3. Press the "Add" button in the popup.
 KIP is now installed and available on your home screen.
 
-#### Fullscreen
+## Fullscreen
 You can toggle fullscreen mode on and off, and disable the screen saver and computer sleep mode (if supported by the device/browser), by clicking the small Expand/Reduce button in the upper left corner of the Actions menu or using the keyboard hotkey. This button is not available on mobile devices.
 
-#### Night Mode
+## Night Mode
 Save your night vision by automatically switching KIP to day or night mode based on sunrise and sunset hours (the Signal K Derived Data plugin is required for automatic switching). This feature can be enabled in the **Settings > Display** page. You can also manually set the mode by clicking the small Moon/Sun button in the upper right corner of the Actions menu. Note that if automatic switching is enabled, brightness will reset to the Signal K mode value.
 
-#### Multiple User Profiles
+## Multiple User Profiles
 KIP supports multiple user profiles, allowing different roles on board—such as captain, skipper, tactician, navigator, or engineer—to tailor the interface to their needs. Profiles can also be used to tie specific configuration arrangements to use cases or device form factors.

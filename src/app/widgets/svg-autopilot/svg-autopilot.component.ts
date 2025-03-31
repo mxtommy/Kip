@@ -11,6 +11,7 @@ interface ISVGRotationObject {
 @Component({
     selector: 'app-svg-autopilot',
     templateUrl: './svg-autopilot.component.html',
+    styleUrl: './svg-autopilot.component.scss',
     animations: [
         trigger('fadeInOut', [
             state('connected', style({

@@ -1,8 +1,16 @@
-###### Get in Touch
+# Get in Touch
 
-KIP has its own channel on the Signal K Discord server. Join the channel to get help, see what others do with KIP and Signal K, get the latest news, and share your ideas.  
-Join us at [KIP Discord channel](https://discord.gg/AMDYT2DQga).
+We’d love to hear from you! KIP has an active community on the Signal K Discord server. Join us to get help, explore what others are doing with KIP and Signal K, stay updated with the latest news, and share your ideas.
 
-###### Feature Requests and Bug Report
+👉 **Join the conversation in the [KIP Discord channel](https://discord.gg/AMDYT2DQga).**
 
-To make a feature request or report a bug, use the [KIP GitHub project](https://github.com/mxtommy/Kip/issues).
+---
+
+## Feature Requests and Bug Reports
+
+Have a great idea for a new feature? Found a bug? Let us know!  
+Submit your feature requests or report issues directly on our GitHub project page:
+
+🔗 **[KIP GitHub Issues](https://github.com/mxtommy/Kip/issues)**
+
+Your feedback helps us make KIP even better. Thank you for contributing!
