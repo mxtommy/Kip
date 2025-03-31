@@ -11,8 +11,8 @@
 }
 
 .layout-action-btn {
-  color: var(--mdc-filled-button-label-text-color, var(--mat-app-on-primary));
-  background-color: var(--mdc-filled-button-container-color, var(--mat-app-primary));
+  color: var(--mat-sys-on-primary);
+  background-color: var(--mat-sys-primary);
 }
 
 .icon-alert-color {
@@ -38,7 +38,7 @@
 
 @keyframes blinking-emergency {
   0%{		background-color: var(--kip-zone-alarm-color);	}
-  50%{	background-color: var(--mdc-filled-button-container-color, var(--mat-app-primary));	}
+  50%{	background-color: var(--mat-sys-primary);	}
   100%{	background-color: var(--kip-zone-alarm-color);	}
 }
 

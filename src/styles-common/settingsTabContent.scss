@@ -2,9 +2,7 @@
 @use '@angular/material' as mat;
 
 @mixin dark-color($theme) {
-  .rounded-card-color {
-    background-color: var(--kip-white-dimmer-color);
-  }
+
 }
 
 @mixin light-color($theme) {
@@ -19,6 +17,10 @@
       @include light-color($theme);
     }
   }
+}
+
+.rounded-card-color {
+  background-color: var(--kip-white-dimmer-color);
 }
 
 .tab-content {

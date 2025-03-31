@@ -2,10 +2,9 @@
 @use './styles-common/material-symbols-outlined.scss';
 @use './styles-common/material-icons.scss';
 @use './styles-common/roboto.scss';
-// Material 3 styles file.
-// Proceed with caution if making changes to this file.
-@use 'sass:map';
-@use '@angular/material' as mat;
+
+@use './themes/m3dark.scss' as dark;
+
 @use './app/app.component-theme' as appRoot;
 @use './app/core/components/menu-notifications/menu-notifications.component-theme' as MenuNotifications;
 @use './styles-common/settingsTabContent.scss' as settingsTabContent;
@@ -17,133 +16,91 @@
 
 // Import GridStack styles
 @use "gridstack/dist/gridstack.min.css";
-// Import the Material Design typography and color palettes
-@import './themes/dark-m3-theme.scss';
 
-@include mat.core();
+@use '@angular/material' as mat;
 
-// Get App (dark) CSS theming value
-$background: map-get($kip-dark-color, background);
-
-// Get default (dark) KIP CSS theming value
-$kip-widget-card-background-color: map-get($kip-dark-color, widget-card-background-color);
-$kip-widget-card-border-color: map-get($kip-dark-color, widget-card-border-color);
-$kip-widget-action-button-color: map-get($kip-dark-color, widget-action-button-color);
-$kip-widget-action-button-foreground-color: map-get($kip-dark-color, widget-action-button-foreground-color);
-$kip-widget-action-delete-button-color: map-get($kip-dark-color, widget-action-delete-button-color);
-
-$blue: map-get($kip-dark-color, blue);
-$blueDim: map-get($kip-dark-color, blue-dim);
-$blueDimmer: map-get($kip-dark-color, blue-dimmer);
-
-$green: map-get($kip-dark-color, green);
-$greenDim: map-get($kip-dark-color, green-dim);
-$greenDimmer: map-get($kip-dark-color, green-dimmer);
-
-$purple: map-get($kip-dark-color, purple);
-$purpleDim: map-get($kip-dark-color, purple-dim);
-$purpleDimmer: map-get($kip-dark-color, purple-dimmer);
-
-$yellow: map-get($kip-dark-color, yellow);
-$yellowDim: map-get($kip-dark-color, yellow-dim);
-$yellowDimmer: map-get($kip-dark-color, yellow-dimmer);
-
-$pink: map-get($kip-dark-color, pink);
-$pinkDim: map-get($kip-dark-color, pink-dim);
-$pinkDimmer: map-get($kip-dark-color, pink-dimmer);
-
-$orange: map-get($kip-dark-color, orange);
-$orangeDim: map-get($kip-dark-color, orange-dim);
-$orangeDimmer: map-get($kip-dark-color, orange-dimmer);
-
-$white: map-get($kip-dark-color, white);
-$whiteDim: map-get($kip-dark-color, white-dim);
-$whiteDimmer: map-get($kip-dark-color, white-dimmer);
-
-$grey: map-get($kip-dark-color, grey);
-$greyDim: map-get($kip-dark-color, grey-dim);
-$greyDimmer: map-get($kip-dark-color, grey-dimmer);
-
-$port: map-get($kip-dark-color, port);
-$starboard: map-get($kip-dark-color, starboard);
-$zone-nominal: map-get($kip-dark-color, zone-nominal);
-$zone-alert: map-get($kip-dark-color, zone-alert);
-$zone-warn: map-get($kip-dark-color, zone-warn);
-$zone-alarm: map-get($kip-dark-color, zone-alarm);
-$zone-emergency: map-get($kip-dark-color, zone-emergency);
-
-// Write styles
 :root {
-  // Apply all component css dark theme by default
-  @include mat.all-component-themes($dark-theme);
-  @include mat.system-level-colors($dark-theme);
-  @include mat.system-level-typography($dark-theme);
-  @include mat.typography-hierarchy($dark-theme);
-  // Apply KIP core component theming
-  @include appRoot.theme($dark-theme);
-  @include MenuNotifications.theme($dark-theme);
-  @include settingsTabContent.theme($dark-theme);
-  @include signalk.theme($dark-theme);
-  @include config.theme($dark-theme);
-  // Apply widget theming
-  @include widgetWind.theme($dark-theme);
-  @include widgetAp.theme($dark-theme);
-  @include widgetRaceTimer.theme($dark-theme);
+  // // Apply KIP core component theming
+  // @include appRoot.theme(mat.$theme);
+  // @include MenuNotifications.theme($dark-theme);
+  // @include settingsTabContent.theme($dark-theme);
+  // @include signalk.theme($dark-theme);
+  // @include config.theme($dark-theme);
+  // // Apply widget theming
+  // @include widgetWind.theme($dark-theme);
+  // @include widgetAp.theme($dark-theme);
+  // @include widgetRaceTimer.theme($dark-theme);
 
-  // Set app background color
-  &{
-    --mat-sys-background: #{$background};
+  // Create KIP M3 token variables
+  --mat-sys-background: #{dark.$background};
 
-    // Create KIP global CSS variables
-    --kip-nightModeBrightness: 1;
-    --kip-widget-card-background-color: #{$kip-widget-card-background-color};
-    --kip-widget-card-border-color: #{$kip-widget-card-border-color};
-    --kip-widget-card-border-style: solid;
-    --kip-widget-card-border-width: 2px;
-    --kip-widget-action-button-color: #{$kip-widget-action-button-color};
-    --kip-widget-action-button-foreground-color: #{$kip-widget-action-button-foreground-color};
-    --kip-widget-action-delete-button-color: #{$kip-widget-action-delete-button-color};
+  --kip-nightModeBrightness: 1;
+  --kip-widget-card-background-color: #{dark.$kip-widget-card-background-color};
+  --kip-widget-card-border-color: #{dark.$kip-widget-card-border-color};
+  --kip-widget-card-border-style: solid;
+  --kip-widget-card-border-width: 2px;
 
-    --kip-blue-color: #{$blue};
-    --kip-blue-dim-color: #{$blueDim};
-    --kip-blue-dimmer-color: #{$blueDimmer};
+  --kip-blue-color: #{dark.$blue};
+  --kip-blue-dim-color: #{dark.$blueDim};
+  --kip-blue-dimmer-color: #{dark.$blueDimmer};
 
-    --kip-green-color: #{$green};
-    --kip-green-dim-color: #{$greenDim};
-    --kip-green-dimmer-color: #{$greenDimmer};
+  --kip-green-color: #{dark.$green};
+  --kip-green-dim-color: #{dark.$greenDim};
+  --kip-green-dimmer-color: #{dark.$greenDimmer};
 
-    --kip-purple-color: #{$purple};
-    --kip-purple-dim-color: #{$purpleDim};
-    --kip-purple-dimmer-color: #{$purpleDimmer};
+  --kip-purple-color: #{dark.$purple};
+  --kip-purple-dim-color: #{dark.$purpleDim};
+  --kip-purple-dimmer-color: #{dark.$purpleDimmer};
 
-    --kip-yellow-color: #{$yellow};
-    --kip-yellow-dim-color: #{$yellowDim};
-    --kip-yellow-dimmer-color: #{$yellowDimmer};
+  --kip-yellow-color: #{dark.$yellow};
+  --kip-yellow-dim-color: #{dark.$yellowDim};
+  --kip-yellow-dimmer-color: #{dark.$yellowDimmer};
 
-    --kip-pink-color: #{$pink};
-    --kip-pink-dim-color: #{$pinkDim};
-    --kip-pink-dimmer-color: #{$pinkDimmer};
+  --kip-pink-color: #{dark.$pink};
+  --kip-pink-dim-color: #{dark.$pinkDim};
+  --kip-pink-dimmer-color: #{dark.$pinkDimmer};
 
-    --kip-orange-color: #{$orange};
-    --kip-orange-dim-color: #{$orangeDim};
-    --kip-orange-dimmer-color: #{$orangeDimmer};
+  --kip-orange-color: #{dark.$orange};
+  --kip-orange-dim-color: #{dark.$orangeDim};
+  --kip-orange-dimmer-color: #{dark.$orangeDimmer};
 
-    --kip-white-color: #{$white};
-    --kip-white-dim-color: #{$whiteDim};
-    --kip-white-dimmer-color: #{$whiteDimmer};
+  --kip-white-color: #{dark.$white};
+  --kip-white-dim-color: #{dark.$whiteDim};
+  --kip-white-dimmer-color: #{dark.$whiteDimmer};
 
-    --kip-grey-color: #{$grey};
-    --kip-grey-dim-color: #{$greyDim};
-    --kip-grey-dimmer-color: #{$greyDimmer};
+  --kip-grey-color: #{dark.$grey};
+  --kip-grey-dim-color: #{dark.$greyDim};
+  --kip-grey-dimmer-color: #{dark.$greyDimmer};
 
-    --kip-port-color: #{$port};
-    --kip-starboard-color: #{$starboard};
-    --kip-zone-nominal-color: #{$zone-nominal};
-    --kip-zone-alert-color: #{$zone-alert};
-    --kip-zone-warn-color: #{$zone-warn};
-    --kip-zone-alarm-color: #{$zone-alarm};
-    --kip-zone-emergency-color: #{$zone-emergency};
-  }
+  --kip-port-color: #{dark.$port};
+  --kip-starboard-color: #{dark.$starboard};
+  --kip-zone-nominal-color: #{dark.$zone-nominal};
+  --kip-zone-alert-color: #{dark.$zone-alert};
+  --kip-zone-warn-color: #{dark.$zone-warn};
+  --kip-zone-alarm-color: #{dark.$zone-alarm};
+  --kip-zone-emergency-color: #{dark.$zone-emergency};
+}
+
+html {
+  @include mat.theme((
+    color: (
+      primary: dark.$primary-palette,
+      tertiary: dark.$tertiary-palette,
+      theme-type: dark,
+    ),
+    typography: Roboto,
+    density: 0
+  ));
+}
+
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  margin: 0;
+  touch-action: none;
+  filter: brightness(var(--kip-nightModeBrightness));
+  backdrop-filter: brightness(var(--kip-nightModeBrightness));
 }
 
 // Set base app style
@@ -160,14 +117,6 @@ app-root {
   height: 100%;
 }
 
-body {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  margin: 0;
-  touch-action: none;
-  filter: brightness(var(--kip-nightModeBrightness));
-  backdrop-filter: brightness(var(--kip-nightModeBrightness));
-}
-
 app-root {
   display: block;
 }
@@ -176,10 +125,9 @@ app-root {
   background-color: rgba(0, 0, 0, 0.75);
 }
 
-/*
+/***************************************************
 * Default styles for markdown (help docs) content
-*/
-
+***************************************************/
 .markdown-content a {
   color: var(--mat-sys-primary);
 }
@@ -201,10 +149,10 @@ app-root {
   background-color: var(--mat-sys-surface-container-high);
 }
 
-/*
+/*************************************************************************
 *  Loading Spinner styles. Used during app bootstrap process (while
 *  executing app-initNetwork.service but before Angular has fully loaded)
-*/
+*************************************************************************/
 .loader-container {
   height: 100%;
   width: 100%;

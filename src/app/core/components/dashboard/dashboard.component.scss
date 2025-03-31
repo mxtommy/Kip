@@ -18,6 +18,6 @@
   z-index: 100;
 }
 .layout-action-btn {
-  color: var(--mdc-filled-button-label-text-color, var(--mat-app-on-primary));
-  background-color: var(--mdc-filled-button-container-color, var(--mat-app-primary));
+  color: var(--mat-sys-on-primary);
+  background-color: var(--mat-sys-primary);
 }

@@ -5,7 +5,15 @@
 }
 
 .fullpage-header-title {
-  padding: 18px 24px 13px 24px;;
+  margin-block-start: 0px;
+  margin-block-end: 0px;
+  padding: 18px 24px 13px 24px;
+  color: var(--mdc-dialog-subhead-color, var(--mat-sys-on-surface, rgba(0, 0, 0, 0.87)));
+  font-family: var(--mdc-dialog-subhead-font, var(--mat-sys-headline-small-font, inherit));
+  line-height: var(--mdc-dialog-subhead-line-height, var(--mat-sys-headline-small-line-height, 1.5rem));
+  font-size: var(--mdc-dialog-subhead-size, var(--mat-sys-headline-small-size, 1rem));
+  font-weight: var(--mdc-dialog-subhead-weight, var(--mat-sys-headline-small-weight, 400));
+  letter-spacing: var(--mdc-dialog-subhead-tracking, var(--mat-sys-headline-small-tracking, 0.03125em));
 }
 
 .dialog-close-icon {

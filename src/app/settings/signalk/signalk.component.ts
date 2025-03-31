@@ -1,5 +1,5 @@
 import { MatIconModule } from '@angular/material/icon';
-import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -46,7 +46,7 @@ import 'chartjs-adapter-date-fns';
     ],
 })
 
-export class SettingsSignalkComponent implements OnInit, OnDestroy {
+export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('lineGraph', {static: true}) lineGraph: ElementRef<HTMLCanvasElement>;
 
@@ -123,10 +123,6 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
       this.streamStatus = status;
     });
 
-    this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-    this._chart?.destroy();
-    this.startChart();
-
     // Get WebSocket Delta update per seconds stats
     this.signalkDeltaUpdatesStatsSubscription = this.DataService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
       this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
@@ -136,6 +132,12 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
       this._chart?.update("none");
     });
   }
+
+   ngAfterViewInit(): void {
+    this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
+    this._chart?.destroy();
+    this.startChart();
+   }
 
   public openUserCredentialModal(errorMsg: string) {
     let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
