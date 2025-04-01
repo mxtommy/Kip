@@ -16,8 +16,9 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
   @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
 
-  dataValue: any = null;
-  dataTimestamp: number = Date.now();
+  protected dataValue: any = null;
+  private dataTimestamp: number = Date.now();
+  private timeZoneGTM: string = "";
   valueFontSize = 1;
   private readonly fontString = "Roboto";
 
@@ -46,7 +47,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
         }
       },
       dateFormat: 'dd/MM/yyyy HH:mm:ss',
-      dateTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      dateTimezone: 'Atlantic/Azores',
       color: 'white',
       enableTimeout: false,
       dataTimeout: 5
@@ -67,6 +68,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   }
 
   protected startWidget(): void {
+    this.timeZoneGTM = this.getGMTOffset(this.widgetProperties.config.dateTimezone);
     this.getColors(this.widgetProperties.config.color);
     this.unsubscribeDataStream();
     this.observeDataStream('gaugePath', newValue => {
@@ -85,6 +87,21 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy() {
     this.destroyDataStreams();
   }
+
+  private getGMTOffset(timeZone: string): string {
+    try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            timeZoneName: 'short'
+        });
+        const parts = formatter.formatToParts(new Date());
+        const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+        return timeZonePart ? timeZonePart.value : 'GMT';
+    } catch (error) {
+        console.error(`Error getting GMT offset for timezone "${timeZone}":`, error);
+        return 'GMT';
+    }
+}
 
   private getColors(color: string): void {
     switch (color) {
@@ -165,18 +182,17 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     let valueText: string;
 
-    if (this.dataValue === null) {
-        valueText = '--';
+    if (isNaN(Date.parse(this.dataValue))) {
+      valueText = '--';
     } else {
-        valueText = this.dataValue;
-        try {
-            let date = formatDate(valueText, this.widgetProperties.config.dateFormat, 'en-US', this.widgetProperties.config.dateTimezone);
-            valueText = date;
-        } catch (error) {
-            valueText = error;
-            console.log("[Date Value Widget]: " + error);
-        }
+      try {
+        valueText = formatDate(this.dataValue, this.widgetProperties.config.dateFormat, 'en-US', this.timeZoneGTM);
+      } catch (error) {
+        valueText = error;
+        console.log("[Date Time Widget]: " + error);
+      }
     }
+
 
     // Check if length of string has changed since last time.
     if (this.currentValueLength !== valueText.length) {
