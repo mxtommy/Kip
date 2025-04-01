@@ -1,4 +1,3 @@
-import { MatIconModule } from '@angular/material/icon';
 import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
@@ -41,8 +40,7 @@ import 'chartjs-adapter-date-fns';
         MatSlideToggle,
         MatTooltip,
         MatButton,
-        SlicePipe,
-        MatIconModule
+        SlicePipe
     ],
 })
 

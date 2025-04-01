@@ -91,7 +91,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       color: 'white',
     };
 
-    Chart.register(annotationPlugin, ChartStreaming);
+
    }
 
   ngOnInit(): void {
@@ -110,6 +110,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       this.setChartOptions();
 
       this.chart?.destroy();
+      Chart.register(annotationPlugin, ChartStreaming);
       this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
         type: this.lineChartType,
         data: this.lineChartData,
