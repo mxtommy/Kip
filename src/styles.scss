@@ -75,16 +75,6 @@ html {
   ));
 }
 
-body {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  margin: 0;
-  touch-action: none;
-  filter: brightness(var(--kip-nightModeBrightness));
-  backdrop-filter: brightness(var(--kip-nightModeBrightness));
-}
-
 // Set base app style
 html {
   box-sizing: border-box;
@@ -94,13 +84,22 @@ html {
 }
 
 html,
-body,
-app-root {
+body {
   height: 100%;
 }
 
-app-root {
-  display: block;
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  margin: 0;
+  touch-action: none;
+}
+
+#app-filter-wrapper {
+  filter: brightness(var(--kip-nightModeBrightness)) var(--kip-nightModeFilters);
+  backdrop-filter: brightness(var(--kip-nightModeBrightness));
+  transition: filter 0.3s ease;
 }
 
 .dialogBackdrop {

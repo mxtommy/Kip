@@ -1,17 +1,12 @@
 .sidenav-container {
-  height: 100%;
+  min-height: 100%;
   width: 100%;
 }
 
-.router-outlet-container {
-  display: contents;
- }
-
 mat-sidenav.sidenav-notifications {
   width: 230px;
-  overflow: visible;
 }
 
-mat-sidenav.sidenav-controls {
+mat-sidenav.sidenav-actions {
   width: 135px;
 }

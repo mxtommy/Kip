@@ -161,13 +161,25 @@ export class AppService implements OnDestroy {
     return this._cssThemeColorRoles;
   }
 
-  public setBrightness(brightness: number): void {
-    const root = document.documentElement;
-    root.style.setProperty('--kip-nightModeBrightness', `${brightness}`);
+  public setBrightness(brightness: number, applyNightFilters: boolean = false): void {
+    const appFilterWrapper = document.body;
+
+    // Set the brightness level
+    appFilterWrapper.style.setProperty('--kip-nightModeBrightness', `${brightness}`);
+
+    // Apply sepia and hue-rotate filters if night mode is active
+    const additionalFilters = applyNightFilters ? ' sepia(0.5) hue-rotate(-30deg)' : '';
+    appFilterWrapper.style.setProperty('--kip-nightModeFilters', additionalFilters);
   }
 
   public toggleDayNightMode(): void {
-    this.isNightMode() ? this.setBrightness(this._settings.getNightModeBrightness()) : this.setBrightness(1);
+    if (this.isNightMode()) {
+      // Night mode: Apply brightness and night filters
+      this.setBrightness(this._settings.getNightModeBrightness(), true);
+    } else {
+      // Day mode: Reset to normal brightness and remove filters
+      this.setBrightness(1, false);
+    }
   }
 
   private autoNightModeObserver(): void {
