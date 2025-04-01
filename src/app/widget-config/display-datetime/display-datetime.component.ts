@@ -7,6 +7,7 @@ import { NgIf, NgFor, AsyncPipe } from '@angular/common';
 import { MatAutocompleteTrigger, MatAutocomplete } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 
 function requireMatch(tz: string[]): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -20,7 +21,7 @@ function requireMatch(tz: string[]): ValidatorFn {
     templateUrl: './display-datetime.component.html',
     styleUrls: ['./display-datetime.component.css'],
     standalone: true,
-    imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, NgIf, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, AsyncPipe]
+    imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, NgIf, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, AsyncPipe, MatIconModule]
 })
 export class DisplayDatetimeComponent implements OnInit, OnDestroy {
   @Input () dateFormat: UntypedFormControl;

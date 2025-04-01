@@ -12,6 +12,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
 import { AsyncPipe } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 
 function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -27,7 +28,7 @@ function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
     templateUrl: './path-control-config.component.html',
     styleUrls: ['./path-control-config.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe]
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule]
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   @Input() pathFormGroup!: UntypedFormGroup;

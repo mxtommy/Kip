@@ -38,7 +38,7 @@
             >
             @if (pathFormGroup.value.path) {
               <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
-                <span matIconSuffix class="fa-solid fa-close"></span>
+                <mat-icon>close</mat-icon>
               </button>
             }
             @if (pathFormGroup.controls['path'].errors?.['required']) {

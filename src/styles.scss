@@ -106,6 +106,13 @@ body {
   background-color: rgba(0, 0, 0, 0.75);
 }
 
+.ng-invalid:not(form) {
+  border-left: 5px solid var(--kip-zone-alarm-color);
+}
+.ng-valid[required], .ng-valid.required  {
+  border-left: 5px solid var(--kip-green-color);
+}
+
 /***************************************************
 * Default styles for markdown (help docs) content
 ***************************************************/
