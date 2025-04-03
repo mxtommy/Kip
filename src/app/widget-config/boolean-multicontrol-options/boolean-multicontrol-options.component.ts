@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, input } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, ReactiveFormsModule, FormGroup, UntypedFormGroup, AbstractControl } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
@@ -24,7 +24,7 @@ import { MatIconModule } from '@angular/material/icon';
     ],
 })
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
-  @Input() multiCtrlArray!: UntypedFormArray;
+  readonly multiCtrlArray = input.required<UntypedFormArray>();
   @Output() private addPath = new EventEmitter<IWidgetPath>();
   @Output() private updatePath = new EventEmitter<IDynamicControl[]>();
   @Output() private delPath = new EventEmitter<IDeleteEventObj>();
@@ -38,11 +38,11 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.arrayLength = this.multiCtrlArray.length;
+    this.arrayLength = this.multiCtrlArray().length;
     this.multiFormGroup = new FormGroup({
-      multiCtrlArray: this.multiCtrlArray
+      multiCtrlArray: this.multiCtrlArray()
     });
-    this.multiCtrlArraySubscription = this.multiCtrlArray.valueChanges.pipe(debounceTime(350)).subscribe((values: IDynamicControl[]) => {
+    this.multiCtrlArraySubscription = this.multiCtrlArray().valueChanges.pipe(debounceTime(350)).subscribe((values: IDynamicControl[]) => {
       this.updatePath.emit(values);
     })
   }
@@ -51,7 +51,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
     const newUUID = UUID.create();
 
     // create new control
-    this.multiCtrlArray.push(
+    this.multiCtrlArray().push(
       this.fb.group({
         ctrlLabel: [null, Validators.required],
         type: ['1', Validators.required],
@@ -62,7 +62,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
       }
     ));
     // update array length for child components
-    this.arrayLength = this.multiCtrlArray.length;
+    this.arrayLength = this.multiCtrlArray().length;
 
     // Create corresponding path group
     const newPathObj: IWidgetPath = {
@@ -82,20 +82,20 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   }
 
   public moveUp(index: number) {
-    const ctrlGrp = this.multiCtrlArray.at(index);
-    this.multiCtrlArray.removeAt(index, {emitEvent: false});
-    this.multiCtrlArray.insert(index - 1, ctrlGrp, {emitEvent: false});
+    const ctrlGrp = this.multiCtrlArray().at(index);
+    this.multiCtrlArray().removeAt(index, {emitEvent: false});
+    this.multiCtrlArray().insert(index - 1, ctrlGrp, {emitEvent: false});
   }
 
   public moveDown(index: number) {
-    const ctrlGrp = this.multiCtrlArray.at(index);
-    this.multiCtrlArray.removeAt(index, {emitEvent: false});
-    this.multiCtrlArray.insert(index + 1, ctrlGrp, {emitEvent: false});
+    const ctrlGrp = this.multiCtrlArray().at(index);
+    this.multiCtrlArray().removeAt(index, {emitEvent: false});
+    this.multiCtrlArray().insert(index + 1, ctrlGrp, {emitEvent: false});
   }
 
   public deletePath(e: IDeleteEventObj): void {
     this.delPath.emit(e);
-    this.arrayLength = this.multiCtrlArray.length;
+    this.arrayLength = this.multiCtrlArray().length;
   }
 
   getFormGroup(ctrl: AbstractControl): UntypedFormGroup {

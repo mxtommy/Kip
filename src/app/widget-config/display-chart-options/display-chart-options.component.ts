@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { DatasetService } from '../../core/services/data-set.service';
 import { AppService } from '../../core/services/app-service';
 import { MatCardModule } from '@angular/material/card';
@@ -18,31 +18,31 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
   imports: [MatCardModule, MatFormFieldModule, MatCheckboxModule, MatSelectModule, MatOptionModule, MatLabel, MatInputModule, MatRadioModule, ReactiveFormsModule]
 })
 export class DisplayChartOptionsComponent implements OnInit {
-  @Input () displayName!: UntypedFormControl;
-  @Input () showLabel!: UntypedFormControl;
-  @Input () convertUnitTo!: UntypedFormControl;
-  @Input () datasetUUID!: UntypedFormControl;
-  @Input () datasetAverageArray!: UntypedFormControl;
-  @Input () showAverageData!: UntypedFormControl;
-  @Input () trackAgainstAverage!: UntypedFormControl;
-  @Input () showDatasetMinimumValueLine!: UntypedFormControl;
-  @Input () showDatasetMaximumValueLine!: UntypedFormControl;
-  @Input () showDatasetAverageValueLine!: UntypedFormControl;
-  @Input () showDatasetAngleAverageValueLine!: UntypedFormControl;
-  @Input () verticalGraph!: UntypedFormControl;
-  @Input () showTimeScale!: UntypedFormControl;
+  readonly displayName = input.required<UntypedFormControl>();
+  readonly showLabel = input.required<UntypedFormControl>();
+  readonly convertUnitTo = input.required<UntypedFormControl>();
+  readonly datasetUUID = input.required<UntypedFormControl>();
+  readonly datasetAverageArray = input.required<UntypedFormControl>();
+  readonly showAverageData = input.required<UntypedFormControl>();
+  readonly trackAgainstAverage = input.required<UntypedFormControl>();
+  readonly showDatasetMinimumValueLine = input.required<UntypedFormControl>();
+  readonly showDatasetMaximumValueLine = input.required<UntypedFormControl>();
+  readonly showDatasetAverageValueLine = input.required<UntypedFormControl>();
+  readonly showDatasetAngleAverageValueLine = input.required<UntypedFormControl>();
+  readonly verticalGraph = input.required<UntypedFormControl>();
+  readonly showTimeScale = input.required<UntypedFormControl>();
 
-  @Input () showYScale!: UntypedFormControl;
-  @Input () startScaleAtZero!: UntypedFormControl;
-  @Input () yScaleSuggestedMin!: UntypedFormControl;
-  @Input () yScaleSuggestedMax!: UntypedFormControl;
+  readonly showYScale = input.required<UntypedFormControl>();
+  readonly startScaleAtZero = input.required<UntypedFormControl>();
+  readonly yScaleSuggestedMin = input.required<UntypedFormControl>();
+  readonly yScaleSuggestedMax = input.required<UntypedFormControl>();
 
-  @Input () enableMinMaxScaleLimit!: UntypedFormControl;
-  @Input () yScaleMin!: UntypedFormControl;
-  @Input () yScaleMax!: UntypedFormControl;
+  readonly enableMinMaxScaleLimit = input.required<UntypedFormControl>();
+  readonly yScaleMin = input.required<UntypedFormControl>();
+  readonly yScaleMax = input.required<UntypedFormControl>();
 
-  @Input () numDecimal!: UntypedFormControl;
-  @Input () color!: UntypedFormControl;
+  readonly numDecimal = input.required<UntypedFormControl>();
+  readonly color = input.required<UntypedFormControl>();
   protected colors = [];
 
 
@@ -53,24 +53,24 @@ export class DisplayChartOptionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;
-    if (!this.showAverageData.value) {
-      this.trackAgainstAverage.disable();
+    if (!this.showAverageData().value) {
+      this.trackAgainstAverage().disable();
     }
 
-    this.setValueScaleOptionsControls(this.enableMinMaxScaleLimit.value);
+    this.setValueScaleOptionsControls(this.enableMinMaxScaleLimit().value);
   }
 
   private setValueScaleOptionsControls(enableMinMaxScaleLimit: boolean) {
     if (enableMinMaxScaleLimit) {
-      this.yScaleMin.enable();
-      this.yScaleMax.enable();
-      this.yScaleSuggestedMin.disable();
-      this.yScaleSuggestedMax.disable();
+      this.yScaleMin().enable();
+      this.yScaleMax().enable();
+      this.yScaleSuggestedMin().disable();
+      this.yScaleSuggestedMax().disable();
     } else {
-      this.yScaleMin.disable();
-      this.yScaleMax.disable();
-      this.yScaleSuggestedMin.enable();
-      this.yScaleSuggestedMax.enable();
+      this.yScaleMin().disable();
+      this.yScaleMax().disable();
+      this.yScaleSuggestedMin().enable();
+      this.yScaleSuggestedMax().enable();
     }
   }
 
@@ -80,10 +80,10 @@ export class DisplayChartOptionsComponent implements OnInit {
 
   public enableTrackAgainstMovingAverage(e: MatCheckboxChange): void {
     if (e.checked) {
-      this.trackAgainstAverage.enable();
+      this.trackAgainstAverage().enable();
     } else {
-      this.trackAgainstAverage.setValue(e.checked);
-      this.trackAgainstAverage.disable();
+      this.trackAgainstAverage().setValue(e.checked);
+      this.trackAgainstAverage().disable();
     }
   }
 }

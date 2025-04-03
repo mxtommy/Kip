@@ -1,6 +1,6 @@
 <svg
-   [attr.height]="dimensions.height"
-   [attr.width]="dimensions.width"
+   [attr.height]="dimensions().height"
+   [attr.width]="dimensions().width"
    [attr.viewBox]="viewBox"
    version="1.1"
    id="svg9"
@@ -43,7 +43,7 @@
         style="text-align:center;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         x="47.083984"
         y="22.636719">
-        {{ data.ctrlLabel }}
+        {{ data().ctrlLabel }}
       </text>
     </svg>
     <g transform="translate(6,2)" id="disabledToogleControl">
@@ -71,7 +71,7 @@
         [attr.fill]="valueColor"
         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         x="47.083984"
-        y="22.636719">{{ data.ctrlLabel }}
+        y="22.636719">{{ data().ctrlLabel }}
       </text>
     </svg>
     <g transform="translate(6,2)" id="enabledToogleControl">

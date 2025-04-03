@@ -5,7 +5,7 @@
       <mat-label>Dataset</mat-label>
       <mat-select
         placeholder="Select dataset..."
-        [formControl]="datasetUUID"
+        [formControl]="datasetUUID()"
         name="datasetUUID"
         (selectionChange)="datasetChanged($event)"
         required>
@@ -21,7 +21,7 @@
       <mat-label>Display Format</mat-label>
       <mat-select
           placeholder="Select unit..."
-          [formControl]="convertUnitTo"
+          [formControl]="convertUnitTo()"
           name="convertUnitTo"
           required>
           @for (group of unitList.conversions; track group) {

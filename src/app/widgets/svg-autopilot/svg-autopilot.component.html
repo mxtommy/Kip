@@ -1031,7 +1031,7 @@
       </span>
     </div> -->
   </div>
-  <div class="apStencil" #apStencil [@fadeInOut]="isApConnected ? 'connected' : 'disconnected'">
+  <div class="apStencil" #apStencil [@fadeInOut]="isApConnected() ? 'connected' : 'disconnected'">
     <p style="font-weight: bold;opacity: 75%;">OFFLINE</p>
     <p style="opacity: 75%;">Press <span class="material-icons">power_settings_new</span> to connect to Signal K server</p>
   </div>

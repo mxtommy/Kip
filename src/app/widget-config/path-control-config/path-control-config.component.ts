@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy, input } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IConversionPathList, ISkBaseUnit, UnitsService } from '../../core/services/units.service';
@@ -32,7 +32,7 @@ function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   @Input() pathFormGroup!: UntypedFormGroup;
-  @Input() filterSelfPaths!: boolean;
+  readonly filterSelfPaths = input.required<boolean>();
 
   public availablePaths: IPathMetaData[];
   public filteredPaths = new BehaviorSubject<IPathMetaData[] | null>(null);
@@ -115,7 +115,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
 
   private getPaths(): IPathMetaData[] {
     const pathType = this.pathFormGroup.controls['pathType'].value;
-    const filterSelfPaths = this.filterSelfPaths;
+    const filterSelfPaths = this.filterSelfPaths();
    return this.data.getPathsAndMetaByType(pathType, filterSelfPaths).sort();
   }
 

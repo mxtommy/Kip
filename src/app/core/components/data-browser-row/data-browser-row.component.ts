@@ -1,10 +1,10 @@
-import { Component, Input, OnInit, ViewEncapsulation, Inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Inject, input } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { DataService } from '../../services/data.service';
 import { UnitsService } from '../../services/units.service';
 import { MatCell } from '@angular/material/table';
-import { MatButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatOptgroup, MatOption } from '@angular/material/core';
 import { NgFor } from '@angular/common';
 import { MatSelect } from '@angular/material/select';
@@ -17,13 +17,13 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
     styleUrls: ['./data-browser-row.component.css'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [MatCell, MatButton],
+    imports: [MatCell, MatButtonModule]
 })
 export class DataBrowserRowComponent implements OnInit {
 
-  @Input('path') path: string;
-  @Input('source') source: string;
-  @Input('pathValue') pathValue: any;
+  readonly path = input<string>(undefined);
+  readonly source = input<string>(undefined);
+  readonly pathValue = input<any>(undefined);
 
   units = null;
   selectedUnit: string = "unitless"
@@ -36,7 +36,7 @@ export class DataBrowserRowComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.units = this.unitsService.getConversionsForPath(this.path);
+    this.units = this.unitsService.getConversionsForPath(this.path());
     this.selectedUnit = this.units.base;
   }
 
@@ -78,8 +78,8 @@ export class DataBrowserRowComponent implements OnInit {
         MatOptgroup,
         MatOption,
         MatDialogActions,
-        MatButton,
-        MatDialogClose,
+        MatButtonModule,
+        MatDialogClose
     ],
 })
 export class DialogUnitSelect {

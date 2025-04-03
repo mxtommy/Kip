@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges, OnDestroy } from '@angular/core';
+import { ViewChild, ElementRef, Component, SimpleChanges, OnChanges, OnDestroy, input } from '@angular/core';
 
 @Component({
     selector: 'svg-simple-linear-gauge',
@@ -8,16 +8,16 @@ import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges, OnDe
 })
 export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
   @ViewChild('gaugeBarAnimate', {static: false}) gaugeBarAnimate: ElementRef;
-  @Input({ required: true }) displayName!: string;
-  @Input({ required: true }) displayNameColor!: string;
-  @Input({ required: true }) dataValue!: string;
-  @Input({ required: true }) unitLabel!: string;
-  @Input({ required: true }) barColor!: string;
-  @Input({ required: true }) barColorGradient!: string;
-  @Input({ required: true }) barColorBackground!: string;
-  @Input({ required: true }) gaugeValue!: string;
-  @Input({ required: true }) gaugeMinValue!: number;
-  @Input({ required: true }) gaugeMaxValue!: number;
+  readonly displayName = input.required<string>();
+  readonly displayNameColor = input.required<string>();
+  readonly dataValue = input.required<string>();
+  readonly unitLabel = input.required<string>();
+  readonly barColor = input.required<string>();
+  readonly barColorGradient = input.required<string>();
+  readonly barColorBackground = input.required<string>();
+  readonly gaugeValue = input.required<string>();
+  readonly gaugeMinValue = input.required<number>();
+  readonly gaugeMaxValue = input.required<number>();
 
   newGaugeValue: number = 1;
   oldGaugeValue: number = 1;
@@ -29,11 +29,11 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
     if (changes.gaugeValue) {
       if (! changes.gaugeValue.firstChange) {
         // scale value to svg gauge pixel length (195), proportional to gauge min/max set values
-        let scaleRange = this.gaugeMaxValue - this.gaugeMinValue;
+        let scaleRange = this.gaugeMaxValue() - this.gaugeMinValue();
         let scaleSliceValue = scaleRange !== 0 ? 195 / scaleRange : 0;
 
         this.oldGaugeValue = this.newGaugeValue;
-        this.newGaugeValue = (changes.gaugeValue.currentValue - this.gaugeMinValue) * scaleSliceValue;
+        this.newGaugeValue = (changes.gaugeValue.currentValue - this.gaugeMinValue()) * scaleSliceValue;
 
         if (this.gaugeBarAnimate?.nativeElement) {
           requestAnimationFrame(() => {

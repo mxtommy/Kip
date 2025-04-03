@@ -6,14 +6,14 @@
         <mat-label>Widget Label</mat-label>
         <input matInput placeholder="Enter a label to display"
           name="displayName"
-          [formControl]="displayName">
+          [formControl]="displayName()">
       </mat-form-field>
     </div>
 
     <div class="chart-panel-group">
       <mat-checkbox class="full-width"
         name="showLabel"
-        [formControl]="showLabel">
+        [formControl]="showLabel()">
           Show Label
       </mat-checkbox>
     </div>
@@ -25,7 +25,7 @@
       <mat-select
         placeholder="Select Color..."
         name="color"
-        [formControl]="color"
+        [formControl]="color()"
         required>
         @for(color of colors; track color) {
           <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
@@ -45,20 +45,20 @@
             min="0" max="5"
             placeholder="Enter or select number..."
             name="numDecimal"
-            [formControl]="numDecimal"
+            [formControl]="numDecimal()"
             required>
         </mat-form-field>
 
         <mat-checkbox class="full-width" style="margin-top: 10px;"
           name="showAverageData"
-          [formControl]="showAverageData"
+          [formControl]="showAverageData()"
           (change)="enableTrackAgainstMovingAverage($event)">
             Display Moving Average
         </mat-checkbox>
 
         <mat-checkbox class="full-width" style="margin-left: 25px;"
           name="trackAgainstAverage"
-          [formControl]="trackAgainstAverage">
+          [formControl]="trackAgainstAverage()">
             Track Against Moving Average
         </mat-checkbox>
       </div>
@@ -71,7 +71,7 @@
 
         <mat-radio-group class="chart-option-radio-group" aria-label="Select an option"
           name="enableMinMaxScaleLimit"
-          [formControl]="enableMinMaxScaleLimit">
+          [formControl]="enableMinMaxScaleLimit()">
           <mat-radio-button class="chart-option-radio-button"
           (change)="setScaleControls($event)"
           [value]="false">Auto Scale</mat-radio-button>
@@ -81,14 +81,14 @@
               <mat-label>Suggested Min</mat-label>
               <input matInput type="number"
                 name="yScaleSuggestedMin"
-                [formControl]="yScaleSuggestedMin">
+                [formControl]="yScaleSuggestedMin()">
             </mat-form-field>
 
             <mat-form-field class="chart-option-radio-button-config-form-field">
               <mat-label>Suggested Max</mat-label>
               <input matInput type="number"
                 name="yScaleSuggestedMax"
-                [formControl]="yScaleSuggestedMax">
+                [formControl]="yScaleSuggestedMax()">
             </mat-form-field>
           </div>
 
@@ -102,7 +102,7 @@
                 <mat-label>Min</mat-label>
                 <input matInput type="number"
                   name="yScaleMin"
-                  [formControl]="yScaleMin"
+                  [formControl]="yScaleMin()"
                   required>
               </mat-form-field>
             </div>
@@ -111,7 +111,7 @@
                 <mat-label>Max</mat-label>
                 <input matInput type="number"
                   name="yScaleMax"
-                  [formControl]="yScaleMax"
+                  [formControl]="yScaleMax()"
                   required>
               </mat-form-field>
             </div>
@@ -120,7 +120,7 @@
 
         <mat-checkbox class="full-width"
           name="showYScale"
-          [formControl]="showYScale">
+          [formControl]="showYScale()">
             Show Scale Ticks
         </mat-checkbox>
       </div>
@@ -131,7 +131,7 @@
         <p class="no-margin">Time Scale</p>
         <mat-checkbox class="full-width"
           name="showTimeScale"
-          [formControl]="showTimeScale">
+          [formControl]="showTimeScale()">
             Show Scale Ticks
         </mat-checkbox>
       </div>
@@ -142,17 +142,17 @@
         <p class="no-margin">Dataset</p>
         <mat-checkbox class="full-width"
           name="showDatasetMaximumValueLine"
-          [formControl]="showDatasetMaximumValueLine">
+          [formControl]="showDatasetMaximumValueLine()">
             Show Maximum Line
         </mat-checkbox>
         <mat-checkbox class="full-width"
           name="showDatasetAverageValueLine"
-          [formControl]="showDatasetAverageValueLine">
+          [formControl]="showDatasetAverageValueLine()">
             Show Average Line
         </mat-checkbox>
         <mat-checkbox class="full-width" #minLine
           name="showDatasetMinimumValueLine"
-          [formControl]="showDatasetMinimumValueLine">
+          [formControl]="showDatasetMinimumValueLine()">
             Show Minimum Line
         </mat-checkbox>
       </div>

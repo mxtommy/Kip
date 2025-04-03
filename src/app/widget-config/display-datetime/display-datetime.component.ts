@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, input } from '@angular/core';
 import { AbstractControl, UntypedFormControl, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subscription, debounceTime, map, startWith } from 'rxjs';
 import { MatOption } from '@angular/material/core';
@@ -24,7 +24,7 @@ function requireMatch(tz: string[]): ValidatorFn {
     imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, NgIf, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, AsyncPipe, MatIconModule]
 })
 export class DisplayDatetimeComponent implements OnInit, OnDestroy {
-  @Input () dateFormat: UntypedFormControl;
+  readonly dateFormat = input<UntypedFormControl>(undefined);
   @Input () dateTimezone: UntypedFormControl;
   private tz: string[] = [];
   public filteredTZ: Observable<string[]>;

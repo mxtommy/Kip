@@ -1,38 +1,38 @@
 <div class="widget-options-grid">
   <mat-checkbox
     name="enableTimeout"
-    [formControl]="enableTimeout">
+    [formControl]="enableTimeout()">
       Enable Widget Data TTL
   </mat-checkbox>
   <mat-form-field>
     <mat-label>TTL Timeout For Paths</mat-label>
     <input type="number" matNativeControl placeholder="Time in seconds..."
       name="dataTimeout"
-      [formControl]="dataTimeout"
+      [formControl]="dataTimeout()"
       min="2"
       required>
     <span matTextSuffix>Seconds</span>
   </mat-form-field>
 </div>
 <ng-container [formGroup]="pathsFormGroup">
-  @if(isArray) {
+  @if(isArray()) {
     @for (group of pathsFormGroup.controls; track group) {
       <path-control-config style="display: block;"
         [pathFormGroup]="group"
-        [filterSelfPaths]="filterSelfPaths.value">
+        [filterSelfPaths]="filterSelfPaths().value">
       </path-control-config>
     }
   } @else {
     @for (group of pathsFormGroup.controls | objectKeys; track group) {
       <path-control-config style="display: block;"
         [pathFormGroup]="pathsFormGroup.get(group)"
-        [filterSelfPaths]="filterSelfPaths.value">
+        [filterSelfPaths]="filterSelfPaths().value">
       </path-control-config>
     }
   }
 </ng-container>
 <mat-checkbox
   name="filterSelfPaths"
-  [formControl]="filterSelfPaths">
+  [formControl]="filterSelfPaths()">
     Restrict to own vessel
 </mat-checkbox>

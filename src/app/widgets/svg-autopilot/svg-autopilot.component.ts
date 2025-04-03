@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit, OnDestroy, input } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { NgIf } from '@angular/common';
 
@@ -30,12 +30,12 @@ export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
   @ViewChild('rudderPrtAnimate', { static: true }) rudderPrtAnimate!: ElementRef;
   @ViewChild('rudderStbAnimate', { static: true }) rudderStbAnimate!: ElementRef;
 
-  @Input() compassHeading!: number;
-  @Input() appWindAngle!: number;
-  @Input() rudderAngle!: number;
+  readonly compassHeading = input.required<number>();
+  readonly appWindAngle = input.required<number>();
+  readonly rudderAngle = input.required<number>();
   @Input() apState!: string;
   @Input() apTargetAppWindAngle!: number;
-  @Input() isApConnected!: boolean;
+  readonly isApConnected = input.required<boolean>();
 
   compassFaceplate: ISVGRotationObject = { oldDegreeIndicator: '0', newDegreeIndicator: '0', animationElement: null };
   appWind: ISVGRotationObject = { oldDegreeIndicator: '0', newDegreeIndicator: '0', animationElement: null };
