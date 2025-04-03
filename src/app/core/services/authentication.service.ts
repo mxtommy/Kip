@@ -1,6 +1,6 @@
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, timer, lastValueFrom, Subscription } from 'rxjs';
 import { filter, map, switchMap } from "rxjs/operators";
 
@@ -20,6 +20,9 @@ const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
   providedIn: 'root'
 })
 export class AuthenticationService implements OnDestroy {
+  private http = inject(HttpClient);
+  private conn = inject(SignalKConnectionService);
+
   private _IsLoggedIn$ = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
@@ -32,10 +35,7 @@ export class AuthenticationService implements OnDestroy {
   private logoutUrl = null;
   private validateTokenUrl = null;
 
-  constructor(
-    private http: HttpClient,
-    private conn: SignalKConnectionService,
-    )
+  constructor()
   {
     // load local storage token
     const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));

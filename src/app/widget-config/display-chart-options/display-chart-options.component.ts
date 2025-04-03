@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, input, inject } from '@angular/core';
 import { DatasetService } from '../../core/services/data-set.service';
 import { AppService } from '../../core/services/app-service';
 import { MatCardModule } from '@angular/material/card';
@@ -18,6 +18,9 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
   imports: [MatCardModule, MatFormFieldModule, MatCheckboxModule, MatSelectModule, MatOptionModule, MatLabel, MatInputModule, MatRadioModule, ReactiveFormsModule]
 })
 export class DisplayChartOptionsComponent implements OnInit {
+  private dsService = inject(DatasetService);
+  private app = inject(AppService);
+
   readonly displayName = input.required<UntypedFormControl>();
   readonly showLabel = input.required<UntypedFormControl>();
   readonly convertUnitTo = input.required<UntypedFormControl>();
@@ -44,12 +47,6 @@ export class DisplayChartOptionsComponent implements OnInit {
   readonly numDecimal = input.required<UntypedFormControl>();
   readonly color = input.required<UntypedFormControl>();
   protected colors = [];
-
-
-  constructor(
-    private dsService: DatasetService,
-    private app: AppService
-  ) { }
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;

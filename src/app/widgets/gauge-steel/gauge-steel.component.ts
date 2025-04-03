@@ -1,5 +1,5 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, OnChanges, SimpleChanges, OnInit, input } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, OnInit, input, inject } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import type { ITheme } from '../../core/services/app-service';
 import { States } from '../../core/interfaces/signalk-interfaces';
@@ -49,6 +49,8 @@ export const SteelFrameColors = {
     imports: [NgxResizeObserverModule]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges {
+  private unitsService = inject(UnitsService);
+
   readonly widgetUUID = input<string>(undefined);
   readonly subType = input<string>(undefined); // linear or radial
   readonly barGauge = input<boolean>(undefined);
@@ -68,9 +70,6 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
   private gauge;
   private gaugeOptions = {};
   protected paddingTop: number = 0;
-
-  constructor(private unitsService: UnitsService) {
-  }
 
   ngOnInit(): void {
     this.buildOptions();

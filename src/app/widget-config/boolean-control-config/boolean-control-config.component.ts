@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output } from '@angular/core';
+import { Component, OnInit, input, output, inject } from '@angular/core';
 import { AppService } from './../../core/services/app-service';
 import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -22,6 +22,8 @@ export interface IDeleteEventObj {
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, MatIconModule]
 })
 export class BooleanControlConfigComponent implements OnInit {
+  private app = inject(AppService);
+
   readonly ctrlFormGroup = input.required<UntypedFormGroup>();
   readonly controlIndex = input<number>(undefined);
   readonly arrayLength = input<number>(undefined);
@@ -29,8 +31,6 @@ export class BooleanControlConfigComponent implements OnInit {
   public readonly moveUp = output<number>();
   public readonly moveDown = output<number>();
   protected colors = [];
-
-  constructor(private app: AppService) { }
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -18,6 +18,8 @@ import { MatButton } from '@angular/material/button';
     imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton, NgIf ]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+  private TimersService = inject(TimersService);
+
   readonly canvasEl = viewChild('canvasEl', { read: ElementRef });
   readonly canvasBG = viewChild('canvasBG', { read: ElementRef });
 
@@ -38,7 +40,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   canvasCtx;
   canvasBGCtx;
 
-  constructor(private TimersService: TimersService) {
+  constructor() {
     super();
 
     this.defaultConfig = {

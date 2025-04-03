@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { cloneDeep } from "lodash-es";
 
@@ -25,6 +25,8 @@ const configVersion: number = 11; // used to invalidate old configs defined as a
   providedIn: 'root'
 })
 export class AppSettingsService {
+  private storage = inject(StorageService);
+
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
@@ -46,9 +48,7 @@ export class AppSettingsService {
   private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
 
-  constructor(
-    private storage: StorageService
-    )
+  constructor()
   {
     console.log("[AppSettings Service] Service startup...");
     this.storage.activeConfigFileVersion = configFileVersion;

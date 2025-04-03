@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, input, output, inject } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, ReactiveFormsModule, FormGroup, UntypedFormGroup, AbstractControl } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
@@ -24,6 +24,8 @@ import { MatIconModule } from '@angular/material/icon';
     ],
 })
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
+  private fb = inject(UntypedFormBuilder);
+
   readonly multiCtrlArray = input.required<UntypedFormArray>();
   public readonly addPath = output<IWidgetPath>();
   public readonly updatePath = output<IDynamicControl[]>();
@@ -32,10 +34,6 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   public multiFormGroup: UntypedFormGroup = null;
   public arrayLength: number = null;
   private multiCtrlArraySubscription: Subscription = null;
-
-  constructor(
-    private fb: UntypedFormBuilder
-  ) { }
 
   ngOnInit(): void {
     this.arrayLength = this.multiCtrlArray().length;

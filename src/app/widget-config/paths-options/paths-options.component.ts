@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, input, inject } from '@angular/core';
 import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import type { IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { ObjectKeysPipe } from '../../core/pipes/object-keys.pipe';
@@ -21,6 +21,9 @@ export interface IAddNewPath {
     imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, ModalPathControlConfigComponent, ObjectKeysPipe]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {
+  private rootFormGroup = inject(FormGroupDirective);
+  private fb = inject(UntypedFormBuilder);
+
   readonly formGroupName = input.required<string>();
   readonly isArray = input.required<boolean>();
   readonly enableTimeout = input.required<UntypedFormControl>();
@@ -29,11 +32,6 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
   readonly addPathEvent = input<IWidgetPath>(undefined);
 
   public pathsFormGroup!: any;
-
-  constructor(
-    private rootFormGroup: FormGroupDirective,
-    private fb: UntypedFormBuilder
-  ) { }
 
   ngOnInit(): void {
     if (this.isArray()) {

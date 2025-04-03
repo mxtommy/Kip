@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, OnDestroy, viewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, OnDestroy, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -21,6 +21,9 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
     imports: [ MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgFor, DataBrowserRowComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, KeyValuePipe, PageHeaderComponent]
 })
 export class DataInspectorComponent implements OnInit, AfterViewInit, OnDestroy {
+  private dataService = inject(DataService);
+  private cdRef = inject(ChangeDetectorRef);
+
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   protected readonly pageTitle = 'Data Inspector';
@@ -30,10 +33,6 @@ export class DataInspectorComponent implements OnInit, AfterViewInit, OnDestroy 
   public pageSize: number = 10;
   public tableData = new MatTableDataSource<ISkPathData>([]);
   public displayedColumns: string[] = ['path', 'defaultSource'];
-
-  constructor(
-    private dataService: DataService,
-    private cdRef: ChangeDetectorRef) { }
 
   public onResize(event) {
     this.setNumPerPage(event.target.innerHeight, event.target.innerWidth);

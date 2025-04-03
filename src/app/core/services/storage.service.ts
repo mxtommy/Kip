@@ -1,5 +1,5 @@
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -20,6 +20,9 @@ interface IPatchAction {
   providedIn: 'root'
 })
 export class StorageService {
+  private server = inject(SignalKConnectionService);
+  private http = inject(HttpClient);
+
   private serverEndpoint: String = null;
   public isAppDataSupported: boolean = false;
   private serverConfigs: Config[] = [];
@@ -38,10 +41,9 @@ export class StorageService {
       );
   }
 
-  constructor(
-    private server: SignalKConnectionService,
-    private http: HttpClient
-  ) {
+  constructor() {
+      const server = this.server;
+
       server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
         if (status.httpServiceUrl !== null) {
           this.serverEndpoint = status.httpServiceUrl.substring(0,status.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;

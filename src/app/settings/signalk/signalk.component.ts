@@ -1,4 +1,4 @@
-import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -45,6 +45,15 @@ import 'chartjs-adapter-date-fns';
 })
 
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
+  dialog = inject(MatDialog);
+  private appSettingsService = inject(AppSettingsService);
+  private appService = inject(AppService);
+  private DataService = inject(DataService);
+  private signalKConnectionService = inject(SignalKConnectionService);
+  private signalkRequestsService = inject(SignalkRequestsService);
+  private deltaService = inject(SignalKDeltaService);
+  auth = inject(AuthenticationService);
+
 
   readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
 
@@ -72,19 +81,6 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   // dynamics theme support
   themeNameSub: Subscription = null;
-
-  constructor(
-    public dialog: MatDialog,
-    private appSettingsService: AppSettingsService,
-    private appService: AppService,
-    private DataService: DataService,
-    private signalKConnectionService: SignalKConnectionService,
-    private signalkRequestsService: SignalkRequestsService,
-    private deltaService: SignalKDeltaService,
-    public auth: AuthenticationService)
-  {
-    // Chart.register(ChartStreaming);
-  }
 
   ngOnInit() {
     // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old

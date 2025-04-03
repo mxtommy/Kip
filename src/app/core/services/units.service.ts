@@ -1,5 +1,5 @@
 import { DataService } from './data.service';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import Qty from 'js-quantities';
 
 import { AppSettingsService } from './app-settings.service';
@@ -62,6 +62,9 @@ export interface ISkUnitProperties {
 @Injectable()
 
 export class UnitsService implements OnDestroy {
+  private AppSettingsService = inject(AppSettingsService);
+  private data = inject(DataService);
+
   private _defaultUnitsSub: Subscription;
 
   /**
@@ -406,10 +409,7 @@ export class UnitsService implements OnDestroy {
 
   private _defaultUnits: IUnitDefaults = null;
 
-  constructor(
-    private AppSettingsService: AppSettingsService,
-    private data: DataService
-    ) {
+  constructor() {
       this._defaultUnitsSub = this.AppSettingsService.getDefaultUnitsAsO().subscribe(
         appSettings => {
           this._defaultUnits = appSettings;

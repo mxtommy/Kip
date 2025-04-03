@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -23,6 +23,9 @@ import { NgFor, NgIf } from '@angular/common';
     imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+  private signalkRequestsService = inject(SignalkRequestsService);
+  private appService = inject(AppService);
+
   @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
   @ViewChild('widgetContainer', {static: true}) widgetContainerElement: ElementRef<HTMLCanvasElement>;
 
@@ -37,10 +40,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private nbCtrl: number = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0};
 
-  constructor(
-    private signalkRequestsService: SignalkRequestsService,
-    private appService: AppService
-    ) {
+  constructor() {
       super();
 
       this.defaultConfig = {

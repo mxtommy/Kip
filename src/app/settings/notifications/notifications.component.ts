@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild } from '@angular/core';
+import { Component, OnInit, viewChild, inject } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
 import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
 import { AppService } from '../../core/services/app-service';
@@ -27,16 +27,14 @@ import { FormsModule, NgForm } from '@angular/forms';
     ],
 })
 export class SettingsNotificationsComponent implements OnInit {
+  private app = inject(AppService);
+  private settings = inject(AppSettingsService);
+
   readonly notificationsForm = viewChild<NgForm>('notificationsForm');
   readonly statePanel = viewChild<MatExpansionPanel>('statePanel');
   readonly soundPanel = viewChild<MatExpansionPanel>('soundPanel');
   public notificationConfig: INotificationConfig;
   public notificationDisabledExpandPanel: boolean = false;
-
-  constructor(
-    private app: AppService,
-    private settings: AppSettingsService,
-  ) { }
 
   ngOnInit() {
     this.notificationConfig = cloneDeep(this.settings.getNotificationConfig());

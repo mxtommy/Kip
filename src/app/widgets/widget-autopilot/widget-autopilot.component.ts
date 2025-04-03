@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
@@ -45,6 +45,8 @@ const timeoutBlink = 250;
     imports: [WidgetHostComponent, MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge]
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+  signalkRequestsService = inject(SignalkRequestsService);
+
   // AP keypad
   readonly powerBtn = viewChild<MatButton>('powerBtn');
   readonly stbTackBtn = viewChild<MatButton>('stbTackBtn');
@@ -91,8 +93,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   notificationTest = {};
 
-  constructor(
-    public signalkRequestsService: SignalkRequestsService) {
+  constructor() {
       super();
 
       this.defaultConfig = {

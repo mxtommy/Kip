@@ -72,6 +72,8 @@ export interface IDeltaUpdate {
   providedIn: 'root'
 })
 export class DataService implements OnDestroy {
+  private delta = inject(SignalKDeltaService);
+
   private _destroyRef = inject(DestroyRef); // Inject DestroyRef
 
 
@@ -99,7 +101,7 @@ export class DataService implements OnDestroy {
   private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 
-  constructor(private delta: SignalKDeltaService) {
+  constructor() {
     // Emit Delta message update counter every second
     this._deltaUpdatesCounterTimer = setInterval(() => {
       if (this._deltaUpdatesCounter !== null) {

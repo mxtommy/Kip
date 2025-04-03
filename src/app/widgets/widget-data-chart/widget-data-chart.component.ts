@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -35,6 +35,8 @@ interface IDataSetRow {
   styleUrl: './widget-data-chart.component.scss'
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+  private dsService = inject(DatasetService);
+
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
 
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
@@ -61,7 +63,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
-  constructor(private dsService: DatasetService) {
+  constructor() {
     super();
 
     this.defaultConfig = {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
@@ -12,8 +12,8 @@ import { WidgetsListComponent } from '../components/widgets-list/widgets-list.co
   providedIn: 'root'
 })
 export class DialogService {
+  private dialog = inject(MatDialog);
 
-  constructor(private dialog: MatDialog) { }
 
   public openFrameDialog(data: DialogComponentData, fullscreen: boolean): Observable<boolean> {
     switch (data.component) {

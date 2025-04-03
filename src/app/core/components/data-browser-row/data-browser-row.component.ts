@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, Inject, input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, input, inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { DataService } from '../../services/data.service';
@@ -20,6 +20,9 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
     imports: [MatCell, MatButtonModule]
 })
 export class DataBrowserRowComponent implements OnInit {
+  private unitsService = inject(UnitsService);
+  dialog = inject(MatDialog);
+
 
   readonly path = input<string>(undefined);
   readonly source = input<string>(undefined);
@@ -27,13 +30,6 @@ export class DataBrowserRowComponent implements OnInit {
 
   units = null;
   selectedUnit: string = "unitless"
-
-  constructor(
-    private unitsService: UnitsService,
-    public dialog: MatDialog
-  ) {
-
-  }
 
   ngOnInit() {
     this.units = this.unitsService.getConversionsForPath(this.path());
@@ -83,11 +79,9 @@ export class DataBrowserRowComponent implements OnInit {
     ],
 })
 export class DialogUnitSelect {
+  dialogRef = inject<MatDialogRef<DialogUnitSelect>>(MatDialogRef);
+  data = inject(MAT_DIALOG_DATA);
+
 
   selectedUnit = null;
-
-  constructor(
-    public dialogRef: MatDialogRef<DialogUnitSelect>,
-    @Inject(MAT_DIALOG_DATA) public data) {
-    }
 }

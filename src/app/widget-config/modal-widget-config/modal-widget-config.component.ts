@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
@@ -37,6 +37,14 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     ]
 })
 export class ModalWidgetConfigComponent implements OnInit {
+  dialog = inject(MatDialog);
+  dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
+  private fb = inject(UntypedFormBuilder);
+  private DatasetService = inject(DatasetService);
+  private units = inject(UnitsService);
+  private app = inject(AppService);
+  widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
+
 
   public titleDialog: string = "Widget Options";
   public formMaster: UntypedFormGroup;
@@ -45,16 +53,6 @@ export class ModalWidgetConfigComponent implements OnInit {
   public isPathArray: boolean = false;
   public addPathEvent: IWidgetPath;
   public colors = [];
-
-  constructor(
-    public dialog: MatDialog,
-    public dialogRef: MatDialogRef<ModalWidgetConfigComponent>,
-    private fb : UntypedFormBuilder,
-    private DatasetService: DatasetService,
-    private units: UnitsService,
-    private app: AppService,
-    @Inject(MAT_DIALOG_DATA) public widgetConfig: IWidgetSvcConfig
-  ) { }
 
   ngOnInit() {
     this.availableDataSets = this.DatasetService.list().sort();

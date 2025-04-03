@@ -1,15 +1,17 @@
 
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http'
 import { AuthenticationService, IAuthorizationToken } from '../services/authentication.service';
 import { Subscription } from 'rxjs';
 
 @Injectable()
 export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
+  private auth = inject(AuthenticationService);
+
   private authToken: IAuthorizationToken = null;
   private authTokenSubscription: Subscription = null;
 
-  constructor(private auth: AuthenticationService) {
+  constructor() {
     // Observe the auth token from the Auth service.
     this.authTokenSubscription = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
       this.authToken = token;

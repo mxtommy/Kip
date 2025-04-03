@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Subscription ,  Observable ,  Subject } from 'rxjs';
 
 import { AppSettingsService } from './app-settings.service';
@@ -32,16 +32,16 @@ export interface skRequest {
   providedIn: 'root'
 })
 export class SignalkRequestsService {
+  private signalKDeltaService = inject(SignalKDeltaService);
+  private appSettingsService = inject(AppSettingsService);
+  private appService = inject(AppService);
+  private auth = inject(AuthenticationService);
+
 
   private requestStatus$ = new Subject<skRequest>(); // public Observable passing message post processing
   private requests: skRequest[] = []; // Private array of all requests.
 
-  constructor(
-    private signalKDeltaService: SignalKDeltaService,
-    private appSettingsService: AppSettingsService,
-    private appService: AppService,
-    private auth: AuthenticationService,
-    ) {
+  constructor() {
       // Observer to get all signalk-delta messages of type request type.
       const requestsSub: Subscription = this.signalKDeltaService.subscribeRequestUpdates().subscribe(
         requestMessage => { this.updateRequest(requestMessage); }
