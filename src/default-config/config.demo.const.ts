@@ -31,6 +31,8 @@ export const DemoAppConfig: IAppConfig = {
     "Power": 'W',
     "Energy": 'J',
     "Pressure": 'mmHg',
+    "Fuel Distance": "nm/l",
+    "Energy Distance": "nm/kWh",
     "Density": 'kg/m3',
     "Time": 'Hours',
     "Angular Velocity": 'deg/min',
