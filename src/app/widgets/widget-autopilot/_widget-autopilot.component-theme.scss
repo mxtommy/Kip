@@ -15,7 +15,7 @@
     border-radius: 5px;
     z-index: 10;
     vertical-align: middle;
-    background-color: var(--sys-background);
+    background-color: var(--mat-sys-background);
   }
 
 .apScreen {
@@ -27,7 +27,7 @@
     text-align: center;
     border-radius: 5px;
     border: 1px solid var(--kip-grey-dim-color);
-    background-color: var(--sys-background);
+    background-color: var(--mat-sys-background);
   }
 
   .compass-inner-ring {
@@ -41,7 +41,7 @@
 
   .apCompassOrnaments {
     fill: var(--kip-kip-widget-card-background-color);
-    stroke: var(--sys-background);
+    stroke: var(--mat-sys-background);
   }
 
   .rudderPort {

@@ -1,5 +1,4 @@
-import { MatIconModule } from '@angular/material/icon';
-import { ViewChild, ElementRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -14,7 +13,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { SlicePipe } from '@angular/common';
-import { MatDivider } from '@angular/material/divider';
 import { MatButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
@@ -42,15 +40,22 @@ import 'chartjs-adapter-date-fns';
         MatSlideToggle,
         MatTooltip,
         MatButton,
-        MatDivider,
-        SlicePipe,
-        MatIconModule
+        SlicePipe
     ],
 })
 
-export class SettingsSignalkComponent implements OnInit, OnDestroy {
+export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
+  dialog = inject(MatDialog);
+  private appSettingsService = inject(AppSettingsService);
+  private appService = inject(AppService);
+  private DataService = inject(DataService);
+  private signalKConnectionService = inject(SignalKConnectionService);
+  private signalkRequestsService = inject(SignalkRequestsService);
+  private deltaService = inject(SignalKDeltaService);
+  auth = inject(AuthenticationService);
 
-  @ViewChild('lineGraph', {static: true}) lineGraph: ElementRef<HTMLCanvasElement>;
+
+  readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
 
   connectionConfig: IConnectionConfig;
 
@@ -76,19 +81,6 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
 
   // dynamics theme support
   themeNameSub: Subscription = null;
-
-  constructor(
-    public dialog: MatDialog,
-    private appSettingsService: AppSettingsService,
-    private appService: AppService,
-    private DataService: DataService,
-    private signalKConnectionService: SignalKConnectionService,
-    private signalkRequestsService: SignalkRequestsService,
-    private deltaService: SignalKDeltaService,
-    public auth: AuthenticationService)
-  {
-    // Chart.register(ChartStreaming);
-  }
 
   ngOnInit() {
     // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old
@@ -125,10 +117,6 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
       this.streamStatus = status;
     });
 
-    this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
-    this._chart?.destroy();
-    this.startChart();
-
     // Get WebSocket Delta update per seconds stats
     this.signalkDeltaUpdatesStatsSubscription = this.DataService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
       this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
@@ -138,6 +126,12 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
       this._chart?.update("none");
     });
   }
+
+   ngAfterViewInit(): void {
+    this.textColor = window.getComputedStyle(this.lineGraph().nativeElement).color;
+    this._chart?.destroy();
+    this.startChart();
+   }
 
   public openUserCredentialModal(errorMsg: string) {
     let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
@@ -222,7 +216,7 @@ export class SettingsSignalkComponent implements OnInit, OnDestroy {
   }
 
   private startChart() {
-    this._chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
+    this._chart = new Chart(this.lineGraph().nativeElement.getContext('2d'),{
       type: 'line',
       data: {
           datasets: [

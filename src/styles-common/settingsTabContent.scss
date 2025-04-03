@@ -1,24 +1,6 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
 
-@mixin dark-color($theme) {
-  .rounded-card-color {
-    background-color: var(--kip-white-dimmer-color);
-  }
-}
-
-@mixin light-color($theme) {
-}
-
-@mixin theme($theme) {
-  @if mat.theme-has($theme, color) {
-    $theme-type: mat.get-theme-type($theme);
-    @if $theme-type == dark {
-      @include dark-color($theme);
-    } @else {
-      @include light-color($theme);
-    }
-  }
+.rounded-card-color {
+  background-color: var(--kip-white-dimmer-color);
 }
 
 .tab-content {

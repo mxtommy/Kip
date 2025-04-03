@@ -1,4 +1,4 @@
-import { ViewChild, Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
@@ -45,23 +45,25 @@ const timeoutBlink = 250;
     imports: [WidgetHostComponent, MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge]
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+  signalkRequestsService = inject(SignalkRequestsService);
+
   // AP keypad
-  @ViewChild('powerBtn') powerBtn: MatButton;
-  @ViewChild('stbTackBtn') stbTackBtn: MatButton;
-  @ViewChild('plus1Btn') plus1Btn: MatButton;
-  @ViewChild('minus1Btn') minus1Btn: MatButton;
-  @ViewChild('prtTackBtn') prtTackBtn: MatButton;
-  @ViewChild('standbyBtn') standbyBtn: MatButton;
-  @ViewChild('plus10Btn') plus10Btn: MatButton;
-  @ViewChild('minus10Btn') minus10Btn: MatButton;
-  @ViewChild('autoBtn') autoBtn: MatButton;
-  @ViewChild('windModeBtn') windModeBtn: MatButton;
-  @ViewChild('trackModeBtn') trackModeBtn: MatButton;
-  @ViewChild('muteBtn') muteBtn: MatButton;
-  @ViewChild('messageBtn') messageBtn: MatButton;
+  readonly powerBtn = viewChild<MatButton>('powerBtn');
+  readonly stbTackBtn = viewChild<MatButton>('stbTackBtn');
+  readonly plus1Btn = viewChild<MatButton>('plus1Btn');
+  readonly minus1Btn = viewChild<MatButton>('minus1Btn');
+  readonly prtTackBtn = viewChild<MatButton>('prtTackBtn');
+  readonly standbyBtn = viewChild<MatButton>('standbyBtn');
+  readonly plus10Btn = viewChild<MatButton>('plus10Btn');
+  readonly minus10Btn = viewChild<MatButton>('minus10Btn');
+  readonly autoBtn = viewChild<MatButton>('autoBtn');
+  readonly windModeBtn = viewChild<MatButton>('windModeBtn');
+  readonly trackModeBtn = viewChild<MatButton>('trackModeBtn');
+  readonly muteBtn = viewChild<MatButton>('muteBtn');
+  readonly messageBtn = viewChild<MatButton>('messageBtn');
 
   // AP Screen
-  @ViewChild('appSvgAutopilot') apScreen : any;
+  readonly apScreen = viewChild<any>('appSvgAutopilot');
 
   displayName: string;
 
@@ -91,8 +93,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   notificationTest = {};
 
-  constructor(
-    public signalkRequestsService: SignalkRequestsService) {
+  constructor() {
       super();
 
       this.defaultConfig = {
@@ -335,25 +336,25 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.startAllSubscriptions();
     this.widgetProperties.config.autoStart = true; // save power-on state to autostart or not
     this.isApConnected = true;
-    this.muteBtn.disabled = true;
-    this.messageBtn.disabled = false;
+    this.muteBtn().disabled = true;
+    this.messageBtn().disabled = false;
   }
 
   stopApHead() {
-    this.muteBtn.disabled = true;
-    this.messageBtn.disabled = true;
-    this.windModeBtn.disabled = true;
-    this.trackModeBtn.disabled = true;
-    this.autoBtn.disabled = true;
-    this.standbyBtn.disabled = true;
-    this.plus1Btn.disabled = true;
-    this.plus10Btn.disabled = true;
-    this.minus1Btn.disabled = true;
-    this.minus10Btn.disabled = true;
-    this.prtTackBtn.disabled = true;
-    this.stbTackBtn.disabled = true;
+    this.muteBtn().disabled = true;
+    this.messageBtn().disabled = true;
+    this.windModeBtn().disabled = true;
+    this.trackModeBtn().disabled = true;
+    this.autoBtn().disabled = true;
+    this.standbyBtn().disabled = true;
+    this.plus1Btn().disabled = true;
+    this.plus10Btn().disabled = true;
+    this.minus1Btn().disabled = true;
+    this.minus10Btn().disabled = true;
+    this.prtTackBtn().disabled = true;
+    this.stbTackBtn().disabled = true;
 
-    this.apScreen.errorIconVisibility = 'hidden';
+    this.apScreen().errorIconVisibility = 'hidden';
 
     this.isApConnected = false; // hide ap screen
     this.stopAllSubscriptions();
@@ -363,59 +364,59 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   SetKeyboardMode(apMode: string) {
     switch (apMode) {
       case "standby":
-        this.trackModeBtn.disabled = true;
-        this.autoBtn.disabled = false;
-        this.standbyBtn.disabled = false;
+        this.trackModeBtn().disabled = true;
+        this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
 
-        this.windModeBtn.disabled = false;
-        this.plus1Btn.disabled = true;
-        this.plus10Btn.disabled = true;
-        this.minus1Btn.disabled = true;
-        this.minus10Btn.disabled = true;
-        this.prtTackBtn.disabled = true;
-        this.stbTackBtn.disabled = true;
+        this.windModeBtn().disabled = false;
+        this.plus1Btn().disabled = true;
+        this.plus10Btn().disabled = true;
+        this.minus1Btn().disabled = true;
+        this.minus10Btn().disabled = true;
+        this.prtTackBtn().disabled = true;
+        this.stbTackBtn().disabled = true;
         break;
 
       case "auto":
-        this.trackModeBtn.disabled = false;
-        this.autoBtn.disabled = false;
-        this.standbyBtn.disabled = false;
+        this.trackModeBtn().disabled = false;
+        this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
 
-        this.windModeBtn.disabled = false;
-        this.plus1Btn.disabled = false;
-        this.plus10Btn.disabled = false;
-        this.minus1Btn.disabled = false;
-        this.minus10Btn.disabled = false;
-        this.prtTackBtn.disabled = true;
-        this.stbTackBtn.disabled = true;
+        this.windModeBtn().disabled = false;
+        this.plus1Btn().disabled = false;
+        this.plus10Btn().disabled = false;
+        this.minus1Btn().disabled = false;
+        this.minus10Btn().disabled = false;
+        this.prtTackBtn().disabled = true;
+        this.stbTackBtn().disabled = true;
         break;
 
       case "wind":
-        this.trackModeBtn.disabled = true;
-        this.autoBtn.disabled = false;
-        this.standbyBtn.disabled = false;
+        this.trackModeBtn().disabled = true;
+        this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
 
-        this.windModeBtn.disabled = false;
-        this.plus1Btn.disabled = false;
-        this.plus10Btn.disabled = false;
-        this.minus1Btn.disabled = false;
-        this.minus10Btn.disabled = false;
-        this.prtTackBtn.disabled = false;
-        this.stbTackBtn.disabled = false;
+        this.windModeBtn().disabled = false;
+        this.plus1Btn().disabled = false;
+        this.plus10Btn().disabled = false;
+        this.minus1Btn().disabled = false;
+        this.minus10Btn().disabled = false;
+        this.prtTackBtn().disabled = false;
+        this.stbTackBtn().disabled = false;
         break;
 
       case "route":
-        this.trackModeBtn.disabled = false;
-        this.autoBtn.disabled = false;
-        this.standbyBtn.disabled = false;
+        this.trackModeBtn().disabled = false;
+        this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
 
-        this.windModeBtn.disabled = true;
-        this.plus1Btn.disabled = true;
-        this.plus10Btn.disabled = true;
-        this.minus1Btn.disabled = true;
-        this.minus10Btn.disabled = true;
-        this.prtTackBtn.disabled = true;
-        this.stbTackBtn.disabled = true;
+        this.windModeBtn().disabled = true;
+        this.plus1Btn().disabled = true;
+        this.plus10Btn().disabled = true;
+        this.minus1Btn().disabled = true;
+        this.minus10Btn().disabled = true;
+        this.prtTackBtn().disabled = true;
+        this.stbTackBtn().disabled = true;
         break;
 
       default:
@@ -475,16 +476,16 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   sendCommand(cmdAction) {
     let requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
-    this.apScreen.activityIconVisibility = "visible";
-    setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
+    this.apScreen().activityIconVisibility = "visible";
+    setTimeout(() => {this.apScreen().activityIconVisibility = 'hidden';}, timeoutBlink);
 
     console.log("AP Action:\n" + JSON.stringify(cmdAction));
   }
 
   commandReceived(cmdResult: skRequest) {
-    this.apScreen.activityIconVisibility = "visible";
+    this.apScreen().activityIconVisibility = "visible";
     clearTimeout(this.handleReceiveTimeout);
-    this.handleReceiveTimeout = setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
+    this.handleReceiveTimeout = setTimeout(() => {this.apScreen().activityIconVisibility = 'hidden';}, timeoutBlink);
 
     if (cmdResult.statusCode != 200){
       this.displayApError(cmdResult);
@@ -497,16 +498,18 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.countDownValue = countDownDefault;
     this.actionToBeConfirmed = cmd;
 
-    this.apScreen.msgStencilInnerHTML = "<p>" + message + "</p>";
-    this.apScreen.msgStencilVisibility = "visible";
+    const apScreen = this.apScreen();
+    apScreen.msgStencilInnerHTML = "<p>" + message + "</p>";
+    apScreen.msgStencilVisibility = "visible";
 
     this.updateCountDownCounter(message);
 
     clearTimeout(this.handleConfirmActionTimeout);
 
     this.handleConfirmActionTimeout = setTimeout(() => {
-      this.apScreen.msgStencilVisibility = "hidden";
-      this.apScreen.msgStencilInnerHTML = "";
+      const apScreenValue = this.apScreen();
+      apScreenValue.msgStencilVisibility = "hidden";
+      apScreenValue.msgStencilInnerHTML = "";
       this.actionToBeConfirmed = "";
     }, 5000);
   }
@@ -515,8 +518,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     clearTimeout(this.handleConfirmActionTimeout);
     clearTimeout(this.handleCountDownCounterTimeout);
     this.countDownValue = -1;
-    this.apScreen.msgStencilVisibility = "hidden";
-    this.apScreen.msgStencilInnerHTML = "";
+    const apScreen = this.apScreen();
+    apScreen.msgStencilVisibility = "hidden";
+    apScreen.msgStencilInnerHTML = "";
     this.actionToBeConfirmed = '';
     return null;
   }
@@ -524,7 +528,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   updateCountDownCounter(message: string) {
     if (this.countDownValue > 0) {
       clearTimeout(this.handleCountDownCounterTimeout);
-      this.apScreen.msgStencilInnerHTML = "<p>" + message + "</p>" + "<h1 class='counterText'>" + this.countDownValue.toString() + "</h1>";
+      this.apScreen().msgStencilInnerHTML = "<p>" + message + "</p>" + "<h1 class='counterText'>" + this.countDownValue.toString() + "</h1>";
       this.countDownValue -= 1;
       this.handleCountDownCounterTimeout = setTimeout(() => {
         this.updateCountDownCounter(message);
@@ -539,16 +543,18 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (cmdResult.message){
       errMsg = errMsg + " Server Message: " + cmdResult.message;
     }
-    this.apScreen.errorStencilInnerText = errMsg;
-    this.apScreen.errorStencilVisibility = "visible";
+    const apScreen = this.apScreen();
+    apScreen.errorStencilInnerText = errMsg;
+    apScreen.errorStencilVisibility = "visible";
 
     clearTimeout(this.handleDisplayErrorTimeout);
 
     this.handleDisplayErrorTimeout = setTimeout(() => {
-      this.apScreen.errorStencilVisibility = "hidden";
-      this.apScreen.errorStencilInnerText = "";
+      const apScreenValue = this.apScreen();
+      apScreenValue.errorStencilVisibility = "hidden";
+      apScreenValue.errorStencilInnerText = "";
     }, 6000);
-    this.apScreen.errorIconVisibility = 'visible';
+    apScreen.errorIconVisibility = 'visible';
   }
 
   getNextNotification(skPath: string): string {
@@ -570,34 +576,35 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   setNotificationMessage(value) {
-    this.apScreen.activityIconVisibility = "visible";
+    const apScreen = this.apScreen();
+    apScreen.activityIconVisibility = "visible";
     clearTimeout(this.handleReceiveTimeout);
-    this.handleReceiveTimeout = setTimeout(() => {this.apScreen.activityIconVisibility = 'hidden';}, timeoutBlink);
+    this.handleReceiveTimeout = setTimeout(() => {this.apScreen().activityIconVisibility = 'hidden';}, timeoutBlink);
 
     if (typeof value.path !== 'undefined') {
       value.path = value.path.replace('notifications.', '');
       if (typeof value.value !== 'undefined') {
         if (value.value.state === 'normal') {
-          if (this.apScreen.messageInnerText === this.notificationsArray[value.path]) {
-            this.apScreen.messageInnerText = '';
+          if (apScreen.messageInnerText === this.notificationsArray[value.path]) {
+            apScreen.messageInnerText = '';
           }
           delete this.notificationsArray[value.path]
         } else {
             this.notificationsArray[value.path] = value.value.message.replace("Pilot", "");
-            this.apScreen.messageInnerText = this.notificationsArray[value.path];
+            apScreen.messageInnerText = this.notificationsArray[value.path];
           }
       }
     }
     this.alarmsCount = Object.keys(this.notificationsArray).length;
     if (this.alarmsCount > 0) {
-      this.muteBtn.disabled = false;
-      if (this.apScreen.messageInnerText == "") {
-        this.apScreen.messageInnerText = Object.keys(this.notificationsArray)[0];
+      this.muteBtn().disabled = false;
+      if (apScreen.messageInnerText == "") {
+        apScreen.messageInnerText = Object.keys(this.notificationsArray)[0];
       }
     } else {
-        this.muteBtn.disabled = true;
+        this.muteBtn().disabled = true;
         this.alarmsCount = 0;
-        this.apScreen.messageInnerText = "";
+        apScreen.messageInnerText = "";
       }
   }
 
@@ -617,18 +624,21 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.skPathToAck = this.getNextNotification(this.skPathToAck);
     // Not sure about this DIV ??? May be message area???
     // silenceScreenTextDiv.innerHTML = notificationToValue(skPathToAck);
-    this.apScreen.messageInnerText = this.notificationToValue(this.skPathToAck);
-    this.apScreen.messageVisibility = 'visible';
+    const apScreen = this.apScreen();
+    apScreen.messageInnerText = this.notificationToValue(this.skPathToAck);
+    apScreen.messageVisibility = 'visible';
     clearTimeout(this.handleMessageTimeout);
     this.handleMessageTimeout = setTimeout(() => {
-      this.apScreen.messageInnerText = "";
-      this.apScreen.messageVisibility = 'hidden';
+      const apScreenValue = this.apScreen();
+      apScreenValue.messageInnerText = "";
+      apScreenValue.messageVisibility = 'hidden';
     }, 2000);
   }
 
   sendSilence() {
-    if (this.apScreen.messageVisibility != 'visible') {
-      this.apScreen.messageVisibility = 'visible';
+    const apScreen = this.apScreen();
+    if (apScreen.messageVisibility != 'visible') {
+      apScreen.messageVisibility = 'visible';
 
       if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
         this.skPathToAck = Object.keys(this.notificationsArray)[0];
@@ -638,8 +648,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           this.sendCommand({"path":"notifications." + this.skPathToAck + ".state","value":"normal"});
           // this.sendCommand({"path":"notifications." + skPathToAck + ".method","value":[]});
         }
-        this.apScreen.messageVisibility = 'hidden';
+        apScreen.messageVisibility = 'hidden';
       }
-      this.apScreen.messageInnerText = this.notificationToValue(this.skPathToAck);
+      apScreen.messageInnerText = this.notificationToValue(this.skPathToAck);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, viewChild } from '@angular/core';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { MatButton } from '@angular/material/button';
@@ -21,7 +21,7 @@ import { FormsModule, NgForm } from '@angular/forms';
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
-  @ViewChild('displayForm') displayForm: NgForm;
+  readonly displayForm = viewChild<NgForm>('displayForm');
   public nightBrightness: number = 0.3;
   public autoNightMode: boolean = false;
   private app = inject(AppService);
@@ -35,7 +35,7 @@ export class SettingsDisplayComponent implements OnInit {
   protected saveAllSettings():void {
     this.settings.setAutoNightMode(this.autoNightMode);
     this.settings.setNightModeBrightness(this.nightBrightness);
-    this.displayForm.form.markAsPristine();
+    this.displayForm().form.markAsPristine();
     if (!this.app.isNightMode()) {
       this.app.setBrightness(1);
     }
@@ -48,7 +48,7 @@ export class SettingsDisplayComponent implements OnInit {
   }
 
   protected setBrightness(value: number): void {
-    this.displayForm.form.markAsDirty();
+    this.displayForm().form.markAsDirty();
     this.nightBrightness = value;
     this.app.setBrightness(value);
   }

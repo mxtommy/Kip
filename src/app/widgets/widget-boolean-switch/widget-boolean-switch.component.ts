@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -23,8 +23,11 @@ import { NgFor, NgIf } from '@angular/common';
     imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  @ViewChild('canvasLabel', {static: true, read: ElementRef}) canvasLabelElement: ElementRef;
-  @ViewChild('widgetContainer', {static: true, read: ElementRef}) widgetContainerElement: ElementRef;
+  private signalkRequestsService = inject(SignalkRequestsService);
+  private appService = inject(AppService);
+
+  @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
+  @ViewChild('widgetContainer', {static: true}) widgetContainerElement: ElementRef<HTMLCanvasElement>;
 
   public switchControls: IDynamicControl[] = null;
   private skRequestSub = new Subscription; // Request result observer
@@ -37,10 +40,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private nbCtrl: number = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0};
 
-  constructor(
-    private signalkRequestsService: SignalkRequestsService,
-    private appService: AppService
-    ) {
+  constructor() {
       super();
 
       this.defaultConfig = {
@@ -223,5 +223,11 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   ngOnDestroy(): void {
     this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
+    // Clear canvas context
+    this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+    // Nullify the references to help garbage collection
+    this.canvasLabelElement.nativeElement.remove();
+    this.canvasLabelElement = null;
+    this.widgetContainerElement = null;
   }
 }

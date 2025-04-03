@@ -1,4 +1,4 @@
-<div [formGroup]="ctrlFormGroup" class="ctrl-grid rounded-card rounded-card-color">
+<div [formGroup]="ctrlFormGroup()" class="ctrl-grid rounded-card rounded-card-color">
   <div class="controls flex-container">
     <div class="flex-label">
       <mat-form-field class="full-width">
@@ -47,12 +47,12 @@
   <div class="actions">
     <div class="flex-actions">
       <div class="btn-grid">
-        @if (controlIndex !== 0) {
+        @if (controlIndex() !== 0) {
           <button mat-icon-button class="up" type="button" (click)="moveCtrlUp()" aria-label="Move control up in the list">
             <mat-icon>arrow_drop_up</mat-icon>
           </button>
         }
-        @if (controlIndex !== arrayLength - 1) {
+        @if (controlIndex() !== arrayLength() - 1) {
           <button mat-icon-button class="down" type="button" (click)="moveCtrlDown()" aria-label="Move control down in the list">
             <mat-icon>arrow_drop_down</mat-icon>
           </button>

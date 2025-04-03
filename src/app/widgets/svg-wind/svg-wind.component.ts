@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, SimpleChanges, AfterViewInit, ElementRef } from '@angular/core';
+import { Component, SimpleChanges, AfterViewInit, ElementRef, input, viewChild } from '@angular/core';
 import { NgIf } from '@angular/common';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
@@ -17,30 +17,30 @@ interface ISVGRotationObject {
     imports: [NgIf]
 })
 export class SvgWindComponent implements AfterViewInit {
-  @ViewChild('compassAnimate', { static: true, read: ElementRef }) compassAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('appWindAnimate', { static: true, read: ElementRef }) appWindAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('trueWindAnimate', { static: true, read: ElementRef }) trueWindAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('appWindValueAnimate', { static: true, read: ElementRef }) appWindValueAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('trueWindValueAnimate', { static: true, read: ElementRef }) trueWindValueAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('waypointAnimate', { static: true, read: ElementRef }) waypointAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('courseOverGroundAnimate', { static: true, read: ElementRef }) courseOverGroundAnimate!: ElementRef<SVGAnimateTransformElement>;
+  readonly compassAnimate = viewChild.required('compassAnimate', { read: ElementRef });
+  readonly appWindAnimate = viewChild.required('appWindAnimate', { read: ElementRef });
+  readonly trueWindAnimate = viewChild.required('trueWindAnimate', { read: ElementRef });
+  readonly appWindValueAnimate = viewChild.required('appWindValueAnimate', { read: ElementRef });
+  readonly trueWindValueAnimate = viewChild.required('trueWindValueAnimate', { read: ElementRef });
+  readonly waypointAnimate = viewChild.required('waypointAnimate', { read: ElementRef });
+  readonly courseOverGroundAnimate = viewChild.required('courseOverGroundAnimate', { read: ElementRef });
 
-  @Input('compassHeading') compassHeading: number;
-  @Input('courseOverGroundAngle') courseOverGroundAngle: number;
-  @Input('courseOverGroundEnable') courseOverGroundEnable: boolean;
-  @Input('trueWindAngle') trueWindAngle: number;
-  @Input('trueWindSpeed') trueWindSpeed: number;
-  @Input('appWindAngle') appWindAngle: number;
-  @Input('appWindSpeed') appWindSpeed: number;
-  @Input('laylineAngle') laylineAngle : number;
-  @Input('closeHauledLineEnable') closeHauledLineEnable: boolean;
-  @Input('sailSetupEnable') sailSetupEnable: boolean;
-  @Input('windSectorEnable') windSectorEnable: boolean;
-  @Input('waypointAngle') waypointAngle: number;
-  @Input('waypointEnable') waypointEnable: boolean;
-  @Input('trueWindMinHistoric') trueWindMinHistoric: number;
-  @Input('trueWindMidHistoric') trueWindMidHistoric: number;
-  @Input('trueWindMaxHistoric') trueWindMaxHistoric: number;
+  readonly compassHeading = input<number>(undefined);
+  readonly courseOverGroundAngle = input<number>(undefined);
+  readonly courseOverGroundEnable = input<boolean>(undefined);
+  readonly trueWindAngle = input<number>(undefined);
+  readonly trueWindSpeed = input<number>(undefined);
+  readonly appWindAngle = input<number>(undefined);
+  readonly appWindSpeed = input<number>(undefined);
+  readonly laylineAngle = input<number>(undefined);
+  readonly closeHauledLineEnable = input<boolean>(undefined);
+  readonly sailSetupEnable = input<boolean>(undefined);
+  readonly windSectorEnable = input<boolean>(undefined);
+  readonly waypointAngle = input<number>(undefined);
+  readonly waypointEnable = input<boolean>(undefined);
+  readonly trueWindMinHistoric = input<number>(undefined);
+  readonly trueWindMidHistoric = input<number>(undefined);
+  readonly trueWindMaxHistoric = input<number>(undefined);
 
   // Compass faceplate
   compassFaceplate: ISVGRotationObject;
@@ -118,13 +118,13 @@ export class SvgWindComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.compassFaceplate.animationElement = this.compassAnimate;
-    this.appWind.animationElement = this.appWindAnimate;
-    this.appWindValue.animationElement = this.appWindValueAnimate;
-    this.trueWind.animationElement = this.trueWindAnimate;
-    this.trueWindValue.animationElement = this.trueWindValueAnimate;
-    this.waypoint.animationElement = this.waypointAnimate;
-    this.courseOverGround.animationElement = this.courseOverGroundAnimate;
+    this.compassFaceplate.animationElement = this.compassAnimate();
+    this.appWind.animationElement = this.appWindAnimate();
+    this.appWindValue.animationElement = this.appWindValueAnimate();
+    this.trueWind.animationElement = this.trueWindAnimate();
+    this.trueWindValue.animationElement = this.trueWindValueAnimate();
+    this.waypoint.animationElement = this.waypointAnimate();
+    this.courseOverGround.animationElement = this.courseOverGroundAnimate();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -147,7 +147,7 @@ export class SvgWindComponent implements AfterViewInit {
 
     // CourseOverGroundAngle
     if (changes.courseOverGroundAngle) {
-      if (this.courseOverGroundEnable == false) {
+      if (this.courseOverGroundEnable() == false) {
         this.courseOverGroundActive = false;
         return
       }
@@ -166,7 +166,7 @@ export class SvgWindComponent implements AfterViewInit {
 
     // WaypointAngle
     if (changes.waypointAngle) {
-      if (this.waypointEnable == false) {
+      if (this.waypointEnable() == false) {
         this.waypointActive = false;
         return
       }
@@ -235,7 +235,7 @@ export class SvgWindComponent implements AfterViewInit {
 
     //Min/Max
     if ((changes.trueWindMinHistoric && !changes.trueWindMinHistoric.firstChange) || (changes.trueWindMaxHistoric && !changes.trueWindMaxHistoric.firstChange)) {
-      if (isNaN(Number((this.trueWindMinHistoric))) && isNaN(Number(this.trueWindMaxHistoric))) {
+      if (isNaN(Number((this.trueWindMinHistoric()))) && isNaN(Number(this.trueWindMaxHistoric()))) {
         this.updateWindSectors();
       }
     }
@@ -243,13 +243,13 @@ export class SvgWindComponent implements AfterViewInit {
   }
 
   private updateClauseHauledLines(){
-    let portLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle*-1));
+    let portLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle()*-1));
     //find xy of that rotation (160 = radius of inner circle)
     let portX = 160 * Math.sin((portLaylineRotate*Math.PI)/180) + 231; //231 is middle
     let portY = (160 * Math.cos((portLaylineRotate*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
     this.closeHauledLinePortPath = 'M 231,231 ' + portX +',' + portY;
 
-    let stbdLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle));
+    let stbdLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle()));
     //find xy of that rotation (160 = radius of inner circle)
     let stbdX = 160 * Math.sin((stbdLaylineRotate*Math.PI)/180) + 231; //231 is middle
     let stbdY = (160 * Math.cos((stbdLaylineRotate*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
@@ -257,9 +257,9 @@ export class SvgWindComponent implements AfterViewInit {
   }
 
   private updateWindSectors() {
-    let portMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle*-1));
-    let portMid = this.addHeading(this.addHeading(this.trueWindMidHistoric, (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle*-1));
-    let portMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric, (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle*-1));
+    let portMin = this.addHeading(this.addHeading(this.trueWindMinHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()*-1));
+    let portMid = this.addHeading(this.addHeading(this.trueWindMidHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()*-1));
+    let portMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()*-1));
 
     //console.log(this.trueWindMinHistoric.toFixed(0) + ' ' + this.trueWindMaxHistoric.toFixed(0) + ' ' + portMin.toFixed(0) + ' ' + portMax.toFixed(0));
     let portMinX = 160 * Math.sin((portMin*Math.PI)/180) + 231; //231 is middle
@@ -275,9 +275,9 @@ export class SvgWindComponent implements AfterViewInit {
 
     this.portWindSectorPath = 'M 231,231 L ' + portMinX + ',' + portMinY + ' A 160,160 0 ' + portLgArcFl + ' ' + portSweepFl + ' ' + portMaxX + ',' + portMaxY +' z';
     //////////
-    let stbdMin = this.addHeading(this.addHeading(this.trueWindMinHistoric, (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle));
-    let stbdMid = this.addHeading(this.addHeading(this.trueWindMidHistoric, (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle));
-    let stbdMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric, (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle));
+    let stbdMin = this.addHeading(this.addHeading(this.trueWindMinHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()));
+    let stbdMid = this.addHeading(this.addHeading(this.trueWindMidHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()));
+    let stbdMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()));
 
     let stbdMinX = 160 * Math.sin((stbdMin*Math.PI)/180) + 231; //231 is middle
     let stbdMinY = (160 * Math.cos((stbdMin*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top

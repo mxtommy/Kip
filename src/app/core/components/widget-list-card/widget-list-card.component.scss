@@ -15,15 +15,15 @@
   height: 100%;
   margin: 0px;
   padding: 15px;
-  border: solid 1px var(--sys-outline);
+  border: solid 1px var(--mat-sys-outline);
 }
 
 .item-container:hover {
-  background-color: var(--sys-inverse-on-surface);
+  background-color: var(--mat-sys-inverse-on-surface);
 }
 
 .item-container:focus-visible {
-  background-color: var(--sys-surface-bright);
+  background-color: var(--mat-sys-surface-bright);
   outline: -webkit-focus-ring-color auto 0px;
 }
 
@@ -39,12 +39,12 @@
 
 .title {
   cursor: pointer;
-  font-size: var(--sys-label-medium-line-height);
+  font-size: var(--mat-sys-label-medium-line-height);
 }
 
 .description {
   cursor: pointer;
-  color: var(--sys-outline);
+  color: var(--mat-sys-outline);
 }
 
 .no-text-select {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, OnInit, input, output, inject } from '@angular/core';
 import { AppService } from './../../core/services/app-service';
 import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -22,30 +22,30 @@ export interface IDeleteEventObj {
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, MatIconModule]
 })
 export class BooleanControlConfigComponent implements OnInit {
-  @Input() ctrlFormGroup!: UntypedFormGroup;
-  @Input() controlIndex: number;
-  @Input() arrayLength: number;
-  @Output() private deleteCtrl = new EventEmitter<IDeleteEventObj>();
-  @Output() private moveUp = new EventEmitter<number>();
-  @Output() private moveDown = new EventEmitter<number>();
-  protected colors = [];
+  private app = inject(AppService);
 
-  constructor(private app: AppService) { }
+  readonly ctrlFormGroup = input.required<UntypedFormGroup>();
+  readonly controlIndex = input<number>(undefined);
+  readonly arrayLength = input<number>(undefined);
+  public readonly deleteCtrl = output<IDeleteEventObj>();
+  public readonly moveUp = output<number>();
+  public readonly moveDown = output<number>();
+  protected colors = [];
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;
   }
 
   public deleteControl() {
-    const delEvent: IDeleteEventObj = {ctrlIndex: this.controlIndex, pathID: this.ctrlFormGroup.get('pathID').value};
+    const delEvent: IDeleteEventObj = {ctrlIndex: this.controlIndex(), pathID: this.ctrlFormGroup().get('pathID').value};
     this.deleteCtrl.emit(delEvent);
   }
 
   public moveCtrlUp() {
-    this.moveUp.emit(this.controlIndex);
+    this.moveUp.emit(this.controlIndex());
   }
 
   public moveCtrlDown() {
-    this.moveDown.emit(this.controlIndex);
+    this.moveDown.emit(this.controlIndex());
   }
 }

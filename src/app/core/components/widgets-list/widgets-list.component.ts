@@ -12,11 +12,13 @@ import { MatDialogRef } from '@angular/material/dialog';
   styleUrl: './widgets-list.component.scss'
 })
 export class WidgetsListComponent {
+  private dialogRef = inject<MatDialogRef<WidgetsListComponent>>(MatDialogRef);
+
   protected _widgets = inject(WidgetService);
   protected widgetsList: WidgetDescription[] = [];
   protected _widgetCategory = signal<string>("Basic");
 
-  constructor(private dialogRef: MatDialogRef<WidgetsListComponent>) {
+  constructor() {
     this.widgetsList = this._widgets.kipWidgets.filter((widget) => widget.category === this._widgetCategory());
   }
 

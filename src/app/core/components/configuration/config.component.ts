@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
@@ -32,6 +32,12 @@ interface IRemoteConfig {
     imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy {
+  private appSettingsService = inject(AppSettingsService);
+  private storageSvc = inject(StorageService);
+  private appService = inject(AppService);
+  private auth = inject(AuthenticationService);
+  private fb = inject(UntypedFormBuilder);
+
   protected readonly pageTitle: string = "Configurations";
   public hasToken: boolean = false;
   public isTokenTypeDevice: boolean = false;
@@ -48,15 +54,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   public saveConfigName: string = null;
   public saveConfigScope: string = null;
   public deleteConfigItem: IRemoteConfig;
-  public jsonData: IConfig = null; // In-memory variable to store the JSON content
-
-  constructor(
-    private appSettingsService: AppSettingsService,
-    private storageSvc: StorageService,
-    private appService: AppService,
-    private auth: AuthenticationService,
-    private fb: UntypedFormBuilder,
-  ) { }
+  public jsonData: IConfig = null;
 
   ngOnInit() {
     // Token observer

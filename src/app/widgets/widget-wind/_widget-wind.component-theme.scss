@@ -1,19 +1,6 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 
-//   .rudderPort {
-//     fill: mat.m2-get-color-from-palette($wind, rudder-port);
-//   }
-//   .rudderStarboard  {
-//     fill: mat.m2-get-color-from-palette($wind, rudder-starboard);
-//   }
-//  .wind-rose-background {
-//     stroke: #2ce51b;
-//   }
-//   .compass-outer-ring {
-//       stroke: mat.m2-get-color-from-palette($wind, compass-dark);
-//   }
-// }
 @mixin light-color($theme) {
 }
 
@@ -36,7 +23,7 @@
   }
 
   .heading-background {
-    stroke: var(--sys-background);
+    stroke: var(--mat-sys-background);
     fill: var(--kip-white-color);
   }
 

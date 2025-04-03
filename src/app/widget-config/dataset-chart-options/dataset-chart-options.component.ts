@@ -1,5 +1,5 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input, inject } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
@@ -14,29 +14,28 @@ import { IUnitGroup } from '../../core/services/units.service';
   styleUrl: './dataset-chart-options.component.scss'
 })
 export class DatasetChartOptionsComponent implements OnInit {
-  @Input () datasetUUID!: UntypedFormControl;
-  @Input () convertUnitTo!: UntypedFormControl;
+  private datasetService = inject(DatasetService);
+  private units = inject(UnitsService);
+
+  readonly datasetUUID = input.required<UntypedFormControl>();
+  readonly convertUnitTo = input.required<UntypedFormControl>();
 
   public availableDataSets: IDatasetServiceDatasetConfig[] = [];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
-  constructor(
-    private datasetService: DatasetService,
-    private units: UnitsService
-  ) {}
-
     ngOnInit(): void {
       this.availableDataSets = this.datasetService.list().sort();
-      if (this.datasetUUID.value) {
-        this.setPathUnits(this.datasetUUID.value);
-        this.convertUnitTo.enable();
+      const datasetUUID = this.datasetUUID();
+      if (datasetUUID.value) {
+        this.setPathUnits(datasetUUID.value);
+        this.convertUnitTo().enable();
       } else {
-        this.convertUnitTo.disable();
+        this.convertUnitTo().disable();
       }
     }
 
     private setPathUnits(uuid: string): void {
-      this.convertUnitTo.enable();
+      this.convertUnitTo().enable();
       if (uuid) {
         this.unitList = this.units.getConversionsForPath(this.datasetService.getDatasetConfig(uuid).path);
       } else {

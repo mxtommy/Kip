@@ -1,11 +1,15 @@
-import { Directive, ViewContainerRef } from '@angular/core';
+import { Directive, ViewContainerRef, inject } from '@angular/core';
 
 @Directive({
     selector: '[dynamic-widget]',
     standalone: true
 })
 export class DynamicWidgetDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {
+  viewContainerRef = inject(ViewContainerRef);
+
+  constructor() {
+    const viewContainerRef = this.viewContainerRef;
+
     viewContainerRef.constructor.name === "ViewContainerRef"; // true
    }
 }

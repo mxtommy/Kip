@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { AppService } from '../../core/services/app-service';
@@ -18,14 +18,12 @@ import { KeyValuePipe } from '@angular/common';
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatButton, KeyValuePipe]
 })
 export class SettingsUnitsComponent implements OnInit {
+  private units = inject(UnitsService);
+  private appSettingsService = inject(AppSettingsService);
+  private appService = inject(AppService);
+
   public unitsFormGroup = new UntypedFormGroup({});
   protected groupUnits: {[key: string]: IUnit}[] = [];
-
-  constructor(
-    private units: UnitsService,
-    private appSettingsService: AppSettingsService,
-    private appService: AppService,
-    ) { }
 
   ngOnInit() {
     const unitsSettings: IUnitDefaults = this.appSettingsService.getDefaultUnits();

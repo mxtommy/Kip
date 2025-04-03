@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChange, OnDestroy, input, inject } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IConversionPathList, ISkBaseUnit, UnitsService } from '../../core/services/units.service';
@@ -12,6 +12,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
 import { AsyncPipe } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 
 function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -27,11 +28,14 @@ function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
     templateUrl: './path-control-config.component.html',
     styleUrls: ['./path-control-config.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe]
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule]
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
+  private data = inject(DataService);
+  private units = inject(UnitsService);
+
   @Input() pathFormGroup!: UntypedFormGroup;
-  @Input() filterSelfPaths!: boolean;
+  readonly filterSelfPaths = input.required<boolean>();
 
   public availablePaths: IPathMetaData[];
   public filteredPaths = new BehaviorSubject<IPathMetaData[] | null>(null);
@@ -47,11 +51,6 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public pathSkUnitsFilterControl = new FormControl<ISkBaseUnit | null>(null);
   public pathSkUnitsFiltersList: ISkBaseUnit[];
   public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '(null)', quantity: 'Unitless', quantityDisplay: '(null)', description: '', }};
-
-  constructor(
-    private data: DataService,
-    private units: UnitsService
-    ) { }
 
   ngOnInit() {
     // Path Unit filter setup
@@ -114,7 +113,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
 
   private getPaths(): IPathMetaData[] {
     const pathType = this.pathFormGroup.controls['pathType'].value;
-    const filterSelfPaths = this.filterSelfPaths;
+    const filterSelfPaths = this.filterSelfPaths();
    return this.data.getPathsAndMetaByType(pathType, filterSelfPaths).sort();
   }
 

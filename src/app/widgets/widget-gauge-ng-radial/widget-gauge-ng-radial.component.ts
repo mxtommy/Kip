@@ -430,5 +430,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   ngOnDestroy() {
     this.destroyDataStreams();
     this.metaSub?.unsubscribe();
+    // Clear references to DOM elements
+    this.radialGauge = null;
+    this.gauge = null;
+
   }
 }

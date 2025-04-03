@@ -1,11 +1,12 @@
-import { inject, Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject, delay, Observable, of, retry, Subject, takeUntil, Subscription } from 'rxjs';
+import { DestroyRef, inject, Injectable, NgZone } from '@angular/core';
+import { BehaviorSubject, delay, Observable, of, retry, Subject } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
 import { IMeta, IPathValueData } from "../interfaces/app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuthenticationService, IAuthorizationToken } from './authentication.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 /**
@@ -28,6 +29,8 @@ export interface IStreamStatus {
     providedIn: 'root'
   })
 export class SignalKDeltaService {
+  private _destroyRef = inject(DestroyRef); // Inject DestroyRef
+
   // Signal K Requests message stream Observable
   private _skRequests$ = new Subject<ISignalKDeltaMessage>();
   // Signal K Notifications message stream Observable
@@ -63,9 +66,6 @@ export class SignalKDeltaService {
   // Token
   private authToken: IAuthorizationToken = null;
 
-  // Subject that emits a value to automatically unsubscribe when the service is destroyed
-  private _destroyed$ = new Subject<void>();
-
   // Array to store the timeout IDs
   private timeoutIds: NodeJS.Timeout[] = [];
 
@@ -77,7 +77,7 @@ export class SignalKDeltaService {
     {
       // Monitor Connection Service Endpoint Status
       this.server.serverServiceEndpoint$
-        .pipe(takeUntil(this._destroyed$))
+      .pipe(takeUntilDestroyed(this._destroyRef))
         .subscribe((endpointStatus: IEndpointStatus) => {
         let reason: string = null;
           if (endpointStatus.operation === 2) {
@@ -106,7 +106,7 @@ export class SignalKDeltaService {
 
       // Monitor Token changes
       this.auth.authToken$
-        .pipe(takeUntil(this._destroyed$))
+        .pipe(takeUntilDestroyed(this._destroyRef))
         .subscribe((token: IAuthorizationToken) => {
           if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
             this.authToken = token;
@@ -128,7 +128,7 @@ export class SignalKDeltaService {
 
       // WebSocket Open Event Handling
       this.socketWSOpenEvent$
-        .pipe(takeUntil(this._destroyed$))
+        .pipe(takeUntilDestroyed(this._destroyRef))
         .subscribe( event => {
             this.streamEndpoint.message = "Connected";
             this.streamEndpoint.operation = 2;
@@ -143,7 +143,7 @@ export class SignalKDeltaService {
 
       // WebSocket closed Event Handling
       this.socketWSCloseEvent$
-        .pipe(takeUntil(this._destroyed$))
+        .pipe(takeUntilDestroyed(this._destroyRef))
         .subscribe( event => {
           if(event.wasClean) {
             this.streamEndpoint.message = "WebSocket closed";
@@ -181,7 +181,8 @@ export class SignalKDeltaService {
             return of(error).pipe(delay(this.WS_RECONNECT_INTERVAL));
           }
         })
-      ).subscribe({
+      ).pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
         next: msgWS => this.processWebsocketMessage(msgWS),
         error: err => console.error('[Delta Service] WebSocket connection failed after maximum retries:', err)
       });
@@ -370,10 +371,16 @@ export class SignalKDeltaService {
   * @memberof SignalKDeltaService
   */
   OnDestroy(): void {
-    // Emit a value to automatically unsubscribe from all observables
-    this._destroyed$.next();
-    this._destroyed$.complete();
+    this._skRequests$.complete();
+    this._skNotificationsMsg$.complete();
+    this._skValue$.complete();
+    this._skMetadata$.complete();
 
+    this._vesselSelfUrn$.complete();
+    this.streamEndpoint$.complete();
+    this.socketWSOpenEvent$.complete();
+    this.socketWSCloseEvent$.complete();
+    this.socketWS$?.complete();
     // Clear all the timeouts
     this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
 

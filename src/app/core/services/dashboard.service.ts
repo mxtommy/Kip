@@ -1,5 +1,5 @@
 import { AppSettingsService } from './app-settings.service';
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
@@ -94,29 +94,51 @@ export class DashboardService {
   }
 
   public duplicate(itemIndex: number, newName: string): void {
-    const newId = UUID.create();
-    const sourceDashboard = this.dashboards()[itemIndex];
-    const newConfiguration = sourceDashboard.configuration.map(item => ({
-      ...cloneDeep(item),
-      id: newId
-    }));
+    if (itemIndex < 0 || itemIndex >= this.dashboards().length) {
+        console.error(`[Dashboard Service] Invalid itemIndex: ${itemIndex}`);
+        return;
+    }
+
+    const originalDashboard = this.dashboards()[itemIndex];
+    const newDashboard = cloneDeep(originalDashboard);
+
+    newDashboard.id = UUID.create();
+    newDashboard.name = newName;
+
+    if (Array.isArray(newDashboard.configuration)) {
+        newDashboard.configuration.forEach((widget: NgGridStackWidget) => {
+            if (widget && widget.input?.widgetProperties) {
+                widget.id = UUID.create();
+                widget.input.widgetProperties.uuid = widget.id;
+            } else {
+                console.error("Dashboard Service] Widget configuration is missing required properties:", widget);
+            }
+        });
+    } else {
+        console.error("Dashboard Service] Dashboard configuration is not an array:", newDashboard.configuration);
+        newDashboard.configuration = [];
+    }
 
     this.dashboards.update(dashboards => [
-      ...dashboards,
-      {
-        id: newId,
-        name: newName,
-        configuration: newConfiguration
-      }
+        ...dashboards,
+        newDashboard
     ]);
   }
 
   public updateConfiguration(itemIndex: number, configuration: NgGridStackWidget[]): void {
-    this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
-      i === itemIndex ? { ...dashboard, configuration: configuration } : dashboard));
+    this.dashboards.update(dashboards => dashboards.map((dashboard, i) => {
+      if (i === itemIndex) {
+        // Only update if the configuration has changed
+        if (isEqual(dashboard.configuration, configuration)) {
+          return dashboard; // No changes, return the same reference
+        }
+        return { ...dashboard, configuration: configuration }; // Update with new configuration
+      }
+      return dashboard; // No changes for other dashboards
+    }));
   }
 
-  public nextDashboard(): void {
+  public previousDashboard(): void {
     if ((this.activeDashboard() + 1) > (this.dashboards().length) - 1) {
       this.activeDashboard.set(0);
     } else {
@@ -124,7 +146,7 @@ export class DashboardService {
     }
   }
 
-  public previousDashboard(): void {
+  public nextDashboard(): void {
     if ((this.activeDashboard() - 1) < 0) {
       this.activeDashboard.set(this.dashboards().length - 1);
     } else {

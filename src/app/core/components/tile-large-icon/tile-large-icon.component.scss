@@ -7,15 +7,15 @@
 }
 
 :host(:hover) {
-  background-color: var(--sys-inverse-on-surface);
+  background-color: var(--mat-sys-inverse-on-surface);
 }
 
 :host(:focus-visible) {
-  background-color: var(--sys-surface-bright);
+  background-color: var(--mat-sys-surface-bright);
   outline: -webkit-focus-ring-color auto 0px;
 }
 
 .large-icon-tile-label {
   cursor: pointer;
-  color: var(--sys-outline);
+  color: var(--mat-sys-outline);
 }

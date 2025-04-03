@@ -14,9 +14,9 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
     imports: [ WidgetHostComponent, NgxResizeObserverModule ]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
-  @ViewChild('canvasMM', {static: true, read: ElementRef}) canvasMM: ElementRef;
-  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  @ViewChild('canvasEl', {static: true}) canvasEl: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvasMM', {static: true}) canvasMM: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
 
   private dataValue: number = null;
   private maxValue: number = null;
@@ -186,6 +186,15 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
+    this.canvasValCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    this.canvasMMCtx.clearRect(0, 0, this.canvasMM.nativeElement.width, this.canvasMM.nativeElement.height);
+    this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+    this.canvasBG.nativeElement.remove();
+    this.canvasBG = null;
+    this.canvasEl.nativeElement.remove();
+    this.canvasEl = null;
+    this.canvasMM.nativeElement.remove();
+    this.canvasMM = null;
   }
 
 /* ******************************************************************************************* */
@@ -287,31 +296,31 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.canvasBGCtx.fillText(unit,this.canvasBG.nativeElement.width*0.97,this.canvasBG.nativeElement.height*0.97, maxTextWidth);
   }
 
-    private drawMinMax() {
-      if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; }
+  private drawMinMax() {
+    if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; }
 
-      let valueText = '';
-      const maxTextWidth = Math.floor(this.canvasMM.nativeElement.width * 0.57);
-      const maxTextHeight = Math.floor(this.canvasMM.nativeElement.height * 0.1);
+    let valueText = '';
+    const maxTextWidth = Math.floor(this.canvasMM.nativeElement.width * 0.57);
+    const maxTextHeight = Math.floor(this.canvasMM.nativeElement.height * 0.1);
 
-      if (this.widgetProperties.config.showMin) {
-          valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Min: --";
-      }
-      if (this.widgetProperties.config.showMax) {
-          valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Max: --";
-      }
-      valueText = valueText.trim();
+    if (this.widgetProperties.config.showMin) {
+        valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Min: --";
+    }
+    if (this.widgetProperties.config.showMax) {
+        valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Max: --";
+    }
+    valueText = valueText.trim();
 
-      if (this.currentMinMaxLength !== valueText.length) {
-          this.currentMinMaxLength = valueText.length;
-          this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", maxTextWidth, maxTextHeight, this.canvasMMCtx);
-      }
+    if (this.currentMinMaxLength !== valueText.length) {
+        this.currentMinMaxLength = valueText.length;
+        this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", maxTextWidth, maxTextHeight, this.canvasMMCtx);
+    }
 
-      this.canvasMMCtx.font = `normal ${this.minMaxFontSize}px ${this.fontString}`;
-      this.canvasMMCtx.textAlign = "left";
-      this.canvasMMCtx.textBaseline = "bottom";
-      this.canvasMMCtx.fillStyle = this.valueColor;
-      this.canvasMMCtx.fillText(valueText, this.canvasMM.nativeElement.width * 0.03, this.canvasMM.nativeElement.height * 0.9559, maxTextWidth);
+    this.canvasMMCtx.font = `normal ${this.minMaxFontSize}px ${this.fontString}`;
+    this.canvasMMCtx.textAlign = "left";
+    this.canvasMMCtx.textBaseline = "bottom";
+    this.canvasMMCtx.fillStyle = this.valueColor;
+    this.canvasMMCtx.fillText(valueText, this.canvasMM.nativeElement.width * 0.03, this.canvasMM.nativeElement.height * 0.9559, maxTextWidth);
   }
 
   private applyDecorations(txtValue: string): string {

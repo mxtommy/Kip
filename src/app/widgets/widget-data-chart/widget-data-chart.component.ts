@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { Component, ViewChild, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -34,8 +34,10 @@ interface IDataSetRow {
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss'
 })
-export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  @ViewChild('widgetDataChart', {static: true, read: ElementRef}) widgetDataChart: ElementRef;
+export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+  private dsService = inject(DatasetService);
+
+  readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
 
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
@@ -61,7 +63,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
-  constructor(private dsService: DatasetService) {
+  constructor() {
     super();
 
     this.defaultConfig = {
@@ -91,11 +93,14 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       color: 'white',
     };
 
-    Chart.register(annotationPlugin, ChartStreaming);
+
    }
 
   ngOnInit(): void {
     this.validateConfig();
+  }
+
+  ngAfterViewInit(): void {
     this.startWidget();
   }
 
@@ -107,7 +112,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       this.setChartOptions();
 
       this.chart?.destroy();
-      this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
+      Chart.register(annotationPlugin, ChartStreaming);
+      this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
         type: this.lineChartType,
         data: this.lineChartData,
         options: this.lineChartOptions

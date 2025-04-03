@@ -31,6 +31,7 @@ import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-line
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
+import { uiEventService } from '../../services/uiEvent.service';
 
 
 @Component({
@@ -46,6 +47,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   protected dashboard = inject(DashboardService);
   private _notifications = inject(NotificationsService);
   private _destroyRef = inject(DestroyRef);
+  private _uiEvent = inject(uiEventService);
   protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   @ViewChild('grid', { static: true }) private _gridstack!: GridstackComponent;
@@ -82,8 +84,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     ]);
 
     effect(() => {
-      this.dashboard.activeDashboard();
-      this.loadDashboard();
+      this.loadDashboard(this.dashboard.activeDashboard());
     });
   }
 
@@ -91,7 +92,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
       if (isStatic) {
         this._gridstack.grid.setStatic(isStatic);
-        if (isStatic && (isStatic !== this._previousIsStaticState)) {
+        if (isStatic !== this._previousIsStaticState) {
           this.saveDashboard();
           this._previousIsStaticState = isStatic;
         }
@@ -121,11 +122,22 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     });
 
     this.resizeGridColumns();
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
+    this._uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
+
+    setTimeout(() => {
+      this.loadDashboard(this.dashboard.activeDashboard());
+    });
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    // Destroy the Gridstack instance to clean up internal resources
+    if (this._gridstack?.grid) {
+      this._gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+    }
+    // Remove the reference to the GridstackComponent
+    this._gridstack = null;
+
+    this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
@@ -133,10 +145,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
       if (event.ctrlKey && event.ctrlKey) {
       switch (event.key) {
-        case 'ArrowUp':
+        case 'ArrowDown':
           this.previousDashboard(event);
           break;
-        case 'ArrowDown':
+        case 'ArrowUp':
           this.nextDashboard(event);
           break;
         default:
@@ -149,9 +161,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this._gridstack.grid.cellHeight(window.innerHeight / this._gridstack.grid.getRow());
   }
 
-  protected loadDashboard(): void {
-    const dashboard = this.dashboard.dashboards()[this.dashboard.activeDashboard()];
-    this._gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+  /**
+   * @description load a dashboard from configuration
+   * @protected
+   * @param {number} dashboardId the ID of the dashboard to load
+   * @param {boolean} [addRemove] Optional (default true). If false, removes all widgets from
+   * the grid before loading the dashboard. This is useful when loading a different dashboard.
+   * If cancelling layout changes, use true.
+   * @memberof DashboardComponent
+   */
+  protected loadDashboard(dashboardId: number): void {
+    const dashboard = this.dashboard.dashboards()[dashboardId];
+    this._gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
   }
 
   protected saveDashboard(): void {
@@ -164,7 +185,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   protected cancelLayoutChanges(): void {
-    this.loadDashboard();
+    this.loadDashboard(this.dashboard.activeDashboard());
     this.dashboard.setStaticDashboard(true);
   }
 
@@ -243,14 +264,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   protected nextDashboard(e: any): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-      this.dashboard.previousDashboard();
+      this.dashboard.nextDashboard();
     }
   }
 
   protected previousDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-      this.dashboard.nextDashboard();
+      this.dashboard.previousDashboard();
     }
   }
 }

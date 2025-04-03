@@ -132,30 +132,11 @@ $_rest: (
   neutral-variant: map.get($_palettes,  neutral-variant),
   error: map.get($_palettes, error),
 );
-$_primary: map.merge(map.get($_palettes, primary), $_rest);
-$_tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+$primary-palette: map.merge(map.get($_palettes, primary), $_rest);
+$tertiary-palette: map.merge(map.get($_palettes, tertiary), $_rest);
 
-// Define the theme object.
-$dark-theme: mat.define-theme((
-  color: (
-    theme-type: dark,
-    primary: $_primary,
-    tertiary: $_tertiary,
-    use-system-variables: true,
-  ),
-  typography: (
-    use-system-variables: true,
-  ),
-  density: (
-    scale: 0,
-  ),
-));
-
-$widget-card-background-color: mat.get-theme-color($dark-theme, primary, 0);
-$widget-action-button-color: mat.get-theme-color($dark-theme, surface-bright);
-$widget-action-button-foreground-color: mat.get-theme-color($dark-theme, on-background);
-$widget-action-delete-button-color: mat.get-theme-color($dark-theme, error-container);
-$background: mat.get-theme-color($dark-theme, neutral, 10);
+$_widget-card-background-color: map.get(map.get($_palettes, primary), 0);
+$_background: map.get(map.get($_palettes, neutral), 10);
 
 $kip-dark-color: (
   blue: #3298ff, blue-dim: #359affc6, blue-dimmer: #063b7178,
@@ -173,10 +154,57 @@ $kip-dark-color: (
   zone-warn: #ff8d41,
   zone-alarm: #E90000,
   zone-emergency: #760000,
-  widget-card-background-color: #{$widget-card-background-color},
+  widget-card-background-color: #{$_widget-card-background-color},
   widget-card-border-color: #252525,
-  widget-action-button-color: #{$widget-action-button-color},
-  widget-action-button-foreground-color: #{$widget-action-button-foreground-color},
-  widget-action-delete-button-color: #{$widget-action-delete-button-color},
-  background: #{$background}
+  background: #{$_background}
 );
+
+// Get App (dark) CSS theming value
+$background: map.get($kip-dark-color, background);
+
+// Get default (dark) KIP CSS theming value
+$kip-widget-card-background-color: map.get($kip-dark-color, widget-card-background-color);
+$kip-widget-card-border-color: map.get($kip-dark-color, widget-card-border-color);
+$kip-widget-action-button-color: map.get($kip-dark-color, widget-action-button-color);
+$kip-widget-action-button-foreground-color: map.get($kip-dark-color, widget-action-button-foreground-color);
+$kip-widget-action-delete-button-color: map.get($kip-dark-color, widget-action-delete-button-color);
+
+$blue: map.get($kip-dark-color, blue);
+$blueDim: map.get($kip-dark-color, blue-dim);
+$blueDimmer: map.get($kip-dark-color, blue-dimmer);
+
+$green: map.get($kip-dark-color, green);
+$greenDim: map.get($kip-dark-color, green-dim);
+$greenDimmer: map.get($kip-dark-color, green-dimmer);
+
+$purple: map.get($kip-dark-color, purple);
+$purpleDim: map.get($kip-dark-color, purple-dim);
+$purpleDimmer: map.get($kip-dark-color, purple-dimmer);
+
+$yellow: map.get($kip-dark-color, yellow);
+$yellowDim: map.get($kip-dark-color, yellow-dim);
+$yellowDimmer: map.get($kip-dark-color, yellow-dimmer);
+
+$pink: map.get($kip-dark-color, pink);
+$pinkDim: map.get($kip-dark-color, pink-dim);
+$pinkDimmer: map.get($kip-dark-color, pink-dimmer);
+
+$orange: map.get($kip-dark-color, orange);
+$orangeDim: map.get($kip-dark-color, orange-dim);
+$orangeDimmer: map.get($kip-dark-color, orange-dimmer);
+
+$white: map.get($kip-dark-color, white);
+$whiteDim: map.get($kip-dark-color, white-dim);
+$whiteDimmer: map.get($kip-dark-color, white-dimmer);
+
+$grey: map.get($kip-dark-color, grey);
+$greyDim: map.get($kip-dark-color, grey-dim);
+$greyDimmer: map.get($kip-dark-color, grey-dimmer);
+
+$port: map.get($kip-dark-color, port);
+$starboard: map.get($kip-dark-color, starboard);
+$zone-nominal: map.get($kip-dark-color, zone-nominal);
+$zone-alert: map.get($kip-dark-color, zone-alert);
+$zone-warn: map.get($kip-dark-color, zone-warn);
+$zone-alarm: map.get($kip-dark-color, zone-alarm);
+$zone-emergency: map.get($kip-dark-color, zone-emergency);

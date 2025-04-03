@@ -97,7 +97,7 @@
        y2="510.65265" />
   </defs>
   <!-- sail setup -->
-  <g *ngIf="sailSetupEnable"
+  <g *ngIf="sailSetupEnable()"
      id="layer1"
      transform="matrix(0.1248082,0,0,0.11220779,-23.713913,416.39261)"
      style="display:inline">
@@ -473,22 +473,22 @@
     </g>
   </g>
   <!-- Laylines -->
-  <g [style.display]="closeHauledLineEnable ? 'inline' : 'none'"
+  <g [style.display]="closeHauledLineEnable() ? 'inline' : 'none'"
      id="LayerLayline"
      style="display:inline">
-    <path *ngIf="trueWindAngle != null"
+    <path *ngIf="trueWindAngle() != null"
       [attr.d]="closeHauledLineStbdPath"
        id="PortLayline"
        style="display:inline;fill:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:4px;stroke-opacity:0.6"
        class="laylines" />
-    <path *ngIf="trueWindAngle != null"
+    <path *ngIf="trueWindAngle() != null"
       [attr.d]="closeHauledLinePortPath"
        class="laylines"
        style="display:inline;fill:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:4px;stroke-opacity:0.6"
        id="StbdLayline" />
   </g>
 <!-- wind shift sector -->
-  <g [style.display]="windSectorEnable ? 'inline' : 'none'"
+  <g [style.display]="windSectorEnable() ? 'inline' : 'none'"
      style="display:inline"
      id="layerLayline">
     <path *ngIf="portWindSectorPath != 'none'"

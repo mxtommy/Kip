@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthenticationService } from "../../core/services/authentication.service";
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -15,14 +15,12 @@ import { AppService } from '../../core/services/app-service';
     standalone: true
 })
 export class WidgetLoginComponent implements OnInit {
-  public connectionConfig: IConnectionConfig = null;
+  dialog = inject(MatDialog);
+  private auth = inject(AuthenticationService);
+  private appService = inject(AppService);
+  private appSettingsService = inject(AppSettingsService);
 
-  constructor(
-    public dialog: MatDialog,
-    private auth: AuthenticationService,
-    private appService: AppService,
-    private appSettingsService: AppSettingsService,
-  ) { }
+  public connectionConfig: IConnectionConfig = null;
 
   ngOnInit(): void {
     this.connectionConfig = this.appSettingsService.getConnectionConfig();

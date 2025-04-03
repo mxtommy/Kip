@@ -1,6 +1,6 @@
 <page-header [pageTitle]="pageTitle" />
 <div class="page-content-wrapper">
-  <p class="mat-card-subtitle description-text">
+  <p>
     Recommended Reading: To understand configuration management and storage
     options, consult the
     <a routerLink="/help">Configuration Management Help</a> section.
@@ -9,26 +9,28 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <form
         name="saveConfigForm"
-        (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
-        #saveConfigForm="ngForm">
-        <h6>Backup</h6>
-        <p style="margin-bottom: 16px;">Create a backup of the current active configuration on the server.</p>
+        (ngSubmit)="
+          saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)
+        "
+        #saveConfigForm="ngForm"
+      >
+        <h2>Backup</h2>
+        <p style="margin-bottom: 16px">
+          Create a backup of the current active configuration on the server.
+        </p>
         <div *ngIf="hasToken; else elseBlock">
-          <mat-form-field style="width: 25%;">
+          <mat-form-field style="width: 25%">
             <mat-label>Scope</mat-label>
             <mat-select
               name="serverConfiScope"
               [(ngModel)]="saveConfigScope"
-              required>
-              <mat-option value="global">
-                Global
-              </mat-option>
-              <mat-option value="user">
-                User
-              </mat-option>
+              required
+            >
+              <mat-option value="global"> Global </mat-option>
+              <mat-option value="user"> User </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field style="width: 70%; padding-left: 3%;">
+          <mat-form-field style="width: 70%; padding-left: 3%">
             <mat-label>Configuration Name</mat-label>
             <input
               matInput
@@ -40,7 +42,8 @@
             />
           </mat-form-field>
           <div *ngIf="!hasToken">
-            Writing to the server requires "Login to Server" authentication or a Device token
+            Writing to the server requires "Login to Server" authentication or a
+            Device token
           </div>
         </div>
         <ng-template #elseBlock>
@@ -54,8 +57,9 @@
             mat-flat-button
             type="submit"
             [disabled]="!hasToken || !saveConfigForm.valid"
-            color="accent">
-              Create
+            color="accent"
+          >
+            Create
           </button>
         </div>
       </form>
@@ -63,16 +67,25 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <form
         name="deleteConfigForm"
-        (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name )"
-        #deleteConfigForm="ngForm">
-        <h6>Delete</h6>
-        <p style="margin-bottom: 16px;">Select a backup configuration to permanently delete from the server.</p>
+        (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name)"
+        #deleteConfigForm="ngForm"
+      >
+        <h2>Delete</h2>
+        <p style="margin-bottom: 16px">
+          Select a backup configuration to permanently delete from the server.
+        </p>
         <div *ngIf="hasToken; else elseBlock">
-          <mat-form-field style="width: 100%;">
+          <mat-form-field style="width: 100%">
             <mat-label>Configuration</mat-label>
-            <mat-select name="selectedDeleteItem" [(ngModel)]="deleteConfigItem" required>
+            <mat-select
+              name="selectedDeleteItem"
+              [(ngModel)]="deleteConfigItem"
+              required
+            >
               <mat-option
-                *ngFor="let config of serverConfigList" [value]="config">
+                *ngFor="let config of serverConfigList"
+                [value]="config"
+              >
                 {{ config.scope }} / {{ config.name }}
               </mat-option>
             </mat-select>
@@ -89,24 +102,28 @@
             mat-flat-button
             type="submit"
             [disabled]="!hasToken || !deleteConfigForm.valid"
-            color="accent">
-              Delete
+            color="accent"
+          >
+            Delete
           </button>
         </div>
       </form>
     </div>
     <div class="flex-item-rounded-card rounded-card-color">
       <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
-        <h6>Restore</h6>
-        <p style="margin-bottom: 16px;">Replace the current configuration with a backup from the server.</p>
+        <h2>Restore</h2>
+        <p style="margin-bottom: 16px">
+          Replace the current configuration with a backup from the server.
+        </p>
         <div *ngIf="hasToken; else elseBlock">
-          <mat-form-field style="width: 100%;">
+          <mat-form-field style="width: 100%">
             <mat-label>Configuration</mat-label>
             <mat-select formControlName="sourceTarget">
               <mat-option
                 *ngFor="let config of serverConfigList"
-                [value]="config">
-                  {{ config.scope }} / {{ config.name }}
+                [value]="config"
+              >
+                {{ config.scope }} / {{ config.name }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -122,84 +139,99 @@
             mat-flat-button
             type="submit"
             color="accent"
-            [disabled]="!this.copyConfigForm.valid">
-              Restore
+            [disabled]="!this.copyConfigForm.valid"
+          >
+            Restore
           </button>
         </div>
       </form>
     </div>
     <div class="flex-item-reset rounded-card-color">
-      <h6>Advanced</h6>
-      <div class="config-operation-container" style="margin-top: 20px;">
+      <h2>Advanced</h2>
+      <div class="config-operation-container" style="margin-top: 20px">
         <div class="download-txt">
-          <span class="descriptiveTexts"
-            >Download the active configuration.
-          </span>
+          <p>Download the active configuration to a file.</p>
         </div>
         <div class="download-btn btn-div">
-          <button mat-flat-button type="button" (click)="downloadJsonConfig()">Download</button>
+          <button
+            mat-flat-button
+            type="button"
+            class="adv-btn"
+            (click)="downloadJsonConfig()"
+          >
+            Download
+          </button>
         </div>
         <div class="upload-txt">
-          <span class="descriptiveTexts"
-            >Select a configuration file to upload. The file must be a valid KIP configuration
-            file of JSON format.
-          </span>
+          <p>
+            Select a configuration file to upload. The file must be a valid KIP
+            configuration file of JSON format.
+          </p>
         </div>
         <div class="upload-btn btn-div">
-           <!-- Hidden file input -->
-           <input type="file" #fileInput (change)="uploadJsonConfig($event)" accept=".json" hidden />
-           <!-- Material button to trigger file input -->
-           <button mat-flat-button (click)="fileInput.click()">
-             Upload
-           </button>
+          <!-- Hidden file input -->
+          <input
+            type="file"
+            #fileInput
+            (change)="uploadJsonConfig($event)"
+            accept=".json"
+            hidden
+          />
+          <!-- Material button to trigger file input -->
+          <button mat-flat-button class="adv-btn" (click)="fileInput.click()">
+            Upload
+          </button>
         </div>
         <div class="demo-txt">
-          <span class="descriptiveTexts"
-            >Load the demonstration configuration and connection to Signal K demo server. Warning:
-            THIS WILL COMPLETELY RESET ALL YOUR SETTINGS.
-          </span>
+          <p>
+            Load the demonstration configuration and connection to Signal K demo
+            server. WARNING: This will completely reset all your settings.
+          </p>
         </div>
         <div class="demo-btn btn-div">
           <button
             mat-flat-button
             type="button"
+            class="adv-btn"
             (click)="loadDemoConfig()"
           >
             Demo
           </button>
         </div>
         <div class="reset-txt">
-          <span class="descriptiveTexts"
-            >Reset all your settings to default. The default configuration has a
-            single Getting Started instruction widget.
-            Your Signal K server connection settings will remain.
-          </span>
+          <p>
+            Reset all your settings to default. The default configuration has a
+            single Getting Started instruction widget. Your Signal K server
+            connection settings will remain.
+          </p>
         </div>
         <div class="reset-btn btn-div">
           <button
             mat-flat-button
             type="button"
+            class="adv-btn"
             (click)="resetConfigToDefault()"
           >
             Default
           </button>
         </div>
         <div class="config-txt">
-          <span class="descriptiveTexts"
-            >Clear the current connection configuration. This only affects Connectivity tab settings.
-          </span>
+          <p>
+            Clear the current connection configuration. This only affects
+            Connectivity tab settings.
+          </p>
         </div>
         <div class="config-btn btn-div">
           <button
             mat-flat-button
             type="button"
+            class="adv-btn"
             (click)="resetConnectionToDefault()"
           >
             Connection
           </button>
         </div>
       </div>
-
     </div>
   </div>
 </div>

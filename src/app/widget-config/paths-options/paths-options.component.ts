@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, input, inject } from '@angular/core';
 import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import type { IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { ObjectKeysPipe } from '../../core/pipes/object-keys.pipe';
@@ -21,25 +21,23 @@ export interface IAddNewPath {
     imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, ModalPathControlConfigComponent, ObjectKeysPipe]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {
-  @Input() formGroupName!: string;
-  @Input() isArray!: boolean;
-  @Input() enableTimeout!: UntypedFormControl;
-  @Input() dataTimeout!: UntypedFormControl;
-  @Input() filterSelfPaths!: UntypedFormControl;
-  @Input() addPathEvent: IWidgetPath;
+  private rootFormGroup = inject(FormGroupDirective);
+  private fb = inject(UntypedFormBuilder);
+
+  readonly formGroupName = input.required<string>();
+  readonly isArray = input.required<boolean>();
+  readonly enableTimeout = input.required<UntypedFormControl>();
+  readonly dataTimeout = input.required<UntypedFormControl>();
+  readonly filterSelfPaths = input.required<UntypedFormControl>();
+  readonly addPathEvent = input<IWidgetPath>(undefined);
 
   public pathsFormGroup!: any;
 
-  constructor(
-    private rootFormGroup: FormGroupDirective,
-    private fb: UntypedFormBuilder
-  ) { }
-
   ngOnInit(): void {
-    if (this.isArray) {
-      this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName) as UntypedFormArray;
+    if (this.isArray()) {
+      this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormArray;
     } else {
-      this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName) as UntypedFormGroup;
+      this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormGroup;
     }
   }
 

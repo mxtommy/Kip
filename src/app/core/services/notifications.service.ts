@@ -1,7 +1,7 @@
 /**
  * This Service handles app notifications sent by the Signal K server.
  */
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, filter, map, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
@@ -59,6 +59,10 @@ interface IAlarmSeverities {
   providedIn: 'root'
 })
 export class NotificationsService implements OnDestroy {
+  private settings = inject(AppSettingsService);
+  private data = inject(DataService);
+  private requests = inject(SignalkRequestsService);
+
   private static readonly ALARM_SEVERITIES: IAlarmSeverities = {
     normal: { sound: 0, visual: 0 },
     nominal: { sound: 0, visual: 0 },
@@ -88,11 +92,7 @@ export class NotificationsService implements OnDestroy {
   // Notification acknowledge timeouts references
   private _lastEmittedValue: IAlarmInfo = null;
 
-  constructor(
-    private settings: AppSettingsService,
-    private data: DataService,
-    private requests: SignalkRequestsService
-  ) {
+  constructor() {
     // Observer of Notification Service configuration changes
     this._notificationSettingsSubscription = this.settings.getNotificationServiceConfigAsO().subscribe((config: INotificationConfig) => {
       this._notificationConfig = config;

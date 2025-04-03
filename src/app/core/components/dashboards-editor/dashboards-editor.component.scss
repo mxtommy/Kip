@@ -30,12 +30,12 @@
 
 .dashboard-item {
   background-color: var(--kip-widget-card-background-color);
-  border: 1px solid var(--sys-surface-container-highest);
+  border: 1px solid var(--mat-sys-surface-container-highest);
 }
 
 .dashboard-item-add {
-  background-color: var(--sys-surface-container);
-  border: 1px solid var(--sys-surface-container-highest);
+  background-color: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-surface-container-highest);
 }
 
 .dashboard-add-btn {
@@ -49,8 +49,8 @@
   flex-wrap: wrap;
   height: 42px;
   width: 42px;
-  background-color: var(--sys-tertiary-fixed);
-  color: var(--kip-widget-action-button-color);
+  background-color: var(--mat-sys-tertiary-fixed);
+  color: var(--mat-sys-surface-bright);
   border-radius: 50%;
   align-content: center;
   align-items: center;
@@ -61,9 +61,9 @@
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 4px;
-  box-shadow: 0 5px 5px -3px var(--sys-on-primary-container),
-              0 8px 10px 1px var(--sys-on-primary-container),
-              0 3px 14px 2px var(--sys-on-primary-container);
+  box-shadow: 0 5px 5px -3px var(--mat-sys-on-primary-container),
+              0 8px 10px 1px var(--mat-sys-on-primary-container),
+              0 3px 14px 2px var(--mat-sys-on-primary-container);
 }
 
 .cdk-drag-placeholder {

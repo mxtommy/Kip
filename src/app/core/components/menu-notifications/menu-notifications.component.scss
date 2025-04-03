@@ -24,18 +24,18 @@ mat-icon {
 
 .notification-title {
   text-transform: capitalize;
-  font-size: var(--sys-headline-small-size);
+  font-size: var(--mat-sys-headline-small-size);
   width: calc(100% - 34px);
 }
 
 .notification-path {
-  font-size: var(--sys-body-small-size);
+  font-size: var(--mat-sys-body-small-size);
   word-break: break-all;
   width: 100%;
 }
 
 .notification-text {
-  font-size: var(--sys-body-small-line-height);
+  font-size: var(--mat-sys-body-small-line-height);
   font-style: italic;
   width: 100%;
   overflow: auto; /* Allow scrolling on hover */
@@ -44,7 +44,7 @@ mat-icon {
 }
 
 .notification-action-btn {
-  background-color: var(--sys-surface-container);
+  background-color: var(--mat-sys-surface-container);
 }
 
 .notification-btn-container {
@@ -66,7 +66,7 @@ mat-icon {
   position: absolute;
   bottom: 0px;
   width: 100%;
-  background-color: var(--sys-surface-container);
+  background-color: var(--mat-sys-surface-container);
 }
 
 .actions-container {
@@ -84,7 +84,7 @@ mat-icon {
 .action-button {
   border-radius: 0px;
   height: 48px;
-  border-bottom-right-radius: var(--mat-sidenav-container-shape, var(--mat-app-corner-large));
+  border-bottom-right-radius: var(--mat-sidenav-container-shape, var(--mat-sys-corner-large));
 }
 
 .icon-alert-color {

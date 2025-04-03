@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
@@ -47,11 +47,16 @@ interface IDatasetServiceObserverRegistration {
 
 @Injectable()
 export class DatasetService {
+  private appSettings = inject(AppSettingsService);
+  private data = inject(DataService);
+
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
 
-  constructor(private appSettings: AppSettingsService, private data: DataService) {
+  constructor() {
+    const appSettings = this.appSettings;
+
     this._svcDatasetConfigs = appSettings.getDataSets();
     this.startAll();
   }

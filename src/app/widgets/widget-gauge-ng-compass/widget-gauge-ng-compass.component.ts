@@ -313,5 +313,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   ngOnDestroy(): void {
     this.destroyDataStreams();
     this.metaSub?.unsubscribe();
+    // Clear references to DOM elements
+    this.compassGauge = null;
+    this.gauge = null;
   }
 }

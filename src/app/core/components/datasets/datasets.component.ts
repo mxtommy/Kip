@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Component, OnInit, Inject, AfterViewInit, ViewChild, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, inject, viewChild } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
 import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -38,8 +38,8 @@ interface settingsForm {
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
-  @ViewChild(MatPaginator) paginator: MatPaginator;
-  @ViewChild(MatSort) sort: MatSort;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   protected readonly pageTitle: string = "Datasets";
 
@@ -60,8 +60,8 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.tableData.paginator = this.paginator;
-    this.tableData.sort = this.sort;
+    this.tableData.paginator = this.paginator();
+    this.tableData.sort = this.sort();
     this.tableData.filter = "";
     this.cdRef.detectChanges();
   }
@@ -145,6 +145,10 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
 })
 export class SettingsDatasetsModalComponent implements OnInit {
+  private SignalKDataService = inject(DataService);
+  dialogRef = inject<MatDialogRef<SettingsDatasetsModalComponent>>(MatDialogRef);
+  dataset = inject<IDatasetServiceDatasetConfig>(MAT_DIALOG_DATA);
+
   public titleDialog: string = null;
   public newDataset: IDatasetServiceDatasetConfig = {
     uuid: null,
@@ -161,12 +165,6 @@ export class SettingsDatasetsModalComponent implements OnInit {
   public availablePaths: string[] = [];
   public availableSources: string[] = [];
   public filterSelfPaths:boolean = true;
-
-  constructor(
-    private SignalKDataService: DataService,
-    public dialogRef:MatDialogRef<SettingsDatasetsModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public dataset: IDatasetServiceDatasetConfig
-    ) { }
 
   ngOnInit() {
     if (this.dataset) {

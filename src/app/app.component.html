@@ -1,16 +1,11 @@
 <mat-sidenav-container class="sidenav-container" (swipeleft)="onSwipeLeft($event)" (swiperight)="onSwipeRight($event)">
-
   <mat-sidenav #notificationsSidenav class="sidenav-notifications" [(opened)]="notificationsSidenavOpened" mode="over" position="start" autoFocus="true">
-
     <menu-notifications />
-
   </mat-sidenav>
-  <mat-sidenav #actionsSidenav class="sidenav-controls" [(opened)]="actionsSidenavOpen" mode="over" position="end" autoFocus="true">
+  <mat-sidenav #actionsSidenav class="sidenav-actions" [(opened)]="actionsSidenavOpen" mode="over" position="end" autoFocus="true">
     <menu-actions [actionsSidenav]="actionsSidenav" />
   </mat-sidenav>
   <mat-sidenav-content>
-    <router-outlet class="router-outlet-container"></router-outlet>
+    <router-outlet class="router-outlet-container" />
   </mat-sidenav-content>
 </mat-sidenav-container>
-
-

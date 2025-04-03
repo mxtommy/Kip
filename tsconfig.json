@@ -24,7 +24,7 @@
     ],
     "module": "es2020",
     "baseUrl": "./",
-    "isolatedModules": true
+    "isolatedModules": false
   },
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
