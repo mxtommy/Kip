@@ -116,6 +116,12 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     this.skStreamStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
     });
+  }
+
+   ngAfterViewInit(): void {
+    this.textColor = window.getComputedStyle(this.lineGraph().nativeElement).color;
+    this._chart?.destroy();
+    this.startChart();
 
     // Get WebSocket Delta update per seconds stats
     this.signalkDeltaUpdatesStatsSubscription = this.DataService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
@@ -125,12 +131,6 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       }
       this._chart?.update("none");
     });
-  }
-
-   ngAfterViewInit(): void {
-    this.textColor = window.getComputedStyle(this.lineGraph().nativeElement).color;
-    this._chart?.destroy();
-    this.startChart();
    }
 
   public openUserCredentialModal(errorMsg: string) {
