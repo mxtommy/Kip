@@ -84,6 +84,10 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
   ngOnDestroy() {
     this.destroyDataStreams();
+    this.canvasCtx = null;
+    this.canvasBGCtx = null;
+    this.canvasEl = null;
+    this.canvasBG = null;
   }
 
   private getColors(color: string): void {

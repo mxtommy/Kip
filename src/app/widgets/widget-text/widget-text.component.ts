@@ -79,6 +79,10 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
 
   ngOnDestroy() {
     this.destroyDataStreams();
+    this.canvasCtx = null;
+    this.canvasBGCtx = null;
+    this.canvasEl = null;
+    this.canvasBG = null;
   }
 
   private getColors(color: string): void {

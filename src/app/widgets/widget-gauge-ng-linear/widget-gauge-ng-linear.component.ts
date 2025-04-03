@@ -456,5 +456,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   ngOnDestroy() {
     this.destroyDataStreams();
     this.metaSub?.unsubscribe();
+    // Clear references to DOM elements
+    this.linearGauge = null;
+    this.gauge = null;
   }
 }

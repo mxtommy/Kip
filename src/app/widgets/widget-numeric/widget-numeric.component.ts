@@ -186,6 +186,12 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
+    this.canvasValCtx = null;
+    this.canvasMMCtx = null;
+    this.canvasBGCtx = null;
+    this.canvasEl = null;
+    this.canvasMM = null;
+    this.canvasBG = null;
   }
 
 /* ******************************************************************************************* */

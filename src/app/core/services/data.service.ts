@@ -1,10 +1,11 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { Observable , BehaviorSubject, Subscription, ReplaySubject, Subject, map, combineLatest, of } from 'rxjs';
+import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
+import { Observable , BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of } from 'rxjs';
 import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
 import { cloneDeep,merge } from 'lodash-es';
 import Qty from 'js-quantities';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const SELFROOTDEF: string = "self";
 
@@ -71,12 +72,8 @@ export interface IDeltaUpdate {
   providedIn: 'root'
 })
 export class DataService implements OnDestroy {
-  // Service subscriptions
-  private _deltaServiceSelfUrnSubscription: Subscription = null;
-  private _deltaServiceMetaSubscription: Subscription = null;
-  private _deltaServicePathSubscription: Subscription = null;
-  private _deltaServiceNotificationSubscription: Subscription = null;
-  private _defaultUnitsSub: Subscription = null;
+  private _destroyRef = inject(DestroyRef); // Inject DestroyRef
+
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;
@@ -104,7 +101,7 @@ export class DataService implements OnDestroy {
 
   constructor(private delta: SignalKDeltaService) {
     // Emit Delta message update counter every second
-    setInterval(() => {
+    this._deltaUpdatesCounterTimer = setInterval(() => {
       if (this._deltaUpdatesCounter !== null) {
         const update: IDeltaUpdate = {timestamp: Date.now(), value: this._deltaUpdatesCounter}
         this._deltaUpdatesSubject.next(update);
@@ -113,17 +110,17 @@ export class DataService implements OnDestroy {
     }, 1000);
 
     // Observer of Delta service data path updates
-    this._deltaServicePathSubscription = this.delta.subscribeDataPathsUpdates().subscribe((dataPath: IPathValueData) => {
+    this.delta.subscribeDataPathsUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe((dataPath: IPathValueData) => {
       this.updatePathData(dataPath);
     });
 
     // Observer of Delta service Metadata updates
-    this._deltaServiceMetaSubscription = this.delta.subscribeMetadataUpdates().subscribe((deltaMeta: IMeta) => {
+    this.delta.subscribeMetadataUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe((deltaMeta: IMeta) => {
       this.setMeta(deltaMeta);
     })
 
     // Observer router of Delta service Notification updates
-    this._deltaServiceNotificationSubscription = this.delta.subscribeNotificationsUpdates().subscribe((msg: ISignalKDataValueUpdate) => {
+    this.delta.subscribeNotificationsUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe((msg: ISignalKDataValueUpdate) => {
       const cleanedPath = msg.path.replace('notifications.', 'self.');
 
       const pathItem = this._skData.find(item => item.path == cleanedPath);
@@ -140,7 +137,7 @@ export class DataService implements OnDestroy {
     });
 
     // Observer of vessel Self URN updates
-    this._deltaServiceSelfUrnSubscription = this.delta.subscribeSelfUpdates().subscribe(self => {
+    this.delta.subscribeSelfUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(self => {
       this.setSelfUrn(self);
     });
   }
@@ -165,8 +162,23 @@ export class DataService implements OnDestroy {
   }
 
   public unsubscribePath(path: string): void {
-    this._pathRegister.splice(this._pathRegister.findIndex(registration => registration.path === path), 1);
+    const index = this._pathRegister.findIndex(registration => registration.path === path);
+
+    if (index !== -1) {
+      const registration = this._pathRegister[index];
+
+      // Ensure all observables are completed to avoid memory leaks
+      registration._pathData$?.complete();
+      registration._pathState$?.complete();
+      registration.pathDataUpdate$?.complete();
+      registration.pathMeta$?.complete();
+
+      // Use splice to remove the item without changing the entire
+      // array reference.
+      this._pathRegister.splice(index, 1);
+    }
   }
+
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
     const matchingPaths = this._pathRegister.find(item => item.path === path && item.source === source);
@@ -488,12 +500,12 @@ export class DataService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this._defaultUnitsSub?.unsubscribe();
-    this._deltaUpdatesSubject?.unsubscribe();
-    this._deltaServiceSelfUrnSubscription?.unsubscribe();
-    this._deltaServiceMetaSubscription?.unsubscribe();
-    this._deltaServicePathSubscription?.unsubscribe();
-    this._deltaServiceNotificationSubscription?.unsubscribe();
+    this._deltaUpdatesSubject?.complete();
+    this._skNotificationMsg$?.complete();
+    this._skNotificationMeta$?.complete();
+    this._isReset?.complete();
+    this._skDataSubject$?.complete();
+    this._dataServiceMetaSubject$?.complete();
 
     if (this._deltaUpdatesCounterTimer) {
       clearInterval(this._deltaUpdatesCounterTimer);

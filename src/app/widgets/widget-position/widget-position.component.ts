@@ -90,6 +90,10 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
+    this.canvasValCtx = null;
+    this.canvasBGCtx = null;
+    this.canvasEl = null;
+    this.canvasBG = null;
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
