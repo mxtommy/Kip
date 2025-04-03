@@ -13,8 +13,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
     standalone: true
 })
 export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
-  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  @ViewChild('canvasEl', {static: true}) canvasEl: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
 
   dataValue: any = null;
   dataTimestamp: number = Date.now();
@@ -84,8 +84,10 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
   ngOnDestroy() {
     this.destroyDataStreams();
-    this.canvasCtx = null;
-    this.canvasBGCtx = null;
+    this.canvasCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    this.canvasBGCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    this.canvasEl.nativeElement.remove();
+    this.canvasBG.nativeElement.remove();
     this.canvasEl = null;
     this.canvasBG = null;
   }

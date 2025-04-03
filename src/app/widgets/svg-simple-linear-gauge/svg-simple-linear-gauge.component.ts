@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges } from '@angular/core';
+import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges, OnDestroy } from '@angular/core';
 
 @Component({
     selector: 'svg-simple-linear-gauge',
@@ -6,8 +6,8 @@ import { ViewChild, ElementRef, Input, Component, SimpleChanges, OnChanges } fro
     styleUrl: './svg-simple-linear-gauge.component.scss',
     standalone: true
 })
-export class SvgSimpleLinearGaugeComponent implements OnChanges {
-  @ViewChild('gaugeBarAnimate', {static: true}) gaugeBarAnimate: ElementRef;
+export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
+  @ViewChild('gaugeBarAnimate', {static: false}) gaugeBarAnimate: ElementRef;
   @Input({ required: true }) displayName!: string;
   @Input({ required: true }) displayNameColor!: string;
   @Input({ required: true }) dataValue!: string;
@@ -25,25 +25,28 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges {
   constructor() { }
 
   ngOnChanges(changes: SimpleChanges) {
-    // Data Value
-    if (changes.dataValue) {
-      if (! changes.dataValue.firstChange) {
-        this.dataValue = changes.dataValue.currentValue;
-      }
-    }
-
     // Gauge bar value
     if (changes.gaugeValue) {
       if (! changes.gaugeValue.firstChange) {
         // scale value to svg gauge pixel length (195), proportional to gauge min/max set values
         let scaleRange = this.gaugeMaxValue - this.gaugeMinValue;
-        let scaleSliceValue = 195 / scaleRange;
+        let scaleSliceValue = scaleRange !== 0 ? 195 / scaleRange : 0;
 
         this.oldGaugeValue = this.newGaugeValue;
         this.newGaugeValue = (changes.gaugeValue.currentValue - this.gaugeMinValue) * scaleSliceValue;
 
-        this.gaugeBarAnimate.nativeElement.beginElement();
+        if (this.gaugeBarAnimate?.nativeElement) {
+          requestAnimationFrame(() => {
+            if (this.gaugeBarAnimate?.nativeElement) {
+              this.gaugeBarAnimate.nativeElement.beginElement();
+            }
+          });
+        }
       }
     }
+  }
+
+  ngOnDestroy() {
+    this.gaugeBarAnimate = null as any;
   }
 }

@@ -152,7 +152,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     * @return {*}
     * @memberof BaseWidgetComponent
     */
-  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void)): any {
+  protected observeDataStream(pathName: string, subscribeNextFunction: ((value: IPathUpdate) => void)): void {
     if (this.dataStream === undefined || this.dataStream.length == 0) {
       this.createDataObservable();
     }

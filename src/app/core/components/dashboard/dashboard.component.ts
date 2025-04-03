@@ -145,10 +145,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
       if (event.ctrlKey && event.ctrlKey) {
       switch (event.key) {
-        case 'ArrowUp':
+        case 'ArrowDown':
           this.previousDashboard(event);
           break;
-        case 'ArrowDown':
+        case 'ArrowUp':
           this.nextDashboard(event);
           break;
         default:

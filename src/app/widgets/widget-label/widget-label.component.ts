@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -11,7 +11,7 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
   templateUrl: './widget-label.component.html',
   styleUrl: './widget-label.component.scss'
 })
-export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit, AfterViewInit {
+export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
   private wrapper = viewChild<ElementRef<HTMLDivElement>>('wrapper');
   private canvasCtx = CanvasRenderingContext2D = null;
@@ -29,18 +29,23 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     };
    }
 
-   ngOnInit(): void {
+  ngOnInit(): void {
     this.validateConfig();
-   }
+  }
 
-   ngAfterViewInit(): void {
+  ngAfterViewInit(): void {
     this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
     this.canvasEl().nativeElement.width = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().width);
     this.canvasEl().nativeElement.height = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().height);
     document.fonts.ready.then(() => {
       this.updateCanvas();
     });
-   }
+  }
+
+  ngOnDestroy(): void {
+    this.canvasCtx.clearRect(0, 0, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+    this.canvasEl().nativeElement.remove();
+  }
 
   protected startWidget(): void {
     // No action needed

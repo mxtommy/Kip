@@ -13,8 +13,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 })
 
 export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
-  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  @ViewChild('canvasEl', {static: true}) canvasEl: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
   private latPos: string = "";
   private longPos: string = "";
   private labelColor: string = undefined;
@@ -90,9 +90,11 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
   ngOnDestroy() {
     this.unsubscribeDataStream();
-    this.canvasValCtx = null;
-    this.canvasBGCtx = null;
+    this.canvasValCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+    this.canvasEl.nativeElement.remove();
     this.canvasEl = null;
+    this.canvasBG.nativeElement.remove();
     this.canvasBG = null;
   }
 

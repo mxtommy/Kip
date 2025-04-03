@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit, OnDestroy } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { NgIf } from '@angular/common';
 
@@ -32,7 +32,7 @@ interface ISVGRotationObject {
     imports: [NgIf]
 })
 
-export class SvgAutopilotComponent implements AfterViewInit {
+export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
   // AP screen
   @ViewChild('apStencil', {static: true, read: ElementRef}) ApStencil: ElementRef;
   @ViewChild('countDown', {static: true, read: ElementRef}) countDown: ElementRef;
@@ -91,6 +91,11 @@ export class SvgAutopilotComponent implements AfterViewInit {
     this.appWind.animationElement = this.appWindAnimate;
   }
 
+  ngOnDestroy(): void {
+    this.compassFaceplate.animationElement = null;
+    this.appWind.animationElement = null;
+  }
+
   ngOnChanges(changes: SimpleChanges) {
 
     //heading
@@ -98,7 +103,9 @@ export class SvgAutopilotComponent implements AfterViewInit {
       if (! changes.compassHeading.firstChange) {
         this.compassFaceplate.oldDegreeIndicator = this.compassFaceplate.newDegreeIndicator;
         this.headingValue = this.compassFaceplate.newDegreeIndicator = changes.compassHeading.currentValue.toFixed(0);
-        this.smoothCircularRotation(this.compassFaceplate);
+        if (this.compassFaceplate.animationElement) {
+          this.smoothCircularRotation(this.compassFaceplate);
+        }
       }
     }
 
@@ -142,10 +149,10 @@ export class SvgAutopilotComponent implements AfterViewInit {
           this.newRudderPrtAngle = Math.round(changes.rudderAngle.currentValue * 7.16); //pixel to angle ratio for rudder box
         }
 
-        if (this.rudderPrtAnimate) { // only update if on dom...
+        if (this.rudderPrtAnimate?.nativeElement?.isConnected) { // only update if on dom...
           this.rudderPrtAnimate.nativeElement.beginElement();
-        }
-        if (this.rudderStbAnimate) { // only update if on dom...
+      }
+        if (this.rudderStbAnimate?.nativeElement?.isConnected) { // only update if on dom...
           this.rudderStbAnimate.nativeElement.beginElement();
         }
       }
@@ -153,44 +160,47 @@ export class SvgAutopilotComponent implements AfterViewInit {
   }
 
   private smoothCircularRotation(rotationElement: ISVGRotationObject): void {
+    if (!rotationElement.animationElement) return;
+
     const oldAngle = Number(rotationElement.oldDegreeIndicator)
     const newAngle = Number(rotationElement.newDegreeIndicator);
     const diff = oldAngle - newAngle;
-    // only update if on DOM and value rounded changed
-    if (rotationElement.animationElement && (diff != 0)) {
-      // Special cases to smooth out passing between 359 to/from 0
-      // if more than half the circle, it could need to go over the 359 to 0 without doing full full circle
-      if ( Math.abs(diff) > 180 ) {
-        // In what direction are we moving?
-        if (Math.sign(diff) == 1) {
-          if (oldAngle == 359) {
-            // special cases
-            rotationElement.oldDegreeIndicator = "0";
-            rotationElement.animationElement.nativeElement.beginElement();
-          } else {
-            rotationElement.newDegreeIndicator = "359";
-            rotationElement.animationElement.nativeElement.beginElement();
-            rotationElement.oldDegreeIndicator = "0";
-            rotationElement.newDegreeIndicator = newAngle.toFixed(0);
-            rotationElement.animationElement.nativeElement.beginElement();
-          }
+
+    if (diff === 0) return;
+
+    // Special cases to smooth out passing between 359 to/from 0
+    // if more than half the circle, it could need to go over the 359 to 0 without doing full full circle
+    if ( Math.abs(diff) > 180 ) {
+      // In what direction are we moving?
+      if (Math.sign(diff) == 1) {
+        if (oldAngle == 359) {
+          // special cases
+          rotationElement.oldDegreeIndicator = "0";
+          rotationElement.animationElement.nativeElement.beginElement();
         } else {
-          if (oldAngle == 0) {
-            // special cases
-            rotationElement.oldDegreeIndicator = "359";
-            rotationElement.animationElement.nativeElement.beginElement();
-          } else {
-            rotationElement.newDegreeIndicator = "0";
-            rotationElement.animationElement.nativeElement.beginElement();
-            rotationElement.oldDegreeIndicator = "359";
-            rotationElement.newDegreeIndicator = newAngle.toFixed(0);
-            rotationElement.animationElement.nativeElement.beginElement();
-          }
+          rotationElement.newDegreeIndicator = "359";
+          rotationElement.animationElement.nativeElement.beginElement();
+          rotationElement.oldDegreeIndicator = "0";
+          rotationElement.newDegreeIndicator = newAngle.toFixed(0);
+          rotationElement.animationElement.nativeElement.beginElement();
         }
       } else {
-        rotationElement.animationElement.nativeElement.beginElement();
+        if (oldAngle == 0) {
+          // special cases
+          rotationElement.oldDegreeIndicator = "359";
+          rotationElement.animationElement.nativeElement.beginElement();
+        } else {
+          rotationElement.newDegreeIndicator = "0";
+          rotationElement.animationElement.nativeElement.beginElement();
+          rotationElement.oldDegreeIndicator = "359";
+          rotationElement.newDegreeIndicator = newAngle.toFixed(0);
+          rotationElement.animationElement.nativeElement.beginElement();
+        }
       }
+    } else {
+      rotationElement.animationElement.nativeElement.beginElement();
     }
   }
+
 
 }
