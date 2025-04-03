@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Component, DoCheck, EventEmitter, OnInit, Output, input } from '@angular/core';
+import { Component, DoCheck, OnInit, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 
@@ -17,7 +17,7 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
   readonly dimensions = input.required<IDimensions>();
-  @Output() toggleClick = new EventEmitter<IDynamicControl>();
+  readonly toggleClick = output<IDynamicControl>();
 
   private toggleOff: string = "0 35 180 35";
   private toggleOn: string = "0 0 180 35";

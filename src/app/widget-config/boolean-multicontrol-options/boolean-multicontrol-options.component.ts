@@ -1,10 +1,10 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, ReactiveFormsModule, FormGroup, UntypedFormGroup, AbstractControl } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { UUID } from '../../core/utils/uuid';
-import { MatMiniFabButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { BooleanControlConfigComponent, IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,15 +19,15 @@ import { MatIconModule } from '@angular/material/icon';
         FormsModule,
         ReactiveFormsModule,
         BooleanControlConfigComponent,
-        MatMiniFabButton,
+        MatButtonModule,
         MatIconModule
     ],
 })
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   readonly multiCtrlArray = input.required<UntypedFormArray>();
-  @Output() private addPath = new EventEmitter<IWidgetPath>();
-  @Output() private updatePath = new EventEmitter<IDynamicControl[]>();
-  @Output() private delPath = new EventEmitter<IDeleteEventObj>();
+  public readonly addPath = output<IWidgetPath>();
+  public readonly updatePath = output<IDynamicControl[]>();
+  public readonly delPath = output<IDeleteEventObj>();
 
   public multiFormGroup: UntypedFormGroup = null;
   public arrayLength: number = null;

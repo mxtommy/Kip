@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, input } from '@angular/core';
+import { Component, OnInit, input, output } from '@angular/core';
 import { AppService } from './../../core/services/app-service';
 import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -25,9 +25,9 @@ export class BooleanControlConfigComponent implements OnInit {
   readonly ctrlFormGroup = input.required<UntypedFormGroup>();
   readonly controlIndex = input<number>(undefined);
   readonly arrayLength = input<number>(undefined);
-  @Output() private deleteCtrl = new EventEmitter<IDeleteEventObj>();
-  @Output() private moveUp = new EventEmitter<number>();
-  @Output() private moveDown = new EventEmitter<number>();
+  public readonly deleteCtrl = output<IDeleteEventObj>();
+  public readonly moveUp = output<number>();
+  public readonly moveDown = output<number>();
   protected colors = [];
 
   constructor(private app: AppService) { }
