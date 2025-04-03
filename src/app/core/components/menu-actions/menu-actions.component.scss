@@ -24,9 +24,10 @@
   position: absolute;
   top: 48px;
   width: 135px;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  // -webkit-overflow-scrolling: touch;
   height: calc(100% - 96px);
 }
 
