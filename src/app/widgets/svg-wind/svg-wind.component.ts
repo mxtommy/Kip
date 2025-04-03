@@ -1,4 +1,4 @@
-import { Component, ViewChild, SimpleChanges, AfterViewInit, ElementRef, input } from '@angular/core';
+import { Component, SimpleChanges, AfterViewInit, ElementRef, input, viewChild } from '@angular/core';
 import { NgIf } from '@angular/common';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
@@ -17,13 +17,13 @@ interface ISVGRotationObject {
     imports: [NgIf]
 })
 export class SvgWindComponent implements AfterViewInit {
-  @ViewChild('compassAnimate', { static: true, read: ElementRef }) compassAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('appWindAnimate', { static: true, read: ElementRef }) appWindAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('trueWindAnimate', { static: true, read: ElementRef }) trueWindAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('appWindValueAnimate', { static: true, read: ElementRef }) appWindValueAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('trueWindValueAnimate', { static: true, read: ElementRef }) trueWindValueAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('waypointAnimate', { static: true, read: ElementRef }) waypointAnimate!: ElementRef<SVGAnimateTransformElement>;
-  @ViewChild('courseOverGroundAnimate', { static: true, read: ElementRef }) courseOverGroundAnimate!: ElementRef<SVGAnimateTransformElement>;
+  readonly compassAnimate = viewChild.required('compassAnimate', { read: ElementRef });
+  readonly appWindAnimate = viewChild.required('appWindAnimate', { read: ElementRef });
+  readonly trueWindAnimate = viewChild.required('trueWindAnimate', { read: ElementRef });
+  readonly appWindValueAnimate = viewChild.required('appWindValueAnimate', { read: ElementRef });
+  readonly trueWindValueAnimate = viewChild.required('trueWindValueAnimate', { read: ElementRef });
+  readonly waypointAnimate = viewChild.required('waypointAnimate', { read: ElementRef });
+  readonly courseOverGroundAnimate = viewChild.required('courseOverGroundAnimate', { read: ElementRef });
 
   readonly compassHeading = input<number>(undefined);
   readonly courseOverGroundAngle = input<number>(undefined);
@@ -118,13 +118,13 @@ export class SvgWindComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.compassFaceplate.animationElement = this.compassAnimate;
-    this.appWind.animationElement = this.appWindAnimate;
-    this.appWindValue.animationElement = this.appWindValueAnimate;
-    this.trueWind.animationElement = this.trueWindAnimate;
-    this.trueWindValue.animationElement = this.trueWindValueAnimate;
-    this.waypoint.animationElement = this.waypointAnimate;
-    this.courseOverGround.animationElement = this.courseOverGroundAnimate;
+    this.compassFaceplate.animationElement = this.compassAnimate();
+    this.appWind.animationElement = this.appWindAnimate();
+    this.appWindValue.animationElement = this.appWindValueAnimate();
+    this.trueWind.animationElement = this.trueWindAnimate();
+    this.trueWindValue.animationElement = this.trueWindValueAnimate();
+    this.waypoint.animationElement = this.waypointAnimate();
+    this.courseOverGround.animationElement = this.courseOverGroundAnimate();
   }
 
   ngOnChanges(changes: SimpleChanges) {

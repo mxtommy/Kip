@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy,ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -18,8 +18,8 @@ import { MatButton } from '@angular/material/button';
     imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton, NgIf ]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  @ViewChild('canvasEl', {static: true, read: ElementRef}) canvasEl: ElementRef;
-  @ViewChild('canvasBG', {static: true, read: ElementRef}) canvasBG: ElementRef;
+  readonly canvasEl = viewChild('canvasEl', { read: ElementRef });
+  readonly canvasBG = viewChild('canvasBG', { read: ElementRef });
 
   dataValue: number = null;
   zoneState: string = null;
@@ -55,8 +55,8 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   protected startWidget(): void {
     this.getColors(this.widgetProperties.config.color);
-    this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
+    this.canvasBGCtx = this.canvasBG().nativeElement.getContext('2d');
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -69,11 +69,13 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   onResized(event: ResizeObserverEntry) {
     if (event.contentRect.height < 50) { return; }
     if (event.contentRect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
-      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
-      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
+    const canvasEl = this.canvasEl();
+    if ((canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
+      canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
+      canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
+      const canvasBG = this.canvasBG();
+      canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
+      canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
       this.currentValueLength = 0; //will force resetting the font size
       this.updateCanvas();
       this.updateCanvasBG();
@@ -229,21 +231,21 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   updateCanvas() {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvasCtx.clearRect(0,0,this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
       this.drawValue();
     }
   }
 
   updateCanvasBG() {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvasBGCtx.clearRect(0,0,this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
 
     }
   }
 
   drawValue() {
-    let maxTextWidth = Math.floor(this.canvasEl.nativeElement.width - (this.canvasEl.nativeElement.width * 0.15));
-    let maxTextHeight = Math.floor(this.canvasEl.nativeElement.height - (this.canvasEl.nativeElement.height * 0.2));
+    let maxTextWidth = Math.floor(this.canvasEl().nativeElement.width - (this.canvasEl().nativeElement.width * 0.15));
+    let maxTextHeight = Math.floor(this.canvasEl().nativeElement.height - (this.canvasEl().nativeElement.height * 0.2));
     let valueText: string;
 
     if (this.dataValue != null) {
@@ -290,6 +292,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
 
     // get color based on zone
+    const canvasEl = this.canvasEl();
     switch (this.zoneState) {
       case States.Alarm:
 
@@ -298,7 +301,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         } else {
           // draw background
           this.canvasCtx.fillStyle = this.warnColor;
-          this.canvasCtx.fillRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+          this.canvasCtx.fillRect(0,0,canvasEl.nativeElement.width, canvasEl.nativeElement.height);
           // text color
           this.canvasCtx.fillStyle = this.textColor;
         }
@@ -315,6 +318,6 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     this.canvasCtx.font = "bold " + this.valueFontSize.toString() + "px Roboto";
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline="middle";
-    this.canvasCtx.fillText(valueText,this.canvasEl.nativeElement.width/2,(this.canvasEl.nativeElement.height * 0.45)+(this.valueFontSize/15), maxTextWidth);
+    this.canvasCtx.fillText(valueText,canvasEl.nativeElement.width/2,(canvasEl.nativeElement.height * 0.45)+(this.valueFontSize/15), maxTextWidth);
   }
 }

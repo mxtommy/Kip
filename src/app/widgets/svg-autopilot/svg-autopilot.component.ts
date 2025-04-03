@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, SimpleChanges, AfterViewInit, OnDestroy, input } from '@angular/core';
+import { Component, Input, ElementRef, SimpleChanges, AfterViewInit, OnDestroy, input, viewChild } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { NgIf } from '@angular/common';
 
@@ -23,12 +23,12 @@ interface ISVGRotationObject {
   imports: [NgIf]
 })
 export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('apStencil', { static: true }) ApStencil!: ElementRef;
-  @ViewChild('countDown', { static: true }) countDown!: ElementRef;
-  @ViewChild('compassAnimate', { static: true }) compassAnimate!: ElementRef;
-  @ViewChild('appWindAnimate', { static: true }) appWindAnimate!: ElementRef;
-  @ViewChild('rudderPrtAnimate', { static: true }) rudderPrtAnimate!: ElementRef;
-  @ViewChild('rudderStbAnimate', { static: true }) rudderStbAnimate!: ElementRef;
+  readonly ApStencil = viewChild.required<ElementRef>('apStencil');
+  readonly countDown = viewChild.required<ElementRef>('countDown');
+  readonly compassAnimate = viewChild.required<ElementRef>('compassAnimate');
+  readonly appWindAnimate = viewChild.required<ElementRef>('appWindAnimate');
+  readonly rudderPrtAnimate = viewChild.required<ElementRef>('rudderPrtAnimate');
+  readonly rudderStbAnimate = viewChild.required<ElementRef>('rudderStbAnimate');
 
   readonly compassHeading = input.required<number>();
   readonly appWindAngle = input.required<number>();
@@ -56,8 +56,8 @@ export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
   messageInnerText: string = "";
 
   ngAfterViewInit(): void {
-    this.compassFaceplate.animationElement = this.compassAnimate;
-    this.appWind.animationElement = this.appWindAnimate;
+    this.compassFaceplate.animationElement = this.compassAnimate();
+    this.appWind.animationElement = this.appWindAnimate();
   }
 
   ngOnDestroy(): void {
@@ -108,8 +108,8 @@ export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
   }
 
   private animateRudder(): void {
-    this.rudderPrtAnimate?.nativeElement?.beginElement();
-    this.rudderStbAnimate?.nativeElement?.beginElement();
+    this.rudderPrtAnimate()?.nativeElement?.beginElement();
+    this.rudderStbAnimate()?.nativeElement?.beginElement();
   }
 
   private smoothCircularRotation(rotationElement: ISVGRotationObject): void {

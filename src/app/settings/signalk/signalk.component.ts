@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -46,7 +46,7 @@ import 'chartjs-adapter-date-fns';
 
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  @ViewChild('lineGraph', {static: true}) lineGraph: ElementRef<HTMLCanvasElement>;
+  readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
 
   connectionConfig: IConnectionConfig;
 
@@ -132,7 +132,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   }
 
    ngAfterViewInit(): void {
-    this.textColor = window.getComputedStyle(this.lineGraph.nativeElement).color;
+    this.textColor = window.getComputedStyle(this.lineGraph().nativeElement).color;
     this._chart?.destroy();
     this.startChart();
    }
@@ -220,7 +220,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   private startChart() {
-    this._chart = new Chart(this.lineGraph.nativeElement.getContext('2d'),{
+    this._chart = new Chart(this.lineGraph().nativeElement.getContext('2d'),{
       type: 'line',
       data: {
           datasets: [

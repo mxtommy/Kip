@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { Component, ViewChild, OnInit, OnDestroy, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -35,7 +35,7 @@ interface IDataSetRow {
   styleUrl: './widget-data-chart.component.scss'
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('widgetDataChart', {static: true, read: ElementRef}) widgetDataChart: ElementRef;
+  readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
 
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
@@ -111,7 +111,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
       this.chart?.destroy();
       Chart.register(annotationPlugin, ChartStreaming);
-      this.chart = new Chart(this.widgetDataChart.nativeElement.getContext('2d'), {
+      this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
         type: this.lineChartType,
         data: this.lineChartData,
         options: this.lineChartOptions
