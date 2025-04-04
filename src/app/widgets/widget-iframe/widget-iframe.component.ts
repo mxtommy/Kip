@@ -5,6 +5,8 @@ import { SafePipe } from '../../core/pipes/safe.pipe';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { AppService } from '../../core/services/app-service';
 
 @Component({
     selector: 'widget-iframe',
@@ -16,7 +18,9 @@ import { AppSettingsService } from '../../core/services/app-settings.service';
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   protected _dashboard = inject(DashboardService);
   private _appSettings = inject(AppSettingsService);
-  protected widgetUrl: string = null;
+  private _sanitizer = inject(DomSanitizer);
+  private _app = inject(AppService);
+  protected widgetUrl: SafeResourceUrl | null = null;
   protected iframe = viewChild<ElementRef<HTMLIFrameElement>>('plainIframe');
   private _widgetHost = viewChild(WidgetHostComponent);
 
@@ -29,8 +33,8 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngOnInit() {
-    this.validateConfig();
-    this.widgetUrl = this.widgetProperties.config.widgetUrl;
+    this.validateConfig();;
+    this.validateUrlAccess(this.widgetProperties?.config?.widgetUrl);
     window.addEventListener('message', this.handleIframeGesture);
   }
 
@@ -44,7 +48,41 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetUrl = this.widgetProperties.config.widgetUrl = config.widgetUrl;
+    this.validateUrlAccess(this.widgetProperties.config.widgetUrl = config.widgetUrl);
+  }
+
+  private validateUrlAccess(url: string | null): void {
+    if (this.isValidUrl(url)) {
+      this.checkUrlAccessibility(url).then((accessible) => {
+        if (accessible) {
+          this.widgetUrl = this._sanitizer.bypassSecurityTrustResourceUrl(url);
+        } else {
+          this._app.sendSnackbarNotification("Error: The URL cannot be accessed. Make sure the URL is both valid and points to the same server as KIP.");
+          this.widgetUrl = null;
+        }
+      });
+    } else {
+      this._app.sendSnackbarNotification("Error: Invalid URL. Please check the URL format.");
+      this.widgetUrl = null;
+    }
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private async checkUrlAccessibility(url: string): Promise<boolean> {
+    try {
+      const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
   }
 
   protected handleIframeGesture = (event: any) => {
