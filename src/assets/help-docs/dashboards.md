@@ -1,5 +1,5 @@
-# Managing Dashboard
-You can organize your dashboards from the Dashboard page. To edit a dashboard layout, visualize the dashboard and unlock it.
+# Managing Dashboards
+You can organize your dashboards from the Dashboards page. To edit a dashboard layout, first visualize the dashboard and unlock it.
 
 ## Dashboard Pages
 On the Dashboards page, you can add, reorder, delete, rename, and duplicate dashboards. The dashboard name is briefly visible when you cycle through dashboards. Available actions include:
