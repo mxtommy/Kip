@@ -9,7 +9,7 @@ On the Dashboards page, you can add, reorder, delete, rename, and duplicate dash
 - Use the **(+)** button to add a new dashboard.
 
 ## Editing Layout
-To edit a dashboard's widgets and arrangement, you need to unlock its layout. View the desired dashboard, access the **Actions menu** on the right-hand side, and tap the bottom **unlock** button. The widgets will become surrounded by dashed borders, indicating you are in edit mode. Actions you can perform while editing a layout include:
+To edit a dashboard's widgets and arrangement, you need to unlock its layout. View the desired dashboard, access the **Actions menu** on the right-hand side, and tap the bottom **unlock button**. The widgets will become surrounded by dashed borders, indicating you are in edit mode. Actions you can perform while editing a layout include:
 - **Long press** an empty area of the dashboard to add a widget (you may need to free up space first).
 - **Double tap** a widget to edit its configuration.
 - **Touch and drag** a widget to reposition it.
