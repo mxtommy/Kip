@@ -15,7 +15,7 @@ To edit a dashboard's widgets and arrangement, you need to unlock its layout. Vi
 - **Touch and drag** a widget to reposition it.
 - **Touch and drag** the edges of a widget to resize it.
 - **Long press** a widget to delete or duplicate it.
-- Tap the **Check button** to save changes or the **X button** to discard changes.
+- Use the lower right **Check button** to save changes or the **X button** to discard layout changes.
 
 ## Widget Gallery
 KIP's widgets are versatile visual presentation controls with advanced configuration options to suit your needs. Below is a list of available widgets:
