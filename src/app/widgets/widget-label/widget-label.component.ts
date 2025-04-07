@@ -16,6 +16,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   private wrapper = viewChild<ElementRef<HTMLDivElement>>('wrapper');
   private canvasCtx = CanvasRenderingContext2D = null;
   private readonly fontString = "'Roboto'";
+  private isDestroyed = false; // guard against callbacks after destroyed
 
   constructor() {
     super();
@@ -38,11 +39,13 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     this.canvasEl().nativeElement.width = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().width);
     this.canvasEl().nativeElement.height = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().height);
     document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
       this.updateCanvas();
     });
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
     this.canvasCtx.clearRect(0, 0, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
     this.canvasEl().nativeElement.remove();
   }

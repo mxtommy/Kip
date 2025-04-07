@@ -29,6 +29,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private valueFontSize: number = 1;
   private minMaxFontSize: number = 1;
   private flashInterval = null;
+  private isDestroyed = false; // gard against callbacks after destroyed
 
   private readonly fontString = "'Roboto'";
   protected canvasValCtx: CanvasRenderingContext2D;
@@ -75,6 +76,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
       this.startWidget();
       this.updateCanvasBG();
     });
@@ -123,6 +125,10 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   }
 
   protected onResized(event: ResizeObserverEntry) {
+    if (!this.canvasEl || !this.canvasMM || !this.canvasBG) {
+      console.error('[Widget Canvas] Canvas elements are not initialized.');
+      return;
+    }
     if (event.contentRect.height < 50) { return; }
     if (event.contentRect.width < 50) { return; }
     if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
@@ -182,6 +188,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     this.destroyDataStreams();
     if (this.flashInterval) {
       clearInterval(this.flashInterval);

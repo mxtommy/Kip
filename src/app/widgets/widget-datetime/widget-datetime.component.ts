@@ -20,6 +20,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   private _timeZoneGTM: string = "";
   private _valueFontSize = 1;
   private readonly _fontString = "Roboto";
+  private isDestroyed = false; // guard against callbacks after destroyed
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentValueLength = 0;
@@ -62,6 +63,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
       this.getColors(this.widgetProperties.config.color);
       this.startWidget();
     });
@@ -85,6 +87,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     this.destroyDataStreams();
     this.canvasCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
     this.canvasBGCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);

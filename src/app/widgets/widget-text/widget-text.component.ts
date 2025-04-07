@@ -25,6 +25,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   canvasBGCtx: CanvasRenderingContext2D;
   labelColor: string = undefined;
   valueColor: string = undefined;
+  private isDestroyed = false; // guard against callbacks after destroyed
 
   constructor() {
     super();
@@ -56,6 +57,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
       this.getColors(this.widgetProperties.config.color);
       this.startWidget();
     });
@@ -78,6 +80,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     this.destroyDataStreams();
     this.canvasCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
     this.canvasBGCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);

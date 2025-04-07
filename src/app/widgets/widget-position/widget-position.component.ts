@@ -24,6 +24,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   private canvasValCtx: CanvasRenderingContext2D;
   private canvasBGCtx: CanvasRenderingContext2D;
   private readonly fontString = 'Roboto';
+  private isDestroyed = false; // gard against callbacks after destroyed
 
   constructor() {
     super();
@@ -68,6 +69,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
       this.getColors(this.widgetProperties.config.color);
       this.startWidget();
       this.updateCanvasBG();
@@ -89,6 +91,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     this.unsubscribeDataStream();
     this.canvasValCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
     this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
