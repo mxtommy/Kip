@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -22,7 +22,7 @@ import { NgFor, NgIf } from '@angular/common';
     standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
-export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
 
@@ -36,6 +36,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private currentValueLength = 0;
   private canvasLabelCtx: CanvasRenderingContext2D;
   private labelColor: string = undefined;
+  private isDestroyed: boolean = false;
 
   private nbCtrl: number = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0};
@@ -58,11 +59,18 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   ngOnInit(): void {
     this.validateConfig();
-    this.startWidget();
+
+  }
+
+  ngAfterViewInit(): void {
+    this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
+    document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
+      this.startWidget();
+    });
   }
 
   protected startWidget(): void {
-    this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.color);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
     this.resizeWidget();
@@ -221,6 +229,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
     this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
     // Clear canvas context
