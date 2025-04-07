@@ -5,7 +5,7 @@
 .canvas-size {
     position: absolute;
     width: 100%;
-    height: 100%;
+    height: 50%;
     top: 0;
     left: 0;
     z-index: inherit;
@@ -13,7 +13,7 @@
 
 .button-color-red {
   --mdc-filled-button-container-color: var(--kip-port-color);
-  --mdc-filled-button-label-text-color: var(--kip-white-color);
+  --mdc-filled-button-label-text-color: var(--kip-contrast-color);
 }
 
 .timerBarContainer {

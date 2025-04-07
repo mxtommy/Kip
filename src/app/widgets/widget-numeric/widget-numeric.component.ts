@@ -67,6 +67,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
   ngOnInit(): void {
     this.validateConfig();
+    this.getColors(this.widgetProperties.config.color);
   }
 
   ngAfterViewInit(): void {

@@ -17,7 +17,7 @@ import { StorageService } from './storage.service';
 import { IAuthorizationToken } from './authentication.service';
 import { Dashboard } from './dashboard.service';
 
-const defaultTheme = 'modern-dark';
+const defaultTheme = '';
 const configFileVersion: number = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const configVersion: number = 11; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
 
@@ -351,19 +351,16 @@ public loadConfigFromLocalStorage(type: string) {
 
   public setThemeName(newTheme: string) {
     this.themeName.next(newTheme);
-    if (newTheme != "nightMode") { // don't save NightMode, only temporary
-      if (this.useSharedConfig) {
-        let theme: IThemeConfig = {
-          themeName: newTheme
-        }
-        this.storage.patchConfig('IThemeConfig', theme)
-      } else {
-        this.saveThemeConfigToLocalStorage();
+    if (this.useSharedConfig) {
+      let theme: IThemeConfig = {
+        themeName: newTheme
       }
+      this.storage.patchConfig('IThemeConfig', theme)
+    } else {
+      this.saveThemeConfigToLocalStorage();
     }
   }
 
-  // TODO: Do we still need this?
   public getThemeName(): string {
     return this.themeName.getValue();;
   }
@@ -568,7 +565,7 @@ public loadConfigFromLocalStorage(type: string) {
     localStorage.setItem('dashboardsConfig', JSON.stringify(dashboards));
   }
 
-  private saveThemeConfigToLocalStorage() {
+  private  saveThemeConfigToLocalStorage() {
     console.log("[AppSettings Service] Saving Theme config to LocalStorage");
     localStorage.setItem('themeConfig', JSON.stringify(this.buildThemeStorageObject()));
   }

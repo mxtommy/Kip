@@ -1,8 +1,9 @@
-import { inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const modePath: string = 'self.environment.mode';
 
@@ -84,11 +85,23 @@ export class AppService implements OnDestroy {
   private _settings = inject(AppSettingsService);
   private _delta = inject(SignalKDeltaService);
   private _data = inject(DataService);
+  private _destroyRef = inject(DestroyRef);
 
   constructor() {
     this.autoNightModeObserver();
     this.readThemeCssRoleVariables();
     this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
+
+    this._settings.getThemeNameAsO().pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(themeName => {
+        if (themeName === 'light-theme')
+          document.body.classList.toggle('light-theme', themeName === 'light-theme');
+        else {
+          // Remove the light theme class if it exists
+          document.body.classList.remove('light-theme');
+        }
+        this.readThemeCssRoleVariables();
+      });
   }
 
   /**
@@ -117,7 +130,7 @@ export class AppService implements OnDestroy {
   }
 
   private readThemeCssRoleVariables(): void {
-    const root = document.documentElement;
+    const root = document.body;
     const computedStyle = getComputedStyle(root);
     const cssThemeRolesColor: ITheme = {
       background: computedStyle.getPropertyValue('--mat-sys-background').trim(),
@@ -140,9 +153,9 @@ export class AppService implements OnDestroy {
       purple: computedStyle.getPropertyValue('--kip-purple-color').trim(),
       purpleDim: computedStyle.getPropertyValue('--kip-purple-dim-color').trim(),
       purpleDimmer: computedStyle.getPropertyValue('--kip-purple-dimmer-color').trim(),
-      white: computedStyle.getPropertyValue('--kip-white-color').trim(),
-      whiteDim: computedStyle.getPropertyValue('--kip-white-dim-color').trim(),
-      whiteDimmer: computedStyle.getPropertyValue('--kip-white-dimmer-color').trim(),
+      white: computedStyle.getPropertyValue('--kip-contrast-color').trim(),
+      whiteDim: computedStyle.getPropertyValue('--kip-contrast-dim-color').trim(),
+      whiteDimmer: computedStyle.getPropertyValue('--kip-contrast-dimmer-color').trim(),
       yellow: computedStyle.getPropertyValue('--kip-yellow-color').trim(),
       yellowDim: computedStyle.getPropertyValue('--kip-yellow-dim-color').trim(),
       yellowDimmer: computedStyle.getPropertyValue('--kip-yellow-dimmer-color').trim(),

@@ -145,7 +145,7 @@ $kip-dark-color: (
   yellow: #ffdf00, yellow-dim: #ffdf00b6, yellow-dimmer: #726e0078,
   pink: #FC0FC0, pink-dim: #FC0FC0b6, pink-dimmer: #6d075378,
   orange: #ff9100, orange-dim: #ff9100b6, orange-dimmer: #714a0078,
-  white: #FFFFFF, white-dim: #ffffffb6, white-dimmer: #ffffff29,
+  contrast: #FFFFFF, contrast-dim: #ffffffb6, contrast-dimmer: #ffffff29,
   grey: #B5B5B5, grey-dim: #B5B5B5b6, grey-dimmer: #1a1a1a,
   port: #8F0000,
   starboard: #008700,
@@ -193,9 +193,9 @@ $orange: map.get($kip-dark-color, orange);
 $orangeDim: map.get($kip-dark-color, orange-dim);
 $orangeDimmer: map.get($kip-dark-color, orange-dimmer);
 
-$white: map.get($kip-dark-color, white);
-$whiteDim: map.get($kip-dark-color, white-dim);
-$whiteDimmer: map.get($kip-dark-color, white-dimmer);
+$contrast: map.get($kip-dark-color, contrast);
+$contrastDim: map.get($kip-dark-color, contrast-dim);
+$contrastDimmer: map.get($kip-dark-color, contrast-dimmer);
 
 $grey: map.get($kip-dark-color, grey);
 $greyDim: map.get($kip-dark-color, grey-dim);
