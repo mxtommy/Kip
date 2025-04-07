@@ -17,10 +17,9 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
 
   protected dataValue: any = null;
-  private dataTimestamp: number = Date.now();
-  private timeZoneGTM: string = "";
-  valueFontSize = 1;
-  private readonly fontString = "Roboto";
+  private _timeZoneGTM: string = "";
+  private _valueFontSize = 1;
+  private readonly _fontString = "Roboto";
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   currentValueLength = 0;
@@ -56,6 +55,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
   ngOnInit() {
     this.validateConfig();
+    this.getColors(this.widgetProperties.config.color);
   }
 
   ngAfterViewInit(): void {
@@ -68,7 +68,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   }
 
   protected startWidget(): void {
-    this.timeZoneGTM = this.getGMTOffset(this.widgetProperties.config.dateTimezone);
+    this._timeZoneGTM = this.getGMTOffset(this.widgetProperties.config.dateTimezone);
     this.getColors(this.widgetProperties.config.color);
     this.unsubscribeDataStream();
     this.observeDataStream('gaugePath', newValue => {
@@ -192,7 +192,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
       valueText = '--';
     } else {
       try {
-        valueText = formatDate(this.dataValue, this.widgetProperties.config.dateFormat, 'en-US', this.timeZoneGTM);
+        valueText = formatDate(this.dataValue, this.widgetProperties.config.dateFormat, 'en-US', this._timeZoneGTM);
       } catch (error) {
         valueText = error;
         console.log("[Date Time Widget]: " + error);
@@ -203,17 +203,17 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     // Check if length of string has changed since last time.
     if (this.currentValueLength !== valueText.length) {
         this.currentValueLength = valueText.length;
-        this.valueFontSize = this.calculateFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasCtx);
+        this._valueFontSize = this.calculateFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasCtx);
     }
 
-    this.canvasCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
+    this.canvasCtx.font = `bold ${this._valueFontSize}px ${this._fontString}`;
     this.canvasCtx.textAlign = 'center';
     this.canvasCtx.textBaseline = 'middle';
     this.canvasCtx.fillStyle = this.valueColor;
     this.canvasCtx.fillText(
       valueText,
       this.canvasEl.nativeElement.width / 2,
-      (this.canvasEl.nativeElement.height / 2) + (this.valueFontSize / 15),
+      (this.canvasEl.nativeElement.height / 2) + (this._valueFontSize / 15),
       maxTextWidth
     );
   }
@@ -225,7 +225,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
     while (minFontSize <= maxFontSize) {
         fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `bold ${fontSize}px ${this.fontString}`;
+        ctx.font = `bold ${fontSize}px ${this._fontString}`;
         const measure = ctx.measureText(text).width;
 
         if (measure > maxWidth) {
@@ -244,7 +244,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
     const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
     const fontSize = this.calculateFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
-    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
+    this.canvasBGCtx.font = `normal ${fontSize}px ${this._fontString}`;
     this.canvasBGCtx.textAlign = 'left';
     this.canvasBGCtx.textBaseline = 'top';
     this.canvasBGCtx.fillStyle = this.labelColor;

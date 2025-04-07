@@ -7,8 +7,8 @@ svg {
 }
 
 .compass-inner-ring {
-  stroke: var(--kip-white-color);
-  fill: var(--kip-white-color);
+  stroke: var(--kip-contrast-color);
+  fill: var(--kip-contrast-color);
 }
 .starboard  {
   stop-color: var(--kip-starboard-color);
@@ -25,11 +25,11 @@ svg {
 
 .heading-background {
   stroke: var(--mat-sys-background);
-  fill: var(--kip-white-color);
+  fill: var(--kip-contrast-color);
 }
 
 .boatBackground {
-  stop-color: var(--kip-white-color) !important;
+  stop-color: var(--kip-contrast-color) !important;
 }
 
 .true-wind {
@@ -49,7 +49,7 @@ svg {
 }
 
 .laylines {
-  stroke:  var(--kip-white-color);
+  stroke:  var(--kip-contrast-color);
 }
 
 .wind-sector-port {

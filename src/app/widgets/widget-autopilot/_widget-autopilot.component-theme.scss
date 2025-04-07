@@ -31,8 +31,8 @@
   }
 
   .compass-inner-ring {
-    stroke: var(--kip-white-color);
-    fill: var(--kip-white-color);
+    stroke: var(--kip-contrast-color);
+    fill: var(--kip-contrast-color);
   }
 
   .compass-outer-ring {
@@ -65,7 +65,7 @@
   }
 
   .apText {
-    fill: var(--kip-white-color);
+    fill: var(--kip-contrast-color);
   }
 
   .powerBtn {
@@ -73,7 +73,7 @@
 
   .button-color-red {
     --mdc-filled-button-container-color: var(--kip-port-color);
-    --mdc-filled-button-label-text-color: var(--kip-white-color);
+    --mdc-filled-button-label-text-color: var(--kip-contrast-color);
   }
 }
 

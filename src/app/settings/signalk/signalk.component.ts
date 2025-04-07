@@ -79,9 +79,6 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   _chart: Chart = null;
   textColor; // store the color of text for the graph...
 
-  // dynamics theme support
-  themeNameSub: Subscription = null;
-
   ngOnInit() {
     // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old
     if (this.auth.isLoggedIn$) {

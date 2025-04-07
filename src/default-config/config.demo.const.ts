@@ -657,7 +657,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
 ]
 
 export const DemoThemeConfig: IThemeConfig = {
-  "themeName": "modern-dark"
+  "themeName": ""
 }
 
 export const DemoConfig: IConfig = {

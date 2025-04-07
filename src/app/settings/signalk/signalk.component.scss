@@ -1,5 +1,5 @@
 .server-status {
-  background-color: var(--kip-white-dimmer-color);
+  background-color: var(--kip-contrast-dimmer-color);
   margin-top: 20px;
   margin: 1% 5% 0% 5%;
   padding: 10px 20px 20px 20px;
@@ -12,7 +12,7 @@
   height: 150px;
   width: 100%;
   border: 2px inset;
-  border-color: var(--kip-white-color)
+  border-color: var(--kip-contrast-color)
 }
 
 .connect-btn {

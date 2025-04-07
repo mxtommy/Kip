@@ -11,7 +11,17 @@
   cursor: default;
   text-align: center;
   padding: 10px;
-  color: var(--mat-sys-tertiary);
+  color: var(--mat-sys-inverse-surface);
+}
+
+.dashboard-label {
+  color: var(--mat-sys-on-surface);
+  text-shadow:
+    1px 1px 0 var(--mat-sys-outline),
+    -1px 1px 0 var(--mat-sys-outline),
+    -1px -1px 0 var(--mat-sys-outline),
+    1px -1px 0 var(--mat-sys-outline);
+  font-size: x-large;
 }
 
 .page-scroll-page-number {
@@ -27,11 +37,15 @@
 
 .page-scroll-container {
   opacity: 0;
-  background-color: var(--mat-sys-inverse-on-surface);
+  background-color: var(--mat-sys-tertiary-fixed-dim);
   border-radius: 10px;
-  border: 1px solid var(--mat-sys-inverse-on-surface);
+  border: 1px solid var(--mat-sys-inverse-surface);
 }
 
 .page-icon {
-  transform: scale(0.75);
+  height: 20px;
+  width: 20px;
+  margin: 4px;
+  border-radius: 50%;
+  border: 1px solid var(--mat-sys-outline);
 }

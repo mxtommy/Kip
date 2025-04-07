@@ -1,6 +1,5 @@
 import { Component, input } from '@angular/core';
 import { Dashboard } from './../../services/dashboard.service';
-import { MatIcon } from '@angular/material/icon';
 import { trigger, style, animate, transition } from '@angular/animations';
 
 
@@ -13,7 +12,7 @@ interface DashboardPage {
 @Component({
   selector: 'dashboard-scroller',
   standalone: true,
-  imports: [ MatIcon],
+  imports: [],
   templateUrl: './dashboard-scroller.component.html',
   styleUrl: './dashboard-scroller.component.scss',
   animations: [

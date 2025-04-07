@@ -1,0 +1,79 @@
+// Material 3 styles file.
+// Proceed with caution if making changes to this file.
+
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+$_widget-card-background-color: #ffffff;
+$_background: #e1e4ec;
+
+$kip-light-color: (
+  blue: #005bb5, blue-dim: #005bb5b6, blue-dimmer: #005bb578,
+  green: #007a00, green-dim: #007a00b6, green-dimmer: #007a0078,
+  purple: #6a00a8, purple-dim: #6a00a8b6, purple-dimmer: #6a00a878,
+  yellow: #bfa800, yellow-dim: #bfa800b6, yellow-dimmer: #bfa80078,
+  pink: #b00070, pink-dim: #b00070b6, pink-dimmer: #b0007078,
+  orange: #c56200, orange-dim: #c56200b6, orange-dimmer: #c5620078,
+  contrast: #000000, contrast-dim: #000000b6, contrast-dimmer: #00000029,
+  grey: #666666, grey-dim: #666666b6, grey-dimmer: #66666629,
+  port: #b70000,
+  starboard: #008700,
+  zone-nominal: #0182fa,
+  zone-alert: #f0f032,
+  zone-warn: #ff8534,
+  zone-alarm: #ff0000,
+  zone-emergency: #741e1e,
+  widget-card-background-color: #{$_widget-card-background-color},
+  widget-card-border-color: #252525,
+  background: #{$_background}
+);
+
+// Get App (dark) CSS theming value
+$background: map.get($kip-light-color, background);
+
+// Get default (dark) KIP CSS theming value
+$kip-widget-card-background-color: map.get($kip-light-color, widget-card-background-color);
+$kip-widget-card-border-color: map.get($kip-light-color, widget-card-border-color);
+$kip-widget-action-button-color: map.get($kip-light-color, widget-action-button-color);
+$kip-widget-action-button-foreground-color: map.get($kip-light-color, widget-action-button-foreground-color);
+$kip-widget-action-delete-button-color: map.get($kip-light-color, widget-action-delete-button-color);
+
+$blue: map.get($kip-light-color, blue);
+$blueDim: map.get($kip-light-color, blue-dim);
+$blueDimmer: map.get($kip-light-color, blue-dimmer);
+
+$green: map.get($kip-light-color, green);
+$greenDim: map.get($kip-light-color, green-dim);
+$greenDimmer: map.get($kip-light-color, green-dimmer);
+
+$purple: map.get($kip-light-color, purple);
+$purpleDim: map.get($kip-light-color, purple-dim);
+$purpleDimmer: map.get($kip-light-color, purple-dimmer);
+
+$yellow: map.get($kip-light-color, yellow);
+$yellowDim: map.get($kip-light-color, yellow-dim);
+$yellowDimmer: map.get($kip-light-color, yellow-dimmer);
+
+$pink: map.get($kip-light-color, pink);
+$pinkDim: map.get($kip-light-color, pink-dim);
+$pinkDimmer: map.get($kip-light-color, pink-dimmer);
+
+$orange: map.get($kip-light-color, orange);
+$orangeDim: map.get($kip-light-color, orange-dim);
+$orangeDimmer: map.get($kip-light-color, orange-dimmer);
+
+$contrast: map.get($kip-light-color, contrast);
+$contrastDim: map.get($kip-light-color, contrast-dim);
+$contrastDimmer: map.get($kip-light-color, contrast-dimmer);
+
+$grey: map.get($kip-light-color, grey);
+$greyDim: map.get($kip-light-color, grey-dim);
+$greyDimmer: map.get($kip-light-color, grey-dimmer);
+
+$port: map.get($kip-light-color, port);
+$starboard: map.get($kip-light-color, starboard);
+$zone-nominal: map.get($kip-light-color, zone-nominal);
+$zone-alert: map.get($kip-light-color, zone-alert);
+$zone-warn: map.get($kip-light-color, zone-warn);
+$zone-alarm: map.get($kip-light-color, zone-alarm);
+$zone-emergency: map.get($kip-light-color, zone-emergency);

@@ -1,10 +1,11 @@
 @let _dashboards = dashboards();
 @let _activePage = activePage();
 <div class="page-scroll-title page-scroll-container" [@fadeInOut]="_activePage">
-  <span style="font-size: x-large;">{{ _dashboards[_activePage].name }}</span>
+  <span class="dashboard-label">{{ _dashboards[_activePage].name }}</span>
 </div>
 <div class="page-scroll-page-number page-scroll-container" [@fadeInOut]="_activePage">
   @for (page of _dashboards; track page.id; let index = $index) {
-    <mat-icon class="page-icon" [style.color]="_activePage === index ? 'var(--mat-sys-tertiary)' : ''">fiber_manual_record</mat-icon>
+    <!-- <mat-icon class="page-icon" [style.color]="_activePage === index ? 'var(--mat-sys-on-surface)' : 'var(--mat-sys-inverse-on-surface)'">fiber_manual_record</mat-icon> -->
+    <div class="page-icon" [style.background-color]="_activePage === index ? 'var(--mat-sys-on-surface)' : 'var(--mat-sys-inverse-on-surface)'"></div>
   }
 </div>

@@ -4,6 +4,7 @@
 @use './styles-common/roboto.scss';
 
 @use './themes/m3dark.scss' as dark;
+@use './themes/m3light.scss' as light;
 
 @use './styles-common/settingsTabContent.scss' as settingsTabContent;
 
@@ -46,9 +47,9 @@
   --kip-orange-dim-color: #{dark.$orangeDim};
   --kip-orange-dimmer-color: #{dark.$orangeDimmer};
 
-  --kip-white-color: #{dark.$white};
-  --kip-white-dim-color: #{dark.$whiteDim};
-  --kip-white-dimmer-color: #{dark.$whiteDimmer};
+  --kip-contrast-color: #{dark.$contrast};
+  --kip-contrast-dim-color: #{dark.$contrastDim};
+  --kip-contrast-dimmer-color: #{dark.$contrastDimmer};
 
   --kip-grey-color: #{dark.$grey};
   --kip-grey-dim-color: #{dark.$greyDim};
@@ -63,12 +64,62 @@
   --kip-zone-emergency-color: #{dark.$zone-emergency};
 }
 
+body.light-theme {
+  --mat-sys-background: #{light.$background};
+  --kip-widget-card-background-color: #{light.$kip-widget-card-background-color};
+  --kip-widget-card-border-color: #{light.$kip-widget-card-border-color};
+
+  --kip-contrast-color: #{light.$contrast};
+  --kip-contrast-dim-color: #{light.$contrastDim};
+  --kip-contrast-dimmer-color: #{light.$contrastDimmer};
+  --kip-grey-color: #{light.$grey};
+  --kip-grey-dim-color: #{light.$greyDim};
+  --kip-grey-dimmer-color: #{light.$greyDimmer};
+  --kip-blue-color: #{light.$blue};
+  --kip-blue-dim-color: #{light.$blueDim};
+  --kip-blue-dimmer-color: #{light.$blueDimmer};
+  --kip-green-color: #{light.$green};
+  --kip-green-dim-color: #{light.$greenDim};
+  --kip-green-dimmer-color: #{light.$greenDimmer};
+  --kip-purple-color: #{light.$purple};
+  --kip-purple-dim-color: #{light.$purpleDim};
+  --kip-purple-dimmer-color: #{light.$purpleDimmer};
+  --kip-yellow-color: #{light.$yellow};
+  --kip-yellow-dim-color: #{light.$yellowDim};
+  --kip-yellow-dimmer-color: #{light.$yellowDimmer};
+  --kip-pink-color: #{light.$pink};
+  --kip-pink-dim-color: #{light.$pinkDim};
+  --kip-pink-dimmer-color: #{light.$pinkDimmer};
+  --kip-orange-color: #{light.$orange};
+  --kip-orange-dim-color: #{light.$orangeDim};
+  --kip-orange-dimmer-color: #{light.$orangeDimmer};
+  --kip-port-color: #{light.$port};
+  --kip-starboard-color: #{light.$starboard};
+  --kip-zone-nominal-color: #{light.$zone-nominal};
+  --kip-zone-alert-color: #{light.$zone-alert};
+  --kip-zone-warn-color: #{light.$zone-warn};
+  --kip-zone-alarm-color: #{light.$zone-alarm};
+  --kip-zone-emergency-color: #{light.$zone-emergency};
+}
+
 html {
   @include mat.theme((
     color: (
       primary: dark.$primary-palette,
       tertiary: dark.$tertiary-palette,
       theme-type: dark,
+    ),
+    typography: Roboto,
+    density: 0
+  ));
+}
+
+.light-theme {
+  @include mat.theme((
+    color: (
+      primary: mat.$blue-palette,
+      tertiary: mat.$yellow-palette,
+      theme-type: light,
     ),
     typography: Roboto,
     density: 0

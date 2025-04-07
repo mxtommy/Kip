@@ -13,7 +13,7 @@ export const DefaultAppConfig: IAppConfig = {
 }
 
 export const DefaultThemeConfig: IThemeConfig = {
-  "themeName": "modern-dark"
+  "themeName": ""
 }
 
 export const defaultConfig: IConfig = {
