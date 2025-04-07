@@ -22,7 +22,6 @@ export abstract class BaseWidgetComponent extends BaseWidget {
 
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
   protected theme: ITheme = undefined;
-  //TODO: Do we still need theme subscription?
   protected themeSubscription: Subscription = undefined;
 
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
@@ -82,6 +81,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
    */
   protected unsubscribeMetaStream(): void {
     this.metaSubscriptions?.unsubscribe();
+    this.metaSubscriptions = undefined;
   }
 
   /**
@@ -320,5 +320,6 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
     this.themeSubscription?.unsubscribe();
+    this.zones$.complete();
   }
 }

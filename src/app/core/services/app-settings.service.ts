@@ -114,7 +114,6 @@ export class AppSettingsService {
   }
 
   private validateAppConfig(config: IConfig): IConfig {
-    //TODO: Clean up
     if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
       if (config.app.configVersion === 6 || config.app.configVersion === 9) {
         // we need to upgrade config
@@ -151,28 +150,6 @@ export class AppSettingsService {
       notificationConfig: cloneDeep(config.app.notificationConfig),
       unitDefaults: cloneDeep(config.app.unitDefaults)
     };
-
-    if (config.app.configVersion === 6) {
-      // Update local storage connection info with old config data
-      let conConf :IConnectionConfig = this.loadConfigFromLocalStorage("connectionConfig");
-      conConf.signalKUrl = this.signalkUrl = config.app.signalKUrl;
-      conConf.kipUUID = this.kipUUID = config.app.kipUUID;
-
-      if (config.app.signalKToken != "" && config.app.signalKToken != undefined && config.app.signalKToken != null) {
-        console.log("[AppSettings Service] Migrating Device Token to LocalStorage");
-        let tokenSettings: IAuthorizationToken = {
-          token: config.app.signalKToken,
-          expiry: null,
-          isDeviceAccessToken: true
-        };
-        localStorage.setItem('authorization_token', JSON.stringify(tokenSettings));
-        conConf.useDeviceToken = true;
-      }
-
-      console.log("[AppSettings Service] Writing upgraded connectionConfig to LocalStorage");
-      this.replaceConfig('connectionConfig', conConf);
-      config.app.configVersion = 9;
-    }
 
     // dataset and data Chart Widget changes
     if (config.app.configVersion == 9) {

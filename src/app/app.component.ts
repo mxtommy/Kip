@@ -41,9 +41,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   protected themeName: string;
-  //TODO: Still need this?
-  // activeThemeClass: string = 'modern-dark fullheight';
-  activeTheme: string;
   private themeNameSub: Subscription;
   private appNotificationSub: Subscription;
   private connectionStatusSub: Subscription;
@@ -52,33 +49,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     // Connection Status Notification sub
     this.connectionStatusSub = this._deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
       this.displayConnectionsStatusNotification(status);
-      }
-    );
-
-    // Theme operations sub
-    this.themeNameSub = this.appSettingsService.getThemeNameAsO().subscribe( newTheme => {
-        //TODO: See if we need to keep this to switch theme CSS class.
-      //   this.activeThemeClass = newTheme + ' fullheight'; // need fullheight there to set 100%height
-
-      //   if (!this.themeName) { // first run
-      //     this.themeName = newTheme;
-      //   } else  {
-      //     this.overlayContainer.getContainerElement().classList.remove(this.activeTheme);
-      //   }
-
-      //   if (newTheme != 'nightMode') {
-      //     this.isNightMode = false;
-      //     if (newTheme !== this.themeName) {
-      //       this.overlayContainer.getContainerElement().classList.add(newTheme);
-      //       this.themeName = newTheme;
-      //     } else {
-      //       this.overlayContainer.getContainerElement().classList.add(this.themeName);
-      //     }
-      //   } else {
-      //     this.overlayContainer.getContainerElement().classList.add(newTheme);
-      //     this.isNightMode = true;
-      //   }
-      //   this.activeTheme = newTheme;
       }
     );
 

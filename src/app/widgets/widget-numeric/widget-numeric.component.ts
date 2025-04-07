@@ -201,7 +201,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
-//TODO: Better canvas scaling see https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
+// High resolution scaling see https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#scaling_for_high_resolution_displays
   private updateCanvas() {
     if (this.canvasValCtx) {
       this.canvasValCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);

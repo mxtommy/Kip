@@ -1,5 +1,3 @@
-//TODO: Needs cleanup and reorganization
-
 import { ITheme } from '../services/app-service';
 import { TValidSkUnits } from '../services/units.service';
 import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
