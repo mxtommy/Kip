@@ -58,7 +58,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       showMin: false,
       numDecimal: 1,
       numInt: 1,
-      color: 'white',
+      color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
       ignoreZones: false
@@ -142,8 +142,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private getColors(color: string): void {
     switch (color) {
       case "white":
-        this.labelColor = this.theme.whiteDim;
-        this.valueColor = this.theme.white;
+        this.labelColor = this.theme.contrastDim;
+        this.valueColor = this.theme.contrast;
         break;
       case "blue":
         this.labelColor = this.theme.blueDim;
@@ -174,8 +174,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
         this.valueColor = this.theme.yellow;
         break;
       default:
-        this.labelColor = this.theme.whiteDim;
-        this.valueColor = this.theme.white;
+        this.labelColor = this.theme.contrastDim;
+        this.valueColor = this.theme.contrast;
         break;
     }
     this.valueStateColor = this.valueColor;

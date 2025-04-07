@@ -99,7 +99,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         showValueBox: false
       },
       enableTimeout: false,
-      color: "white",
+      color: "contrast",
       dataTimeout: 5
     };
   }
@@ -148,7 +148,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
             option.colorValueText = this.theme.zoneAlert;
             break;
           default:
-            option.colorValueText = this.theme.white;
+            option.colorValueText = this.theme.contrast;
         }
         this.compassGauge.update(option);
       }
@@ -281,8 +281,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       [this.theme.port, dim, dim, dim, dim, dim, dim, dim, this.theme.port];
 
     this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
-      [this.theme.port, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.port] :
-      [this.theme.port, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.white, this.theme.port];
+      [this.theme.port, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.port] :
+      [this.theme.port, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.port];
 
     this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = this.theme.cardColor;
     this.gaugeOptions.colorBar = this.theme.background;
@@ -298,7 +298,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "white": { color: this.theme.white, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer },
+      "white": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
       "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
       "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
       "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },

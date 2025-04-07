@@ -14,16 +14,6 @@
   color: var(--mat-sys-inverse-surface);
 }
 
-.dashboard-label {
-  color: var(--mat-sys-on-surface);
-  text-shadow:
-    1px 1px 0 var(--mat-sys-outline),
-    -1px 1px 0 var(--mat-sys-outline),
-    -1px -1px 0 var(--mat-sys-outline),
-    1px -1px 0 var(--mat-sys-outline);
-  font-size: x-large;
-}
-
 .page-scroll-page-number {
   position: absolute;
   top: 50%;
@@ -42,7 +32,17 @@
   border: 1px solid var(--mat-sys-inverse-surface);
 }
 
-.page-icon {
+.page-label {
+  color: var(--mat-sys-on-surface);
+  text-shadow:
+    1px 1px 0 var(--mat-sys-outline),
+    -1px 1px 0 var(--mat-sys-outline),
+    -1px -1px 0 var(--mat-sys-outline),
+    1px -1px 0 var(--mat-sys-outline);
+  font-size: x-large;
+}
+
+.page-marker {
   height: 20px;
   width: 20px;
   margin: 4px;

@@ -81,7 +81,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       numInt: 1,
       numDecimal: 0,
       enableTimeout: false,
-      color: "white",
+      color: "contrast",
       dataTimeout: 5,
       ignoreZones: false
     };
@@ -221,14 +221,14 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorNeedle = this.getColors(this.widgetProperties.config.color).dim;
     this.gaugeOptions.colorNeedleEnd = this.getColors(this.widgetProperties.config.color).dim;
     // Labels
-    this.gaugeOptions.colorTitle = this.theme.whiteDim;
-    this.gaugeOptions.colorUnits = this.theme.whiteDim;
+    this.gaugeOptions.colorTitle = this.theme.contrastDim;
+    this.gaugeOptions.colorUnits = this.theme.contrastDim;
     this.gaugeOptions.colorValueText = this.getColors(this.widgetProperties.config.color).color;
     // Ticks
-    this.colorStrokeTicks = this.theme.whiteDim; // missing property in gaugeOptions
-    this.gaugeOptions.colorMinorTicks = this.theme.whiteDim;
-    this.gaugeOptions.colorNumbers = this.theme.whiteDim;
-    this.gaugeOptions.colorMajorTicks = this.theme.whiteDim;
+    this.colorStrokeTicks = this.theme.contrastDim; // missing property in gaugeOptions
+    this.gaugeOptions.colorMinorTicks = this.theme.contrastDim;
+    this.gaugeOptions.colorNumbers = this.theme.contrastDim;
+    this.gaugeOptions.colorMajorTicks = this.theme.contrastDim;
     // Plate
     this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.theme.cardColor;
     this.gaugeOptions.colorBar = this.theme.background;
@@ -254,7 +254,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "white": { color: this.theme.white, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer },
+      "white": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
       "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
       "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
       "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },

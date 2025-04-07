@@ -66,7 +66,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     let color = "";
     switch (colorName) {
       case "white":
-        color = this.theme.white;
+        color = this.theme.contrast;
         break;
       case "blue":
         color = this.theme.blue;
@@ -90,7 +90,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
         color = this.theme.yellow;
         break;
       default:
-        color = this.theme.white;
+        color = this.theme.contrast;
         break;
     }
     return color;
