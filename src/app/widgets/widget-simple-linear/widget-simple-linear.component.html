@@ -1,7 +1,7 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
     <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
       [displayName]="widgetProperties.config.displayName"
-      [displayNameColor]="theme.whiteDim"
+      [displayNameColor]="theme.contrastDim"
       [unitLabel]="unitsLabel"
       [dataValue]="dataLabelValue"
       [barColor]="barColor"

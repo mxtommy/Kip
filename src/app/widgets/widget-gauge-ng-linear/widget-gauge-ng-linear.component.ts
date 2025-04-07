@@ -74,7 +74,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       },
       numInt: 1,
       numDecimal: 0,
-      color: 'white',
+      color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
       ignoreZones: false
@@ -328,8 +328,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
     switch (this.widgetProperties.config.color) {
       case "white":
-        themePaletteColor = this.theme.white;
-        themePaletteDarkColor = this.theme.whiteDim;
+        themePaletteColor = this.theme.contrast;
+        themePaletteDarkColor = this.theme.contrastDim;
         break;
       case "blue":
         themePaletteColor = this.theme.blue;
@@ -364,8 +364,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         themePaletteDarkColor = this.theme.blue;
         break;
       default:
-        themePaletteColor = this.theme.white;
-        themePaletteDarkColor = this.theme.whiteDim;
+        themePaletteColor = this.theme.contrast;
+        themePaletteDarkColor = this.theme.contrastDim;
         break;
     }
 
@@ -379,7 +379,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "white": { color: this.theme.white, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer },
+      "white": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
       "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
       "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
       "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
@@ -387,7 +387,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
       "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
       "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer },
-      "nobar": { color: this.theme.blue, dim: this.theme.whiteDim, dimmer: this.theme.whiteDimmer }
+      "nobar": { color: this.theme.blue, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer }
     };
     return themePalette[color];
   }

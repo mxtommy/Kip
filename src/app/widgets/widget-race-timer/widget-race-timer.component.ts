@@ -41,7 +41,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
     this.defaultConfig = {
       timerLength: 300,
-      color: 'white',
+      color: 'contrast',
     };
   }
 
@@ -154,7 +154,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   private getColors(color: string) {
     switch (color) {
       case "white":
-        this.textColor = this.theme.white;
+        this.textColor = this.theme.contrast;
         this.warnColor = this.theme.zoneAlarm;
         this.warmContrast = this.theme.zoneAlarm;
         break;
@@ -194,7 +194,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         this.warmContrast = this.theme.zoneAlarm;
         break;
       default:
-        this.textColor = this.theme.white;
+        this.textColor = this.theme.contrast;
         this.warnColor = this.theme.zoneAlarm;
         this.warmContrast = this.theme.zoneAlarm;
         break;

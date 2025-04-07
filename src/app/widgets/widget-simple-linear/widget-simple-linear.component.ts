@@ -49,7 +49,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       },
       numInt: 1,
       numDecimal: 2,
-      color: 'white',
+      color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -91,8 +91,8 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     this.barColorBackground = this.theme.background;
     switch (this.widgetProperties.config.color) {
       case "white":
-        this.barColor = this.theme.white;
-        this.barColorGradient = this.theme.whiteDimmer;
+        this.barColor = this.theme.contrast;
+        this.barColorGradient = this.theme.contrastDimmer;
         break;
       case "blue":
         this.barColor = this.theme.blue;
@@ -123,8 +123,8 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
         this.barColorGradient = this.theme.yellowDimmer;
         break;
       default:
-        this.barColor = this.theme.white;
-        this.barColorGradient = this.theme.whiteDimmer;
+        this.barColor = this.theme.contrast;
+        this.barColorGradient = this.theme.contrastDimmer;
     }
   }
 

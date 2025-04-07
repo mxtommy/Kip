@@ -54,7 +54,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
           sampleTime: 500
         }
       },
-      color: 'white',
+      color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -109,8 +109,8 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   private getColors(color: string): void {
     switch (color) {
       case 'white':
-        this.labelColor = this.theme.whiteDim;
-        this.valueColor = this.theme.white;
+        this.labelColor = this.theme.contrastDim;
+        this.valueColor = this.theme.contrast;
         break;
       case 'blue':
         this.labelColor = this.theme.blueDim;
@@ -141,8 +141,8 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
         this.valueColor = this.theme.yellow;
         break;
       default:
-        this.labelColor = this.theme.whiteDim;
-        this.valueColor = this.theme.white;
+        this.labelColor = this.theme.contrastDim;
+        this.valueColor = this.theme.contrast;
         break;
     }
   }

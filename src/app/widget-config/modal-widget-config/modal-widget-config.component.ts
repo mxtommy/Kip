@@ -37,13 +37,13 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     ]
 })
 export class ModalWidgetConfigComponent implements OnInit {
-  dialog = inject(MatDialog);
-  dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
+  private dialog = inject(MatDialog);
+  private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
   private DatasetService = inject(DatasetService);
   private units = inject(UnitsService);
   private app = inject(AppService);
-  widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
+  protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
 
 
   public titleDialog: string = "Widget Options";

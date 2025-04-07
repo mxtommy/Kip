@@ -49,7 +49,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         paths: [],
         enableTimeout: false,
         dataTimeout: 5,
-        color: "white",
+        color: "contrast",
         putEnable: true,
         putMomentary: false,
         multiChildCtrls: []
@@ -191,7 +191,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private getColors(color: string): void {
     switch (color) {
       case "white":
-        this.labelColor = this.theme.whiteDim;
+        this.labelColor = this.theme.contrastDim;
         break;
       case "blue":
         this.labelColor = this.theme.blueDim;
@@ -215,7 +215,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         this.labelColor = this.theme.yellowDim;
         break;
       default:
-        this.labelColor = this.theme.whiteDim;
+        this.labelColor = this.theme.contrastDim;
         break;
     }
   }
