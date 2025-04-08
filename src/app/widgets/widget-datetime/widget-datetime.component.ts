@@ -23,12 +23,16 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   private isDestroyed = false; // guard against callbacks after destroyed
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  currentValueLength = 0;
-  canvasCtx: CanvasRenderingContext2D;
-  canvasBGCtx: CanvasRenderingContext2D;
+  private currentValueLength = 0;
+  private canvasCtx: CanvasRenderingContext2D;
+  private canvasBGCtx: CanvasRenderingContext2D;
 
-  labelColor: string = undefined;
-  valueColor: string = undefined;
+  private labelColor: string = undefined;
+  private valueColor: string = undefined;
+  private cWidth = 0;
+  private cHeight = 0;
+  private maxTextWidth = 0;
+  private maxTextHeight = 0;
 
   constructor() {
     super();
@@ -62,6 +66,10 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   ngAfterViewInit(): void {
     this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.cWidth = this.canvasEl.nativeElement.width;
+    this.cHeight = this.canvasEl.nativeElement.height;
+    this.maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
+    this.maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     document.fonts.ready.then(() => {
       if (this.isDestroyed) return;
       this.getColors(this.widgetProperties.config.color);
@@ -89,8 +97,8 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvasCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-    this.canvasBGCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+    this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
     this.canvasEl.nativeElement.remove();
     this.canvasBG.nativeElement.remove();
     this.canvasEl = null;
@@ -156,16 +164,24 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   protected onResized(event: ResizeObserverEntry): void {
     if (event.contentRect.height < 50) { return; }
     if (event.contentRect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
-      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
-      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
+    if ((this.cWidth != Math.floor(event.contentRect.width)) || (this.cHeight != Math.floor(event.contentRect.height))) {
+      this.cWidth = this.canvasEl.nativeElement.width = this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
+      this.cHeight = this.canvasEl.nativeElement.height = this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
+
+      this.maxTextWidth = Math.floor(this.cWidth * 0.85);
+      this.maxTextHeight = Math.floor(this.cHeight * 0.85);
+
       this.currentValueLength = 0; // will force resetting the font size
-      this.updateCanvas();
-      this.updateCanvasBG();
+      document.fonts.ready.then(() => {
+        if (this.isDestroyed) return;
+        this.updateCanvas();
+        this.updateCanvasBG();
+      });
     } else {
-      this.updateCanvasBG();
+      document.fonts.ready.then(() => {
+        if (this.isDestroyed) return;
+        this.updateCanvasBG();
+      });
     }
 
   }
@@ -174,21 +190,19 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 /* ******************************************************************************************* */
   updateCanvas() {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
       this.drawValue();
     }
   }
 
   updateCanvasBG() {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
       this.drawTitle();
     }
   }
 
   drawValue() {
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     let valueText: string;
 
     if (isNaN(Date.parse(this.dataValue))) {
@@ -206,7 +220,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     // Check if length of string has changed since last time.
     if (this.currentValueLength !== valueText.length) {
         this.currentValueLength = valueText.length;
-        this._valueFontSize = this.calculateFontSize(valueText, maxTextWidth, maxTextHeight, this.canvasCtx);
+        this._valueFontSize = this.calculateFontSize(valueText, this.maxTextWidth, this.maxTextHeight, this.canvasCtx);
     }
 
     this.canvasCtx.font = `bold ${this._valueFontSize}px ${this._fontString}`;
@@ -215,9 +229,9 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.canvasCtx.fillStyle = this.valueColor;
     this.canvasCtx.fillText(
       valueText,
-      this.canvasEl.nativeElement.width / 2,
-      (this.canvasEl.nativeElement.height / 2) + (this._valueFontSize / 15),
-      maxTextWidth
+      Math.floor(this.cWidth / 2),
+      Math.floor((this.cHeight / 2) + (this._valueFontSize / 15)),
+      this.maxTextWidth
     );
   }
 
@@ -244,13 +258,13 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   drawTitle() {
     const displayName = this.widgetProperties.config.displayName;
     if (displayName === null) { return; }
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.94);
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.1);
+    const maxTextWidth = Math.floor(this.cWidth * 0.94);
+    const maxTextHeight = Math.floor(this.cHeight * 0.1);
     const fontSize = this.calculateFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
     this.canvasBGCtx.font = `normal ${fontSize}px ${this._fontString}`;
     this.canvasBGCtx.textAlign = 'left';
     this.canvasBGCtx.textBaseline = 'top';
     this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(displayName, this.canvasEl.nativeElement.width * 0.03, this.canvasEl.nativeElement.height * 0.03, maxTextWidth);
+    this.canvasBGCtx.fillText(displayName, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.03), maxTextWidth);
   }
 }
