@@ -78,13 +78,13 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   }
 
   ngAfterViewInit(): void {
-    if (this.isDestroyed) return;
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
     this.cWidth = Math.floor(this.cWidth);
     this.cHeight = Math.floor(this.cHeight);
     document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
       this.startWidget();
       this.updateCanvasBG();
     });
