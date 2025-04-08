@@ -1,21 +1,15 @@
 import { Routes } from '@angular/router';
-import { SettingsConfigComponent } from './core/components/configuration/config.component';
 import { DashboardComponent } from './core/components/dashboard/dashboard.component';
-import { DashboardsEditorComponent } from './core/components/dashboards-editor/dashboards-editor.component';
-import { DataInspectorComponent } from './core/components/data-inspector/data-inspector.component';
-import { SettingsDatasetsComponent } from './core/components/datasets/datasets.component';
-import { AppSettingsComponent } from './settings/settings/settings.component';
-import { WidgetLoginComponent } from './widgets/widget-login/widget-login.component';
-import { AppHelpComponent } from './core/components/app-help/app-help.component';
 
 export const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
-  { path: 'settings', component: AppSettingsComponent },
-  { path: 'help', component: AppHelpComponent },
-  { path: 'data', component: DataInspectorComponent },
-  { path: 'dashboards', component: DashboardsEditorComponent },
-  { path: 'datasets', component: SettingsDatasetsComponent },
-  { path: 'configurations', component: SettingsConfigComponent },
-  { path: 'login', component: WidgetLoginComponent },
+  { path: 'dashboard', loadComponent: () => import('./core/components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+  { path: 'settings', loadComponent: () => import('./settings/settings/settings.component').then(m => m.AppSettingsComponent) },
+  { path: 'help', loadComponent: () => import('./core/components/app-help/app-help.component').then(m => m.AppHelpComponent) },
+  { path: 'data', loadComponent: () => import('./core/components/data-inspector/data-inspector.component').then(m => m.DataInspectorComponent) },
+  { path: 'dashboards', loadComponent: () => import('./core/components/dashboards-editor/dashboards-editor.component').then(m => m.DashboardsEditorComponent) },
+  { path: 'datasets', loadComponent: () => import('./core/components/datasets/datasets.component').then(m => m.SettingsDatasetsComponent) },
+  { path: 'configurations', loadComponent: () => import('./core/components/configuration/config.component').then(m => m.SettingsConfigComponent) },
+  { path: 'login', loadComponent: () => import('./widgets/widget-login/widget-login.component').then(m => m.WidgetLoginComponent) },
   { path: '**', component: DashboardComponent }
 ];
