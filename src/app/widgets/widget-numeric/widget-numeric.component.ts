@@ -137,7 +137,6 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       console.error('[Widget Canvas] Canvas elements are not initialized.');
       return;
     }
-    if (this.isDestroyed) return;
     if (event.contentRect.height < 50) return;
     if (event.contentRect.width < 50) return;
 
@@ -153,6 +152,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       this.currentValueLength = 0; //will force resetting the font size
       this.currentMinMaxLength = 0;
       document.fonts.ready.then(() => {
+        if (this.isDestroyed) return;
         this.updateCanvas();
         this.updateCanvasBG();
       });
