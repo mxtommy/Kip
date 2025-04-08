@@ -14,9 +14,11 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
   private wrapper = viewChild<ElementRef<HTMLDivElement>>('wrapper');
-  private canvasCtx = CanvasRenderingContext2D = null;
-  private readonly fontString = "'Roboto'";
+  private canvasCtx: CanvasRenderingContext2D = null;
+  private readonly fontString = "Roboto";
   private isDestroyed = false; // guard against callbacks after destroyed
+  private cWidth = 0;
+  private cHeight = 0;
 
   constructor() {
     super();
@@ -36,8 +38,8 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
 
   ngAfterViewInit(): void {
     this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
-    this.canvasEl().nativeElement.width = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().width);
-    this.canvasEl().nativeElement.height = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().height);
+    this.canvasEl().nativeElement.width = this.cWidth = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().width);
+    this.canvasEl().nativeElement.height = this.cHeight = Math.floor(this.wrapper().nativeElement.getBoundingClientRect().height);
     document.fonts.ready.then(() => {
       if (this.isDestroyed) return;
       this.updateCanvas();
@@ -46,7 +48,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this.canvasCtx.clearRect(0, 0, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+    this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
     this.canvasEl().nativeElement.remove();
   }
 
@@ -60,9 +62,11 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   }
 
   protected onResized(event: ResizeObserverEntry) {
-    this.canvasEl().nativeElement.width = Math.floor(event.contentRect.width);
-    this.canvasEl().nativeElement.height = Math.floor(event.contentRect.height);
-    this.updateCanvas();
+    document.fonts.ready.then(() => {
+      this.canvasEl().nativeElement.width = this.cWidth = Math.floor(event.contentRect.width);
+      this.canvasEl().nativeElement.height = this.cHeight = Math.floor(event.contentRect.height);
+      this.updateCanvas();
+    });
   }
 
   private getColors(colorName: string): string {
@@ -104,25 +108,25 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   /* ******************************************************************************************* */
   private updateCanvas() {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0, 0, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+      this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
       if (!this.widgetProperties.config.noBgColor) {
         this.canvasCtx.fillStyle = this.getColors(this.widgetProperties.config.bgColor);;
-        this.canvasCtx.fillRect(0, 0, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+        this.canvasCtx.fillRect(0, 0, this.cWidth, this.cHeight);
       }
       this.drawValue();
     }
   }
 
   private drawValue() {
-    const maxTextWidth = Math.floor(this.canvasEl().nativeElement.width * 0.85);
-    const maxTextHeight = Math.floor(this.canvasEl().nativeElement.height * 0.85);
+    const maxTextWidth = Math.floor(this.cWidth * 0.85);
+    const maxTextHeight = Math.floor(this.cHeight * 0.85);
     const valueFontSize = this.calculateOptimalFontSize(this.widgetProperties.config.displayName, "bold", maxTextWidth, maxTextHeight, this.canvasCtx);
 
     this.canvasCtx.font = `bold ${valueFontSize}px ${this.fontString}`;
     this.canvasCtx.fillStyle = this.getColors(this.widgetProperties.config.color);
     this.canvasCtx.textAlign = "center";
     this.canvasCtx.textBaseline = "middle";
-    this.canvasCtx.fillText(this.widgetProperties.config.displayName, this.canvasEl().nativeElement.width / 2, (this.canvasEl().nativeElement.height / 2) + (valueFontSize / 15), maxTextWidth);
+    this.canvasCtx.fillText(this.widgetProperties.config.displayName, Math.floor(this.cWidth / 2), Math.floor((this.cHeight / 2) + (valueFontSize / 15)), maxTextWidth);
   }
 
   private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {

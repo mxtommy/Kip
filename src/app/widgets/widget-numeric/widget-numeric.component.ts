@@ -28,13 +28,19 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private currentMinMaxLength: number = 0;
   private valueFontSize: number = 1;
   private minMaxFontSize: number = 1;
+  private maxValueTextWidth = 0;
+  private maxValueTextHeight = 0;
+  private maxMinMaxTextWidth = 0;
+  private maxMinMaxTextHeight = 0;
   private flashInterval = null;
   private isDestroyed = false; // gard against callbacks after destroyed
 
-  private readonly fontString = "'Roboto'";
+  private readonly fontString = "Roboto";
   protected canvasValCtx: CanvasRenderingContext2D;
   protected canvasMMCtx: CanvasRenderingContext2D;
   protected canvasBGCtx: CanvasRenderingContext2D;
+  private cHeight: number = 0;
+  private cWidth: number = 0;
 
   constructor() {
     super();
@@ -75,6 +81,8 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
     this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
     this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.cWidth = Math.floor(this.cWidth);
+    this.cHeight = Math.floor(this.cHeight);
     document.fonts.ready.then(() => {
       if (this.isDestroyed) return;
       this.startWidget();
@@ -129,20 +137,26 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       console.error('[Widget Canvas] Canvas elements are not initialized.');
       return;
     }
-    if (event.contentRect.height < 50) { return; }
-    if (event.contentRect.width < 50) { return; }
-    if ((this.canvasEl.nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl.nativeElement.height != Math.floor(event.contentRect.height))) {
-      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
-      this.canvasMM.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasMM.nativeElement.height = Math.floor(event.contentRect.height);
-      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
+    if (event.contentRect.height < 50) return;
+    if (event.contentRect.width < 50) return;
+
+    if ((this.cWidth != Math.floor(event.contentRect.width)) || (this.cHeight != Math.floor(event.contentRect.height))) {
+      this.cWidth = this.canvasEl.nativeElement.width = this.canvasBG.nativeElement.width = this.canvasMM.nativeElement.width = Math.floor(event.contentRect.width);
+      this.cHeight = this.canvasEl.nativeElement.height = this.canvasBG.nativeElement.height = this.canvasMM.nativeElement.height = Math.floor(event.contentRect.height);
+
+      this.maxValueTextWidth = Math.floor(this.cWidth * 0.85);
+      this.maxValueTextHeight = Math.floor(this.cHeight * 0.85);
+      this.maxMinMaxTextWidth = Math.floor(this.cWidth * 0.57);
+      this.maxMinMaxTextHeight = Math.floor(this.cHeight * 0.1);
+
       this.currentValueLength = 0; //will force resetting the font size
       this.currentMinMaxLength = 0;
-      this.updateCanvas();
-      this.updateCanvasBG();
-    }
+      document.fonts.ready.then(() => {
+        if (this.isDestroyed) return;
+        this.updateCanvas();
+        this.updateCanvasBG();
+      });
+    };
   }
 
   private getColors(color: string): void {
@@ -194,9 +208,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvasValCtx.clearRect(0, 0, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-    this.canvasMMCtx.clearRect(0, 0, this.canvasMM.nativeElement.width, this.canvasMM.nativeElement.height);
-    this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+    this.canvasValCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+    this.canvasMMCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+    this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
     this.canvasBG.nativeElement.remove();
     this.canvasBG = null;
     this.canvasEl.nativeElement.remove();
@@ -211,10 +225,10 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 // High resolution scaling see https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#scaling_for_high_resolution_displays
   private updateCanvas() {
     if (this.canvasValCtx) {
-      this.canvasValCtx.clearRect(0,0,this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvasValCtx.clearRect(0, 0, this.cWidth, this.cHeight);
       this.drawValue();
       if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
-        this.canvasMMCtx.clearRect(0,0,this.canvasMM.nativeElement.width, this.canvasMM.nativeElement.height);
+        this.canvasMMCtx.clearRect(0, 0, this.cWidth, this.cHeight);
         this.drawMinMax();
       }
     }
@@ -222,26 +236,25 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
   private updateCanvasBG() {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0, 0, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+      this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
       this.drawTitle();
       this.drawUnit();
     }
   }
 
   private drawValue() {
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85);
     const valueText = this.getValueText();
 
     if (this.currentValueLength !== valueText.length) {
         this.currentValueLength = valueText.length;
-        this.valueFontSize = this.calculateOptimalFontSize(valueText, "bold", maxTextWidth, maxTextHeight, this.canvasValCtx);
+        this.valueFontSize = this.calculateOptimalFontSize(valueText, "bold", this.maxValueTextWidth, this.maxValueTextHeight, this.canvasValCtx);
     }
+
     this.canvasValCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
     this.canvasValCtx.fillStyle = this.valueStateColor;
     this.canvasValCtx.textAlign = "center";
     this.canvasValCtx.textBaseline = "middle";
-    this.canvasValCtx.fillText(valueText, this.canvasEl.nativeElement.width / 2, (this.canvasEl.nativeElement.height * 0.5) + (this.valueFontSize / 15), maxTextWidth);
+    this.canvasValCtx.fillText(valueText, Math.floor(this.cWidth / 2), Math.floor((this.cHeight * 0.5) + (this.valueFontSize / 15)), this.maxValueTextWidth);
   }
 
   private getValueText(): string {
@@ -279,37 +292,35 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private drawTitle() {
     const displayName = this.widgetProperties.config.displayName;
     if (displayName === null) { return; }
-    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.94);
-    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.1);
+    const maxTextWidth = Math.floor(this.cWidth * 0.94);
+    const maxTextHeight = Math.floor(this.cHeight * 0.1);
     const fontSize = this.calculateOptimalFontSize(displayName, "normal", maxTextWidth, maxTextHeight, this.canvasBGCtx);
     this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
     this.canvasBGCtx.textAlign = "left";
     this.canvasBGCtx.textBaseline = "top";
     this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(displayName, this.canvasBG.nativeElement.width * 0.03, this.canvasBG.nativeElement.height * 0.03, maxTextWidth);
+    this.canvasBGCtx.fillText(displayName, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.03), maxTextWidth);
   }
 
   private drawUnit() {
     const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
     if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) { return; }
 
-    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.35);
-    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.15);
+    const maxTextWidth = Math.floor(this.cWidth * 0.35);
+    const maxTextHeight = Math.floor(this.cHeight * 0.15);
     const fontSize = this.calculateOptimalFontSize(unit, "bold", maxTextWidth, maxTextHeight, this.canvasBGCtx);
 
     this.canvasBGCtx.font = `bold ${fontSize}px ${this.fontString}`;
     this.canvasBGCtx.textAlign = "right";
     this.canvasBGCtx.textBaseline="bottom";
     this.canvasBGCtx.fillStyle = this.valueColor;
-    this.canvasBGCtx.fillText(unit,this.canvasBG.nativeElement.width*0.97,this.canvasBG.nativeElement.height*0.97, maxTextWidth);
+    this.canvasBGCtx.fillText(unit, Math.floor(this.cWidth * 0.97), Math.floor(this.cHeight * 0.97), maxTextWidth);
   }
 
   private drawMinMax() {
     if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; }
 
     let valueText = '';
-    const maxTextWidth = Math.floor(this.canvasMM.nativeElement.width * 0.57);
-    const maxTextHeight = Math.floor(this.canvasMM.nativeElement.height * 0.1);
 
     if (this.widgetProperties.config.showMin) {
         valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Min: --";
@@ -321,14 +332,14 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
     if (this.currentMinMaxLength !== valueText.length) {
         this.currentMinMaxLength = valueText.length;
-        this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", maxTextWidth, maxTextHeight, this.canvasMMCtx);
+        this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", this.maxMinMaxTextWidth, this.maxMinMaxTextHeight, this.canvasMMCtx);
     }
 
     this.canvasMMCtx.font = `normal ${this.minMaxFontSize}px ${this.fontString}`;
     this.canvasMMCtx.textAlign = "left";
     this.canvasMMCtx.textBaseline = "bottom";
     this.canvasMMCtx.fillStyle = this.valueColor;
-    this.canvasMMCtx.fillText(valueText, this.canvasMM.nativeElement.width * 0.03, this.canvasMM.nativeElement.height * 0.9559, maxTextWidth);
+    this.canvasMMCtx.fillText(valueText, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.9559), this.maxMinMaxTextWidth);
   }
 
   private applyDecorations(txtValue: string): string {
