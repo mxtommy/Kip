@@ -1,5 +1,17 @@
-# Loading KIP on Phones, Tablets, Raspberry Pi, and Computers
-Simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip/` to load KIP and enjoy its features remotely on any device.
+# General Layout
+<img src="../../assets/help-docs/img/general-layout.png" alt="Sidebar Menus" title="Sidebar Menus" width="100%">
+
+UI Elements
+1. Actions menu
+2. Fullscreen toggle button
+3. Night Mode toggle button
+4. Actions button
+5. Unlock dashboard
+6. Notifications menu
+7. Notification message
+8. Silence notification
+9. Resolve notification
+10. Mute audio toggle button
 
 ## Touch, Mouse, and Keyboard Navigation
 KIP supports multiple input modes for seamless navigation across devices.
@@ -14,6 +26,9 @@ KIP supports multiple input modes for seamless navigation across devices.
 | Toggle Dashboard edit mode   | N/A            | N/A                    | Shift + Ctrl + E             |
 
 <br/>
+
+## Loading KIP on Phones, Tablets, Raspberry Pi, and Computers
+Simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip/` to load KIP and enjoy its features remotely on any device.
 
 ## Mobile App
 Run KIP in full screen, without browser controls, just like a regular mobile app. This feature is supported on most mobile operating systems. Each browser has its own way of handling Progressive Web App (PWA) installations.
