@@ -70,7 +70,7 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
 
   private getColors(color: string): void {
     switch (color) {
-      case "white":
+      case "contrast":
         this.labelColorEnabled = 'black';
         this.labelColorDisabled = this.theme().contrastDim;
         this.valueColor = this.theme().contrast;

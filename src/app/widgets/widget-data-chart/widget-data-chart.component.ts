@@ -330,7 +330,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     };
 
     switch (widgetColor) {
-      case "white":
+      case "contrast":
         if (this.widgetProperties.config.trackAgainstAverage) {
           colors.valueLine = this.theme.contrastDimmer;
           colors.valueFill = this.theme.contrastDimmer;

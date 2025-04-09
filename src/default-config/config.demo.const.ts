@@ -288,7 +288,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "showMin": true,
               "numDecimal": 1,
               "numInt": 1,
-              "color": "white",
+              "color": "contrast",
               "enableTimeout": false,
               "dataTimeout": 5
             }
@@ -508,7 +508,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               },
               "dateFormat": "dd/MM HH:mm",
               "dateTimezone": "America/Toronto",
-              "color": "white",
+              "color": "contrast",
               "enableTimeout": false,
               "dataTimeout": 5
             }

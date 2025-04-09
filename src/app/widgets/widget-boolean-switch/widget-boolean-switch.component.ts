@@ -190,7 +190,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): void {
     switch (color) {
-      case "white":
+      case "contrast":
         this.labelColor = this.theme.contrastDim;
         break;
       case "blue":

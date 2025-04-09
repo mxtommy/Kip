@@ -118,6 +118,8 @@ export interface IWidgetSvcConfig {
     compassUseNumbers?: boolean;
     /** Optional. Used ny ngGauge to show/hide value box */
     showValueBox?: boolean;
+    /** Optional. Used by Linear ngGauge to use a needle indicator and no progress bar */
+    useNeedle?: boolean;
     /** Optional. Used by GaugeSteel to set face style */
     backgroundColor?: string;
     /** Optional. Used by GaugeSteel to set face style */

@@ -184,6 +184,13 @@
             }
 
             @if (widgetConfig.gauge?.type == 'ngLinear') {
+              <div formGroupName="gauge">
+                <mat-checkbox name="useNeedle"
+                  formControlName="useNeedle">
+                    Use needle indicator
+                </mat-checkbox>
+              </div>
+
               <mat-form-field formGroupName="gauge">
                 <mat-label>Orientation</mat-label>
                 <mat-select
@@ -218,9 +225,6 @@
                 required>
                 @for(color of colors; track color) {
                   <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
-                }
-                @if (widgetConfig.gauge) {
-                  <mat-option *ngIf="(widgetConfig.gauge?.type == 'ngLinear') || (widgetConfig.gauge?.type == 'ngLinear')" value='nobar'>No Progress</mat-option>
                 }
               </mat-select>
             </mat-form-field>

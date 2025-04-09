@@ -264,20 +264,20 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   private setGaugeOptions(color: string, dim: string, dimmer: string) {
-    const whiteDim = rgbaToHex(this.getColors('white').dim);
+    const contrastDim = rgbaToHex(this.getColors('contrast').dim);
     this.gaugeOptions.colorBarProgress = color;
     this.gaugeOptions.colorBorderMiddle = dim;
     this.gaugeOptions.colorBorderMiddleEnd = dim;
     this.gaugeOptions.colorNeedle = color;
     this.gaugeOptions.colorNeedleEnd = color;
 
-    this.gaugeOptions.colorTitle = whiteDim;
-    this.gaugeOptions.colorUnits = whiteDim;
+    this.gaugeOptions.colorTitle = contrastDim;
+    this.gaugeOptions.colorUnits = contrastDim;
     this.gaugeOptions.colorValueText = color;
 
-    this.gaugeOptions.colorMinorTicks = whiteDim;
+    this.gaugeOptions.colorMinorTicks = contrastDim;
     this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
-      [this.theme.port, whiteDim, whiteDim, dim, whiteDim, whiteDim, dim, whiteDim, whiteDim, dim, whiteDim, whiteDim, this.theme.port] :
+      [this.theme.port, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, this.theme.port] :
       [this.theme.port, dim, dim, dim, dim, dim, dim, dim, this.theme.port];
 
     this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
@@ -298,7 +298,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "white": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
+      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
       "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
       "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
       "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
