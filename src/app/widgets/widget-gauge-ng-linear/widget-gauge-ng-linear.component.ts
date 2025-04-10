@@ -71,6 +71,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         subType: 'vertical',    // vertical or horizontal
         enableTicks: true,
         highlightsWidth: 5,
+        useNeedle: false,
       },
       numInt: 1,
       numDecimal: 0,
@@ -113,53 +114,48 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         if (!this.widgetProperties.config.ignoreZones) {
           switch (newValue.state) {
             case States.Emergency:
-              if (this.widgetProperties.config.color != 'nobar') {
+              if (!this.widgetProperties.config.gauge.useNeedle) {
                 option.colorBarProgress = this.theme.zoneEmergency;
                 option.colorValueText = this.theme.zoneEmergency;
               } else {
-                option.colorBarProgress = '';
                 option.colorNeedle = this.theme.zoneEmergency;
                 option.colorValueText = this.theme.zoneEmergency;
               }
               break;
             case States.Alarm:
-              if (this.widgetProperties.config.color != 'nobar') {
+              if (!this.widgetProperties.config.gauge.useNeedle) {
                 option.colorBarProgress = this.theme.zoneAlarm;
                 option.colorValueText = this.theme.zoneAlarm;
               } else {
-                option.colorBarProgress = '';
                 option.colorNeedle = this.theme.zoneAlarm;
                 option.colorValueText = this.theme.zoneAlarm;
               }
               break;
             case States.Warn:
-              if (this.widgetProperties.config.color != 'nobar') {
+              if (!this.widgetProperties.config.gauge.useNeedle) {
                 option.colorBarProgress = this.theme.zoneWarn;
                 option.colorValueText = this.theme.zoneWarn;
               } else {
-                option.colorBarProgress = '';
                 option.colorNeedle = this.theme.zoneWarn;
                 option.colorValueText = this.theme.zoneWarn;
               }
               break;
             case States.Alert:
-              if(this.widgetProperties.config.color != 'nobar') {
+              if (!this.widgetProperties.config.gauge.useNeedle) {
                 option.colorBarProgress = this.theme.zoneAlert;
                 option.colorValueText = this.theme.zoneAlert;
               } else {
-                option.colorBarProgress = '';
                 option.colorNeedle = this.theme.zoneAlert;
                 option.colorValueText = this.theme.zoneAlert;
               }
               break;
             default:
-              if (this.widgetProperties.config.color != 'nobar') {
+              if (!this.widgetProperties.config.gauge.useNeedle) {
                 option.colorBarProgress = this.getColors(this.widgetProperties.config.color).color;
                 option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
               } else {
-                option.colorBarProgress = '';
-                option.colorNeedle = this.getColors('blue').color;
-                option.colorValueText = this.getColors('blue').color;
+                option.colorNeedle = this.getColors(this.widgetProperties.config.color).color;
+                option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
               }
           }
         }
@@ -188,22 +184,43 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public onResized(event: ResizeObserverEntry) {
     //@ts-ignore
     let resize: LinearGaugeOptions = {};
+    const aspectRatio = 0.3; // Aspect ratio to maintain (e.g., height/width or width/height)
+
     if (this.widgetProperties.config.gauge.subType === 'vertical') {
-      resize.height = event.contentRect.height;
-      resize.width = (event.contentRect.height * 0.3);
+        // Enforce vertical orientation: Height is the primary dimension, width is 30% less
+        resize.height = event.contentRect.height;
+        resize.width = resize.height * aspectRatio;
+
+        // Ensure the canvas fits within the parent dimensions
+        if (resize.width > event.contentRect.width) {
+            resize.width = event.contentRect.width;
+            resize.height = resize.width / aspectRatio;
+        }
+    } else {
+        // Enforce horizontal orientation: Width is the primary dimension, height is 30% less
+        resize.width = event.contentRect.width;
+        resize.height = resize.width * aspectRatio;
+
+        // Ensure the canvas fits within the parent dimensions
+        if (resize.height > event.contentRect.height) {
+            resize.height = event.contentRect.height;
+            resize.width = resize.height / aspectRatio;
+        }
     }
-    else {
-      resize.height = event.contentRect.width * 0.3;
-      resize.width = event.contentRect.width;
-    }
+    resize.height -= 10; // Adjust height to account for margin-top
+
+    // Apply the calculated dimensions to the canvas
     this.linearGauge.update(resize);
   }
 
   private setGaugeConfig() {
     const isVertical = this.widgetProperties.config.gauge.subType === 'vertical';
+    const isNeedle = this.widgetProperties.config.gauge.useNeedle;
     const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
     const rect = this.gauge.nativeElement.getBoundingClientRect();
-    let height, width: number = null;
+    let height: number = null;
+    let width: number = null;
+
     if (this.widgetProperties.config.gauge.subType === 'vertical') {
       height = rect.height;
       width = rect.height * 0.3;
@@ -212,6 +229,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       height = rect.width * 0.3;
       width = rect.width;
     }
+
     const defaultOptions = {
       height: height,
       width: width,
@@ -233,9 +251,16 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       barStrokeWidth: 0,
       barShadow: 0,
 
-      needleStart: -45,
-      needleEnd: 55,
+      needle: true,
+      needleType: this.widgetProperties.config.gauge.useNeedle ? "arrow" : "line",
+      needleShadow: false,
+      needleSide: "both",
+      needleStart: this.widgetProperties.config.gauge.useNeedle ? 22 : -45,
+      needleEnd: this.widgetProperties.config.gauge.useNeedle ? 120 : 55,
 
+      colorNeedleEnd: "",
+      colorNeedleShadowUp: "",
+      colorNeedleShadowDown: "black",
 
       units: this.widgetProperties.config.paths['gaugePath'].convertUnitTo,
       fontUnits: "Roboto",
@@ -269,22 +294,17 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       fontNumbersWeight: "normal",
       fontUnitsSize: this.isGaugeVertical ? 40 : 35,
 
-      colorTitle: this.getColors('white').dim,
-      colorUnits: this.getColors('white').dim,
+      colorTitle: this.getColors('contrast').dim,
+      colorUnits: this.getColors('contrast').dim,
       colorValueText: this.getColors(this.widgetProperties.config.color).color,
       colorPlate: this.theme.cardColor,
       colorBar: this.theme.background,
 
-      colorMajorTicks: this.getColors('white').dim,
-      colorMinorTicks: this.getColors('white').dim,
-      colorNumbers: this.getColors('white').dim,
-
-      colorNeedleEnd: "",
-      colorNeedleShadowUp: "",
-      colorNeedleShadowDown: "black",
+      colorMajorTicks: this.getColors('contrast').dim,
+      colorMinorTicks: this.getColors('contrast').dim,
+      colorNumbers: this.getColors('contrast').dim,
 
       majorTicks: scale.majorTicks,
-
 
       majorTicksInt: this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1,
       majorTicksDec: this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2,
@@ -298,14 +318,9 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       minorTicks: 2,
       ticksWidthMinor: 6,
 
-
       valueBox: true,
       valueBoxWidth: 35,
       valueBoxBorderRadius: 10,
-      needle: true,
-      needleType: "line",
-      needleShadow: false,
-      needleSide: "both",
 
       highlights: [],
       highlightsWidth: this.widgetProperties.config.gauge.highlightsWidth,
@@ -327,7 +342,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     let themePaletteDarkColor = "";
 
     switch (this.widgetProperties.config.color) {
-      case "white":
+      case "contrast":
         themePaletteColor = this.theme.contrast;
         themePaletteDarkColor = this.theme.contrastDim;
         break;
@@ -359,10 +374,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
         themePaletteColor = this.theme.yellow;
         themePaletteDarkColor = this.theme.yellowDim;
         break;
-      case "nobar":
-        themePaletteColor = "";
-        themePaletteDarkColor = this.theme.blue;
-        break;
       default:
         themePaletteColor = this.theme.contrast;
         themePaletteDarkColor = this.theme.contrastDim;
@@ -370,24 +381,23 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     }
 
     Object.assign(this.gaugeOptions, {
-      colorBarProgress: themePaletteColor,
+      colorBarProgress: this.widgetProperties.config.gauge.useNeedle ? "" : themePaletteColor,
       colorBarProgressEnd: '',
-      colorNeedle: themePaletteDarkColor,
-      needleWidth: this.widgetProperties.config.color === "nobar" ? 10 : 0,
+      colorNeedle: this.widgetProperties.config.gauge.useNeedle ? themePaletteColor : themePaletteDarkColor,
+      needleWidth: this.widgetProperties.config.gauge.useNeedle ? 20 : 0,
     });
   }
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "white": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
+      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
       "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
       "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
       "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
       "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
       "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
       "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
-      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer },
-      "nobar": { color: this.theme.blue, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer }
+      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
     };
     return themePalette[color];
   }

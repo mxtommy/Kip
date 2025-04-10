@@ -153,7 +153,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   private getColors(color: string) {
     switch (color) {
-      case "white":
+      case "contrast":
         this.textColor = this.theme.contrast;
         this.warnColor = this.theme.zoneAlarm;
         this.warmContrast = this.theme.zoneAlarm;

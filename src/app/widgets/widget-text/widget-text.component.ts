@@ -99,7 +99,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
 
   private getColors(color: string): void {
     switch (color) {
-      case "white":
+      case "contrast":
         this.labelColor = this.theme.contrastDim;
         this.valueColor = this.theme.contrast;
         break;

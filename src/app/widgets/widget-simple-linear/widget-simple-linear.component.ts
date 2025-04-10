@@ -90,7 +90,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   private updateGaugeSettings() {
     this.barColorBackground = this.theme.background;
     switch (this.widgetProperties.config.color) {
-      case "white":
+      case "contrast":
         this.barColor = this.theme.contrast;
         this.barColorGradient = this.theme.contrastDimmer;
         break;

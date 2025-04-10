@@ -254,7 +254,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "white": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
+      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
       "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
       "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
       "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
