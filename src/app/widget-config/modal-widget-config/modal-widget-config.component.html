@@ -246,6 +246,26 @@
             </mat-form-field>
 
             <!-- Steelgauge -->
+            @if (widgetConfig.gauge?.type == "horizon") {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Pointer Colour</mat-label>
+                <mat-select
+                  placeholder="Select colour..."
+                  formControlName="faceColor"
+                  name="faceColor">
+                  <mat-option value='Red'>Red</mat-option>
+                  <mat-option value='Green'>Green</mat-option>
+                  <mat-option value='Blue'>Blue</mat-option>
+                  <mat-option value='White'>White</mat-option>
+                  <mat-option value='Black'>Black</mat-option>
+                  <mat-option value='Orange'>Orange</mat-option>
+                  <mat-option value='Yellow'>Yellow</mat-option>
+                  <mat-option value='Gray'>Gray</mat-option>
+                  <mat-option value='Magenta'>Magenta</mat-option>
+                  <mat-option value='Green LCD'>Green LCD</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
             @if (widgetConfig.gauge?.type == "steel") {
               <mat-form-field formGroupName="gauge">
                 <mat-label>Background Style</mat-label>
