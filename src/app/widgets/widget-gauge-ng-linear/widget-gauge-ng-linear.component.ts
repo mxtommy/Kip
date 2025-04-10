@@ -184,14 +184,32 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   public onResized(event: ResizeObserverEntry) {
     //@ts-ignore
     let resize: LinearGaugeOptions = {};
+    const aspectRatio = 0.3; // Aspect ratio to maintain (e.g., height/width or width/height)
+
     if (this.widgetProperties.config.gauge.subType === 'vertical') {
-      resize.height = event.contentRect.height;
-      resize.width = (event.contentRect.height * 0.3);
+        // Enforce vertical orientation: Height is the primary dimension, width is 30% less
+        resize.height = event.contentRect.height;
+        resize.width = resize.height * aspectRatio;
+
+        // Ensure the canvas fits within the parent dimensions
+        if (resize.width > event.contentRect.width) {
+            resize.width = event.contentRect.width;
+            resize.height = resize.width / aspectRatio;
+        }
+    } else {
+        // Enforce horizontal orientation: Width is the primary dimension, height is 30% less
+        resize.width = event.contentRect.width;
+        resize.height = resize.width * aspectRatio;
+
+        // Ensure the canvas fits within the parent dimensions
+        if (resize.height > event.contentRect.height) {
+            resize.height = event.contentRect.height;
+            resize.width = resize.height / aspectRatio;
+        }
     }
-    else {
-      resize.height = event.contentRect.width * 0.3;
-      resize.width = event.contentRect.width;
-    }
+    resize.height -= 10; // Adjust height to account for margin-top
+
+    // Apply the calculated dimensions to the canvas
     this.linearGauge.update(resize);
   }
 
