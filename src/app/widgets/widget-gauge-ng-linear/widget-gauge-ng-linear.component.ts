@@ -10,7 +10,7 @@ import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
-import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
+import { LinearGaugeOptions, LinearGauge, GaugesModule, RadialGaugeOptions } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -26,7 +26,7 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
 })
 
 export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('linearGauge', {static: true, read: LinearGauge}) protected linearGauge: LinearGauge;
+  @ViewChild('linearGauge', {static: true, read: LinearGauge}) protected ngGauge: LinearGauge;
   @ViewChild('linearGauge', {static: true, read: ElementRef}) protected gauge: ElementRef;
 
   // Gauge text value for value box rendering
@@ -85,14 +85,11 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   ngOnInit() {
     this.validateConfig();
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
-    this.gaugeOptions.height = gaugeSize.height;
-    this.gaugeOptions.width = gaugeSize.width;
   }
 
   protected startWidget(): void {
     this.setGaugeConfig();
-    this.linearGauge.update(this.gaugeOptions);
+    this.ngGauge.update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
@@ -159,7 +156,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
               }
           }
         }
-        this.linearGauge.update(option);
+        this.ngGauge.update(option);
       }
     });
     if (!this.widgetProperties.config.ignoreZones) {
@@ -178,6 +175,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngAfterViewInit() {
+    this.setCanvasHight
     this.startWidget();
   }
 
@@ -210,7 +208,16 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     resize.height -= 10; // Adjust height to account for margin-top
 
     // Apply the calculated dimensions to the canvas
-    this.linearGauge.update(resize);
+    this.ngGauge.update(resize);
+  }
+
+  private setCanvasHight(): void {
+    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const resize: RadialGaugeOptions = {};
+    resize.height = gaugeSize.height;
+    resize.width = gaugeSize.width;
+
+    this.ngGauge.update(resize);
   }
 
   private setGaugeConfig() {
@@ -460,14 +467,14 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
-    this.linearGauge.update(highlights);
+    this.ngGauge.update(highlights);
   }
 
   ngOnDestroy() {
     this.destroyDataStreams();
     this.metaSub?.unsubscribe();
     // Clear references to DOM elements
-    this.linearGauge = null;
+    this.ngGauge = null;
     this.gauge = null;
   }
 }
