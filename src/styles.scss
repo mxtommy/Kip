@@ -196,17 +196,15 @@ body {
   height: 100%;
   width: 100%;
   background-color: var(--mat-sys-background);
+  display: flex; // Use flexbox for centering
+  align-items: center; // Center vertically
+  justify-content: center; // Center horizontally
 }
 
 #loader {
-  bottom: 0;
   height: 175px;
-  left: 0;
-  margin: auto;
-  position: absolute;
-  right: 0;
-  top: 0;
   width: 175px;
+  position: relative; // Ensure proper alignment with flexbox
 }
 
 #loader .dot {

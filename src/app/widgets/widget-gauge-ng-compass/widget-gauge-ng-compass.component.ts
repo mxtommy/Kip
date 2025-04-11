@@ -6,14 +6,13 @@
  * instantiated gauge config.
  */
 import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 function rgbaToHex(rgba) {
   let [r, g, b, a = 1] = rgba.match(/\d+(\.\d+)?/g).map(Number);
@@ -52,17 +51,13 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   // Gauge value
   protected value: number = 0;
 
-  @ViewChild('compassGauge', { static: true }) compassGauge: RadialGauge;
+  @ViewChild('compassGauge', { static: true }) ngGauge: RadialGauge;
   @ViewChild('compassGauge', { static: true, read: ElementRef }) gauge: ElementRef;
 
   protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
   protected colorStrokeTicks: string = "";
   protected unitName: string = null;
-
-  // Zones support
-  private meta: ISkMetadata = null;
-  private metaSub: Subscription;
   private state: string = "normal";
 
   private readonly negToPortPaths = [
@@ -106,13 +101,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnInit() {
     this.validateConfig();
-    this.setCanvasHight();
     this.setGaugeConfig();
   }
 
   protected startWidget(): void {
     this.setGaugeConfig();
-    this.compassGauge.update(this.gaugeOptions);
+    this.ngGauge.update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
 
@@ -150,7 +144,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           default:
             option.colorValueText = this.theme.contrast;
         }
-        this.compassGauge.update(option);
+        this.ngGauge.update(option);
       }
     });
   }
@@ -167,10 +161,11 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     resize.height = gaugeSize.height;
     resize.width = gaugeSize.width;
 
-    this.compassGauge.update(resize);
+    this.ngGauge.update(resize);
   }
 
   ngAfterViewInit(): void {
+    this.setCanvasHight();
     this.startWidget();
   }
 
@@ -180,7 +175,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     resize.height = event.contentRect.height;
     resize.width = event.contentRect.width;
 
-    this.compassGauge.update(resize);
+    this.ngGauge.update(resize);
   }
 
   private setGaugeConfig(): void {
@@ -312,9 +307,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnDestroy(): void {
     this.destroyDataStreams();
-    this.metaSub?.unsubscribe();
     // Clear references to DOM elements
-    this.compassGauge = null;
+    this.ngGauge = null;
     this.gauge = null;
   }
 }
