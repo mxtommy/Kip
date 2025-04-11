@@ -58,6 +58,6 @@ export class SettingsDisplayComponent implements OnInit {
   protected setBrightness(value: number): void {
     this.displayForm().form.markAsDirty();
     this.nightBrightness = value;
-    this._app.setBrightness(value);
+    this._app.setBrightness(value, this._app.isNightMode());
   }
 }
