@@ -1,6 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { cloneDeep } from "lodash-es";
 
 import { IDatasetServiceDatasetConfig } from './data-set.service';
 import { IWidget } from '../interfaces/widgets-interface';
@@ -14,7 +13,6 @@ import { DefaultNotificationConfig } from '../../../default-config/config.blank.
 import { DemoAppConfig, DemoConnectionConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
 
 import { StorageService } from './storage.service';
-import { IAuthorizationToken } from './authentication.service';
 import { Dashboard } from './dashboard.service';
 
 const defaultTheme = '';
@@ -47,9 +45,9 @@ export class AppSettingsService {
   private widgets: Array<IWidget>;
   private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
+  public configUpgrade = signal<boolean>(false);
 
-  constructor()
-  {
+  constructor() {
     console.log("[AppSettings Service] Service startup...");
     this.storage.activeConfigFileVersion = configFileVersion;
 
@@ -70,7 +68,8 @@ export class AppSettingsService {
 
       if (serverConfig) {
         console.log("[AppSettings Service] Remote configuration storage enabled");
-        this.activeConfig = this.validateAppConfig(serverConfig);
+        this.checkConfigUpgradeRequired();
+        this.activeConfig = serverConfig;
         this.pushSettings();
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
@@ -78,8 +77,9 @@ export class AppSettingsService {
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
         localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
-
-        this.activeConfig = this.validateAppConfig(localStorageConfig);
+//TODO: Fix this
+        this.checkConfigUpgradeRequired();
+        this.activeConfig = localStorageConfig;
         this.pushSettings();
       }
     }
@@ -113,95 +113,39 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
-  private validateAppConfig(config: IConfig): IConfig {
-    if ((typeof config.app.configVersion !== 'number') || (config.app.configVersion !== configVersion)) {
-      if (config.app.configVersion === 6 || config.app.configVersion === 9) {
-        // we need to upgrade config
-        this.upgradeAppConfig(config);
-      } else {
-        // unknown version - delete and load defaults
-        if (this.useSharedConfig) {
-          console.error("[AppSettings Service] Invalid Server config version. Resetting and loading configuration default");
-        } else {
-          console.error("[AppSettings Service] Invalid localStorage config version. Replacing with Defaults");
-          // we don't remove connectionConfig. It only hold: url, use, pwd, kipUUID, etc. Those
-          // values can and should stay local and persist over time
-          localStorage.removeItem("appConfig");
-          localStorage.removeItem("widgetConfig");
-          localStorage.removeItem("layoutConfig");
-          localStorage.removeItem("themeConfig");
-          localStorage.removeItem("zonesConfig");
+  private checkConfigUpgradeRequired(): void {
+    this.storage.listConfigs(9)
+      .then(async (rootConfigs) => {
+        for (const rootConfig of rootConfigs) {
+          try {
+            // Fetch the full configuration for each rootConfig
+            const fullConfig = await this.storage.getConfig(rootConfig.scope, rootConfig.name, 9);
+
+            // Check if the version is 10
+            if (fullConfig.app?.configVersion === 10) {
+              this.configUpgrade.set(true); // Set the upgrade flag to true
+              console.log(`[AppSettings Service] Configuration upgrade required for version 9.`);
+              break; // Exit the loop once a version 9 config is found
+            }
+          } catch (error) {
+            console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);
+          }
         }
-        this.resetSettings();
-      }
-    }
-    return config;
+      })
+      .catch((error) => {
+        console.error("[AppSettings Service] Error fetching configuration data:", error);
+      });
   }
 
-  private upgradeAppConfig(config: any): void {
-    //TODO: Clean up
-    console.warn("[AppSettings Service] Configuration upgrade required");
-
-    let upgradedAppConfig: IAppConfig = {
-      configVersion: 9,
-      autoNightMode: this.autoNightMode.getValue(),
-      nightModeBrightness: 0.20,
-      dataSets: cloneDeep(config.app.dataSets),
-      notificationConfig: cloneDeep(config.app.notificationConfig),
-      unitDefaults: cloneDeep(config.app.unitDefaults)
-    };
-
-    // dataset and data Chart Widget changes
-    if (config.app.configVersion == 9) {
-      config.app.dataSets.forEach(oldDS => {
-        const upgradedDS: IDatasetServiceDatasetConfig = {
-          uuid: oldDS.uuid,
-          path: oldDS.path,
-          pathSource: oldDS.signalKSource,
-          baseUnit: null,
-          timeScaleFormat: 'second',
-          period: oldDS.dataPoints,
-          label: `${oldDS.path}, Source: ${oldDS.signalKSource}, Scale: Needs upgrade, Period: ${oldDS.dataPoints}`
-        };
-
-        upgradedAppConfig.dataSets.push(upgradedDS);
-        upgradedAppConfig.dataSets.shift();
-      });
-
-      const historicalWidget: any[] = config.widget.widgets.filter(widget => widget.type === "WidgetHistorical");
-      historicalWidget.forEach(widget => {
-        widget.type = "WidgetDataChart";
-        widget.config.datasetUUID = widget.config.dataSetUUID;
-        widget.config.startScaleAtZero = widget.config.includeZero;
-      });
-
-      upgradedAppConfig.configVersion = 10;
-    }
-
-    // save upgraded app Config
-    if (this.useSharedConfig) {
-      // Config came from remote storage Scope User, name default. Push it back
-      console.log("[AppSettings Service] Writing upgraded AppConfig to remote storage default config");
-      this.storage.patchConfig('IWidgetConfig',config.widget);
-      this.storage.patchConfig('IAppConfig',upgradedAppConfig);
-      this.reloadApp();
-    } else {
-      // Config came from local storage. Save it back
-      console.log("[AppSettings Service] Writing upgraded AppConfig to LocalStorage default config");
-      this.replaceConfig('widgetConfig',config.widget, true);
-      this.replaceConfig('appConfig', upgradedAppConfig, true);
-    }
-  }
-
-/**
- * Get configuration from local browser storage rather then in
- * memory running config.
- *
- * @param {string} type Possible choices are: appConfig,  widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
- * @return {*}
- * @memberof AppSettingsService
- */
-public loadConfigFromLocalStorage(type: string) {
+  /**
+   * Get configuration from local browser storage rather then in
+   * memory running config.
+   *
+   * @param {string} type Possible choices are: appConfig,  widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
+   * @return {*}
+   * @memberof AppSettingsService
+   */
+  public loadConfigFromLocalStorage(type: string) {
     let config = JSON.parse(localStorage.getItem(type));
 
     if (config === null) {

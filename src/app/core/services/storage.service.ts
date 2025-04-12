@@ -6,7 +6,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
 import { tap, concatMap, catchError, lastValueFrom } from 'rxjs';
 
-interface Config {
+export interface Config {
   name: string,
   scope: string
 }
@@ -25,7 +25,6 @@ export class StorageService {
 
   private serverEndpoint: String = null;
   public isAppDataSupported: boolean = false;
-  private serverConfigs: Config[] = [];
   private configFileVersion: number = null;
   public sharedConfigName: string;
   private InitConfig: IConfig = null;
@@ -173,9 +172,12 @@ export class StorageService {
    * @return {*}  {null} returns null if operation is successful or raises an error.
    * @memberof StorageService
    */
-  public async setConfig(scope: string, configName: string, config: IConfig): Promise<null> {
+  public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
     let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/"+ configName;
     let response: any;
+    if (forceConfigFileVersion) {
+      url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/"+ configName;
+    }
     await lastValueFrom(this.http.post<null>(url, config))
       .then(x => {
         console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
@@ -195,10 +197,13 @@ export class StorageService {
    * @param {*} value unstringified update object. The resulting outgoing POST request will automatically stringify.
    * @memberof StorageService
    */
-  public patchConfig(ObjType: string, value: any) {
+  public patchConfig(ObjType: string, value: any, forceConfigFileVersion?: number) {
 
     let url = this.serverEndpoint + "user/kip/" + this.configFileVersion;
     let document;
+    if (forceConfigFileVersion) {
+      url = this.serverEndpoint + "user/kip/" + forceConfigFileVersion;
+    }
 
     switch (ObjType) {
       case "IAppConfig":
