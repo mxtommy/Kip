@@ -4,6 +4,7 @@ import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import * as packageInfo from '../../../../package.json';
 
 const modePath: string = 'self.environment.mode';
 
@@ -87,6 +88,10 @@ export class AppService implements OnDestroy {
   private _data = inject(DataService);
   private _destroyRef = inject(DestroyRef);
 
+  public readonly appVersion = signal<string>(packageInfo.version);
+  public readonly browserVersion = signal<string>('Unknown');
+  public readonly osVersion = signal<string>('Unknown');
+
   constructor() {
     this.autoNightModeObserver();
     this.readThemeCssRoleVariables();
@@ -102,6 +107,16 @@ export class AppService implements OnDestroy {
         }
         this.readThemeCssRoleVariables();
       });
+
+    this.browserVersion.set(this.getBrowserVersion());
+    this.osVersion.set(this.getOSVersion());
+
+    // Log versions
+    console.log("*********** KIP Version Information ***********");
+    console.log(`** App Version: ${this.appVersion()}`);
+    console.log(`** Browser Version: ${this.browserVersion()}`);
+    console.log(`** OS Version: ${this.osVersion()}`);
+    console.log("***********************************************");
   }
 
   /**
@@ -233,6 +248,58 @@ export class AppService implements OnDestroy {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Helper method to get the browser version.
+   */
+  private getBrowserVersion(): string {
+    const userAgent = navigator.userAgent;
+    let browser = 'Unknown';
+
+    if (userAgent.includes('Edg')) {
+      browser = `Edge ${userAgent.match(/Edg\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('Chromium')) {
+      browser = `Chrome ${userAgent.match(/Chrome\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Chromium')) {
+      browser = `Chromium ${userAgent.match(/Chromium\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Firefox')) {
+      browser = `Firefox ${userAgent.match(/Firefox\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome') && !userAgent.includes('Chromium')) {
+      browser = `Safari ${userAgent.match(/Version\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+      browser = `Opera ${userAgent.match(/(Opera|OPR)\/(\d+)/)?.[2]}`;
+    }
+
+    return browser;
+  }
+
+  /**
+   * Helper method to get the OS version.
+   */
+  private getOSVersion(): string {
+    const platform = navigator.platform;
+    const userAgent = navigator.userAgent;
+
+    if (platform.startsWith('Mac')) {
+      return 'macOS';
+    } else if (platform.startsWith('Win')) {
+      return 'Windows';
+    } else if (/Linux/.test(platform)) {
+      // Check for Raspberry Pi identifiers in the userAgent or platform
+      if (
+        userAgent.includes('ARM') ||
+        userAgent.includes('aarch64') ||
+        userAgent.includes('Raspberry') ||
+        platform.includes('armv7l') ||
+        platform.includes('armv8l')
+      ) {
+        return 'Raspberry Pi';
+      }
+      return 'Linux';
+    } else {
+      return 'Unknown OS';
+    }
   }
 
   ngOnDestroy(): void {
