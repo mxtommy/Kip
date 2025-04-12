@@ -101,6 +101,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnInit() {
     this.validateConfig();
+    //TODO: remove debug line
+    console.log("***** COPY THIS THEME COLOURS:", this.theme);
     this.setGaugeConfig();
   }
 
@@ -289,6 +291,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
     this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
     this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
+    //TODO: remove this debug line
+    console.log("***** COPY THIS WIDGET CONFIG:", this.gaugeOptions);
   }
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
