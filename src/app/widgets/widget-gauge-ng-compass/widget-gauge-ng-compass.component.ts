@@ -67,7 +67,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
   protected colorStrokeTicks: string = "";
   protected unitName: string = null;
-  private state: string = "normal";
+  private state: string = States.Normal;
 
   private readonly negToPortPaths = [
     "self.environment.wind.angleApparent",
@@ -120,17 +120,32 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.unsubscribeDataStream();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (!newValue.data) {
+      if (!newValue || !newValue.data) {
+        newValue = {
+          data: {
+            value: 0,
+            timestamp: new Date(),
+          },
+          state: States.Normal // Default state
+        };
+
         this.textValue = "--";
         this.value = 0;
-      } else {
-        let convertedValue: number = this.negToPortPaths.includes(this.widgetProperties.config.paths['gaugePath'].path) ? convertNegToPortDegree(newValue.data.value) : newValue.data.value;
-
-        // Compound value to displayScale
-        this.value = Math.min(Math.max(convertedValue, 0), 360);
-        // Format for value box
-        this.textValue = this.value.toFixed(0);
       }
+
+      // Validate and handle `newValue.state`
+      if (newValue.state == null) {
+        newValue.state = States.Normal; // Provide a default value for state
+      }
+
+      const convertedValue: number = this.negToPortPaths.includes(this.widgetProperties.config.paths['gaugePath'].path)
+        ? convertNegToPortDegree(newValue.data.value)
+        : newValue.data.value;
+
+      // Compound value to displayScale
+      this.value = Math.min(Math.max(convertedValue, 0), 360);
+      // Format for value box
+      this.textValue = this.value.toFixed(0);
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
@@ -151,7 +166,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
             option.colorValueText = this.theme.zoneAlert;
             break;
           default:
-            option.colorValueText = this.theme.contrast;
+            option.colorValueText = this.theme.contrast; // Fallback for unknown or null state
         }
         this.ngGauge.update(option);
       }

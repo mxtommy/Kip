@@ -45,7 +45,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   // Zones support
   private metaSub: Subscription;
-  private state: string = "normal";
+  private state: string = States.Normal;
 
   constructor() {
     super();
@@ -101,11 +101,22 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (!newValue.data) {
-        this.value = 0;
-      } else {
-        this.value = newValue.data.value;
+      if (!newValue || !newValue.data) {
+        newValue = {
+          data: {
+            value: 0,
+            timestamp: new Date(),
+          },
+          state: States.Normal // Default state
+        };
       }
+
+      if (newValue.state == null) {
+        newValue.state = States.Normal; // Provide a default value for state
+      }
+
+      // Compound value to displayScale
+      this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
