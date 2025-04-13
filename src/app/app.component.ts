@@ -94,24 +94,17 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Add keyboard shortcut listener
-    this._uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
+    this._uiEvent.addHotkeyListener(
+      (key, event) => this.handleKeyDown(key, event),
+      { ctrlKey: true, keys: ['arrowright', 'arrowleft'] } // Filter for arrow keys with Ctrl
+    );
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    // Avoid executing shortcuts when an input field is focused
-    if (['INPUT', 'TEXTAREA', 'MAT-SELECT'].includes(document.activeElement.tagName)) return;
-    if (event.ctrlKey && event.ctrlKey) {
-      switch (event.key) {
-        case 'ArrowRight':
-          this.onSwipeRight(event);
-          break;
-        case 'ArrowLeft':
-          this.onSwipeLeft(event);
-          break;
-        default:
-          break;
-      }
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
+    if (key === 'arrowright') {
+      this.onSwipeRight(event);
+    } else if (key === 'arrowleft') {
+      this.onSwipeLeft(event);
     }
   }
 

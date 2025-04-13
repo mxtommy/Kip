@@ -39,35 +39,29 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
+    this.uiEvent.addHotkeyListener(
+      (key, event) => this.handleKeyDown(key, event),
+      { ctrlKey: true, shiftKey: true, keys: ['e', 'f', 'n'] } // Filter for specific keys and modifiers
+    );
   }
 
   ngOnDestroy(): void {
     this.uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));;
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    // Normalize key to lowercase
-    const key = event.key.toLowerCase();
-
-    // Check if Ctrl and Shift are pressed
-    const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey for Mac (Cmd)
-    const isShiftPressed = event.shiftKey;
-
-    if (isCtrlPressed && isShiftPressed) {
-      switch (key) {
-        case 'e':
-          this.onActionItem('layout');
-          break;
-        case 'f':
-          this.onActionItem('toggleFullScreen');
-          break;
-        case 'n':
-          this.onActionItem('nightMode');
-          break;
-        default:
-          break;
-      }
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
+    switch (key) {
+      case 'e':
+        this.onActionItem('layout');
+        break;
+      case 'f':
+        this.onActionItem('toggleFullScreen');
+        break;
+      case 'n':
+        this.onActionItem('nightMode');
+        break;
+      default:
+        break;
     }
   }
 

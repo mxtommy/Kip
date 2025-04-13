@@ -122,7 +122,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     });
 
     this.resizeGridColumns();
-    this._uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
+    this._uiEvent.addHotkeyListener(
+      (key, event) => this.handleKeyDown(key, event),
+      { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
+    );
 
     setTimeout(() => {
       this.loadDashboard(this.dashboard.activeDashboard());
@@ -140,20 +143,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    // Avoid executing shortcuts when an input field is focused
-    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      if (event.ctrlKey && event.ctrlKey) {
-      switch (event.key) {
-        case 'ArrowDown':
-          this.previousDashboard(event);
-          break;
-        case 'ArrowUp':
-          this.nextDashboard(event);
-          break;
-        default:
-          break;
-      }
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
+    if (key === 'arrowdown') {
+      this.previousDashboard(event);
+    } else if (key === 'arrowup') {
+      this.nextDashboard(event);
     }
   }
 
