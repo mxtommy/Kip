@@ -1,0 +1,27 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.widget-config-dialog-content {
+  height: 100%
+}
+
+.display-content {
+  display: block;
+  height: 100%;
+  width: 100%;
+  padding-top: 15px;
+  padding-bottom: 10px;
+}
+
+.warning {
+  color: var(--mat-sys-error-container);
+}
+
+.tab-group-content {
+  // height: calc(100% - 63px);
+  overflow: hidden;
+  width: 100%;
+}

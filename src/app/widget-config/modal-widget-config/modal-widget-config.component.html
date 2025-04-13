@@ -1,9 +1,9 @@
 <form (ngSubmit)="submitConfig()" [formGroup]="formMaster">
   <h6 mat-dialog-title>{{titleDialog}}</h6>
-  <mat-dialog-content>
-    <mat-tab-group>
+  <mat-dialog-content class="widget-config-dialog-content">
+    <mat-tab-group class="tab-group-content">
       <mat-tab label="Display">
-        <config-display-chart-options *ngIf="(widgetConfig.datasetUUID !== undefined)"
+        <config-display-chart-options class="tab-content" *ngIf="(widgetConfig.datasetUUID !== undefined)"
           [displayName]="displayNameToControl"
           [datasetUUID]="datasetUUIDToControl"
           [convertUnitTo]="convertUnitToControl"
@@ -29,8 +29,7 @@
           [color]="colorToControl"
           >
         </config-display-chart-options>
-
-        <div class="tab-content" *ngIf="(widgetConfig.datasetUUID === undefined)">
+        <div class="display-content tab-content" *ngIf="(widgetConfig.datasetUUID === undefined)">
           <div class="widget-options-grid">
             <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.widgetUrl !== undefined)">
               <mat-label>URL</mat-label>
@@ -297,8 +296,6 @@
           <!-- end Gauge stuff-->
         </div>
       </mat-tab>
-
-
 <!-- Boolean Multi Child Control Config Panel -->
       <mat-tab label="Controls" *ngIf="(widgetConfig.multiChildCtrls !== undefined)">
         <div class="tab-content">
