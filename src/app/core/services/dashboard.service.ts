@@ -1,5 +1,5 @@
 import { AppSettingsService } from './app-settings.service';
-import { effect, inject, Injectable, signal, input } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
