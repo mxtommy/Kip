@@ -56,12 +56,12 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
         if (accessible) {
           this.widgetUrl = this._sanitizer.bypassSecurityTrustResourceUrl(url);
         } else {
-          this._app.sendSnackbarNotification("Error: The URL cannot be accessed. Make sure the URL is both valid and points to the same server as KIP.");
+          this._app.sendSnackbarNotification(`Error: The URL ${url} cannot be accessed. Make sure the URL is both valid and points to the same server where KIP was loaded.`);
           this.widgetUrl = null;
         }
       });
     } else {
-      this._app.sendSnackbarNotification("Error: Invalid URL. Please check the URL format.");
+      this._app.sendSnackbarNotification(`Error: Invalid URL ${url}. Please check the URL format.`);
       this.widgetUrl = null;
     }
   }
