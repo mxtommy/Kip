@@ -14,7 +14,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 @Component({
     selector: 'settings-notifications',
     templateUrl: './notifications.component.html',
-    styleUrls: ['./notifications.component.css'],
+    styleUrls: ['./notifications.component.scss'],
     standalone: true,
 
     imports: [

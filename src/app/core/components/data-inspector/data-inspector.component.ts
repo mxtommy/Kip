@@ -16,7 +16,7 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 @Component({
     selector: 'data-inspector',
     templateUrl: './data-inspector.component.html',
-    styleUrls: ['./data-inspector.component.css'],
+    styleUrls: ['./data-inspector.component.scss'],
     standalone: true,
     imports: [ MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgFor, DataBrowserRowComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, KeyValuePipe, PageHeaderComponent]
 })
