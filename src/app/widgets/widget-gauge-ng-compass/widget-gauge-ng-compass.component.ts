@@ -14,10 +14,19 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
-function rgbaToHex(rgba) {
-  let [r, g, b, a = 1] = rgba.match(/\d+(\.\d+)?/g).map(Number);
-  // Convert the alpha from 0-1 to 0-255 then to HEX, default to 255 (fully opaque) if alpha is not provided
+function rgbaToHex(rgba: string) {
+  const match = rgba.match(/(\d+(\.\d+)?|\.\d+)/g);
+  if (!match || match.length < 3) {
+    throw new Error("Invalid RGBA format");
+  }
+
+  // Extract RGBA values
+  let [r, g, b, a = 1] = match.map(Number);
+
+  // Convert alpha from 0-1 to 0-255 and then to HEX
   let alpha = a === 1 ? '' : Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
+
+  // Convert RGB to HEX
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase() + alpha;
 }
 

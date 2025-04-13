@@ -35,7 +35,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
 
   protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
-  protected actionsSidenavOpen = false;
+  protected actionsSidenavOpen = signal<boolean>(false);
   protected notificationsSidenavOpened = signal<boolean>(false);
   protected notificationsVisibility: string = 'hidden';
 
@@ -149,7 +149,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected onSwipeLeft(e: Event): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
-      this.actionsSidenavOpen = true;
+      this.actionsSidenavOpen.set(true);
     }
   }
 

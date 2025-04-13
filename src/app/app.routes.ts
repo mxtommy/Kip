@@ -3,7 +3,6 @@ import { DashboardComponent } from './core/components/dashboard/dashboard.compon
 
 export const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
-  { path: 'dashboard', loadComponent: () => import('./core/components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: 'settings', loadComponent: () => import('./settings/settings/settings.component').then(m => m.AppSettingsComponent) },
   { path: 'help', loadComponent: () => import('./core/components/app-help/app-help.component').then(m => m.AppHelpComponent) },
   { path: 'data', loadComponent: () => import('./core/components/data-inspector/data-inspector.component').then(m => m.DataInspectorComponent) },

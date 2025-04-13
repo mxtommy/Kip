@@ -47,7 +47,7 @@ import 'chartjs-adapter-date-fns';
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
   dialog = inject(MatDialog);
   private appSettingsService = inject(AppSettingsService);
-  private appService = inject(AppService);
+  protected appService = inject(AppService);
   private DataService = inject(DataService);
   private signalKConnectionService = inject(SignalKConnectionService);
   private signalkRequestsService = inject(SignalkRequestsService);
