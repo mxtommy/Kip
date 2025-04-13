@@ -11,7 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
     selector: 'settings-display',
     templateUrl: './display.component.html',
-    styleUrls: ['./display.component.css'],
+    styleUrls: ['./display.component.scss'],
     standalone: true,
     imports: [
         FormsModule,
