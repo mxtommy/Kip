@@ -68,17 +68,18 @@ export class AppSettingsService {
 
       if (serverConfig) {
         console.log("[AppSettings Service] Remote configuration storage enabled");
-        this.checkConfigUpgradeRequired();
+        this.checkConfigUpgradeRequired(false);
         this.activeConfig = serverConfig;
         this.pushSettings();
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
         let localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
+        if (localStorageConfig.app.configVersion !== configVersion) {
+          this.checkConfigUpgradeRequired(true);
+        }
         localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
-//TODO: Fix this
-        this.checkConfigUpgradeRequired();
         this.activeConfig = localStorageConfig;
         this.pushSettings();
       }
@@ -113,9 +114,11 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
-  private checkConfigUpgradeRequired(): void {
-    this.storage.listConfigs(9)
-      .then(async (rootConfigs) => {
+  private checkConfigUpgradeRequired(isLocalStorageConfig: boolean): void {
+    if (isLocalStorageConfig) {
+      this.configUpgrade.set(true); // Set the upgrade flag to true
+    } else {
+      this.storage.listConfigs(9).then(async (rootConfigs) => {
         for (const rootConfig of rootConfigs) {
           try {
             // Fetch the full configuration for each rootConfig
@@ -135,13 +138,14 @@ export class AppSettingsService {
       .catch((error) => {
         console.error("[AppSettings Service] Error fetching configuration data:", error);
       });
+    }
   }
 
   /**
    * Get configuration from local browser storage rather then in
    * memory running config.
    *
-   * @param {string} type Possible choices are: appConfig,  widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
+   * @param {string} type Possible choices are: appConfig, dashboardsConfig, themeConfig, connectionConfig or older v2 if they are present widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
    * @return {*}
    * @memberof AppSettingsService
    */

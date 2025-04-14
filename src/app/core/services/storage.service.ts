@@ -86,6 +86,10 @@ export class StorageService {
    */
   public async listConfigs(forceConfigFileVersion?: number): Promise<Config[]> {
     let serverConfigs: Config[] = [];
+    if (!this.serverEndpoint) {
+      console.warn("[Storage Service] No server endpoint set. Cannot retrieve config list");
+      return null;
+    }
     const url = this.serverEndpoint;
     let globalUrl = url + "global/kip/" + this.configFileVersion + "/?keys=true";
     let userUrl = url + "user/kip/" + this.configFileVersion + "/?keys=true";

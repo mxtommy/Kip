@@ -1,19 +1,22 @@
 import { cloneDeep } from 'lodash-es';
 import { Component, inject } from '@angular/core';
 import { StorageService, Config } from '../../services/storage.service';
-import { IAppConfig, IThemeConfig } from '../../interfaces/app-settings.interfaces';
+import { IAppConfig, IConfig, IThemeConfig } from '../../interfaces/app-settings.interfaces';
 import { v10IConfig, v10IThemeConfig } from './v10-config-interface';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { MatButtonModule } from '@angular/material/button';
 import { AppSettingsService } from '../../services/app-settings.service';
+import { Dashboard } from '../../services/dashboard.service';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'upgrade-config',
-  imports: [MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule],
   templateUrl: './upgrade-config.component.html',
   styleUrl: './upgrade-config.component.scss'
 })
 export class UpgradeConfigComponent {
+  protected dialogRef = inject<MatDialogRef<UpgradeConfigComponent>>(MatDialogRef);
   private readonly fileVersionToUpgrade = 9;
   private readonly configVersionToUpgrade = 10;
   private readonly currentConfigVersion = 11;
@@ -45,46 +48,80 @@ export class UpgradeConfigComponent {
   protected upgrade(): void {
     if (this._storage.initConfig) {
       this._storage.listConfigs(this.fileVersionToUpgrade)
-        .then(async (rootConfigs: Config[]) => {
-          for (const rootConfig of rootConfigs) {
-            const transformedConfig = await this.transformConfig(rootConfig);
+      .then(async (rootConfigs: Config[]) => {
+        for (const rootConfig of rootConfigs) {
+          const transformedConfig = await this.transformConfig(rootConfig);
 
-            // Skip the loop iteration if transformedConfig is null
-            if (!transformedConfig) {
-              continue; // Skip to the next iteration
-            }
-
-            console.log('Transformed Configuration:', transformedConfig);
-
-            if (transformedConfig.scope === 'global') {
-              try {
-                this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.newConfiguration, 'add')
-                this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.oldConfiguration, 'replace', 9);
-                console.log(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
-              } catch {
-                console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}:`);
-              }
-
-            } else {
-              this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.newConfiguration)
-              .then(() => {
-                this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.oldConfiguration, 9);
-                console.log(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
-              })
-              .catch((error) => {
-                console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}:`, error);
-              });
-            }
-
-
+          // Skip the loop iteration if transformedConfig is null
+          if (!transformedConfig) {
+            continue; // Skip to the next iteration
           }
-        })
-        .catch((error) => {
-          console.error('Error fetching configuration data:', error);
-        });
 
-      // this._settings.reloadApp();
+          if (transformedConfig.scope === 'global') {
+            try {
+              this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.newConfiguration, 'add')
+              this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.oldConfiguration, 'replace', 9);
+              console.log(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
+            } catch {
+              console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}`);
+            }
+
+          } else {
+            this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.newConfiguration)
+            .then(() => {
+              this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.oldConfiguration, 9);
+              console.log(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
+            })
+            .catch((error) => {
+              console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}:`, error);
+            });
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching configuration data:', error);
+      });
+
+    } else {
+      const localStorageConfig: v10IConfig = {
+        app: null,
+        widget: null,
+        layout: null,
+        theme: null
+      };
+      localStorageConfig.app =  this._settings.loadConfigFromLocalStorage("appConfig");
+      localStorageConfig.widget = this._settings.loadConfigFromLocalStorage("widgetConfig");
+      localStorageConfig.layout = this._settings.loadConfigFromLocalStorage("layoutConfig");
+      localStorageConfig.theme = this._settings.loadConfigFromLocalStorage("themeConfig");
+
+      // Transform app
+      const transformedApp = this.transformApp(localStorageConfig.app as IAppConfig);
+
+      // Transform theme
+      const transformedTheme = this.transformTheme(localStorageConfig.theme);
+
+      // Transform dashboards and widgets
+      const rootSplits = localStorageConfig.layout?.rootSplits || [];
+      const splitSets = localStorageConfig.layout?.splitSets || [];
+      const widgets = localStorageConfig.widget?.widgets || [];
+
+      const dashboards: Dashboard[] = rootSplits.map((rootSplitUUID: string, i: number) => {
+        const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
+
+        return {
+          id: rootSplitUUID,
+          name: `Dashboard ${i + 1}`,
+          configuration
+        };
+      });
+
+      localStorage.setItem("appConfig", JSON.stringify(transformedApp));
+      localStorage.setItem("dashboardsConfig", JSON.stringify(dashboards));
+      localStorage.setItem("themeConfig", JSON.stringify(transformedTheme));
     }
+    setTimeout(() => {
+      this._settings.reloadApp()
+    }, 1500);
   }
 
   private async transformConfig(rootConfig: Config): Promise<any> {
@@ -105,7 +142,7 @@ export class UpgradeConfigComponent {
     const splitSets = config.layout?.splitSets || [];
     const widgets = config.widget?.widgets || [];
 
-    const dashboards = rootSplits.map((rootSplitUUID: string, i: number) => {
+    const dashboards: Dashboard[] = rootSplits.map((rootSplitUUID: string, i: number) => {
       const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
 
       return {
@@ -168,7 +205,7 @@ export class UpgradeConfigComponent {
     return config;
   };
 
-  private transformApp(app: IAppConfig): any {
+  private transformApp(app: IAppConfig): IAppConfig {
     if (!app) return null;
     app.configVersion = 11; // Update the config version
     app.nightModeBrightness = 0.27;
@@ -267,5 +304,53 @@ export class UpgradeConfigComponent {
   }
 
   protected startFresh(): void {
+    if (this._storage.initConfig) {
+      this._storage.listConfigs(this.fileVersionToUpgrade).then(async (rootConfigs: Config[]) => {
+        for (const rootConfig of rootConfigs) {
+          const oldConfiguration = await this._storage.getConfig(rootConfig.scope, rootConfig.name, this.fileVersionToUpgrade) as unknown as IConfig;
+
+          oldConfiguration.app.configVersion = 0; // Reset the config version to 0
+
+          if (rootConfig.scope === 'global') {
+            try {
+              setTimeout(() => {
+                this._storage.patchGlobal(rootConfig.name, rootConfig.scope, oldConfiguration, 'replace', 9);
+                console.log(`[Retired] Configuration ${rootConfig.scope}/${rootConfig.name} has been patched to version 0.`);
+              }, 750);
+            } catch {
+              console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}:`);
+            }
+
+          } else {
+            try {
+              await this._storage.setConfig(rootConfig.scope, rootConfig.name, oldConfiguration, 9);
+              console.log(`[Retired] Configuration ${rootConfig.scope}/${rootConfig.name} has been patched to version 0.`);
+            } catch {
+                console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}.`);
+            }
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching configuration data:', error);
+      });
+
+    } else {
+      const localStorageConfig: IConfig = {
+        app: null,
+        dashboards: null,
+        theme: null
+      };
+      localStorageConfig.app =  this._settings.loadConfigFromLocalStorage("appConfig");
+      localStorageConfig.theme = this._settings.loadConfigFromLocalStorage("themeConfig");
+      localStorageConfig.app.configVersion = 11;
+      localStorageConfig.app.nightModeBrightness = 0.27;
+      localStorageConfig.theme.themeName = '';
+      localStorage.setItem("appConfig", JSON.stringify(localStorageConfig.app));
+      localStorage.setItem("themeConfig", JSON.stringify(localStorageConfig.theme));
+      localStorage.removeItem("widgetConfig");
+      localStorage.removeItem("layoutConfig");
+    }
+    this.dialogRef.close();
   }
 }
