@@ -52,7 +52,8 @@ export class DashboardService {
   constructor() {
     const dashboards = this._settings.getDashboardConfig();
 
-    if (dashboards.length === 0) {
+    if (!dashboards || dashboards.length === 0) {
+      console.warn('[Dashboard Service] No dashboards found in settings, creating blank dashboard');
       const newBlankDashboard = this.blankDashboard.map(dashboard => ({
           ...dashboard,
           id: UUID.create()
