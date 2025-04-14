@@ -1,3 +1,17 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.page-content {
+  width: 100%;
+  height: calc(100% - 63px);
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+  padding: 0px 24px 10px 24px;
+}
+
 .flex-item-copy {
   flex: 2 1 41%;
   padding: 10px 20px 10px 20px;

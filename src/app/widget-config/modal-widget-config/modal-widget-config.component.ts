@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormsModule, ReactiveFormsModule }    from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialog, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -26,7 +26,7 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
 @Component({
     selector: 'modal-widget-config',
     templateUrl: './modal-widget-config.component.html',
-    styleUrls: ['./modal-widget-config.component.css'],
+    styleUrls: ['./modal-widget-config.component.scss'],
     standalone: true,
     imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, NgIf, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose,
       DisplayDatetimeComponent,
@@ -37,7 +37,6 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     ]
 })
 export class ModalWidgetConfigComponent implements OnInit {
-  private dialog = inject(MatDialog);
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
   private DatasetService = inject(DatasetService);

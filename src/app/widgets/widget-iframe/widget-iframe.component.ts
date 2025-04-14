@@ -1,7 +1,6 @@
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
-import { SafePipe } from '../../core/pipes/safe.pipe';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -13,15 +12,15 @@ import { AppService } from '../../core/services/app-service';
     templateUrl: './widget-iframe.component.html',
     styleUrls: ['./widget-iframe.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, SafePipe]
+    imports: [WidgetHostComponent]
 })
-export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   protected _dashboard = inject(DashboardService);
   private _appSettings = inject(AppSettingsService);
   private _sanitizer = inject(DomSanitizer);
   private _app = inject(AppService);
   protected widgetUrl: SafeResourceUrl | null = null;
-  protected iframe = viewChild<ElementRef<HTMLIFrameElement>>('plainIframe');
+  private iframe = viewChild<ElementRef<HTMLIFrameElement>>('plainIframe');
   private _widgetHost = viewChild(WidgetHostComponent);
 
   constructor() {
@@ -30,18 +29,18 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     this.defaultConfig = {
       widgetUrl: null
     };
+
+    effect(() => {
+      if (this.iframe() && this.iframe()?.nativeElement) {
+        this.iframe().nativeElement.onload = () => this.injectHammerJS();
+      }
+   });
   }
 
   ngOnInit() {
     this.validateConfig();;
     this.validateUrlAccess(this.widgetProperties?.config?.widgetUrl);
     window.addEventListener('message', this.handleIframeGesture);
-  }
-
-  ngAfterViewInit() {
-    if (this.iframe() && this.iframe()?.nativeElement) {
-      this.iframe().nativeElement.onload = () => this.injectHammerJS();
-    }
   }
 
   protected startWidget(): void {
@@ -57,12 +56,12 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
         if (accessible) {
           this.widgetUrl = this._sanitizer.bypassSecurityTrustResourceUrl(url);
         } else {
-          this._app.sendSnackbarNotification("Error: The URL cannot be accessed. Make sure the URL is both valid and points to the same server as KIP.");
+          this._app.sendSnackbarNotification(`Error: The URL ${url} cannot be accessed. Make sure the URL is both valid and points to the same server where KIP was loaded.`);
           this.widgetUrl = null;
         }
       });
     } else {
-      this._app.sendSnackbarNotification("Error: Invalid URL. Please check the URL format.");
+      this._app.sendSnackbarNotification(`Error: Invalid URL ${url}. Please check the URL format.`);
       this.widgetUrl = null;
     }
   }
@@ -72,15 +71,28 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       const parsedUrl = new URL(url);
       return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
     } catch (e) {
+      console.warn('[Embed Widget] isValidUrl: Invalid URL:', url, e);
       return false;
     }
   }
 
   private async checkUrlAccessibility(url: string): Promise<boolean> {
     try {
-      const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+      const parsedUrl = new URL(url);
+
+      // Allow URLs with the same hostname but different ports
+      if (parsedUrl.hostname !== window.location.hostname) {
+        console.warn(`[Embed Widget] checkUrlAccessibility: URL hostname (${parsedUrl.hostname}) does not match app hostname (${window.location.hostname}).`);
+        return false;
+      }
+
+      // Use 'cors' mode to let the browser enforce CORS policies
+      const response = await fetch(url, { method: 'HEAD', mode: 'cors' });
+
+      // If the server allows the request, response.ok will be true
       return response.ok;
     } catch (error) {
+      console.warn('[Embed Widget] checkUrlAccessibility: Error checking URL accessibility:', error);
       return false;
     }
   }
@@ -123,7 +135,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     const iframeDocument = this.iframe().nativeElement.contentDocument;
 
     if (!iframeDocument || !iframeWindow) {
-      console.error('[IFrame Widget] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue, bad or empty widget URL.');
+      console.warn('[IFrame Widget] Iframe contentDocument or contentWindow object is undefined. Possible cross-origin issue, bad or empty widget URL.');
       return;
     }
 
@@ -142,7 +154,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   injectSwipeHandler() {
     const iframeDocument = this.iframe().nativeElement.contentDocument;
     if (!iframeDocument) {
-      console.error('[IFrame Widget] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
+      console.warn('[IFrame Widget] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
       return;
     }
 

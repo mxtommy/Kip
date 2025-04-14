@@ -92,8 +92,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       numDecimal: 1,
       color: 'contrast',
     };
-
-
    }
 
   ngOnInit(): void {
@@ -101,7 +99,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   ngAfterViewInit(): void {
-    this.startWidget();
+    //TODO: Readable
+    // this.startWidget();
   }
 
   protected startWidget(): void {
@@ -125,7 +124,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.startWidget();
+    //TODO: Readable
+    // this.startWidget();
 
   }
 

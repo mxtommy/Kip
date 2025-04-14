@@ -72,9 +72,16 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (newValue.data.value == null) {
-        newValue.data.value = 0;
+      if (!newValue || !newValue.data) {
+        newValue = {
+          data: {
+            value: 0,
+            timestamp: new Date(),
+          },
+          state: "normal" // Default state
+        };
       }
+
       // Compound value to displayScale
       this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
     });

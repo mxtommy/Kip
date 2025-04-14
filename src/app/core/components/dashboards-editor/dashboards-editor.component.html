@@ -1,22 +1,22 @@
 <page-header [pageTitle]="pageTitle" />
-  <div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
-    @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
-      <div class="dashboard-card dashboard-item"
-        cdkDrag
-        cdkDragBoundary=".dashboard-manage"
-        (cdkDragStarted)="dragStart($event)" (cdkDragEnded)="dragEnd($event)"
-        (press)="openBottomSheet(index)"
-        (doubletap)="editDashboard(index)">
-        <span style="display: block; width: 100%;">
-          <div class="item-index">{{index + 1}}</div>
-        </span>
-        <p class="mat-title-large" style="margin-top: 25px;">{{dashboard.name}}</p>
-      </div>
-    }
-    <div class="dashboard-card dashboard-item-add dashboard-add-btn">
-      <button mat-fab (click)="addDashboard()">
-        <mat-icon>add_box</mat-icon>
-      </button>
-      <p style="margin-top: 10px;"><i>Add Dashboard</i></p>
+<div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
+  @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
+    <div class="dashboard-card dashboard-item"
+      cdkDrag
+      cdkDragBoundary=".dashboard-manage"
+      (cdkDragStarted)="dragStart($event)" (cdkDragEnded)="dragEnd($event)"
+      (press)="openBottomSheet(index)"
+      (doubletap)="editDashboard(index)">
+      <span style="display: block; width: 100%;">
+        <div class="item-index">{{index + 1}}</div>
+      </span>
+      <p class="mat-title-large" style="margin-top: 25px;">{{dashboard.name}}</p>
     </div>
+  }
+  <div class="dashboard-card dashboard-item-add dashboard-add-btn">
+    <button mat-fab (click)="addDashboard()">
+      <mat-icon>add_box</mat-icon>
+    </button>
+    <p style="margin-top: 10px;"><i>Add Dashboard</i></p>
   </div>
+</div>

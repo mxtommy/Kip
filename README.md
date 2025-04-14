@@ -146,7 +146,7 @@ Linux, Mac, Pi or Windows dev platform supported
 
 **Apple PWA Icon Generation**
 Use the following tool and command line:
-`npx pwa-asset-generator ./src/svg-templates/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%`
+`npx pwa-asset-generator ./src/svg-templates/icon/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%`
 
 **Share**
 Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.

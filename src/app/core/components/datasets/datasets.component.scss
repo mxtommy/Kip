@@ -1,8 +1,14 @@
-.full-display {
-  width: 100%;
+:host {
+  display: block;
   height: 100%;
-  position: relative;
-  z-index: 101;
+  width: 100%;
+}
+
+.content-area {
+  height: calc(100% - 63px);
+  overflow-y: scroll;
+  width: 100%;
+  scroll-behavior: smooth;
 }
 
 .filter {

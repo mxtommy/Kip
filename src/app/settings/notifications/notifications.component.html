@@ -1,8 +1,6 @@
 <form (ngSubmit)="saveAllSettings()" #notificationsForm="ngForm" id="notificationSetting">
-  <p class="mat-card-subtitle description-text">Notifications are integral to Signal K's data state messaging
-    framework. They are designed to provide operators with important information, enabling
-    them to take appropriate actions. In KIP, notifications are presented as Notifications menu items and
-    accompanied by audio prompts for enhanced user interaction.</p>
+  <p>Manage notification settings, ensuring operators
+    stay informed about critical events.</p>
   <mat-slide-toggle
     name="disableNotifications"
     [(ngModel)]="notificationConfig.disableNotifications"
