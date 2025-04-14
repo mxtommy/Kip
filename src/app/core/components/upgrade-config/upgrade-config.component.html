@@ -1,0 +1,42 @@
+<h2>Instructions and Upgrade Limitations</h2>
+
+<p>The new and old widget layout engines are fundamentally different. As a result, migrating the configuration will produce the following:</p>
+<ul>
+  <li>All KIP configuration settings will be migrated.</li>
+  <li>Each v2 Page layout will be migrated to a v3 Dashboard.</li>
+  <li>All widgets and their configurations will be migrated and visible in their corresponding v3 Dashboard.</li>
+  <li>
+    <strong>Note:</strong> Widget positions, order, and sizes <strong>WILL BE LOST</strong>. Dashboards will contain small widgets that can be repositioned and resized manually.
+  </li>
+</ul>
+
+<p>To upgrade your configuration, please follow these steps:</p>
+<ol>
+  <li>
+    As a safety measure, if you are using Signal K authentication, manually back up your configuration. Make a copy of the <code>9.0.0.json</code> files found on the Signal K server in the following folders:
+    <ul>
+      <li><code>~/.signalk/applicationData/users/(username)/kip/</code></li>
+      <li><code>~/.signalk/applicationData/global/kip/</code></li>
+    </ul>
+  </li>
+  <li>Click the <strong>Upgrade</strong> button below.</li>
+  <li>Once the upgrade is complete, KIP will restart and display the migrated dashboards.</li>
+  <li>
+    Swipe left, or press <code>Shift + Ctrl + Left Arrow</code> to open the Actions menu. Tap/Click on <strong>Help</strong> and read "The Basics" and "Dashboards and Layout." We promise, it's a quick read.
+  </li>
+  <li>Reposition and resize your widgets as needed.</li>
+  <li>Once satisfied, proceed to deleting the <code>9.0.0.json</code> configuration files located in the previously mentioned folders. They are not needed any more.</li>
+  <li>
+    If you need support, join the <a href="https://discord.gg/AMDYT2DQga" target="_blank">Signal K #kip Discord channel</a>.
+  </li>
+  <li>Enjoy the new features and improvements!</li>
+</ol>
+
+<p>
+  If you prefer not to upgrade your configuration, you <strong>MUST MANUALLY DELETE</strong> the <code>9.0.0.json</code> files from the previously mentioned server folders.
+</p>
+
+<div class="button-group">
+  <button mat-flat-button (click)="upgrade()">Upgrade</button>
+  <button mat-flat-button (click)="startFresh()" style="margin-left: 20px;">Start Fresh</button>
+</div>

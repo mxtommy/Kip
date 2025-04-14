@@ -109,6 +109,11 @@ export class AppNetworkInitService implements OnDestroy {
       this.setLocalStorageConfig();
       console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
     }
+    if (this.config.configVersion == 10) {
+      this.config.configVersion = 11;
+      this.setLocalStorageConfig();
+      console.log(`[AppInit Network Service] Upgrading Connection version from 10 to 11`);
+    }
   }
 
   private preloadFonts (): void {

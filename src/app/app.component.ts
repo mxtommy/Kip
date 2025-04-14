@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -15,6 +15,7 @@ import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
+import { DialogService } from './core/services/dialog.service';
 
 
 @Component({
@@ -30,6 +31,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private _app = inject(AppService);
   private _dashboard = inject(DashboardService);
   private _uiEvent = inject(uiEventService);
+  private _dialog = inject(DialogService);
   public appSettingsService = inject(AppSettingsService);
   public authenticationService = inject(AuthenticationService);
   public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
@@ -44,6 +46,20 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private themeNameSub: Subscription;
   private appNotificationSub: Subscription;
   private connectionStatusSub: Subscription;
+
+  constructor() {
+    effect(() => {
+      if (this.appSettingsService.configUpgrade()) {
+        this._dialog.openFrameDialog({
+          title: 'Configuration Upgrade',
+          component: 'upgrade-config',
+        }, true).subscribe(data => {
+          if (!data) {return} //clicked cancel
+
+        });
+      }
+    });
+  }
 
   ngOnInit() {
     // Connection Status Notification sub
