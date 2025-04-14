@@ -146,12 +146,6 @@ export class uiEventService {
     const wrappedCallback: EventListener = (event: Event) => {
       if (event instanceof KeyboardEvent) {
         const normalizedKey = event.key.toLowerCase(); // Normalize key to lowercase
-
-        //TODO: REmove debug
-        if (!event.key) {
-          console.error("*** KIP ********** COPY THIS:", event);
-        }
-
         // Apply optional filters
         if (options) {
           if (options.keys && !options.keys.includes(normalizedKey)) {

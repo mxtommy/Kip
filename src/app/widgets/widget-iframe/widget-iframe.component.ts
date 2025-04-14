@@ -71,7 +71,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       const parsedUrl = new URL(url);
       return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
     } catch (e) {
-      console.error('[Embed Widget] isValidUrl: Invalid URL:', url, e);
+      console.warn('[Embed Widget] isValidUrl: Invalid URL:', url, e);
       return false;
     }
   }
@@ -92,7 +92,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       // If the server allows the request, response.ok will be true
       return response.ok;
     } catch (error) {
-      console.error('[Embed Widget] checkUrlAccessibility: Error checking URL accessibility:', error);
+      console.warn('[Embed Widget] checkUrlAccessibility: Error checking URL accessibility:', error);
       return false;
     }
   }
@@ -135,7 +135,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     const iframeDocument = this.iframe().nativeElement.contentDocument;
 
     if (!iframeDocument || !iframeWindow) {
-      console.error('[IFrame Widget] Iframe contentDocument or contentWindow object is undefined. Possible cross-origin issue, bad or empty widget URL.');
+      console.warn('[IFrame Widget] Iframe contentDocument or contentWindow object is undefined. Possible cross-origin issue, bad or empty widget URL.');
       return;
     }
 
@@ -154,7 +154,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   injectSwipeHandler() {
     const iframeDocument = this.iframe().nativeElement.contentDocument;
     if (!iframeDocument) {
-      console.error('[IFrame Widget] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
+      console.warn('[IFrame Widget] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
       return;
     }
 
