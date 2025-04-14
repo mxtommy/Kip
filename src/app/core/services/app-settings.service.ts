@@ -124,8 +124,8 @@ export class AppSettingsService {
             // Check if the version is 10
             if (fullConfig.app?.configVersion === 10) {
               this.configUpgrade.set(true); // Set the upgrade flag to true
-              console.log(`[AppSettings Service] Configuration upgrade required for version 9.`);
-              break; // Exit the loop once a version 9 config is found
+              console.log(`[AppSettings Service] Configuration upgrade required for version 10.`);
+              break; // Exit the loop once a version 10 config is found
             }
           } catch (error) {
             console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);

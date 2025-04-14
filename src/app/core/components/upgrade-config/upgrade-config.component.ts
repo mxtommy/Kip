@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash-es';
 import { Component, inject } from '@angular/core';
 import { StorageService, Config } from '../../services/storage.service';
 import { IAppConfig, IThemeConfig } from '../../interfaces/app-settings.interfaces';
-import { v10IAppConfig, v10IConfig, v10IThemeConfig } from './v10-config-interface';
+import { v10IConfig, v10IThemeConfig } from './v10-config-interface';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { MatButtonModule } from '@angular/material/button';
 import { AppSettingsService } from '../../services/app-settings.service';
@@ -56,20 +56,34 @@ export class UpgradeConfigComponent {
 
             console.log('Transformed Configuration:', transformedConfig);
 
-            this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.newConfiguration)
+            if (transformedConfig.scope === 'global') {
+              try {
+                this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.newConfiguration, 'add')
+                this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.oldConfiguration, 'replace', 9);
+                console.log(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
+              } catch {
+                console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}:`);
+              }
+
+            } else {
+              this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.newConfiguration)
               .then(() => {
-                this._storage.patchConfig('IAppConfig', transformedConfig.oldConfiguration, 9);
-                console.log(`[Upgrade Component] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
-                this._settings.reloadApp();
+                this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.oldConfiguration, 9);
+                console.log(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} has been upgraded to version ${this.currentConfigVersion} and saved. Old configuration has been patched to version 0.`);
               })
               .catch((error) => {
-                console.error(`[Upgrade Component] Error saving configuration for ${rootConfig.name}:`, error);
+                console.error(`[Upgrade] Error saving configuration for ${rootConfig.name}:`, error);
               });
+            }
+
+
           }
         })
         .catch((error) => {
           console.error('Error fetching configuration data:', error);
         });
+
+      // this._settings.reloadApp();
     }
   }
 
@@ -101,8 +115,8 @@ export class UpgradeConfigComponent {
       };
     });
 
-    const oldConf: v10IAppConfig = cloneDeep(config.app);
-    oldConf.configVersion = 0; // Reset the config version to 0
+    const oldConf: v10IConfig = cloneDeep(config);
+    oldConf.app.configVersion = 0; // Reset the config version to 0
 
     return {
       scope: rootConfig.scope,
@@ -112,9 +126,7 @@ export class UpgradeConfigComponent {
         theme: transformedTheme,
         dashboards: dashboards
       },
-      oldConfiguration: {
-        app: oldConf
-      }
+      oldConfiguration: oldConf
     };
   }
 
@@ -255,6 +267,5 @@ export class UpgradeConfigComponent {
   }
 
   protected startFresh(): void {
-
   }
 }
