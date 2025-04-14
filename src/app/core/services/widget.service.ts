@@ -152,8 +152,8 @@ export class WidgetService {
       componentClassName: 'WidgetRaceTimerComponent',
     },
     {
-      name: 'Embed Webpage',
-      description: 'Use this widget to embed external web based applications, such as Grafana or Node-RED, in your dashboard for a seamless integration.',
+      name: 'Embed Webpage Viewer',
+      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not supported.',
       icon: 'embedWidget',
       category: 'Components',
       selector: 'widget-iframe',
