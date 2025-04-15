@@ -2,7 +2,7 @@ import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, timer, lastValueFrom, Subscription } from 'rxjs';
-import { filter, map, switchMap } from "rxjs/operators";
+import { filter, map, switchMap, distinctUntilChanged } from "rxjs/operators";
 
 export interface IAuthorizationToken {
   expiry: number;
@@ -29,6 +29,7 @@ export class AuthenticationService implements OnDestroy {
   public authToken$ = this._authToken$.asObservable();
   private connectionEndpointSubscription: Subscription = null;
   private authTokenSubscription: Subscription = null;
+  private isRenewingToken = false; // Prevent overlapping renewals
 
   // Network connection
   private loginUrl = null;
@@ -57,33 +58,22 @@ export class AuthenticationService implements OnDestroy {
         console.log('[Authentication Service] Deleting user session token');
         localStorage.removeItem('authorization_token');
       }
-   }
+    }
 
     // Token Subject subscription to handle token expiration and renewal
     this.authTokenSubscription = this._authToken$.pipe(
-      filter((token: IAuthorizationToken) => (!!token && token.expiry !== null)),
-        map((token: IAuthorizationToken) => token.expiry),
-        switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry, tokenRenewalBuffer))),
-      )
-      .subscribe(() => {
-        let token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
-        if (token.isDeviceAccessToken) {
-          console.warn('[Authentication Service] Device Access Token expired. Manually renew token using SignalK Connection Tab');
-        } else {
-          if (this.isTokenExpired(token.expiry)) {
-            console.log('[Authentication Service] User session Token expired');
-          } else {
-            let connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
-            console.log('[Authentication Service] User session Token expires soon. Renewing token.');
-            console.log("[Authentication Service] \nToken Expiry: " + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer));
-            this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
-            .catch( (error: HttpErrorResponse) => {
-              console.error("[AppInit Service] Token renewal failure. Server returned: " + JSON.stringify(error.error));
-            });
-          }
-        }
-      }
-    );
+      filter((token: IAuthorizationToken) => !!token && token.expiry !== null), // Ensure token and expiry exist
+      distinctUntilChanged((prev, curr) => prev.expiry === curr.expiry), // Only react to changes in the token
+      map((token: IAuthorizationToken) => {
+        const expirationDate = this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer);
+        const duration = expirationDate.getTime() - Date.now(); // Calculate duration in milliseconds
+        console.log(`[Authentication Service] Token refresh timer set for ${duration} ms (Token Expiry: ${expirationDate.toISOString()})`);
+        return Math.max(duration, 0); // Ensure duration is not negative
+      }),
+      switchMap((duration: number) => timer(duration)) // Set timer for the calculated duration
+    ).subscribe(() => {
+      this.handleTokenRenewal();
+    });
 
     // Endpoint connection observer
     this.connectionEndpointSubscription =  this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
@@ -94,6 +84,45 @@ export class AuthenticationService implements OnDestroy {
         this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
       }
     });
+  }
+
+  private handleTokenRenewal(): void {
+    if (this.isRenewingToken) {
+      console.warn('[Authentication Service] Token renewal already in progress.');
+      return;
+    }
+
+    this.isRenewingToken = true;
+
+    const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
+    if (!token) {
+      console.warn('[Authentication Service] No token found in local storage. Cannot renew.');
+      this.isRenewingToken = false;
+      return;
+    }
+
+    if (token.isDeviceAccessToken) {
+      console.warn('[Authentication Service] Device Access Token expired. Manual renewal required.');
+      this.isRenewingToken = false;
+    } else {
+      if (this.isTokenExpired(token.expiry)) {
+        console.log('[Authentication Service] User session Token expired. Cannot renew.');
+        this.isRenewingToken = false;
+      } else {
+        console.log('[Authentication Service] User session Token expires soon. Renewing token...');
+        const connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
+        this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
+          .then(() => {
+            console.log('[Authentication Service] Token successfully renewed.');
+          })
+          .catch((error: HttpErrorResponse) => {
+            console.error('[Authentication Service] Token renewal failed. Server returned:', error.error);
+          })
+          .finally(() => {
+            this.isRenewingToken = false;
+          });
+      }
+    }
   }
 
   /**
