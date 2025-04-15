@@ -7,7 +7,7 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs id="defs9" />
-  <g id="disabled" transform="translate(0,35)" (pointerup)="toggle(true)">
+  <g id="disabled" transform="translate(0,35)" (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="onPointerUp($event, true)">
     <rect
        width="180"
        height="35"
@@ -43,7 +43,7 @@
         style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
     </g>
   </g>
-  <g id="enabled" (pointerup)="toggle(false)">
+  <g id="enabled" (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="onPointerUp($event, false)">
     <rect
       width="180"
       height="35"

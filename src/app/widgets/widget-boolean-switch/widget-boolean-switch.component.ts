@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -12,6 +12,7 @@ import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { NgFor, NgIf } from '@angular/common';
+import { DashboardService } from '../../core/services/dashboard.service';
 
 
 
@@ -22,7 +23,8 @@ import { NgFor, NgIf } from '@angular/common';
     standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
-export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+  protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
 
@@ -39,6 +41,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   private nbCtrl: number = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0};
+  private readonly fontString = "Roboto";
 
   constructor() {
       super();
@@ -58,6 +61,9 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   ngOnInit(): void {
     this.validateConfig();
+  }
+
+  ngAfterViewInit(): void {
     this.startWidget();
   }
 
@@ -105,9 +111,9 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   onResized(event: ResizeObserverEntry): void {
-    let calcH: number = event.contentRect.height / this.nbCtrl; // divide by number of instantiated widget
-    let ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
-    let h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
+    const calcH: number = event.contentRect.height / this.nbCtrl; // divide by number of instantiated widget
+    const ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
+    const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
     this.ctrlDimensions = { width: event.contentRect.width, height: h};
     this.resizeWidget();
   }
@@ -152,40 +158,54 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
       this.canvasLabelElement.nativeElement.width = Math.floor(rect.width);
       this.canvasLabelElement.nativeElement.height = Math.floor(rect.height);
       this.currentValueLength = 0; // will force resetting the font size
-      this.updateBtnCanvas();
+
+      if (this.canvasLabelCtx) {
+        this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+        this.drawTitle();
+      }
     }
   }
 
-  private updateBtnCanvas() {
-    if (this.canvasLabelCtx) {
-      this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-      this.drawTitle();
-    }
-  }
-
+  // Draw the title on the canvas
+  // this is called when the widget is resized, and when the title changes
   drawTitle() {
-    const maxTextWidth = Math.floor(this.canvasLabelElement.nativeElement.width * 0.935);
-    const maxTextHeight = Math.floor(this.canvasLabelElement.nativeElement.height * 0.86 );
-    // set font small and make bigger until we hit a max.
-    if (this.widgetProperties.config.displayName === null) { return; }
-    let fontSize = 1;
+    if (this.widgetProperties.config.displayName === null) { return }
+    const maxTextWidth = Math.floor(this.canvasLabelElement.nativeElement.width * 0.94);
+    const maxTextHeight = Math.floor(this.canvasLabelElement.nativeElement.height * 0.1 );
+    const fontSize = this.calculateOptimalFontSize(this.widgetProperties.config.displayName, "normal", maxTextWidth, maxTextHeight, this.canvasLabelCtx);
 
     this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto'; // need to init it, so we do loop at least once :)
-    while ( (this.canvasLabelCtx.measureText(this.widgetProperties.config.displayName).width < maxTextWidth) && (fontSize < maxTextHeight)) {
-        fontSize++;
-        this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto';
-    }
-
+    this.canvasLabelCtx.font = `normal ${fontSize}px ${this.fontString}`;
     this.canvasLabelCtx.textAlign = 'left';
     this.canvasLabelCtx.textBaseline = 'top';
     this.canvasLabelCtx.fillStyle = this.labelColor;
     this.canvasLabelCtx.fillText(
       this.widgetProperties.config.displayName,
-      this.canvasLabelElement.nativeElement.width * 0.03,
-      this.canvasLabelElement.nativeElement.height * 0.25,
+      Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
+      Math.floor(this.canvasLabelElement.nativeElement.height * 0.03),
       maxTextWidth
     );
 
+  }
+
+  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
+    let minFontSize = 1;
+    let maxFontSize = maxHeight;
+    let fontSize = maxFontSize;
+
+    while (minFontSize <= maxFontSize) {
+        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
+        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
+        const measure = ctx.measureText(text).width;
+
+        if (measure > maxWidth) {
+            maxFontSize = fontSize - 1;
+        } else {
+            minFontSize = fontSize + 1;
+        }
+    }
+
+    return maxFontSize;
   }
 
   private getColors(color: string): void {

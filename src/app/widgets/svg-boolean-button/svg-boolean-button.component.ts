@@ -25,6 +25,9 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
 
   private timeoutHandler = null;
   private pressed: boolean = false;
+  private isSwiping: boolean = false;
+  private pointerStartX: number = 0;
+  private pointerStartY: number = 0;
 
   public viewBox: string = this.toggleOff;
   public labelColorEnabled = null;
@@ -46,25 +49,58 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
     }
   }
 
-  public handleClickDown() {
-      // momentary mode
-      this.pressed = true;
-      const state: IDynamicControl = cloneDeep(this.data());
-      state.value = this.pressed;
+  public handleClickDown(event: PointerEvent): void {
+    this.isSwiping = false;
+    this.pointerStartX = event.clientX;
+    this.pointerStartY = event.clientY;
 
-      // send it once to start
-      this.toggleClick.emit(state);
+    // Wait 250ms before emitting the state
+    this.timeoutHandler = setTimeout(() => {
+      if (!this.isSwiping) {
+        // Momentary mode
+        this.pressed = true;
 
-      //send it again every 100ms
-      this.timeoutHandler = setInterval(() => {
+        const state: IDynamicControl = cloneDeep(this.data());
+        state.value = this.pressed;
+
+        // Start emitting the state every 100ms
         this.toggleClick.emit(state);
-      }, 100);
+        this.timeoutHandler = setInterval(() => {
+          this.toggleClick.emit(state);
+        }, 100);
+      }
+    }, 200);
   }
 
-  public handleClickUp() {
+  public handlePointerMove(event: PointerEvent): void {
+    const deltaX = Math.abs(event.clientX - this.pointerStartX);
+    const deltaY = Math.abs(event.clientY - this.pointerStartY);
+
+    // Mark as swiping if movement exceeds a threshold
+    if (deltaX > 30 || deltaY > 30) {
+      this.isSwiping = true;
+
+      // Cancel the timeout if swiping is detected
+      if (this.timeoutHandler) {
+        clearTimeout(this.timeoutHandler);
+        this.timeoutHandler = null;
+      }
+    }
+  }
+
+  public handleClickUp(): void {
+    if (this.isSwiping) {
+      // Ignore pointerup if it was a swipe
+      this.isSwiping = false;
+      return;
+    }
+
     this.pressed = false;
+
+    // Clear the interval if it was set
     if (this.timeoutHandler) {
       clearInterval(this.timeoutHandler);
+      this.timeoutHandler = null;
     }
   }
 

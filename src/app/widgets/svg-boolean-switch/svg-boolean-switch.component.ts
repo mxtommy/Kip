@@ -22,6 +22,9 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   private toggleOn: string = "0 0 180 35";
   private ctrlState: boolean = null;
   private oldTheme: ITheme = null;
+  private isSwiping: boolean = false;
+  private pointerStartX: number = 0;
+  private pointerStartY: number = 0;
 
   public viewBox: string = this.toggleOff;
   public labelColor = null;
@@ -46,6 +49,32 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
     }
   }
 
+  public onPointerDown(event: PointerEvent): void {
+    this.isSwiping = false;
+    this.pointerStartX = event.clientX;
+    this.pointerStartY = event.clientY;
+  }
+
+  public onPointerMove(event: PointerEvent): void {
+    const deltaX = Math.abs(event.clientX - this.pointerStartX);
+    const deltaY = Math.abs(event.clientY - this.pointerStartY);
+
+    // Mark as swiping if movement exceeds a threshold
+    if (deltaX > 30 || deltaY > 30) {
+      this.isSwiping = true;
+    }
+  }
+
+  public onPointerUp(event: PointerEvent, state: boolean): void {
+    if (this.isSwiping) {
+      // Ignore pointerup if it was a swipe
+      this.isSwiping = false;
+      return;
+    }
+
+    // Handle the toggle action for a tap
+    this.toggle(state);
+  }
 
   public toggle(state: boolean): void {
     const data = this.data();
