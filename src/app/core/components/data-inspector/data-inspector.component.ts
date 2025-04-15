@@ -37,7 +37,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     this.filterSubject.pipe(
-      debounceTime(3000)
+      debounceTime(500)
     ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(filterValue => {
       this.tableData.filter = filterValue.trim().toLowerCase();
       if (this.tableData.paginator) {
