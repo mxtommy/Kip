@@ -88,12 +88,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
         console.warn(`[Embed Widget] checkUrlAccessibility: URL hostname (${parsedUrl.hostname}) does not match app hostname (${window.location.hostname}).`);
         return false;
       }
-
-      // Use 'cors' mode to let the browser enforce CORS policies
-      const response = await fetch(url, { method: 'HEAD', mode: 'cors' });
-
-      // If the server allows the request, response.ok will be true
-      return response.ok;
+      return true;
     } catch (error) {
       console.warn('[Embed Widget] checkUrlAccessibility: Error checking URL accessibility:', error);
       return false;
