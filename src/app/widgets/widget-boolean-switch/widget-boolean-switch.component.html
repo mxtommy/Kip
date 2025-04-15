@@ -22,4 +22,8 @@
       </app-svg-boolean-light>
     </ng-container>
   </div>
+  @if (!dashboard.isDashboardStatic()) {
+    <div class="widgetOverlay">
+    </div>
+  }
 </widget-host>
