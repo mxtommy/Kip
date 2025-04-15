@@ -1,7 +1,8 @@
 <form (ngSubmit)="saveAllSettings()" #displayForm="ngForm" id="displaySetting">
   <p>Customize display settings to enhance visibility and adapt to different
      lighting conditions.</p>
-  <mat-checkbox class="full-width" (change)="isAutoNightModeSupported($event)"
+  <mat-checkbox class="full-width"
+    (change)="isAutoNightModeSupported($event)"
     name="autoNightMode">
     Automatically activate Day and Night Modes based on sun phases.
   </mat-checkbox>

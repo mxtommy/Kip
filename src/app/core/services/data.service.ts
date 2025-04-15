@@ -403,7 +403,6 @@ export class DataService implements OnDestroy {
 
   public stopSkDataFullTree(): void {
     this._isSkDataFullTreeActive = false;
-    this._skDataSubject$.next(null);
   }
 
   private setSelfUrn(value: string) {

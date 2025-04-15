@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewEncapsulation, input, inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
-import { DataService } from '../../services/data.service';
 import { UnitsService } from '../../services/units.service';
 import { MatCell } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,33 +19,31 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
     imports: [MatCell, MatButtonModule]
 })
 export class DataBrowserRowComponent implements OnInit {
-  private unitsService = inject(UnitsService);
-  dialog = inject(MatDialog);
-
-
-  readonly path = input<string>(undefined);
+  private _units = inject(UnitsService);
+  private _dialog = inject(MatDialog);
+  readonly path = input.required<string>();
   readonly source = input<string>(undefined);
   readonly pathValue = input<any>(undefined);
+  readonly type = input.required<string>();
 
   units = null;
   selectedUnit: string = "unitless"
 
   ngOnInit() {
-    this.units = this.unitsService.getConversionsForPath(this.path());
+    this.units = this._units.getConversionsForPath(this.path());
     this.selectedUnit = this.units.base;
   }
 
-  convertValue(value: any) {
-    if (typeof(value) != "number") {
-      return value; //is a string or bool or ??
+  protected convertValue(value: any, type: string): any {
+    if (type === 'number')
+      return this._units.convertToUnit(this.selectedUnit, value);
+    else {
+      return value;
     }
-    let converted = this.unitsService.convertToUnit(this.selectedUnit, value);
-
-    return converted;
   }
 
   openDialog(): void {
-    const dialogRef = this.dialog.open(DialogUnitSelect, {
+    const dialogRef = this._dialog.open(DialogUnitSelect, {
       data: {selectedUnit: this.selectedUnit, units: this.units}
     });
 

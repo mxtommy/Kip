@@ -50,6 +50,7 @@ export class SettingsDisplayComponent implements OnInit {
   }
 
   protected isAutoNightModeSupported(e: MatCheckboxChange): void {
+    this.displayForm().form.markAsDirty();
     if (e.checked) {
       this._app.validateAutoNightModeSupported();
     }

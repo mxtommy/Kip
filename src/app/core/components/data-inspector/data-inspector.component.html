@@ -1,42 +1,36 @@
 <page-header [pageTitle]="pageTitle" />
-<div class="page-content-wrapper content-area" (window:resize)="onResize($event)">
+<div class="data-inspector-container">
   <mat-form-field class="filter-field">
     <mat-label>Filter</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="self." #input>
   </mat-form-field>
 
+  <mat-table class="table-content-area mat-elevation-z8" [dataSource]="tableData" [trackBy]="trackByPath" matSort matSortActive="path" matSortDirection="asc">
+    <!-- Path Column -->
+    <ng-container matColumnDef="path">
+      <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header> Path </mat-header-cell>
+      <mat-cell class="pathCell row-cell" *matCellDef="let element"> {{element.path}} </mat-cell>
+    </ng-container>
+    <!-- Source/value Column -->
+    <ng-container matColumnDef="defaultSource">
+      <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source </mat-header-cell>
+      <mat-cell class="dataCell row-cell" *matCellDef="let element">
+        <div class="flex-container">
+          @for (item of element.sources | keyvalue; track item.key) {
+            <data-browser-row class="source-sub-row" [path]="element.path" [source]="getSourceKey(item)" [pathValue]="getSourceValue(item)" [type]="element.type"></data-browser-row>
+          }
+        </div>
+      </mat-cell>
+    </ng-container>
 
-  <div class="mat-elevation-z8 full-width table-container">
-    <mat-table class="full-display" [dataSource]="tableData" [trackBy]="trackByPath" matSort matSortActive="path" matSortDirection="asc">
+    <!-- Table headers -->
+    <mat-header-row class="headerRow" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+    <mat-row class="table-row" *matRowDef="let row; columns: displayedColumns;"></mat-row>
 
-      <!-- Path Column -->
-      <ng-container matColumnDef="path">
-        <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header> Path </mat-header-cell>
-        <mat-cell class="pathCell" *matCellDef="let element"> {{element.path}} </mat-cell>
-      </ng-container>
-
-      <!-- Source/value Column -->
-      <ng-container matColumnDef="defaultSource">
-        <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source / Value</mat-header-cell>
-        <mat-cell class="dataCell" *matCellDef="let element">
-          <div style="width: 100%;" *ngFor="let item of element.sources | keyvalue; trackBy: trackBySource">
-            <data-browser-row class="flex-container" [path]="element.path" [source]="getSourceKey(item)" [pathValue]="getSourceValue(item)"></data-browser-row>
-          </div>
-        </mat-cell>
-     </ng-container>
-
-      <!-- Table headers -->
-      <mat-header-row class="headerRow" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-      <mat-row class="cellRow" *matRowDef="let row; columns: displayedColumns;"></mat-row>
-
-      <!-- Row shown when there is no matching data. -->
-      <tr class="mat-row" *matNoDataRow>
-        <td class="mat-cell" colspan="4">No data matching the filter "{{input.value}}"</td>
-      </tr>
-    </mat-table>
-  </div>
-  <div class="paginator">
-    <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
-  </div>
+    <!-- Row shown when there is no matching data. -->
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell" colspan="4">No data matching the filter "{{input.value}}"</td>
+    </tr>
+  </mat-table>
+  <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 100]" class="paginator"></mat-paginator>
 </div>
-
