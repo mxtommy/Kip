@@ -7,7 +7,7 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs id="defs9" />
-  <g (mouseup)="handleClickUp()" (mouseleave)="handleClickUp()" (mousedown)="handleClickDown()">
+  <g (pointerup)="handleClickUp()" (pointerleave)="handleClickUp()" (pointerdown)="handleClickDown()">
     <g id="disabled" transform="translate(0,35)"
         >
       <rect
