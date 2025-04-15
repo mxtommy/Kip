@@ -7,9 +7,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs id="defs9" />
-  <g (pointerup)="handleClickUp()" (pointerleave)="handleClickUp()" (pointerdown)="handleClickDown()">
-    <g id="disabled" transform="translate(0,35)"
-        >
+  <g (pointerup)="handleClickUp()" (pointerleave)="handleClickUp()" (pointerdown)="handleClickDown($event)" (pointermove)="handlePointerMove($event)">
+    <g id="disabled" transform="translate(0,35)">
       <rect
         id="clickRecDisabled"
         width="180"
@@ -36,7 +35,7 @@
         </text>
       </svg>
     </g>
-    <g id="enabled" >
+    <g id="enabled">
       <rect
         width="180"
         height="35"
