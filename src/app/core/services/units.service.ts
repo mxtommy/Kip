@@ -493,12 +493,18 @@ export class UnitsService implements OnDestroy {
     "Days": Qty.swiftConverter('s', 'days'),
     "HH:MM:SS": function(v) {
       v = parseInt(v, 10);
-      if (v < 0) { v = v *-1} // always positive
+      const isNegative = v < 0; // Check if the value is negative
+      v = Math.abs(v); // Use the absolute value for calculations
 
       let h = Math.floor(v / 3600);
       let m = Math.floor(v % 3600 / 60);
       let s = Math.floor(v % 3600 % 60);
-      return ('0' + h).slice(-2) + ":" + ('0' + m).slice(-2) + ":" + ('0' + s).slice(-2);
+
+      // Add a negative sign if the original value was negative
+      return (isNegative ? '-' : '') +
+             ('0' + h).slice(-2) + ":" +
+             ('0' + m).slice(-2) + ":" +
+             ('0' + s).slice(-2);
     },
 //  angularVelocity
     "rad/s": function(v) { return v; },
