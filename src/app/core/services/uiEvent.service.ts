@@ -26,7 +26,7 @@ export class uiEventService {
       });
     } else {
       this.fullscreenSupported.set(false);
-      console.warn('[Actions Menu] Fullscreen mode is not supported by this device/browser.');
+      console.log('[Actions Menu] Fullscreen mode is not supported by device/browser.');
     }
 
     this.checkNoSleepSupport();
@@ -61,7 +61,7 @@ export class uiEventService {
         this.noSleep.disable();
       }
       this.noSleepStatus.set(!this.noSleepStatus());
-      console.log('[Actions Menu] NoSleep:', this.noSleepStatus());
+      console.log('[Actions Menu] NoSleep active:', this.noSleepStatus());
     }
   }
 
@@ -79,7 +79,7 @@ export class uiEventService {
       this.fullscreenStatus.set(!this.fullscreenStatus());
     } else {
       this.fullscreenSupported.set(false);
-      console.warn('[Actions Menu] Fullscreen mode is not supported by this browser.');
+      console.log('[Actions Menu] Fullscreen mode is not supported by this browser.');
     }
   }
 
