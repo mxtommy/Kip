@@ -24,49 +24,33 @@
           <td>Swipe right</td>
           <td>Shift + Ctrl + Left Arrow</td>
         </tr>
-        <tr>
-          <td>Toggle Fullscreen</td>
-          <td>N/A</td>
-          <td>Shift + Ctrl + f</td>
-        </tr>
-        <tr>
-          <td>Toggle Night mode</td>
-          <td>N/A</td>
-          <td>Shift + Ctrl + n</td>
-        </tr>
-        <tr>
-          <td>Toggle Dashboard edit mode</td>
-          <td>N/A</td>
-          <td>Shift + Ctrl + e</td>
-        </tr>
       </table>
-      <br />
       <h3>Load Demonstration Dashboards</h3>
       <p>
-        Try out the sample Dashboard with simulated data from demo.signalk.org
-        (<i>internet connection is required to receive data</i>).
+        Try the sample Dashboard with simulated data from demo.signalk.org
+        (<i>internet required to receive data</i>).
         <br/>
-        <button mat-raised-button (click)="loadDemoConfig()">Load Demo</button>
+        <button mat-raised-button style="margin-left: 15px;" (click)="loadDemoConfig()">Load Demo</button>
       </p>
       <h3>Create Your Own Layout</h3>
       <p>
         First, configure Signal K server authentication (<i>a pre-existing Signal K
-          server user/password is required</i>). Swipe left to open the Actions menu, toggle
-          Login to server switch enter you pre-existing Signal K server credentials.
+        server user/password is required</i>). Swipe left to open the Actions menu,
+        hit Settings, toggle Login to server and enter you pre-existing Signal K credentials.
       </p>
       <p>
-        Dashboards (individual layout pages) are "Locked" by default. This is to prevent accidental modifications.
-        Edit the dashboard by swiping left to open the Actions menu and hit the bottom
-        unlock button. You can later add and manage dashboards using the Dashboards option
-        from the Actions menu.
+        Dashboards are "Locked" by default to prevent accidental modifications.
+        To edit dashboard a, swipe left and hit the bottom unlock menu button. You can later
+        add and manage dashboards using the Dashboards from the Actions menu.
       </p>
       <p><strong>Try editing the Dashboard now to receive further instructions!</strong></p>
     } @else {
       <h3>Build Your Layout</h3>
       <p>
         First, resize this Tutorial widget using the now visible dashed borders so
-        it does not take up all the screen. Then, to add a widget, in an empty dashboard area, press and hold. This will open the
-        widget selection menu. Here you can choose from a variety of widgets.
+        it does not take up all the screen. Then, to add a widget: in an empty dashboard area,
+        press and hold. This will open the widget selection panel. Here you can choose from a
+        variety of widgets.
       </p>
       <p>To manage widgets, you can:</p>
       <ul>
@@ -77,7 +61,10 @@
       </ul>
       <h3>Exit Dashboard Edit Mode</h3>
       <p>Use the Save or Cancel buttons in the lower right corner to either persist
-        your changes or revert back all changes.</p>
+        your changes or revert changes.</p>
+      <h3>Add More Dashboards</h3>
+      <p>Swipe left and hit the Dashboards button. From this page you can add, rename, position
+        and duplicate dashboards.</p>
     }
   </div>
 </widget-host>

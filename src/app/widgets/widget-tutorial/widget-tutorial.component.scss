@@ -1,7 +1,12 @@
 .tutorial-container {
+  display: block;
   height: 100%;
-  padding: 15px;
-  overflow: hidden;
+  width: 100%;
+  overflow: auto;
+}
+
+.tutorial-container {
+  padding: 0px 15px 0px 15px;
 }
 
 table, th, td {
