@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, viewChild, signal } from '@angular/core';
+import { Component, inject, OnInit, viewChild, signal, Signal } from '@angular/core';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { MatButton } from '@angular/material/button';
@@ -7,6 +8,8 @@ import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { toSignal } from '@angular/core/rxjs-interop';
+
 
 @Component({
     selector: 'settings-display',
@@ -24,15 +27,21 @@ import { MatExpansionModule } from '@angular/material/expansion';
 })
 export class SettingsDisplayComponent implements OnInit {
   readonly displayForm = viewChild<NgForm>('displayForm');
+  private _app = inject(AppService);
+  private _settings = inject(AppSettingsService);
+  private _responsive = inject(BreakpointObserver);
   protected nightBrightness = signal<number>(0.27);
   protected autoNightMode = signal<boolean>(false);
   protected isRedNightMode = signal<boolean>(false);
   protected isLightTheme = signal<boolean>(false);
-  private _app = inject(AppService);
-  private _settings = inject(AppSettingsService);
+  protected isPhonePortrait: Signal<BreakpointState>;
 
   readonly LIGHT_THEME_NAME = "light-theme";
   readonly RED_NIGHT_MODE_THEME_NAME = "night-theme";
+
+  constructor() {
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait))
+  }
 
   ngOnInit() {
     this.nightBrightness.set(this._settings.getNightModeBrightness());
