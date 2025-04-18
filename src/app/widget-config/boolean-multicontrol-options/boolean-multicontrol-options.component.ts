@@ -25,14 +25,12 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   private fb = inject(UntypedFormBuilder);
-
   readonly multiCtrlArray = input.required<UntypedFormArray>();
   public readonly addPath = output<IWidgetPath>();
   public readonly updatePath = output<IDynamicControl[]>();
   public readonly delPath = output<IDeleteEventObj>();
-
   public multiFormGroup: UntypedFormGroup = null;
-  public arrayLength: number = null;
+  public arrayLength: number = 0;
   private multiCtrlArraySubscription: Subscription = null;
 
   ngOnInit(): void {
@@ -54,7 +52,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
         ctrlLabel: [null, Validators.required],
         type: ['1', Validators.required],
         pathID:[newUUID],
-        color:['text'],
+        color:['contrast'],
         isNumeric: [false],
         value:[null]
       }

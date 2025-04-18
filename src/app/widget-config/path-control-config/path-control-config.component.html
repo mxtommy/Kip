@@ -20,7 +20,7 @@
               panelWidth=""
               (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
               <mat-option>All</mat-option>
-              @for (item of pathSkUnitsFiltersList; track item) {
+              @for (item of pathSkUnitsFiltersList; track $index) {
                 <mat-option [value]="item">{{item.properties.quantity}}: {{item.properties.display}}</mat-option>
               }
             </mat-select>
@@ -74,7 +74,7 @@
             placeholder="Select source"
             formControlName="source"
             required>
-            @for (source of availableSources; track source) {
+            @for (source of availableSources; track $index) {
               <mat-option [value]="source">
                 {{source}}
               </mat-option>
@@ -99,9 +99,9 @@
                 placeholder="Select unit"
                 formControlName="convertUnitTo"
                 required>
-                @for (group of unitList.conversions; track group) {
+                @for (group of unitList.conversions; track $index) {
                   <mat-optgroup [label]="group.group">
-                    @for (unit of group.units; track unit) {
+                    @for (unit of group.units; track $index) {
                       <mat-option [value]="unit.measure">
                         {{unit.description}}
                       </mat-option>

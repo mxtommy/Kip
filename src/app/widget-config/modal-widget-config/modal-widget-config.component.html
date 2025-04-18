@@ -222,7 +222,7 @@
                 formControlName="color"
                 name="color"
                 required>
-                @for(color of colors; track color) {
+                @for(color of colors; track $index) {
                   <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
                 }
               </mat-select>
@@ -238,7 +238,7 @@
                 formControlName="bgColor"
                 name="bgColor"
                 required>
-                @for(color of colors; track color) {
+                @for(color of colors; track $index) {
                   <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
                 }
               </mat-select>

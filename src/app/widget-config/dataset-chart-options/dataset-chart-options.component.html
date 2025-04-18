@@ -9,7 +9,7 @@
         name="datasetUUID"
         (selectionChange)="datasetChanged($event)"
         required>
-        @for (ds of availableDataSets; track ds) {
+        @for (ds of availableDataSets; track $index) {
           <mat-option [value]="ds.uuid">
             {{ds.label}}
           </mat-option>
@@ -24,7 +24,7 @@
           [formControl]="convertUnitTo()"
           name="convertUnitTo"
           required>
-          @for (group of unitList.conversions; track group) {
+          @for (group of unitList.conversions; track $index) {
             <mat-optgroup [label]="group.group">
               @for (unit of group.units; track unit) {
                 <mat-option [value]="unit.measure">

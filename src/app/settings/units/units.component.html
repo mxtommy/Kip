@@ -2,14 +2,14 @@
   <p>Configure your preferred default unit types. These defaults can be overridden
     within individual widget settings.</p>
   <div class="unit-grid">
-    @for(control of unitsFormGroup.controls | keyvalue; track control) {
+    @for(control of unitsFormGroup.controls | keyvalue; track control.key) {
       <mat-form-field>
         <mat-label>{{control.key}}</mat-label>
         <mat-select
           [placeholder] = "control.key"
           [formControlName] = "control.key"
           required>
-          @for(unit of groupUnits[control.key]; track unit) {
+          @for(unit of groupUnits[control.key]; track unit.measure) {
             <mat-option [value]="unit.measure" >{{ unit.description }}</mat-option>
           }
         </mat-select>
