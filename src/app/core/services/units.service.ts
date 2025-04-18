@@ -74,7 +74,8 @@ export class UnitsService implements OnDestroy {
    */
   private readonly _conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
-      { measure: 'unitless', description: "As-Is numeric value" }
+      { measure: 'unitless', description: "As-Is numeric value" },
+      { measure: ' ', description: "No unit label - As-Is numeric value" }
     ] },
     { group: 'Speed', units: [
       { measure: 'knots', description: "Knots - Nautical miles per hour"},
@@ -419,6 +420,7 @@ export class UnitsService implements OnDestroy {
 
   private unitConversionFunctions = {
     'unitless': function(v) { return v; },
+    ' ': function(v) { return v; },
 //  speed
     'knots': Qty.swiftConverter("m/s", "kn"),
     'kph': Qty.swiftConverter("m/s", "kph"),
