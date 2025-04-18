@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, viewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -30,6 +30,13 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
       noColor: false,
       noBgColor: true
     };
+
+    effect(() => {
+      if (this.theme()) {
+        this.getColors(this.widgetProperties.config.color);
+        this.updateCanvas();
+      }
+    });
    }
 
   ngOnInit(): void {
@@ -73,31 +80,31 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     let color = "";
     switch (colorName) {
       case "contrast":
-        color = this.theme.contrast;
+        color = this.theme().contrast;
         break;
       case "blue":
-        color = this.theme.blue;
+        color = this.theme().blue;
         break;
       case "green":
-        color = this.theme.green;
+        color = this.theme().green;
         break;
       case "pink":
-        color = this.theme.pink;
+        color = this.theme().pink;
         break;
       case "orange":
-        color = this.theme.orange;
+        color = this.theme().orange;
         break;
       case "purple":
-        color = this.theme.purple;
+        color = this.theme().purple;
         break;
       case "grey":
-        color = this.theme.grey;
+        color = this.theme().grey;
         break;
       case "yellow":
-        color = this.theme.yellow;
+        color = this.theme().yellow;
         break;
       default:
-        color = this.theme.contrast;
+        color = this.theme().contrast;
         break;
     }
     return color;

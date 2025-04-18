@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
+import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
@@ -106,6 +106,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       color: "contrast",
       dataTimeout: 5
     };
+
+    effect(() => {
+      if (this.theme()) {
+       this.startWidget();
+      }
+    });
   }
 
   ngOnInit() {
@@ -154,19 +160,19 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.zoneEmergency;
+            option.colorValueText = this.theme().zoneEmergency;
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.zoneAlarm;
+            option.colorValueText = this.theme().zoneAlarm;
             break;
           case States.Warn:
-            option.colorValueText = this.theme.zoneWarn;
+            option.colorValueText = this.theme().zoneWarn;
             break;
           case States.Alert:
-            option.colorValueText = this.theme.zoneAlert;
+            option.colorValueText = this.theme().zoneAlert;
             break;
           default:
-            option.colorValueText = this.theme.contrast; // Fallback for unknown or null state
+            option.colorValueText = this.theme().contrast; // Fallback for unknown or null state
         }
         this.ngGauge.update(option);
       }
@@ -296,17 +302,17 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
     this.gaugeOptions.colorMinorTicks = contrastDim;
     this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
-      [this.theme.port, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, this.theme.port] :
-      [this.theme.port, dim, dim, dim, dim, dim, dim, dim, this.theme.port];
+      [this.theme().port, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, this.theme().port] :
+      [this.theme().port, dim, dim, dim, dim, dim, dim, dim, this.theme().port];
 
     this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
-      [this.theme.port, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.port] :
-      [this.theme.port, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.port];
+      [this.theme().port, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().port] :
+      [this.theme().port, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().port];
 
-    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = this.theme.cardColor;
-    this.gaugeOptions.colorBar = this.theme.background;
+    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = this.theme().cardColor;
+    this.gaugeOptions.colorBar = this.theme().background;
     this.gaugeOptions.colorBarStroke="";
-    this.gaugeOptions.colorValueBoxBackground = this.theme.background;
+    this.gaugeOptions.colorValueBoxBackground = this.theme().background;
     this.gaugeOptions.colorNeedleShadowUp = "";
     this.gaugeOptions.colorNeedleShadowDown = "";
     this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
@@ -317,14 +323,14 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
-      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
-      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
-      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
-      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
-      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
-      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
-      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
+      "contrast": { color: this.theme().contrast, dim: this.theme().contrastDim, dimmer: this.theme().contrastDimmer },
+      "blue": { color: this.theme().blue, dim: this.theme().blueDim, dimmer: this.theme().blueDimmer },
+      "green": { color: this.theme().green, dim: this.theme().greenDim, dimmer: this.theme().greenDimmer },
+      "pink": { color: this.theme().pink, dim: this.theme().pinkDim, dimmer: this.theme().pinkDimmer },
+      "orange": { color: this.theme().orange, dim: this.theme().orangeDim, dimmer: this.theme().orangeDimmer },
+      "purple": { color: this.theme().purple, dim: this.theme().purpleDim, dimmer: this.theme().purpleDimmer },
+      "yellow": { color: this.theme().yellow, dim: this.theme().yellowDim, dimmer: this.theme().yellowDimmer },
+      "grey": { color: this.theme().grey, dim: this.theme().greyDim, dimmer: this.theme().yellowDimmer }
     };
     return themePalette[color];
   }

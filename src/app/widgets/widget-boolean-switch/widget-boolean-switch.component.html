@@ -4,19 +4,19 @@
     <ng-container *ngFor="let ctrl of switchControls">
       <app-svg-boolean-switch class="svg-widget" *ngIf="ctrl.type === '1'"
         [controlData]="ctrl"
-        [theme]="theme"
+        [theme]="theme()"
         [dimensions]="ctrlDimensions"
         (toggleClick)="toggle($event)">
       </app-svg-boolean-switch>
       <app-svg-boolean-button class="svg-widget" *ngIf="ctrl.type === '2'"
         [controlData]="ctrl"
-        [theme]="theme"
+        [theme]="theme()"
         [dimensions]="ctrlDimensions"
         (toggleClick)="toggle($event)">
       </app-svg-boolean-button>
       <app-svg-boolean-light class="svg-widget" *ngIf="ctrl.type === '3'"
         [controlData]="ctrl"
-        [theme]="theme"
+        [theme]="theme()"
         [dimensions]="ctrlDimensions"
         (toggleClick)="toggle($event)">
       </app-svg-boolean-light>

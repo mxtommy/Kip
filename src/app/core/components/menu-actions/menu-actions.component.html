@@ -10,14 +10,16 @@
       </button>
     }
   }
-  @if (!app.isNightMode()) {
-    <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
-      <span class="material-icons">mode_night</span>
-    </button>
-  } @else {
-    <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
-      <span class="material-icons">light_mode</span>
-    </button>
+  @if (!isAutoNightMode()) {
+    @if (!app.isNightMode()) {
+      <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+        <span class="material-icons">mode_night</span>
+      </button>
+    } @else {
+      <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+        <span class="material-icons">light_mode</span>
+      </button>
+    }
   }
 </div>
 <div class="menu-item-container">

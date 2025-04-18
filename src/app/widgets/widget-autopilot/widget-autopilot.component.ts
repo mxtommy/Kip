@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, viewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
@@ -94,128 +94,128 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   notificationTest = {};
 
   constructor() {
-      super();
+    super();
 
-      this.defaultConfig = {
-        displayName: 'N2k Autopilot',
-        filterSelfPaths: true,
-        paths: {
-          "apState": {
-            description: "Autopilot State",
-            path: 'self.steering.autopilot.state',
-            source: 'default',
-            pathType: "string",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            convertUnitTo: "",
-            sampleTime: 500
-          },
-          "apTargetHeadingMag": {
-            description: "Autopilot Target Heading Mag",
-            path: 'self.steering.autopilot.target.headingMagnetic',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
-          "apTargetWindAngleApp": {
-            description: "Autopilot Target Wind Angle Apparent",
-            path: 'self.steering.autopilot.target.windAngleApparent',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
-          // "apNotifications": {
-          //   description: "Autopilot Notifications",
-          //   path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* path subscription paths in sk service and widget config modal
-          //   source: 'default',
-          //   pathType: "string",
-          //   convertUnitTo: "",
-          //   isPathConfigurable: false,
-          //   sampleTime: 500
-          // },
-          "headingMag": {
-            description: "Heading Magnetic",
-            path: 'self.navigation.headingMagnetic',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
-          "headingTrue": {
-            description: "Heading True",
-            path: 'self.navigation.headingTrue',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
-          "windAngleApparent": {
-            description: "Wind Angle Apparent",
-            path: 'self.environment.wind.angleApparent',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
-          "windAngleTrueWater": {
-            description: "Wind Angle True Water",
-            path: 'self.environment.wind.angleTrueWater',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
-          "rudderAngle": {
-            description: "Rudder Angle",
-            path: 'self.steering.rudderAngle',
-            source: 'default',
-            pathType: "number",
-            convertUnitTo: "deg",
-            isPathConfigurable: true,
-            showPathSkUnitsFilter: false,
-            pathSkUnitsFilter: 'rad',
-            sampleTime: 500
-          },
+    this.defaultConfig = {
+      displayName: 'N2k Autopilot',
+      filterSelfPaths: true,
+      paths: {
+        "apState": {
+          description: "Autopilot State",
+          path: 'self.steering.autopilot.state',
+          source: 'default',
+          pathType: "string",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          convertUnitTo: "",
+          sampleTime: 500
         },
-        usage: {
-          "headingMag": ['wind', 'route', 'auto', 'standby'],
-          "headingTrue": ['wind', 'route', 'auto', 'standby'],
-          "windAngleApparent": ['wind'],
-          "windAngleTrueWater": ['wind'],
+        "apTargetHeadingMag": {
+          description: "Autopilot Target Heading Mag",
+          path: 'self.steering.autopilot.target.headingMagnetic',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
         },
-        typeVal: {
-          "headingMag": 'Mag',
-          "headingTrue": 'True',
-          "windAngleApparent": 'AWA',
-          "windAngleTrueWater": 'TWA',
+        "apTargetWindAngleApp": {
+          description: "Autopilot Target Wind Angle Apparent",
+          path: 'self.steering.autopilot.target.windAngleApparent',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
         },
-        barColor: 'accent',     // theme palette to select
-        autoStart: false,
-        invertRudder: true,
-        enableTimeout: false,
-        dataTimeout: 5
-      };
-    }
+        // "apNotifications": {
+        //   description: "Autopilot Notifications",
+        //   path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* path subscription paths in sk service and widget config modal
+        //   source: 'default',
+        //   pathType: "string",
+        //   convertUnitTo: "",
+        //   isPathConfigurable: false,
+        //   sampleTime: 500
+        // },
+        "headingMag": {
+          description: "Heading Magnetic",
+          path: 'self.navigation.headingMagnetic',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "headingTrue": {
+          description: "Heading True",
+          path: 'self.navigation.headingTrue',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "windAngleApparent": {
+          description: "Wind Angle Apparent",
+          path: 'self.environment.wind.angleApparent',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "windAngleTrueWater": {
+          description: "Wind Angle True Water",
+          path: 'self.environment.wind.angleTrueWater',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "rudderAngle": {
+          description: "Rudder Angle",
+          path: 'self.steering.rudderAngle',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+      },
+      usage: {
+        "headingMag": ['wind', 'route', 'auto', 'standby'],
+        "headingTrue": ['wind', 'route', 'auto', 'standby'],
+        "windAngleApparent": ['wind'],
+        "windAngleTrueWater": ['wind'],
+      },
+      typeVal: {
+        "headingMag": 'Mag',
+        "headingTrue": 'True',
+        "windAngleApparent": 'AWA',
+        "windAngleTrueWater": 'TWA',
+      },
+      barColor: 'accent',     // theme palette to select
+      autoStart: false,
+      invertRudder: true,
+      enableTimeout: false,
+      dataTimeout: 5
+    };
+  }
 
   ngOnInit() {
     this.validateConfig();
