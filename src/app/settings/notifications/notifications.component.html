@@ -16,9 +16,11 @@
         <mat-panel-title>
           Notifications
         </mat-panel-title>
-        <mat-panel-description>
-          Show or hide menu items based on their state
-        </mat-panel-description>
+        @if (!isPhonePortrait().matches) {
+          <mat-panel-description>
+            Show or hide menu items based on their state
+          </mat-panel-description>
+        }
       </mat-expansion-panel-header>
       <mat-checkbox
         name="showNormalState"
@@ -38,9 +40,11 @@
         <mat-panel-title>
           Audio Prompts
         </mat-panel-title>
-        <mat-panel-description>
-          Mute and unmute data state audio prompts
-        </mat-panel-description>
+        @if (!isPhonePortrait().matches) {
+          <mat-panel-description>
+            Mute and unmute data state audio prompts
+          </mat-panel-description>
+        }
       </mat-expansion-panel-header>
       <mat-checkbox
         name="=disableSound"

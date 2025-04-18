@@ -30,17 +30,17 @@ export class SettingsDisplayComponent implements OnInit {
   private _app = inject(AppService);
   private _settings = inject(AppSettingsService);
   private _responsive = inject(BreakpointObserver);
+  protected isPhonePortrait: Signal<BreakpointState>;
   protected nightBrightness = signal<number>(0.27);
   protected autoNightMode = signal<boolean>(false);
   protected isRedNightMode = signal<boolean>(false);
   protected isLightTheme = signal<boolean>(false);
-  protected isPhonePortrait: Signal<BreakpointState>;
 
   readonly LIGHT_THEME_NAME = "light-theme";
   readonly RED_NIGHT_MODE_THEME_NAME = "night-theme";
 
   constructor() {
-    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait))
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
   }
 
   ngOnInit() {
