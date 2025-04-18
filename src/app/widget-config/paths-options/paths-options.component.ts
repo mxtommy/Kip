@@ -53,7 +53,8 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
         showPathSkUnitsFilter: [newPath.showPathSkUnitsFilter],
         pathSkUnitsFilter: [newPath.pathSkUnitsFilter],
         convertUnitTo: [newPath.convertUnitTo],
-        sampleTime: [newPath.sampleTime]
+        sampleTime: [newPath.sampleTime],
+        supportsPut: [newPath.supportsPut],
       })
     );
     this.pathsFormGroup.updateValueAndValidity();

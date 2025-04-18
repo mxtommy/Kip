@@ -109,12 +109,12 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
       this.pathFormGroup.controls['path'].updateValueAndValidity();
     }
- }
+  }
 
   private getPaths(): IPathMetaData[] {
     const pathType = this.pathFormGroup.controls['pathType'].value;
     const filterSelfPaths = this.filterSelfPaths();
-   return this.data.getPathsAndMetaByType(pathType, filterSelfPaths).sort();
+   return this.data.getPathsAndMetaByType(pathType, this.pathFormGroup.value.supportsPut, filterSelfPaths).sort();
   }
 
   public filterPaths(searchString: string) {

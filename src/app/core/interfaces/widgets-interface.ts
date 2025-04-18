@@ -293,6 +293,8 @@ export interface IWidgetPath {
   source: string | null;
   /** Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from. Format can be: number, string, boolean or null to list all types */
   pathType: string  | null;
+  /** Only lists paths the support PUT action. Defaults to false */
+  supportsPut?: boolean;
   /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
   isPathConfigurable: boolean;
   /** Hide numeric path type filter */
