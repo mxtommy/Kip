@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -43,6 +43,13 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       timerLength: 300,
       color: 'contrast',
     };
+
+    effect(() => {
+      if (this.theme()) {
+        this.getColors(this.widgetProperties.config.color);
+        this.updateCanvas();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -154,49 +161,49 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   private getColors(color: string) {
     switch (color) {
       case "contrast":
-        this.textColor = this.theme.contrast;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().contrast;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       case "blue":
-        this.textColor = this.theme.blue;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().blue;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       case "green":
-        this.textColor = this.theme.green;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;;
+        this.textColor = this.theme().green;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;;
         break;
       case "pink":
-        this.textColor = this.theme.pink;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().pink;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       case "orange":
-        this.textColor = this.theme.orange;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().orange;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       case "purple":
-        this.textColor = this.theme.purple;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().purple;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       case "grey":
-        this.textColor = this.theme.grey;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().grey;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       case "yellow":
-        this.textColor = this.theme.yellow;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().yellow;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
       default:
-        this.textColor = this.theme.contrast;
-        this.warnColor = this.theme.zoneAlarm;
-        this.warmContrast = this.theme.zoneAlarm;
+        this.textColor = this.theme().contrast;
+        this.warnColor = this.theme().zoneAlarm;
+        this.warmContrast = this.theme().zoneAlarm;
         break;
     }
   }

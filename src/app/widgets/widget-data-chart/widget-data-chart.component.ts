@@ -197,7 +197,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         },
         grid: {
           display: true,
-          color: this.theme.contrastDimmer
+          color: this.theme().contrastDimmer
         }
       },
       y: {
@@ -223,7 +223,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         },
         grid: {
           display: true,
-          color: this.theme.contrastDimmer,
+          color: this.theme().contrastDimmer,
         }
       }
     }
@@ -332,146 +332,146 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     switch (widgetColor) {
       case "contrast":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.contrastDimmer;
-          colors.valueFill = this.theme.contrastDimmer;
-          colors.averageLine = this.theme.contrast;
-          colors.averageFill = this.theme.contrast;
+          colors.valueLine = this.theme().contrastDimmer;
+          colors.valueFill = this.theme().contrastDimmer;
+          colors.averageLine = this.theme().contrast;
+          colors.averageFill = this.theme().contrast;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.contrast;
-          colors.valueFill = this.theme.contrast;
-          colors.averageLine = this.theme.contrastDimmer;
-          colors.averageFill = this.theme.contrastDimmer;
-          colors.chartValue = this.theme.contrast;
+          colors.valueLine = this.theme().contrast;
+          colors.valueFill = this.theme().contrast;
+          colors.averageLine = this.theme().contrastDimmer;
+          colors.averageFill = this.theme().contrastDimmer;
+          colors.chartValue = this.theme().contrast;
         }
-        colors.averageChartLine = this.theme.contrastDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().contrastDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "blue":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.blueDimmer;
-          colors.valueFill = this.theme.blueDimmer;
-          colors.averageLine = this.theme.blue;
-          colors.averageFill = this.theme.blue;
+          colors.valueLine = this.theme().blueDimmer;
+          colors.valueFill = this.theme().blueDimmer;
+          colors.averageLine = this.theme().blue;
+          colors.averageFill = this.theme().blue;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.blue;
-          colors.valueFill = this.theme.blue;
-          colors.averageLine = this.theme.blueDimmer;
-          colors.averageFill = this.theme.blueDimmer;
+          colors.valueLine = this.theme().blue;
+          colors.valueFill = this.theme().blue;
+          colors.averageLine = this.theme().blueDimmer;
+          colors.averageFill = this.theme().blueDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.blueDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().blueDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "green":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.greenDimmer;
-          colors.valueFill = this.theme.greenDimmer;
-          colors.averageLine = this.theme.green;
-          colors.averageFill = this.theme.green;
+          colors.valueLine = this.theme().greenDimmer;
+          colors.valueFill = this.theme().greenDimmer;
+          colors.averageLine = this.theme().green;
+          colors.averageFill = this.theme().green;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.green;
-          colors.valueFill = this.theme.green;
-          colors.averageLine = this.theme.greenDimmer;
-          colors.averageFill = this.theme.greenDimmer;
+          colors.valueLine = this.theme().green;
+          colors.valueFill = this.theme().green;
+          colors.averageLine = this.theme().greenDimmer;
+          colors.averageFill = this.theme().greenDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.greenDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().greenDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "pink":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.pinkDimmer;
-          colors.valueFill = this.theme.pinkDimmer;
-          colors.averageLine = this.theme.pink;
-          colors.averageFill = this.theme.pink;
+          colors.valueLine = this.theme().pinkDimmer;
+          colors.valueFill = this.theme().pinkDimmer;
+          colors.averageLine = this.theme().pink;
+          colors.averageFill = this.theme().pink;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.pink;
-          colors.valueFill = this.theme.pink;
-          colors.averageLine = this.theme.pinkDimmer;
-          colors.averageFill = this.theme.pinkDimmer;
+          colors.valueLine = this.theme().pink;
+          colors.valueFill = this.theme().pink;
+          colors.averageLine = this.theme().pinkDimmer;
+          colors.averageFill = this.theme().pinkDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.pinkDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().pinkDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "orange":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.orangeDimmer;
-          colors.valueFill = this.theme.orangeDimmer;
-          colors.averageLine = this.theme.orange;
-          colors.averageFill = this.theme.orange;
+          colors.valueLine = this.theme().orangeDimmer;
+          colors.valueFill = this.theme().orangeDimmer;
+          colors.averageLine = this.theme().orange;
+          colors.averageFill = this.theme().orange;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.orange;
-          colors.valueFill = this.theme.orange;
-          colors.averageLine = this.theme.orangeDimmer;
-          colors.averageFill = this.theme.orangeDimmer;
+          colors.valueLine = this.theme().orange;
+          colors.valueFill = this.theme().orange;
+          colors.averageLine = this.theme().orangeDimmer;
+          colors.averageFill = this.theme().orangeDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.orangeDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().orangeDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "purple":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.purpleDimmer;
-          colors.valueFill = this.theme.purpleDimmer;
-          colors.averageLine = this.theme.purple;
-          colors.averageFill = this.theme.purple;
+          colors.valueLine = this.theme().purpleDimmer;
+          colors.valueFill = this.theme().purpleDimmer;
+          colors.averageLine = this.theme().purple;
+          colors.averageFill = this.theme().purple;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.purple;
-          colors.valueFill = this.theme.purple;
-          colors.averageLine = this.theme.purpleDimmer;
-          colors.averageFill = this.theme.purpleDimmer;
+          colors.valueLine = this.theme().purple;
+          colors.valueFill = this.theme().purple;
+          colors.averageLine = this.theme().purpleDimmer;
+          colors.averageFill = this.theme().purpleDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.purpleDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().purpleDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "grey":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.greyDimmer;
-          colors.valueFill = this.theme.greyDimmer;
-          colors.averageLine = this.theme.grey;
-          colors.averageFill = this.theme.grey;
+          colors.valueLine = this.theme().greyDimmer;
+          colors.valueFill = this.theme().greyDimmer;
+          colors.averageLine = this.theme().grey;
+          colors.averageFill = this.theme().grey;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.grey;
-          colors.valueFill = this.theme.grey;
-          colors.averageLine = this.theme.greyDimmer;
-          colors.averageFill = this.theme.greyDimmer;
+          colors.valueLine = this.theme().grey;
+          colors.valueFill = this.theme().grey;
+          colors.averageLine = this.theme().greyDimmer;
+          colors.averageFill = this.theme().greyDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.greyDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().greyDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "yellow":
         if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme.yellowDimmer;
-          colors.valueFill = this.theme.yellowDimmer;
-          colors.averageLine = this.theme.yellow;
-          colors.averageFill = this.theme.yellow;
+          colors.valueLine = this.theme().yellowDimmer;
+          colors.valueFill = this.theme().yellowDimmer;
+          colors.averageLine = this.theme().yellow;
+          colors.averageFill = this.theme().yellow;
           colors.chartValue = colors.averageLine;
         } else {
-          colors.valueLine = this.theme.yellow;
-          colors.valueFill = this.theme.yellow;
-          colors.averageLine = this.theme.yellowDimmer;
-          colors.averageFill = this.theme.yellowDimmer;
+          colors.valueLine = this.theme().yellow;
+          colors.valueFill = this.theme().yellow;
+          colors.averageLine = this.theme().yellowDimmer;
+          colors.averageFill = this.theme().yellowDimmer;
           colors.chartValue = colors.valueFill;
         }
-        colors.averageChartLine = this.theme.yellowDim;
-        colors.chartLabel = this.theme.contrastDim;
+        colors.averageChartLine = this.theme().yellowDim;
+        colors.chartLabel = this.theme().contrastDim;
         break;
     }
     return colors;

@@ -5,8 +5,9 @@ import { UnitsService } from '../services/units.service';
 import type { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { ISkZone } from '../interfaces/signalk-interfaces';
 import { cloneDeep, merge } from 'lodash-es';
-import { AppService, ITheme } from '../services/app-service';
+import { AppService } from '../services/app-service';
 import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 
 interface IWidgetDataStream {
@@ -19,11 +20,15 @@ interface IWidgetDataStream {
 })
 export abstract class BaseWidgetComponent extends BaseWidget {
   @Input({ required: true }) protected widgetProperties!: IWidget;
-
   public zones$ = new BehaviorSubject<ISkZone[]>([]);
-  protected theme: ITheme = undefined;
-  protected themeSubscription: Subscription = undefined;
-
+  /** Signal K data stream service to obtain/observe server data */
+  protected DataService = inject(DataService);
+  /** Unit conversion service to convert a wide range of numerical data formats */
+  protected unitsService = inject(UnitsService);
+  /** Unit conversion service to convert a wide range of numerical data formats */
+  protected app = inject(AppService);
+  /** Active theme colors signal */
+  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
   public defaultConfig: IWidgetSvcConfig = undefined;
   /** Array of data paths use for observable automatic setup and cleanup */
@@ -32,16 +37,10 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   private dataSubscriptions: Subscription = undefined;
   /** Single Observable Subscription object for all data paths */
   protected metaSubscriptions: Subscription = undefined;
-  /** Signal K data stream service to obtain/observe server data */
-  protected DataService = inject(DataService);
-  /** Unit conversion service to convert a wide range of numerical data formats */
-  protected unitsService = inject(UnitsService);
-  /** Unit conversion service to convert a wide range of numerical data formats */
-  protected app = inject(AppService);
+
 
   constructor() {
     super();
-    this.themeSubscription = this.app.cssThemeColorRoles$.subscribe(t => this.theme = t);
   }
 
   public override serialize(): NgCompInputs {
@@ -319,7 +318,6 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   protected destroyDataStreams(): void {
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
-    this.themeSubscription?.unsubscribe();
     this.zones$.complete();
   }
 }

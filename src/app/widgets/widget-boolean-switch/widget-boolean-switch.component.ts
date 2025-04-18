@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -57,6 +57,12 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         putMomentary: false,
         multiChildCtrls: []
       };
+
+    effect(() => {
+      if (this.theme()) {
+        this.getColors(this.widgetProperties.config.color);
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -211,31 +217,31 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private getColors(color: string): void {
     switch (color) {
       case "contrast":
-        this.labelColor = this.theme.contrastDim;
+        this.labelColor = this.theme().contrastDim;
         break;
       case "blue":
-        this.labelColor = this.theme.blueDim;
+        this.labelColor = this.theme().blueDim;
         break;
       case "green":
-        this.labelColor = this.theme.greenDim;
+        this.labelColor = this.theme().greenDim;
         break;
       case "pink":
-        this.labelColor = this.theme.pinkDim;
+        this.labelColor = this.theme().pinkDim;
         break;
       case "orange":
-        this.labelColor = this.theme.orangeDim;
+        this.labelColor = this.theme().orangeDim;
         break;
       case "purple":
-        this.labelColor = this.theme.purpleDim;
+        this.labelColor = this.theme().purpleDim;
         break;
       case "grey":
-        this.labelColor = this.theme.greyDim;
+        this.labelColor = this.theme().greyDim;
         break;
       case "yellow":
-        this.labelColor = this.theme.yellowDim;
+        this.labelColor = this.theme().yellowDim;
         break;
       default:
-        this.labelColor = this.theme.contrastDim;
+        this.labelColor = this.theme().contrastDim;
         break;
     }
   }

@@ -1,12 +1,10 @@
-import { DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
-import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import * as packageInfo from '../../../../package.json';
-
-const modePath: string = 'self.environment.mode';
+import { set } from 'lodash-es';
 
 /**
  * Snack-bar notification message interface.
@@ -63,7 +61,8 @@ export interface ITheme {
 @Injectable({
   providedIn: 'root'
 })
-export class AppService implements OnDestroy {
+export class AppService {
+  readonly MODE_PATH: string = 'self.environment.mode';
   public readonly configurableThemeColors: {label: string, value: string}[] = [
     {label: "Contrast", value: "contrast"},
     {label: "Blue", value: "blue"},
@@ -74,44 +73,49 @@ export class AppService implements OnDestroy {
     {label: "Purple", value: "purple"},
     {label: "Grey", value: "grey"}
   ];
-  public isNightMode = signal<boolean>(false);
-  private _autoNightDeltaStatus: Subscription = null;
-  private _autoNightModeSubscription: Subscription = null;
-  private _environmentModePathSubscription: Subscription = null;
-  private _autoNightModeThemeSubscription: Subscription = null;
-
   public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
-  private readonly _cssThemeColorRoles: ITheme = null;
+  private _cssThemeColorRoles: ITheme = null;
   private _settings = inject(AppSettingsService);
-  private _delta = inject(SignalKDeltaService);
   private _data = inject(DataService);
-  private _destroyRef = inject(DestroyRef);
+  public isNightMode = signal<boolean>(false);
+  private _useAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), { requireSync: true });
+  private _theme = toSignal(this._settings.getThemeNameAsO(), { requireSync: true });
+  private _redNightMode = toSignal(this._settings.getRedNightModeAsO(), { requireSync: true });
+  private _environmentMode = toSignal(this._data.subscribePath(this.MODE_PATH, 'default'));
 
   public readonly appVersion = signal<string>(packageInfo.version);
   public readonly browserVersion = signal<string>('Unknown');
   public readonly osVersion = signal<string>('Unknown');
 
   constructor() {
-    this.autoNightModeObserver();
+    effect(() => {
+      if (this._theme() === 'light-theme') {
+        document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
+      } else {
+        // Remove the light theme class if it exists
+        document.body.classList.remove('light-theme');
+      }
+    });
+
+    effect(() => {
+      const mode = this._environmentMode().data.value;
+      if (this._useAutoNightMode()) {
+        this.isNightMode.set(mode === "night");
+        this.toggleDayNightMode();
+      }
+    });
+
+    effect(() => {
+      this._redNightMode() ? this.toggleDayNightMode() : this.toggleDayNightMode();
+    });
+
     this.readThemeCssRoleVariables();
     this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
-
-    this._settings.getThemeNameAsO().pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe(themeName => {
-        if (themeName === 'light-theme')
-          document.body.classList.toggle('light-theme', themeName === 'light-theme');
-        else {
-          // Remove the light theme class if it exists
-          document.body.classList.remove('light-theme');
-        }
-        this.readThemeCssRoleVariables();
-      });
 
     this.browserVersion.set(this.getBrowserVersion());
     this.osVersion.set(this.getOSVersion());
 
-    // Log versions
     console.log("*********** KIP Version Information ***********");
     console.log(`** App Version: ${this.appVersion()}`);
     console.log(`** Browser Version: ${this.browserVersion()}`);
@@ -202,48 +206,37 @@ export class AppService implements OnDestroy {
 
   public toggleDayNightMode(): void {
     if (this.isNightMode()) {
-      // Night mode: Apply brightness and night filters
-      this.setBrightness(this._settings.getNightModeBrightness(), true);
+      if (this._redNightMode()) {
+        document.body.classList.toggle('night-theme', true);
+        this.setBrightness(1, false);
+      } else {
+        this.setBrightness(this._settings.getNightModeBrightness(), true);
+        document.body.classList.remove('night-theme');
+        if (this._theme() === 'light-theme') {
+          document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
+        } else {
+          document.body.classList.remove('light-theme');
+        }
+      }
+
     } else {
-      // Day mode: Reset to normal brightness and remove filters
+      document.body.classList.remove('night-theme');
+      if (this._theme() === 'light-theme') {
+        document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
+      }
       this.setBrightness(1, false);
     }
+    this.readThemeCssRoleVariables();
+    this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
   }
 
-  private autoNightModeObserver(): void {
-    this._autoNightModeSubscription = this._settings.getAutoNightModeAsO().subscribe(modeEnabled => {
-      if (modeEnabled) {
-        this.environmentModeObserver();
-      } else {
-        this._environmentModePathSubscription?.unsubscribe();
-      }
-    });
-  }
-
-  private environmentModeObserver(): void {
-    const deltaStatus = this._delta.getDataStreamStatusAsO(); // wait for delta service to start
-    this._autoNightDeltaStatus = deltaStatus.subscribe(stat => {
-      stat as IStreamStatus;
-      if(stat.operation == 2) {
-        this._environmentModePathSubscription = this._data.subscribePath(modePath, 'default').subscribe(path => {
-          if (this._settings.getAutoNightMode()) {
-            if (path.data.value) {
-              if (path.data.value === "night") {
-                this.isNightMode.set(true);
-                this.toggleDayNightMode();
-              } else if (path.data.value === "day") {
-                this.isNightMode.set(false);
-                this.toggleDayNightMode();
-              }
-            }
-          }
-        });
-      }
-    });
-  }
-
+  /**
+   * Check if the browser supports the automatic night mode feature.
+   * This is a helper method to check if the browser supports the
+   * matchMedia API and the prefers-color-scheme media query.
+   */
   public  validateAutoNightModeSupported(): boolean {
-    if (!this._data.getPathObject(modePath)) {
+    if (!this._data.getPathObject(this.MODE_PATH)) {
       this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
       return false;
     }
@@ -300,12 +293,5 @@ export class AppService implements OnDestroy {
     } else {
       return 'Unknown OS';
     }
-  }
-
-  ngOnDestroy(): void {
-    this._autoNightModeSubscription?.unsubscribe();
-    this._environmentModePathSubscription?.unsubscribe();
-    this._autoNightModeThemeSubscription?.unsubscribe();
-    this._autoNightDeltaStatus?.unsubscribe();
   }
 }

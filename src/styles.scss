@@ -3,8 +3,9 @@
 @use './styles-common/material-icons.scss';
 @use './styles-common/roboto.scss';
 
-@use './themes/m3dark.scss' as dark;
-@use './themes/m3light.scss' as light;
+@use './themes/_m3dark.scss' as dark;
+@use './themes/_m3light.scss' as light;
+@use './themes/_m3night.scss' as night;
 
 @use './styles-common/settingsTabContent.scss' as settingsTabContent;
 
@@ -102,6 +103,44 @@ body.light-theme {
   --kip-zone-emergency-color: #{light.$zone-emergency};
 }
 
+body.night-theme {
+  --mat-sys-background: #{night.$background};
+  --kip-widget-card-background-color: #{night.$kip-widget-card-background-color};
+  --kip-widget-card-border-color: #{night.$kip-widget-card-border-color};
+
+  --kip-contrast-color: #{night.$contrast};
+  --kip-contrast-dim-color: #{night.$contrastDim};
+  --kip-contrast-dimmer-color: #{night.$contrastDimmer};
+  --kip-grey-color: #{night.$grey};
+  --kip-grey-dim-color: #{night.$greyDim};
+  --kip-grey-dimmer-color: #{night.$greyDimmer};
+  --kip-blue-color: #{night.$blue};
+  --kip-blue-dim-color: #{night.$blueDim};
+  --kip-blue-dimmer-color: #{night.$blueDimmer};
+  --kip-green-color: #{night.$green};
+  --kip-green-dim-color: #{night.$greenDim};
+  --kip-green-dimmer-color: #{night.$greenDimmer};
+  --kip-purple-color: #{night.$purple};
+  --kip-purple-dim-color: #{night.$purpleDim};
+  --kip-purple-dimmer-color: #{night.$purpleDimmer};
+  --kip-yellow-color: #{night.$yellow};
+  --kip-yellow-dim-color: #{night.$yellowDim};
+  --kip-yellow-dimmer-color: #{night.$yellowDimmer};
+  --kip-pink-color: #{night.$pink};
+  --kip-pink-dim-color: #{night.$pinkDim};
+  --kip-pink-dimmer-color: #{night.$pinkDimmer};
+  --kip-orange-color: #{night.$orange};
+  --kip-orange-dim-color: #{night.$orangeDim};
+  --kip-orange-dimmer-color: #{night.$orangeDimmer};
+  --kip-port-color: #{night.$port};
+  --kip-starboard-color: #{night.$starboard};
+  --kip-zone-nominal-color: #{night.$zone-nominal};
+  --kip-zone-alert-color: #{night.$zone-alert};
+  --kip-zone-warn-color: #{night.$zone-warn};
+  --kip-zone-alarm-color: #{night.$zone-alarm};
+  --kip-zone-emergency-color: #{night.$zone-emergency};
+}
+
 html {
   @include mat.theme((
     color: (
@@ -124,6 +163,38 @@ html {
     typography: Roboto,
     density: 0
   ));
+}
+
+.night-theme {
+  @include mat.theme((
+    color: (
+      primary: night.$primary-palette,
+      tertiary: night.$tertiary-palette,
+      theme-type: dark,
+    ),
+    typography: Roboto,
+    density: 0
+  ));
+
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-contrast-dim-color),
+    outlined-outline-color: var(--kip-contrast-color),
+  ));
+
+  @include mat.icon-overrides((
+    color: var(--kip-contrast-color),
+  ));
+
+  @include mat.theme-overrides((
+    on-background: #831d1d,
+    on-surface: #831d1d,
+    on-surface-variant: #831d1d,
+    inverse-surface: #831d1d,
+    primary: #831d1d,
+    outline: #831d1d,
+    tertiary-fixed: var(--kip-contrast-color),
+    tertiary-fixed-dim: var(--kip-contrast-color),
+    ));
 }
 
 // Set base app style

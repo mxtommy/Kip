@@ -24,6 +24,7 @@ export interface IConfig {
 export interface IAppConfig {
   configVersion: number;
   autoNightMode: boolean;
+  redNightMode: boolean;
   nightModeBrightness: number;
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;

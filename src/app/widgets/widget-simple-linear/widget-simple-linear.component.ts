@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -53,6 +53,12 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       enableTimeout: false,
       dataTimeout: 5
     };
+
+    effect(() => {
+      if (this.theme()) {
+        this.updateGaugeSettings();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -61,7 +67,6 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   }
 
   protected startWidget(): void {
-    this.updateGaugeSettings();
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gauge.unitLabelFormat == "abr") {
       this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
@@ -86,45 +91,44 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     this.startWidget();
   }
 
-
   private updateGaugeSettings() {
-    this.barColorBackground = this.theme.background;
+    this.barColorBackground = this.theme().background;
     switch (this.widgetProperties.config.color) {
       case "contrast":
-        this.barColor = this.theme.contrast;
-        this.barColorGradient = this.theme.contrastDimmer;
+        this.barColor = this.theme().contrast;
+        this.barColorGradient = this.theme().contrastDimmer;
         break;
       case "blue":
-        this.barColor = this.theme.blue;
-        this.barColorGradient = this.theme.blueDimmer;
+        this.barColor = this.theme().blue;
+        this.barColorGradient = this.theme().blueDimmer;
         break;
       case "green":
-        this.barColor = this.theme.green;
-        this.barColorGradient = this.theme.greenDimmer;
+        this.barColor = this.theme().green;
+        this.barColorGradient = this.theme().greenDimmer;
         break;
       case "pink":
-        this.barColor = this.theme.pink;
-        this.barColorGradient = this.theme.pinkDimmer;
+        this.barColor = this.theme().pink;
+        this.barColorGradient = this.theme().pinkDimmer;
         break;
       case "orange":
-        this.barColor = this.theme.orange;
-        this.barColorGradient = this.theme.orangeDimmer;
+        this.barColor = this.theme().orange;
+        this.barColorGradient = this.theme().orangeDimmer;
         break;
       case "purple":
-        this.barColor = this.theme.purple;
-        this.barColorGradient = this.theme.purpleDimmer;
+        this.barColor = this.theme().purple;
+        this.barColorGradient = this.theme().purpleDimmer;
         break;
       case "grey":
-        this.barColor = this.theme.grey;
-        this.barColorGradient = this.theme.greyDimmer;
+        this.barColor = this.theme().grey;
+        this.barColorGradient = this.theme().greyDimmer;
         break;
       case "yellow":
-        this.barColor = this.theme.yellow;
-        this.barColorGradient = this.theme.yellowDimmer;
+        this.barColor = this.theme().yellow;
+        this.barColorGradient = this.theme().yellowDimmer;
         break;
       default:
-        this.barColor = this.theme.contrast;
-        this.barColorGradient = this.theme.contrastDimmer;
+        this.barColor = this.theme().contrast;
+        this.barColorGradient = this.theme().contrastDimmer;
     }
   }
 

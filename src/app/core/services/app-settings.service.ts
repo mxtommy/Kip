@@ -29,6 +29,7 @@ export class AppSettingsService {
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
   private kipKNotificationConfig: BehaviorSubject<INotificationConfig> = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
   private autoNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private redNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
 
   public proxyEnabled: boolean = false;
@@ -204,6 +205,12 @@ export class AppSettingsService {
       this.autoNightMode.next(this.activeConfig.app.autoNightMode);
     }
 
+    if (this.activeConfig.app.redNightMode === undefined) {
+      this.setRedNightMode(false);
+    } else {
+      this.redNightMode.next(this.activeConfig.app.redNightMode);
+    }
+
     if (this.activeConfig.app.nightModeBrightness === undefined) {
       this.setNightModeBrightness(0.2);
     } else {
@@ -309,6 +316,27 @@ export class AppSettingsService {
   public getAutoNightMode(): boolean {
     return this.autoNightMode.getValue();
   }
+
+  // Red night mode
+  public getRedNightModeAsO() {
+    return this.redNightMode.asObservable();
+  }
+
+  public getRedNightMode(): boolean {
+    return this.redNightMode.getValue();
+  }
+
+  public setRedNightMode(enabled: boolean) {
+    this.redNightMode.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
 
   public getNightModeBrightness(): number {
     return this.nightModeBrightness.getValue();
@@ -439,6 +467,7 @@ export class AppSettingsService {
     let storageObject: IAppConfig = {
       configVersion: configVersion,
       autoNightMode: this.autoNightMode.getValue(),
+      redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),

@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
+import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -85,6 +85,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       dataTimeout: 5,
       ignoreZones: false
     };
+
+    effect(() => {
+      if (this.theme()) {
+       this.startWidget();
+      }
+    });
   }
 
   ngOnInit() {
@@ -126,22 +132,22 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
           switch (newValue.state) {
             case States.Alarm:
-              option.colorBorderMiddle = this.theme.cardColor;
-              option.colorBarProgress = this.theme.zoneAlarm;
-              option.colorValueText = this.theme.zoneAlarm;
+              option.colorBorderMiddle = this.theme().cardColor;
+              option.colorBarProgress = this.theme().zoneAlarm;
+              option.colorValueText = this.theme().zoneAlarm;
               break;
             case States.Warn:
-              option.colorBorderMiddle = this.theme.cardColor;
-              option.colorBarProgress = this.theme.zoneWarn;
-              option.colorValueText = this.theme.zoneWarn;
+              option.colorBorderMiddle = this.theme().cardColor;
+              option.colorBarProgress = this.theme().zoneWarn;
+              option.colorValueText = this.theme().zoneWarn;
               break;
             case States.Alert:
-              option.colorBorderMiddle = this.theme.cardColor;
-              option.colorBarProgress = this.theme.zoneAlert;
-              option.colorValueText = this.theme.zoneAlert;
+              option.colorBorderMiddle = this.theme().cardColor;
+              option.colorBarProgress = this.theme().zoneAlert;
+              option.colorValueText = this.theme().zoneAlert;
               break;
             default:
-              option.colorBorderMiddle = this.theme.cardColor;
+              option.colorBorderMiddle = this.theme().cardColor;
               option.colorBarProgress = this.widgetProperties.config.gauge.subType == 'measuring' ? this.getColors(this.widgetProperties.config.color).color : this.getColors(this.widgetProperties.config.color).dim;
               option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
           }
@@ -222,9 +228,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
     // Borders
     this.gaugeOptions.colorBorderShadow = false;
-    this.gaugeOptions.colorBorderOuter = this.theme.cardColor;
+    this.gaugeOptions.colorBorderOuter = this.theme().cardColor;
     this.gaugeOptions.colorBorderOuterEnd = '';
-    this.gaugeOptions.colorBorderMiddle = this.theme.cardColor;
+    this.gaugeOptions.colorBorderMiddle = this.theme().cardColor;
     this.gaugeOptions.colorBorderMiddleEnd = '';
 
     // Progress bar
@@ -232,17 +238,17 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorNeedle = this.getColors(this.widgetProperties.config.color).dim;
     this.gaugeOptions.colorNeedleEnd = this.getColors(this.widgetProperties.config.color).dim;
     // Labels
-    this.gaugeOptions.colorTitle = this.theme.contrastDim;
-    this.gaugeOptions.colorUnits = this.theme.contrastDim;
+    this.gaugeOptions.colorTitle = this.theme().contrastDim;
+    this.gaugeOptions.colorUnits = this.theme().contrastDim;
     this.gaugeOptions.colorValueText = this.getColors(this.widgetProperties.config.color).color;
     // Ticks
-    this.colorStrokeTicks = this.theme.contrastDim; // missing property in gaugeOptions
-    this.gaugeOptions.colorMinorTicks = this.theme.contrastDim;
-    this.gaugeOptions.colorNumbers = this.theme.contrastDim;
-    this.gaugeOptions.colorMajorTicks = this.theme.contrastDim;
+    this.colorStrokeTicks = this.theme().contrastDim; // missing property in gaugeOptions
+    this.gaugeOptions.colorMinorTicks = this.theme().contrastDim;
+    this.gaugeOptions.colorNumbers = this.theme().contrastDim;
+    this.gaugeOptions.colorMajorTicks = this.theme().contrastDim;
     // Plate
-    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.theme.cardColor;
-    this.gaugeOptions.colorBar = this.theme.background;
+    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.theme().cardColor;
+    this.gaugeOptions.colorBar = this.theme().background;
 
     this.gaugeOptions.colorNeedleShadowUp = "";
     this.gaugeOptions.colorNeedleShadowDown = "black";
@@ -265,14 +271,14 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
-      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
-      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
-      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
-      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
-      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
-      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
-      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
+      "contrast": { color: this.theme().contrast, dim: this.theme().contrastDim, dimmer: this.theme().contrastDimmer },
+      "blue": { color: this.theme().blue, dim: this.theme().blueDim, dimmer: this.theme().blueDimmer },
+      "green": { color: this.theme().green, dim: this.theme().greenDim, dimmer: this.theme().greenDimmer },
+      "pink": { color: this.theme().pink, dim: this.theme().pinkDim, dimmer: this.theme().pinkDimmer },
+      "orange": { color: this.theme().orange, dim: this.theme().orangeDim, dimmer: this.theme().orangeDimmer },
+      "purple": { color: this.theme().purple, dim: this.theme().purpleDim, dimmer: this.theme().purpleDimmer },
+      "yellow": { color: this.theme().yellow, dim: this.theme().yellowDim, dimmer: this.theme().yellowDimmer },
+      "grey": { color: this.theme().grey, dim: this.theme().greyDim, dimmer: this.theme().yellowDimmer }
     };
     return themePalette[color];
   }
@@ -388,19 +394,19 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       let color: string;
       switch (zone.state) {
         case States.Emergency:
-          color = this.theme.zoneEmergency;
+          color = this.theme().zoneEmergency;
           break;
         case States.Alarm:
-          color = this.theme.zoneAlarm;
+          color = this.theme().zoneAlarm;
           break;
         case States.Warn:
-          color = this.theme.zoneWarn;
+          color = this.theme().zoneWarn;
           break;
         case States.Alert:
-          color = this.theme.zoneAlert;
+          color = this.theme().zoneAlert;
           break;
         case States.Nominal:
-          color = this.theme.zoneNominal;
+          color = this.theme().zoneNominal;
           break;
         default:
           color = "rgba(0,0,0,0)";

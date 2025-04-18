@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
+import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -81,6 +81,11 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       ignoreZones: false
     };
 
+    effect(() => {
+      if (this.theme()) {
+       this.startWidget();
+      }
+    });
   }
 
   ngOnInit() {
@@ -123,38 +128,38 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           switch (newValue.state) {
             case States.Emergency:
               if (!this.widgetProperties.config.gauge.useNeedle) {
-                option.colorBarProgress = this.theme.zoneEmergency;
-                option.colorValueText = this.theme.zoneEmergency;
+                option.colorBarProgress = this.theme().zoneEmergency;
+                option.colorValueText = this.theme().zoneEmergency;
               } else {
-                option.colorNeedle = this.theme.zoneEmergency;
-                option.colorValueText = this.theme.zoneEmergency;
+                option.colorNeedle = this.theme().zoneEmergency;
+                option.colorValueText = this.theme().zoneEmergency;
               }
               break;
             case States.Alarm:
               if (!this.widgetProperties.config.gauge.useNeedle) {
-                option.colorBarProgress = this.theme.zoneAlarm;
-                option.colorValueText = this.theme.zoneAlarm;
+                option.colorBarProgress = this.theme().zoneAlarm;
+                option.colorValueText = this.theme().zoneAlarm;
               } else {
-                option.colorNeedle = this.theme.zoneAlarm;
-                option.colorValueText = this.theme.zoneAlarm;
+                option.colorNeedle = this.theme().zoneAlarm;
+                option.colorValueText = this.theme().zoneAlarm;
               }
               break;
             case States.Warn:
               if (!this.widgetProperties.config.gauge.useNeedle) {
-                option.colorBarProgress = this.theme.zoneWarn;
-                option.colorValueText = this.theme.zoneWarn;
+                option.colorBarProgress = this.theme().zoneWarn;
+                option.colorValueText = this.theme().zoneWarn;
               } else {
-                option.colorNeedle = this.theme.zoneWarn;
-                option.colorValueText = this.theme.zoneWarn;
+                option.colorNeedle = this.theme().zoneWarn;
+                option.colorValueText = this.theme().zoneWarn;
               }
               break;
             case States.Alert:
               if (!this.widgetProperties.config.gauge.useNeedle) {
-                option.colorBarProgress = this.theme.zoneAlert;
-                option.colorValueText = this.theme.zoneAlert;
+                option.colorBarProgress = this.theme().zoneAlert;
+                option.colorValueText = this.theme().zoneAlert;
               } else {
-                option.colorNeedle = this.theme.zoneAlert;
-                option.colorValueText = this.theme.zoneAlert;
+                option.colorNeedle = this.theme().zoneAlert;
+                option.colorValueText = this.theme().zoneAlert;
               }
               break;
             default:
@@ -301,7 +306,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       valueBoxStroke: 0,
       colorValueBoxRect: "",
       colorValueBoxRectEnd: "",
-      colorValueBoxBackground: this.theme.background,
+      colorValueBoxBackground: this.theme().background,
       fontValueSize: 50,
       fontValue: "Roboto",
       fontValueWeight: "bold",
@@ -315,8 +320,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorTitle: this.getColors('contrast').dim,
       colorUnits: this.getColors('contrast').dim,
       colorValueText: this.getColors(this.widgetProperties.config.color).color,
-      colorPlate: this.theme.cardColor,
-      colorBar: this.theme.background,
+      colorPlate: this.theme().cardColor,
+      colorBar: this.theme().background,
 
       colorMajorTicks: this.getColors('contrast').dim,
       colorMinorTicks: this.getColors('contrast').dim,
@@ -361,40 +366,40 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
     switch (this.widgetProperties.config.color) {
       case "contrast":
-        themePaletteColor = this.theme.contrast;
-        themePaletteDarkColor = this.theme.contrastDim;
+        themePaletteColor = this.theme().contrast;
+        themePaletteDarkColor = this.theme().contrastDim;
         break;
       case "blue":
-        themePaletteColor = this.theme.blue;
-        themePaletteDarkColor = this.theme.blueDim;
+        themePaletteColor = this.theme().blue;
+        themePaletteDarkColor = this.theme().blueDim;
         break;
       case "green":
-        themePaletteColor = this.theme.green;
-        themePaletteDarkColor = this.theme.greenDim;
+        themePaletteColor = this.theme().green;
+        themePaletteDarkColor = this.theme().greenDim;
         break;
       case "pink":
-        themePaletteColor = this.theme.pink;
-        themePaletteDarkColor = this.theme.pinkDim;
+        themePaletteColor = this.theme().pink;
+        themePaletteDarkColor = this.theme().pinkDim;
         break;
       case "orange":
-        themePaletteColor = this.theme.orange;
-        themePaletteDarkColor = this.theme.orangeDim;
+        themePaletteColor = this.theme().orange;
+        themePaletteDarkColor = this.theme().orangeDim;
         break;
       case "purple":
-        themePaletteColor = this.theme.purple;
-        themePaletteDarkColor = this.theme.purpleDim;
+        themePaletteColor = this.theme().purple;
+        themePaletteDarkColor = this.theme().purpleDim;
         break;
       case "grey":
-        themePaletteColor = this.theme.grey;
-        themePaletteDarkColor = this.theme.greyDim;
+        themePaletteColor = this.theme().grey;
+        themePaletteDarkColor = this.theme().greyDim;
         break;
       case "yellow":
-        themePaletteColor = this.theme.yellow;
-        themePaletteDarkColor = this.theme.yellowDim;
+        themePaletteColor = this.theme().yellow;
+        themePaletteDarkColor = this.theme().yellowDim;
         break;
       default:
-        themePaletteColor = this.theme.contrast;
-        themePaletteDarkColor = this.theme.contrastDim;
+        themePaletteColor = this.theme().contrast;
+        themePaletteDarkColor = this.theme().contrastDim;
         break;
     }
 
@@ -408,14 +413,14 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   private getColors(color: string): { color: string, dim: string, dimmer: string } {
     const themePalette = {
-      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
-      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
-      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
-      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
-      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
-      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
-      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
-      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
+      "contrast": { color: this.theme().contrast, dim: this.theme().contrastDim, dimmer: this.theme().contrastDimmer },
+      "blue": { color: this.theme().blue, dim: this.theme().blueDim, dimmer: this.theme().blueDimmer },
+      "green": { color: this.theme().green, dim: this.theme().greenDim, dimmer: this.theme().greenDimmer },
+      "pink": { color: this.theme().pink, dim: this.theme().pinkDim, dimmer: this.theme().pinkDimmer },
+      "orange": { color: this.theme().orange, dim: this.theme().orangeDim, dimmer: this.theme().orangeDimmer },
+      "purple": { color: this.theme().purple, dim: this.theme().purpleDim, dimmer: this.theme().purpleDimmer },
+      "yellow": { color: this.theme().yellow, dim: this.theme().yellowDim, dimmer: this.theme().yellowDimmer },
+      "grey": { color: this.theme().grey, dim: this.theme().greyDim, dimmer: this.theme().yellowDimmer }
     };
     return themePalette[color];
   }
@@ -431,19 +436,19 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       let color: string;
       switch (zone.state) {
         case States.Emergency:
-          color = this.theme.zoneEmergency;
+          color = this.theme().zoneEmergency;
           break;
         case States.Alarm:
-          color = this.theme.zoneAlarm;
+          color = this.theme().zoneAlarm;
           break;
         case States.Warn:
-          color = this.theme.zoneWarn;
+          color = this.theme().zoneWarn;
           break;
         case States.Alert:
-          color = this.theme.zoneAlert;
+          color = this.theme().zoneAlert;
           break;
         case States.Nominal:
-          color = this.theme.zoneNominal;
+          color = this.theme().zoneNominal;
           break;
         default:
           color = "rgba(0,0,0,0)";

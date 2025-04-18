@@ -7,6 +7,8 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
 import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
 import { uiEventService } from '../../services/uiEvent.service';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 interface MenuActionItem extends LargeIconTile {
   action: string;
@@ -26,6 +28,8 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected uiEvent = inject(uiEventService);
   private dashboard = inject(DashboardService);
   protected app = inject(AppService);
+  private _settings = inject(AppSettingsService);
+  protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
   protected readonly menuItems: MenuActionItem[]  = [
     { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
     { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Inspector', action: 'datainspector' },

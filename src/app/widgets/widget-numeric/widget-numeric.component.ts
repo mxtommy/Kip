@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnDestroy, ViewChild, ElementRef, OnInit, AfterViewInit, effect } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -70,6 +70,14 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       dataTimeout: 5,
       ignoreZones: false
     };
+
+    effect(() => {
+      if (this.theme()) {
+        this.getColors(this.widgetProperties.config.color);
+        this.updateCanvas();
+        this.updateCanvasBG();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -107,13 +115,13 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       if (!this.widgetProperties.config.ignoreZones) {
         switch (newValue.state) {
           case States.Alarm:
-            this.valueStateColor = this.theme.zoneAlarm;
+            this.valueStateColor = this.theme().zoneAlarm;
             break;
           case States.Warn:
-            this.valueStateColor = this.theme.zoneWarn;
+            this.valueStateColor = this.theme().zoneWarn;
             break;
           case States.Alert:
-            this.valueStateColor = this.theme.zoneAlert;
+            this.valueStateColor = this.theme().zoneAlert;
             break;
           default:
             this.valueStateColor = this.valueColor;
@@ -162,40 +170,40 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private getColors(color: string): void {
     switch (color) {
       case "contrast":
-        this.labelColor = this.theme.contrastDim;
-        this.valueColor = this.theme.contrast;
+        this.labelColor = this.theme().contrastDim;
+        this.valueColor = this.theme().contrast;
         break;
       case "blue":
-        this.labelColor = this.theme.blueDim;
-        this.valueColor = this.theme.blue;
+        this.labelColor = this.theme().blueDim;
+        this.valueColor = this.theme().blue;
         break;
       case "green":
-        this.labelColor = this.theme.greenDim;
-        this.valueColor = this.theme.green;
+        this.labelColor = this.theme().greenDim;
+        this.valueColor = this.theme().green;
         break;
       case "pink":
-        this.labelColor = this.theme.pinkDim;
-        this.valueColor = this.theme.pink;
+        this.labelColor = this.theme().pinkDim;
+        this.valueColor = this.theme().pink;
         break;
       case "orange":
-        this.labelColor = this.theme.orangeDim;
-        this.valueColor = this.theme.orange;
+        this.labelColor = this.theme().orangeDim;
+        this.valueColor = this.theme().orange;
         break;
       case "purple":
-        this.labelColor = this.theme.purpleDim;
-        this.valueColor = this.theme.purple;
+        this.labelColor = this.theme().purpleDim;
+        this.valueColor = this.theme().purple;
         break;
       case "grey":
-        this.labelColor = this.theme.greyDim;
-        this.valueColor = this.theme.grey;
+        this.labelColor = this.theme().greyDim;
+        this.valueColor = this.theme().grey;
         break;
       case "yellow":
-        this.labelColor = this.theme.yellowDim;
-        this.valueColor = this.theme.yellow;
+        this.labelColor = this.theme().yellowDim;
+        this.valueColor = this.theme().yellow;
         break;
       default:
-        this.labelColor = this.theme.contrastDim;
-        this.valueColor = this.theme.contrast;
+        this.labelColor = this.theme().contrastDim;
+        this.valueColor = this.theme().contrast;
         break;
     }
     this.valueStateColor = this.valueColor;
