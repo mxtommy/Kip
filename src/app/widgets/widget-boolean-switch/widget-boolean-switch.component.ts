@@ -1,7 +1,6 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit, effect, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
@@ -11,7 +10,6 @@ import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-inte
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
-import { NgFor, NgIf } from '@angular/common';
 import { DashboardService } from '../../core/services/dashboard.service';
 
 
@@ -21,7 +19,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
     templateUrl: './widget-boolean-switch.component.html',
     styleUrls: ['./widget-boolean-switch.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule, NgFor, NgIf, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   protected dashboard = inject(DashboardService);
@@ -31,7 +29,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
   @ViewChild('widgetContainer', {static: true}) widgetContainerElement: ElementRef<HTMLCanvasElement>;
 
-  public switchControls: IDynamicControl[] = null;
+  public switchControls = signal<IDynamicControl[]>([]);
   private skRequestSub = new Subscription; // Request result observer
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -80,20 +78,20 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     this.resizeWidget();
 
     // Build control array
-    this.switchControls = [];
+    this.switchControls.set([]);
     this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
       if (!ctrlConfig.isNumeric) {
         ctrlConfig.isNumeric = false;
       }
-        this.switchControls.push({...ctrlConfig});
+        this.switchControls().push({...ctrlConfig});
       }
     );
 
     // Start Observers as path Array
     this.unsubscribeDataStream();
-    for (const key in this.switchControls) {
-      if (Object.prototype.hasOwnProperty.call(this.switchControls, key)) {
-        const path = this.switchControls[key];
+    for (const key in this.switchControls()) {
+      if (Object.prototype.hasOwnProperty.call(this.switchControls(), key)) {
+        const path = this.switchControls()[key];
         this.observeDataStream(key, newValue => {
           if (path.isNumeric) {
             if ([0, 1, null].includes(newValue.data.value)) {
