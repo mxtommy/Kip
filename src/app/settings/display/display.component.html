@@ -8,9 +8,11 @@
           <mat-panel-title>
             Night Mode
           </mat-panel-title>
-          <mat-panel-description>
-            Adjust night mode settings to enhance visibility in low-light environments.
-          </mat-panel-description>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description [hidden]="isPhonePortrait().matches">
+              Adjust night mode settings to enhance visibility in low-light environments.
+            </mat-panel-description>
+          }
         </mat-expansion-panel-header>
         <mat-checkbox class="full-width"
           (change)="isAutoNightModeSupported($event)"
@@ -40,9 +42,11 @@
           <mat-panel-title>
             Theme
           </mat-panel-title>
-          <mat-panel-description>
-            Choose your preferred high-contrast theme.
-          </mat-panel-description>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Choose your preferred high-contrast theme.
+            </mat-panel-description>
+          }
         </mat-expansion-panel-header>
         <mat-checkbox class="full-width"
           [(ngModel)]="isLightTheme"

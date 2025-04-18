@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild, inject } from '@angular/core';
+import { Component, OnInit, viewChild, inject, Signal } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
 import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
 import { AppService } from '../../core/services/app-service';
@@ -9,6 +9,8 @@ import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansi
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { FormsModule, NgForm } from '@angular/forms';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 
 @Component({
@@ -26,17 +28,19 @@ import { FormsModule, NgForm } from '@angular/forms';
         MatButton,
     ],
 })
-export class SettingsNotificationsComponent implements OnInit {
+export class SettingsNotificationsComponent {
   private app = inject(AppService);
   private settings = inject(AppSettingsService);
-
+  private _responsive = inject(BreakpointObserver);
+  protected isPhonePortrait: Signal<BreakpointState>;
   readonly notificationsForm = viewChild<NgForm>('notificationsForm');
   readonly statePanel = viewChild<MatExpansionPanel>('statePanel');
   readonly soundPanel = viewChild<MatExpansionPanel>('soundPanel');
   public notificationConfig: INotificationConfig;
   public notificationDisabledExpandPanel: boolean = false;
 
-  ngOnInit() {
+  constructor() {
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
     this.notificationConfig = cloneDeep(this.settings.getNotificationConfig());
   }
 

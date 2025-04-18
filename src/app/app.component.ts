@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -16,6 +16,8 @@ import { MenuActionsComponent } from './core/components/menu-actions/menu-action
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
 import { DialogService } from './core/services/dialog.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 
 
 @Component({
@@ -34,11 +36,13 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private _dialog = inject(DialogService);
   public appSettingsService = inject(AppSettingsService);
   public authenticationService = inject(AuthenticationService);
+  private _responsive = inject(BreakpointObserver);
   public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
 
   protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
   protected actionsSidenavOpen = signal<boolean>(false);
   protected notificationsSidenavOpened = signal<boolean>(false);
+  protected isPhonePortrait: Signal<BreakpointState>;
   protected notificationsVisibility: string = 'hidden';
 
 
@@ -59,6 +63,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       }
     });
+
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
   }
 
   ngOnInit() {
@@ -151,14 +157,24 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected onSwipeRight(e: Event): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
-      this.notificationsSidenavOpened.set(true);
+      if (this.isPhonePortrait().matches) {
+        this.actionsSidenavOpen.set(false);
+        this.notificationsSidenavOpened.set(true);
+      } else {
+        this.notificationsSidenavOpened.set(true);
+      }
     }
   }
 
   protected onSwipeLeft(e: Event): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
-      this.actionsSidenavOpen.set(true);
+      if (this.isPhonePortrait().matches) {
+        this.notificationsSidenavOpened.set(false);
+        this.actionsSidenavOpen.set(true);
+      } else {
+        this.actionsSidenavOpen.set(true);
+      }
     }
   }
 
