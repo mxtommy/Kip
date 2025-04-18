@@ -5,7 +5,7 @@
   </button>
   <mat-menu #helpMenu="matMenu">
     <ng-template matMenuContent>
-      @for (file of helpFiles; track file) {
+      @for (file of helpFiles; track $index) {
         <button mat-menu-item (click)="selectFile(file.file)">
           {{ file.title }}
         </button>

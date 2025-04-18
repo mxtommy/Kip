@@ -23,7 +23,7 @@
   }
 </div>
 <div class="menu-item-container">
-  @for (item of menuItems; track item) {
+  @for (item of menuItems; track $index) {
     <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onActionItem(item.action)"/>
   }
 </div>

@@ -1,9 +1,9 @@
 <div [formGroup]="multiFormGroup">
   <div formArrayName="multiCtrlArray">
-    @for(ctrl of multiCtrlArray().controls; track ctrl; let i = $index) {
+    @for(ctrl of multiCtrlArray().controls; track $index) {
       <boolean-control-config class="full-width"
         [ctrlFormGroup]="getFormGroup(ctrl)"
-        [controlIndex]="i"
+        [controlIndex]="$index"
         [arrayLength]="arrayLength"
         (moveUp)="moveUp($event)"
         (moveDown)="moveDown($event)"

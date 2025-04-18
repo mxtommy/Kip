@@ -6,7 +6,7 @@
     (change)="onCategoryChange($event)"
     class="list-filter"
   >
-    @for (category of _widgets.categories; track category) {
+    @for (category of _widgets.categories; track $index) {
       <mat-button-toggle [value]="category">
         {{ category }}
       </mat-button-toggle>

@@ -23,7 +23,6 @@ export interface IDeleteEventObj {
 })
 export class BooleanControlConfigComponent implements OnInit {
   private app = inject(AppService);
-
   readonly ctrlFormGroup = input.required<UntypedFormGroup>();
   readonly controlIndex = input<number>(undefined);
   readonly arrayLength = input<number>(undefined);

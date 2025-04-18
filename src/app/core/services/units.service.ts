@@ -23,7 +23,7 @@ export interface IConversionPathList {
 export interface IUnitGroup {
   group: string;
   units: IUnit[];
-}[]
+}
 
 /**
  * Individual Kip units system measures definition
@@ -111,11 +111,13 @@ export class UnitsService implements OnDestroy {
      ] },
     { group: 'Length', units: [
       { measure: 'm', description: "Meters (base)"},
+      { measure: 'mm', description: "Millimeters"},
       { measure: 'fathom', description: "Fathoms"},
-      { measure: 'feet', description: "Feet"},
-      { measure: 'km', description: "Kilometers"},
       { measure: 'nm', description: "Nautical Miles"},
+      { measure: 'km', description: "Kilometers"},
       { measure: 'mi', description: "Miles"},
+      { measure: 'feet', description: "Feet"},
+      { measure: 'inch', description: "Inches"},
     ] },
     { group: 'Volume', units: [
       { measure: 'liter', description: "Liters (base)"},
@@ -454,8 +456,10 @@ export class UnitsService implements OnDestroy {
     "fahrenheit": Qty.swiftConverter("tempK", "tempF"),
 //  length
     "m": function(v) { return v; },
+    "mm": function(v) { return v*1000; },
     "fathom": Qty.swiftConverter('m', 'fathom'),
     "feet": Qty.swiftConverter('m', 'foot'),
+    "inch": Qty.swiftConverter('m', 'in'),
     "km": Qty.swiftConverter('m', 'km'),
     "nm": Qty.swiftConverter('m', 'nmi'),
     "mi": Qty.swiftConverter('m', 'mi'),
