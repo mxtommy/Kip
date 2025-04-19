@@ -1,18 +1,20 @@
-import { Component, AfterViewInit, OnDestroy, viewChild, inject, DestroyRef } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, ViewChild, Signal, effect } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { DataService } from '../../services/data.service';
 import { ISkPathData } from "../../interfaces/app-interfaces";
-import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
+import { DataInspectorRowComponent } from '../data-inspector-row/data-inspector-row.component';
 import { KeyValuePipe } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map, throttleTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 
 
 @Component({
@@ -20,20 +22,25 @@ import { debounceTime } from 'rxjs/operators';
     templateUrl: './data-inspector.component.html',
     styleUrls: ['./data-inspector.component.scss'],
     standalone: true,
-    imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataBrowserRowComponent, KeyValuePipe, PageHeaderComponent]
+    imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatIconModule]
 })
 export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private dataService = inject(DataService);
   private destroyRef = inject(DestroyRef);
+  private _responsive = inject(BreakpointObserver);
+  private isPhonePortrait: Signal<BreakpointState>;
   private filterSubject = new Subject<string>();
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
+  @ViewChild(MatPaginator) paginator!: MatPaginator; // Correct usage of @ViewChild
+  @ViewChild(MatSort) sort!: MatSort; // Correct usage of @ViewChild
   protected readonly pageTitle = 'Data Inspector';
 
-  public pageSize: number = 10;
+  public pageSize: number = 25;
+  protected hidePageSize = false;
+  protected showFirstLastButtons = true;
+  protected showPageSizeOptions = [5, 10, 25, 100];
   public tableData = new MatTableDataSource<ISkPathData>([]);
-  public displayedColumns: string[] = ['path', 'defaultSource'];
+  public displayedColumns: string[] = ['path', 'supportsPut', 'defaultSource'];
 
   constructor() {
     this.filterSubject.pipe(
@@ -42,6 +49,20 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
       this.tableData.filter = filterValue.trim().toLowerCase();
       if (this.tableData.paginator) {
         this.tableData.paginator.firstPage();
+      }
+    });
+
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+
+    effect(() => {
+      if (this.isPhonePortrait().matches) {
+        this.hidePageSize = true;
+        this.showFirstLastButtons = false;
+        this.showPageSizeOptions = [];
+      } else {
+        this.hidePageSize = false;
+        this.showFirstLastButtons = true;
+        this.showPageSizeOptions = [5, 10, 25, 100];
       }
     });
   }
@@ -76,9 +97,19 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
         this.tableData.data = filteredPaths;
       });
 
-    this.tableData.paginator = this.paginator();
-    this.tableData.sort = this.sort();
-    this.tableData.filter = "self.";
+    // Assign paginator and sort to the tableData
+    this.tableData.paginator = this.paginator;
+    this.tableData.sort = this.sort;
+
+    // Add a custom sorting accessor for the "supportsPut" column
+    this.tableData.sortingDataAccessor = (item, property) => {
+      switch (property) {
+        case 'supportsPut':
+          return item.meta?.supportsPut ? 1 : 0; // Sort by boolean value (1 for true, 0 for false)
+        default:
+          return item[property]; // Default sorting for other columns
+      }
+    };
   }
 
   public applyFilter(event: Event) {

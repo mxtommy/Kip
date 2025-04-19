@@ -39,11 +39,15 @@
 }
 
 .pathHeader {
-  flex: 1 1 50%;
+  flex: 1 1 45%;
+}
+
+.putHeader {
+  flex: 1 1 10%;
 }
 
 .dataHeader {
-  flex: 1 1 50%;
+  flex: 1 1 45%;
 }
 
 .table-row {
@@ -59,13 +63,17 @@
 }
 
 .pathCell {
-  flex: 1 1 50%;
+  flex: 1 1 45%;
   word-break: break-word; /* Breaks words at arbitrary points if needed */
   overflow-wrap: break-word; /* Ensures wrapping for long words */
 }
 
+.putCell {
+  flex: 1 1 10%;
+}
+
 .dataCell {
-  flex: 1 1 50%;
+  flex: 1 1 45%;
   flex-flow: column;
   flex-wrap: nowrap;
   gap: 2px;
@@ -87,6 +95,10 @@
   flex-wrap: nowrap;
   gap: 5px;
   width: 100%;
+}
+
+.put-icon {
+  color: var(--kip-starboard-color);
 }
 
 @media screen and (max-width: 750px) {
