@@ -32,7 +32,7 @@ import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-line
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
-import { WidgetRangeSliderComponent } from '../../../widgets/widget-range-slider/widget-range-slider.component';
+import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
 
 
 @Component({
@@ -82,7 +82,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetWindComponent,
       WidgetPositionComponent,
       WidgetLabelComponent,
-      WidgetRangeSliderComponent
+      WidgetSliderComponent
     ]);
 
     effect(() => {

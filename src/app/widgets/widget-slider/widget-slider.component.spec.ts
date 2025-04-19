@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { WidgetRangeSliderComponent } from './widget-range-slider.component';
+import { WidgetSliderComponent } from './widget-slider.component';
 
 describe('WidgetRangeSliderComponent', () => {
-  let component: WidgetRangeSliderComponent;
-  let fixture: ComponentFixture<WidgetRangeSliderComponent>;
+  let component: WidgetSliderComponent;
+  let fixture: ComponentFixture<WidgetSliderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [WidgetRangeSliderComponent]
+      imports: [WidgetSliderComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(WidgetRangeSliderComponent);
+    fixture = TestBed.createComponent(WidgetSliderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -68,8 +68,8 @@ export class WidgetService {
       description: 'A range slider that allows users to adjust values, such as controlling lighting intensity from 0% to 100%.',
       icon: 'sliderWidget',
       category: 'Basic',
-      selector: 'widget-range-slider',
-      componentClassName: 'WidgetRangeSliderComponent'
+      selector: 'widget-slider',
+      componentClassName: 'WidgetSliderComponent'
     },
     {
       name: 'Static Label',
