@@ -31,8 +31,8 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private isPhonePortrait: Signal<BreakpointState>;
   private filterSubject = new Subject<string>();
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator; // Correct usage of @ViewChild
-  @ViewChild(MatSort) sort!: MatSort; // Correct usage of @ViewChild
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
   protected readonly pageTitle = 'Data Inspector';
 
   public pageSize: number = 25;
