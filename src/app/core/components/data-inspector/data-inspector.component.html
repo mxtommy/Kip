@@ -11,13 +11,22 @@
       <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header> Path </mat-header-cell>
       <mat-cell class="pathCell row-cell" *matCellDef="let element"> {{element.path}} </mat-cell>
     </ng-container>
+    <!-- Put Column -->
+    <ng-container matColumnDef="supportsPut">
+      <mat-header-cell class="putHeader" *matHeaderCellDef mat-sort-header> PUT Support </mat-header-cell>
+      <mat-cell class="putCell row-cell" *matCellDef="let element">
+        @if (element.meta?.supportsPut) {
+          <mat-icon class="put-icon" matTooltip="Supports PUT operation">check_circle</mat-icon>
+        }
+      </mat-cell>
+    </ng-container>
     <!-- Source/value Column -->
     <ng-container matColumnDef="defaultSource">
       <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source </mat-header-cell>
       <mat-cell class="dataCell row-cell" *matCellDef="let element">
         <div class="flex-container">
           @for (item of element.sources | keyvalue; track item.key) {
-            <data-browser-row class="source-sub-row" [path]="element.path" [source]="getSourceKey(item)" [pathValue]="getSourceValue(item)" [type]="element.type"></data-browser-row>
+            <data-inspector-row class="source-sub-row" [path]="element.path" [source]="getSourceKey(item)" [pathValue]="getSourceValue(item)" [type]="element.type"></data-inspector-row>
           }
         </div>
       </mat-cell>
@@ -32,5 +41,5 @@
       <td class="mat-cell" colspan="4">No data matching the filter "{{input.value}}"</td>
     </tr>
   </mat-table>
-  <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 100]" class="paginator"></mat-paginator>
+  <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="showPageSizeOptions" [hidePageSize]="hidePageSize" [showFirstLastButtons]="showFirstLastButtons" class="paginator"></mat-paginator>
 </div>

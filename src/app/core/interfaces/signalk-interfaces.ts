@@ -175,6 +175,7 @@ export interface ISkMetadata {
   shortName?: string;
   longName?: string;
   description: string;
+  supportsPut?: boolean; // true if the path supports PUT (write) requests
   units: string;        // required if value is present. Describe the SK type of data
   timeout?: number;     // tells the consumer how long it should consider the value valid
   properties: {}; // Not defined by Kip. Used by GPS and Ship details and other complex data types

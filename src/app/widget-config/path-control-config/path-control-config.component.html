@@ -3,8 +3,6 @@
     <div class="flex-field-100">
       <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
     </div>
-
-
       @if (pathFormGroup.value.pathType == 'number' && showPathSkUnitsFilter) {
         <div class="flex-field-fixed">
           <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
@@ -115,4 +113,3 @@
     </div>
   </div>
 }
-

@@ -1,10 +1,9 @@
 import { effect, inject, Injectable, signal } from '@angular/core';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import * as packageInfo from '../../../../package.json';
-import { set } from 'lodash-es';
 
 /**
  * Snack-bar notification message interface.

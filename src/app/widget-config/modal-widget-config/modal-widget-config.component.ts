@@ -195,6 +195,9 @@ export class ModalWidgetConfigComponent implements OnInit {
 
     const multiCtrlFormArray = this.formMaster.get('multiChildCtrls') as UntypedFormArray;
     multiCtrlFormArray.removeAt(e.ctrlIndex);
+
+    // Explicitly update the form's value object
+    this.formMaster.updateValueAndValidity();
   }
 
   /**

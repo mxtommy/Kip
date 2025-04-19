@@ -12,8 +12,6 @@ import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-but
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
 
-
-
 @Component({
     selector: 'widget-boolean-switch',
     templateUrl: './widget-boolean-switch.component.html',
@@ -33,7 +31,6 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   private skRequestSub = new Subscription; // Request result observer
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  private currentValueLength = 0;
   private canvasLabelCtx: CanvasRenderingContext2D;
   private labelColor: string = undefined;
 
@@ -161,7 +158,6 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     if ((this.canvasLabelElement.nativeElement.width != Math.floor(rect.width)) || (this.canvasLabelElement.nativeElement.height != Math.floor(rect.height))) {
       this.canvasLabelElement.nativeElement.width = Math.floor(rect.width);
       this.canvasLabelElement.nativeElement.height = Math.floor(rect.height);
-      this.currentValueLength = 0; // will force resetting the font size
 
       if (this.canvasLabelCtx) {
         this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);

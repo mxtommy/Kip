@@ -431,9 +431,13 @@ export class DataService implements OnDestroy {
       .map(item => item.path);
   }
 
-  public getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] {
+  public getPathsAndMetaByType(valueType: string, supportsPutOnly?: boolean, selfOnly?: boolean): IPathMetaData[] {
     return this._skData
-      .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
+      .filter(item =>
+        item.type === valueType &&
+        (!selfOnly || item.path.startsWith("self")) &&
+        (supportsPutOnly === true ? item.meta?.supportsPut === true : true)
+      )
       .map(item => ({ path: item.path, meta: item.meta }));
   }
 

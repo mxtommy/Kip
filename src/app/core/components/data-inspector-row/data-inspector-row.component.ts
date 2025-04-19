@@ -11,14 +11,14 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 
 
 @Component({
-    selector: 'data-browser-row',
-    templateUrl: './data-browser-row.component.html',
-    styleUrls: ['./data-browser-row.component.css'],
+    selector: 'data-inspector-row',
+    templateUrl: './data-inspector-row.component.html',
+    styleUrls: ['./data-inspector-row.component.css'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [MatCell, MatButtonModule]
 })
-export class DataBrowserRowComponent implements OnInit {
+export class DataInspectorRowComponent implements OnInit {
   private _units = inject(UnitsService);
   private _dialog = inject(MatDialog);
   readonly path = input.required<string>();
@@ -59,7 +59,7 @@ export class DataBrowserRowComponent implements OnInit {
 
 @Component({
     selector: 'dialog-unit-selector',
-    templateUrl: 'data-browser-row-unit-modal.html',
+    templateUrl: 'data-inspector-row-unit-modal.html',
     standalone: true,
     imports: [
         MatDialogTitle,
