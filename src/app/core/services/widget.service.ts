@@ -64,6 +64,14 @@ export class WidgetService {
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
     {
+      name: 'Slider',
+      description: 'A range slider that allows users to adjust values, such as controlling lighting intensity from 0% to 100%.',
+      icon: 'sliderWidget',
+      category: 'Basic',
+      selector: 'widget-range-slider',
+      componentClassName: 'WidgetRangeSliderComponent'
+    },
+    {
       name: 'Static Label',
       description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
       icon: 'labelWidget',

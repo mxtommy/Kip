@@ -11,6 +11,7 @@ import { DialogService } from '../../services/dialog.service';
 import { NotificationBadgeComponent } from "../notification-badge/notification-badge.component";
 import { NotificationsService } from '../../services/notifications.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { uiEventService } from '../../services/uiEvent.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
@@ -31,7 +32,7 @@ import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-line
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
-import { uiEventService } from '../../services/uiEvent.service';
+import { WidgetRangeSliderComponent } from '../../../widgets/widget-range-slider/widget-range-slider.component';
 
 
 @Component({
@@ -80,7 +81,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetTutorialComponent,
       WidgetWindComponent,
       WidgetPositionComponent,
-      WidgetLabelComponent
+      WidgetLabelComponent,
+      WidgetRangeSliderComponent
     ]);
 
     effect(() => {
