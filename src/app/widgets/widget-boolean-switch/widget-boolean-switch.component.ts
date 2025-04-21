@@ -65,14 +65,15 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngAfterViewInit(): void {
+    this.resizeWidget();
     this.startWidget();
+    this.drawTitle();
   }
 
   protected startWidget(): void {
     this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
     this.getColors(this.widgetProperties.config.color);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
-    this.resizeWidget();
 
     // Build control array
     this.switchControls.set([]);
@@ -109,6 +110,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
+    this.drawTitle();
   }
 
   onResized(event: ResizeObserverEntry): void {
