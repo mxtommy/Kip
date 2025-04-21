@@ -89,6 +89,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
+    this.getColors(this.widgetProperties.config.color);
     this.updateCanvas();
     this.updateCanvasBG();
   }

@@ -69,7 +69,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       gauge: {
         type: 'ngLinear',
         subType: 'vertical',    // vertical or horizontal
-        enableTicks: true,
+        enableTicks: false,
         highlightsWidth: 5,
         useNeedle: false,
       },
@@ -239,6 +239,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   private setGaugeConfig() {
     const isVertical = this.widgetProperties.config.gauge.subType === 'vertical';
     const isNeedle = this.widgetProperties.config.gauge.useNeedle;
+    const isTicks = this.widgetProperties.config.gauge.enableTicks;
     const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
     const rect = this.gauge.nativeElement.getBoundingClientRect();
     let height: number = null;
@@ -268,7 +269,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       fontTitleWeight: "bold",
 
       barLength: isVertical ? 80 : 90,
-      barWidth: 30,
+      barWidth: isTicks ? 30 : 60,
       barProgress: true,
       barBeginCircle: 0,
       barStrokeWidth: 0,
@@ -327,19 +328,19 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorMinorTicks: this.getColors('contrast').dim,
       colorNumbers: this.getColors('contrast').dim,
 
-      majorTicks: scale.majorTicks,
+      majorTicks:  isTicks ? scale.majorTicks : [],
 
       majorTicksInt: this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1,
       majorTicksDec: this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2,
       numberSide: "left",
-      fontNumbersSize: 25,
+      fontNumbersSize: isTicks ? 25 : 0,
       numbersMargin: isVertical ? 8 : 4,
       tickSide: "left",
-      ticksWidth: 10,
+      ticksWidth: isTicks ? 10 : 0,
       ticksPadding: 0,
       strokeTicks: false,
-      minorTicks: 2,
-      ticksWidthMinor: 6,
+      minorTicks: isTicks ? 2 : 0,
+      ticksWidthMinor: isTicks ? 6 : 0,
 
       valueBox: true,
       valueBoxWidth: 35,

@@ -190,7 +190,14 @@
                 </mat-checkbox>
               </div>
 
-              <mat-form-field formGroupName="gauge">
+              <div formGroupName="gauge">
+                <mat-checkbox name="enableTicks"
+                  formControlName="enableTicks">
+                    Enable Ticks
+                </mat-checkbox>
+              </div>
+
+              <mat-form-field formGroupName="gauge" class="options-grid-span2">
                 <mat-label>Orientation</mat-label>
                 <mat-select
                     placeholder="Select type..."

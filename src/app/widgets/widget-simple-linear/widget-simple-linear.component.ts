@@ -89,6 +89,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
+    this.updateGaugeSettings();
   }
 
   private updateGaugeSettings() {
