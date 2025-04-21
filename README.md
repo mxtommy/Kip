@@ -4,7 +4,7 @@ KIP is a powerful and versatile marine instrumentation package designed to displ
 
 With its responsive design, KIP works seamlessly across phones, tablets, Raspberry Pi, and computers, ensuring an optimal user experience on any device. It supports touchscreen gestures, night/day modes, and even Progressive Web App (PWA) functionality for a full-screen, app-like experience.
 
-![KIP](./images/kip-1024.png)
+![KIP](./images/formfactor.png)
 
 Key features include:
 - **Flexible Layouts**: Build purposeful dashboards with an easy-to-use and intuitive grid layout system. Drag widgets into place and make adjustments with simple gestures or clicks.
