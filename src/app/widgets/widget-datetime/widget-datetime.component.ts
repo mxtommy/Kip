@@ -4,6 +4,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 
 @Component({
     selector: 'widget-datetime',
@@ -105,8 +106,8 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-    this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
     this.canvasEl.nativeElement.remove();
     this.canvasBG.nativeElement.remove();
     this.canvasEl = null;
@@ -196,21 +197,21 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
-  updateCanvas() {
+  private updateCanvas(): void {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
       this.drawValue();
     }
   }
 
-  updateCanvasBG() {
+  private updateCanvasBG(): void {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
       this.drawTitle();
     }
   }
 
-  drawValue() {
+  private drawValue(): void {
     let valueText: string;
 
     if (isNaN(Date.parse(this.dataValue))) {
@@ -220,59 +221,48 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
         valueText = formatDate(this.dataValue, this.widgetProperties.config.dateFormat, 'en-US', this._timeZoneGTM);
       } catch (error) {
         valueText = error;
-        console.log("[Date Time Widget]: " + error);
+        console.log('[Date Time Widget]: ' + error);
       }
     }
 
-
-    // Check if length of string has changed since last time.
     if (this.currentValueLength !== valueText.length) {
-        this.currentValueLength = valueText.length;
-        this._valueFontSize = this.calculateFontSize(valueText, this.maxTextWidth, this.maxTextHeight, this.canvasCtx);
+      this.currentValueLength = valueText.length;
+      this._valueFontSize = CanvasUtils.calculateOptimalFontSize(
+        this.canvasCtx,
+        valueText,
+        this.maxTextWidth,
+        this.maxTextHeight,
+        'bold'
+      );
     }
 
-    this.canvasCtx.font = `bold ${this._valueFontSize}px ${this._fontString}`;
-    this.canvasCtx.textAlign = 'center';
-    this.canvasCtx.textBaseline = 'middle';
-    this.canvasCtx.fillStyle = this.valueColor;
-    this.canvasCtx.fillText(
+    CanvasUtils.drawText(
+      this.canvasCtx,
       valueText,
       Math.floor(this.cWidth / 2),
       Math.floor((this.cHeight / 2) + (this._valueFontSize / 15)),
-      this.maxTextWidth
+      this.maxTextWidth,
+      this.maxTextHeight,
+      'bold',
+      this.valueColor
     );
   }
 
-  private calculateFontSize(text: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
-
-    while (minFontSize <= maxFontSize) {
-        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `bold ${fontSize}px ${this._fontString}`;
-        const measure = ctx.measureText(text).width;
-
-        if (measure > maxWidth) {
-            maxFontSize = fontSize - 1;
-        } else {
-            minFontSize = fontSize + 1;
-        }
-    }
-
-    return maxFontSize;
-  }
-
-  drawTitle() {
+  private drawTitle(): void {
     const displayName = this.widgetProperties.config.displayName;
-    if (displayName === null) { return; }
-    const maxTextWidth = Math.floor(this.cWidth * 0.94);
-    const maxTextHeight = Math.floor(this.cHeight * 0.1);
-    const fontSize = this.calculateFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
-    this.canvasBGCtx.font = `normal ${fontSize}px ${this._fontString}`;
-    this.canvasBGCtx.textAlign = 'left';
-    this.canvasBGCtx.textBaseline = 'top';
-    this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(displayName, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.03), maxTextWidth);
+    if (!displayName) return;
+
+    CanvasUtils.drawText(
+      this.canvasBGCtx,
+      displayName,
+      Math.floor(this.cWidth * 0.03),
+      Math.floor(this.cHeight * 0.03),
+      Math.floor(this.cWidth * 0.94),
+      Math.floor(this.cHeight * 0.1),
+      'normal',
+      this.labelColor,
+      'left',
+      'top'
+    );
   }
 }

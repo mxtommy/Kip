@@ -3,6 +3,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 
 @Component({
   selector: 'widget-label',
@@ -55,7 +56,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
     this.canvasEl().nativeElement.remove();
   }
 
@@ -77,82 +78,65 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   }
 
   private getColors(colorName: string): string {
-    let color = "";
     switch (colorName) {
       case "contrast":
-        color = this.theme().contrast;
-        break;
+        return this.theme().contrast;
       case "blue":
-        color = this.theme().blue;
-        break;
+        return this.theme().blue;
       case "green":
-        color = this.theme().green;
-        break;
+        return this.theme().green;
       case "pink":
-        color = this.theme().pink;
-        break;
+        return this.theme().pink;
       case "orange":
-        color = this.theme().orange;
-        break;
+        return this.theme().orange;
       case "purple":
-        color = this.theme().purple;
-        break;
+        return this.theme().purple;
       case "grey":
-        color = this.theme().grey;
-        break;
+        return this.theme().grey;
       case "yellow":
-        color = this.theme().yellow;
-        break;
+        return this.theme().yellow;
       default:
-        color = this.theme().contrast;
-        break;
+        return this.theme().contrast;
     }
-    return color;
   }
 
   /* ******************************************************************************************* */
   /*                                  Canvas                                                     */
   /* ******************************************************************************************* */
-  private updateCanvas() {
+  private updateCanvas(): void {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+
       if (!this.widgetProperties.config.noBgColor) {
-        this.canvasCtx.fillStyle = this.getColors(this.widgetProperties.config.bgColor);;
-        this.canvasCtx.fillRect(0, 0, this.cWidth, this.cHeight);
+        CanvasUtils.drawRectangle(
+          this.canvasCtx,
+          0,
+          0,
+          this.cWidth,
+          this.cHeight,
+          this.getColors(this.widgetProperties.config.bgColor)
+        );
       }
+
       this.drawValue();
     }
   }
 
-  private drawValue() {
+  private drawValue(): void {
     const maxTextWidth = Math.floor(this.cWidth * 0.85);
     const maxTextHeight = Math.floor(this.cHeight * 0.85);
-    const valueFontSize = this.calculateOptimalFontSize(this.widgetProperties.config.displayName, "bold", maxTextWidth, maxTextHeight, this.canvasCtx);
 
-    this.canvasCtx.font = `bold ${valueFontSize}px ${this.fontString}`;
-    this.canvasCtx.fillStyle = this.getColors(this.widgetProperties.config.color);
-    this.canvasCtx.textAlign = "center";
-    this.canvasCtx.textBaseline = "middle";
-    this.canvasCtx.fillText(this.widgetProperties.config.displayName, Math.floor(this.cWidth / 2), Math.floor((this.cHeight / 2) + (valueFontSize / 15)), maxTextWidth);
-  }
-
-  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
-
-    while (minFontSize <= maxFontSize) {
-        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
-        const measure = ctx.measureText(text).width;
-
-        if (measure > maxWidth) {
-            maxFontSize = fontSize - 1;
-        } else {
-            minFontSize = fontSize + 1;
-        }
-    }
-
-    return maxFontSize;
+    CanvasUtils.drawText(
+      this.canvasCtx,
+      this.widgetProperties.config.displayName,
+      Math.floor(this.cWidth / 2),
+      Math.floor(this.cHeight / 2),
+      maxTextWidth,
+      maxTextHeight,
+      'bold',
+      this.getColors(this.widgetProperties.config.color),
+      'center',
+      'middle'
+    );
   }
 }

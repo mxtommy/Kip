@@ -3,6 +3,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 
 
 @Component({
@@ -97,8 +98,8 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvasCtx.clearRect(0,0,this.cWidth, this.cHeight);
-    this.canvasBGCtx.clearRect(0,0,this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
     this.canvasEl.nativeElement.remove();
     this.canvasBG.nativeElement.remove();
     this.canvasEl = null;
@@ -147,13 +148,13 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   }
 
   protected onResized(event: ResizeObserverEntry) {
-    if (event.contentRect.height < 50) { return; }
-    if (event.contentRect.width < 50) { return; }
-    if ((this.cWidth != Math.floor(event.contentRect.width)) || (this.cHeight != Math.floor(event.contentRect.height))) {
+    if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
+
+    if (this.cWidth !== Math.floor(event.contentRect.width) || this.cHeight !== Math.floor(event.contentRect.height)) {
       this.cWidth = this.canvasEl.nativeElement.width = this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
       this.cHeight = this.canvasEl.nativeElement.height = this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
 
-      this.currentValueLength = 0; //will force resetting the font size
+      this.currentValueLength = 0; // Force resetting the font size
       this.maxTextWidth = Math.floor(this.cWidth * 0.85);
       this.maxTextHeight = Math.floor(this.cHeight * 0.85);
       document.fonts.ready.then(() => {
@@ -165,75 +166,67 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   }
 
 /* ******************************************************************************************* */
-/*                                  Canvas drawing                                             */
-/* ******************************************************************************************* */
+  /*                                  Canvas Drawing                                             */
+  /* ******************************************************************************************* */
 
   updateCanvas() {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0,0,this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
       this.drawValue();
     }
   }
 
   updateCanvasBG() {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0,0,this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
       this.drawTitle();
     }
   }
 
   drawValue() {
-    let valueText: string;
+    const valueText = this.dataValue === null ? '--' : this.dataValue;
 
-    if (this.dataValue === null) {
-        valueText = "--";
-    } else {
-        valueText = this.dataValue;
-    }
-
-    // Check if length of string has changed since last time.
+    // Check if the length of the string has changed
     if (this.currentValueLength !== valueText.length) {
-        this.currentValueLength = valueText.length;
-        this.valueFontSize = this.calculateFontSize(valueText, this.maxTextWidth, this.maxTextHeight, this.canvasCtx);
+      this.currentValueLength = valueText.length;
+      this.valueFontSize = CanvasUtils.calculateOptimalFontSize(
+        this.canvasCtx,
+        valueText,
+        this.maxTextWidth,
+        this.maxTextHeight,
+        'bold'
+      );
     }
 
-    this.canvasCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
-    this.canvasCtx.textAlign = "center";
-    this.canvasCtx.textBaseline = "middle";
-    this.canvasCtx.fillStyle = this.valueColor;
-    this.canvasCtx.fillText(valueText, Math.floor(this.cWidth / 2), Math.floor((this.cHeight / 2) + (this.valueFontSize / 15)), this.maxTextWidth);
-  }
-
-  private calculateFontSize(text: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
-
-    while (minFontSize <= maxFontSize) {
-      fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-      ctx.font = `bold ${fontSize}px ${this.fontString}`;
-      const measure = ctx.measureText(text).width;
-
-      if (measure > maxWidth) {
-          maxFontSize = fontSize - 1;
-      } else {
-          minFontSize = fontSize + 1;
-      }
-    }
-    return maxFontSize;
+    CanvasUtils.drawText(
+      this.canvasCtx,
+      valueText,
+      Math.floor(this.cWidth / 2),
+      Math.floor(this.cHeight / 2),
+      this.maxTextWidth,
+      this.maxTextHeight,
+      'bold',
+      this.valueColor,
+      'center',
+      'middle'
+    );
   }
 
   drawTitle() {
     const displayName = this.widgetProperties.config.displayName;
-    if (displayName === null) { return; }
-    const maxTextWidth = Math.floor(this.cWidth * 0.94);
-    const maxTextHeight = Math.floor(this.cHeight * 0.1);
-    const fontSize = this.calculateFontSize(displayName, maxTextWidth, maxTextHeight, this.canvasBGCtx);
+    if (!displayName) return;
 
-    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
-    this.canvasBGCtx.textAlign = "left";
-    this.canvasBGCtx.textBaseline = "top";
-    this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(displayName, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.03), maxTextWidth);
+    CanvasUtils.drawText(
+      this.canvasBGCtx,
+      displayName,
+      Math.floor(this.cWidth * 0.03),
+      Math.floor(this.cHeight * 0.03),
+      Math.floor(this.cWidth * 0.94),
+      Math.floor(this.cHeight * 0.1),
+      'normal',
+      this.labelColor,
+      'left',
+      'top'
+    );
   }
 }
