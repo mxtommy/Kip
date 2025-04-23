@@ -4,7 +4,7 @@ import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 
 @Component({
     selector: 'widget-numeric',
@@ -216,9 +216,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvasValCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-    this.canvasMMCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-    this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasValCtx, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasMMCtx, this.cWidth, this.cHeight);
+    CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
     this.canvasBG.nativeElement.remove();
     this.canvasBG = null;
     this.canvasEl.nativeElement.remove();
@@ -231,38 +231,49 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
 // High resolution scaling see https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#scaling_for_high_resolution_displays
-  private updateCanvas() {
+private updateCanvas(): void {
     if (this.canvasValCtx) {
-      this.canvasValCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasValCtx, this.cWidth, this.cHeight);
       this.drawValue();
       if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
-        this.canvasMMCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+        CanvasUtils.clearCanvas(this.canvasMMCtx, this.cWidth, this.cHeight);
         this.drawMinMax();
       }
     }
   }
 
-  private updateCanvasBG() {
+  private updateCanvasBG(): void {
     if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+      CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
       this.drawTitle();
       this.drawUnit();
     }
   }
 
-  private drawValue() {
+  private drawValue(): void {
     const valueText = this.getValueText();
 
     if (this.currentValueLength !== valueText.length) {
-        this.currentValueLength = valueText.length;
-        this.valueFontSize = this.calculateOptimalFontSize(valueText, "bold", this.maxValueTextWidth, this.maxValueTextHeight, this.canvasValCtx);
+      this.currentValueLength = valueText.length;
+      this.valueFontSize = CanvasUtils.calculateOptimalFontSize(
+        this.canvasValCtx,
+        valueText,
+        this.maxValueTextWidth,
+        this.maxValueTextHeight,
+        'bold'
+      );
     }
 
-    this.canvasValCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
-    this.canvasValCtx.fillStyle = this.valueStateColor;
-    this.canvasValCtx.textAlign = "center";
-    this.canvasValCtx.textBaseline = "middle";
-    this.canvasValCtx.fillText(valueText, Math.floor(this.cWidth / 2), Math.floor((this.cHeight * 0.5) + (this.valueFontSize / 15)), this.maxValueTextWidth);
+    CanvasUtils.drawText(
+      this.canvasValCtx,
+      valueText,
+      Math.floor(this.cWidth / 2),
+      Math.floor((this.cHeight * 0.5) + (this.valueFontSize / 15)),
+      this.maxValueTextWidth,
+      this.maxValueTextHeight,
+      'bold',
+      this.valueStateColor
+    );
   }
 
   private getValueText(): string {
@@ -277,77 +288,77 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     return this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
   }
 
-  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
-
-    while (minFontSize <= maxFontSize) {
-        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
-        const measure = ctx.measureText(text).width;
-
-        if (measure > maxWidth) {
-            maxFontSize = fontSize - 1;
-        } else {
-            minFontSize = fontSize + 1;
-        }
-    }
-
-    return maxFontSize;
-  }
-
-  private drawTitle() {
+  private drawTitle(): void {
     const displayName = this.widgetProperties.config.displayName;
-    if (displayName === null) { return; }
-    const maxTextWidth = Math.floor(this.cWidth * 0.94);
-    const maxTextHeight = Math.floor(this.cHeight * 0.1);
-    const fontSize = this.calculateOptimalFontSize(displayName, "normal", maxTextWidth, maxTextHeight, this.canvasBGCtx);
-    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
-    this.canvasBGCtx.textAlign = "left";
-    this.canvasBGCtx.textBaseline = "top";
-    this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(displayName, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.03), maxTextWidth);
+    if (!displayName) return;
+
+    CanvasUtils.drawText(
+      this.canvasBGCtx,
+      displayName,
+      Math.floor(this.cWidth * 0.03),
+      Math.floor(this.cHeight * 0.03),
+      Math.floor(this.cWidth * 0.94),
+      Math.floor(this.cHeight * 0.1),
+      'normal',
+      this.labelColor,
+      'left',
+      'top'
+    );
   }
 
-  private drawUnit() {
+  private drawUnit(): void {
     const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) { return; }
+    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
 
-    const maxTextWidth = Math.floor(this.cWidth * 0.35);
-    const maxTextHeight = Math.floor(this.cHeight * 0.15);
-    const fontSize = this.calculateOptimalFontSize(unit, "bold", maxTextWidth, maxTextHeight, this.canvasBGCtx);
-
-    this.canvasBGCtx.font = `bold ${fontSize}px ${this.fontString}`;
-    this.canvasBGCtx.textAlign = "right";
-    this.canvasBGCtx.textBaseline="bottom";
-    this.canvasBGCtx.fillStyle = this.valueColor;
-    this.canvasBGCtx.fillText(unit, Math.floor(this.cWidth * 0.97), Math.floor(this.cHeight * 0.97), maxTextWidth);
+    CanvasUtils.drawText(
+      this.canvasBGCtx,
+      unit,
+      Math.floor(this.cWidth * 0.97),
+      Math.floor(this.cHeight * 0.97),
+      Math.floor(this.cWidth * 0.35),
+      Math.floor(this.cHeight * 0.15),
+      'bold',
+      this.valueColor,
+      'right',
+      'bottom'
+    );
   }
 
-  private drawMinMax() {
-    if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; }
+  private drawMinMax(): void {
+    if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) return;
 
     let valueText = '';
-
     if (this.widgetProperties.config.showMin) {
-        valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Min: --";
+      valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Min: --';
     }
     if (this.widgetProperties.config.showMax) {
-        valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Max: --";
+      valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Max: --';
     }
     valueText = valueText.trim();
 
     if (this.currentMinMaxLength !== valueText.length) {
-        this.currentMinMaxLength = valueText.length;
-        this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", this.maxMinMaxTextWidth, this.maxMinMaxTextHeight, this.canvasMMCtx);
+      this.currentMinMaxLength = valueText.length;
+      this.minMaxFontSize = CanvasUtils.calculateOptimalFontSize(
+        this.canvasMMCtx,
+        valueText,
+        this.maxMinMaxTextWidth,
+        this.maxMinMaxTextHeight,
+        'normal'
+      );
     }
 
-    this.canvasMMCtx.font = `normal ${this.minMaxFontSize}px ${this.fontString}`;
-    this.canvasMMCtx.textAlign = "left";
-    this.canvasMMCtx.textBaseline = "bottom";
-    this.canvasMMCtx.fillStyle = this.valueColor;
-    this.canvasMMCtx.fillText(valueText, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.9559), this.maxMinMaxTextWidth);
+    CanvasUtils.drawText(
+      this.canvasMMCtx,
+      valueText,
+      Math.floor(this.cWidth * 0.03),
+      Math.floor(this.cHeight * 0.9559),
+      this.maxMinMaxTextWidth,
+      this.maxMinMaxTextHeight,
+      'normal',
+      this.valueColor,
+      'left',
+      'bottom'
+    );
   }
 
   private applyDecorations(txtValue: string): string {

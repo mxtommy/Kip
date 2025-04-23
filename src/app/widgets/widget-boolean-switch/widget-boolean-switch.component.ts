@@ -11,6 +11,7 @@ import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 
 @Component({
     selector: 'widget-boolean-switch',
@@ -67,7 +68,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   ngAfterViewInit(): void {
     this.resizeWidget();
     this.startWidget();
-    this.drawTitle();
+    this. updateCanvas();
   }
 
   protected startWidget(): void {
@@ -110,7 +111,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-    this.drawTitle();
+    this.updateCanvas();
   }
 
   onResized(event: ResizeObserverEntry): void {
@@ -163,51 +164,9 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
       if (this.canvasLabelCtx) {
         this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-        this.drawTitle();
+        this.updateCanvas();
       }
     }
-  }
-
-  // Draw the title on the canvas
-  // this is called when the widget is resized, and when the title changes
-  drawTitle() {
-    if (this.widgetProperties.config.displayName === null) { return }
-    const maxTextWidth = Math.floor(this.canvasLabelElement.nativeElement.width * 0.94);
-    const maxTextHeight = Math.floor(this.canvasLabelElement.nativeElement.height * 0.1 );
-    const fontSize = this.calculateOptimalFontSize(this.widgetProperties.config.displayName, "normal", maxTextWidth, maxTextHeight, this.canvasLabelCtx);
-
-    this.canvasLabelCtx.font = 'normal ' + fontSize.toString() + 'px Roboto'; // need to init it, so we do loop at least once :)
-    this.canvasLabelCtx.font = `normal ${fontSize}px ${this.fontString}`;
-    this.canvasLabelCtx.textAlign = 'left';
-    this.canvasLabelCtx.textBaseline = 'top';
-    this.canvasLabelCtx.fillStyle = this.labelColor;
-    this.canvasLabelCtx.fillText(
-      this.widgetProperties.config.displayName,
-      Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
-      Math.floor(this.canvasLabelElement.nativeElement.height * 0.03),
-      maxTextWidth
-    );
-
-  }
-
-  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
-
-    while (minFontSize <= maxFontSize) {
-        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
-        const measure = ctx.measureText(text).width;
-
-        if (measure > maxWidth) {
-            maxFontSize = fontSize - 1;
-        } else {
-            minFontSize = fontSize + 1;
-        }
-    }
-
-    return maxFontSize;
   }
 
   private getColors(color: string): void {
@@ -245,11 +204,38 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   ngOnDestroy(): void {
     this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
-    // Clear canvas context
-    this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-    // Nullify the references to help garbage collection
+    CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
     this.canvasLabelElement.nativeElement.remove();
     this.canvasLabelElement = null;
     this.widgetContainerElement = null;
+  }
+
+  /* ******************************************************************************************* */
+  /*                                  Canvas                                                     */
+  /* ******************************************************************************************* */
+
+  private updateCanvas(): void {
+    if (this.canvasLabelCtx) {
+      CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+      this.drawTitle();
+    }
+  }
+
+  private drawTitle(): void {
+    const displayName = this.widgetProperties.config.displayName;
+    if (!displayName) return;
+
+    CanvasUtils.drawText(
+      this.canvasLabelCtx,
+      displayName,
+      Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
+      Math.floor(this.canvasLabelElement.nativeElement.height * 0.03),
+      Math.floor(this.canvasLabelElement.nativeElement.width * 0.94),
+      Math.floor(this.canvasLabelElement.nativeElement.height * 0.1),
+      'normal',
+      this.labelColor,
+      'left',
+      'top'
+    );
   }
 }

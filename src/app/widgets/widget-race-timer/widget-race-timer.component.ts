@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
@@ -214,22 +214,20 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
+    if (this.canvasCtx) {
+      CanvasUtils.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+    }
     clearInterval(this.flashInterval);
     this.destroyDataStreams();
   }
 
 /* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/*                                  Canvas                                                     */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
-/* ******************************************************************************************* */
-
+  /*                                  Canvas                                                     */
+  /* ******************************************************************************************* */
 
   updateCanvas() {
     if (this.canvasCtx) {
-      this.canvasCtx.clearRect(0,0,this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+      CanvasUtils.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
       this.drawValue();
     }
   }
@@ -241,68 +239,60 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     let valueText: string;
 
     if (this.dataValue != null) {
-        let v = Math.abs(this.dataValue); // Always positive
-        const m = Math.floor(v / 600);
-        const s = Math.floor((v % 600) / 10);
-        const d = Math.floor(v % 10);
-        valueText = `${m}:${('0' + s).slice(-2)}.${d}`;
+      let v = Math.abs(this.dataValue); // Always positive
+      const m = Math.floor(v / 600);
+      const s = Math.floor((v % 600) / 10);
+      const d = Math.floor(v % 10);
+      valueText = `${m}:${('0' + s).slice(-2)}.${d}`;
 
-        if (this.dataValue < 0) {
-            valueText = `-${valueText}`;
-        }
+      if (this.dataValue < 0) {
+        valueText = `-${valueText}`;
+      }
     } else {
-        valueText = "--";
+      valueText = "--";
     }
 
     // Check if the length of the string has changed
     if (this.currentValueLength !== valueText.length) {
-        this.currentValueLength = valueText.length;
-
-        // Start with the maximum font size
-        this.valueFontSize = maxTextHeight;
-        this.canvasCtx.font = `bold ${this.valueFontSize}px Roboto`;
-
-        // Measure the text width and adjust the font size if necessary
-        let measure = this.canvasCtx.measureText(valueText).width;
-        if (measure > maxTextWidth) {
-            const scaleRatio = maxTextWidth / measure;
-            this.valueFontSize = Math.floor(this.valueFontSize * scaleRatio);
-            this.canvasCtx.font = `bold ${this.valueFontSize}px Roboto`;
-        }
-
-        // Fine-tune the font size to ensure it fits within the max width
-        while (this.canvasCtx.measureText(valueText).width > maxTextWidth && this.valueFontSize > 0) {
-            this.valueFontSize--;
-            this.canvasCtx.font = `bold ${this.valueFontSize}px Roboto`;
-        }
+      this.currentValueLength = valueText.length;
+      this.valueFontSize = CanvasUtils.calculateOptimalFontSize(
+        this.canvasCtx,
+        valueText,
+        maxTextWidth,
+        maxTextHeight,
+        'bold'
+      );
     }
 
     // Set the text color based on the zone state
     switch (this.zoneState) {
-        case States.Alarm:
-            if (this.flashOn) {
-                this.canvasCtx.fillStyle = this.textColor;
-            } else {
-                this.canvasCtx.fillStyle = this.warnColor;
-                this.canvasCtx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-                this.canvasCtx.fillStyle = this.textColor;
-            }
-            break;
-        case States.Warn:
-            this.canvasCtx.fillStyle = this.warnColor;
-            break;
-        default:
-            this.canvasCtx.fillStyle = this.textColor;
+      case States.Alarm:
+        if (this.flashOn) {
+          this.canvasCtx.fillStyle = this.textColor;
+        } else {
+          CanvasUtils.drawRectangle(this.canvasCtx, 0, 0, canvasEl.width, canvasEl.height, this.warnColor);
+          this.canvasCtx.fillStyle = this.textColor;
+        }
+        break;
+      case States.Warn:
+        this.canvasCtx.fillStyle = this.warnColor;
+        break;
+      default:
+        this.canvasCtx.fillStyle = this.textColor;
     }
 
     // Draw the text
-    this.canvasCtx.textAlign = "center";
-    this.canvasCtx.textBaseline = "middle";
-    this.canvasCtx.fillText(
-        valueText,
-        canvasEl.width / 2,
-        canvasEl.height / 2,
-        maxTextWidth
+    CanvasUtils.drawText(
+      this.canvasCtx,
+      valueText,
+      canvasEl.width / 2,
+      canvasEl.height / 2,
+      maxTextWidth,
+      maxTextHeight,
+      'bold',
+      this.canvasCtx.fillStyle,
+      'center',
+      'middle'
     );
   }
 }

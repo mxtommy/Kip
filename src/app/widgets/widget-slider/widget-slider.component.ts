@@ -8,6 +8,7 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { CanvasUtils } from '../../core/utils/canvas-utils';
 
 @Component({
   selector: 'widget-slider',
@@ -274,49 +275,28 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     }
   }
 
-  // Draw the title on the canvas
-  // this is called when the widget is resized, and when the title changes
-  drawTitle() {
-    this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+  drawTitle(): void {
+    CanvasUtils.clearCanvas(
+      this.canvasLabelCtx,
+      this.canvasLabelElement.nativeElement.width,
+      this.canvasLabelElement.nativeElement.height
+    );
+
     const displayName = this.widgetProperties.config.displayName;
-    if (!displayName) {
-      return;
-    }
+    if (!displayName) return;
 
-    const maxTextWidth = Math.floor(this.canvasLabelElement.nativeElement.width * 0.94);
-    const maxTextHeight = Math.floor(this.canvasLabelElement.nativeElement.height * 0.1);
-    const fontSize = this.calculateOptimalFontSize(displayName, "normal", maxTextWidth, maxTextHeight, this.canvasLabelCtx);
-
-    this.canvasLabelCtx.font = `normal ${fontSize}px ${this.fontString}`;
-    this.canvasLabelCtx.textAlign = 'left';
-    this.canvasLabelCtx.textBaseline = 'top';
-    this.canvasLabelCtx.fillStyle = this.labelColor;
-    this.canvasLabelCtx.fillText(
+    CanvasUtils.drawText(
+      this.canvasLabelCtx,
       displayName,
       Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
       Math.floor(this.canvasLabelElement.nativeElement.height * 0.03),
-      maxTextWidth
+      Math.floor(this.canvasLabelElement.nativeElement.width * 0.94),
+      Math.floor(this.canvasLabelElement.nativeElement.height * 0.1),
+      'normal',
+      this.labelColor,
+      'left',
+      'top'
     );
-  }
-
-  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
-
-    while (minFontSize <= maxFontSize) {
-        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
-        const measure = ctx.measureText(text).width;
-
-        if (measure > maxWidth) {
-            maxFontSize = fontSize - 1;
-        } else {
-            minFontSize = fontSize + 1;
-        }
-    }
-
-    return maxFontSize;
   }
 
   private getColors(color: string): void {
@@ -330,7 +310,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     this.skRequestSub?.unsubscribe();
     this.valueChange$.complete(); // Complete the Subject to clean up resources
     if (this.canvasLabelCtx) {
-      this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+      CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
     }
     clearTimeout(this.debounceTimeout);
     clearTimeout(this.resizeTimeout);
