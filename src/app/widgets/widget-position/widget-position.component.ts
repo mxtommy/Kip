@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, effect, inject } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
     selector: 'widget-position',
@@ -15,7 +15,7 @@ import { CanvasUtils } from '../../core/utils/canvas-utils';
 export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('canvasEl', { static: true }) canvasEl: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasBG', { static: true }) canvasBG: ElementRef<HTMLCanvasElement>;
-
+  private canvas = inject(CanvasService);
   private latPos: string = '';
   private longPos: string = '';
   private labelColor: string = undefined;
@@ -98,8 +98,8 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy(): void {
     this.isDestroyed = true;
     this.unsubscribeDataStream();
-    CanvasUtils.clearCanvas(this.canvasValCtx, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-    CanvasUtils.clearCanvas(this.canvasBGCtx, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+    this.canvas.clearCanvas(this.canvasValCtx, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+    this.canvas.clearCanvas(this.canvasBGCtx, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
     this.canvasEl.nativeElement.remove();
     this.canvasBG.nativeElement.remove();
     this.canvasEl = null;
@@ -174,14 +174,14 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
   private updateCanvas(): void {
     if (this.canvasValCtx) {
-      CanvasUtils.clearCanvas(this.canvasValCtx, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
+      this.canvas.clearCanvas(this.canvasValCtx, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
       this.drawValue();
     }
   }
 
   private updateCanvasBG(): void {
     if (this.canvasBGCtx) {
-      CanvasUtils.clearCanvas(this.canvasBGCtx, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
+      this.canvas.clearCanvas(this.canvasBGCtx, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
       this.drawTitle();
     }
   }
@@ -195,7 +195,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
     if (this.currentValueLength !== longestString.length) {
       this.currentValueLength = longestString.length;
-      this.valueFontSize = CanvasUtils.calculateOptimalFontSize(
+      this.valueFontSize = this.canvas.calculateOptimalFontSize(
         this.canvasValCtx,
         longestString,
         maxTextWidth,
@@ -208,7 +208,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     const middle = this.canvasEl.nativeElement.height * 0.55;
     const fontSizeOffset = this.valueFontSize / 2;
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasValCtx,
       latPosText,
       center,
@@ -221,7 +221,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
       'middle'
     );
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasValCtx,
       longPosText,
       center,
@@ -242,7 +242,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
     if (!displayName) return;
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasBGCtx,
       displayName,
       Math.floor(this.canvasBG.nativeElement.width * 0.03),

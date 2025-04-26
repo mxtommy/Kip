@@ -8,7 +8,7 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
   selector: 'widget-slider',
@@ -19,7 +19,7 @@ import { CanvasUtils } from '../../core/utils/canvas-utils';
 export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
   @ViewChild('svgSlider', {static: true}) svgElement: ElementRef<SVGElement>;
-
+  private canvas = inject(CanvasService);
   protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
@@ -276,7 +276,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   }
 
   drawTitle(): void {
-    CanvasUtils.clearCanvas(
+    this.canvas.clearCanvas(
       this.canvasLabelCtx,
       this.canvasLabelElement.nativeElement.width,
       this.canvasLabelElement.nativeElement.height
@@ -285,7 +285,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     const displayName = this.widgetProperties.config.displayName;
     if (!displayName) return;
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasLabelCtx,
       displayName,
       Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
@@ -310,7 +310,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     this.skRequestSub?.unsubscribe();
     this.valueChange$.complete(); // Complete the Subject to clean up resources
     if (this.canvasLabelCtx) {
-      CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+      this.canvas.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
     }
     clearTimeout(this.debounceTimeout);
     clearTimeout(this.resizeTimeout);

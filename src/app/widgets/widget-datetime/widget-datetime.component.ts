@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, effect, inject } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
     selector: 'widget-datetime',
@@ -16,7 +16,7 @@ import { CanvasUtils } from '../../core/utils/canvas-utils';
 export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('canvasEl', {static: true}) canvasEl: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
-
+  private canvas = inject(CanvasService);
   protected dataValue: any = null;
   private _timeZoneGTM: string = "";
   private _valueFontSize = 1;
@@ -106,8 +106,8 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
-    CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
+    this.canvas.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+    this.canvas.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
     this.canvasEl.nativeElement.remove();
     this.canvasBG.nativeElement.remove();
     this.canvasEl = null;
@@ -199,14 +199,14 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 /* ******************************************************************************************* */
   private updateCanvas(): void {
     if (this.canvasCtx) {
-      CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+      this.canvas.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
       this.drawValue();
     }
   }
 
   private updateCanvasBG(): void {
     if (this.canvasBGCtx) {
-      CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
+      this.canvas.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
       this.drawTitle();
     }
   }
@@ -227,7 +227,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
     if (this.currentValueLength !== valueText.length) {
       this.currentValueLength = valueText.length;
-      this._valueFontSize = CanvasUtils.calculateOptimalFontSize(
+      this._valueFontSize = this.canvas.calculateOptimalFontSize(
         this.canvasCtx,
         valueText,
         this.maxTextWidth,
@@ -236,7 +236,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
       );
     }
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasCtx,
       valueText,
       Math.floor(this.cWidth / 2),
@@ -252,7 +252,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     const displayName = this.widgetProperties.config.displayName;
     if (!displayName) return;
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasBGCtx,
       displayName,
       Math.floor(this.cWidth * 0.03),

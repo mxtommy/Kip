@@ -1,9 +1,9 @@
-import { AfterViewInit, Component, effect, ElementRef, OnDestroy, OnInit, viewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
   selector: 'widget-label',
@@ -15,6 +15,7 @@ import { CanvasUtils } from '../../core/utils/canvas-utils';
 export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
   private wrapper = viewChild<ElementRef<HTMLDivElement>>('wrapper');
+  private canvas = inject(CanvasService);
   private canvasCtx: CanvasRenderingContext2D = null;
   private readonly fontString = "Roboto";
   private isDestroyed = false; // guard against callbacks after destroyed
@@ -56,7 +57,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+    this.canvas.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
     this.canvasEl().nativeElement.remove();
   }
 
@@ -105,10 +106,10 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   /* ******************************************************************************************* */
   private updateCanvas(): void {
     if (this.canvasCtx) {
-      CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
+      this.canvas.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
 
       if (!this.widgetProperties.config.noBgColor) {
-        CanvasUtils.drawRectangle(
+        this.canvas.drawRectangle(
           this.canvasCtx,
           0,
           0,
@@ -126,7 +127,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     const maxTextWidth = Math.floor(this.cWidth * 0.85);
     const maxTextHeight = Math.floor(this.cHeight * 0.85);
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasCtx,
       this.widgetProperties.config.displayName,
       Math.floor(this.cWidth / 2),

@@ -1,33 +1,27 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 
 @Component({
     selector: 'widget-text',
     templateUrl: './widget-text.component.html',
     styleUrls: ['./widget-text.component.css'],
-    imports: [ WidgetHostComponent, NgxResizeObserverModule ],
+    imports: [ WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent ],
     standalone: true
 })
 export class WidgetTextComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild('canvasEl', {static: true}) canvasEl: ElementRef<HTMLCanvasElement>;
-  @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
-
-  private readonly fontString = "Roboto";
+  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
+  private canvas = inject(CanvasService);
   private dataValue: any = null;
-  private valueFontSize: number = 1;
-  private currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   private canvasCtx: CanvasRenderingContext2D;
-  private canvasBGCtx: CanvasRenderingContext2D;
-  private labelColor: string = undefined;
+  protected labelColor: string = undefined;
   private valueColor: string = undefined;
   private isDestroyed = false; // guard against callbacks after destroyed
-  private cWidth: number = 0;
-  private cHeight: number = 0;
   private maxTextWidth = 0;
   private maxTextHeight = 0;
 
@@ -55,8 +49,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     effect(() => {
       if (this.theme()) {
         this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
-        this.updateCanvasBG();
+        this.drawValue();
       }
     });
   }
@@ -66,15 +59,13 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   }
 
   ngAfterViewInit(): void {
-    this.canvasCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-    this.cWidth = Math.floor(this.canvasEl.nativeElement.width);
-    this.cHeight = Math.floor(this.canvasEl.nativeElement.height);
-    this.maxTextWidth = Math.floor(this.cWidth * 0.85);
-    this.maxTextHeight = Math.floor(this.cHeight * 0.85);
+    const canvasElement = this.canvasValue().nativeElement;
+    this.canvas.setHighDPISize(this.canvasValue().nativeElement, canvasElement.parentElement.getBoundingClientRect());
+    this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
+    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
+    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.80);
     document.fonts.ready.then(() => {
       if (this.isDestroyed) return;
-      this.getColors(this.widgetProperties.config.color);
       this.startWidget();
     });
   }
@@ -83,7 +74,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.unsubscribeDataStream();
     this.observeDataStream('stringPath', newValue => {
       this.dataValue = newValue.data.value;
-      this.updateCanvas();
+      this.drawValue();
     });
   }
 
@@ -91,19 +82,14 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.widgetProperties.config = config;
     this.startWidget();
     this.getColors(this.widgetProperties.config.color);
-    this.updateCanvas();
-    this.updateCanvasBG();
+    this.drawValue();
   }
 
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
-    CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
-    this.canvasEl.nativeElement.remove();
-    this.canvasBG.nativeElement.remove();
-    this.canvasEl = null;
-    this.canvasBG = null;
+    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
+    this.canvasValue().nativeElement.remove();
   }
 
   private getColors(color: string): void {
@@ -147,86 +133,37 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     }
   }
 
-  protected onResized(event: ResizeObserverEntry) {
-    if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
+  protected onResized(e: ResizeObserverEntry) {
+    if (e.contentRect.height < 25 || e.contentRect.width < 25) return;
+    this.canvas.setHighDPISize(this.canvasValue().nativeElement, e.contentRect);
+    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
+    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
+    document.fonts.ready.then(() => {
+      if (this.isDestroyed) return;
+      this.drawValue();
+    });
 
-    if (this.cWidth !== Math.floor(event.contentRect.width) || this.cHeight !== Math.floor(event.contentRect.height)) {
-      this.cWidth = this.canvasEl.nativeElement.width = this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
-      this.cHeight = this.canvasEl.nativeElement.height = this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
-
-      this.currentValueLength = 0; // Force resetting the font size
-      this.maxTextWidth = Math.floor(this.cWidth * 0.85);
-      this.maxTextHeight = Math.floor(this.cHeight * 0.85);
-      document.fonts.ready.then(() => {
-        if (this.isDestroyed) return;
-        this.updateCanvas();
-        this.updateCanvasBG();
-      });
-    }
   }
 
 /* ******************************************************************************************* */
   /*                                  Canvas Drawing                                             */
   /* ******************************************************************************************* */
-
-  updateCanvas() {
-    if (this.canvasCtx) {
-      CanvasUtils.clearCanvas(this.canvasCtx, this.cWidth, this.cHeight);
-      this.drawValue();
-    }
-  }
-
-  updateCanvasBG() {
-    if (this.canvasBGCtx) {
-      CanvasUtils.clearCanvas(this.canvasBGCtx, this.cWidth, this.cHeight);
-      this.drawTitle();
-    }
-  }
-
   drawValue() {
+    if (!this.canvasCtx) return;
+    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
     const valueText = this.dataValue === null ? '--' : this.dataValue;
 
-    // Check if the length of the string has changed
-    if (this.currentValueLength !== valueText.length) {
-      this.currentValueLength = valueText.length;
-      this.valueFontSize = CanvasUtils.calculateOptimalFontSize(
-        this.canvasCtx,
-        valueText,
-        this.maxTextWidth,
-        this.maxTextHeight,
-        'bold'
-      );
-    }
-
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasCtx,
       valueText,
-      Math.floor(this.cWidth / 2),
-      Math.floor(this.cHeight / 2),
+      Math.floor(this.canvasValue().nativeElement.width / 2),
+      Math.floor(this.canvasValue().nativeElement.height / 2 * 1.15),
       this.maxTextWidth,
       this.maxTextHeight,
       'bold',
       this.valueColor,
       'center',
       'middle'
-    );
-  }
-
-  drawTitle() {
-    const displayName = this.widgetProperties.config.displayName;
-    if (!displayName) return;
-
-    CanvasUtils.drawText(
-      this.canvasBGCtx,
-      displayName,
-      Math.floor(this.cWidth * 0.03),
-      Math.floor(this.cHeight * 0.03),
-      Math.floor(this.cWidth * 0.94),
-      Math.floor(this.cHeight * 0.1),
-      'normal',
-      this.labelColor,
-      'left',
-      'top'
     );
   }
 }

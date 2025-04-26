@@ -11,7 +11,7 @@ import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
     selector: 'widget-boolean-switch',
@@ -24,7 +24,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
-
+  private canvas = inject(CanvasService);
   @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
   @ViewChild('widgetContainer', {static: true}) widgetContainerElement: ElementRef<HTMLCanvasElement>;
 
@@ -204,7 +204,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   ngOnDestroy(): void {
     this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
-    CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+    this.canvas.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
     this.canvasLabelElement.nativeElement.remove();
     this.canvasLabelElement = null;
     this.widgetContainerElement = null;
@@ -216,7 +216,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   private updateCanvas(): void {
     if (this.canvasLabelCtx) {
-      CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
+      this.canvas.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
       this.drawTitle();
     }
   }
@@ -225,7 +225,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     const displayName = this.widgetProperties.config.displayName;
     if (!displayName) return;
 
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasLabelCtx,
       displayName,
       Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),

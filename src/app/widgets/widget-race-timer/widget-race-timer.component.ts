@@ -3,12 +3,12 @@ import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
+import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
     selector: 'widget-racetimer',
@@ -19,9 +19,10 @@ import { MatButton } from '@angular/material/button';
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private TimersService = inject(TimersService);
+  private canvas = inject(CanvasService);
   readonly canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
-  dataValue: number = null;
-  zoneState: string = null;
+  protected dataValue: number = null;
+  private zoneState: string = null;
   private currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
   private valueFontSize: number = 1;
   private flashOn: boolean = false;
@@ -215,7 +216,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
     if (this.canvasCtx) {
-      CanvasUtils.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+      this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
     }
     clearInterval(this.flashInterval);
     this.destroyDataStreams();
@@ -227,7 +228,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   updateCanvas() {
     if (this.canvasCtx) {
-      CanvasUtils.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+      this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
       this.drawValue();
     }
   }
@@ -255,7 +256,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     // Check if the length of the string has changed
     if (this.currentValueLength !== valueText.length) {
       this.currentValueLength = valueText.length;
-      this.valueFontSize = CanvasUtils.calculateOptimalFontSize(
+      this.valueFontSize = this.canvas.calculateOptimalFontSize(
         this.canvasCtx,
         valueText,
         maxTextWidth,
@@ -270,7 +271,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         if (this.flashOn) {
           this.canvasCtx.fillStyle = this.textColor;
         } else {
-          CanvasUtils.drawRectangle(this.canvasCtx, 0, 0, canvasEl.width, canvasEl.height, this.warnColor);
+          this.canvas.drawRectangle(this.canvasCtx, 0, 0, canvasEl.width, canvasEl.height, this.warnColor);
           this.canvasCtx.fillStyle = this.textColor;
         }
         break;
@@ -282,7 +283,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
 
     // Draw the text
-    CanvasUtils.drawText(
+    this.canvas.drawText(
       this.canvasCtx,
       valueText,
       canvasEl.width / 2,
