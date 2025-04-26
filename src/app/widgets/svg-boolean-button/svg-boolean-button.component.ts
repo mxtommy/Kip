@@ -33,6 +33,7 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   public labelColorEnabled = null;
   public labelColorDisabled = null;
   public valueColor = null;
+  private ctrlColor: string = '';
 
   constructor() { }
 
@@ -41,6 +42,11 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
 
   ngDoCheck(): void {
     this.viewBox = this.pressed ? this.toggleOn : this.toggleOff;
+    const data = this.data();
+    if(data.color != this.ctrlColor) {
+      this.ctrlColor = data.color;
+      this.getColors(data.color);
+    }
 
     const theme = this.theme();
     if (this.oldTheme != theme) {

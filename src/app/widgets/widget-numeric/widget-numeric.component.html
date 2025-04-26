@@ -1,7 +1,8 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <div class="textGenericWrapper" (onResize)="onResized($event)">
-    <canvas id="canvasBG" class="canvas-size" #canvasBG></canvas>
-    <canvas id="canvasValue" class="canvas-size" #canvasEl></canvas>
-    <canvas id="canvasMM" class="canvas-size" #canvasMM></canvas>
+    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
+    <canvas #canvasUnit class="canvas"></canvas>
+    <canvas #canvasValue class="canvas"></canvas>
+    <canvas #canvasMinMax class="canvas"></canvas>
   </div>
 </widget-host>

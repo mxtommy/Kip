@@ -29,6 +29,7 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   public viewBox: string = this.toggleOff;
   public labelColor = null;
   public valueColor = null;
+  private ctrlColor: string = '';
 
   constructor() { }
 
@@ -40,6 +41,10 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
     if (data.value != this.ctrlState) {
       this.ctrlState = data.value;
       this.viewBox = data.value ? this.toggleOn : this.toggleOff;
+    }
+    if(data.color != this.ctrlColor) {
+      this.ctrlColor = data.color;
+      this.getColors(data.color);
     }
 
     const theme = this.theme();

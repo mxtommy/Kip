@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -8,26 +8,24 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { CanvasService } from '../../core/services/canvas.service';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 @Component({
   selector: 'widget-slider',
-  imports: [ WidgetHostComponent, NgxResizeObserverModule ],
+  imports: [ WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent ],
   templateUrl: './widget-slider.component.html',
   styleUrl: './widget-slider.component.scss'
 })
 export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
-  @ViewChild('svgSlider', {static: true}) svgElement: ElementRef<SVGElement>;
-
+  private svgElement = viewChild.required<ElementRef<SVGElement>>('svgSlider');
+  private canvas = inject(CanvasService);
   protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
-  private canvasLabelCtx: CanvasRenderingContext2D;
   protected labelColor: string = undefined;
   protected barColor: string = undefined;
   private skRequestSub = new Subscription; // Request result observer
-  private readonly fontString = "Roboto";
 
   private lineStartPx: number;
   private lineWidthPx: number;
@@ -39,7 +37,6 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   private lineStart = this.handlePosition;
   private isDragStarted: boolean = false;
   protected lineWidth: string = '0px';
-  labels: string[] = ["25", "50", "75"];
   private readonly VIEWBOX_WIDTH = 200;
   private readonly LINE_START = 20;
   private readonly LINE_WIDTH = 160;
@@ -60,7 +57,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     super();
 
     this.defaultConfig = {
-      displayName: 'Range Slider Label',
+      displayName: 'Slider Label',
       filterSelfPaths: true,
       paths: {
         'gaugePath': {
@@ -117,8 +114,21 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngAfterViewInit(): void {
-    this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
     this.startWidget();
+  }
+
+  protected startWidget(): void {
+    this.unsubscribeDataStream();
+    this.observeDataStream('gaugePath', newValue => {
+      if (!newValue || !newValue.data) {
+        this.handlePosition = this.mapValueToPosition(this.widgetProperties.config.displayScale.lower); // Default to lower bound
+        return;
+      }
+      this.updateHandlePosition(this.mapValueToPosition(newValue.data.value));
+    });
+
+    this.skRequestSub?.unsubscribe();
+    this.subscribeSKRequest();
   }
 
   private mapValueToPosition(value: number): number {
@@ -136,22 +146,6 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   private isWithinMargin(value: number, target: number): boolean {
     const margin = (this.widgetProperties.config.displayScale.upper - this.widgetProperties.config.displayScale.lower) * 0.01; // 1% margin
     return Math.abs(value - target) <= margin;
-  }
-
-  protected startWidget(): void {
-    this.getColors(this.widgetProperties.config.color);
-
-    this.unsubscribeDataStream();
-    this.observeDataStream('gaugePath', newValue => {
-      if (!newValue || !newValue.data) {
-        this.handlePosition = this.mapValueToPosition(this.widgetProperties.config.displayScale.lower); // Default to lower bound
-        return;
-      }
-      this.updateHandlePosition(this.mapValueToPosition(newValue.data.value));
-    });
-
-    this.skRequestSub?.unsubscribe();
-    this.subscribeSKRequest();
   }
 
   private subscribeSKRequest(): void {
@@ -181,38 +175,25 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    this.getColors(this.widgetProperties.config.color);
     this.calculateLineBounds(); // Recalculate line bounds on config update
     this.startWidget();
-    this.drawTitle();
   }
 
   protected onResized(event: ResizeObserverEntry): void {
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
-      this.resizeWidget();
       this.calculateLineBounds(); // Recalculate line bounds on resize
     }, 200); // Adjust debounce time as needed
   }
 
-  private resizeWidget(): void {
-    const rect = this.canvasLabelElement.nativeElement.getBoundingClientRect();
-    if ((this.canvasLabelElement.nativeElement.width != Math.floor(rect.width)) || (this.canvasLabelElement.nativeElement.height != Math.floor(rect.height))) {
-      this.canvasLabelElement.nativeElement.width = Math.floor(rect.width);
-      this.canvasLabelElement.nativeElement.height = Math.floor(rect.height);
-
-      if (this.canvasLabelCtx) {
-        this.drawTitle();
-      }
-    }
-  }
-
   private calculateLineBounds(): void {
-    if (!this.svgElement?.nativeElement) {
+    if (!this.svgElement()?.nativeElement) {
       console.warn('[Slider Widget] SVG element is not initialized yet.');
       return;
     }
 
-    const svgRect = this.svgElement.nativeElement.getBoundingClientRect();
+    const svgRect = this.svgElement().nativeElement.getBoundingClientRect();
     const lineStartPx = (this.LINE_START / this.VIEWBOX_WIDTH) * svgRect.width;
     const lineWidthPx = (this.LINE_WIDTH / this.VIEWBOX_WIDTH) * svgRect.width;
 
@@ -227,7 +208,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   }
 
   private getPointerX(e: PointerEvent): number {
-    return e.clientX - this.svgElement.nativeElement.getBoundingClientRect().left;
+    return e.clientX - this.svgElement().nativeElement.getBoundingClientRect().left;
   }
 
   protected onPointerDown(e: PointerEvent) {
@@ -275,30 +256,6 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     }
   }
 
-  drawTitle(): void {
-    CanvasUtils.clearCanvas(
-      this.canvasLabelCtx,
-      this.canvasLabelElement.nativeElement.width,
-      this.canvasLabelElement.nativeElement.height
-    );
-
-    const displayName = this.widgetProperties.config.displayName;
-    if (!displayName) return;
-
-    CanvasUtils.drawText(
-      this.canvasLabelCtx,
-      displayName,
-      Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
-      Math.floor(this.canvasLabelElement.nativeElement.height * 0.03),
-      Math.floor(this.canvasLabelElement.nativeElement.width * 0.94),
-      Math.floor(this.canvasLabelElement.nativeElement.height * 0.1),
-      'normal',
-      this.labelColor,
-      'left',
-      'top'
-    );
-  }
-
   private getColors(color: string): void {
     const colors = this.colorMap.get(color) || this.colorMap.get("contrast");
     this.labelColor = colors.label;
@@ -309,9 +266,6 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
     this.valueChange$.complete(); // Complete the Subject to clean up resources
-    if (this.canvasLabelCtx) {
-      CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-    }
     clearTimeout(this.debounceTimeout);
     clearTimeout(this.resizeTimeout);
   }

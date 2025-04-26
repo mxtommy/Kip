@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, AfterViewInit, effect, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
@@ -11,33 +11,26 @@ import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { CanvasUtils } from '../../core/utils/canvas-utils';
+import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
 
 @Component({
     selector: 'widget-boolean-switch',
     templateUrl: './widget-boolean-switch.component.html',
     styleUrls: ['./widget-boolean-switch.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
-
-  @ViewChild('canvasLabel', {static: true}) canvasLabelElement: ElementRef<HTMLCanvasElement>;
-  @ViewChild('widgetContainer', {static: true}) widgetContainerElement: ElementRef<HTMLCanvasElement>;
-
   public switchControls = signal<IDynamicControl[]>([]);
   private skRequestSub = new Subscription; // Request result observer
 
-  // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  private canvasLabelCtx: CanvasRenderingContext2D;
-  private labelColor: string = undefined;
+  protected labelColor: string = undefined;
 
   private nbCtrl: number = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0};
-  private readonly fontString = "Roboto";
 
   constructor() {
       super();
@@ -66,14 +59,10 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   ngAfterViewInit(): void {
-    this.resizeWidget();
     this.startWidget();
-    this. updateCanvas();
   }
 
   protected startWidget(): void {
-    this.canvasLabelCtx = this.canvasLabelElement.nativeElement.getContext('2d');
-    this.getColors(this.widgetProperties.config.color);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
 
     // Build control array
@@ -110,8 +99,8 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    this.getColors(this.widgetProperties.config.color);
     this.startWidget();
-    this.updateCanvas();
   }
 
   onResized(event: ResizeObserverEntry): void {
@@ -119,7 +108,6 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     const ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
     const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
     this.ctrlDimensions = { width: event.contentRect.width, height: h};
-    this.resizeWidget();
   }
 
   private subscribeSKRequest(): void {
@@ -153,19 +141,6 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         $event.value,
         this.widgetProperties.uuid
       );
-    }
-  }
-
-  private resizeWidget(): void {
-    const rect = this.canvasLabelElement.nativeElement.getBoundingClientRect();
-    if ((this.canvasLabelElement.nativeElement.width != Math.floor(rect.width)) || (this.canvasLabelElement.nativeElement.height != Math.floor(rect.height))) {
-      this.canvasLabelElement.nativeElement.width = Math.floor(rect.width);
-      this.canvasLabelElement.nativeElement.height = Math.floor(rect.height);
-
-      if (this.canvasLabelCtx) {
-        this.canvasLabelCtx.clearRect(0, 0, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-        this.updateCanvas();
-      }
     }
   }
 
@@ -204,38 +179,5 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   ngOnDestroy(): void {
     this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
-    CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-    this.canvasLabelElement.nativeElement.remove();
-    this.canvasLabelElement = null;
-    this.widgetContainerElement = null;
-  }
-
-  /* ******************************************************************************************* */
-  /*                                  Canvas                                                     */
-  /* ******************************************************************************************* */
-
-  private updateCanvas(): void {
-    if (this.canvasLabelCtx) {
-      CanvasUtils.clearCanvas(this.canvasLabelCtx, this.canvasLabelElement.nativeElement.width, this.canvasLabelElement.nativeElement.height);
-      this.drawTitle();
-    }
-  }
-
-  private drawTitle(): void {
-    const displayName = this.widgetProperties.config.displayName;
-    if (!displayName) return;
-
-    CanvasUtils.drawText(
-      this.canvasLabelCtx,
-      displayName,
-      Math.floor(this.canvasLabelElement.nativeElement.width * 0.03),
-      Math.floor(this.canvasLabelElement.nativeElement.height * 0.03),
-      Math.floor(this.canvasLabelElement.nativeElement.width * 0.94),
-      Math.floor(this.canvasLabelElement.nativeElement.height * 0.1),
-      'normal',
-      this.labelColor,
-      'left',
-      'top'
-    );
   }
 }
