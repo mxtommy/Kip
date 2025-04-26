@@ -1,4 +1,4 @@
-import { Component, DoCheck, OnInit, input, output } from '@angular/core';
+import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 
@@ -13,7 +13,7 @@ interface IDimensions {
     templateUrl: './svg-boolean-light.component.svg',
     standalone: true
 })
-export class SvgBooleanLightComponent implements OnInit, DoCheck {
+export class SvgBooleanLightComponent implements DoCheck {
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
   readonly dimensions = input.required<IDimensions>();
@@ -22,6 +22,7 @@ export class SvgBooleanLightComponent implements OnInit, DoCheck {
   private toggleOff: string = "0 35 180 35";
   private toggleOn: string = "0 0 180 35";
   private ctrlState: boolean = null;
+  private ctrlColor: string = '';
   private oldTheme: ITheme = null;
 
   public viewBox: string = this.toggleOff;
@@ -30,14 +31,15 @@ export class SvgBooleanLightComponent implements OnInit, DoCheck {
 
   constructor() { }
 
-  ngOnInit(): void {
-  }
-
   ngDoCheck(): void {
     const data = this.data();
     if (data.value != this.ctrlState) {
       this.ctrlState = data.value;
       this.viewBox = data.value ? this.toggleOn : this.toggleOff;
+    }
+    if(data.color != this.ctrlColor) {
+      this.ctrlColor = data.color;
+      this.getColors(data.color);
     }
 
     const theme = this.theme();

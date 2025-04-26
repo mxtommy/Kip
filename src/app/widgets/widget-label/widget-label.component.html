@@ -3,7 +3,7 @@
   [id]="widgetProperties.uuid"
   (configChange)="updateConfig($event)"
 >
-  <div class="wrapper" (onResize)="onResized($event)" #wrapper>
-    <canvas class="canvas-wrapper" style="z-index: inherit;" #canvasEl></canvas>
+  <div class="wrapper" (onResize)="onResized($event)">
+    <canvas #canvasEl class="canvas" style="z-index: inherit;"></canvas>
   </div>
 </widget-host>

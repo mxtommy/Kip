@@ -1,5 +1,5 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <canvas #canvasLabel class="canvas-label"></canvas>
+  <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"></widget-title>
   <div class="widgets-container" #widgetContainer (onResize)="onResized($event)">
     @for (ctrl of switchControls(); track $index) {
       <ng-container>
