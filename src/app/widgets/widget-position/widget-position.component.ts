@@ -1,29 +1,31 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 @Component({
     selector: 'widget-position',
     templateUrl: './widget-position.component.html',
     styleUrls: ['./widget-position.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
 })
 export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild('canvasEl', { static: true }) canvasEl: ElementRef<HTMLCanvasElement>;
-  @ViewChild('canvasBG', { static: true }) canvasBG: ElementRef<HTMLCanvasElement>;
+  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   private canvas = inject(CanvasService);
   private latPos: string = '';
   private longPos: string = '';
-  private labelColor: string = undefined;
+  protected labelColor: string = undefined;
   private valueColor: string = undefined;
-  private currentValueLength = 0;
-  private valueFontSize = 1;
+  private maxTextWidth = 0;
+  private maxTextHeight = 0;
+  private middle = 0;
+  private center = 0;
+  private fontSizeOffset = 0;
   private canvasValCtx: CanvasRenderingContext2D;
-  private canvasBGCtx: CanvasRenderingContext2D;
   private isDestroyed = false;
 
   constructor() {
@@ -63,8 +65,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     effect(() => {
       if (this.theme()) {
         this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
-        this.updateCanvasBG();
+        this.drawValue();
       }
     });
   }
@@ -74,61 +75,49 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   }
 
   ngAfterViewInit(): void {
-    this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
+    this.canvas.setHighDPISize(this.canvasValue().nativeElement, this.canvasValue().nativeElement.parentElement.getBoundingClientRect());
+    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.60 / 2); // Two lines
+    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
+    this.canvasValCtx = this.canvasValue().nativeElement.getContext('2d');
+    this.calculateFontSizeAndPositions();
     document.fonts.ready.then(() => {
       if (this.isDestroyed) return;
-      this.getColors(this.widgetProperties.config.color);
       this.startWidget();
-      this.updateCanvasBG();
     });
   }
 
   protected startWidget(): void {
+    this.unsubscribeDataStream();
     this.observeDataStream('longPath', newValue => {
       this.longPos = newValue.data.value ? newValue.data.value.toString() : '';
-      this.updateCanvas();
+      this.drawValue();
     });
     this.observeDataStream('latPath', newValue => {
       this.latPos = newValue.data.value ? newValue.data.value.toString() : '';
-      this.updateCanvas();
+      this.drawValue();
     });
   }
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
     this.unsubscribeDataStream();
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-    this.canvas.clearCanvas(this.canvasBGCtx, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
-    this.canvasEl.nativeElement.remove();
-    this.canvasBG.nativeElement.remove();
-    this.canvasEl = null;
-    this.canvasBG = null;
+    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
+    this.canvasValue().nativeElement.remove();
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.getColors(this.widgetProperties.config.color);
     this.startWidget();
-    this.updateCanvas();
-    this.updateCanvasBG();
   }
 
   protected onResized(event: ResizeObserverEntry): void {
-    if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
-
-    if (
-      this.canvasEl.nativeElement.width !== Math.floor(event.contentRect.width) ||
-      this.canvasEl.nativeElement.height !== Math.floor(event.contentRect.height)
-    ) {
-      this.canvasEl.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasEl.nativeElement.height = Math.floor(event.contentRect.height);
-      this.canvasBG.nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasBG.nativeElement.height = Math.floor(event.contentRect.height);
-      this.currentValueLength = 0; // Force recalculation of font size
-      this.updateCanvasBG();
-      this.updateCanvas();
-    }
+    if (event.contentRect.height < 25 || event.contentRect.width < 25) return;
+    this.canvas.setHighDPISize(this.canvasValue().nativeElement, this.canvasValue().nativeElement.parentElement.getBoundingClientRect());
+    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.60 / 2); // Two lines
+    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
+    this.calculateFontSizeAndPositions();
+    this.drawValue();
   }
 
   private getColors(color: string): void {
@@ -172,86 +161,41 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     }
   }
 
-  private updateCanvas(): void {
-    if (this.canvasValCtx) {
-      this.canvas.clearCanvas(this.canvasValCtx, this.canvasEl.nativeElement.width, this.canvasEl.nativeElement.height);
-      this.drawValue();
-    }
-  }
+  private calculateFontSizeAndPositions(): void {
+    this.center = this.canvasValue().nativeElement.width / 2;
+    this.middle = this.canvasValue().nativeElement.height * 0.57;
 
-  private updateCanvasBG(): void {
-    if (this.canvasBGCtx) {
-      this.canvas.clearCanvas(this.canvasBGCtx, this.canvasBG.nativeElement.width, this.canvasBG.nativeElement.height);
-      this.drawTitle();
-    }
+    const longestString = this.latPos.length > this.longPos.length ? this.latPos : this.longPos;
+    const size = this.canvas.calculateOptimalFontSize(this.canvasValCtx, longestString, this.maxTextWidth, this.maxTextHeight, 'bold')
+    this.fontSizeOffset = Math.floor(size * 0.0005);
   }
 
   private drawValue(): void {
-    const maxTextWidth = Math.floor(this.canvasEl.nativeElement.width * 0.85);
-    const maxTextHeight = Math.floor(this.canvasEl.nativeElement.height * 0.85) / 2; // Two lines
-    const latPosText = this.latPos;
-    const longPosText = this.longPos;
-    const longestString = latPosText.length > longPosText.length ? latPosText : longPosText;
-
-    if (this.currentValueLength !== longestString.length) {
-      this.currentValueLength = longestString.length;
-      this.valueFontSize = this.canvas.calculateOptimalFontSize(
-        this.canvasValCtx,
-        longestString,
-        maxTextWidth,
-        maxTextHeight,
-        'bold'
-      );
-    }
-
-    const center = this.canvasEl.nativeElement.width / 2;
-    const middle = this.canvasEl.nativeElement.height * 0.55;
-    const fontSizeOffset = this.valueFontSize / 2;
-
+    if (!this.canvasValCtx) return;
+    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
     this.canvas.drawText(
       this.canvasValCtx,
-      latPosText,
-      center,
-      middle - fontSizeOffset,
-      maxTextWidth,
-      maxTextHeight,
+      this.latPos,
+      this.center,
+      this.middle - this.fontSizeOffset,
+      this.maxTextWidth,
+      this.maxTextHeight,
       'bold',
       this.valueColor,
       'center',
-      'middle'
+      'bottom'
     );
 
     this.canvas.drawText(
       this.canvasValCtx,
-      longPosText,
-      center,
-      middle + fontSizeOffset,
-      maxTextWidth,
-      maxTextHeight,
+      this.longPos,
+      this.center,
+      this.middle + this.fontSizeOffset,
+      this.maxTextWidth,
+      this.maxTextHeight,
       'bold',
       this.valueColor,
       'center',
-      'middle'
-    );
-  }
-
-  private drawTitle(): void {
-    const maxTextWidth = Math.floor(this.canvasBG.nativeElement.width * 0.94);
-    const maxTextHeight = Math.floor(this.canvasBG.nativeElement.height * 0.1);
-    const displayName = this.widgetProperties.config.displayName;
-
-    if (!displayName) return;
-
-    this.canvas.drawText(
-      this.canvasBGCtx,
-      displayName,
-      Math.floor(this.canvasBG.nativeElement.width * 0.03),
-      Math.floor(this.canvasBG.nativeElement.height * 0.03),
-      maxTextWidth,
-      maxTextHeight,
-      'normal',
-      this.labelColor,
-      'left',
       'top'
     );
   }
