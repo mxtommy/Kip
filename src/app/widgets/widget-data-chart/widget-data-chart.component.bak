@@ -9,8 +9,9 @@ import { Subscription } from 'rxjs';
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
+import ChartStreaming from '@robloche/chartjs-plugin-streaming';
 
-Chart.register(annotationPlugin, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
+Chart.register(annotationPlugin, ChartStreaming, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
 
 interface IChartColors {
     valueLine: string,
@@ -36,7 +37,9 @@ interface IDataSetRow {
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private dsService = inject(DatasetService);
+
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
+
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
   };
@@ -121,6 +124,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
+
   }
 
   private setChartOptions() {
@@ -164,7 +168,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
     this.lineChartOptions.scales = {
       x: {
-        type: "time",
+        type: "realtime",
         display: this.widgetProperties.config.showTimeScale,
         title: {
           display: true,
@@ -302,7 +306,12 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       },
       legend: {
         display: false
-      }
+      },
+       streaming: {
+        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
+        delay: this.dataSourceInfo.sampleTime,
+        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+       }
     }
   }
 

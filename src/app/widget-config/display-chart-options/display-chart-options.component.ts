@@ -59,15 +59,15 @@ export class DisplayChartOptionsComponent implements OnInit {
 
   private setValueScaleOptionsControls(enableMinMaxScaleLimit: boolean) {
     if (enableMinMaxScaleLimit) {
-      this.yScaleMin().enable();
-      this.yScaleMax().enable();
-      this.yScaleSuggestedMin().disable();
-      this.yScaleSuggestedMax().disable();
+      this.yScaleMin()?.enable();
+      this.yScaleMax()?.enable();
+      this.yScaleSuggestedMin()?.disable();
+      this.yScaleSuggestedMax()?.disable();
     } else {
-      this.yScaleMin().disable();
-      this.yScaleMax().disable();
-      this.yScaleSuggestedMin().enable();
-      this.yScaleSuggestedMax().enable();
+      this.yScaleMin()?.disable();
+      this.yScaleMax()?.disable();
+      this.yScaleSuggestedMin()?.enable();
+      this.yScaleSuggestedMax()?.enable();
     }
   }
 
