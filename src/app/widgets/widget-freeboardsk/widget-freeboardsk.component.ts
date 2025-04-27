@@ -110,12 +110,13 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
     script.textContent = `
       if (!window.hammerInstance) {
         const hammer = new Hammer(document.body);
-        hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+        hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL, velocity: 1.5, threshold: 200, domEvents: true });
 
         const instanceId = '${this.widgetProperties.uuid}'; // Include the instance ID in the script to prevent multiple listeners
 
         hammer.on('swipeleft', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -137,6 +138,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
         hammer.on('swiperight', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -158,6 +160,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
         hammer.on('swipeup', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -179,6 +182,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
         hammer.on('swipedown', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
