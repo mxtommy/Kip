@@ -25,30 +25,34 @@
           <td>Shift + Ctrl + Left Arrow</td>
         </tr>
       </table>
-      <h3>Load Demonstration Dashboards</h3>
+      <h3>Log in to Signal K</h3>
       <p>
-        Try the sample Dashboard with simulated data from demo.signalk.org
-        (<i>internet required to receive data</i>).
-        <br/>
-        <button mat-raised-button style="margin-left: 15px;" (click)="loadDemoConfig()">Load Demo</button>
-      </p>
-      <h3>Create Your Own Layout</h3>
-      <p>
-        First, configure Signal K server authentication (<i>a pre-existing Signal K
+        The first step is to configure Signal K server authentication (<i>a pre-existing Signal K
         server user/password is required</i>). Swipe left to open the Actions menu,
         hit Settings, toggle Login to server and enter you pre-existing Signal K credentials.
       </p>
+      <h3>Option 1: Load Demonstration Dashboards</h3>
       <p>
+        Try the sample dashboards using data from your server. :
+        <br/>
+        <button mat-raised-button style="margin-left: 15px;" (click)="loadDemoConfig()">Load Demo</button>
+      </p>
+      <h3>Option 2: Create Your Own Layout</h3>
+      <p>
+        The text you are reading is actually a full screen widget in a dashboard.
         Dashboards are "Locked" by default to prevent accidental modifications.
-        To edit dashboard a, swipe left and hit the bottom unlock menu button. You can later
-        add and manage dashboards using the Dashboards from the Actions menu.
+        To edit a dashboard, swipe left and hit the bottom unlock menu button.
+        You can later add and manage dashboards using the Dashboards page from
+        the Actions menu.
       </p>
       <p><strong>Try editing the Dashboard now to receive further instructions!</strong></p>
     } @else {
       <h3>Build Your Layout</h3>
       <p>
         First, resize this Tutorial widget using the now visible dashed borders so
-        it does not take up all the screen. Then, to add a widget: in an empty dashboard area,
+        it does not take up all the screen. You can delete this Tutorial widget later when you are
+        done with the instructions.
+        Then, to add a widget: in an empty dashboard area,
         press and hold. This will open the widget selection panel. Here you can choose from a
         variety of widgets.
       </p>
