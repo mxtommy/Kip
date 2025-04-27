@@ -74,11 +74,16 @@ export class SettingsDisplayComponent implements OnInit {
   protected isAutoNightModeSupported(e: MatCheckboxChange): void {
     this.displayForm().form.markAsDirty();
     if (e.checked) {
-      if (this._plugins.isEnabled("derived-data")) {
-        this.validateAutoNightModeSupported() ? this.autoNightMode.set(true) : this.autoNightMode.set(false);
-      } else {
-        this._app.sendSnackbarNotification("Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.", 0);
-      }
+      this._plugins.isEnabled('derived-data').then((enabled) => {
+        if (enabled) {
+          this.autoNightMode.set(true);
+          this.validateAutoNightModeSupported() ? this.autoNightMode.set(true) : this.autoNightMode.set(false);
+        } else {
+          this._app.sendSnackbarNotification("Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.", 0);
+        }
+      }).catch((error) => {
+        console.error('[Display Component] Error checking plugin status:', error);
+      });
     }
   }
 

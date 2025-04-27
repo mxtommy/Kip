@@ -1,71 +1,83 @@
-import { httpResource } from '@angular/common/http';
-import { effect, inject, Injectable, signal } from '@angular/core';
-import { SignalKConnectionService } from './signalk-connection.service';
+import { Injectable, inject, signal, effect, resource } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { SignalKConnectionService } from './signalk-connection.service';
 
 interface plugin {
   id: string;
   versionRequirement: string | null;
 }
 
+
+interface skFeatures {
+  apis: string[];
+  plugins: PluginInformation[]
+}
+
 interface PluginInformation {
-  id:	string,
-  name:	string,
-  packageName: string,
-  keywords:	string[],
-  version: string,
-  description: string,
-  schema: {},
-  statusMessage: string,
-  data:	{
-    configuration: {},
-    enabled: boolean,
-    enableLogging: boolean,
-    enableDebug: boolean
-  }
+    id: string;
+    name: string;
+    version: string;
+    enabled: boolean
 }
 
-interface pluginDetails {
-    enabled: boolean,
-    enabledByDefault: boolean,
-    id: string,
-    name: string,
-    version: string
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class SignalkPluginsService {
   private readonly _TRACKED_PLUGINS: plugin[] = [
-    { id: "derived-data", versionRequirement: null },
-    { id: "signalk-autostate", versionRequirement: null },
-    { id: "signalk-polar-performance-plugin", versionRequirement: null },
-    { id: "autopilot", versionRequirement: null },
+    { id: 'derived-data', versionRequirement: null },
+    { id: 'signalk-autostate', versionRequirement: null },
+    { id: 'signalk-polar-performance-plugin', versionRequirement: null },
+    { id: 'autopilot', versionRequirement: null },
   ];
-  private _connectionSvc = inject(SignalKConnectionService)
-  private _API_URL = signal<string | null>('');
-  private _pluginInformation = httpResource<PluginInformation[]>(
-    () => `${this._API_URL()}/plugins`
-  );
+
+  private _connectionSvc = inject(SignalKConnectionService);
+
+  // Use a Signal to track the API URL instead of a simple string.
+  private _API_URL = signal<string | null>(null);
+
   private _connection = toSignal(this._connectionSvc.getServiceEndpointStatusAsO());
 
-  constructor() {
-    effect(() => {
-      if (this._connection().operation === 2) {
-        this._API_URL.set(this._connectionSvc.signalKURL.url);
+  private _pluginInformation = resource<skFeatures, unknown>({
+    loader: async ({ abortSignal }) => {
+      // Use the signal to get the current URL.
+      const url = this._API_URL();
+      if (!url) {
+        console.error('API URL not set yet.');
+        return [];
       }
-    });
+
+      try {
+        const response = await fetch(url, { signal: abortSignal });
+        if (!response.ok) {
+          console.error('[SkPlugin Service] Error fetching plugin information:', response.statusText);
+          return [];
+        }
+        return await response.json();
+      } catch (error) {
+        console.error('[SkPlugin Service] Error fetching plugin information:', error);
+        return [];
+      }
+    },
+  });
+
+  constructor() {
+    this._API_URL.set(
+      `${this._connectionSvc.signalKURL.url}/signalk/v2/features?enabled=enabled`
+    );
   }
 
-  public isEnabled(pluginId: string): boolean {
+  public async isEnabled(pluginId: string): Promise<boolean> {
     this._pluginInformation.reload();
-    const plugins = this._pluginInformation.value();
-    if (!plugins) {
-      return false; // Return false if no plugin information is available
+
+    // Wait for the resource to finish loading
+    while (this._pluginInformation.isLoading()) {
+      await new Promise(resolve => setTimeout(resolve, 100)); // Poll every 50ms
     }
-    return plugins.some((plugin) => {
-      return plugin.id === pluginId && plugin.data.enabled;
-    });
+
+    const features = this._pluginInformation.value();
+
+    if (!features || !features.plugins || features.plugins.length === 0) {
+      return false;
+    }
+    return features.plugins.some((plugin) => plugin.id === pluginId && plugin.enabled);
   }
 }
