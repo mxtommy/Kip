@@ -230,19 +230,6 @@ export class AppService {
   }
 
   /**
-   * Check if the browser supports the automatic night mode feature.
-   * This is a helper method to check if the browser supports the
-   * matchMedia API and the prefers-color-scheme media query.
-   */
-  public  validateAutoNightModeSupported(): boolean {
-    if (!this._data.getPathObject(this.MODE_PATH)) {
-      this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
-      return false;
-    }
-    return true;
-  }
-
-  /**
    * Helper method to get the browser version.
    */
   private getBrowserVersion(): string {

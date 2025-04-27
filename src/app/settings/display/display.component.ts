@@ -9,6 +9,8 @@ import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
+import { DataService } from '../../core/services/data.service';
 
 
 @Component({
@@ -26,10 +28,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
+  readonly MODE_PATH: string = 'self.environment.mode';
   readonly displayForm = viewChild<NgForm>('displayForm');
   private _app = inject(AppService);
   private _settings = inject(AppSettingsService);
   private _responsive = inject(BreakpointObserver);
+  private _plugins = inject(SignalkPluginsService);
+  private _data = inject(DataService);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected nightBrightness = signal<number>(0.27);
   protected autoNightMode = signal<boolean>(false);
@@ -69,8 +74,25 @@ export class SettingsDisplayComponent implements OnInit {
   protected isAutoNightModeSupported(e: MatCheckboxChange): void {
     this.displayForm().form.markAsDirty();
     if (e.checked) {
-      this._app.validateAutoNightModeSupported() ? this.autoNightMode.set(true) : this.autoNightMode.set(false);
+      if (this._plugins.isEnabled("derived-data")) {
+        this.validateAutoNightModeSupported() ? this.autoNightMode.set(true) : this.autoNightMode.set(false);
+      } else {
+        this._app.sendSnackbarNotification("Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.", 0);
+      }
     }
+  }
+
+  /**
+   * Check if the browser supports the automatic night mode feature.
+   * This is a helper method to check if the browser supports the
+   * matchMedia API and the prefers-color-scheme media query.
+   */
+  public  validateAutoNightModeSupported(): boolean {
+    if (!this._data.getPathObject(this.MODE_PATH)) {
+      this._app.sendSnackbarNotification("Path Error: In Signal K, locate the Derived Data plugin and enable the 'Sets environment.sun' parameter under the 'Sun' group. Restart the Signal K server and try again.", 0);
+      return false;
+    }
+    return true;
   }
 
   protected setBrightness(value: number): void {
