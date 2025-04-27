@@ -72,6 +72,7 @@ KIP is built with modern web technologies and is open-source under the MIT licen
 All KIP Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
 - **Numeric display**: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
 - **Text display**: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
+- **Label**: A static text widget.
 - **Date display**: a timezone aware control with flexible presentation formatting support.
 - **Position display**: Position coordinates in textual format.
 - **Boolean Control Panel**: A switch board to configure and operate remote devices - light switches, bilge pump, solenoid, any Signal K path that support boolean PUT operations.
