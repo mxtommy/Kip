@@ -447,10 +447,8 @@ export class AppSettingsService {
       this.storage.setConfig('user', this.sharedConfigName, demoConfig);
       this.reloadApp();
     } else {
-      localStorage.clear();
       console.log("[AppSettings Service] Loading Demo configuration settings to LocalStorage");
       this.replaceConfig("appConfig", DemoAppConfig);
-      this.replaceConfig("connectionConfig", DemoConnectionConfig);
       this.replaceConfig("dashboardsConfig", DemoDashboardsConfig);
       this.replaceConfig("themeConfig", DemoThemeConfig, true);
     }
