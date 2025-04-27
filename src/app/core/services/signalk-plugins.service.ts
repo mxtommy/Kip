@@ -30,15 +30,12 @@ export class SignalkPluginsService {
   ];
 
   private _connectionSvc = inject(SignalKConnectionService);
-
-  // Use a Signal to track the API URL instead of a simple string.
   private _API_URL = signal<string | null>(null);
 
   private _connection = toSignal(this._connectionSvc.getServiceEndpointStatusAsO());
 
   private _pluginInformation = resource<skFeatures, unknown>({
     loader: async ({ abortSignal }) => {
-      // Use the signal to get the current URL.
       const url = this._API_URL();
       if (!url) {
         console.error('API URL not set yet.');
