@@ -16,8 +16,9 @@ import { Subscription } from 'rxjs';
     imports: [WidgetHostComponent, SafePipe]
 })
 export class WidgetFreeboardskComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  protected appSettings = inject(AppSettingsService);
-  protected auth = inject(AuthenticationService);
+  private appSettings = inject(AppSettingsService);
+  private auth = inject(AuthenticationService);
+  private _dashboard = inject(DashboardService);
   protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('freeboardSkIframe');
   public widgetUrl: string = null;
   private _authTokenSubscription: Subscription = null;
@@ -51,33 +52,51 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
   }
 
   private handleIframeGesture = (event: MessageEvent) => {
-    if (!event.data || !event.data.gesture || event.data.eventData.instanceId !== this.widgetProperties.uuid) return;
+    if (!event.data) return;
 
-    switch (event.data.gesture) {
-      case 'swipeup':
-        if (this.dashboard.isDashboardStatic()) {
-          this.dashboard.previousDashboard();
-        }
-        break;
-      case 'swipedown':
-        if (this.dashboard.isDashboardStatic()) {
-          this.dashboard.nextDashboard();
-        }
-        break;
-      case 'swipeleft':
+    if (event.data.gesture && event.data.eventData.instanceId === this.widgetProperties.uuid) {
+      switch (event.data.gesture) {
+        case 'swipeup':
+          if (this.dashboard.isDashboardStatic()) {
+            this.dashboard.previousDashboard();
+          }
+          break;
+        case 'swipedown':
+          if (this.dashboard.isDashboardStatic()) {
+            this.dashboard.nextDashboard();
+          }
+          break;
+        case 'swipeleft':
           const leftSidebarEvent = new Event('openLeftSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(leftSidebarEvent);
-        break;
-      case 'swiperight':
+          break;
+        case 'swiperight':
           const rightSidebarEvent = new Event('openRightSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(rightSidebarEvent);
-        break;
-      default:
-        break;
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Handle keydown events
+    if (event.data.type === 'keydown' && event.data.keyEventData.instanceId === this.widgetProperties.uuid) {
+      const { key, ctrlKey, shiftKey } = event.data.keyEventData;
+
+      // Re-dispatch the keydown event
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key,
+        ctrlKey,
+        shiftKey,
+        bubbles: true, // Ensure the event bubbles up the DOM
+        cancelable: true, // Allow the event to be canceled
+      });
+      document.dispatchEvent(keyboardEvent);
     }
   };
 
   injectHammerJS() {
+    const baseHref = document.getElementsByTagName('base')[0]?.href || '/';
     const iframeWindow = this.iframe().nativeElement.contentWindow;
     const iframeDocument = this.iframe().nativeElement.contentDocument;
 
@@ -93,7 +112,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
     // Inject HammerJS
     const hammerScript = iframeDocument.createElement('script');
-    hammerScript.src = `${this.appSettings.signalkUrl.url}/@mxtommy/kip/assets/hammer.min.js`;
+    hammerScript.src = `${baseHref}assets/hammer.min.js`;
     hammerScript.onload = () => this.injectSwipeHandler();
     iframeDocument.body.appendChild(hammerScript);
   }
@@ -200,6 +219,19 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
             instanceId: instanceId // Include the instance ID in the event data
           };
           window.parent.postMessage({ gesture: 'swipedown', eventData: eventData }, '*');
+        });
+
+        // Add keydown listener
+        document.addEventListener('keydown', (event) => {
+          if (event.ctrlKey && event.shiftKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'E', 'F', 'N'].includes(event.key)) {
+            const keyEventData = {
+              key: event.key,
+              ctrlKey: event.ctrlKey,
+              shiftKey: event.shiftKey,
+              instanceId: instanceId
+            };
+            window.parent.postMessage({ type: 'keydown', keyEventData: keyEventData }, '*');
+          }
         });
 
         window.hammerInstance = hammer; // Store the instance to prevent multiple listeners
