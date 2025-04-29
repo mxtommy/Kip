@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -89,6 +89,15 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       numDecimal: 1,
       color: 'contrast',
     };
+
+    effect(() => {
+      if (this.theme()) {
+        if (this.datasetConfig) {
+          this.setChartOptions();
+          this.chart.config.options = this.lineChartOptions;
+        }
+      }
+    });
    }
 
   ngOnInit(): void {
