@@ -122,7 +122,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  public handleKeyDown(key: string, event: KeyboardEvent): void {
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
     if (key === 'arrowright') {
       this.onSwipeRight(event);
     } else if (key === 'arrowleft') {
