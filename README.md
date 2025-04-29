@@ -19,7 +19,7 @@ Key features include:
 KIP is open-source under the MIT license, built by the community and 100% free. Join the community on Discord or contribute to the project on GitHub!
 
 ## Basic Instruction
-Read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome) help file.
+Read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
 
 # Design Goal
 
