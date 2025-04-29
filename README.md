@@ -29,7 +29,7 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - **Modern Browser Support**: Include support for the latest versions of Chromium and other modern web browsers to ensure optimal performance and compatibility.
 
 ## KIP basic instructions
-src/assets/help-docs/welcome.md
+![basic instructions](src/assets/help-docs/welcome.md)
 
 ## Features
 
