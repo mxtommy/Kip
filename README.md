@@ -28,8 +28,8 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - **Cross-Device Compatibility**: Guarantee a consistent and responsive experience across phones, tablets, computers, and other devices.
 - **Modern Browser Support**: Include support for the latest versions of Chromium and other modern web browsers to ensure optimal performance and compatibility.
 
-## KIP basic instructions
-![basic instructions](src/assets/help-docs/welcome.md)
+## Basic Instruction
+Read the ![Introduction](src/assets/help-docs/welcome) help file.
 
 ## Features
 
