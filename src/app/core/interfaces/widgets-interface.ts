@@ -233,6 +233,8 @@ export interface IWidgetSvcConfig {
 
  /** Used by IFrame widget: URL lo load in the iframe */
   widgetUrl?: string;
+  /** Used by IFrame widget: allow input on iframe or not */
+  allowInput?: boolean;
 
   /** Use by racetimer widget */
   timerLength?: number;

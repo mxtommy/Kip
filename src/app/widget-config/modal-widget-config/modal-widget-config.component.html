@@ -36,6 +36,14 @@
               <input type="url" matInput placeholder="Enter URL to page/resource" name="widgetUrl" formControlName="widgetUrl">
             </mat-form-field>
 
+            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.allowInput !== undefined)"
+              name="allowInput"
+              formControlName="allowInput">
+              Allow pointer events on embedded content. WARNING: this may prevent swipe
+              gestures over the Embed widget or keyboard events, while the focus is in
+              the embed, from triggering normal KIP interactions.
+            </mat-checkbox>
+
             <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.displayName !== undefined)">
               <mat-label>Widget Label</mat-label>
               <input matInput placeholder="Enter a label to display" name="displayName" formControlName="displayName">

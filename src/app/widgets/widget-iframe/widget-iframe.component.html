@@ -23,9 +23,6 @@
       </p>
     </div>
   }
-
-  <!-- @if (!_dashboard.isDashboardStatic()) { -->
-    <div class="widgetOverlay">
-    </div>
-  <!-- } -->
+  <div class="widgetOverlay" [style.display]="displayTransparentOverlay()">
+  </div>
 </widget-host>
