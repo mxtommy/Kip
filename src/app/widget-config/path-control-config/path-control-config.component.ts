@@ -13,6 +13,8 @@ import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
 import { AsyncPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { compare } from 'compare-versions';
+import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
 
 
 function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -31,16 +33,17 @@ function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule]
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
-  private data = inject(DataService);
-  private units = inject(UnitsService);
+  private _data = inject(DataService);
+  private _units = inject(UnitsService);
+  private _connection = inject(SignalKConnectionService)
 
   @Input() pathFormGroup!: UntypedFormGroup;
   readonly filterSelfPaths = input.required<boolean>();
 
   public availablePaths: IPathMetaData[];
   public filteredPaths = new BehaviorSubject<IPathMetaData[] | null>(null);
-  private pathValueChange$: Subscription = null;
-  private pathFormGroup$: Subscription = null;
+  private _pathValueChange$: Subscription = null;
+  private _pathFormGroup$: Subscription = null;
 
   // Sources control
   public availableSources: Array<string>;
@@ -54,7 +57,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
 
   ngOnInit() {
     // Path Unit filter setup
-    this.pathSkUnitsFiltersList = this.units.skBaseUnits.sort((a, b) => {
+    this.pathSkUnitsFiltersList = this._units.skBaseUnits.sort((a, b) => {
       return a.properties.quantity > b.properties.quantity ? 1 : -1;
     });
     this.pathSkUnitsFiltersList.unshift(this.unitlessUnit);
@@ -79,7 +82,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     }
 
     // subscribe to path formControl changes
-    this.pathValueChange$ = this.pathFormGroup.controls['path'].valueChanges.pipe(
+    this._pathValueChange$ = this.pathFormGroup.controls['path'].valueChanges.pipe(
       debounce(value => value === '' ? timer(0) : timer(350)),
       startWith(''),
       map(value => this.filterPaths(value || '')))
@@ -98,7 +101,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       }
     );
 
-    this.pathFormGroup$ = this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
+    this._pathFormGroup$ = this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
         this.pathSkUnitsFilterControl.setValue(this.unitlessUnit);
         this.pathFormGroup.controls['path'].updateValueAndValidity();
     });
@@ -114,7 +117,9 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   private getPaths(): IPathMetaData[] {
     const pathType = this.pathFormGroup.controls['pathType'].value;
     const filterSelfPaths = this.filterSelfPaths();
-   return this.data.getPathsAndMetaByType(pathType, this.pathFormGroup.value.supportsPut, filterSelfPaths).sort();
+    const supportsPUT = compare(this._connection.skServerVersion, '2.12.0', ">=") ? this.pathFormGroup.value.supportsPut : false;
+
+    return this._data.getPathsAndMetaByType(pathType, supportsPUT, filterSelfPaths).sort();
   }
 
   public filterPaths(searchString: string) {
@@ -135,11 +140,11 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private enableFormFields(setValues?: boolean): void {
-    let pathObject = this.data.getPathObject(this.pathFormGroup.controls['path'].value);
+    let pathObject = this._data.getPathObject(this.pathFormGroup.controls['path'].value);
     if (pathObject != null) {
       this.pathFormGroup.controls['sampleTime'].enable({onlySelf: false});
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number
-        this.unitList = this.units.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
+        this.unitList = this._units.getConversionsForPath(this.pathFormGroup.controls['path'].value); // array of Group or Groups: "angle", "speed", etc...
         if (setValues) {
           this.pathFormGroup.controls['convertUnitTo'].setValue(this.unitList.base, {onlySelf: true});
         }
@@ -181,7 +186,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
 
   private updatePathMetaBoundDisplayName(path: string) {
     if (!this.pathFormGroup.parent.parent.value.hasOwnProperty('displayName')) {return;}
-    const meta = this.data.getPathMeta(path);
+    const meta = this._data.getPathMeta(path);
     if (meta?.displayName) {
       this.pathFormGroup.parent.parent.controls['displayName'].setValue(meta.displayName);
     }
@@ -190,16 +195,16 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   private updatePathMetaBoundDisplayScale(path: string) {
     if (!this.pathFormGroup.parent.parent.value.hasOwnProperty('displayScale')) {return;}
 
-    const meta = this.data.getPathMeta(path);
+    const meta = this._data.getPathMeta(path);
     if (meta?.displayScale) {
       const displayScale = this.pathFormGroup.parent.parent.get('displayScale') as FormGroup;
       const unit = this.pathFormGroup.controls['convertUnitTo'].value;
 
       if (meta.displayScale.lower !== null && meta.displayScale.lower !== undefined) {
-        displayScale.controls['lower'].setValue(this.units.convertToUnit(unit, meta.displayScale.lower));
+        displayScale.controls['lower'].setValue(this._units.convertToUnit(unit, meta.displayScale.lower));
       }
       if (meta.displayScale.upper !== null && meta.displayScale.upper !== undefined) {
-        displayScale.controls['upper'].setValue(this.units.convertToUnit(unit, meta.displayScale.upper));
+        displayScale.controls['upper'].setValue(this._units.convertToUnit(unit, meta.displayScale.upper));
       }
       if (meta.displayScale.type !== null && meta.displayScale.type !== undefined){
         displayScale.controls['type'].setValue(meta.displayScale.type);
@@ -211,7 +216,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   ngOnDestroy(): void {
-    this.pathValueChange$?.unsubscribe();
-    this.pathFormGroup$?.unsubscribe();
+    this._pathValueChange$?.unsubscribe();
+    this._pathFormGroup$?.unsubscribe();
   }
 }

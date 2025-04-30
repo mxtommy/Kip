@@ -73,9 +73,7 @@ export interface IDeltaUpdate {
 })
 export class DataService implements OnDestroy {
   private delta = inject(SignalKDeltaService);
-
-  private _destroyRef = inject(DestroyRef); // Inject DestroyRef
-
+  private _destroyRef = inject(DestroyRef);
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;
@@ -180,7 +178,6 @@ export class DataService implements OnDestroy {
       this._pathRegister.splice(index, 1);
     }
   }
-
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
     const matchingPaths = this._pathRegister.find(item => item.path === path && item.source === source);
