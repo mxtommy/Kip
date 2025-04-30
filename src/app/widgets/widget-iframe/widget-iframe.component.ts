@@ -38,9 +38,9 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
   ngOnInit() {
     this.validateConfig();
-    this.validateUrlAccess(this.widgetProperties?.config?.widgetUrl);
     window.addEventListener('message', this.handleIframeGesture);
     this.displayTransparentOverlay.set(this.widgetProperties.config.allowInput ? 'none' : 'block');
+    this.widgetUrl = this.resolveUrl(this.widgetProperties.config.widgetUrl);
   }
 
   ngAfterViewInit() {
@@ -243,12 +243,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
-    this.validateUrlAccess(this.widgetProperties.config.widgetUrl = config.widgetUrl);
-  }
-
-  private validateUrlAccess(url: string | null): void {
-    if (!url) return;
-    this.widgetUrl = this.isValidProtocol(url) ? this._sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+    this.widgetUrl = this.resolveUrl(config.widgetUrl);
   }
 
   private isValidProtocol(url: string): boolean {
@@ -258,6 +253,19 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     } catch (e) {
       console.warn('[Embed Widget] isValidUrl: Invalid URL:', url);
       return false;
+    }
+  }
+
+  private resolveUrl(rawUrl: string): SafeResourceUrl | null {
+    if (!rawUrl) return null;
+    try {
+      // Check if the URL is absolute
+      const parsedUrl = new URL(rawUrl, window.location.origin);
+      const resolvedUrl = this.isValidProtocol(parsedUrl.href) ? this._sanitizer.bypassSecurityTrustResourceUrl(parsedUrl.href) : null;
+      return resolvedUrl;
+    } catch (e) {
+      console.warn('[Embed Widget] Invalid URL:', rawUrl);
+      return null; // Return an empty string if the URL is invalid
     }
   }
 }
