@@ -1,3 +1,7 @@
+# V 3.1.1
+## Fixes
+* Missing image assets
+* Only enable metadata supportsPUT path filter for SK v2.12 or more
 # V 3.1.0
 ## Improvements
 * Add option the allow input device events on Embed widget content. Fixes 602
