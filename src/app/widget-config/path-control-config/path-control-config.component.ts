@@ -15,6 +15,7 @@ import { AsyncPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { compare } from 'compare-versions';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { IDynamicControl } from '../../core/interfaces/widgets-interface';
 
 
 function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -35,9 +36,10 @@ function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   private _data = inject(DataService);
   private _units = inject(UnitsService);
-  private _connection = inject(SignalKConnectionService)
+  private _connection = inject(SignalKConnectionService);
 
   @Input() pathFormGroup!: UntypedFormGroup;
+  readonly multiCTRLArray = input.required<IDynamicControl[]>();
   readonly filterSelfPaths = input.required<boolean>();
 
   public availablePaths: IPathMetaData[];
@@ -117,8 +119,21 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   private getPaths(): IPathMetaData[] {
     const pathType = this.pathFormGroup.controls['pathType'].value;
     const filterSelfPaths = this.filterSelfPaths();
-    const supportsPUT = compare(this._connection.skServerVersion, '2.12.0', ">=") ? this.pathFormGroup.value.supportsPut : false;
+    let supportsPUT = false;
+    if (this.pathFormGroup.value.supportsPut) {
+      let isMultiCTRLTypeLight = false;
+      if (this.multiCTRLArray().length > 0) {
+        isMultiCTRLTypeLight = this.multiCTRLArray().some((ctrlItem: IDynamicControl) =>
+            ctrlItem.pathID === this.pathFormGroup.value.pathID && ctrlItem.type === '3' // type 3 = light
+          );
+      }
 
+      if (isMultiCTRLTypeLight) {
+        supportsPUT = false;
+      } else {
+        supportsPUT = compare(this._connection.skServerVersion, '2.12.0', ">=") ? this.pathFormGroup.value.supportsPut : false;
+      }
+    }
     return this._data.getPathsAndMetaByType(pathType, supportsPUT, filterSelfPaths).sort();
   }
 

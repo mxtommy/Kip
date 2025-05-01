@@ -9,6 +9,10 @@ import { BooleanControlConfigComponent, IDeleteEventObj } from '../boolean-contr
 import { Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
+export interface IAddNewPathObject {
+  path: IWidgetPath;
+  ctrlType: number;
+}
 
 @Component({
     selector: 'boolean-multicontrol-options',
@@ -26,7 +30,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   private fb = inject(UntypedFormBuilder);
   readonly multiCtrlArray = input.required<UntypedFormArray>();
-  public readonly addPath = output<IWidgetPath>();
+  public readonly addPath = output<IAddNewPathObject>();
   public readonly updatePath = output<IDynamicControl[]>();
   public readonly delPath = output<IDeleteEventObj>();
   public multiFormGroup: UntypedFormGroup = null;
@@ -61,21 +65,24 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
     this.arrayLength = this.multiCtrlArray().length;
 
     // Create corresponding path group
-    const newPathObj: IWidgetPath = {
-      description: null,
-      path: null,
-      pathID: newUUID,
-      source: 'default',
-      pathType: 'boolean',
-      supportsPut: true,
-      isPathConfigurable: true,
-      showPathSkUnitsFilter: false,
-      pathSkUnitsFilter: 'unitless',
-      convertUnitTo: 'unitless',
-      sampleTime: 500
-    }
+    const newPath: IAddNewPathObject = {
+      path: {
+        description: null,
+        path: null,
+        pathID: newUUID,
+        source: 'default',
+        pathType: 'boolean',
+        supportsPut: true,
+        isPathConfigurable: true,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'unitless',
+        convertUnitTo: 'unitless',
+        sampleTime: 500
+      },
+      ctrlType: 1
+    };
 
-    this.addPath.emit(newPathObj);
+    this.addPath.emit(newPath);
   }
 
   public moveUp(index: number) {
