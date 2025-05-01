@@ -4,8 +4,9 @@
   { "title": "Datasets and Data Charts", "file": "datasets.md" },
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Updating Signal K data", "file": "putcontrols.md" },
-  { "title": "Configuration Management", "file": "configuration.md" },
   { "title": "Data Inspector", "file": "datainspector.md" },
+  { "title": "Using the Embed Page Viewer", "file": "embedwidget.md" },
+  { "title": "Configuration Management", "file": "configuration.md" },
   { "title": "Gafana Integration", "file": "grafana.md" },
   { "title": "InfluxDB and Signal K", "file": "influxdb.md" },
   { "title": "Contact Us", "file": "contact-us.md" }
