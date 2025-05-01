@@ -19,14 +19,16 @@
     @for (group of pathsFormGroup.controls; track $index) {
       <path-control-config style="display: block;"
         [pathFormGroup]="group"
-        [filterSelfPaths]="filterSelfPaths().value">
+        [filterSelfPaths]="filterSelfPaths().value"
+        [multiCTRLArray]="multiCTRLArray">
       </path-control-config>
     }
   } @else {
     @for (group of pathsFormGroup.controls | objectKeys; track $index) {
       <path-control-config style="display: block;"
         [pathFormGroup]="pathsFormGroup.get(group)"
-        [filterSelfPaths]="filterSelfPaths().value">
+        [filterSelfPaths]="filterSelfPaths().value"
+        [multiCTRLArray]="multiCTRLArray">
       </path-control-config>
     }
   }

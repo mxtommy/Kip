@@ -1,3 +1,6 @@
+# V 3.1.3
+## Fixes
+* Switch Panel Indicator control only listing PUT enabled paths. Fixes #609
 # V 3.1.2
 ## Fixes
 * Embed widget not accepting relative URL and causing issues when loading KIP embeds on devices other then the server  

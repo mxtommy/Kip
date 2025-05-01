@@ -12,7 +12,7 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { NgIf } from '@angular/common';
 import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
 
-import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
+import { BooleanMultiControlOptionsComponent, IAddNewPathObject } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
@@ -50,7 +50,9 @@ export class ModalWidgetConfigComponent implements OnInit {
   public availableDataSets: IDatasetServiceDatasetConfig[];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
   public isPathArray: boolean = false;
-  public addPathEvent: IWidgetPath;
+  public addPathEvent: IAddNewPathObject;
+  public delPathEvent: string;
+  public updatePathEvent: IDynamicControl[];
   public colors = [];
 
   ngOnInit() {
@@ -162,7 +164,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     return fg;
   }
 
-  public addPathGroup(e: IWidgetPath): void {
+  public addPathGroup(e: IAddNewPathObject): void {
     this.addPathEvent = e;
   }
 
@@ -175,6 +177,7 @@ export class ModalWidgetConfigComponent implements OnInit {
         if (pathIDCtrl.value == ctrl.pathID) {
           fg.controls['description'].setValue(ctrl.ctrlLabel);
           fg.controls['pathType'].setValue(ctrl.isNumeric ? 'number' : 'boolean');
+          this.updatePathEvent = ctrlUpdates;
         }
       });
     });
@@ -195,6 +198,8 @@ export class ModalWidgetConfigComponent implements OnInit {
 
     const multiCtrlFormArray = this.formMaster.get('multiChildCtrls') as UntypedFormArray;
     multiCtrlFormArray.removeAt(e.ctrlIndex);
+
+    this.delPathEvent = e.pathID;
 
     // Explicitly update the form's value object
     this.formMaster.updateValueAndValidity();
