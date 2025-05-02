@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal, model } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -40,8 +40,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
 
   protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
-  protected actionsSidenavOpen = signal<boolean>(false);
-  protected notificationsSidenavOpened = signal<boolean>(false);
+  protected actionsSidenavOpen = model<boolean>(false);
+  protected notificationsSidenavOpened = model<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected notificationsVisibility: string = 'hidden';
 
