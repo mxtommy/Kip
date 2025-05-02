@@ -1,7 +1,6 @@
 [
   { "title": "The basics", "file": "welcome.md" },
   { "title": "Dashboards and Layout", "file": "dashboards.md" },
-  { "title": "Datasets and Data Charts", "file": "datasets.md" },
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Updating Signal K data", "file": "putcontrols.md" },
   { "title": "Data Inspector", "file": "datainspector.md" },
