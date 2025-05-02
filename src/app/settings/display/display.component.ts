@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, viewChild, signal, Signal } from '@angular/core';
+import { Component, inject, OnInit, viewChild, signal, Signal, model } from '@angular/core';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
@@ -37,9 +37,9 @@ export class SettingsDisplayComponent implements OnInit {
   private _data = inject(DataService);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected nightBrightness = signal<number>(0.27);
-  protected autoNightMode = signal<boolean>(false);
-  protected isRedNightMode = signal<boolean>(false);
-  protected isLightTheme = signal<boolean>(false);
+  protected autoNightMode = model<boolean>(false);
+  protected isRedNightMode = model<boolean>(false);
+  protected isLightTheme = model<boolean>(false);
 
   readonly LIGHT_THEME_NAME = "light-theme";
   readonly RED_NIGHT_MODE_THEME_NAME = "night-theme";
