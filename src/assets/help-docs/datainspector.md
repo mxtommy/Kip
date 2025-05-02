@@ -5,12 +5,13 @@ The Data Inspector is a powerful tool in KIP that allows you to view all Signal 
 The Data Inspector is a good way to validate raw data and available paths without the constraints that each widget can impose. It provides a clear and unrestricted view of the data, making it an essential tool for understanding the underlying Signal K data structure.
 
 ## How to use the Data Inspector
-2. **Filter Paths**:
+1. **Filter Paths**:
    - Use the filter input box to narrow down the list of paths. For example:
      - Type `self.` to view paths related to your vessel.
      - Type `environment` to view environmental data like wind or temperature.
+     - Type `speed` to view any speed related data like wind speed, max speed, polar speed, etc.
 
-6. **Sort and Navigate**:
+2. **Sort and Navigate**:
    - Click on column headers to sort the data by Path, PUT Support, or Source.
    - Use the paginator to navigate through the list if there are many paths.
 
@@ -22,7 +23,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 2. **PUT Support**:
    - You can see if a path supports PUT operations, indicated by a green checkmark in the **PUT Support** column.
-   - For more details on PUT support and how to use it, refer to the [PUT Commands Guide](./putcontrols.md).
+   - For more details on PUT support and how to use it, refer to the Updating Signal K Data Guide.
 
 3. **Multiple Data Sources**:
    - The Data Inspector displays how many sources are providing data for each path.
