@@ -1,11 +1,11 @@
 [
   { "title": "The basics", "file": "welcome.md" },
   { "title": "Dashboards and Layout", "file": "dashboards.md" },
-  { "title": "Datasets and Data Charts", "file": "datasets.md" },
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Updating Signal K data", "file": "putcontrols.md" },
-  { "title": "Configuration Management", "file": "configuration.md" },
+  { "title": "Datasets and Data Charts", "file": "datasets.md" },
   { "title": "Data Inspector", "file": "datainspector.md" },
+  { "title": "Configuration Management", "file": "configuration.md" },
   { "title": "Gafana Integration", "file": "grafana.md" },
   { "title": "InfluxDB and Signal K", "file": "influxdb.md" },
   { "title": "Contact Us", "file": "contact-us.md" }
