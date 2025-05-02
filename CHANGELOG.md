@@ -1,6 +1,11 @@
+# V 3.1.5
+## Fixes
+* Swipe sensitivity reported by trackpad device users
+* Sidebars occasionally stops responding to swipes
+* Documentation: Embed widget, Dataset & Data Charts and Data Inspector guides update
 # V 3.1.4
 ## Fixes
-* Help section on updating Signal K Data (using PUT)
+* Help section on Updating Signal K Data (using PUT commands)
 # V 3.1.3
 ## Fixes
 * Switch Panel Indicator control only listing PUT enabled paths. Fixes #609
