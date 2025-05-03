@@ -1,6 +1,8 @@
 .widgetIframe {
   background-color: white;
+  border-radius: var(--mdc-elevated-card-container-shape, var(--mat-sys-corner-medium));
 }
+
 .widgetOverlay {
   position: absolute;
   width: 100%;
