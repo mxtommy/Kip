@@ -233,6 +233,7 @@ private updateCanvas(): void {
 
   private drawValue(): void {
     const valueText = this.getValueText();
+    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
     this.canvas.drawText(
       this.canvasValCtx,
       valueText,

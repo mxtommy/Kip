@@ -1,3 +1,8 @@
+# V 3.1.6
+## Fixes
+* Fix embed overflow scrollbar
+* Fix canvas cleanup process
+* Harden known webkit canvas bug with custom webfont 
 # V 3.1.5
 ## Fixes
 * Swipe sensitivity reported by trackpad device users
