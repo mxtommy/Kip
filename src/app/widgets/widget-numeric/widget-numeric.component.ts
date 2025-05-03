@@ -92,12 +92,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.maxValueTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
     this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
-
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.startWidget();
-      this.updateCanvasUnit();
-    });
+    if (this.isDestroyed) return;
+    this.startWidget();
+    this.updateCanvasUnit();
   }
 
   protected startWidget(): void {
@@ -154,11 +151,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
 
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.updateCanvas();
-      this.updateCanvasUnit();
-    });
+    if (this.isDestroyed) return;
+    this.updateCanvas();
+    this.updateCanvasUnit();
   }
 
   private getColors(color: string): void {

@@ -67,11 +67,9 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
     this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
     this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.getColors(this.widgetProperties.config.color);
-      this.startWidget();
-    });
+    if (this.isDestroyed) return;
+    this.getColors(this.widgetProperties.config.color);
+    this.startWidget();
   }
 
   protected startWidget(): void {
@@ -159,11 +157,8 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
     this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
     this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.drawValue();
-    });
+    if (this.isDestroyed) return;
+    this.drawValue();
   }
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */

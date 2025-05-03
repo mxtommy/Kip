@@ -64,10 +64,8 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
     this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
     this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.80);
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.startWidget();
-    });
+    if (this.isDestroyed) return;
+    this.startWidget();
   }
 
   protected startWidget(): void {
@@ -138,11 +136,8 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.canvas.setHighDPISize(this.canvasValue().nativeElement, e.contentRect);
     this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
     this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.drawValue();
-    });
-
+    if (this.isDestroyed) return;
+    this.drawValue();
   }
 
 /* ******************************************************************************************* */

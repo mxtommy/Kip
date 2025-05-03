@@ -46,13 +46,10 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   ngAfterViewInit(): void {
     this.canvas.setHighDPISize(this.canvasEl().nativeElement, this.canvasEl().nativeElement.parentElement.getBoundingClientRect());
     this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
-    this.maxTextWidth = Math.floor(this.canvasEl().nativeElement.width - 40);
-    this.maxTextHeight = Math.floor(this.canvasEl().nativeElement.height - 40);
-
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.updateCanvas();
-    });
+    this.maxTextWidth = this.canvasEl().nativeElement.width - 40;
+    this.maxTextHeight = this.canvasEl().nativeElement.height - 40;
+    if (this.isDestroyed) return;
+    this.updateCanvas();
   }
 
   ngOnDestroy(): void {
@@ -74,9 +71,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     this.canvas.setHighDPISize(this.canvasEl().nativeElement, e.contentRect);
     this.maxTextWidth = Math.floor(this.canvasEl().nativeElement.width - 40);
     this.maxTextHeight = Math.floor(this.canvasEl().nativeElement.height - 40);
-    document.fonts.ready.then(() => {
-      this.updateCanvas();
-    });
+    this.updateCanvas();
   }
 
   private getColors(colorName: string): string {

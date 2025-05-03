@@ -28,9 +28,7 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges {
       this.canvas.setHighDPISize(this.canvasElement, this.canvasElement.parentElement.getBoundingClientRect());
     }
     this.isReady = true;
-    document.fonts.ready.then(() => {
-      this.drawTitle();
-    });
+    this.drawTitle();
   }
 
   ngOnChanges(changes: SimpleChanges) {

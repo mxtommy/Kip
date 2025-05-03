@@ -80,10 +80,8 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
     this.canvasValCtx = this.canvasValue().nativeElement.getContext('2d');
     this.calculateFontSizeAndPositions();
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.startWidget();
-    });
+    if (this.isDestroyed) return;
+    this.startWidget();
   }
 
   protected startWidget(): void {
