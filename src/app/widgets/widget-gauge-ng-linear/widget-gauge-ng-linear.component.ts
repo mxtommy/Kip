@@ -240,7 +240,12 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     const isVertical = this.widgetProperties.config.gauge.subType === 'vertical';
     const isNeedle = this.widgetProperties.config.gauge.useNeedle;
     const isTicks = this.widgetProperties.config.gauge.enableTicks;
-    const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+    let scale = {
+      min: this.widgetProperties.config.displayScale.lower,
+      max: this.widgetProperties.config.displayScale.upper,
+      majorTicks: []
+    };
+
     const rect = this.gauge.nativeElement.getBoundingClientRect();
     let height: number = null;
     let width: number = null;
@@ -252,6 +257,10 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     else {
       height = rect.width * 0.3;
       width = rect.width;
+    }
+
+    if (isTicks) {
+      scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
     }
 
     const defaultOptions = {
@@ -275,7 +284,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       barStrokeWidth: 0,
       barShadow: 0,
 
-      needle: true,
+      needle: isNeedle,
       needleType: this.widgetProperties.config.gauge.useNeedle ? "arrow" : "line",
       needleShadow: false,
       needleSide: "both",
@@ -334,11 +343,11 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       majorTicksDec: this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2,
       numberSide: "left",
       fontNumbersSize: isTicks ? 25 : 0,
-      numbersMargin: isVertical ? 8 : 4,
+      numbersMargin: isVertical ? -3 : -5,
       tickSide: "left",
       ticksWidth: isTicks ? 10 : 0,
-      ticksPadding: 0,
-      strokeTicks: false,
+      ticksPadding: isTicks ? isVertical ? 5 : 8 : 0,
+      strokeTicks: isTicks,
       minorTicks: isTicks ? 2 : 0,
       ticksWidthMinor: isTicks ? 6 : 0,
 
