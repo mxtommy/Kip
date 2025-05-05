@@ -172,7 +172,7 @@ export class DatasetService {
         if (newValue.data.value === null) return; // we don't need null values
 
         // Keep the array to specified size before adding new value
-        if (dataSource.maxDataPoints == dataSource.historicalData.length) {
+        if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
           dataSource.historicalData.shift();
         }
         dataSource.historicalData.push(newValue.data.value);
@@ -270,6 +270,12 @@ export class DatasetService {
    * @memberof DataSetService
    */
   public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
+    const existingConfig = this._svcDatasetConfigs.find(conf => conf.uuid === datasetConfig.uuid);
+    if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
+      console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
+      return; // Avoid unnecessary stop/start
+    }
+
     this.stop(datasetConfig.uuid);
     console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
     datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);

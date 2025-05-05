@@ -115,12 +115,15 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     if (this.datasetConfig) {
       this.setChartOptions();
 
-      this.chart?.destroy();
-      this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
-        type: this.lineChartType,
-        data: this.lineChartData,
-        options: this.lineChartOptions
-      });
+      if (!this.chart) {
+        this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+          type: this.lineChartType,
+          data: this.lineChartData,
+          options: this.lineChartOptions
+        });
+      } else {
+        this.chart.update();
+      }
 
       this.startStreaming();
     }
