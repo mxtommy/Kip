@@ -1,3 +1,8 @@
+# V 3.1.7
+## Fixes
+* Linear gauge not respecting scales with no ticks. Fixes #621
+* Text overlap on low resolution screens. Fixes #624
+* Minor performance improvement to Data Chart widget
 # V 3.1.6
 ## Fixes
 * Fix embed overflow scrollbar
