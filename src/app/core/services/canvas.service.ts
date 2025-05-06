@@ -4,9 +4,9 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class CanvasService {
-  private readonly DEFAULT_FONT = 'Roboto';
-  private readonly EDGE_BUFFER = 20;
-  private scaleFactor = window.devicePixelRatio || 1;
+  public readonly DEFAULT_FONT = 'Roboto';
+  public readonly EDGE_BUFFER = 10;
+  public scaleFactor = window.devicePixelRatio || 1;
   private fontsReadyPromise: Promise<FontFaceSet>;
 
   constructor() {
@@ -74,7 +74,7 @@ export class CanvasService {
     ctx.fillStyle = color;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(text, this.EDGE_BUFFER, this.EDGE_BUFFER, maxWidth);
+    ctx.fillText(text, this.EDGE_BUFFER * this.scaleFactor, this.EDGE_BUFFER * this.scaleFactor, maxWidth);
   }
 
   /**
@@ -123,6 +123,8 @@ export class CanvasService {
    * Draws text on the canvas with optimal font size.
    */
   private drawTextInternal(ctx: CanvasRenderingContext2D, text: string, x: number = this.EDGE_BUFFER, y: number = this.EDGE_BUFFER, maxWidth: number, maxHeight: number, fontWeight: string = 'normal', color: string = '#000', textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle'): void {
+    maxWidth = maxWidth;
+    maxHeight = maxHeight;
     const fontSize = this.calculateOptimalFontSize(ctx, text, maxWidth, maxHeight, fontWeight);
     ctx.font = `${fontWeight} ${fontSize}px ${this.DEFAULT_FONT}`;
     ctx.fillStyle = color;

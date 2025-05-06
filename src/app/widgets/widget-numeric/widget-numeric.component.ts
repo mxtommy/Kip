@@ -266,8 +266,8 @@ private updateCanvas(): void {
     this.canvas.drawText(
       this.canvasUnitCtx,
       unit,
-      Math.floor(this.canvasUnit().nativeElement.width - 20),
-      Math.floor(this.canvasUnit().nativeElement.height - 20),
+      Math.floor(this.canvasUnit().nativeElement.width - 10 * this.canvas.scaleFactor),
+      Math.floor(this.canvasUnit().nativeElement.height - 10 * this.canvas.scaleFactor),
       Math.floor(this.canvasUnit().nativeElement.width * 0.25),
       Math.floor(this.canvasUnit().nativeElement.height * 0.15),
       'bold',
@@ -278,6 +278,7 @@ private updateCanvas(): void {
   }
 
   private drawMinMax(): void {
+
     if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) return;
 
     let valueText = '';
@@ -292,8 +293,8 @@ private updateCanvas(): void {
     this.canvas.drawText(
       this.canvasMinMaxCtx,
       valueText,
-      20,
-      Math.floor(this.canvasMinMax().nativeElement.height - 20),
+      10 * this.canvas.scaleFactor,
+      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor),
       this.maxMinMaxTextWidth,
       this.maxMinMaxTextHeight,
       'normal',
