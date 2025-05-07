@@ -23,28 +23,28 @@ export class DatasetChartOptionsComponent implements OnInit {
   public availableDataSets: IDatasetServiceDatasetConfig[] = [];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
-    ngOnInit(): void {
-      this.availableDataSets = this.datasetService.list().sort();
-      const datasetUUID = this.datasetUUID();
-      if (datasetUUID.value) {
-        this.setPathUnits(datasetUUID.value);
-        this.convertUnitTo().enable();
-      } else {
-        this.convertUnitTo().disable();
-      }
+  ngOnInit(): void {
+    this.availableDataSets = this.datasetService.list().sort();
+    const datasetUUID = this.datasetUUID();
+    if (datasetUUID.value) {
+      this.setPathUnits(datasetUUID.value);
     }
+  }
 
-    private setPathUnits(uuid: string): void {
-      this.convertUnitTo().enable();
-      if (uuid) {
-        this.unitList = this.units.getConversionsForPath(this.datasetService.getDatasetConfig(uuid).path);
-      } else {
-        this.unitList = this.units.getConversionsForPath('');
-      }
+  private setPathUnits(uuid: string): boolean {
+    const datasetConfig = this.datasetService.getDatasetConfig(uuid);
+    if (uuid && datasetConfig) {
+      this.unitList = this.units.getConversionsForPath(datasetConfig.path);
+      this.convertUnitTo()?.enable();
+      return true;
+    } else {
+      this.unitList = this.units.getConversionsForPath('');
+      this.convertUnitTo()?.disable();
+      return false;
     }
+  }
 
-    public datasetChanged(e: MatSelectChange): void {
-      this.setPathUnits(e.value);
-    }
-
+  public datasetChanged(e: MatSelectChange): void {
+    this.setPathUnits(e.value);
+  }
 }
