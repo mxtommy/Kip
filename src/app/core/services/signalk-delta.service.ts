@@ -1,5 +1,5 @@
-import { DestroyRef, inject, Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject, delay, Observable, of, retry, Subject } from 'rxjs';
+import { DestroyRef, inject, Injectable, NgZone, OnDestroy } from '@angular/core';
+import { BehaviorSubject, delay, Observable, of, retry, Subject, fromEvent } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
@@ -28,7 +28,7 @@ export interface IStreamStatus {
 @Injectable({
     providedIn: 'root'
   })
-export class SignalKDeltaService {
+export class SignalKDeltaService implements OnDestroy {
   private _destroyRef = inject(DestroyRef); // Inject DestroyRef
 
   // Signal K Requests message stream Observable
@@ -73,91 +73,102 @@ export class SignalKDeltaService {
   private auth = inject(AuthenticationService);
   private zones = inject(NgZone); // NgZone to run outside Angular zone - NOT to be confused with SK zones
 
-  constructor()
-    {
-      // Monitor Connection Service Endpoint Status
-      this.server.serverServiceEndpoint$
+  constructor() {
+    // Monitor Connection Service Endpoint Status
+    this.server.serverServiceEndpoint$
       .pipe(takeUntilDestroyed(this._destroyRef))
-        .subscribe((endpointStatus: IEndpointStatus) => {
-        let reason: string = null;
-          if (endpointStatus.operation === 2) {
-            reason = "New endpoint";
-          } else {
-            reason = "Connection stopped";
+      .subscribe((endpointStatus: IEndpointStatus) => {
+      let reason: string = null;
+        if (endpointStatus.operation === 2) {
+          reason = "New endpoint";
+        } else {
+          reason = "Connection stopped";
+        }
+
+        if (endpointStatus.operation === 2) {
+          this.endpointWS = endpointStatus.WsServiceUrl;
+
+          if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
+            this.closeWS(reason);
           }
 
-          if (endpointStatus.operation === 2) {
-            this.endpointWS = endpointStatus.WsServiceUrl;
+          this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
 
-            if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
-              this.closeWS(reason);
-            }
+        } else {
+          if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
+            this.closeWS(reason);
+          }
+        }
 
+        endpointStatus.subscribeAll ? this.SubscriptionType = "all" : this.SubscriptionType = "self"; // set subscription type
+    });
+
+    // Monitor Token changes
+    this.auth.authToken$
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe((token: IAuthorizationToken) => {
+        if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
+          this.authToken = token;
+
+          let reason: string = null;
+          if (token) {
+            reason = "New token";
+          } else {
+            reason = "Deleted Token";
+          }
+
+          // Only if the socket is in Connected or Connecting state.
+          if (this.socketWS$ && (this.streamEndpoint.operation === 2 || this.streamEndpoint.operation === 1) ) {
+            this.closeWS(reason);
             this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
-
-          } else {
-            if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
-              this.closeWS(reason);
-            }
           }
+        }
+    });
 
-          endpointStatus.subscribeAll ? this.SubscriptionType = "all" : this.SubscriptionType = "self"; // set subscription type
-        });
+    // WebSocket Open Event Handling
+    this.socketWSOpenEvent$
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe( event => {
+        this.streamEndpoint.message = "Connected";
+        this.streamEndpoint.operation = 2;
+        if (this.authToken) {
+          console.log("[Delta Service] WebSocket connected with Authorization Token")
+        } else {
+          console.log("[Delta Service] WebSocket connected without Authorization Token");
+        }
+        this.streamEndpoint$.next(this.streamEndpoint);
+    });
 
-      // Monitor Token changes
-      this.auth.authToken$
-        .pipe(takeUntilDestroyed(this._destroyRef))
-        .subscribe((token: IAuthorizationToken) => {
-          if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
-            this.authToken = token;
+    // WebSocket closed Event Handling
+    this.socketWSCloseEvent$
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe( event => {
+        if(event.wasClean) {
+          this.streamEndpoint.message = "WebSocket closed";
+          this.streamEndpoint.operation = 0;
+          console.log('[Delta Service] WebSocket closed');
+        } else {
+          console.log('[Delta Service] WebSocket terminated due to socket error');
+          this.streamEndpoint.message = "WebSocket error";
+          this.streamEndpoint.operation = 3;
+          console.log('[Delta Service] WebSocket closed');
+        }
+        this.streamEndpoint$.next(this.streamEndpoint);
+    });
 
-            let reason: string = null;
-            if (token) {
-              reason = "New token";
-            } else {
-              reason = "Deleted Token";
-            }
-
-            // Only if the socket is in Connected or Connecting state.
-            if (this.socketWS$ && (this.streamEndpoint.operation === 2 || this.streamEndpoint.operation === 1) ) {
-              this.closeWS(reason);
-              this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
-            }
-          }
-        });
-
-      // WebSocket Open Event Handling
-      this.socketWSOpenEvent$
-        .pipe(takeUntilDestroyed(this._destroyRef))
-        .subscribe( event => {
-            this.streamEndpoint.message = "Connected";
-            this.streamEndpoint.operation = 2;
-            if (this.authToken) {
-              console.log("[Delta Service] WebSocket connected with Authorization Token")
-            } else {
-              console.log("[Delta Service] WebSocket connected without Authorization Token");
-            }
-            this.streamEndpoint$.next(this.streamEndpoint);
-          }
-        );
-
-      // WebSocket closed Event Handling
-      this.socketWSCloseEvent$
-        .pipe(takeUntilDestroyed(this._destroyRef))
-        .subscribe( event => {
-          if(event.wasClean) {
-            this.streamEndpoint.message = "WebSocket closed";
-            this.streamEndpoint.operation = 0;
-            console.log('[Delta Service] WebSocket closed');
-          } else {
-            console.log('[Delta Service] WebSocket terminated due to socket error');
-            this.streamEndpoint.message = "WebSocket error";
-            this.streamEndpoint.operation = 3;
-            console.log('[Delta Service] WebSocket closed');
-          }
-          this.streamEndpoint$.next(this.streamEndpoint);
-        });
-    }
+    // Listen for visibility (app suspend, background or screenlock) change events
+    fromEvent(document, 'visibilitychange')
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(() => {
+        if (document.visibilityState === 'visible') {
+          console.log('[Delta Service] App resumed, checking WebSocket connection...');
+          this.checkAndReconnect('App resumed');
+        } else if (document.visibilityState === 'hidden') {
+          console.log('[Delta Service] App suspended');
+          // Optional: Handle app suspension logic here if needed
+        }
+    });
+  }
 
   /**
    * Connect WebSocket to server. Endpoint URL taken from Connection Service and
@@ -364,13 +375,30 @@ export class SignalKDeltaService {
   }
 
   /**
+   * Check the WebSocket connection status and reconnect if necessary.
+   * @param reason Reason for triggering the reconnection logic.
+   */
+  private checkAndReconnect(reason: string): void {
+    if (this.streamEndpoint.operation !== 2) { // Not connected
+      console.log(`[Delta Service] ${reason}: WebSocket not connected, attempting to reconnect...`);
+      this.closeWS(reason); // Ensure any existing connection is closed
+      this.timeoutIds.push(setTimeout(() => this.connectWS(reason), 250)); // Reconnect with a slight delay
+    } else {
+      console.log(`[Delta Service] ${reason}: WebSocket is already connected.`);
+    }
+  }
+
+  /**
   * Close the WebSocket on app termination. This send a Close to the server for
   * a clean disconnect. Else the server keeps buffering the messages that creates
   * an overflow.
   *
   * @memberof SignalKDeltaService
   */
-  OnDestroy(): void {
+  ngOnDestroy(): void {
+    this.closeWS("App terminated");
+
+    // Complete all the Observables
     this._skRequests$.complete();
     this._skNotificationsMsg$.complete();
     this._skValue$.complete();
@@ -381,10 +409,7 @@ export class SignalKDeltaService {
     this.socketWSOpenEvent$.complete();
     this.socketWSCloseEvent$.complete();
     this.socketWS$?.complete();
-    // Clear all the timeouts
+    // Clear all the timers
     this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
-
-    // Close the WebSocket connection
-    this.closeWS("App terminated");
   }
 }
