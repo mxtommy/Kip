@@ -1,3 +1,8 @@
+# V 3.2.0
+## New features
+* Add automatic reconnection on mobile OS app resume
+## Fixes
+* Data Chart form error with invalid dataset uuid
 # V 3.1.7
 ## Fixes
 * Linear gauge not respecting scales with no ticks. Fixes #621
