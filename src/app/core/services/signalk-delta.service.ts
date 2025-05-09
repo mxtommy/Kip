@@ -1,5 +1,5 @@
 import { DestroyRef, inject, Injectable, NgZone, OnDestroy } from '@angular/core';
-import { BehaviorSubject, delay, Observable, of, retry, Subject, fromEvent, Subscription } from 'rxjs';
+import { BehaviorSubject, delay, Observable, of, retry, Subject, fromEvent } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
@@ -72,8 +72,6 @@ export class SignalKDeltaService implements OnDestroy {
   private server = inject(SignalKConnectionService);
   private auth = inject(AuthenticationService);
   private zones = inject(NgZone); // NgZone to run outside Angular zone - NOT to be confused with SK zones
-
-  private visibilityChangeSubscription: Subscription;
 
   constructor() {
     // Monitor Connection Service Endpoint Status
