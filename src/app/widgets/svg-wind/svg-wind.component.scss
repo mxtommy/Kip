@@ -6,38 +6,57 @@ svg {
   top: 0;
 }
 
-.compass-inner-ring {
-  stroke: var(--kip-contrast-color);
-  fill: var(--kip-contrast-color);
+.fixed-dial-background {
+  fill: var(--kip-grey-color);
 }
+
+.rotating-dial-Backplate {
+  fill: var(--mat-sys-background);
+}
+
 .starboard  {
-  stop-color: var(--kip-starboard-color);
+  stroke: var(--kip-starboard-color);
 }
 
 .port {
-  stop-color: var(--kip-port-color);
-}
-
-.wind-text {
-  fill: var(--kip-widget-card-background-color);
-  stroke: var(--kip-widget-card-background-color);
+  stroke: var(--kip-port-color);
 }
 
 .heading-background {
-  stroke: var(--mat-sys-background);
+  stroke: var(--kip-grey-color);
+  fill: var(--kip-widget-card-background-color);
+}
+
+.boat {
+  stop-color: var(--kip-grey-color) !important;
+}
+
+.contrast-text {
   fill: var(--kip-contrast-color);
 }
 
-.boatBackground {
-  stop-color: var(--kip-contrast-color) !important;
+.contrast-stroke {
+  stroke: var(--kip-contrast-color);
+}
+
+.card-color {
+  fill: var(--kip-widget-card-background-color);
 }
 
 .true-wind {
   fill: var(--kip-yellow-color);
 }
 
+.true-wind-label {
+  fill: var(--kip-yellow-dim-color);
+}
+
 .app-wind {
-    fill: var(--kip-blue-color);
+    fill: var(--kip-orange-color);
+}
+
+.app-wind-label {
+    fill: var(--kip-orange-dim-color);
 }
 
 .course-over-ground {
@@ -46,6 +65,10 @@ svg {
 
 .next-waypoint {
   stroke: var(--kip-green-color);
+}
+
+.next-waypoint-bar {
+  stroke: var(--kip-grey-color);
 }
 
 .laylines {
@@ -58,4 +81,8 @@ svg {
 
 .wind-sector-stbd {
   fill: var(--kip-starboard-color);
+}
+
+.drift-arrow {
+  stop-color: var(--kip-blue-color);
 }

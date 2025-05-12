@@ -176,6 +176,12 @@ export interface IWidgetSvcConfig {
   waypointEnable?: boolean;
   /** Used by wind Widget: enable/disable COG UI feature */
   courseOverGroundEnable?: boolean;
+  /** Used by wind Widget: enable/disable current UI feature */
+  driftEnable?: boolean;
+  /** Used by wind Widget: enable/disable Apparent Wind Speed UI feature */
+  awsEnable?: boolean;
+  /** Used by wind Widget: enable/disable True Wind Speed UI feature */
+  twsEnable?: boolean;
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 

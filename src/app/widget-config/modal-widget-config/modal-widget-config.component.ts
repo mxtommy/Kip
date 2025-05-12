@@ -217,6 +217,16 @@ export class ModalWidgetConfigComponent implements OnInit {
       const ctrlGrp = this.formMaster.get('paths.courseOverGround');
       this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
     }
+    if (this.formMaster.contains('driftEnable')) {
+      const setCtrl = this.formMaster.get('paths.set');
+      const driftCtrl = this.formMaster.get('paths.drift');
+      this.formMaster.controls['driftEnable'].value ? setCtrl.enable() : setCtrl.disable();
+      this.formMaster.controls['driftEnable'].value ? driftCtrl.enable() : driftCtrl.disable();
+    }
+    if (this.formMaster.contains('waypointEnable')) {
+      const waypointCtrl = this.formMaster.get('paths.nextWaypointBearing');
+      this.formMaster.controls['waypointEnable'].value ? waypointCtrl.enable() : waypointCtrl.disable();
+    }
   }
 
   get convertUnitToControl(): UntypedFormControl {
@@ -340,6 +350,6 @@ export class ModalWidgetConfigComponent implements OnInit {
   }
 
   submitConfig() {
-    this.dialogRef.close(this.formMaster.value);
+    this.dialogRef.close(this.formMaster.getRawValue());
   }
 }
