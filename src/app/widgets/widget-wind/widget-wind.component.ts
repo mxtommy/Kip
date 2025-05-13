@@ -117,7 +117,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           sampleTime: 500
         },
         "drift": {
-          description: "Drift Speed",
+          description: "Drift Speed Impact",
           path: 'self.environment.current.drift',
           source: 'default',
           pathType: "number",
