@@ -14,20 +14,22 @@ import { SvgWindComponent } from '../svg-wind/svg-wind.component';
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   private zones = inject(NgZone);
-  currentHeading: number = 0;
-  courseOverGroundAngle: number = 0;
-  appWindAngle: number = 0;
-  appWindSpeed: number = 0;
-  trueWindAngle: number = 0;
-  trueWindSpeed: number = 0;
-  waypointAngle: number = 0;
-  trueWindHistoric: {
+  protected currentHeading: number = 0;
+  protected courseOverGroundAngle: number = 0;
+  protected appWindAngle: number = 0;
+  protected appWindSpeed: number = 0;
+  protected trueWindAngle: number = 0;
+  protected trueWindSpeed: number = 0;
+  protected driftFlow: number = 0;
+  protected driftSet: number = 0;
+  protected waypointAngle: number = 0;
+  protected trueWindHistoric: {
     timestamp: number;
     heading: number;
   }[] = [];
-  trueWindMinHistoric: number;
-  trueWindMidHistoric: number;
-  trueWindMaxHistoric: number;
+  protected trueWindMinHistoric: number;
+  protected trueWindMidHistoric: number;
+  protected trueWindMaxHistoric: number;
 
   private windSectorObservableSub: Subscription = null;
 
@@ -38,7 +40,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       filterSelfPaths: true,
       paths: {
         "headingPath": {
-          description: "Heading",
+          description: "Heading True",
           path: 'self.navigation.headingTrue',
           source: 'default',
           pathType: "number",
@@ -49,7 +51,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           sampleTime: 500
         },
         "courseOverGround": {
-          description: "Course Over Ground",
+          description: "Course Over Ground True",
           path: 'self.navigation.courseOverGroundTrue',
           source: 'default',
           pathType: "number",
@@ -71,7 +73,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           sampleTime: 500
         },
         "trueWindSpeed": {
-          description: "True Wind Speed",
+          description: "Wind Speed True",
           path: 'self.environment.wind.speedTrue',
           source: 'default',
           pathType: "number",
@@ -103,6 +105,28 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           convertUnitTo: "knots",
           sampleTime: 500
         },
+        "set": {
+          description: "Drift Set True",
+          path: 'self.environment.current.setTrue',
+          source: 'default',
+          pathType: "number",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          convertUnitTo: "deg",
+          sampleTime: 500
+        },
+        "drift": {
+          description: "Drift Speed Impact",
+          path: 'self.environment.current.drift',
+          source: 'default',
+          pathType: "number",
+          isPathConfigurable: true,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'm/s',
+          convertUnitTo: "knots",
+          sampleTime: 500
+        },
         "nextWaypointBearing": {
           description: "Next Waypoint Bearing",
           path: 'self.navigation.courseGreatCircle.nextPoint.bearingTrue',
@@ -121,6 +145,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       laylineAngle: 40,
       waypointEnable: true,
       courseOverGroundEnable: true,
+      driftEnable: true,
+      awsEnable: true,
+      twsEnable: true,
       sailSetupEnable: false,
       enableTimeout: false,
       dataTimeout: 5
@@ -138,16 +165,30 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
     this.observeDataStream('headingPath', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0
+        newValue.data.value = 0;
       }
       this.currentHeading = newValue.data.value;
     });
 
     this.observeDataStream('courseOverGround', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0
+        newValue.data.value = 0;
       }
       this.courseOverGroundAngle = newValue.data.value;
+    });
+
+    this.observeDataStream('drift', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.driftFlow = newValue.data.value;
+    });
+
+    this.observeDataStream('set', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+          newValue.data.value = 0
+      }
+      this.driftSet = newValue.data.value;
     });
 
     this.observeDataStream('nextWaypointBearing', newValue => {
@@ -156,8 +197,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       } else {
         this.waypointAngle = newValue.data.value;
       }
-    }
-    );
+    });
 
     this.observeDataStream('appWindAngle', newValue => {
         if (newValue.data.value == null) { // act upon data timeout of null
@@ -173,21 +213,21 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
     this.observeDataStream('appWindSpeed', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0
+        newValue.data.value = 0;
       }
       this.appWindSpeed = newValue.data.value;
     });
 
     this.observeDataStream('trueWindSpeed', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0
+        newValue.data.value = 0;
       }
       this.trueWindSpeed = newValue.data.value;
     });
 
     this.observeDataStream('trueWindAngle', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0
+        newValue.data.value = 0;
       }
         // Depending on path, this number can either be the magnetic compass heading, true compass heading, or heading relative to boat heading (-180 to 180deg)... Ugh...
           // 0-180+ for stb
@@ -220,13 +260,12 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     this.startWidget();
   }
 
-
   ngOnDestroy() {
     this.destroyDataStreams();
     this.stopWindSectors();
   }
 
-  startWindSectors() {
+  private startWindSectors() {
     this.zones.runOutsideAngular(() => {
       this.windSectorObservableSub = interval(500).subscribe(x => {
         this.historicalCleanup();
@@ -234,7 +273,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     });
   }
 
-  addHistoricalTrue (windHeading: number) {
+  private addHistoricalTrue (windHeading: number) {
     this.trueWindHistoric.push({
       timestamp: Date.now(),
       heading: windHeading
@@ -245,7 +284,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     this.trueWindMidHistoric = arr[2];
   }
 
-  arcForAngles (data) {
+  private arcForAngles (data) {
     return data.slice(1).reduce((acc, theValue) => {
       let value = theValue
       while (value < acc[0] - 180) {
@@ -261,7 +300,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     }, [data[0], data[0]])
   }
 
-  historicalCleanup() {
+  private historicalCleanup() {
     let n = Date.now()-(this.widgetProperties.config.windSectorWindowSeconds*1000);
     for (let i = this.trueWindHistoric.length - 1; i >= 0; --i) {
       if (this.trueWindHistoric[i].timestamp < n) {
@@ -270,11 +309,11 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     }
   }
 
-  stopWindSectors() {
+  private stopWindSectors() {
     this.windSectorObservableSub?.unsubscribe();
   }
 
-  addHeading(h1: number, h2: number) {
+  private addHeading(h1: number, h2: number) {
     let h3 = h1 + h2;
     while (h3 > 359) { h3 = h3 - 359; }
     while (h3 < 0) { h3 = h3 + 359; }

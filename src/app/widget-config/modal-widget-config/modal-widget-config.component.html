@@ -119,11 +119,21 @@
               <input type="number" min="1" max="90" matInput placeholder="Select or enter duration..." name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
             </mat-form-field>
 
+            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.awsEnable !== undefined)" name="awsEnable" formControlName="awsEnable" (change)="setPaths()">
+              Show Apparent Wind Speed Value
+            </mat-checkbox>
+            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.twsEnable !== undefined)" name="twsEnable" formControlName="twsEnable" (change)="setPaths()">
+              Show True Wind Speed Value
+            </mat-checkbox>
+
             <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.courseOverGroundEnable !== undefined)" name="courseOverGroundEnable" formControlName="courseOverGroundEnable" (change)="setPaths()">
               Show Course Over Ground
             </mat-checkbox>
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.waypointEnable !== undefined)" name="waypointEnable" formControlName="waypointEnable">
+            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.waypointEnable !== undefined)" name="waypointEnable" formControlName="waypointEnable" (change)="setPaths()">
               Show Next Waypoint
+            </mat-checkbox>
+            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.driftEnable !== undefined)" name="driftEnable" formControlName="driftEnable" (change)="setPaths()">
+              Show Drift
             </mat-checkbox>
 
             <mat-form-field *ngIf="(widgetConfig.minValue !== undefined) && !formMaster.get('displayScale')">
