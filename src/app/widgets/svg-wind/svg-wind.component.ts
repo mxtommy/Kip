@@ -101,8 +101,8 @@ export class SvgWindComponent implements AfterViewInit {
   protected closeHauledLinePortPath: string = "M 500,500 500,500";
   protected closeHauledLineStbdPath: string = "M 500,500 500,500";
   //WindSectors
-  protected portWindSectorPath: string = "none";
-  protected stbdWindSectorPath: string = "none";
+  protected portWindSectorPath: string = "M 500,500 V 150";
+  protected stbdWindSectorPath: string = "M 500,500 V 150";
 
   constructor() {
     effect(() => {
