@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal, model } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal, model } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';

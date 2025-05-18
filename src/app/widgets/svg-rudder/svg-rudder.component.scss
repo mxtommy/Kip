@@ -1,0 +1,16 @@
+:root {
+  font-family: Roboto;
+}
+
+.rudderPort {
+  fill: var(--kip-port-color);
+}
+
+.rudderStarboard  {
+  fill: var(--kip-starboard-color);
+}
+
+.boxes {
+  stroke: var(--kip-grey-color);
+  fill: var(--kip-grey-color);
+}

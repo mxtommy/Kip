@@ -91,6 +91,32 @@
          transform="scale(-1,1)" />
     </g>
   </g>
+   <g id="LayerLayline"
+     [style.display]="closeHauledLineEnabled() ? 'inline' : 'none'">
+    <path id="PortLayline"
+       [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
+       [attr.d]="closeHauledLineStbdPath"
+       style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6"
+       class="laylines" />
+    <path id="StbdLayline"
+       [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
+       [attr.d]="closeHauledLinePortPath"
+       class="laylines"
+       style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6" />
+  </g>
+  <g id="LayerWindShift"
+     [style.display]="windSectorEnabled() ? 'inline' : 'none'">
+    <path id="portSectorShift"
+      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
+      [attr.d]="portWindSectorPath"
+      class="wind-sector-port"
+      style="fill-opacity:0.5;stroke:none" />
+    <path id="StbdSectorShift"
+      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
+      [attr.d]="stbdWindSectorPath"
+      class="wind-sector-stbd"
+      style="fill-opacity:0.5;stroke:none" />
+  </g>
   <g id="layerCompass">
     <g id="fixedDial">
       <path id="portStarboardBackground"
@@ -106,9 +132,8 @@
         style="display:inline;fill:none;stroke-width:39.6875;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:0"
         d="M 660.62476,58.687069 A 469.63541,469.63541 0 0 1 906.71619,265.18228" />
     </g>
-    <g id="rotatingDial">
-      <g
-        id="g201"
+    <g #rotatingDial>
+      <g id="barsAndText"
         class="contrast-stroke"
         style="display:inline">
         <path
@@ -403,7 +428,7 @@
             x="500.15503"
             y="101.96342">N</tspan></text>
       </g>
-      <g id="waypoint"
+      <g #wptIndicator
         [attr.display]="waypointActive() ? 'inline' : 'none'">
         <path
           clip-path="url(#clipPath16)"
@@ -413,53 +438,19 @@
          transform="matrix(0.28310615,0,0,0.32000828,411.88452,661.64815)" />
         <ellipse
           class="next-waypoint"
-          style="display:inline;fill:none;fill-opacity:1;stroke-width:15.2778;stroke-dasharray:none"
+          style="display:inline;fill:none;stroke-width:15.2778;stroke-dasharray:none"
           id="path6341"
           cx="500"
           cy="175.00002"
           rx="17.361122"
           ry="17.361118" />
-        <animateTransform #waypointAnimate attributeName="transform"
-          type="rotate"
-          [attr.from]="waypoint.oldDegreeIndicator+' 500 500'"
-          [attr.to]="waypoint.newDegreeIndicator+' 500 500'"
-          begin="indefinite"
-          dur="0.5s"
-          keySplines="0.25 0.1 0.25 1"
-          keyTimes="0;1"
-          calcMode="spline"
-          additive="replace"
-          fill="freeze"
-          />
       </g>
-      <g id="setCurrentArrow"
+      <g #setIndicator
         [style.display]="driftEnabled() ? 'inline' : 'none'">
         <path id="setArrow"
           style="fill:url(#linearGradient14);stroke:none;stroke-width:1.18648"
           d="m 563.93337,480.60403 -64.4901,-94.9673 -63.37665,95.71396 58.48691,-30.71299 0.77713,133.08346 c 0.0992,16.99331 2.52916,30.65913 5.44822,30.64209 2.91911,-0.0171 5.18926,-13.71032 5.09001,-30.70362 l -0.77782,-133.20444 z" />
-        <animateTransform #driftAnimate attributeName="transform"
-          type="rotate"
-          [attr.from]="set.oldDegreeIndicator+' 500 500'"
-          [attr.to]="set.newDegreeIndicator+' 500 500'"
-          begin="indefinite"
-          dur="0.5s"
-          keySplines="0.25 0.1 0.25 1"
-          keyTimes="0;1"
-          calcMode="spline"
-          additive="replace"
-          fill="freeze" />
       </g>
-      <animateTransform #compassAnimate attributeName="transform"
-        type="rotate"
-        [attr.from]="'-'+compassFaceplate.oldDegreeIndicator+' 500 500'"
-        [attr.to]="'-'+compassFaceplate.newDegreeIndicator+' 500 500'"
-        begin="indefinite"
-        dur="0.5s"
-        keySplines="0.25 0.1 0.25 1"
-        keyTimes="0;1"
-        calcMode="spline"
-        additive="replace"
-        fill="freeze" />
     </g>
   </g>
   <g id="layerCounter">
@@ -512,32 +503,6 @@
        id="text39-7">AWS</text>
     </g>
   </g>
-  <g id="LayerLayline"
-     [style.display]="closeHauledLineEnabled() ? 'inline' : 'none'">
-    <path id="PortLayline"
-       [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
-       [attr.d]="closeHauledLineStbdPath"
-       style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6"
-       class="laylines" />
-    <path id="StbdLayline"
-       [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
-       [attr.d]="closeHauledLinePortPath"
-       class="laylines"
-       style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6" />
-  </g>
-  <g id="LayerWindShift"
-     [style.display]="windSectorEnabled() ? 'inline' : 'none'">
-    <path id="portSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-      [attr.d]="portWindSectorPath"
-      class="wind-sector-port"
-      style="fill-opacity:0.5;stroke:none" />
-    <path id="StbdSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-      [attr.d]="stbdWindSectorPath"
-      class="wind-sector-stbd"
-      style="fill-opacity:0.5;stroke:none" />
-  </g>
   <g id="layerCurrent"
      [style.display]="driftEnabled() ? 'inline' : 'none'">
     <text id="text11"
@@ -550,26 +515,14 @@
   </g>
   <g id="layerIndicators"
     style="display:inline">
-    <g id="COGIndicator"
+    <g #cogIndicator
       [attr.display]="courseOverGroundEnabled() ? 'inline' : 'none'">
       <path
         class="course-over-ground"
         style="stroke-width:14.7329;stroke-linecap:square"
         d="m 506.20767,172.99458 a 6.3888631,8.8250643 0 0 1 -6.38888,8.82508 6.3888631,8.8250643 0 0 1 -6.38888,-8.82508 6.3888631,8.8250643 0 0 1 6.38888,-8.82509 6.3888631,8.8250643 0 0 1 6.38888,8.82509 z M 476.25472,30.811298 493.47058,13.265068 c 3.6173,-3.6867571 9.44162,-3.6867571 13.05892,0 l 17.21586,17.546106 c 3.6173,3.686743 3.6173,9.622786 0,13.309544 l -17.21595,17.54623 c -3.61721,3.686757 -9.44153,3.686757 -13.05893,0 L 476.25472,44.120841 c -3.6174,-3.686743 -3.6174,-9.622924 0,-13.309543 z m 17.20533,-16.510116 h 12.77766 V 173.26408 h -12.77766 z" />
-      <animateTransform #courseOverGroundAnimate attributeName="transform"
-        type="rotate"
-        [attr.from]="courseOverGround.oldDegreeIndicator+' 500 500'"
-        [attr.to]="courseOverGround.newDegreeIndicator+' 500 500'"
-        begin="indefinite"
-        dur="0.5s"
-        keySplines="0.25 0.1 0.25 1"
-        keyTimes="0;1"
-        calcMode="spline"
-        additive="replace"
-        fill="freeze"
-        />
     </g>
-    <g id="ApparentWindIndicator">
+    <g #awaIndicator>
       <path
          class="app-wind"
          d="m 451.77021,55.078207 42.08541,-33.202814 a 12.555638,12.555638 0.26446337 0 1 15.64423,0.07221 l 42.20046,33.930296 a 15.557694,15.557694 71.53185 0 1 5.32954,15.957795 L 504.17034,279.76529 a 2.5373267,2.5373267 0.02614114 0 1 -4.91879,-0.002 L 446.37431,70.966036 a 15.416336,15.416336 108.75875 0 1 5.3959,-15.887829 z"
@@ -578,24 +531,11 @@
       <text
          xml:space="preserve"
          class="card-color"
-         style="font-weight:bold;font-size:52.9167px;font-family:Roboto;display:inline;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-         x="474.16168"
-         y="109.42192"
-         id="text8">A</text>
-      <animateTransform #appWindAnimate attributeName="transform"
-        type="rotate"
-        [attr.from]="appWind.oldDegreeIndicator+' 500 500'"
-        [attr.to]="appWind.newDegreeIndicator+' 500 500'"
-        begin="indefinite"
-        dur="0.5s"
-        keySplines="0.25 0.1 0.25 1"
-        keyTimes="0;1"
-        calcMode="spline"
-        additive="replace"
-        fill="freeze"
-      />
+         style="font-weight:bold;font-size:70px;font-family:Roboto;text-align:center;text-anchor:middle;display:inline;stroke:none"
+         x="500"
+         y="110">A</text>
     </g>
-    <g id="trueWindIndicator">
+    <g #twaIndicator>
       <path
         class="true-wind"
         d="m 451.77021,55.078207 42.08541,-33.202814 a 12.555638,12.555638 0.26446337 0 1 15.64423,0.07221 l 42.20046,33.930296 a 15.557694,15.557694 71.53185 0 1 5.32954,15.957795 L 504.17034,279.76529 a 2.5373267,2.5373267 0.02614114 0 1 -4.91879,-0.002 L 446.37431,70.966036 a 15.416336,15.416336 108.75875 0 1 5.3959,-15.887829 z"
@@ -604,11 +544,10 @@
       <text
          xml:space="preserve"
          class="card-color"
-         style="font-weight:bold;font-size:52.9167px;font-family:Roboto;display:inline;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-         x="478.41647"
-         y="109.42194"
+         style="font-weight:bold;font-size:60px;font-family:Roboto;text-align:center;text-anchor:middle;display:inline;stroke:none"
+         x="500"
+         y="110"
          id="text10">T</text>
-      <animateTransform #trueWindAnimate
         attributeName="transform"
         type="rotate"
         [attr.from]="trueWind.oldDegreeIndicator+' 500 500'"

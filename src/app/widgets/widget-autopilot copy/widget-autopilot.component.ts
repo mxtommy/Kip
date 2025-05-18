@@ -1,14 +1,21 @@
-import { SvgRudderComponent } from './../svg-rudder/svg-rudder.component';
-import { Component, OnInit, OnDestroy, viewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { MatBadge } from '@angular/material/badge';
+import { NgIf } from '@angular/common';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
-import { TitleCasePipe } from '@angular/common';
+
+const defaultPreferredDisplayMode = {
+  wind: 'windAngleApparent',
+  route: 'headingMag',
+  auto: 'headingMag',
+  standby: 'headingMag'
+}
 
 const commands = {
   "auto":    {"path":"self.steering.autopilot.state","value":"auto"},
@@ -31,35 +38,40 @@ const countDownDefault: number = 5;
 const timeoutBlink = 250;
 
 @Component({
-    selector: 'widget-autopilot',
+    selector: 'widget-autopilotold',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButton, SvgRudderComponent, TitleCasePipe]
+    imports: [WidgetHostComponent, MatButton, SvgAutopilotComponent, MatMiniFabButton, NgIf, MatBadge]
 })
-export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetAutopilotComponentold extends BaseWidgetComponent implements OnInit, OnDestroy {
   signalkRequestsService = inject(SignalkRequestsService);
 
   // AP keypad
-  readonly stbTackBtn = viewChild<MatButton>('engageBtn');
+  readonly powerBtn = viewChild<MatButton>('powerBtn');
+  readonly stbTackBtn = viewChild<MatButton>('stbTackBtn');
   readonly plus1Btn = viewChild<MatButton>('plus1Btn');
   readonly minus1Btn = viewChild<MatButton>('minus1Btn');
   readonly prtTackBtn = viewChild<MatButton>('prtTackBtn');
+  readonly standbyBtn = viewChild<MatButton>('standbyBtn');
   readonly plus10Btn = viewChild<MatButton>('plus10Btn');
   readonly minus10Btn = viewChild<MatButton>('minus10Btn');
-  readonly autoBtn = viewChild<MatButton>('modesBtn');
+  readonly autoBtn = viewChild<MatButton>('autoBtn');
+  readonly windModeBtn = viewChild<MatButton>('windModeBtn');
+  readonly trackModeBtn = viewChild<MatButton>('trackModeBtn');
+  readonly muteBtn = viewChild<MatButton>('muteBtn');
+  readonly messageBtn = viewChild<MatButton>('messageBtn');
 
   // AP Screen
   readonly apScreen = viewChild<any>('appSvgAutopilot');
 
-  protected displayName: string;
+  displayName: string;
 
-  protected currentAPState: string = "standby"; // Current Pilot Mode - used for display, keyboard state and buildCommand function
-  protected currentAPTargetAppWind: number = 0;
-  protected currentAPTargetHeadingMag: number = 0;
-  protected currentHeading: number = 0;
-  protected currentAppWindAngle: number = null;
-  protected currentRudder: number = null;
+  currentAPState: any = null;      // Current Pilot Mode - used for display, keyboard state and buildCommand function
+  currentAPTargetAppWind: number = 0;
+  currentHeading: number = 0;
+  currentAppWindAngle: number = null;
+  currentRudder: number = null;
 
   skApNotificationSub =  new Subscription;
   skRequestSub = new Subscription; // signalk-Request result observer
@@ -88,7 +100,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       displayName: 'N2k Autopilot',
       filterSelfPaths: true,
       paths: {
-        // TODO: maybe need to remove - not needed anymore
         "apState": {
           description: "Autopilot State",
           path: 'self.steering.autopilot.state',
@@ -121,6 +132,15 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
         },
+        // "apNotifications": {
+        //   description: "Autopilot Notifications",
+        //   path: 'self.notifications.autopilot.*', //TODO(David): need to add support for .* path subscription paths in sk service and widget config modal
+        //   source: 'default',
+        //   pathType: "string",
+        //   convertUnitTo: "",
+        //   isPathConfigurable: false,
+        //   sampleTime: 500
+        // },
         "headingMag": {
           description: "Heading Magnetic",
           path: 'self.navigation.headingMagnetic',
@@ -202,15 +222,18 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (this.widgetProperties.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
-    this.startWidget();
+    // this.demoMode(); // demo mode for troubleshooting
   }
 
   protected startWidget(): void {
-    this.startAllSubscriptions();
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+  }
+
+  demoMode() {
+    // this.setNotificationMessage('{"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift"}}');
   }
 
   ngOnDestroy() {
@@ -258,15 +281,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       }
     );
 
-    this.observeDataStream('apTargetHeadingMag', newValue => {
-        if (newValue.data.value === null) {
-          this.currentAPTargetHeadingMag = 0;
-        } else {
-          this.currentAPTargetHeadingMag = newValue.data.value;
-        }
-      }
-    );
-
     this.observeDataStream('apTargetWindAngleApp', newValue => {
         if (newValue.data.value === null) {
           this.currentAPTargetAppWind = 0;
@@ -277,12 +291,14 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     );
 
     this.subscribeSKRequest();
+    // this.subscribeAPNotification();
     console.log("Autopilot Subs Started");
   }
 
   stopAllSubscriptions() {
     this.unsubscribeDataStream();
     this.unsubscribeSKRequest();
+    // this.unsubscribeAPNotification();
     console.log("Autopilot Subs Stopped");
   }
 
@@ -320,10 +336,17 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.startAllSubscriptions();
     this.widgetProperties.config.autoStart = true; // save power-on state to autostart or not
     this.isApConnected = true;
+    this.muteBtn().disabled = true;
+    this.messageBtn().disabled = false;
   }
 
   stopApHead() {
+    this.muteBtn().disabled = true;
+    this.messageBtn().disabled = true;
+    this.windModeBtn().disabled = true;
+    this.trackModeBtn().disabled = true;
     this.autoBtn().disabled = true;
+    this.standbyBtn().disabled = true;
     this.plus1Btn().disabled = true;
     this.plus10Btn().disabled = true;
     this.minus1Btn().disabled = true;
@@ -341,7 +364,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   SetKeyboardMode(apMode: string) {
     switch (apMode) {
       case "standby":
+        this.trackModeBtn().disabled = true;
         this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
+
+        this.windModeBtn().disabled = false;
         this.plus1Btn().disabled = true;
         this.plus10Btn().disabled = true;
         this.minus1Btn().disabled = true;
@@ -351,7 +378,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "auto":
+        this.trackModeBtn().disabled = false;
         this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
+
+        this.windModeBtn().disabled = false;
         this.plus1Btn().disabled = false;
         this.plus10Btn().disabled = false;
         this.minus1Btn().disabled = false;
@@ -361,7 +392,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "wind":
+        this.trackModeBtn().disabled = true;
         this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
+
+        this.windModeBtn().disabled = false;
         this.plus1Btn().disabled = false;
         this.plus10Btn().disabled = false;
         this.minus1Btn().disabled = false;
@@ -371,7 +406,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "route":
+        this.trackModeBtn().disabled = false;
         this.autoBtn().disabled = false;
+        this.standbyBtn().disabled = false;
+
+        this.windModeBtn().disabled = true;
         this.plus1Btn().disabled = true;
         this.plus10Btn().disabled = true;
         this.minus1Btn().disabled = true;
@@ -558,10 +597,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
     this.alarmsCount = Object.keys(this.notificationsArray).length;
     if (this.alarmsCount > 0) {
+      this.muteBtn().disabled = false;
       if (apScreen.messageInnerText == "") {
         apScreen.messageInnerText = Object.keys(this.notificationsArray)[0];
       }
     } else {
+        this.muteBtn().disabled = true;
         this.alarmsCount = 0;
         apScreen.messageInnerText = "";
       }
