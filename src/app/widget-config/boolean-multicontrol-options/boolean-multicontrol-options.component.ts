@@ -3,7 +3,7 @@ import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, Reactive
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
-import { UUID } from '../../core/utils/uuid';
+import { UUID } from '../../core/utils/uuid.util';
 import { MatButtonModule } from '@angular/material/button';
 import { BooleanControlConfigComponent, IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { Subscription } from 'rxjs';

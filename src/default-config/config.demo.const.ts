@@ -1,6 +1,6 @@
 import { Dashboard } from "../app/core/services/dashboard.service"
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig } from "../app/core/interfaces/app-settings.interfaces"
-import { UUID } from "../app/core/utils/uuid"
+import { UUID } from "../app/core/utils/uuid.util"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {

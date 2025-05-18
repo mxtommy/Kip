@@ -14,7 +14,7 @@ import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
+import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales.util';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({

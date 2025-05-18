@@ -15,7 +15,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
-import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales';
+import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales.util';
 
 @Component({
     selector: 'widget-gauge-ng-linear',

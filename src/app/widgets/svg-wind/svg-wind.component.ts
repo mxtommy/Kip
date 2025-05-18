@@ -249,13 +249,14 @@ export class SvgWindComponent {
     else this.stbdLaylineAnimId = id;
   }
 
+  private windSectorsInitialized = false;
+
   private updateWindSectors() {
     if (!this.windSectorEnabled()) return;
     if (!this.trueWindMinHistoric()) return;
     if (!this.trueWindMidHistoric()) return;
     if (!this.trueWindMaxHistoric()) return;
 
-    // Prepare new values
     const portNew = {
       min: this.trueWindMinHistoric(),
       mid: this.trueWindMidHistoric(),
@@ -267,11 +268,20 @@ export class SvgWindComponent {
       max: this.trueWindMaxHistoric()
     };
 
-    // Animate
+    if (!this.windSectorsInitialized) {
+      this.portSectorPrev = portNew;
+      this.stbdSectorPrev = stbdNew;
+      this.windSectorsInitialized = true;
+      // Draw in place, no animation
+      this.animateWindSector(portNew, portNew, true);
+      this.animateWindSector(stbdNew, stbdNew, false);
+      return;
+    }
+
+    // Animate as usual
     this.animateWindSector(this.portSectorPrev, portNew, true);
     this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
 
-    // Store for next time
     this.portSectorPrev = portNew;
     this.stbdSectorPrev = stbdNew;
   }

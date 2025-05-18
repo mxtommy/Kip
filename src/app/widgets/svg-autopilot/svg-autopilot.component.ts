@@ -1,9 +1,10 @@
-import { Component, ElementRef, AfterViewInit, OnDestroy, input, viewChild, effect, computed } from '@angular/core';
+import { Component, ElementRef, input, viewChild, effect, computed, untracked } from '@angular/core';
+import { animateRotation } from '../../core/utils/svg-animate.util';
+
 
 interface ISVGRotationObject {
-  oldDegreeIndicator: number;
-  newDegreeIndicator: number;
-  animationElement: ElementRef | null;
+  oldValue: number;
+  newValue: number;
 }
 
 @Component({
@@ -13,9 +14,9 @@ interface ISVGRotationObject {
   standalone: true,
   imports: []
 })
-export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
-  private  readonly compassAnimate = viewChild.required<ElementRef<SVGAnimateTransformElement>>('compassAnimate');
-  private readonly appWindAnimate = viewChild.required<ElementRef<SVGAnimateTransformElement>>('appWindAnimate');
+export class SvgAutopilotComponent {
+  private readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
+  private readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
 
   protected readonly compassHeading = input.required<number>();
   protected readonly appWindAngle = input.required<number>();
@@ -24,8 +25,8 @@ export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
   protected readonly apTargetAppWindAngle = input.required<number>();
   protected readonly apTargetHeadingMagnetic= input.required<number>();
 
-  protected compassFaceplate : ISVGRotationObject = { oldDegreeIndicator: 0, newDegreeIndicator: 0, animationElement: null };
-  protected appWind: ISVGRotationObject = { oldDegreeIndicator: 0, newDegreeIndicator: 0, animationElement: null };
+  protected compass : ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected awa : ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
   protected apTWA = computed(() => {
     const apTWA = parseFloat(this.apTargetAppWindAngle().toFixed(0))
@@ -51,66 +52,34 @@ export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
     }
   });
 
+  private animationFrameIds = new WeakMap<SVGGElement, number>();
+  private readonly ANIMATION_DURATION = 1000;
+
   constructor() {
     effect(() => {
-     const compassHeading = this.compassHeading();
-     if (compassHeading == null) return;
-      this.updateRotation(this.compassFaceplate, parseFloat(compassHeading.toFixed(0)));
+      if (this.compassHeading() === null || this.compassHeading() === undefined) return;
+      const compassHeading = parseFloat(this.compassHeading().toFixed(0));
+
+      untracked(() => {
+        this.compass.oldValue = this.compass.newValue;
+        this.compass.newValue = compassHeading;
+        if (this.rotatingDial()?.nativeElement) {
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, 500, undefined, this.animationFrameIds, [500, 560.061]);
+        }
+      });
     });
 
     effect(() => {
-     const aWA = this.appWindAngle();
-     if (aWA == null) return;
-      this.updateRotation(this.appWind, parseFloat(aWA.toFixed(0)));
-    });
-  }
+      if (this.appWindAngle() === null || this.appWindAngle() === undefined) return;
+      const aWA = parseFloat(this.appWindAngle().toFixed(0));
 
-  ngAfterViewInit(): void {
-    this.compassFaceplate.animationElement = this.compassAnimate();
-    this.appWind.animationElement = this.appWindAnimate();
-  }
-
-  ngOnDestroy(): void {
-    this.compassFaceplate.animationElement = null;
-    this.appWind.animationElement = null;
-  }
-
-  private updateRotation(rotationObject: ISVGRotationObject, newValue: number): void {
-    rotationObject.oldDegreeIndicator = rotationObject.newDegreeIndicator;
-    rotationObject.newDegreeIndicator = newValue;
-    this.smoothCircularRotation(rotationObject);
-  }
-
-  private smoothCircularRotation(rotationElement: ISVGRotationObject): void {
-    if (!rotationElement.animationElement) return;
-
-    const oldAngle = Number(rotationElement.oldDegreeIndicator);
-    const newAngle = Number(rotationElement.newDegreeIndicator);
-    const diff = oldAngle - newAngle;
-
-    if (diff === 0) return;
-
-    if (Math.abs(diff) > 180) {
-      const specialCases = [
-        { condition: oldAngle === 359, oldVal: 0 },
-        { condition: oldAngle === 0, oldVal: 359 }
-      ];
-
-      for (const { condition, oldVal } of specialCases) {
-        if (condition) {
-          rotationElement.oldDegreeIndicator = oldVal;
-          rotationElement.animationElement.nativeElement.beginElement();
-          return;
+      untracked(() => {
+        this.awa.oldValue = this.awa.newValue;
+        this.awa.newValue = aWA;
+        if (this.awaIndicator()?.nativeElement) {
+          animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds,[500, 560.061]);
         }
-      }
-
-      rotationElement.newDegreeIndicator = diff > 0 ? 359 : 0;
-      rotationElement.animationElement.nativeElement.beginElement();
-      rotationElement.oldDegreeIndicator = diff > 0 ? 0 : 359;
-      rotationElement.newDegreeIndicator = newAngle;
-      rotationElement.animationElement.nativeElement.beginElement();
-    } else {
-      rotationElement.animationElement.nativeElement.beginElement();
-    }
+      });
+    });
   }
 }

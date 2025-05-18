@@ -18,7 +18,7 @@
         style="display:inline;stroke:none"
         d="M 499.5601,210 450,251.94996 h 100 z" />
     </g>
-    <g id="RotatingDial" style="display:inline">
+    <g #rotatingDial style="display:inline">
       <g transform="translate(0,59.999714)">
         <path
           class="contrast-text"
@@ -347,17 +347,6 @@
             x="500.15503"
             y="101.96342">N</tspan></text>
         </g>
-        <animateTransform #compassAnimate attributeName="transform"
-          type="rotate"
-          [attr.from]="'-'+compassFaceplate.oldDegreeIndicator+' 500 560.061'"
-          [attr.to]="'-'+compassFaceplate.newDegreeIndicator+' 500 560.061'"
-          begin="indefinite"
-          dur="0.5s"
-          keySplines="0.25 0.1 0.25 1"
-          keyTimes="0;1"
-          calcMode="spline"
-          additive="replace"
-          fill="freeze" />
       </g>
   </g>
   <g id="counterAWA"
@@ -367,7 +356,7 @@
       class="appWA-text"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="878.84814"
-      y="151.93721">{{ appWind.newDegreeIndicator }}°</text>
+      y="151.93721">{{ awa.newValue }}°</text>
     <text xml:space="preserve"
       [attr.display]="lockedMode() == 'AWA' ? 'inline' : 'none'"
       class="appWA-text-dim"
@@ -389,7 +378,7 @@
   </g>
   <g id="IndicatorsLayer"
      style="display:inline">
-    <g id="AWA"
+    <g #awaIndicator
       [attr.display]="lockedMode() == 'AWA' ? 'inline' : 'none'"
        transform="matrix(0.78967872,0,0,0.78967872,95.846484,6.0520865)">
       <path
@@ -407,18 +396,6 @@
            style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:70.5556px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#001000;fill-opacity:1;stroke:none;stroke-width:14.5521"
            x="486.45618"
            y="136.29939">A</tspan></text>
-      <animateTransform #appWindAnimate attributeName="transform"
-        type="rotate"
-        [attr.from]="appWind.oldDegreeIndicator+' 500 560.061'"
-        [attr.to]="appWind.newDegreeIndicator+' 500 560.061'"
-        begin="indefinite"
-        dur="0.5s"
-        keySplines="0.25 0.1 0.25 1"
-        keyTimes="0;1"
-        calcMode="spline"
-        additive="replace"
-        fill="freeze"
-      />
     </g>
   </g>
   <g id="displayArea"
@@ -427,7 +404,7 @@
       class="contrast-text"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:200px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
       x="523.93127"
-      y="480.13757">{{ compassFaceplate.newDegreeIndicator }}°</text>
+      y="480.13757">{{ compass.newValue }}°</text>
     <text
       xml:space="preserve"
       class="contrast-text-dim"

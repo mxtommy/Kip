@@ -3,7 +3,7 @@ import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWid
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
-import { UUID } from '../../utils/uuid';
+import { UUID } from '../../utils/uuid.util';
 import { AppService } from '../../services/app-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
