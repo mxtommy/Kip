@@ -10,6 +10,8 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
 import { NgClass, TitleCasePipe } from '@angular/common';
+import { WidgetDatetimeComponent } from '../widget-datetime/widget-datetime.component';
+import { WidgetPositionComponent } from '../widget-position/widget-position.component';
 
 
 const commands = {
@@ -37,7 +39,7 @@ const timeoutBlink = 250;
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButton, SvgRudderComponent, TitleCasePipe, MatIconModule, NgClass],
+    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButton, SvgRudderComponent, TitleCasePipe, MatIconModule, NgClass, WidgetPositionComponent],
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   signalkRequestsService = inject(SignalkRequestsService);
@@ -82,10 +84,44 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   alarmsCount: number = 0;
 
   notificationTest = {};
-
-  protected readonly visibleRowCount = computed(() =>{
-    let rowCount = 0;
-    switch (this.apState()) {
+  protected nextWptProperties = {
+    type: "widget-position",
+    uuid: "db473695-42b1-4835-9d3d-ac2f27bf9665",
+    config: {
+      displayName: "Next WPT",
+      filterSelfPaths: true,
+      paths: {
+        "longPath": {
+          description: "Longitude",
+          path: "self.navigation.courseRhumbline.nextPoint.position.longitude",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "longitudeMin",
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
+          sampleTime: 500
+        },
+        "latPath": {
+          description: "Latitude",
+          path: "self.navigation.courseGreatCircle.nextPoint.position.latitude",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "latitudeMin",
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
+          sampleTime: 500
+        }
+      },
+      color: "contrast",
+      enableTimeout: false,
+      dataTimeout: 5
+    }
+  }
+  protected readonly apModeRows = computed(() =>{
+    let mode = this.apState();
+    switch (mode) {
       case "standby":
         this.modesBtn().disabled = false;
         this.engageBtn().disabled = false;
@@ -97,7 +133,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         this.stbTackBtn().disabled = true;
         this.advWptBtn().disabled = true;
         this.overrideBtn().disabled = true;
-        rowCount = 7;
         break;
       case "auto":
         this.modesBtn().disabled = false;
@@ -110,7 +145,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         this.stbTackBtn().disabled = true;
         this.advWptBtn().disabled = true;
         this.overrideBtn().disabled = true;
-        rowCount = 6;
         break;
       case "wind":
         this.modesBtn().disabled = false;
@@ -123,7 +157,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         this.stbTackBtn().disabled = false;
         this.advWptBtn().disabled = true;
         this.overrideBtn().disabled = true;
-        rowCount = 7;
         break;
       case "route":
         this.modesBtn().disabled = false;
@@ -136,12 +169,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         this.stbTackBtn().disabled = true;
         this.advWptBtn().disabled = false;
         this.overrideBtn().disabled = false;
-        rowCount = 4;
         break;
       default:
         break;
     }
-    return rowCount;
+    return mode;
   });
 
   constructor() {

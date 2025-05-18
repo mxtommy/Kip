@@ -1,5 +1,6 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" class="widget-host">
-  <div class="autopilot-grid-container" [ngClass]="'rows-' + visibleRowCount()">
+  <div class="autopilot-grid-container" [ngClass]="'rows-' + apModeRows()">
+    <!-- Modes row -->
     <div class="autopilot-grid-row autopilot-grid-row--top">
       <button #modesBtn mat-flat-button  disabled="true" class="autopilot-btn autopilot-btn--modes">
         <mat-icon class="svg-icon">
@@ -25,7 +26,7 @@
       <app-svg-rudder [rudderAngle]="currentRudder"></app-svg-rudder>
     </div>
      <!-- AP Screen row -->
-    <div class="autopilot-grid-row autopilot-grid-row--autopilot">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--autopilot">
       <app-svg-autopilot
         [compassHeading]="currentHeading"
         [appWindAngle]="currentAppWindAngle"
@@ -114,33 +115,39 @@
         </mat-icon>
       </button>
     </div>
+    <!-- Route info row -->
+    <div [style.display]="apState() === 'route' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
+      <widget-position [widgetProperties]="nextWptProperties"/>
+    </div>
     <!-- Route Button row -->
     <div [style.display]="apState() === 'route' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
-      <button #advWptBtn mat-flat-button disabled="true" class="autopilot-btn">
+      <button #overrideBtn mat-flat-button disabled="true" class="autopilot-btn">
         <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve" x="49.894032" y="98.734871">Adv wpt</text>
-            <path class="tack"
-              style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
-              d="M 12.512809,30.561249 28.414641,41.670318 8.7808256,51.708321 Z" />
-            <path  class="tack" d="m 94.531167,45.533345 a 8.5515804,8.0601101 0 0 1 -8.55158,8.06011 8.5515804,8.0601101 0 0 1 -8.55158,-8.06011 8.5515804,8.0601101 0 0 1 8.55158,-8.06011 8.5515804,8.0601101 0 0 1 8.55158,8.06011 z" />
-            <path
-              style="stroke-width:8.45947;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
-              d="M 19.881053,36.470039 A 36.704643,37.635372 0 0 1 54.605189,19.909133 36.704643,37.635372 0 0 1 84.80548,44.055681" />
+          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-route">
+            <text xml:space="preserve"
+              x="49.961578"
+              y="86.799866">Override</text>
+            <path style="fill:none;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+              d="M 4.6584699,36.552789 29.229283,58.159051 M 4.6584699,36.451699 29.229283,14.845436" />
+            <path style="fill:none;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+              d="M 95.34153,36.552789 70.770717,58.159051 M 95.34153,36.451699 70.770717,14.845436" />
+            <text xml:space="preserve"
+              style="font-size:68.6095px"
+              x="50.167503"
+              y="61.058273">!</text>
           </svg>
         </mat-icon>
       </button>
-      <button #overrideBtn mat-flat-button disabled="true" class="autopilot-btn">
+      <button #advWptBtn mat-flat-button disabled="true" class="autopilot-btn">
         <mat-icon class="svg-icon">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve" x="49.894032" y="98.734871">Override</text>
-            <path class="tack"
-              style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
-              d="M 88.231151,30.561249 72.329319,41.670318 91.963134,51.708321 Z" />
-            <path class="tack" d="m 6.212793,45.533345 a 8.5515804,8.0601101 0 0 0 8.55158,8.06011 8.5515804,8.0601101 0 0 0 8.55158,-8.06011 8.5515804,8.0601101 0 0 0 -8.55158,-8.06011 8.5515804,8.0601101 0 0 0 -8.55158,8.06011 z" />
+          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-route">
+            <text xml:space="preserve" x="49.961578" y="86.799866">Adv wpt</text>
             <path
-              style="stroke-width:8.45947;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
-              d="M 80.862907,36.470039 A 36.704643,37.635372 0 0 0 46.138771,19.909133 36.704643,37.635372 0 0 0 15.93848,44.055681" />
+              style="stroke:none"
+              d="M 19.090795,4 V 63.58544 L 78.676235,33.792718 Z" />
+            <path
+              style="fill:none;stroke-width:9.90493;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+              d="M 75.95674,4 V 63.58544" />
           </svg>
         </mat-icon>
       </button>
