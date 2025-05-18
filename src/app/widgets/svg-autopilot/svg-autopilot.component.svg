@@ -1,4 +1,4 @@
-<svg viewBox="0 0 1000 500">
+<svg viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
   <g id="compassDial">
     <g id="fixedDial">
       <path

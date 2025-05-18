@@ -83,8 +83,8 @@ export class SvgWindComponent {
   private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
   private portSectorAnimId: number | null = null;
   private stbdSectorAnimId: number | null = null;
-  protected portWindSectorPath: string = "none";
-  protected stbdWindSectorPath: string = "none";
+  protected portWindSectorPath: string = "";
+  protected stbdWindSectorPath: string = "";
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
 
