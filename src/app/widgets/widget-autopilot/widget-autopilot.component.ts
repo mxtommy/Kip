@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, viewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton, MatMiniFabButton } from '@angular/material/button';
 
@@ -334,7 +334,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   startApHead() {
     this.startAllSubscriptions();
-    this.widgetProperties.config.autoStart;
+    this.widgetProperties.config.autoStart = true; // save power-on state to autostart or not
     this.isApConnected = true;
     this.muteBtn().disabled = true;
     this.messageBtn().disabled = false;
