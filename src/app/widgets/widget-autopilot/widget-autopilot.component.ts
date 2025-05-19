@@ -219,7 +219,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   ngOnInit() {
     this.validateConfig();
-    if (this.widgetProperties().config.autoStart) {
+    if (this.widgetProperties.config.autoStart) {
       setTimeout(() => {this.startApHead();});
     }
     // this.demoMode(); // demo mode for troubleshooting
@@ -229,10 +229,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.update(prev => ({
-      ...prev,
-      config: config
-    }));
+    this.widgetProperties.config = config;
   }
 
   demoMode() {
@@ -279,7 +276,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         if (newValue.data.value === null) {
           this.currentRudder = 0;
         } else {
-          this.currentRudder = this.widgetProperties().config.invertRudder ? -newValue.data.value : newValue.data.value;
+          this.currentRudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
         }
       }
     );
@@ -307,7 +304,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   subscribeSKRequest() {
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.widgetProperties().uuid) {
+      if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         this.commandReceived(requestResult);
       }
     });
@@ -337,13 +334,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   startApHead() {
     this.startAllSubscriptions();
-    this.widgetProperties.update(prev => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        autoStart: true // save power-on state to autostart or not
-      }
-    }));
+    this.widgetProperties.config.autoStart;
     this.isApConnected = true;
     this.muteBtn().disabled = true;
     this.messageBtn().disabled = false;
@@ -367,13 +358,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
     this.isApConnected = false; // hide ap screen
     this.stopAllSubscriptions();
-    this.widgetProperties.update(prev => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        autoStart: false // save power on state to autostart or not
-      }
-    }));
+    this.widgetProperties.config.autoStart = false; // save power on state to autostart or not
   }
 
   SetKeyboardMode(apMode: string) {
@@ -490,7 +475,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   sendCommand(cmdAction) {
-    let requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties().uuid);
+    let requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
     this.apScreen().activityIconVisibility = "visible";
     setTimeout(() => {this.apScreen().activityIconVisibility = 'hidden';}, timeoutBlink);
 
