@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SvgAutopilotComponent } from './svg-autopilot.component';
 
@@ -6,14 +6,12 @@ describe('SvgAutopilotComponent', () => {
   let component: SvgAutopilotComponent;
   let fixture: ComponentFixture<SvgAutopilotComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    imports: [SvgAutopilotComponent]
-})
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SvgAutopilotComponent]
+    })
     .compileComponents();
-  }));
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(SvgAutopilotComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

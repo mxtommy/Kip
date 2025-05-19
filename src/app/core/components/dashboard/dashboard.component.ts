@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, untracked, ViewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
@@ -19,6 +19,7 @@ import { WidgetNumericComponent } from '../../../widgets/widget-numeric/widget-n
 import { WidgetDatetimeComponent } from '../../../widgets/widget-datetime/widget-datetime.component';
 import { WidgetBooleanSwitchComponent } from '../../../widgets/widget-boolean-switch/widget-boolean-switch.component';
 import { WidgetAutopilotComponent } from '../../../widgets/widget-autopilot/widget-autopilot.component';
+import { WidgetAutopilotV2Component } from '../../../widgets/widget-autopilot-v2/widget-autopilot-v2.component';
 import { WidgetDataChartComponent } from '../../../widgets/widget-data-chart/widget-data-chart.component';
 import { WidgetFreeboardskComponent } from '../../../widgets/widget-freeboardsk/widget-freeboardsk.component';
 import { WidgetGaugeNgCompassComponent } from '../../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
@@ -75,6 +76,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetSteelGaugeComponent,
       WidgetFreeboardskComponent,
       WidgetAutopilotComponent,
+      WidgetAutopilotV2Component,
       WidgetDataChartComponent,
       WidgetRaceTimerComponent,
       WidgetIframeComponent,
@@ -86,7 +88,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     ]);
 
     effect(() => {
-      this.loadDashboard(this.dashboard.activeDashboard());
+      const dashboardId = this.dashboard.activeDashboard();
+      untracked(() => {
+        this.loadDashboard(dashboardId);
+      });
     });
   }
 

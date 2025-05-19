@@ -148,17 +148,6 @@ export interface IWidgetSvcConfig {
   /** Option for widget that supports Signal K PUT command */
   putMomentaryValue?: boolean;
 
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
-  usage?: {
-    [key: string]: string[];
-  };
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
-  typeVal?: {
-    [key: string]: string;
-  };
-  /** To retire. Used by Autopilot */
-  barColor?: string;
-
   /** Used by date Widget: configurable display format of the date/time value */
   dateFormat?: string;
   /** Used by date Widget: Time zone value to apply to the data/time value */
@@ -185,10 +174,26 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Used by autopilot Widget to autostart the AP widget */
+  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
+  usage?: {
+    [key: string]: string[];
+  };
+  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
+  typeVal?: {
+    [key: string]: string;
+  };
+  /** To retire. Used by Autopilot V1 */
+  barColor?: string;
+  /** Used by autopilot V1 Widget to autostart the AP widget */
   autoStart?: boolean;
   /** Used by autopilot Widget to invert rudder angle value */
   invertRudder?: boolean;
+  /** Used by autopilot Widget to indicate if bearing direction type is Magnetic or True */
+  bearingDirectionTrue?: boolean,
+  /** Used by autopilot Widget to indicate if wind direction type is Magnetic or True */
+  windDirectionTrue?: boolean,
+  /** Used by autopilot Widget to indicate if heading direction type is Magnetic or True */
+  headingDirectionTrue?: boolean,
 
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;

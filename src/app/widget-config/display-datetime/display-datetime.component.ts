@@ -1734,6 +1734,7 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
       ].sort((a, b) => this.compareOffsets(a.offset, b.offset));
     }
 
+    this.tz.unshift({ offset: "", label: "System Timezone -" });
     this.dateTimezone.setValidators([Validators.required, requireMatch(this.tz)]);
 
     // add autocomplete filtering

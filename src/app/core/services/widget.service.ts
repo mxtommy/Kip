@@ -145,11 +145,19 @@ export class WidgetService {
     },
     {
       name: 'Autopilot Head',
-      description: 'An Autopilot Head for supported Signal K autopilot devices.',
+      description: 'A basic Autopilot Head for supported Signal K v1 API autopilot devices.',
       icon: 'autopilotWidget',
       category: 'Components',
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
+    },
+    {
+      name: 'Autopilot Head v2',
+      description: 'A modern and responsive Autopilot Head for supported Signal K v2 API autopilot devices.',
+      icon: 'autopilotWidget',
+      category: 'Components',
+      selector: 'widget-autopilot-v2',
+      componentClassName: 'WidgetAutopilotV2Component'
     },
     {
       name: 'Race Timer',
