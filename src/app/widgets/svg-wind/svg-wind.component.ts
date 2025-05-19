@@ -60,6 +60,7 @@ export class SvgWindComponent implements AfterViewInit {
   protected appWindSpeedDisplay = computed(() => {
     const appWindSpeed = this.appWindSpeed();
     if (appWindSpeed == null) return "--";
+    else if (appWindSpeed >= 9.95) return appWindSpeed.toFixed(0);
     return appWindSpeed.toFixed(1);
   });
   protected trueWind: ISVGRotationObject = {
@@ -70,6 +71,7 @@ export class SvgWindComponent implements AfterViewInit {
   protected trueWindSpeedDisplay = computed(() => {
     const trueWindSpeed = this.trueWindSpeed();
     if (trueWindSpeed == null) return "--";
+    else if (trueWindSpeed >= 9.95) return trueWindSpeed.toFixed(0);
     return trueWindSpeed.toFixed(1);
   });
   private trueWindHeading: number = 0;

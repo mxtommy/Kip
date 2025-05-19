@@ -468,23 +468,23 @@
       <text
         xml:space="preserve"
         class="true-wind-label"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="904.27722"
-        y="150.88913"
+        y="155.88913"
         id="text43">kts</text>
       <text
         xml:space="preserve"
         class="true-wind"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:116.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="903.84814"
-        y="114.73512"
+        y="124.73512"
         id="text42">{{ trueWindSpeedDisplay() }}</text>
       <text
         xml:space="preserve"
         class="true-wind-label"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="905.25897"
-        y="52.894646"
+        y="27.894646"
         id="text41">TWS</text>
     </g>
     <g id="awsCounter"
@@ -492,23 +492,23 @@
       <text
         xml:space="preserve"
         class="app-wind-label"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="94.554222"
-        y="150.88913"
+        y="155.88913"
         id="text39">kts</text>
       <text
         xml:space="preserve"
         class="app-wind"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:116.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="94.580925"
-        y="114.63747"
+        y="124.63747"
         id="text40">{{ appWindSpeedDisplay() }}</text>
       <text
        xml:space="preserve"
        class="app-wind-label"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
        x="95.967644"
-       y="52.894646"
+       y="27.894646"
        id="text39-7">AWS</text>
     </g>
   </g>
