@@ -1,19 +1,47 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" class="widget-host">
-  <div [style.display]="apGrid()" class="autopilot-grid-container">
+  <div #apGrid style="display: none" class="autopilot-grid-container" [ngClass]="'rows-' + apModeRows()">
     <!-- Modes row -->
-    <div class="ap-modes">
-      <button #modesBtn mat-flat-button disabled="true" class="autopilot-btn" (click)="toggleMenu()">
+    <div class="autopilot-grid-row autopilot-grid-row--top">
+      <button #modesBtn mat-flat-button  disabled="true" class="autopilot-btn autopilot-btn--modes" (click)="toggleMenu()">
         <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-modes">
             <text xml:space="preserve"
               x="50"
-              y="10.7">Mode {{ apState() | titlecase }} &nbsp;&vellip;</text>
+              y="10.7">Steering to {{ apState() | titlecase }} &vellip;</text>
           </svg>
         </mat-icon>
       </button>
-      <button #engageBtn mat-flat-button  disabled="true" class="autopilot-btn ap-btn-engage">
+      @if (menuOpen) {
+        <!-- Overlay -->
+        <div class="svg-menu-overlay" (click)="toggleMenu()">
+          <!-- Centered Responsive SVG Menu -->
+          <svg viewBox="0 0 240 240" [style.height]="'50%'" [style.width]="'auto'" class="svg-menu" (click)="$event.stopPropagation()">
+            <g>
+              <rect x="0" y="0" width="240" height="240" rx="12" class="svg-menu-box"/>
+              <!-- Menu Items -->
+              <g style="cursor:pointer;" (click)="onMenuItemClick('auto')">
+                <rect x="0" y="0" width="240" height="60" class="svg-menu-item"/>
+                <text x="120" y="40">Auto</text>
+              </g>
+              <g style="cursor:pointer;" (click)="onMenuItemClick('wind')">
+                <rect x="0" y="60" width="240" height="60" class="svg-menu-item"/>
+                <text x="120" y="100">Wind</text>
+              </g>
+              <g style="cursor:pointer;" (click)="onMenuItemClick('route')">
+                <rect x="0" y="120" width="240" height="60" class="svg-menu-item"/>
+                <text x="120" y="160">Route</text>
+              </g>
+              <g style="cursor:pointer;" (click)="toggleMenu()">
+                <rect x="0" y="180" width="240" height="60" class="cancel"/>
+                <text x="120" y="220">Cancel</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+      }
+      <button #engageBtn mat-flat-button  disabled="true" class="autopilot-btn autopilot-btn--engage">
         <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-modes">
             <text xml:space="preserve"
               x="50.090435"
               y="10.743966">Disengage</text>
@@ -22,7 +50,7 @@
       </button>
     </div>
      <!-- AP Screen row -->
-    <div class="ap-screen">
+    <div class="autopilot-grid-row autopilot-grid-row--autopilot">
       <app-svg-autopilot-v2
         [apState]="apState()"
         [apTargetAppWindAngle]="autopilotTarget"
@@ -36,8 +64,8 @@
       ></app-svg-autopilot-v2>
     </div>
     <!-- -1 / +1 buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
-      <button #minus1Btn mat-flat-button disabled="true" class="autopilot-btn">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
+      <button #minus1Btn mat-flat-button disabled="true" class="autopilot-btn autopilot-btn--minus1">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text xml:space="preserve"
@@ -47,9 +75,7 @@
           </svg>
         </mat-icon>
       </button>
-    </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
-      <button #plus1Btn mat-flat-button disabled="true" class="autopilot-btn">
+      <button #plus1Btn mat-flat-button disabled="true" class="autopilot-btn autopilot-btn--plus1">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text xml:space="preserve"
@@ -61,8 +87,8 @@
       </button>
     </div>
     <!-- -10 / +10 buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
-      <button #minus10Btn mat-flat-button disabled="true" class="autopilot-btn">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
+      <button #minus10Btn mat-flat-button disabled="true" class="autopilot-btn autopilot-btn--minus10">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text xml:space="preserve"
@@ -73,9 +99,7 @@
           </svg>
         </mat-icon>
       </button>
-    </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
-      <button #plus10Btn mat-flat-button disabled="true" class="autopilot-btn">
+      <button #plus10Btn mat-flat-button disabled="true" class="autopilot-btn autopilot-btn--plus10">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text xml:space="preserve"
@@ -88,8 +112,8 @@
       </button>
     </div>
     <!-- Tack port / starboard buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'standby' ? 'block' : 'none'">
-      <button #prtTackBtn mat-flat-button disabled="true" class="autopilot-btn">
+    <div [style.display]="apState() === 'wind' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
+      <button #prtTackBtn mat-flat-button disabled="true" class="autopilot-btn autopilot-btn--tack-port">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
@@ -103,9 +127,7 @@
           </svg>
         </mat-icon>
       </button>
-    </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'standby' ? 'block' : 'none'">
-      <button #stbTackBtn mat-flat-button disabled="true" class="autopilot-btn">
+      <button #stbTackBtn mat-flat-button disabled="true" class="autopilot-btn autopilot-btn--tack-starboard">
         <mat-icon class="svg-icon">
           <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
@@ -120,24 +142,21 @@
         </mat-icon>
       </button>
     </div>
-    <!-- Route widget -->
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+    <!-- Route info row -->
+    <div [style.display]="apState() === 'route' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
       <widget-position [widgetProperties]="nextWptProperties()" class="embed-widget" />
-    </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
-      <widget-datetime [widgetProperties]="etaProperties()" class="embed-widget" />
-    </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
-      <widget-numeric [widgetProperties]="dtwProperties()" class="embed-widget"/>
-    </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
       <widget-numeric [widgetProperties]="ttwProperties()" class="embed-widget" />
     </div>
+    <!-- Route waypoint row -->
+    <div [style.display]="apState() === 'route' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
+      <widget-datetime [widgetProperties]="etaProperties()" class="embed-widget" />
+      <widget-numeric [widgetProperties]="dtwProperties()" class="embed-widget"/>
+    </div>
     <!-- Route Button row -->
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
-      <!-- <button #dodgeBtn mat-flat-button disabled="true" class="autopilot-btn">
+    <div [style.display]="apState() === 'route' ? 'flex' : 'none'" class="autopilot-grid-row autopilot-grid-row--actions">
+      <button #dodgeBtn mat-flat-button disabled="true" class="autopilot-btn">
         <mat-icon class="svg-icon">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-route">
             <text xml:space="preserve"
               x="49.961578"
               y="86.799866">Dodge</text>
@@ -151,12 +170,10 @@
               y="61.058273">!</text>
           </svg>
         </mat-icon>
-      </button> -->
-      </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+      </button>
       <button #advWptBtn mat-flat-button disabled="true" class="autopilot-btn">
         <mat-icon class="svg-icon">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-route">
             <text xml:space="preserve" x="49.961578" y="86.799866">Adv wpt</text>
             <path
               style="stroke:none"
@@ -174,31 +191,3 @@
     </div>
   }
 </widget-host>
-@if (menuOpen) {
-  <!-- Modes Menu Overlay -->
-  <div class="svg-menu-overlay" (click)="toggleMenu()">
-    <!-- Centered Responsive SVG Menu -->
-    <svg viewBox="0 0 240 240" style="height: 50%" class="svg-menu" (click)="$event.stopPropagation()">
-
-        <rect x="0" y="0" width="240" height="240" rx="12" class="svg-menu-box"/>
-        <!-- Menu Items -->
-        <g style="cursor:pointer;" (click)="onMenuItemClick('auto')">
-          <rect x="0" y="0" width="240" height="60" class="svg-menu-item"/>
-          <text x="120" y="40">Auto</text>
-        </g>
-        <g style="cursor:pointer;" (click)="onMenuItemClick('wind')">
-          <rect x="0" y="60" width="240" height="60" class="svg-menu-item"/>
-          <text x="120" y="100">Wind</text>
-        </g>
-        <g style="cursor:pointer;" (click)="onMenuItemClick('route')">
-          <rect x="0" y="120" width="240" height="60" class="svg-menu-item"/>
-          <text x="120" y="160">Route</text>
-        </g>
-        <g style="cursor:pointer;" (click)="toggleMenu()">
-          <rect x="0" y="180" width="240" height="65" class="cancel"/>
-          <text x="120" y="215">Cancel</text>
-        </g>
-
-    </svg>
-  </div>
-}

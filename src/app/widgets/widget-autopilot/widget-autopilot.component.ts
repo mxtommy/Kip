@@ -646,7 +646,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     } else {
         if (this.skPathToAck !== "") {
           this.sendCommand({"path":"notifications." + this.skPathToAck + ".state","value":"normal"});
-          // this.sendCommand({"path":"notifications." + skPathToAck + ".method","value":[]});
         }
         apScreen.messageVisibility = 'hidden';
       }

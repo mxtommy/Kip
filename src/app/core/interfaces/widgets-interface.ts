@@ -189,9 +189,7 @@ export interface IWidgetSvcConfig {
   /** Used by autopilot Widget to invert rudder angle value */
   invertRudder?: boolean;
   /** Used by autopilot Widget to indicate if bearing direction type is Magnetic or True */
-  bearingDirectionTrue?: boolean,
-  /** Used by autopilot Widget to indicate if wind direction type is Magnetic or True */
-  windDirectionTrue?: boolean,
+  courseDirectionTrue?: boolean,
   /** Used by autopilot Widget to indicate if heading direction type is Magnetic or True */
   headingDirectionTrue?: boolean,
 

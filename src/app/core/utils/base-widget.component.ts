@@ -103,7 +103,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   /**
     * Will iterate and creates all Widget Observables based on the Widget's widgetProperties.config.paths
     * child Objects definitions. If no widgetProperties.config.paths child Objects definitions
-    * exists, execution returns without further execution.
+    * exists, method returns without further execution.
     *
     * This method will be automatically called by observeDataStream() if it finds that no Observable
     * have been created.
@@ -146,7 +146,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     * path sampleTimes and conversions.
     *
     * @protected
-    * @param {string} pathName the [key: string] name of the path IWidgetPath Object ie. paths: { "numericPath"... Look at you this.defaultConfig Object to identify the string key to use.
+    * @param {string} pathName the [key: string] name of the path IWidgetPath Object ie. paths: { "numericPath"... Look at the this.defaultConfig Object to identify the string key to use.
     * @param {((value) => void)} subscribeNextFunction The callback function for the Next notification delivered by the Observer. The function has the same properties as a standard subscribe callback function. ie. observer.subscribe( x => { console.log(x) } ).
     * @return {*}
     * @memberof BaseWidgetComponent

@@ -1,10 +1,8 @@
-import { Component, OnInit, OnDestroy, viewChild, inject, computed, signal, ElementRef, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatButton } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { NgClass, TitleCasePipe } from '@angular/common';
-
-import { SvgRudderComponent } from '../svg-rudder/svg-rudder.component';
+import { TitleCasePipe } from '@angular/common';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -14,7 +12,8 @@ import { WidgetPositionComponent } from '../widget-position/widget-position.comp
 import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.component';
 import { WidgetDatetimeComponent } from "../widget-datetime/widget-datetime.component";
 import { DashboardService } from '../../core/services/dashboard.service';
-import isEqual from 'lodash-es/isEqual';
+import { isEqual } from 'lodash-es';
+import { MatMenuModule } from '@angular/material/menu';
 
 
 const commands = {
@@ -42,13 +41,11 @@ const timeoutBlink = 250;
     templateUrl: './widget-autopilot-v2.component.html',
     styleUrls: ['./widget-autopilot-v2.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, SvgAutopilotV2Component, MatButton, SvgRudderComponent, TitleCasePipe, MatIconModule, NgClass, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
+    imports: [WidgetHostComponent, SvgAutopilotV2Component, MatButton, MatMenuModule, TitleCasePipe, MatIconModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotV2Component extends BaseWidgetComponent implements OnInit, OnDestroy {
   private signalkRequestsService = inject(SignalkRequestsService);
   protected readonly dashboard = inject(DashboardService);
-
-  private apGrid = viewChild.required<ElementRef<HTMLDivElement>>('apGrid');
 
   // AP keypad
   protected readonly plus1Btn = viewChild.required<MatButton>('plus1Btn');
@@ -60,16 +57,17 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected readonly modesBtn = viewChild.required<MatButton>('modesBtn');
   protected readonly engageBtn = viewChild.required<MatButton>('engageBtn');
   protected readonly advWptBtn = viewChild.required<MatButton>('advWptBtn');
-  protected readonly overrideBtn = viewChild.required<MatButton>('overrideBtn');
+  // protected readonly dodgeBtn = viewChild.required<MatButton>('dodgeBtn');
 
   protected displayName: string;
 
   protected apState = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
-  protected currentAPTargetAppWind: number = 0;
-  protected currentAPTargetHeadingMag: number = 0;
-  protected currentHeading: number = 0;
-  protected currentAppWindAngle: number = null;
-  protected currentRudder: number = null;
+  protected autopilotTarget: number = 0;
+  protected courseTargetHeading: number = 0;
+  protected heading: number = 0;
+  protected crossTrackError: number = 0;
+  protected windAngleApparent: number = 0;
+  protected rudder: number = 0;
 
   skApNotificationSub =  new Subscription;
   skRequestSub = new Subscription; // signalk-Request result observer
@@ -88,10 +86,12 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   isApConnected: boolean = false;
   notificationsArray = {};
   alarmsCount: number = 0;
+  menuOpen = false;
 
   notificationTest = {};
   embedWidgetColor = 'contrast';
-  protected nextWptProperties = {
+  protected apGrid = signal('none');
+  protected nextWptProperties = signal<IWidget>({
     type: "widget-position",
     uuid: "db473695-42b1-4435-9d3d-ac2f27bf9665",
     config: {
@@ -125,8 +125,8 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
       enableTimeout: false,
       dataTimeout: 5
     }
-  };
-  protected ttwProperties = {
+  }, {equal: isEqual});
+  protected ttwProperties = signal<IWidget>({
     type: "widget-numeric",
     uuid: "ee022f2f-ee23-41a7-b0b1-0928dc28864d",
     config: {
@@ -154,8 +154,8 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
       dataTimeout: 5,
       ignoreZones: false
     }
-  };
-  protected etaProperties = {
+  }, {equal: isEqual});
+  protected etaProperties = signal<IWidget>({
     type: "widget-datetime",
     uuid: "544ca35d-18bf-4a90-9aa8-b12312e3fc60",
     config: {
@@ -177,8 +177,8 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
       enableTimeout: false,
       dataTimeout: 5
     }
-  };
-  protected dtwProperties = {
+  }, {equal: isEqual});
+  protected dtwProperties = signal<IWidget>({
     type : "widget-numeric",
     uuid : "ee02ef2f-ee23-41a7-b0b1-0928dc28864d",
     config : {
@@ -206,8 +206,8 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
       dataTimeout  : 5,
       ignoreZones  : false
     }
-  };
-  protected xteProperties = {
+  }, {equal: isEqual});
+  protected xteProperties = signal<IWidget>({
     type: "widget-numeric",
     uuid: "9234856b-7573-4154-a44f-3baf7c6f119c",
     config: {
@@ -235,7 +235,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
       dataTimeout: 5,
       ignoreZones: false
     }
-  };
+  }, {equal: isEqual});
   protected brgProperties = signal<IWidget>({
     type : "widget-numeric",
     uuid : "27a73083-3786-4399-847e-f08f32cb13bd",
@@ -264,63 +264,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
       dataTimeout : 5,
       ignoreZones : false
     }
-  }, { equal: isEqual });
-  protected readonly apModeRows = computed(() =>{
-    let mode = this.apState();
-    switch (mode) {
-      case "standby":
-        this.modesBtn().disabled = false;
-        this.engageBtn().disabled = false;
-        this.plus1Btn().disabled = true;
-        this.plus10Btn().disabled = true;
-        this.minus1Btn().disabled = true;
-        this.minus10Btn().disabled = true;
-        this.prtTackBtn().disabled = true;
-        this.stbTackBtn().disabled = true;
-        this.advWptBtn().disabled = true;
-        this.overrideBtn().disabled = true;
-        break;
-      case "auto":
-        this.modesBtn().disabled = false;
-        this.engageBtn().disabled = false;
-        this.plus1Btn().disabled = false;
-        this.plus10Btn().disabled = false;
-        this.minus1Btn().disabled = false;
-        this.minus10Btn().disabled = false;
-        this.prtTackBtn().disabled = true;
-        this.stbTackBtn().disabled = true;
-        this.advWptBtn().disabled = true;
-        this.overrideBtn().disabled = true;
-        break;
-      case "wind":
-        this.modesBtn().disabled = false;
-        this.engageBtn().disabled = false;
-        this.plus1Btn().disabled = false;
-        this.plus10Btn().disabled = false;
-        this.minus1Btn().disabled = false;
-        this.minus10Btn().disabled = false;
-        this.prtTackBtn().disabled = false;
-        this.stbTackBtn().disabled = false;
-        this.advWptBtn().disabled = true;
-        this.overrideBtn().disabled = true;
-        break;
-      case "route":
-        this.modesBtn().disabled = false;
-        this.engageBtn().disabled = false;
-        this.plus1Btn().disabled = true;
-        this.plus10Btn().disabled = true;
-        this.minus1Btn().disabled = true;
-        this.minus10Btn().disabled = true;
-        this.prtTackBtn().disabled = true;
-        this.stbTackBtn().disabled = true;
-        this.advWptBtn().disabled = false;
-        this.overrideBtn().disabled = false;
-        break;
-      default:
-        break;
-    }
-    return mode;
-  });
+  }, {equal: isEqual});
 
   constructor() {
     super();
@@ -328,19 +272,30 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     this.defaultConfig = {
       filterSelfPaths: true,
       paths: {
-        "apState": {
+        "autopilotState": {
           description: "Autopilot State",
           path: 'self.steering.autopilot.state',
           source: 'default',
           pathType: "string",
-          isPathConfigurable: true,
+          isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           convertUnitTo: "",
           sampleTime: 500
         },
-        "apTargetHeadingMag": {
-          description: "Autopilot Target Heading Mag",
-          path: 'self.steering.autopilot.target.headingMagnetic',
+        "autopilotTarget": {
+          description: "Autopilot Target",
+          path: 'self.steering.autopilot.target',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: false,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "rudderAngle": {
+          description: "Rudder Angle",
+          path: 'self.steering.rudderAngle',
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
@@ -349,15 +304,37 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
         },
-        "apTargetWindAngleApp": {
-          description: "Autopilot Target Wind Angle Apparent",
-          path: 'self.steering.autopilot.target.windAngleApparent',
+        "courseTargetHeadingTrue": {
+          description: "Course Bearing True",
+          path: 'self.navigation.course.calcValues.bearingTrue',
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
-          isPathConfigurable: true,
+          isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "courseTargetHeadingMag": {
+          description: "Course Bearing Magnetic",
+          path: 'self.navigation.course.calcValues.bearingMagnetic',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: false,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "courseXte": {
+          description: "Cross Track Error",
+          path: "self.navigation.course.calcValues.crossTrackError",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: false,
+          convertUnitTo: "m",
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
           sampleTime: 500
         },
         "headingMag": {
@@ -366,7 +343,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
-          isPathConfigurable: true,
+          isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
@@ -377,7 +354,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
-          isPathConfigurable: true,
+          isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
@@ -403,18 +380,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
-        },
-        "rudderAngle": {
-          description: "Rudder Angle",
-          path: 'self.steering.rudderAngle',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: true,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
+        }
       },
       usage: {
         "headingMag": ['wind', 'route', 'auto', 'standby'],
@@ -429,32 +395,89 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
         "windAngleTrueWater": 'TWA',
       },
       invertRudder: true,
-      bearingDirectionTrue: false,
+      courseDirectionTrue: false,
       headingDirectionTrue: false,
-      windDirectionTrue: false,
       enableTimeout: false,
       dataTimeout: 5
     };
 
     effect(() => {
-      if (this.apState() !== null) {
-        this.apGrid().nativeElement.style.display = 'grid';
-      }
+      const mode = this.apState();
+
+      untracked(() => {
+        switch (mode) {
+          case "standby":
+            this.modesBtn().disabled = false;
+            this.engageBtn().disabled = true;
+            this.plus1Btn().disabled = true;
+            this.plus10Btn().disabled = true;
+            this.minus1Btn().disabled = true;
+            this.minus10Btn().disabled = true;
+            this.prtTackBtn().disabled = true;
+            this.stbTackBtn().disabled = true;
+            this.advWptBtn().disabled = true;
+            // this.dodgeBtn().disabled = true;
+            break;
+          case "auto":
+            this.modesBtn().disabled = false;
+            this.engageBtn().disabled = false;
+            this.plus1Btn().disabled = false;
+            this.plus10Btn().disabled = false;
+            this.minus1Btn().disabled = false;
+            this.minus10Btn().disabled = false;
+            this.prtTackBtn().disabled = true;
+            this.stbTackBtn().disabled = true;
+            this.advWptBtn().disabled = true;
+            // this.dodgeBtn().disabled = true;
+            break;
+          case "wind":
+            this.modesBtn().disabled = false;
+            this.engageBtn().disabled = false;
+            this.plus1Btn().disabled = false;
+            this.plus10Btn().disabled = false;
+            this.minus1Btn().disabled = false;
+            this.minus10Btn().disabled = false;
+            this.prtTackBtn().disabled = false;
+            this.stbTackBtn().disabled = false;
+            this.advWptBtn().disabled = true;
+            // this.dodgeBtn().disabled = true;
+            break;
+          case "route":
+            this.modesBtn().disabled = false;
+            this.engageBtn().disabled = false;
+            this.plus1Btn().disabled = true;
+            this.plus10Btn().disabled = true;
+            this.minus1Btn().disabled = true;
+            this.minus10Btn().disabled = true;
+            this.prtTackBtn().disabled = true;
+            this.stbTackBtn().disabled = true;
+            this.advWptBtn().disabled = false;
+            // this.dodgeBtn().disabled = false;
+            break;
+          default:
+            this.modesBtn().disabled = true;
+            this.engageBtn().disabled = true;
+            this.plus1Btn().disabled = true;
+            this.plus10Btn().disabled = true;
+            this.minus1Btn().disabled = true;
+            this.minus10Btn().disabled = true;
+            this.prtTackBtn().disabled = true;
+            this.stbTackBtn().disabled = true;
+            this.advWptBtn().disabled = true;
+            // this.dodgeBtn().disabled = true;
+        }
+        this.apGrid.set(mode ? 'grid' : 'none');
+      });
     });
   }
 
   ngOnInit() {
     this.validateConfig();
-    if (this.widgetProperties.config.autoStart) {
-      setTimeout(() => {this.startApHead();});
-    }
-    this.configureEmbedWidgets();
     this.startWidget();
   }
 
   private configureEmbedWidgets(): void {
-    const brg = this.widgetProperties.config.bearingDirectionTrue;
-
+    const brg = this.widgetProperties.config.courseDirectionTrue;
     this.brgProperties.update(prev => ({
       ...prev,
       config: {
@@ -478,70 +501,38 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.configureEmbedWidgets();
+    this.stopAllSubscriptions();
+    this.startAllSubscriptions();
   }
 
   ngOnDestroy() {
     this.destroyDataStreams();
     this.unsubscribeSKRequest();
-    console.log("Autopilot Subs Stopped");
   }
 
   startAllSubscriptions() {
-    this.observeDataStream('apState', newValue => {
-        this.apState.set(newValue.data.value);
-      }
-    );
-
-    this.observeDataStream('headingMag', newValue => {
-        if (newValue.data.value === null) {
-          this.currentHeading = 0;
-        } else {
-          this.currentHeading = newValue.data.value;
-        }
-      }
-    );
-
-    this.observeDataStream('windAngleApparent', newValue => {
-        if (newValue.data.value === null) {
-          this.currentAppWindAngle = null;
-          return;
-        }
-
-        if (newValue.data.value < 0) {// stb
-          this.currentAppWindAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
-        } else {
-          this.currentAppWindAngle = newValue.data.value;
-        }
-      }
-    );
-
+    this.observeDataStream('autopilotState', newValue => this.apState.set(newValue.data.value));
+    this.observeDataStream('autopilotTarget', newValue => this.autopilotTarget = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('rudderAngle', newValue => {
         if (newValue.data.value === null) {
-          this.currentRudder = 0;
+          this.rudder = 0;
         } else {
-          this.currentRudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
+          this.rudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
         }
       }
     );
-
-    this.observeDataStream('apTargetHeadingMag', newValue => {
-        if (newValue.data.value === null) {
-          this.currentAPTargetHeadingMag = 0;
-        } else {
-          this.currentAPTargetHeadingMag = newValue.data.value;
-        }
-      }
-    );
-
-    this.observeDataStream('apTargetWindAngleApp', newValue => {
-        if (newValue.data.value === null) {
-          this.currentAPTargetAppWind = 0;
-        } else {
-          this.currentAPTargetAppWind = newValue.data.value;
-        }
-      }
-    );
-
+    if (this.widgetProperties.config.courseDirectionTrue) {
+      this.observeDataStream('courseTargetHeadingTrue', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
+    } else {
+      this.observeDataStream('courseTargetHeadingMag', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
+    }
+    this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value ? newValue.data.value : 0);
+    if (this.widgetProperties.config.headingDirectionTrue) {
+      this.observeDataStream('headingTrue', newValue => this.heading = newValue.data.value ? newValue.data.value : 0);
+    } else {
+      this.observeDataStream('headingMag', newValue => this.heading = newValue.data.value ? newValue.data.value : 0);
+    }
+    this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent = newValue.data.value ? newValue.data.value : 0);
     this.subscribeSKRequest();
   }
 
@@ -565,19 +556,17 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     }
   }
 
-  addHeading(h1: number, h2: number) {
-    let h3 = h1 + h2;
-    while (h3 > 359) { h3 = h3 - 359; }
-    while (h3 < 0) { h3 = h3 + 359; }
-    return h3;
+  protected toggleMenu():void {
+    this.menuOpen = !this.menuOpen;
   }
 
-  powerBtnClick(event: Event) {
-    if (!this.isApConnected) {
-      this.startApHead();
-    } else {
-      this.stopApHead();
-    }
+  protected closeMenu():void {
+    this.menuOpen = false;
+  }
+
+  protected onMenuItemClick(action: string):void {
+    this.apState.set(action)
+    this.closeMenu();
   }
 
   startApHead() {

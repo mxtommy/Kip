@@ -19,8 +19,8 @@
  * // 2. In your SVG template, assign a template reference variable to your <g> element:
  * <g #rotatingDial> ... </g>
  *
- * // 3. In your component, get a reference to the element using @ViewChild:
- * @ViewChild('rotatingDial', { static: true }) rotatingDial!: ElementRef<SVGGElement>;
+ * // 3. In your component, get a reference to the element using viewChild:
+ * private readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
  *
  * // 4. Use the utility to animate rotation (with custom center):
  * import { animateRotation } from 'src/app/core/utils/svg-animate.util';
@@ -85,6 +85,78 @@ export function animateRotation(
       if (frameMap) frameMap.set(element, id);
     } else {
       element.setAttribute('transform', `rotate(${to} ${center[0]} ${center[1]})`);
+      if (onDone) onDone();
+      if (frameMap) frameMap.delete(element);
+    }
+  };
+  const id = requestAnimationFrame(animate);
+  if (frameMap) frameMap.set(element, id);
+}
+
+/**
+ * Smoothly animates the width of an SVG <rect> element from a starting value to a target value.
+ *
+ * The function uses requestAnimationFrame for smooth animation and cubic easing for a natural feel.
+ * It can optionally manage and cancel overlapping animations for the same element using a WeakMap.
+ *
+ * @param element    The SVG <rect> element to animate.
+ * @param from       The starting width.
+ * @param to         The target width.
+ * @param duration   Animation duration in milliseconds (default: 500).
+ * @param onDone     Optional callback to run when the animation completes.
+ * @param frameMap   Optional WeakMap to track/cancel ongoing animations for each element.
+ *
+ * @example
+ * // 1. In your component, create a WeakMap to track animation frames:
+ * private animationFrameIds = new WeakMap<SVGRectElement, number>();
+ *
+ * // 2. In your SVG template, assign a template reference variable to your <rect> element:
+ * <rect #rudderWidth ... />
+ *
+ * // 3. In your component, get a reference to the element using viewChild:
+ * private readonly rudderWidth = viewChild.required<ElementRef<SVGRectElement>>('rudderWidth');
+ *
+ * // 4. Use the utility to animate width:
+ * import { animateRudderWidth } from 'src/app/core/utils/svg-animate.util';
+ *
+ * animateRudderWidth(
+ *   this.rudderWidth.nativeElement,
+ *   oldWidth,
+ *   newWidth,
+ *   500,
+ *   () => console.log('Width animation done!'),
+ *   this.animationFrameIds
+ * );
+ */
+export function animateRudderWidth(
+  element: SVGRectElement,
+  from: number,
+  to: number,
+  duration: number = 500,
+  onDone?: () => void,
+  frameMap?: WeakMap<SVGRectElement, number>
+) {
+  if (frameMap) {
+    const prevId = frameMap.get(element);
+    if (prevId) cancelAnimationFrame(prevId);
+  }
+
+  const start = performance.now();
+  const delta = to - from;
+  const easeInOutCubic = (t: number) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  const animate = (now: number) => {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeInOutCubic(progress);
+    const current = from + delta * eased;
+    element.setAttribute('width', current.toString());
+    if (progress < 1) {
+      const id = requestAnimationFrame(animate);
+      if (frameMap) frameMap.set(element, id);
+    } else {
+      element.setAttribute('width', to.toString());
       if (onDone) onDone();
       if (frameMap) frameMap.delete(element);
     }

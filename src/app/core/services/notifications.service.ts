@@ -427,5 +427,6 @@ export class NotificationsService implements OnDestroy {
     this._notificationConfig$.complete();
     this._notifications$.complete();
     this._alarmsInfo$.complete();
+    this._howlPlayer?.unload();
   }
 }

@@ -4,6 +4,8 @@
   display: block;
   height: 100%;
   width: 100%;
+  min-height: 0;
+  min-width: 0;
 }
 
 .widget-host {
@@ -12,37 +14,39 @@
   width: 100%;
 }
 
+.autopilot-grid-container,
+.autopilot-grid-row  {
+  min-height: 50px;
+  min-width: 50px;
+}
+
 .autopilot-grid-container {
+  display: grid;
+  gap: 0rem 1rem;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  gap: 0.5rem 0.5rem;
-  padding: 10px;
-  grid-template:
-    "modes modes"   minmax(50px, 1fr)
-    "screen screen" minmax(50px, auto)
-    / 1fr 1fr;
-  grid-auto-rows: minmax(50px, 2fr);
+  padding: 0.25rem 0.75rem 0.25rem 0.75rem;
 }
 
-.ap-modes {
-  grid-area: modes;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(50px, 1fr);
-  gap: 0.5rem 0.5rem;
+.autopilot-grid-container.rows-standby { grid-template-rows: 14fr 20fr; }
+.autopilot-grid-container.rows-wind { grid-template-rows: 0.5fr minmax(50px auto) 1fr 1fr 1fr; }
+.autopilot-grid-container.rows-auto { grid-template-rows: auto 1fr 1fr 1fr; }
+.autopilot-grid-container.rows-route { grid-template-rows: auto 1fr 1fr 1fr 1fr; }
+
+.autopilot-grid-row {
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0rem;
 }
 
-.ap-screen {
-  grid-area: screen;
-  width: 100%;
-  height: 100%;
-  max-height: 200px;
-  align-content: center;
+.autopilot-grid-row--top {
+  justify-content: space-between;
 }
 
 .autopilot-btn {
+  flex: 1 1 0;
   width: 100%;
   border-radius: 12px;
   align-items: center;
@@ -54,32 +58,49 @@
   ));
 }
 
-.ap-btn-modes {
+.autopilot-btn--modes {
   @include mat.button-overrides((
     filled-horizontal-padding: 0rem
   ));
 }
 
-.ap-btn-engage {
+.autopilot-btn--engage {
   @include mat.button-overrides((
     filled-horizontal-padding: 0rem,
     filled-container-color: var(--kip-zone-alarm-color),
   ));
 }
 
+.autopilot-grid-row--rudder,
+.autopilot-grid-row--autopilot {
+  width: 100%;
+  justify-content: center;
+  padding-bottom: 0rem;
+}
+
+.autopilot-grid-row--rudder {
+  padding: 0rem;
+}
+
+.autopilot-grid-row--autopilot {
+  height: 100%;
+  padding-top: 0rem;
+}
+
+.autopilot-grid-row--actions {
+  justify-content: space-evenly;
+}
+
 .svg-icon {
   width: 100%;
   height: 100%;
   margin: 0px;
-  padding: 0.5rem;
+  padding: 0.5rem 0px;
 }
-
-
 
 .svg-element {
   width: 100%;
   height: 100%;
-  padding: 0.5em;
   text {
     font-family: Roboto;
     font-size: 25px;
@@ -116,19 +137,62 @@
 }
 
 .svg-modes {
-  padding: 0em;
+  width: 100%;
+  height: 100%;
   text {
+    font-family: Roboto;
     font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor: middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    fill: var(--kip-contrast-color);
+    fill-opacity: 1;
+    stroke: none;
   }
 }
 
 .svg-route {
+  width: 100%;
+  height: 100%;
   text {
+    font-family: Roboto;
     font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor: middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    fill: var(--kip-contrast-color);
+    fill-opacity: 1;
+    stroke: none;
   }
   path {
     fill: var(--kip-contrast-color);
     fill-opacity: 1;
+    stroke: var(--kip-contrast-color);
+    stroke-opacity: 1;
+    stroke-width :7.59058;
+    stroke-linecap: round;
+    stroke-miterlimit: 0;
+    stroke-dasharray: none;
+  }
+  path.tack {
+    fill: var(--kip-contrast-color);
+    fill-opacity: 1;
+    stroke: var(--kip-contrast-color);
+    stroke-opacity: 1;
   }
 }
 
@@ -146,6 +210,16 @@
   .autopilot-btn {
     font-size: 0.95rem;
     padding: 0.4em 0.5em;
+  }
+
+  .autopilot-btn--modes,
+  .autopilot-btn--engage {
+    max-width: 100%;
+  }
+
+  .autopilot-grid-row--top {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
@@ -191,12 +265,12 @@
   }
 }
 
-.svg-menu-item {
-  fill: transparent;
-  stroke: var(--kip-contrast-dimmer-color);
-  stroke-width: 2px;
-}
+  .svg-menu-item {
+    fill: transparent;
+    stroke: var(--kip-contrast-dimmer-color);
+    stroke-width: 2px;
+  }
 
-.cancel {
-  fill: var(--kip-grey-color);
-}
+  .cancel {
+    fill: var(--kip-grey-color);
+  }

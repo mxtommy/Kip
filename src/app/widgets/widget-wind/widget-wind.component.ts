@@ -73,7 +73,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           sampleTime: 500
         },
         "trueWindSpeed": {
-          description: "Wind Speed True",
+          description: "True Wind Speed",
           path: 'self.environment.wind.speedTrue',
           source: 'default',
           pathType: "number",

@@ -33,12 +33,12 @@ svg {
   stroke: var(--kip-contrast-dim-color);
 }
 
-.appWA-text {
+.awa-text {
   fill: var(--kip-orange-color);
   stroke: var(--kip-orange-color);
 }
 
-.appWA-text-dim {
+.awa-text-dim {
   fill: var(--kip-orange-dim-color);
   stroke: var(--kip-orange-dim-color);
 }
@@ -48,5 +48,22 @@ svg {
 }
 
 .fixed-dial-background {
+  fill: var(--kip-grey-color);
+}
+
+.rotating-dial-Backplate {
+  fill: var(--mat-sys-background);
+}
+
+.rudderPort {
+  fill: var(--kip-port-color);
+}
+
+.rudderStarboard  {
+  fill: var(--kip-starboard-color);
+}
+
+.boxes {
+  stroke: var(--kip-grey-color);
   fill: var(--kip-grey-color);
 }
