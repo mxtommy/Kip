@@ -20,11 +20,11 @@ As path values move between zone ranges, Signal K generates a notification sent 
 ### Zone State and Method Guidance
 
 - The **Nominal** and **Emergency** zones are special-purpose zones and should not be used.
-- KIP emits audio prompts for all zone states that include the **sound** method, except for the **Normal** and **Nominal** zones.
-- KIP uses distinct sound files for each zone state with sound enabled.
-- KIP displays a notification in Notifications menu for all zone states that include the **visual** method, except for the **Normal** and **Nominal** zones. Excluding the **visual** method for a zone does not prevent supporting widgets from displaying zones. This is achieved by configuring individual widgets to ignore zones settings.
 - You do **not** need to configure a **Normal** zone; it is the default when no other zone matches.
-- You can configure KIP to ignore audio prompts in **Settings**; this applies globally to all notifications and paths.
+- KIP displays a notification in the Notifications menu for all zone states that include the **visual** method, except for the **Normal** and **Nominal** zones. Excluding the **visual** method for a zone does not prevent supporting widgets from displaying zones. This can be achieved by configuring individual widgets to ignore zones settings.
+- KIP emits audio prompts for all zone states that include the **sound** method, except for the **Normal** and **Nominal** zones.
+- KIP uses predefined, state specific sound files.
+- You can configure KIP to globally ignore audio prompts in **Settings > Notifications**; this applies globally to all notifications and paths.
 
 **Tips:**
 1. You don’t need zones for every path.
@@ -60,4 +60,6 @@ You can **Silence** or **Resolve** notifications.
 
 ## KIP Notification Configuration Override
 
-In **Settings > Notifications**, you can filter which notification states are shown and enable or disable audio prompts to match your preferences.
+In **Settings > Notifications**, you can customize which notification states are displayed and enable or disable audio prompts to suit your preferences.
+
+> **Note:** Muting all notifications will also mute other KIP system sounds, such as those played when KIP connects to or disconnects from Signal K, not just zone-related alerts.
