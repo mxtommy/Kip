@@ -34,6 +34,13 @@
         [headingDirectionTrue]="widgetProperties.config.headingDirectionTrue"
         [appWindAngle]="windAngleApparent"
       ></app-svg-autopilot-v2>
+      <div class="ap-screen-overlay" [style.visibility]="msgOverlayVisibility()">
+         <p [innerHTML]="msgOverlayInnerHTML()"></p>
+      </div>
+      <div class="ap-screen-overlay" [style.visibility]="errorOverlayVisibility()">
+        <span class="material-icons" style="color: darkgoldenrod;padding-top: 15px;">warning</span>
+        <p [innerHTML]="errorOverlayInnerText()"></p>
+      </div>
     </div>
     <!-- -1 / +1 buttons row -->
     <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
@@ -169,11 +176,11 @@
       </button>
     </div>
   </div>
-  @if (!dashboard.isDashboardStatic()) {
-    <div class="widgetOverlay">
-    </div>
-  }
 </widget-host>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay">
+  </div>
+}
 @if (menuOpen) {
   <!-- Modes Menu Overlay -->
   <div class="svg-menu-overlay" (click)="toggleMenu()">

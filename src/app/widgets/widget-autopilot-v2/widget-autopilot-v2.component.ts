@@ -60,7 +60,6 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   // protected readonly dodgeBtn = viewChild.required<MatButton>('dodgeBtn');
 
   protected displayName: string;
-
   protected apState = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
   protected autopilotTarget: number = 0;
   protected courseTargetHeading: number = 0;
@@ -69,27 +68,32 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected windAngleApparent: number = 0;
   protected rudder: number = 0;
 
-  skApNotificationSub =  new Subscription;
-  skRequestSub = new Subscription; // signalk-Request result observer
+  private skApNotificationSub: Subscription;
+  private skRequestSub: Subscription; // signalk-Request result observer
 
-  // Widget var
-  handleCountDownCounterTimeout = null;
-  handleConfirmActionTimeout = null;
-  handleMessageTimeout = null;
-  handleReceiveTimeout = null;
-  handleDisplayErrorTimeout = null;
-  countDownValue: number = 0;
-  actionToBeConfirmed: string = "";
-  skPathToAck: string = "";
-  isWChecked: boolean = false;       // used for Wind toggle
-  isTChecked: boolean = false;       // used for Track toggle
-  isApConnected: boolean = false;
-  notificationsArray = {};
-  alarmsCount: number = 0;
-  menuOpen = false;
+  protected menuOpen = false;
 
-  notificationTest = {};
-  embedWidgetColor = 'contrast';
+  // Widget messaging var
+  protected msgOverlayVisibility = signal<string>('hidden');
+  protected msgOverlayInnerHTML = signal<string>('');
+  protected errorOverlayVisibility = signal<string>('hidden');
+  protected errorOverlayInnerText = signal<string>('');
+  private handleCountDownCounterTimeout = null;
+  private handleConfirmActionTimeout = null;
+  private handleMessageTimeout = null;
+  private handleReceiveTimeout = null;
+  private handleDisplayErrorTimeout = null;
+  private countDownValue: number = 0;
+  private actionToBeConfirmed: string = "";
+  private skPathToAck: string = "";
+  private isWChecked: boolean = false;       // used for Wind toggle
+  private isTChecked: boolean = false;       // used for Track toggle
+  private isApConnected: boolean = false;
+  private notificationsArray = {};
+  private alarmsCount: number = 0;
+  private notificationTest = {};
+
+  private embedWidgetColor = 'contrast';
   protected apGrid = signal('none');
   protected nextWptProperties = signal<IWidget>({
     type: "widget-position",
