@@ -22,14 +22,15 @@ As path values move between zone ranges, Signal K generates a notification sent 
 - The **Nominal** and **Emergency** zones are special-purpose zones and should not be used.
 - KIP emits audio prompts for all zone states that include the **sound** method, except for the **Normal** and **Nominal** zones.
 - KIP uses distinct sound files for each zone state with sound enabled.
-- KIP displays a notification in Notifications menu for all zone states that include the **visual** method, except for the **Normal** and **Nominal** zones.
+- KIP displays a notification in Notifications menu for all zone states that include the **visual** method, except for the **Normal** and **Nominal** zones. Excluding the **visual** method for a zone does not prevent supporting widgets from displaying zones. This is achieved by configuring individual widgets to ignore zones settings.
 - You do **not** need to configure a **Normal** zone; it is the default when no other zone matches.
 - You can configure KIP to ignore audio prompts in **Settings**; this applies globally to all notifications and paths.
 
 **Tips:**
 1. You don’t need zones for every path.
 2. You don’t need to configure every zone for a given path. Only configure what is really needed. For example, if all you want is to be alerted at 20% State Of Charge, just add one zone with the Alarm state and method. No need for Warn and Alert zones in this case.
-3. Keep your zone setup simple—too many Notifications can become overwhelming.
+3. Don't enable the **visual** method if you don't want a zone state in the Notifications menu.
+4. Keep your zone setup simple—too many Notifications can become overwhelming.
 
 ---
 
