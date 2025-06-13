@@ -97,6 +97,8 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     * @memberof BaseWidgetComponent
     */
   protected validateConfig() {
+    // TODO check nextDashboard in range
+    // TODO check timerLength in range
     this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
   }
 
