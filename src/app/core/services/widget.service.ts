@@ -160,6 +160,14 @@ export class WidgetService {
       componentClassName: 'WidgetRaceTimerComponent',
     },
     {
+      name: 'Racer Timer',
+      description: "A race start countdown timer that integrates with the signalk-racer plugin. The line can be set and the timer can be started, paused, reset and the countdown duration specified.",
+      icon: 'racertimerWidget',
+      category: 'Components',
+      selector: 'widget-racertimer',
+      componentClassName: 'WidgetRacerTimerComponent',
+    },
+    {
       name: 'Embed Webpage Viewer',
       description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not supported.',
       icon: 'embedWidget',

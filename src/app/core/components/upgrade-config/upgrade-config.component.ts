@@ -41,6 +41,7 @@ export class UpgradeConfigComponent {
     'WidgetAutopilotComponent': 'widget-autopilot',
     'WidgetDataChart': 'widget-data-chart',
     'WidgetRaceTimerComponent': 'widget-racetimer',
+    'WidgetRacerTimerComponent': 'widget-racetimer',
     'WidgetIframeComponent': 'widget-iframe',
     'WidgetTutorial': 'widget-tutorial'
   };
