@@ -44,12 +44,18 @@
 }
 
 .line-adjust-port-button {
-  width: calc(50% - 5px);
+  width: calc(40% - 5px);
   margin-right: 5px;
 }
 
+.line-on-course-side {
+  width: calc(20% - 10px);
+  margin: 5px;
+  color: red;
+}
+
 .line-adjust-stb-button {
-  width: calc(50% - 5px);
+  width: calc(40% - 5px);
   margin-left: 5px;
 }
 
