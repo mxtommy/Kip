@@ -10,6 +10,7 @@ import {DashboardService} from '../../core/services/dashboard.service';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {NgIf} from '@angular/common';
 import {MatButton} from '@angular/material/button';
+import {result} from 'lodash-es';
 
 @Component({
     selector: 'widget-racertimer',
@@ -93,14 +94,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
       newValue => {
         this.dataValue = newValue;
 
-        if (newValue === 0) {
-          this.zoneState = States.Normal;
-          // TODO do not change dashboard if OCS???
-          // TODO delay change of dashboard
-          if (this.widgetProperties.config.nextDashboard >= 0) {
-            this.DashboardService.navigateTo(this.widgetProperties.config.nextDashboard);
-          }
-        } else if (newValue > 0) {
+        if (newValue > 0) {
           this.zoneState = States.Normal;
         } else if (newValue > -10) {
           this.zoneState = States.Alarm;
@@ -122,8 +116,24 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
         }
         this.updateCanvas();
 
+        // Set the time on the server and check if OCS
         fetch(`/plugins/signalk-racer/startline/timeToStart`, {
           method: 'PUT', body: JSON.stringify({ value: newValue })
+        }).then(response => {
+          if (response.ok) {
+            response.text().then(text => {
+              const json = JSON.parse(text);
+              if (json.distanceToStart && typeof json.distanceToStart === 'number' ) {
+                if (json.distanceToStart < 0) {
+                  // TODO highlight the onCourseSide display element
+                }
+                if (json.timeToStart && typeof json.timeToStart === 'number' && json.timeToStart === 0 &&
+                  this.widgetProperties.config.nextDashboard >= 0) {
+                 this.DashboardService.navigateTo(this.widgetProperties.config.nextDashboard);
+                }
+              }
+            });
+          }
         }).catch(error => {
           console.error(`Error setting timeToStart:`, error);
         });
