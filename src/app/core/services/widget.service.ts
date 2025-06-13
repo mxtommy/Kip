@@ -153,11 +153,19 @@ export class WidgetService {
     },
     {
       name: 'Race Timer',
-      description: "A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.",
+      description: 'A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.',
       icon: 'racetimerWidget',
       category: 'Components',
       selector: 'widget-racetimer',
       componentClassName: 'WidgetRaceTimerComponent',
+    },
+    {
+      name: 'Racer Timer',
+      description: 'A race start timer that integrates withe the signalk-racer plugin. The line can be set and the timer can be started, paused, reset and the countdown duration specified.',
+      icon: 'racertimerWidget',
+      category: 'Components',
+      selector: 'widget-racertimer',
+      componentClassName: 'WidgetRacerTimerComponent',
     },
     {
       name: 'Embed Webpage Viewer',
