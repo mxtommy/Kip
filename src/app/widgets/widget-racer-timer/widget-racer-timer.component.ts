@@ -117,6 +117,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
         this.updateCanvas();
 
         // Set the time on the server and check if OCS
+        // TODO this is not the right way to do this
         fetch(`/plugins/signalk-racer/startline/timeToStart`, {
           method: 'PUT', body: JSON.stringify({ value: newValue })
         }).then(response => {
@@ -180,6 +181,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
     }
   }
   private setLineEnd(end: 'port' | 'stb') {
+    // TODO this is not the right way to do this
     const url = `/plugins/signalk-racer/startline/${end}`;
     fetch(url, { method: 'PUT' })
       .then(async response => {
