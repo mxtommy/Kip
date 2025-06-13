@@ -1,0 +1,37 @@
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div class="racerWrapper" (onResize)="onResized($event)">
+    <canvas id="canvasValue" class="canvas-size" #canvasEl></canvas>
+      <div class="timerBarContainer">
+        <div class="timer-button-groups line-adjusters-group">
+          <button mat-flat-button class="line-adjust-port-button" (click)="setLinePort()">
+            Port End (pin)
+          </button>
+          <button mat-flat-button class="line-adjust-stb-button" (click)="setLineStb()">
+            Starboard End (boat)
+          </button>
+        </div>
+        <div class="timer-button-groups timer-adjusters-group">
+          <button mat-flat-button class="timer-adjust-buttons" (click)="remOneMin()">
+            -1
+          </button>
+          <button mat-flat-button class="timer-reset-button" (click)="resetTimer()">
+          Reset
+          </button>
+          <button mat-flat-button class="timer-adjust-buttons" (click)="addOneMin()">
+          +1
+          </button>
+        </div>
+        <div class="timer-button-groups timer-countdown-group">
+          <button *ngIf="!timerRunning" mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
+            Start
+          </button>
+          <button *ngIf="timerRunning" mat-flat-button class="timer-start-button" (click)="pauseTimer()">
+            Pause
+          </button>
+          <button mat-flat-button class="timer-synch-button button-color-red" (click)="roundToMin()">
+            Synch
+          </button>
+        </div>
+      </div>
+  </div>
+</widget-host>
