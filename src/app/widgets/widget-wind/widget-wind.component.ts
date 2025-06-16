@@ -237,7 +237,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         this.widgetProperties.config.paths['trueWindAngle'].path.match('angleTrueGround')) {
           //-180 to 180
           this.trueWindAngle = this.addHeading(this.currentHeading, newValue.data.value);
-        } else if (this.widgetProperties.config.paths['trueWindAngle'].path.match('direction')) {
+        } else if (this.widgetProperties.config.paths['trueWindAngle'].path.match('directionTrue')) {
           //0-360
           this.trueWindAngle = newValue.data.value;
         } else {
