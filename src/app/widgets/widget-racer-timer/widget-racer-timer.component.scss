@@ -1,15 +1,15 @@
 .racerWrapper {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  align-items: center;
+  justify-content: space-between;
+  align-items: stretch;
   height: 100%;
   color: white;
   background: black;
   font-family: sans-serif;
 }
 
-.display-pane, .time-adjust-pane, .line-adjust-pane {
+.top-pane, .bottom-pane {
   width: 100%;
   text-align: center;
 }

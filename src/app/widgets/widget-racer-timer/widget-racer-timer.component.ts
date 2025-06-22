@@ -1,25 +1,27 @@
 // widget-racer-timer.component.ts
-import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
-import { SignalKRequestsService } from 'signalk-client-angular';
+import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
+import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'widget-racer-timer',
   templateUrl: './widget-racer-timer.component.html',
+  standalone: true,
   styleUrls: ['./widget-racer-timer.component.scss']
 })
 export class WidgetRacerTimerComponent implements OnDestroy {
+  signalkRequestsService = inject(SignalkRequestsService);
   @ViewChild('canvasEl') canvasRef!: ElementRef;
 
   mode: 'display' | 'time-adjust' | 'line-adjust' = 'display';
-  timeToStart: string = '00:00';
-  distanceToLine: string = '-';
-  startTime: string = '';
-  timerRunning: boolean = false;
+  timeToStart = '0:00:00';
+  distanceToLine = '-';
+  startTime = '';
+  timerRunning = false;
 
   private sub?: Subscription;
 
-  constructor(private skRequest: SignalKRequestsService) {
+  constructor() {
     this.subscribeToPaths();
   }
 
@@ -28,7 +30,7 @@ export class WidgetRacerTimerComponent implements OnDestroy {
   }
 
   private subscribeToPaths() {
-    this.sub = this.skRequest.subscribeDelta(
+    this.sub = this.signalkRequestsService.subscribeDelta(
       [
         'navigation.racing.timeToStart',
         'navigation.racing.distanceStartline',
@@ -67,7 +69,7 @@ export class WidgetRacerTimerComponent implements OnDestroy {
 
   // Timer Adjustment Methods
   adjustStartTime(delta: number) {
-    this.skRequest.put('vessels.self', 'navigation.racing.setStartTime', {
+    this.signalkRequestsService.put('vessels.self', 'navigation.racing.setStartTime', {
       command: 'adjust',
       delta
     }).subscribe();
@@ -77,28 +79,28 @@ export class WidgetRacerTimerComponent implements OnDestroy {
     const now = new Date();
     const [hh, mm, ss] = hhmmss.split(':').map(Number);
     now.setHours(hh, mm, ss, 0);
-    this.skRequest.put('vessels.self', 'navigation.racing.setStartTime', {
+    this.signalkRequestsService.put('vessels.self', 'navigation.racing.setStartTime', {
       command: 'set',
       startTime: now.toISOString()
     }).subscribe();
   }
 
   sendTimerCommand(command: 'start' | 'reset' | 'sync') {
-    this.skRequest.put('vessels.self', 'navigation.racing.setStartTime', {
+    this.signalkRequestsService.put('vessels.self', 'navigation.racing.setStartTime', {
       command
     }).subscribe();
   }
 
   // Line Adjustment Methods
   setLineEnd(end: 'port' | 'stb') {
-    this.skRequest.put('vessels.self', 'navigation.racing.setStartLine', {
+    this.signalkRequestsService.put('vessels.self', 'navigation.racing.setStartLine', {
       end,
       position: 'bow'
     }).subscribe();
   }
 
   adjustLineEnd(end: 'port' | 'stb', delta: number, rotate: number) {
-    this.skRequest.put('vessels.self', 'navigation.racing.setStartLine', {
+    this.signalkRequestsService.put('vessels.self', 'navigation.racing.setStartLine', {
       end,
       delta,
       rotate: rotate ? rotate * Math.PI / 180 : null
