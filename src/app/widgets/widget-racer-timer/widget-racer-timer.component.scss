@@ -1,89 +1,59 @@
 .racerWrapper {
-  height: 100%;
-  width: 100%;
-}
-.canvas-size {
-    position: absolute;
-    width: 100%;
-    height: 50%;
-    top: 0;
-    left: 0;
-    z-index: inherit;
-}
-
-.button-color-red {
-  --mdc-filled-button-container-color: var(--kip-port-color);
-  --mdc-filled-button-label-text-color: var(--kip-contrast-color);
-}
-
-.timerBarContainer {
-  position: absolute;
-  left: 0px;
-  bottom: 8%;
-  height: auto;
-  width: calc(100% - 20px);
-  margin: 0px 10px 0px 10px;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
+  color: white;
+  background: black;
+  font-family: sans-serif;
+}
+
+.display-pane, .time-adjust-pane, .line-adjust-pane {
+  width: 100%;
+  text-align: center;
+}
+
+.tts, .dts {
+  font-size: 3em;
+  padding: 0.5em;
+  border-bottom: 1px solid gray;
+  cursor: pointer;
+}
+
+.timer-controls, .line-grid {
+  display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: stretch;
-  align-content: stretch;
-  gap: 20px;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 1em;
 }
 
-.timer-button-groups {
-  min-width: 247px;
-  max-width: 100%;
-  --mdc-filled-button-container-shape: 5px;
+.timer-controls button, .line-buttons button {
+  padding: 0.5em 1em;
+  font-size: 1em;
+  border-radius: 5px;
+  background-color: #333;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 
-.line-adjusters-group {
-  flex-grow: 1;
-  flex-shrink: 1;
+input {
+  font-size: 1.2em;
+  text-align: center;
+  padding: 0.3em;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
-.line-adjust-port-button {
-  width: calc(40% - 5px);
-  margin-right: 5px;
+.line-end {
+  margin: 1em 0;
+  text-align: center;
 }
 
-.line-on-course-side {
-  width: calc(20% - 10px);
-  margin: 5px;
-  color: red;
-}
-
-.line-adjust-stb-button {
-  width: calc(40% - 5px);
-  margin-left: 5px;
-}
-
-.timer-adjusters-group {
-  flex-grow: 1;
-  flex-shrink: 1;
-}
-
-.timer-countdown-group {
-  flex-grow: 3;
-  flex-shrink: 3;
-}
-
-.timer-synch-button {
-  width: calc(50% - 5px);
-  margin-left: 5px;
-}
-
-.timer-start-button {
-  width: calc(50% - 5px);
-  margin-right: 5px;
-}
-
-.timer-reset-button {
-  width: calc(40% - 0px);
-  margin: 0px 10px 0px 10px;
-}
-
-.timer-adjust-buttons {
-  width: calc(30% - 10px);
+.end-label {
+  font-weight: bold;
+  margin-bottom: 0.5em;
 }
