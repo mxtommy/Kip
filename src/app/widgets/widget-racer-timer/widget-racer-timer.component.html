@@ -1,37 +1,11 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="racerWrapper" (click)="mode === 'display' ? null : (mode = 'display')">
-    <div *ngIf="mode === 'display'" class="display-pane">
-      <div class="tts" (click)="toggleMode('time-adjust')">
+  <div class="racerWrapper" (onResize)="onResized($event)">
+    <!-- Top Pane: TTS or Line Adjust -->
+    <div class="top-pane">
+      <div *ngIf="showTopTTS" class="tts" (click)="toggleTopPane()">
         {{ timeToStart }}
       </div>
-      <div class="dts" (click)="toggleMode('line-adjust')">
-        {{ distanceToLine }} m
-      </div>
-    </div>
-
-    <div *ngIf="mode === 'time-adjust'" class="time-adjust-pane">
-      <div class="tts" (click)="toggleMode('time-adjust')">
-        {{ timeToStart }}
-      </div>
-      <div class="timer-controls">
-        <button (click)="adjustStartTime(-60)">-1m</button>
-        <button (click)="adjustStartTime(-1)">-1s</button>
-        <input [(ngModel)]="startTime" placeholder="HH:MM:SS" size="8"/>
-        <button (click)="adjustStartTime(1)">+1s</button>
-        <button (click)="adjustStartTime(60)">+1m</button>
-        <button (click)="sendTimerCommand('start')">Start</button>
-        <button (click)="setStartTimeManually(startTime)">Start At</button>
-        <button (click)="sendTimerCommand('sync')">Sync</button>
-        <button (click)="sendTimerCommand('reset')">Reset</button>
-      </div>
-    </div>
-
-    <div *ngIf="mode === 'line-adjust'" class="line-adjust-pane">
-      <div class="dts" (click)="toggleMode('line-adjust')">
-        {{ distanceToLine }} m
-      </div>
-
-      <div class="line-grid">
+      <div *ngIf="!showTopTTS" class="line-grid">
         <div class="line-end" *ngFor="let end of ['port', 'stb']">
           <div class="end-label">{{ end === 'port' ? 'Port End' : 'Stb End' }}</div>
           <div class="line-buttons">
@@ -44,6 +18,24 @@
             <button (click)="adjustLineEnd(end, 0, -1)">-1°</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Bottom Pane: DTS or Time Adjust -->
+    <div class="bottom-pane">
+      <div *ngIf="showBottomDTS" class="dts" (click)="toggleBottomPane()">
+        {{ distanceToLine }} m
+      </div>
+      <div *ngIf="!showBottomDTS" class="timer-controls">
+        <button (click)="adjustStartTime(-60)">-1m</button>
+        <button (click)="adjustStartTime(-1)">-1s</button>
+        <input [(ngModel)]="startTime" placeholder="HH:MM:SS" size="8"/>
+        <button (click)="adjustStartTime(1)">+1s</button>
+        <button (click)="adjustStartTime(60)">+1m</button>
+        <button (click)="sendTimerCommand('start')">Start</button>
+        <button (click)="setStartTimeManually(startTime)">Start At</button>
+        <button (click)="sendTimerCommand('sync')">Sync</button>
+        <button (click)="sendTimerCommand('reset')">Reset</button>
       </div>
     </div>
   </div>
