@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed, waitForAsync} from '@angular/core/testing';
 
 import { WidgetRacerTimerComponent } from './widget-racer-timer.component';
 
@@ -6,12 +6,12 @@ describe('WidgetRacerTimerComponent', () => {
   let component: WidgetRacerTimerComponent;
   let fixture: ComponentFixture<WidgetRacerTimerComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-    imports: [WidgetRacerTimerComponent]
-})
-    .compileComponents();
-  });
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [WidgetRacerTimerComponent]
+    })
+      .compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(WidgetRacerTimerComponent);
