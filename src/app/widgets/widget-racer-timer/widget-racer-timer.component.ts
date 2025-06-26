@@ -7,7 +7,6 @@ import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {TimersService} from '../../core/services/timers.service';
 import {DashboardService} from '../../core/services/dashboard.service';
 import {States} from '../../core/interfaces/signalk-interfaces';
-import {NgIf} from '@angular/common';
 import {MatButton} from '@angular/material/button';
 import {CanvasService} from '../../core/services/canvas.service';
 import {result} from 'lodash-es';
@@ -17,20 +16,23 @@ import {result} from 'lodash-es';
     templateUrl: './widget-racer-timer.component.html',
     styleUrls: ['./widget-racer-timer.component.scss'],
     standalone: true,
-    imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton, NgIf ]
+    imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton ]
 })
 export class WidgetRacerTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private TimersService = inject(TimersService);
   private canvas = inject(CanvasService);
 
   private DashboardService = inject(DashboardService);
-  readonly canvasTimer = viewChild<ElementRef<HTMLCanvasElement>>('canvasTimer');
+  readonly ttsCanvas = viewChild<ElementRef<HTMLCanvasElement>>('ttsCanvas');
+  readonly dtsCanvas = viewChild<ElementRef<HTMLCanvasElement>>('dtsCanvas');
   protected dataValue: number = null;
   private zoneState: string = null;
 
   // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  private currentValueLength = 0;
-  private valueFontSize = 1;
+  private currentTtsLength = 0;
+  private currentDtsLength = 0;
+  private ttsFontSize = 1;
+  private dtsFontSize = 1;
   private flashOn = false;
   private flashInterval = null;
   public timerRunning = false;
@@ -43,10 +45,12 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
 
   timerSub: Subscription = null;
 
-  private canvasCtx: CanvasRenderingContext2D = null;
+  private ttsCanvasCtx: CanvasRenderingContext2D = null;
+  private dtsCanvasCtx: CanvasRenderingContext2D = null;
 
   constructor() {
     super();
+    console.log('WidgetRacerTimerComponent canvasTimer ', this.ttsCanvas);
 
     this.defaultConfig = {
       timerLength: 300,
@@ -70,7 +74,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
 
   protected startWidget(): void {
     this.getColors(this.widgetProperties.config.color);
-    this.canvasCtx = this.canvasTimer().nativeElement.getContext('2d');
+    this.ttsCanvasCtx = this.ttsCanvas().nativeElement.getContext('2d');
+    this.dtsCanvasCtx = this.dtsCanvas().nativeElement.getContext('2d');
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -82,11 +87,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
   onResized(event: ResizeObserverEntry) {
     if (event.contentRect.height < 50) { return; }
     if (event.contentRect.width < 50) { return; }
-    if ((this.canvasTimer().nativeElement.width !== Math.floor(event.contentRect.width)) ||
-      (this.canvasTimer().nativeElement.height !== Math.floor(event.contentRect.height))) {
-      this.canvasTimer().nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasTimer().nativeElement.height = Math.floor(event.contentRect.height / 2);
-      this.currentValueLength = 0; // will force resetting the font size
+    if ((this.ttsCanvas().nativeElement.width !== Math.floor(event.contentRect.width)) ||
+      (this.ttsCanvas().nativeElement.height !== Math.floor(event.contentRect.height * 0.4))) {
+      this.ttsCanvas().nativeElement.width = Math.floor(event.contentRect.width);
+      this.ttsCanvas().nativeElement.height = Math.floor(event.contentRect.height * 0.4);
+      this.dtsCanvas().nativeElement.width = Math.floor(event.contentRect.width);
+      this.dtsCanvas().nativeElement.height = Math.floor(event.contentRect.height * 0.4);
+      this.currentTtsLength = 0; // will force resetting the font size
       this.updateCanvas();
     }
   }
@@ -119,28 +126,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
           clearInterval(this.flashInterval);
         }
         this.updateCanvas();
-
-        // Set the time on the server and check if OCS
-        fetch(`/plugins/signalk-racer/startline/timeToStart`, {
-          method: 'PUT', body: JSON.stringify({ value: newValue })
-        }).then(response => {
-          if (response.ok) {
-            response.text().then(text => {
-              const json = JSON.parse(text);
-              if (json.distanceToStart && typeof json.distanceToStart === 'number' ) {
-                if (json.distanceToStart < 0) {
-                  // TODO highlight the onCourseSide display element
-                }
-                if (json.timeToStart && typeof json.timeToStart === 'number' && json.timeToStart === 0 &&
-                  this.widgetProperties.config.nextDashboard >= 0) {
-                 this.DashboardService.navigateTo(this.widgetProperties.config.nextDashboard);
-                }
-              }
-            });
-          }
-        }).catch(error => {
-          console.error(`Error setting timeToStart:`, error);
-        });
       }
     );
   }
@@ -272,8 +257,11 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
 
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx, this.canvasTimer().nativeElement.width, this.canvasTimer().nativeElement.height);
+    if (this.ttsCanvasCtx) {
+      this.canvas.clearCanvas(this.ttsCanvasCtx, this.ttsCanvas().nativeElement.width, this.ttsCanvas().nativeElement.height);
+    }
+    if (this.dtsCanvasCtx) {
+      this.canvas.clearCanvas(this.dtsCanvasCtx, this.dtsCanvas().nativeElement.width, this.dtsCanvas().nativeElement.height);
     }
     clearInterval(this.flashInterval);
     this.destroyDataStreams();
@@ -284,37 +272,39 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
   /* ******************************************************************************************* */
 
   updateCanvas() {
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx, this.canvasTimer().nativeElement.width, this.canvasTimer().nativeElement.height);
+    if (this.ttsCanvasCtx) {
+      this.canvas.clearCanvas(this.ttsCanvasCtx, this.ttsCanvas().nativeElement.width, this.ttsCanvas().nativeElement.height);
+      this.canvas.clearCanvas(this.dtsCanvasCtx, this.dtsCanvas().nativeElement.width, this.dtsCanvas().nativeElement.height);
       this.drawValue();
     }
   }
 
   drawValue() {
-    const canvasTimer = this.canvasTimer().nativeElement;
-    const maxTextWidth = Math.floor(canvasTimer.width * 0.95);
-    const maxTextHeight = Math.floor(canvasTimer.height);
-    let valueText: string;
+    const ttsCanvas = this.ttsCanvas().nativeElement;
+    const dtsCanvas = this.dtsCanvas().nativeElement;
+    const maxTextWidth = Math.floor(ttsCanvas.width * 0.95);
+    const maxTextHeight = Math.floor(ttsCanvas.height * 0.80);
+    let ttsText: string;
 
     if (this.dataValue != null) {
       const v = Math.abs(this.dataValue); // Always positive
       const m = Math.floor(v / 60);
       const s = Math.floor(v % 60);
-      valueText = `${m}:${('0' + s).slice(-2)}`;
+      ttsText = `${m}:${('0' + s).slice(-2)}`;
 
       if (this.dataValue < 0) {
-        valueText = `-${valueText}`;
+        ttsText = `-${ttsText}`;
       }
     } else {
-      valueText = '--';
+      ttsText = '--';
     }
 
     // Check if the length of the string has changed
-    if (this.currentValueLength !== valueText.length) {
-      this.currentValueLength = valueText.length;
-      this.valueFontSize = this.canvas.calculateOptimalFontSize(
-        this.canvasCtx,
-        valueText,
+    if (this.currentTtsLength !== ttsText.length) {
+      this.currentTtsLength = ttsText.length;
+      this.ttsFontSize = this.canvas.calculateOptimalFontSize(
+        this.ttsCanvasCtx,
+        ttsText,
         maxTextWidth,
         maxTextHeight,
         'bold'
@@ -325,31 +315,93 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
     switch (this.zoneState) {
       case States.Alarm:
         if (this.flashOn) {
-          this.canvasCtx.fillStyle = this.textColor;
+          this.ttsCanvasCtx.fillStyle = this.textColor;
         } else {
-          this.canvas.drawRectangle(this.canvasCtx, 0, 0, canvasTimer.width, canvasTimer.height, this.warnColor);
-          this.canvasCtx.fillStyle = this.textColor;
+          this.canvas.drawRectangle(this.ttsCanvasCtx, 0, 0, ttsCanvas.width, ttsCanvas.height, this.warnColor);
+          this.ttsCanvasCtx.fillStyle = this.textColor;
         }
         break;
       case States.Warn:
-        this.canvasCtx.fillStyle = this.warnColor;
+        this.ttsCanvasCtx.fillStyle = this.warnColor;
         break;
       default:
-        this.canvasCtx.fillStyle = this.textColor;
+        this.ttsCanvasCtx.fillStyle = this.textColor;
     }
 
     // Draw the text
+    this.canvas.drawTitle(this.ttsCanvasCtx,
+      'TTS',
+      this.ttsCanvasCtx.fillStyle,
+      'normal',
+      ttsCanvas.width, ttsCanvas.height);
     this.canvas.drawText(
-      this.canvasCtx,
-      valueText,
-      canvasTimer.width / 2,
-      canvasTimer.height / 2,
+      this.ttsCanvasCtx,
+      ttsText,
+      ttsCanvas.width / 2,
+      ttsCanvas.height / 2,
       maxTextWidth,
       maxTextHeight,
       'bold',
-      this.canvasCtx.fillStyle,
+      this.ttsCanvasCtx.fillStyle,
       'center',
       'middle'
+    );
+
+    this.canvas.drawText(
+      this.ttsCanvasCtx,
+      'At: HH:MM:SS',
+      15 * this.canvas.scaleFactor,
+      Math.floor(ttsCanvas.height - 15 * this.canvas.scaleFactor),
+      Math.floor(ttsCanvas.width * 0.25),
+      Math.floor(ttsCanvas.height * 0.15),
+      'normal',
+      this.ttsCanvasCtx.fillStyle,
+      'start',
+      'alphabetic'
+    );
+
+    this.canvas.drawTitle(this.dtsCanvasCtx,
+      'DTS',
+      this.ttsCanvasCtx.fillStyle,
+      'normal',
+      dtsCanvas.width, dtsCanvas.height);
+    this.canvas.drawText(
+      this.dtsCanvasCtx,
+      '34.2',
+      dtsCanvas.width / 2,
+      dtsCanvas.height / 2,
+      maxTextWidth,
+      maxTextHeight,
+      'bold',
+      this.ttsCanvasCtx.fillStyle,
+      'center',
+      'middle'
+    );
+
+    this.canvas.drawText(
+      this.dtsCanvasCtx,
+      'm',
+      Math.floor(dtsCanvas.width - 15 * this.canvas.scaleFactor),
+      Math.floor(dtsCanvas.height - 15 * this.canvas.scaleFactor),
+      Math.floor(dtsCanvas.width * 0.25),
+      Math.floor(dtsCanvas.height * 0.15),
+      'bold',
+      this.ttsCanvasCtx.fillStyle,
+      'end',
+      'alphabetic'
+    );
+
+    this.canvas.drawText(
+      this.dtsCanvasCtx,
+      'Line: 120m   Bias: -5m',
+      15 * this.canvas.scaleFactor,
+      Math.floor(dtsCanvas.height - 15 * this.canvas.scaleFactor),
+      Math.floor(dtsCanvas.width * 0.35),
+      Math.floor(dtsCanvas.height * 0.15),
+      'normal',
+      this.ttsCanvasCtx.fillStyle,
+      'start',
+      'alphabetic'
     );
   }
 }
