@@ -1,10 +1,10 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <div class="racerWrapper" (onResize)="onResized($event)">
-    <div>
-      <canvas id="canvasValue" class="canvas-size" #canvasTimer></canvas>
-    </div>
+    <canvas id="ttsCanvas" class="canvas-tts" #ttsCanvas></canvas>
+    <canvas id="dtsCanvas" class="canvas-dts" #dtsCanvas></canvas>
     <div class="timerBarContainer">
-      <div *ngIf="showAdjustStartLine" class="timer-button-groups line-adjusters-group">
+      @if (showAdjustStartLine) {
+      <div class="timer-button-groups line-adjusters-group">
         <button mat-flat-button class="line-adjust-port-button" (click)="setLinePort()">
           Port End (pin)
         </button>
@@ -15,6 +15,8 @@
           Starboard End (boat)
         </button>
       </div>
+      } @else {
+      }
       <div class="timer-button-groups timer-adjusters-group">
         <button mat-flat-button class="timer-adjust-buttons" (click)="remOneMin()">
           -1
@@ -27,14 +29,17 @@
         </button>
       </div>
       <div class="timer-button-groups timer-countdown-group">
-        <button *ngIf="!timerRunning" mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
-          Start
-        </button>
-        <button *ngIf="timerRunning" mat-flat-button class="timer-start-button" (click)="pauseTimer()">
-          Pause
-        </button>
+        @if (timerRunning) {
+          <button mat-flat-button class="timer-start-button" (click)="pauseTimer()">
+            Pause
+          </button>
+        } @else {
+          <button mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
+            Start
+          </button>
+        }
         <button mat-flat-button class="timer-synch-button button-color-red" (click)="roundToMin()">
-          Synch
+          Sync
         </button>
       </div>
     </div>
