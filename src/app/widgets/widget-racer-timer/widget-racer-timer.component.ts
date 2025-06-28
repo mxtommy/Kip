@@ -12,7 +12,7 @@ import {CanvasService} from '../../core/services/canvas.service';
 import {result} from 'lodash-es';
 
 @Component({
-    selector: 'widget-racertimer',
+    selector: 'widget-racer-timer',
     templateUrl: './widget-racer-timer.component.html',
     styleUrls: ['./widget-racer-timer.component.scss'],
     standalone: true,
