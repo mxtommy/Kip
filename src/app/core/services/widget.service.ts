@@ -296,11 +296,19 @@ export class WidgetService {
       componentClassName: 'WidgetRaceTimerComponent',
     },
     {
+      name: 'Racer Line',
+      description: 'A race start line widget that integrates with the signalk-racer plugin.',
+      icon: 'racerlineWidget',
+      category: 'Components',
+      selector: 'widget-racer-line',
+      componentClassName: 'WidgetRacerLineComponent',
+    },
+    {
       name: 'Racer Timer',
       description: 'A race start timer that integrates withe the signalk-racer plugin. The line can be set and the timer can be started, paused, reset and the countdown duration specified.',
       icon: 'racertimerWidget',
       category: 'Components',
-      selector: 'widget-racertimer',
+      selector: 'widget-racer-timer',
       componentClassName: 'WidgetRacerTimerComponent',
     },
     {

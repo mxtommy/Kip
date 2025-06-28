@@ -1,0 +1,11 @@
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div class="textGenericWrapper" (onResize)="onResized($event)">
+    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
+    <canvas #widgetCanvas class="canvas"></canvas>
+
+    <div class="filler"></div>
+    <div class="buttonContainer">
+      <button>Some Button</button>
+    </div>
+  </div>
+</widget-host>
