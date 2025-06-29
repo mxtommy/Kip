@@ -5,8 +5,10 @@ import {WidgetHostComponent} from '../../core/components/widget-host/widget-host
 import {IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
 import {NgxResizeObserverModule} from 'ngx-resize-observer';
 import {CanvasService} from '../../core/services/canvas.service';
+import {SignalKDeltaService} from '../../core/services/signalk-delta.service';
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
 import {MatButton} from '@angular/material/button';
+import {UUID} from '../../core/utils/uuid';
 
 @Component({
     selector: 'widget-racer-line',
@@ -16,6 +18,7 @@ import {MatButton} from '@angular/material/button';
     imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
+  private signalKDeltaService = inject(SignalKDeltaService);
   private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
   private canvas = inject(CanvasService);
   private dtsValue: number = null;
@@ -93,6 +96,10 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   heightAdjust(height: number): number {
     return height;
+  }
+
+  toRadians(degrees) {
+    return degrees ? degrees * (Math.PI / 180) : null;
   }
 
   ngOnInit(): void {
@@ -279,10 +286,8 @@ private updateCanvas(): void {
   }
 
   private drawLengthBias(): void {
-
-    let valueText = '';
     let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-    valueText = this.lengthValue != null
+    let valueText = this.lengthValue != null
       ? ` Length: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
       : ' Length: --';
 
@@ -333,5 +338,31 @@ private updateCanvas(): void {
 
   setLineEnd(end) {
     console.log('Set line end ', end);
+    const requestId = UUID.create();
+    const message = {
+      context: 'vessels.self',
+      requestId: requestId,
+      put: {
+        path: 'navigation.racing.setStartLine',
+        value: { end, position : 'bow'}
+      }
+    };
+    this.signalKDeltaService.publishDelta(message);
+    return requestId;
+  }
+
+  adjustLineEnd(end: string, delta: number, rotate) {
+    console.log('adjustLineEnd: delta ', delta, ' rotate ', rotate);
+    const requestId = UUID.create();
+    const message = {
+      context: 'vessels.self',
+      requestId: requestId,
+      put: {
+        path: 'navigation.racing.setStartLine',
+        value: { end, delta, rotate : rotate ? this.toRadians(rotate) : null }
+      }
+    };
+    this.signalKDeltaService.publishDelta(message);
+    return requestId;
   }
 }
