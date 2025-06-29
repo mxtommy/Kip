@@ -2,20 +2,64 @@
   position: absolute;
   display: block;
   width: 100%;
-  height: 100%;
+  height: 80%;
   z-index: inherit;
 }
 
 .canvas {
   position: absolute;
+  width: 100%;
+  height: 100%;
   top: 0;
   left: 0;
+  z-index: inherit;
 }
 
 .filler {
   width: 100%;
-  height: 80%;
+  height: 100%;
 }
 
 .buttonsContainer {
+  height: 20%;
+  width: calc(100% - 20px);
+  margin: 10px 10px 10px 10px;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.select-button {
+  width: calc(15% - 10px);
+  height: calc(100% - 5px);
+  margin-left: 5px;
+  margin-right: 10px;
+  --mdc-filled-button-container-color: var(--kip-grey-color);
+}
+
+.port-button {
+  width: calc(40% - 5px);
+  height: calc(100% - 5px);
+  margin-left: 5px;
+  --mdc-filled-button-container-color: var(--kip-port-color);
+}
+
+.starboard-button {
+  width: calc(40% - 5px);
+  height: calc(100% - 5px);
+  margin-left: 5px;
+  --mdc-filled-button-container-color: var(--kip-starboard-color);
+}
+
+.port-small-button {
+  width: calc(20% - 5px);
+  height: calc(100% - 5px);
+  margin-left: 5px;
+  --mdc-filled-button-container-color: var(--kip-port-color);
+}
+
+.starboard-small-button {
+  width: calc(20% - 5px);
+  height: calc(100% - 5px);
+  margin-left: 5px;
+  --mdc-filled-button-container-color: var(--kip-starboard-color);
 }

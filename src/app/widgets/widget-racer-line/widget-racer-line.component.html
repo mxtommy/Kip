@@ -1,11 +1,26 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <div class="textGenericWrapper" (onResize)="onResized($event)">
     <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
-    <canvas #widgetCanvas class="canvas"></canvas>
 
-    <div class="filler"></div>
-    <div class="buttonContainer">
-      <button>Some Button</button>
+    <div class="filler">
+      <canvas #widgetCanvas class="canvas"></canvas>
+    </div>
+    <div class="buttonsContainer">
+      <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
+      @if (mode == 0) {
+        <button mat-flat-button class="port-button" (click)="setLineEnd('port')">Port</button>
+        <button mat-flat-button class="starboard-button" (click)="setLineEnd('stb')">Starboard</button>
+      } @else if (mode == 1) {
+        <button mat-flat-button class="port-small-button">+5m</button>
+        <button mat-flat-button class="port-small-button">-5m</button>
+        <button mat-flat-button class="starboard-small-button">-5m</button>
+        <button mat-flat-button class="starboard-small-button">+5m</button>
+      } @else if (mode == 2) {
+        <button mat-flat-button class="port-small-button">+1&deg;</button>
+        <button mat-flat-button class="port-small-button">-1&deg;</button>
+        <button mat-flat-button class="starboard-small-button">-1&deg;</button>
+        <button mat-flat-button class="starboard-small-button">+1&deg;</button>
+      }
     </div>
   </div>
 </widget-host>
