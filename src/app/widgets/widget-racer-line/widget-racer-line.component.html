@@ -11,15 +11,15 @@
         <button mat-flat-button class="port-button" (click)="setLineEnd('port')">Port</button>
         <button mat-flat-button class="starboard-button" (click)="setLineEnd('stb')">Starboard</button>
       } @else if (mode == 1) {
-        <button mat-flat-button class="port-small-button">+5m</button>
-        <button mat-flat-button class="port-small-button">-5m</button>
-        <button mat-flat-button class="starboard-small-button">-5m</button>
-        <button mat-flat-button class="starboard-small-button">+5m</button>
+        <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 5, 0)">+5m</button>
+        <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', -5, 0)">-5m</button>
+        <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', -5, 0)">-5m</button>
+        <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 5, 0)">+5m</button>
       } @else if (mode == 2) {
-        <button mat-flat-button class="port-small-button">+1&deg;</button>
-        <button mat-flat-button class="port-small-button">-1&deg;</button>
-        <button mat-flat-button class="starboard-small-button">-1&deg;</button>
-        <button mat-flat-button class="starboard-small-button">+1&deg;</button>
+        <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 0, 1)">+1&deg;</button>
+        <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 0, -1)">-1&deg;</button>
+        <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 0, -1)">-1&deg;</button>
+        <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 0, 1)">+1&deg;</button>
       }
     </div>
   </div>
