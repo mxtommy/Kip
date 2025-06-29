@@ -1,18 +1,19 @@
-import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { States } from '../../core/interfaces/signalk-interfaces';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
-import { CanvasService } from '../../core/services/canvas.service';
-import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
+import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild} from '@angular/core';
+import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
+import {States} from '../../core/interfaces/signalk-interfaces';
+import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
+import {IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import {NgxResizeObserverModule} from 'ngx-resize-observer';
+import {CanvasService} from '../../core/services/canvas.service';
+import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
+import {MatButton} from '@angular/material/button';
 
 @Component({
     selector: 'widget-racer-line',
     templateUrl: './widget-racer-line.component.html',
     styleUrls: ['./widget-racer-line.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
@@ -29,7 +30,8 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private maxMinMaxTextHeight = 0;
 
   private flashInterval = null;
-  private isDestroyed = false; // gard against callbacks after destroyed
+  private isDestroyed = false; // guard against callbacks after destroyed
+  protected mode = 0;
 
   protected canvasCtx: CanvasRenderingContext2D;
 
@@ -37,7 +39,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     super();
 
     this.defaultConfig = {
-      displayName: 'Gauge Label',
+      displayName: 'DTS',
       filterSelfPaths: true,
       paths: {
         'dtsPath': {
@@ -74,8 +76,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           sampleTime: 1000
         }
       },
-      numDecimal: 1,
-      numInt: 1,
+      numDecimal: 0,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
@@ -91,7 +92,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   heightAdjust(height: number): number {
-    return height * 0.8;
+    return height;
   }
 
   ngOnInit(): void {
@@ -110,6 +111,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     if (this.isDestroyed) { return; }
     this.startWidget();
     this.updateCanvas();
+    console.log('ngAfterViewInit!');
   }
 
   protected startWidget(): void {
@@ -157,6 +159,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   protected onResized(e: ResizeObserverEntry) {
+    console.log('resize widget');
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) { return; }
 
     this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, e.contentRect);
@@ -224,24 +227,19 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       this.heightAdjust(this.widgetCanvas().nativeElement.height));
   }
 
-/* ******************************************************************************************* */
-/*                                  Canvas                                                     */
-/* ******************************************************************************************* */
 private updateCanvas(): void {
     if (this.canvasCtx) {
       this.canvas.clearCanvas(this.canvasCtx,
         this.widgetCanvas().nativeElement.width,
         this.heightAdjust(this.widgetCanvas().nativeElement.height));
       this.drawValue();
-      this.drawMinMax();
+      this.drawLengthBias();
       this.drawUnit();
     }
   }
 
   private drawValue(): void {
     const valueText = this.getValueText();
-    this.canvas.clearCanvas(this.canvasCtx, this.widgetCanvas().nativeElement.width,
-      this.heightAdjust(this.widgetCanvas().nativeElement.height));
     this.canvas.drawText(
       this.canvasCtx,
       valueText,
@@ -259,12 +257,7 @@ private updateCanvas(): void {
         return '--';
     }
 
-    const cUnit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
-    if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'HH:MM:SS'].includes(cUnit)) {
-        return this.dtsValue.toString();
-    }
-
-    return this.applyDecorations(this.dtsValue.toFixed(this.widgetProperties.config.numDecimal));
+    return this.dtsValue.toFixed(this.widgetProperties.config.numDecimal);
   }
 
   private drawUnit(): void {
@@ -285,16 +278,25 @@ private updateCanvas(): void {
     );
   }
 
-  private drawMinMax(): void {
+  private drawLengthBias(): void {
 
     let valueText = '';
-      valueText = this.lengthValue != null
-        ? ` Length: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}`
-        : ' Length: --';
-      valueText += this.biasValue != null
-        ? ` Bias: ${this.applyDecorations(this.biasValue.toFixed(this.widgetProperties.config.numDecimal))}`
-        : ' Bias: --';
-    valueText = valueText.trim();
+    let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+    valueText = this.lengthValue != null
+      ? ` Length: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+      : ' Length: --';
+
+    valueText += '  Bias:';
+    unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+    if (this.biasValue == null) {
+      valueText += '--';
+    } else if (this.biasValue < -1) {
+      valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
+    } else if (this.biasValue > 1) {
+      valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
+    } else {
+      valueText += 'fair';
+    }
 
     this.canvas.drawText(
       this.canvasCtx,
@@ -321,5 +323,15 @@ private updateCanvas(): void {
         break;
     }
     return txtValue;
+  }
+
+  toggleMode() {
+    console.log('toggle mode ', this.mode);
+    this.mode = (this.mode + 1) % 3;
+    this.updateCanvas();
+  }
+
+  setLineEnd(end) {
+    console.log('Set line end ', end);
   }
 }
