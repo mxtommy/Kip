@@ -29,37 +29,36 @@
 }
 
 .select-button {
-  width: calc(15% - 10px);
+  width: calc(10% - 5px);
   height: calc(100% - 5px);
-  margin-left: 5px;
-  margin-right: 10px;
+  margin: 0;
   --mdc-filled-button-container-color: var(--kip-grey-color);
 }
 
 .port-button {
-  width: calc(40% - 5px);
-  height: calc(100% - 5px);
-  margin-left: 5px;
+  width: 40%;
+  height: 100%;
+  margin: 0;
   --mdc-filled-button-container-color: var(--kip-port-color);
 }
 
 .starboard-button {
-  width: calc(40% - 5px);
-  height: calc(100% - 5px);
-  margin-left: 5px;
+  width: 40%;
+  height: 100%;
+  margin: 0;
   --mdc-filled-button-container-color: var(--kip-starboard-color);
 }
 
 .port-small-button {
-  width: calc(20% - 5px);
-  height: calc(100% - 5px);
-  margin-left: 5px;
+  width: 20%;
+  height: 100%;
+  margin: 0;
   --mdc-filled-button-container-color: var(--kip-port-color);
 }
 
 .starboard-small-button {
-  width: calc(20% - 5px);
-  height: calc(100% - 5px);
-  margin-left: 5px;
+  width: 20%;
+  height: 100%;
+  margin: 0;
   --mdc-filled-button-container-color: var(--kip-starboard-color);
 }
