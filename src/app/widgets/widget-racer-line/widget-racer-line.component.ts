@@ -5,20 +5,20 @@ import {WidgetHostComponent} from '../../core/components/widget-host/widget-host
 import {IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
 import {NgxResizeObserverModule} from 'ngx-resize-observer';
 import {CanvasService} from '../../core/services/canvas.service';
-import {SignalKDeltaService} from '../../core/services/signalk-delta.service';
+import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
 import {MatButton} from '@angular/material/button';
-import {UUID} from '../../core/utils/uuid';
+import {Subscription} from 'rxjs';
 
 @Component({
-    selector: 'widget-racer-line',
-    templateUrl: './widget-racer-line.component.html',
-    styleUrls: ['./widget-racer-line.component.scss'],
-    standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton]
+  selector: 'widget-racer-line',
+  templateUrl: './widget-racer-line.component.html',
+  styleUrls: ['./widget-racer-line.component.scss'],
+  standalone: true,
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private signalKDeltaService = inject(SignalKDeltaService);
+  private signalk = inject(SignalkRequestsService);
   private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
   private canvas = inject(CanvasService);
   private dtsValue: number = null;
@@ -37,6 +37,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   protected mode = 0;
 
   protected canvasCtx: CanvasRenderingContext2D;
+  private skRequestSubscription: Subscription;
 
   constructor() {
     super();
@@ -115,7 +116,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
     this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
-    if (this.isDestroyed) { return; }
+    if (this.isDestroyed) {
+      return;
+    }
     this.startWidget();
     this.updateCanvas();
     console.log('ngAfterViewInit!');
@@ -157,6 +160,12 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       this.biasValue = newValue.data.value;
       this.updateCanvas();
     });
+
+    this.skRequestSubscription = this.signalk.subscribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID === this.widgetProperties.uuid) {
+        console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
+      }
+    });
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -167,7 +176,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   protected onResized(e: ResizeObserverEntry) {
     console.log('resize widget');
-    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) { return; }
+    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
+      return;
+    }
 
     this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, e.contentRect);
 
@@ -176,7 +187,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
 
-    if (this.isDestroyed) { return; }
+    if (this.isDestroyed) {
+      return;
+    }
     this.updateCanvas();
   }
 
@@ -232,9 +245,14 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.canvas.clearCanvas(this.canvasCtx,
       this.widgetCanvas().nativeElement.width,
       this.heightAdjust(this.widgetCanvas().nativeElement.height));
+
+    if (this.skRequestSubscription !== null) {
+      this.skRequestSubscription.unsubscribe();
+      this.skRequestSubscription = null;
+    }
   }
 
-private updateCanvas(): void {
+  private updateCanvas(): void {
     if (this.canvasCtx) {
       this.canvas.clearCanvas(this.canvasCtx,
         this.widgetCanvas().nativeElement.width,
@@ -261,7 +279,7 @@ private updateCanvas(): void {
 
   private getValueText(): string {
     if (this.dtsValue === null) {
-        return '--';
+      return '--';
     }
 
     return this.dtsValue.toFixed(this.widgetProperties.config.numDecimal);
@@ -269,7 +287,9 @@ private updateCanvas(): void {
 
   private drawUnit(): void {
     const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
-    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) { return; }
+    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) {
+      return;
+    }
 
     this.canvas.drawText(
       this.canvasCtx,
@@ -288,10 +308,10 @@ private updateCanvas(): void {
   private drawLengthBias(): void {
     let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
     let valueText = this.lengthValue != null
-      ? ` Length: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-      : ' Length: --';
+      ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+      : ' Line: --';
 
-    valueText += '  Bias:';
+    valueText += '   Bias:';
     unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
     if (this.biasValue == null) {
       valueText += '--';
@@ -337,32 +357,16 @@ private updateCanvas(): void {
   }
 
   setLineEnd(end) {
-    console.log('Set line end ', end);
-    const requestId = UUID.create();
-    const message = {
-      context: 'vessels.self',
-      requestId: requestId,
-      put: {
-        path: 'navigation.racing.setStartLine',
-        value: { end, position : 'bow'}
-      }
-    };
-    this.signalKDeltaService.publishDelta(message);
+    const requestId = this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.widgetProperties.uuid);
+    console.log('Set line end ', end, ' ', requestId);
     return requestId;
   }
 
   adjustLineEnd(end: string, delta: number, rotate) {
-    console.log('adjustLineEnd: delta ', delta, ' rotate ', rotate);
-    const requestId = UUID.create();
-    const message = {
-      context: 'vessels.self',
-      requestId: requestId,
-      put: {
-        path: 'navigation.racing.setStartLine',
-        value: { end, delta, rotate : rotate ? this.toRadians(rotate) : null }
-      }
-    };
-    this.signalKDeltaService.publishDelta(message);
+    const requestId = this.signalk.putRequest('navigation.racing.setStartLine',
+      {end, delta, rotate: rotate ? this.toRadians(rotate) : null},
+      this.widgetProperties.uuid);
+    console.log('adjustLineEnd: delta ', delta, ' rotate ', rotate, ' ', requestId);
     return requestId;
   }
 }
