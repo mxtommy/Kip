@@ -1,47 +1,27 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="racerWrapper" (onResize)="onResized($event)">
-    <canvas id="ttsCanvas" class="canvas-tts" #ttsCanvas></canvas>
-    <canvas id="dtsCanvas" class="canvas-dts" #dtsCanvas></canvas>
-    <div class="timerBarContainer">
-      @if (showAdjustStartLine) {
-      <div class="timer-button-groups line-adjusters-group">
-        <button mat-flat-button class="line-adjust-port-button" (click)="setLinePort()">
-          Port End (pin)
-        </button>
-        <button mat-flat-button class="line-on-course-side" disabled="true">
-          OCS
-        </button>
-        <button mat-flat-button class="line-adjust-stb-button" (click)="setLineStb()">
-          Starboard End (boat)
-        </button>
-      </div>
-      } @else {
+  <div class="textGenericWrapper" (onResize)="onResized($event)">
+    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
+
+    <div class="filler">
+      <canvas #widgetCanvas class="canvas"></canvas>
+    </div>
+    <div class="buttonsContainer">
+      <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
+      @if (mode == 0) {
+        <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('start')">Start</button>
+        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-60)">-1m</button>
+        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+60)">+1m</button>
+      } @else if (mode == 1) {
+        <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('sync')">Sync</button>
+        <button mat-flat-button class="other-button" (click)="sendStartTimerCommand('reset')">Reset</button>
+      } @else if (mode == 2) {
+        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-60)">-1m</button>
+        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-1)">-1s</button>
+        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
+        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+60)">+1m</button>
+      } @else if (mode == 3) {
+        <input class="start-at" type="text" [(ngModel)]="startAtTime" (keyup.enter)="setStartTime(startAtTime)">
       }
-      <div class="timer-button-groups timer-adjusters-group">
-        <button mat-flat-button class="timer-adjust-buttons" (click)="remOneMin()">
-          -1
-        </button>
-        <button mat-flat-button class="timer-reset-button" (click)="resetTimer()">
-          Reset
-        </button>
-        <button mat-flat-button class="timer-adjust-buttons" (click)="addOneMin()">
-          +1
-        </button>
-      </div>
-      <div class="timer-button-groups timer-countdown-group">
-        @if (timerRunning) {
-          <button mat-flat-button class="timer-start-button" (click)="pauseTimer()">
-            Pause
-          </button>
-        } @else {
-          <button mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
-            Start
-          </button>
-        }
-        <button mat-flat-button class="timer-synch-button button-color-red" (click)="roundToMin()">
-          Sync
-        </button>
-      </div>
     </div>
   </div>
 </widget-host>
