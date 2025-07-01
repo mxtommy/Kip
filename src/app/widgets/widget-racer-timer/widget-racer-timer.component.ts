@@ -305,19 +305,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     );
   }
 
-  private applyDecorations(txtValue: string): string {
-    // apply decoration when required
-    switch (this.widgetProperties.config.paths['dtsPath'].convertUnitTo) {
-      case 'percent':
-      case 'percentraw':
-        txtValue += '%';
-        break;
-      default:
-        break;
-    }
-    return txtValue;
-  }
-
   toggleMode() {
     console.log('toggle mode ', this.mode);
     this.mode = (this.mode + 1) % 4;
