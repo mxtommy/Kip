@@ -1,61 +1,81 @@
-import {Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild} from '@angular/core';
-import {Subscription} from 'rxjs';
+import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild} from '@angular/core';
+import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
+import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
 import {IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
 import {NgxResizeObserverModule} from 'ngx-resize-observer';
-import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
-import {TimersService} from '../../core/services/timers.service';
-import {DashboardService} from '../../core/services/dashboard.service';
-import {States} from '../../core/interfaces/signalk-interfaces';
-import {MatButton} from '@angular/material/button';
 import {CanvasService} from '../../core/services/canvas.service';
-import {result} from 'lodash-es';
+import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
+import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
+import {MatButton} from '@angular/material/button';
+import {Subscription} from 'rxjs';
+import {FormsModule} from '@angular/forms';
 
 @Component({
-    selector: 'widget-racer-timer',
-    templateUrl: './widget-racer-timer.component.html',
-    styleUrls: ['./widget-racer-timer.component.scss'],
-    standalone: true,
-    imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton ]
+  selector: 'widget-racer-timer',
+  templateUrl: './widget-racer-timer.component.html',
+  styleUrls: ['./widget-racer-timer.component.scss'],
+  standalone: true,
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton, FormsModule]
 })
-export class WidgetRacerTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  private TimersService = inject(TimersService);
+export class WidgetRacerTimerComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
+  private signalk = inject(SignalkRequestsService);
+  private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
   private canvas = inject(CanvasService);
+  private ttsValue: number = null;
+  private lengthValue: number = null;
+  private biasValue: number = null;
+  protected labelColor: string = undefined;
+  private valueColor: string = undefined;
+  private valueStateColor: string = undefined;
+  private maxValueTextWidth = 0;
+  private maxValueTextHeight = 0;
+  private maxMinMaxTextWidth = 0;
+  private maxMinMaxTextHeight = 0;
 
-  private DashboardService = inject(DashboardService);
-  readonly ttsCanvas = viewChild<ElementRef<HTMLCanvasElement>>('ttsCanvas');
-  readonly dtsCanvas = viewChild<ElementRef<HTMLCanvasElement>>('dtsCanvas');
-  protected dataValue: number = null;
-  private zoneState: string = null;
-
-  // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  private currentTtsLength = 0;
-  private currentDtsLength = 0;
-  private ttsFontSize = 1;
-  private dtsFontSize = 1;
-  private flashOn = false;
   private flashInterval = null;
-  public timerRunning = false;
-  public showAdjustStartLine = true;
-  public showAdjustTimer = false;
-  readonly timeName: string = 'racer';
-  private warnColor: string = null;
-  private warmContrast: string = null;
-  private textColor: string = null;
+  private isDestroyed = false; // guard against callbacks after destroyed
+  protected mode = 0;
 
-  timerSub: Subscription = null;
-
-  private ttsCanvasCtx: CanvasRenderingContext2D = null;
-  private dtsCanvasCtx: CanvasRenderingContext2D = null;
+  protected canvasCtx: CanvasRenderingContext2D;
+  private skRequestSubscription: Subscription;
+  protected startAtTime = 'HH:MM:SS';
 
   constructor() {
     super();
-    console.log('WidgetRacerTimerComponent canvasTimer ', this.ttsCanvas);
 
     this.defaultConfig = {
-      timerLength: 300,
-      nextDashboard: 1,
+      displayName: 'TTS',
+      filterSelfPaths: true,
+      paths: {
+        'ttsPath': {
+          description: 'Time to Start path',
+          path: 'self.navigation.racing.timeToStart',
+          source: 'default',
+          pathType: 'number',
+          isPathConfigurable: true,
+          convertUnitTo: 's',
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
+          sampleTime: 500
+        },
+        'startTimePath': {
+          description: 'Time of the start',
+          path: 'self.navigation.racing.startTime',
+          source: 'default',
+          pathType: 'string',
+          isPathConfigurable: true,
+          convertUnitTo: 'unitless',
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
+          sampleTime: 1000
+        },
+      },
+      numDecimal: 0,
       color: 'contrast',
+      enableTimeout: false,
+      dataTimeout: 5,
+      ignoreZones: false
     };
 
     effect(() => {
@@ -66,16 +86,77 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
     });
   }
 
+  heightAdjust(height: number): number {
+    return height;
+  }
+
   ngOnInit(): void {
     this.validateConfig();
-    this.subscribeTimer();
+  }
+
+  ngAfterViewInit(): void {
+    const canvasElement = this.widgetCanvas().nativeElement;
+    this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, canvasElement.parentElement.getBoundingClientRect());
+    this.canvasCtx = this.widgetCanvas().nativeElement.getContext('2d');
+
+    this.maxValueTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
+    this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
+    this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
+    if (this.isDestroyed) {
+      return;
+    }
     this.startWidget();
+    this.updateCanvas();
+    console.log('ngAfterViewInit!');
   }
 
   protected startWidget(): void {
+    this.unsubscribeDataStream();
+    this.ttsValue = null;
+    this.lengthValue = null;
+    this.biasValue = null;
     this.getColors(this.widgetProperties.config.color);
-    this.ttsCanvasCtx = this.ttsCanvas().nativeElement.getContext('2d');
-    this.dtsCanvasCtx = this.dtsCanvas().nativeElement.getContext('2d');
+    this.observeDataStream('ttsPath', newValue => {
+      this.ttsValue = newValue.data.value;
+      if (!this.widgetProperties.config.ignoreZones) {
+        switch (newValue.state) {
+          case States.Alarm:
+            this.valueStateColor = this.theme().zoneAlarm;
+            break;
+          case States.Warn:
+            this.valueStateColor = this.theme().zoneWarn;
+            break;
+          case States.Alert:
+            this.valueStateColor = this.theme().zoneAlert;
+            break;
+          default:
+            this.valueStateColor = this.valueColor;
+            break;
+        }
+      }
+      this.updateCanvas();
+    });
+
+    this.observeDataStream('startTimePath', newValue => {
+      if (!newValue.data.value) {
+        this.startAtTime = 'HH:MM:SS';
+      } else {
+        const isoTime = new Date(newValue.data.value);
+        this.startAtTime = isoTime.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      }
+      this.updateCanvas();
+    });
+
+    this.skRequestSubscription = this.signalk.subscribeRequest().subscribe(requestResult => {
+      if (requestResult.widgetUUID === this.widgetProperties.uuid) {
+        console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
+      }
+    });
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -84,324 +165,220 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements On
     this.updateCanvas();
   }
 
-  onResized(event: ResizeObserverEntry) {
-    if (event.contentRect.height < 50) { return; }
-    if (event.contentRect.width < 50) { return; }
-    if ((this.ttsCanvas().nativeElement.width !== Math.floor(event.contentRect.width)) ||
-      (this.ttsCanvas().nativeElement.height !== Math.floor(event.contentRect.height * 0.4))) {
-      this.ttsCanvas().nativeElement.width = Math.floor(event.contentRect.width);
-      this.ttsCanvas().nativeElement.height = Math.floor(event.contentRect.height * 0.4);
-      this.dtsCanvas().nativeElement.width = Math.floor(event.contentRect.width);
-      this.dtsCanvas().nativeElement.height = Math.floor(event.contentRect.height * 0.4);
-      this.currentTtsLength = 0; // will force resetting the font size
-      this.updateCanvas();
+  protected onResized(e: ResizeObserverEntry) {
+    console.log('resize widget');
+    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
+      return;
     }
-  }
 
-  private subscribeTimer() {
-    this.timerRunning = this.TimersService.isRunning(this.timeName);
-    const length = this.widgetProperties.config.timerLength;
-    this.timerSub = this.TimersService.createTimer(this.timeName, -length, 1000).subscribe(
-      newValue => {
-        this.dataValue = newValue;
+    this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, e.contentRect);
 
-        if (newValue > 0) {
-          this.zoneState = States.Normal;
-        } else if (newValue > -10) {
-          this.zoneState = States.Alarm;
-        } else if (newValue > -30) {
-          this.zoneState = States.Warn;
-        } else {
-          this.zoneState = States.Normal;
-        }
+    this.maxValueTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
+    this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
+    this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
 
-        // start flashing if alarm
-        if (this.zoneState === States.Alarm && !this.flashInterval) {
-          this.flashInterval = setInterval(() => {
-            this.flashOn = !this.flashOn;
-            this.updateCanvas();
-          }, 500); // used to flash stuff in alarm
-        } else if (this.zoneState !== States.Alarm) {
-          // stop alarming if not in alarm state
-          clearInterval(this.flashInterval);
-        }
-        this.updateCanvas();
-      }
-    );
-  }
-
-  public startTimer() {
-    this.TimersService.startTimer(this.timeName);
-    this.timerRunning = true;
-  }
-
-  public resetTimer() {
-    this.unsubscribeTimer();
-    this.TimersService.deleteTimer(this.timeName);
-    this.timerRunning = false;
-    this.subscribeTimer();
-  }
-
-  public pauseTimer() {
-    this.TimersService.stopTimer(this.timeName);
-    this.timerRunning = false;
-  }
-
-  public roundToMin() {
-    let v = this.dataValue;
-    if (this.dataValue < 0) {
-      v = v * -1; // always positive
+    if (this.isDestroyed) {
+      return;
     }
-    const seconds = v % 60;
-
-    if (this.dataValue > 0) {
-      if (seconds > 30) {
-        this.TimersService.setTimer(this.timeName, this.dataValue + (60 - seconds));
-      } else {
-        this.TimersService.setTimer(this.timeName, this.dataValue - seconds);
-      }
-    } else {
-      if (seconds > 30) {
-        this.TimersService.setTimer(this.timeName, this.dataValue - (60 - seconds));
-      } else {
-        this.TimersService.setTimer(this.timeName, this.dataValue + seconds);
-      }
-    }
-  }
-  private setLineEnd(end: 'port' | 'stb') {
-    const url = `/plugins/signalk-racer/startline/${end}`;
-    fetch(url, { method: 'PUT' })
-      .then(async response => {
-        if (!response.ok) {
-          const err = await response.text();
-          console.error(`Failed to set ${end} end: ${response.status} - ${err}`);
-        } else {
-          console.log(`✅ Set start line ${end} end successfully.`);
-        }
-      })
-      .catch(error => {
-        console.error(`Error setting ${end} end:`, error);
-        alert(`Error setting ${end} end: ${error.message}`);
-      });
+    this.updateCanvas();
   }
 
-  setLinePort() {
-    this.setLineEnd('port');
-  }
-
-  setLineStb() {
-    this.setLineEnd('stb');
-  }
-
-  addOneMin() {
-      this.TimersService.setTimer(this.timeName, this.dataValue + 60);
-  }
-
-  remOneMin() {
-      this.TimersService.setTimer(this.timeName, this.dataValue - 60);
-  }
-
-  private getColors(color: string) {
+  private getColors(color: string): void {
     switch (color) {
       case 'contrast':
-        this.textColor = this.theme().contrast;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().contrastDim;
+        this.valueColor = this.theme().contrast;
         break;
       case 'blue':
-        this.textColor = this.theme().blue;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().blueDim;
+        this.valueColor = this.theme().blue;
         break;
       case 'green':
-        this.textColor = this.theme().green;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().greenDim;
+        this.valueColor = this.theme().green;
         break;
       case 'pink':
-        this.textColor = this.theme().pink;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().pinkDim;
+        this.valueColor = this.theme().pink;
         break;
       case 'orange':
-        this.textColor = this.theme().orange;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().orangeDim;
+        this.valueColor = this.theme().orange;
         break;
       case 'purple':
-        this.textColor = this.theme().purple;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().purpleDim;
+        this.valueColor = this.theme().purple;
         break;
       case 'grey':
-        this.textColor = this.theme().grey;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().greyDim;
+        this.valueColor = this.theme().grey;
         break;
       case 'yellow':
-        this.textColor = this.theme().yellow;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().yellowDim;
+        this.valueColor = this.theme().yellow;
         break;
       default:
-        this.textColor = this.theme().contrast;
-        this.warnColor = this.theme().zoneAlarm;
-        this.warmContrast = this.theme().zoneAlarm;
+        this.labelColor = this.theme().contrastDim;
+        this.valueColor = this.theme().contrast;
         break;
     }
-  }
-
-  private unsubscribeTimer() {
-      this.timerSub?.unsubscribe();
+    this.valueStateColor = this.valueColor;
   }
 
   ngOnDestroy() {
-    this.timerSub?.unsubscribe();
-    if (this.ttsCanvasCtx) {
-      this.canvas.clearCanvas(this.ttsCanvasCtx, this.ttsCanvas().nativeElement.width, this.ttsCanvas().nativeElement.height);
-    }
-    if (this.dtsCanvasCtx) {
-      this.canvas.clearCanvas(this.dtsCanvasCtx, this.dtsCanvas().nativeElement.width, this.dtsCanvas().nativeElement.height);
-    }
-    clearInterval(this.flashInterval);
+    this.isDestroyed = true;
     this.destroyDataStreams();
+    if (this.flashInterval) {
+      clearInterval(this.flashInterval);
+      this.flashInterval = null;
+    }
+    this.canvas.clearCanvas(this.canvasCtx,
+      this.widgetCanvas().nativeElement.width,
+      this.heightAdjust(this.widgetCanvas().nativeElement.height));
+
+    if (this.skRequestSubscription !== null) {
+      this.skRequestSubscription.unsubscribe();
+      this.skRequestSubscription = null;
+    }
   }
 
-/* ******************************************************************************************* */
-  /*                                  Canvas                                                     */
-  /* ******************************************************************************************* */
-
-  updateCanvas() {
-    if (this.ttsCanvasCtx) {
-      this.canvas.clearCanvas(this.ttsCanvasCtx, this.ttsCanvas().nativeElement.width, this.ttsCanvas().nativeElement.height);
-      this.canvas.clearCanvas(this.dtsCanvasCtx, this.dtsCanvas().nativeElement.width, this.dtsCanvas().nativeElement.height);
+  private updateCanvas(): void {
+    if (this.canvasCtx) {
+      this.canvas.clearCanvas(this.canvasCtx,
+        this.widgetCanvas().nativeElement.width,
+        this.heightAdjust(this.widgetCanvas().nativeElement.height));
       this.drawValue();
+      this.drawStartAt();
     }
   }
 
-  drawValue() {
-    const ttsCanvas = this.ttsCanvas().nativeElement;
-    const dtsCanvas = this.dtsCanvas().nativeElement;
-    const maxTextWidth = Math.floor(ttsCanvas.width * 0.95);
-    const maxTextHeight = Math.floor(ttsCanvas.height * 0.80);
-    let ttsText: string;
+  private drawValue(): void {
+    const valueText = this.getValueText();
+    this.canvas.drawText(
+      this.canvasCtx,
+      valueText,
+      Math.floor(this.widgetCanvas().nativeElement.width / 2),
+      Math.floor((this.heightAdjust(this.widgetCanvas().nativeElement.height) / 2) * 1.15),
+      this.maxValueTextWidth,
+      this.maxValueTextHeight,
+      'bold',
+      this.valueStateColor
+    );
+  }
 
-    if (this.dataValue != null) {
-      const v = Math.abs(this.dataValue); // Always positive
-      const m = Math.floor(v / 60);
-      const s = Math.floor(v % 60);
-      ttsText = `${m}:${('0' + s).slice(-2)}`;
+  private getValueText(): string {
+    if (this.ttsValue === null) {
+      return '--';
+    }
 
-      if (this.dataValue < 0) {
-        ttsText = `-${ttsText}`;
-      }
+    const seconds = this.ttsValue;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      const mm = Math.floor(minutes % 60);
+      const ss = Math.floor(seconds % 60);
+      return `${hours.toString()}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
     } else {
-      ttsText = '--';
+      const mm = Math.floor(minutes % 60);
+      const ss = Math.floor(seconds % 60);
+      return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
     }
+  }
 
-    // Check if the length of the string has changed
-    if (this.currentTtsLength !== ttsText.length) {
-      this.currentTtsLength = ttsText.length;
-      this.ttsFontSize = this.canvas.calculateOptimalFontSize(
-        this.ttsCanvasCtx,
-        ttsText,
-        maxTextWidth,
-        maxTextHeight,
-        'bold'
-      );
-    }
+  private drawStartAt(): void {
+    const valueText = this.startAtTime != null
+      ? ` Start at: ${this.startAtTime}`
+      : ' Start at: HH:MM:SS';
 
-    // Set the text color based on the zone state
-    switch (this.zoneState) {
-      case States.Alarm:
-        if (this.flashOn) {
-          this.ttsCanvasCtx.fillStyle = this.textColor;
-        } else {
-          this.canvas.drawRectangle(this.ttsCanvasCtx, 0, 0, ttsCanvas.width, ttsCanvas.height, this.warnColor);
-          this.ttsCanvasCtx.fillStyle = this.textColor;
-        }
-        break;
-      case States.Warn:
-        this.ttsCanvasCtx.fillStyle = this.warnColor;
+    this.canvas.drawText(
+      this.canvasCtx,
+      valueText,
+      10 * this.canvas.scaleFactor,
+      Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) - 10 * this.canvas.scaleFactor),
+      this.maxMinMaxTextWidth,
+      this.maxMinMaxTextHeight,
+      'normal',
+      this.valueColor,
+      'start',
+      'alphabetic'
+    );
+  }
+
+  private applyDecorations(txtValue: string): string {
+    // apply decoration when required
+    switch (this.widgetProperties.config.paths['dtsPath'].convertUnitTo) {
+      case 'percent':
+      case 'percentraw':
+        txtValue += '%';
         break;
       default:
-        this.ttsCanvasCtx.fillStyle = this.textColor;
+        break;
+    }
+    return txtValue;
+  }
+
+  toggleMode() {
+    console.log('toggle mode ', this.mode);
+    this.mode = (this.mode + 1) % 4;
+    switch (this.mode) {
+      case 0:
+        if (this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS') {
+          this.mode = 1;
+        }
+        break;
+      case 1:
+        if (!this.startAtTime || this.startAtTime === 'HH:MM:SS') {
+          this.mode = 2;
+        }
+        break;
+      default:
+    }
+    this.updateCanvas();
+  }
+
+  sendStartTimerCommand(command) {
+    const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command}, this.widgetProperties.uuid);
+    console.log('Start Timer Command ', command, ' ', requestId);
+    switch (command) {
+      case 'start':
+        this.mode = 1;
+        this.updateCanvas();
+        break;
+      case 'reset':
+        this.mode = 0;
+        this.startAtTime = 'HH:MM:SS';
+        this.updateCanvas();
+        break;
+      default:
+    }
+    return requestId;
+  }
+
+  adjustStartTime(delta: number) {
+    const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command: 'adjust', delta}, this.widgetProperties.uuid);
+    console.log('Adjust Timer: delta=', delta, ' ', requestId);
+    return requestId;
+  }
+
+  setStartTime(startAtTime: string) {
+    const now = new Date();
+    const [hours, minutes, seconds] = startAtTime.split(':').map(Number);
+
+    const date = new Date(now); // clone the current date
+    date.setHours(hours, minutes, seconds, 0);
+
+    // If the scheduled time is in the past, move it to the next day
+    if (date <= now) {
+      date.setDate(date.getDate() + 1);
     }
 
-    // Draw the text
-    this.canvas.drawTitle(this.ttsCanvasCtx,
-      'TTS',
-      this.ttsCanvasCtx.fillStyle,
-      'normal',
-      ttsCanvas.width, ttsCanvas.height);
-    this.canvas.drawText(
-      this.ttsCanvasCtx,
-      ttsText,
-      ttsCanvas.width / 2,
-      ttsCanvas.height / 2,
-      maxTextWidth,
-      maxTextHeight,
-      'bold',
-      this.ttsCanvasCtx.fillStyle,
-      'center',
-      'middle'
+    const requestId = this.signalk.putRequest(
+      'navigation.racing.setStartTime',
+      { command: 'set', startTime: date.toISOString() },
+      this.widgetProperties.uuid
     );
 
-    this.canvas.drawText(
-      this.ttsCanvasCtx,
-      'At: HH:MM:SS',
-      15 * this.canvas.scaleFactor,
-      Math.floor(ttsCanvas.height - 15 * this.canvas.scaleFactor),
-      Math.floor(ttsCanvas.width * 0.25),
-      Math.floor(ttsCanvas.height * 0.15),
-      'normal',
-      this.ttsCanvasCtx.fillStyle,
-      'start',
-      'alphabetic'
-    );
-
-    this.canvas.drawTitle(this.dtsCanvasCtx,
-      'DTS',
-      this.ttsCanvasCtx.fillStyle,
-      'normal',
-      dtsCanvas.width, dtsCanvas.height);
-    this.canvas.drawText(
-      this.dtsCanvasCtx,
-      '34.2',
-      dtsCanvas.width / 2,
-      dtsCanvas.height / 2,
-      maxTextWidth,
-      maxTextHeight,
-      'bold',
-      this.ttsCanvasCtx.fillStyle,
-      'center',
-      'middle'
-    );
-
-    this.canvas.drawText(
-      this.dtsCanvasCtx,
-      'm',
-      Math.floor(dtsCanvas.width - 15 * this.canvas.scaleFactor),
-      Math.floor(dtsCanvas.height - 15 * this.canvas.scaleFactor),
-      Math.floor(dtsCanvas.width * 0.25),
-      Math.floor(dtsCanvas.height * 0.15),
-      'bold',
-      this.ttsCanvasCtx.fillStyle,
-      'end',
-      'alphabetic'
-    );
-
-    this.canvas.drawText(
-      this.dtsCanvasCtx,
-      'Line: 120m   Bias: -5m',
-      15 * this.canvas.scaleFactor,
-      Math.floor(dtsCanvas.height - 15 * this.canvas.scaleFactor),
-      Math.floor(dtsCanvas.width * 0.35),
-      Math.floor(dtsCanvas.height * 0.15),
-      'normal',
-      this.ttsCanvasCtx.fillStyle,
-      'start',
-      'alphabetic'
-    );
+    console.log('Set Timer: startAtTime=', startAtTime, ' →', date.toISOString(), 'requestId=', requestId);
   }
 }

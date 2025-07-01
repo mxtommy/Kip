@@ -1,97 +1,70 @@
-.racerWrapper {
-  height: 100%;
-  width: 100%;
-}
-.canvas-tts {
-    position: absolute;
-    width: 100%;
-    height: 40%;
-    top: 0;
-    left: 0;
-    z-index: inherit;
-}
-.canvas-dts {
-    position: absolute;
-    width: 100%;
-    height: 40%;
-    top: 40%;
-    left: 0;
-    z-index: inherit;
-}
-
-.button-color-red {
-  --mdc-filled-button-container-color: var(--kip-port-color);
-  --mdc-filled-button-label-text-color: var(--kip-contrast-color);
-}
-
-.timerBarContainer {
+.textGenericWrapper {
   position: absolute;
-  left: 0px;
-  bottom: 8%;
-  height: auto;
+  display: block;
+  width: 100%;
+  height: 80%;
+  z-index: inherit;
+}
+
+.canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: inherit;
+}
+
+.filler {
+  width: 100%;
+  height: 100%;
+}
+
+.buttonsContainer {
+  height: 20%;
   width: calc(100% - 20px);
-  margin: 0px 10px 0px 10px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: stretch;
-  align-content: stretch;
-  gap: 20px;
+  margin: 10px 10px 10px 10px;
+  z-index: 100;
+  pointer-events: auto;
 }
 
-.timer-button-groups {
-  min-width: 247px;
-  max-width: 100%;
-  --mdc-filled-button-container-shape: 5px;
+.select-button {
+  width: calc(10% - 5px);
+  height: calc(100% - 5px);
+  margin: 0;
+  --mdc-filled-button-container-color: var(--kip-grey-color);
 }
 
-.line-adjusters-group {
-  flex-grow: 1;
-  flex-shrink: 1;
+.main-button {
+  width: 40%;
+  height: 100%;
+  margin: 0;
+  --mdc-filled-button-container-color: var(--kip-port-color);
 }
 
-.line-adjust-port-button {
-  width: calc(40% - 5px);
-  margin-right: 5px;
+.other-button {
+  width: 40%;
+  height: 100%;
+  margin: 0;
+  --mdc-filled-button-container-color: var(--kip-blue-color);
 }
 
-.line-on-course-side {
-  width: calc(20% - 10px);
-  margin: 5px;
-  color: red;
+.main-small-button {
+  width: 20%;
+  height: 100%;
+  margin: 0;
+  --mdc-filled-button-container-color: var(--kip-port-color);
 }
 
-.line-adjust-stb-button {
-  width: calc(40% - 5px);
-  margin-left: 5px;
+.other-small-button {
+  width: 20%;
+  height: 100%;
+  margin: 0;
+  --mdc-filled-button-container-color: var(--kip-blue-color);
 }
 
-.timer-adjusters-group {
-  flex-grow: 1;
-  flex-shrink: 1;
-}
-
-.timer-countdown-group {
-  flex-grow: 3;
-  flex-shrink: 3;
-}
-
-.timer-synch-button {
-  width: calc(50% - 5px);
-  margin-left: 5px;
-}
-
-.timer-start-button {
-  width: calc(50% - 5px);
-  margin-right: 5px;
-}
-
-.timer-reset-button {
-  width: calc(40% - 0px);
-  margin: 0px 10px 0px 10px;
-}
-
-.timer-adjust-buttons {
-  width: calc(30% - 10px);
+.start-at {
+  width: 80%;
+  height: 100%;
+  font-size-adjust: 1.0;
 }
