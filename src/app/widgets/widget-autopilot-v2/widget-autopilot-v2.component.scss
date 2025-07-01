@@ -29,7 +29,7 @@
 .ap-modes {
   grid-area: modes;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 1fr 3fr;
   grid-template-rows: minmax(50px, 1fr);
   gap: 0.5rem 0.5rem;
 }
@@ -55,7 +55,15 @@
   background-color: var(--mat-sys-background);
 }
 
-.autopilot-btn {
+.ap-error-icon {
+  padding-top: 15px;
+}
+
+.ap-error-text {
+  color: var(--mat-sys-error-container);
+}
+
+.ap-btn {
   width: 100%;
   border-radius: 12px;
   align-items: center;
@@ -67,9 +75,19 @@
   ));
 }
 
+.ap-btn-ctrlbar {
+  padding: 4px;
+}
+
 .ap-btn-modes {
   @include mat.button-overrides((
     filled-horizontal-padding: 0rem
+  ));
+}
+
+.ap-btn-notifications {
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-yellow-dim-color),
   ));
 }
 
@@ -78,6 +96,13 @@
     filled-horizontal-padding: 0rem,
     filled-container-color: var(--kip-zone-alarm-color),
   ));
+}
+
+.svg-icon-ctrlbar {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
 }
 
 .svg-icon {
@@ -90,7 +115,7 @@
 .svg-element {
   width: 100%;
   height: 100%;
-  padding: 0.5em;
+  padding: 0em;
   text {
     font-family: Roboto;
     font-size: 25px;
@@ -126,10 +151,59 @@
   }
 }
 
+.svg-element-msg {
+  font-family: Roboto;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  font-style: normal;
+  font-variant: normal;
+  font-stretch: normal;
+  font-variant-ligatures: normal;
+  font-variant-caps: normal;
+  font-variant-numeric: normal;
+  font-variant-east-asian: normal;
+  fill: var(--kip-contrast-color);
+  fill-opacity: 1;
+  stroke: none;
+}
+
+.svg-element-note {
+  font-family: Roboto;
+  font-size: 0.5em;
+  font-weight: normal;
+  text-align: center;
+  text-anchor: middle;
+  font-style: italic;
+  font-variant: normal;
+  font-stretch: normal;
+  font-variant-ligatures: normal;
+  font-variant-caps: normal;
+  font-variant-numeric: normal;
+  font-variant-east-asian: normal;
+  fill: var(--kip-contrast-dim-color);
+  fill-opacity: 1;
+  stroke: none;
+}
+
+.svg-element-error-txt {
+  fill: var(--mat-sys-error-container);
+}
+
+.svg-element-notifications {
+  fill: var(--kip-contrast-color);
+}
+
+.svg-element-clear-notifications {
+  fill: var(--kip-contrast-color);
+  fill-opacity: 1;
+  stroke: none;
+}
+
 .svg-modes {
-  padding: 0em;
   text {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 
@@ -182,21 +256,23 @@
 
 .svg-menu-box {
   fill: var(--kip-blue-color);
-  stroke: var(--mat-sys-background);
+  stroke: none;
+  border-radius: 12px;
 }
 
 .svg-menu {
-  max-width: 90vw;
+  max-width: 80%;
   background: transparent;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
   z-index: 20;
   display: block;
   font-family: Roboto;
+  font-size: 1.1rem;
+  font-weight: bold;
   text-anchor: middle;
   text-align: center;
   alignment-baseline: middle;
-  font-size: 1.5rem;
   text {
     fill: var(--kip-contrast-color);
   }
@@ -204,10 +280,17 @@
 
 .svg-menu-item {
   fill: transparent;
-  stroke: var(--kip-contrast-dimmer-color);
-  stroke-width: 2px;
+  stroke: none;
 }
 
 .cancel {
   fill: var(--kip-grey-color);
+  stroke: none;
+}
+
+.counterText {
+  font-weight: bold;
+  font-size: 7em;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }

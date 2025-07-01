@@ -68,6 +68,7 @@ export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.compassHeading && !changes.compassHeading.firstChange) {
       this.updateRotation(this.compassFaceplate, changes.compassHeading.currentValue);
+      this.headingValue = changes.compassHeading.currentValue.toFixed(0);
     }
 
     if (changes.apState && !changes.apState.firstChange) {

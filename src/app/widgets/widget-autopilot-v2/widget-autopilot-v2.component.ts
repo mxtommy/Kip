@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked, computed } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
@@ -13,10 +13,19 @@ import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.compone
 import { WidgetDatetimeComponent } from "../widget-datetime/widget-datetime.component";
 import { DashboardService } from '../../core/services/dashboard.service';
 import { isEqual } from 'lodash-es';
-import { MatMenuModule } from '@angular/material/menu';
+import { INotification } from '../../core/services/notifications.service';
+import { MatBadgeModule } from '@angular/material/badge';
 
+interface CommandDefinition {
+  path: string;
+  value: string | number;
+}
 
-const commands = {
+interface CommandsMap {
+  [key: string]: CommandDefinition;
+}
+
+const commands: CommandsMap = {
   "auto":    {"path":"self.steering.autopilot.state","value":"auto"},
   "wind":    {"path":"self.steering.autopilot.state","value":"wind"},
   "route":   {"path":"self.steering.autopilot.state","value":"route"},
@@ -41,7 +50,7 @@ const timeoutBlink = 250;
     templateUrl: './widget-autopilot-v2.component.html',
     styleUrls: ['./widget-autopilot-v2.component.scss'],
     standalone: true,
-    imports: [WidgetHostComponent, SvgAutopilotV2Component, MatButton, MatMenuModule, TitleCasePipe, MatIconModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
+    imports: [WidgetHostComponent, SvgAutopilotV2Component, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotV2Component extends BaseWidgetComponent implements OnInit, OnDestroy {
   private signalkRequestsService = inject(SignalkRequestsService);
@@ -55,7 +64,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected readonly stbTackBtn = viewChild.required<MatButton>('stbTackBtn');
   protected readonly prtTackBtn = viewChild.required<MatButton>('prtTackBtn');
   protected readonly modesBtn = viewChild.required<MatButton>('modesBtn');
-  protected readonly engageBtn = viewChild.required<MatButton>('engageBtn');
+  protected readonly engageBtn = viewChild.required<MatButton>('disengageBtn');
   protected readonly advWptBtn = viewChild.required<MatButton>('advWptBtn');
   // protected readonly dodgeBtn = viewChild.required<MatButton>('dodgeBtn');
 
@@ -68,30 +77,33 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected windAngleApparent: number = 0;
   protected rudder: number = 0;
 
-  private skApNotificationSub: Subscription;
   private skRequestSub: Subscription; // signalk-Request result observer
 
-  protected menuOpen = false;
+  protected menuOpen = signal<boolean>(false);
 
-  // Widget messaging var
+  // Widget messaging countdown
+  protected countdownOverlayVisibility = signal<string>('hidden');
+  protected countdownOverlayText = signal<string>('');
   protected msgOverlayVisibility = signal<string>('hidden');
-  protected msgOverlayInnerHTML = signal<string>('');
+  protected msgOverlayText = signal<string>('');
   protected errorOverlayVisibility = signal<string>('hidden');
-  protected errorOverlayInnerText = signal<string>('');
+  protected errorOverlayText = signal<string>('');
   private handleCountDownCounterTimeout = null;
   private handleConfirmActionTimeout = null;
   private handleMessageTimeout = null;
-  private handleReceiveTimeout = null;
   private handleDisplayErrorTimeout = null;
-  private countDownValue: number = 0;
+  protected countDownValue: number = -1;
   private actionToBeConfirmed: string = "";
   private skPathToAck: string = "";
-  private isWChecked: boolean = false;       // used for Wind toggle
-  private isTChecked: boolean = false;       // used for Track toggle
-  private isApConnected: boolean = false;
   private notificationsArray = {};
-  private alarmsCount: number = 0;
-  private notificationTest = {};
+  protected hasNotifications = computed(() => Object.keys(this.notificationsArray).length);
+  protected alarmsCount = signal<number>(0);
+
+  protected menuItems = [
+    { label: 'Cancel', action: 'cancel' }
+  ];
+  protected readonly itemHeight = 60;
+  protected readonly padding = 20;
 
   private embedWidgetColor = 'contrast';
   protected apGrid = signal('none');
@@ -421,6 +433,11 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
+            this.menuItems = [
+              { label: 'Auto', action: 'auto' },
+              { label: 'Wind', action: 'wind' },
+              { label: 'Cancel', action: 'cancel' }
+            ];
             break;
           case "auto":
             this.modesBtn().disabled = false;
@@ -433,6 +450,11 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
+            this.menuItems = [
+              { label: 'Wind', action: 'wind' },
+              { label: 'Route', action: 'route' },
+              { label: 'Cancel', action: 'cancel' }
+            ];
             break;
           case "wind":
             this.modesBtn().disabled = false;
@@ -445,6 +467,10 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
             this.stbTackBtn().disabled = false;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
+            this.menuItems = [
+              { label: 'Auto', action: 'auto' },
+              { label: 'Cancel', action: 'cancel' }
+            ];
             break;
           case "route":
             this.modesBtn().disabled = false;
@@ -457,6 +483,10 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = false;
             // this.dodgeBtn().disabled = false;
+            this.menuItems = [
+              { label: 'Auto', action: 'auto' },
+              { label: 'Cancel', action: 'cancel' }
+            ];
             break;
           default:
             this.modesBtn().disabled = true;
@@ -469,6 +499,12 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
+            this.menuItems = [
+              { label: 'Auto', action: 'auto' },
+              { label: 'Wind', action: 'wind' },
+              { label: 'Route', action: 'route' },
+              { label: 'Cancel', action: 'cancel' }
+            ];
         }
         this.apGrid.set(mode ? 'grid' : 'none');
       });
@@ -478,6 +514,11 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   ngOnInit() {
     this.validateConfig();
     this.startWidget();
+  }
+
+  protected addTestMsg() {
+    this.setNotificationMessage({"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift", "method":['sound', 'visual'], "timestamp": new Date().toISOString()}});
+    this.setNotificationMessage({"path":"notifications.autopilot.PilotWarningTack","value":{"state":"alarm","message":"Pilot Warning Tack", "method":['sound', 'visual'], "timestamp": new Date().toISOString()}});
   }
 
   private configureEmbedWidgets(): void {
@@ -514,8 +555,8 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     this.unsubscribeSKRequest();
   }
 
-  startAllSubscriptions() {
-    this.observeDataStream('autopilotState', newValue => this.apState.set(newValue.data.value));
+  private startAllSubscriptions(): void {
+    this.observeDataStream('autopilotState', newValue => this.apState.set("auto"));//newValue.data.value));
     this.observeDataStream('autopilotTarget', newValue => this.autopilotTarget = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('rudderAngle', newValue => {
         if (newValue.data.value === null) {
@@ -540,12 +581,12 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     this.subscribeSKRequest();
   }
 
-  stopAllSubscriptions() {
+  private stopAllSubscriptions(): void {
     this.unsubscribeDataStream();
     this.unsubscribeSKRequest();
   }
 
-  subscribeSKRequest() {
+  private subscribeSKRequest(): void {
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         this.commandReceived(requestResult);
@@ -553,47 +594,27 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     });
   }
 
-  unsubscribeSKRequest() {
+  private unsubscribeSKRequest(): void {
     if (this.skRequestSub !== null) {
       this.skRequestSub.unsubscribe();
       this.skRequestSub = null;
     }
   }
 
-  protected toggleMenu():void {
-    this.menuOpen = !this.menuOpen;
+  protected toggleMenu(): void {
+    this.menuOpen.set(!this.menuOpen());
   }
 
-  protected closeMenu():void {
-    this.menuOpen = false;
+  protected onMenuItemClick(action: string): void {
+    if (action === 'cancel') {
+      this.toggleMenu();
+      return;
+    }
+    this.buildAndSendCommand(action);
+    this.menuOpen.set(false);
   }
 
-  protected onMenuItemClick(action: string):void {
-    this.apState.set(action)
-    this.closeMenu();
-  }
-
-  startApHead() {
-    this.startAllSubscriptions();
-    this.widgetProperties.config.autoStart = true; // save power-on state to autostart or not
-    this.isApConnected = true;
-  }
-
-  stopApHead() {
-    this.modesBtn().disabled = true;
-    this.plus1Btn().disabled = true;
-    this.plus10Btn().disabled = true;
-    this.minus1Btn().disabled = true;
-    this.minus10Btn().disabled = true;
-    this.prtTackBtn().disabled = true;
-    this.stbTackBtn().disabled = true;
-
-    this.isApConnected = false; // hide ap screen
-    this.stopAllSubscriptions();
-    this.widgetProperties.config.autoStart = false; // save power on state to autostart or not
-  }
-
-  buildAndSendCommand(cmd: string) {
+  protected buildAndSendCommand(cmd: string) {
     let cmdAction = commands[cmd];
     if (typeof cmdAction === 'undefined') {
       alert('Unknown Autopilot command: ' + cmd);
@@ -602,20 +623,20 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     if ((this.actionToBeConfirmed !== '') && (this.actionToBeConfirmed !== cmd)) {
       this.clearConfirmCmd();
     }
-    if (((cmd === 'tackToPort')||(cmd === 'tackToStarboard'))&&(this.actionToBeConfirmed === '')) {
+    if (((cmd === 'tackToPort') || (cmd === 'tackToStarboard')) && (this.actionToBeConfirmed === '')) {
       this.confirmTack(cmd);
       return null;
     }
-    if ((cmd === 'route')&&(this.apState() === 'route')&&(this.actionToBeConfirmed === '')) {
+    if ((cmd === 'route') && (this.apState() === 'route') && (this.actionToBeConfirmed === '')) {
       this.confirmAdvanceWaypoint(cmd);
       return null;
     }
     if (this.actionToBeConfirmed === cmd) {
       this.clearConfirmCmd();
-      if ((cmd === 'tackToPort')||(cmd === 'tackToStarboard')) {
+      if ((cmd === 'tackToPort') || (cmd === 'tackToStarboard')) {
         this.sendCommand(cmdAction);
       }
-      if ((cmd === 'route')&&(this.apState() === 'route')) {
+      if ((cmd === 'route') && (this.apState() === 'route')) {
         this.sendCommand(commands['advanceWaypoint']);
       }
       return null;
@@ -623,32 +644,34 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     this.sendCommand(cmdAction);
   }
 
-  confirmAdvanceWaypoint(cmd: string) {
-    let message: string = "Repeat key <b>[Next Wpt]</b><br>to confirm<br>Advance Waypoint";
+  private confirmAdvanceWaypoint(cmd: string): void {
+    let message: string = "Repeat key [Adv Wpt] to confirm";
     this.startConfirmCmd(cmd, message);
   }
 
-  confirmTack(cmd: string) {
-    let message = "Repeat same key<br>to confirm<br>tack to ";
+  private confirmTack(cmd: string): void {
+    let direction: string = "";
     if (cmd === "tackToPort") {
-      message += "port";
+      direction = "Port";
       this.actionToBeConfirmed = cmd;
     } else if (cmd === "tackToStarboard") {
-        message += "starboard";
-        this.actionToBeConfirmed = cmd;
-      } else {
-          this.actionToBeConfirmed = "";
-          return null;
-        }
+      direction = "Starboard";
+      this.actionToBeConfirmed = cmd;
+    } else {
+      this.actionToBeConfirmed = "";
+      return null;
+    }
+
+    let message = `Repeat [Tack ${direction}] key to confirm`;
     this.startConfirmCmd(cmd, message);
   }
 
-  sendCommand(cmdAction) {
-    let requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
+  private sendCommand(cmdAction: CommandDefinition): void {
+    const requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
     console.log("AP Action:\n" + JSON.stringify(cmdAction));
   }
 
-  commandReceived(cmdResult: skRequest) {
+  private commandReceived(cmdResult: skRequest): void {
     if (cmdResult.statusCode != 200){
       this.displayApError(cmdResult);
     } else {
@@ -656,38 +679,136 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     }
   }
 
-  startConfirmCmd(cmd: string, message: string) {
- }
+  private startConfirmCmd(cmd: string, message: string): void {
+    this.countDownValue = countDownDefault;
+    this.actionToBeConfirmed = cmd;
 
-  clearConfirmCmd() : void {
+    this.countdownOverlayText.set(message);
+    this.countdownOverlayVisibility.set("visible");
+
+    this.updateCountDownCounter(message);
+
+    clearTimeout(this.handleConfirmActionTimeout);
+
+    this.handleConfirmActionTimeout = setTimeout(() => {
+      this.countdownOverlayVisibility.set("hidden");
+      this.countdownOverlayText.set("");
+      this.actionToBeConfirmed = "";
+    }, 5000);
   }
 
-  updateCountDownCounter(message: string) {
+  private clearConfirmCmd(): void {
+    clearTimeout(this.handleConfirmActionTimeout);
+    clearTimeout(this.handleCountDownCounterTimeout);
+    this.countDownValue = -1;
+    this.countdownOverlayVisibility.set("hidden");
+    this.countdownOverlayText.set("");
+    this.actionToBeConfirmed = '';
+    return null;
   }
 
-  displayApError(cmdResult: skRequest) {
-  }
-
-  getNextNotification(skPath: string): void {
-
-  }
-
-  setNotificationMessage(value) {
-
-  }
-
-  notificationToValue(skPathToAck: string): string {
-    let message: string = this.notificationsArray[skPathToAck];
-    if (typeof message == "undefined") {
-      message = "No alarm present...";
+  private updateCountDownCounter(message: string): void {
+    if (this.countDownValue > 0) {
+      clearTimeout(this.handleCountDownCounterTimeout);
+      this.countdownOverlayText.set(message);
+      this.countDownValue -= 1;
+      this.handleCountDownCounterTimeout = setTimeout(() => {
+        this.updateCountDownCounter(message);
+      }, 1000);
+    } else {
+      this.countDownValue = -1;
+        clearTimeout(this.handleCountDownCounterTimeout);
     }
-    return message;
   }
 
-  notificationScroll() {
+  private displayApError(cmdResult: skRequest): void {
+    let errMsg = cmdResult.statusCode + " - " + cmdResult.statusCodeDescription + ".";
+    if (cmdResult.message){
+      errMsg = errMsg + "Server Message: " + cmdResult.message + ".";
+    }
+    this.errorOverlayText.set(errMsg);
+    this.errorOverlayVisibility.set("visible");
 
+    clearTimeout(this.handleDisplayErrorTimeout);
+    this.handleDisplayErrorTimeout = setTimeout(() => {
+      this.errorOverlayVisibility.set("hidden");
+      this.errorOverlayText.set("");
+    }, 6000);
   }
 
-  sendSilence() {
+  private getNextNotification(skPath: string): string {
+    //TODO: getNextNotification not used anymore, remove?
+    const notificationsKeys = Object.keys(this.notificationsArray);
+    let newSkPathToAck: string = "";
+    let index: number = 0;
+    if (notificationsKeys.length > 0) {
+      if (typeof skPath !== "undefined") {
+        index = notificationsKeys.indexOf(skPath) + 1;
+      } else {
+          index = 0;
+        }
+      if (notificationsKeys.length <= index) {
+        index = 0;
+      }
+      newSkPathToAck = notificationsKeys[index];
+    }
+    return newSkPathToAck;
+  }
+
+  private setNotificationMessage(msg: INotification): void {
+    if (typeof msg.path !== 'undefined') {
+      msg.path = msg.path.replace('notifications.', '');
+      if (typeof msg.value !== 'undefined') {
+        if (msg.value.state === 'normal') {
+          if (this.msgOverlayText() === this.notificationsArray[msg.path]) {
+            this.msgOverlayText.set("");
+          }
+          delete this.notificationsArray[msg.path]
+        } else {
+            this.notificationsArray[msg.path] = msg.value.message.replace("Pilot", "");
+            this.msgOverlayText.set(this.notificationsArray[msg.path]);
+          }
+      }
+    }
+    this.alarmsCount.set(Object.keys(this.notificationsArray).length);
+    if (this.alarmsCount() > 0) {
+      if (this.msgOverlayText() == "") {
+        this.msgOverlayText.set(Object.keys(this.notificationsArray)[0]);
+      }
+    } else {
+      this.alarmsCount.set(0);
+      this.msgOverlayText.set("");
+    }
+  }
+
+  protected notificationScroll(): void {
+    if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
+      this.skPathToAck = Object.keys(this.notificationsArray)[0];
+    }
+    this.skPathToAck = this.getNextNotification(this.skPathToAck);
+    this.msgOverlayText.set(this.notificationsArray[this.skPathToAck]);
+    this.msgOverlayVisibility.set('visible');
+    clearTimeout(this.handleMessageTimeout);
+    this.handleMessageTimeout = setTimeout(() => {
+      this.msgOverlayText.set("");
+      this.msgOverlayVisibility.set('hidden');
+    }, 2000);
+  }
+
+  protected sendSilence(): void {
+    if (this.msgOverlayVisibility() !== 'visible') {
+      this.msgOverlayVisibility.set('visible');
+
+      if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
+        this.skPathToAck = Object.keys(this.notificationsArray)[0];
+      }
+    } else {
+      if (this.skPathToAck !== "") {
+        this.sendCommand({"path":"notifications." + this.skPathToAck + ".state","value":"normal"});
+      }
+      this.msgOverlayVisibility.set('hidden');
+    }
+
+    this.msgOverlayText.set(this.notificationsArray[this.skPathToAck]);
   }
 }
