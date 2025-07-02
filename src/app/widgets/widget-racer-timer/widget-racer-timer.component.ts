@@ -10,6 +10,7 @@ import {WidgetTitleComponent} from '../../core/components/widget-title/widget-ti
 import {MatButton} from '@angular/material/button';
 import {Subscription} from 'rxjs';
 import {FormsModule} from '@angular/forms';
+import {DashboardService} from '../../core/services/dashboard.service';
 
 @Component({
   selector: 'widget-racer-timer',
@@ -20,11 +21,11 @@ import {FormsModule} from '@angular/forms';
 })
 export class WidgetRacerTimerComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
+  protected dashboard = inject(DashboardService);
   private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
   private canvas = inject(CanvasService);
   private ttsValue: number = null;
-  private lengthValue: number = null;
-  private biasValue: number = null;
+  private dtsValue: number = null;
   protected labelColor: string = undefined;
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
@@ -46,6 +47,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.defaultConfig = {
       displayName: 'TTS',
+      nextDashboard: 2,
       filterSelfPaths: true,
       paths: {
         'ttsPath': {
@@ -65,13 +67,23 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           source: 'default',
           pathType: 'string',
           isPathConfigurable: true,
-          convertUnitTo: 'unitless',
+          convertUnitTo: '',
           showPathSkUnitsFilter: true,
           pathSkUnitsFilter: null,
           sampleTime: 1000
         },
+        'dtsPath': {
+          description: 'Distance to Start Line path, used to determine OCS',
+          path: 'self.navigation.racing.distanceStartline',
+          source: 'default',
+          pathType: 'number',
+          isPathConfigurable: true,
+          convertUnitTo: 'm',
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: null,
+          sampleTime: 500
+        },
       },
-      numDecimal: 0,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
@@ -114,8 +126,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   protected startWidget(): void {
     this.unsubscribeDataStream();
     this.ttsValue = null;
-    this.lengthValue = null;
-    this.biasValue = null;
+    this.dtsValue = null;
     this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('ttsPath', newValue => {
       this.ttsValue = newValue.data.value;
@@ -135,6 +146,15 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
             break;
         }
       }
+      if (this.ttsValue === 0) {
+        this.mode = 1;
+        if (this.widgetProperties.config.nextDashboard >= 0 && (!this.dtsValue || this.dtsValue >= 0)) {
+          this.dashboard.navigateTo(this.widgetProperties.config.nextDashboard);
+          return;
+        }
+      } else if (this.mode === 0) {
+        this.mode = 1;
+      }
       this.updateCanvas();
     });
 
@@ -152,11 +172,19 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       this.updateCanvas();
     });
 
+    this.observeDataStream('dtsPath', newValue => {
+      this.dtsValue = newValue.data.value;
+    });
+
     this.skRequestSubscription = this.signalk.subscribeRequest().subscribe(requestResult => {
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
       }
     });
+  }
+
+  private isStartTimerRunning(): boolean {
+    return this.ttsValue > 0 && this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS';
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -310,12 +338,12 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.mode = (this.mode + 1) % 4;
     switch (this.mode) {
       case 0:
-        if (this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS') {
+        if (this.isStartTimerRunning()) {
           this.mode = 1;
         }
         break;
       case 1:
-        if (!this.startAtTime || this.startAtTime === 'HH:MM:SS') {
+        if (this.ttsValue !== 0 && !this.isStartTimerRunning()) {
           this.mode = 2;
         }
         break;
@@ -330,12 +358,10 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     switch (command) {
       case 'start':
         this.mode = 1;
-        this.updateCanvas();
         break;
       case 'reset':
-        this.mode = 0;
         this.startAtTime = 'HH:MM:SS';
-        this.updateCanvas();
+        this.mode = 0;
         break;
       default:
     }
