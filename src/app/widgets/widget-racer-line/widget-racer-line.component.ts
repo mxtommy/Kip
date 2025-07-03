@@ -87,7 +87,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
-      ignoreZones: false
+      ignoreZones: true
     };
 
     effect(() => {
@@ -133,7 +133,17 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('dtsPath', newValue => {
       this.dtsValue = newValue.data.value;
-      if (!this.widgetProperties.config.ignoreZones) {
+      if (this.widgetProperties.config.ignoreZones) {
+        if (this.dtsValue < 0) {
+          this.dtsColor = this.theme().zoneAlarm;
+        } else if (this.dtsValue < 10) {
+          this.dtsColor = this.theme().zoneWarn;
+        } else if (this.dtsValue < 20) {
+          this.dtsColor = this.theme().zoneAlert;
+        } else {
+          this.dtsColor = this.valueColor;
+        }
+      } else {
         switch (newValue.state) {
           case States.Alarm:
             this.dtsColor = this.theme().zoneAlarm;

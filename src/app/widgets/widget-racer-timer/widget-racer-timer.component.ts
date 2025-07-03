@@ -51,7 +51,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.defaultConfig = {
       displayName: 'TTS',
-      nextDashboard: 2,
+      nextDashboard: 1,
       filterSelfPaths: true,
       paths: {
         'ttsPath': {
@@ -91,7 +91,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
-      ignoreZones: false
+      ignoreZones: true
     };
 
     effect(() => {
@@ -132,8 +132,19 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.dtsValue = null;
     this.getColors(this.widgetProperties.config.color);
     this.observeDataStream('ttsPath', newValue => {
+      const lastTtsValue = this.ttsValue;
       this.ttsValue = newValue.data.value;
-      if (!this.widgetProperties.config.ignoreZones) {
+      if (this.widgetProperties.config.ignoreZones) {
+        if (this.ttsValue === 0) {
+          this.valueStateColor = this.valueColor;
+        } else if (this.ttsValue < 10) {
+          this.valueStateColor = this.ttsValue % 2 === 1 ? this.theme().zoneAlarm : this.theme().zoneWarn;
+        } else if (this.ttsValue < 60) {
+          this.valueStateColor = this.theme().zoneAlert;
+        } else {
+          this.valueStateColor = this.valueColor;
+        }
+      } else {
         switch (newValue.state) {
           case States.Alarm:
             this.valueStateColor = this.theme().zoneAlarm;
@@ -151,14 +162,17 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       }
       if (this.ttsValue === 0) {
         this.mode = 1;
-        if (this.widgetProperties.config.nextDashboard >= 0 && (!this.dtsValue || this.dtsValue >= 0)) {
-          this.dashboard.navigateTo(this.widgetProperties.config.nextDashboard);
-          return;
+        if (this.dtsValue < 0) {
+          this.valueStateColor = this.theme().zoneAlarm;
         }
       } else if (this.mode === 0 && this.isStartTimerRunning()) {
         this.mode = 1;
       }
       this.updateCanvas();
+      if (this.widgetProperties.config.nextDashboard > 0 &&
+        lastTtsValue === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
+        this.dashboard.setActiveDashboard(this.widgetProperties.config.nextDashboard);
+      }
     });
 
     this.observeDataStream('startTimePath', newValue => {
