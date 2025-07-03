@@ -254,11 +254,14 @@ export interface IWidgetSvcConfig {
   /** Used by IFrame widget: allow input on iframe or not */
   allowInput?: boolean;
 
-  /** Use by racetimer and racertimer widget */
+  /** Use by race-timer-widget */
   timerLength?: number;
 
-  /** Use by racertimer widget */
+  /** Use by racer-timer-widget */
   nextDashboard?: number;
+
+  /** Play beeps in racer-timer-widget */
+  playBeeps?: boolean;
 }
 
 /**
