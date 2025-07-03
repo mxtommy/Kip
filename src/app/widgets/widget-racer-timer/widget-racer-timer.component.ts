@@ -52,6 +52,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.defaultConfig = {
       displayName: 'TTS',
       nextDashboard: 1,
+      playBeeps: true,
       filterSelfPaths: true,
       paths: {
         'ttsPath': {
@@ -126,6 +127,22 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     console.log('ngAfterViewInit!');
   }
 
+  protected beep(frequency = 440, duration = 100) {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency; // Hz
+    gainNode.gain.value = 0.1; // volume
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration / 1000);
+  }
+
   protected startWidget(): void {
     this.unsubscribeDataStream();
     this.ttsValue = null;
@@ -169,6 +186,17 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         this.mode = 1;
       }
       this.updateCanvas();
+      if (this.widgetProperties.config.playBeeps && this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS' && lastTtsValue !== 0) {
+        if (this.ttsValue === 0) {
+          this.beep(500, 1000);
+        } else if (this.ttsValue < 10 ) {
+          this.beep(450, 100);
+        } else if (this.ttsValue < 60 && this.ttsValue % 10 === 0) {
+          this.beep(400, 150);
+        } else if (this.ttsValue % 60 === 0) {
+          this.beep(350, 200);
+        }
+      }
       if (this.widgetProperties.config.nextDashboard > 0 &&
         lastTtsValue === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
         this.dashboard.setActiveDashboard(this.widgetProperties.config.nextDashboard);
