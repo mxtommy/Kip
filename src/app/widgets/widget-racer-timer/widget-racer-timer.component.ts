@@ -22,8 +22,9 @@ import {DashboardService} from '../../core/services/dashboard.service';
 export class WidgetRacerTimerComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
   protected dashboard = inject(DashboardService);
-  private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
-  private canvas = inject(CanvasService);
+  private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
+  private startAtCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('startAtCanvas');
+  private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
   protected labelColor: string = undefined;
@@ -31,14 +32,17 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private valueStateColor: string = undefined;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
-  private maxMinMaxTextWidth = 0;
-  private maxMinMaxTextHeight = 0;
+  private maxStartAtTextWidth = 0;
+  private maxStartAtTextHeight = 0;
 
   private flashInterval = null;
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
 
-  protected canvasCtx: CanvasRenderingContext2D;
+  protected timeToSContext: CanvasRenderingContext2D;
+  protected timeToSElement: HTMLCanvasElement;
+  protected startAtContext: CanvasRenderingContext2D;
+  protected startAtElement: HTMLCanvasElement;
   private skRequestSubscription: Subscription;
   protected startAtTime = 'HH:MM:SS';
 
@@ -98,23 +102,22 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     });
   }
 
-  heightAdjust(height: number): number {
-    return height;
-  }
-
   ngOnInit(): void {
     this.validateConfig();
   }
 
   ngAfterViewInit(): void {
-    const canvasElement = this.widgetCanvas().nativeElement;
-    this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, canvasElement.parentElement.getBoundingClientRect());
-    this.canvasCtx = this.widgetCanvas().nativeElement.getContext('2d');
+    this.timeToSElement = this.timeToSCanvas().nativeElement;
+    this.startAtElement = this.startAtCanvas().nativeElement;
+    this.canvasService.setHighDPISize(this.timeToSElement, this.timeToSElement.parentElement.getBoundingClientRect());
+    this.canvasService.setHighDPISize(this.startAtElement, this.startAtElement.parentElement.getBoundingClientRect());
+    this.timeToSContext = this.timeToSElement.getContext('2d');
+    this.startAtContext = this.startAtElement.getContext('2d');
 
-    this.maxValueTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
-    this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
-    this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
+    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
+    this.maxStartAtTextWidth = Math.floor(this.startAtElement.width * 0.57);
+    this.maxStartAtTextHeight = Math.floor(this.startAtElement.height * 0.1);
     if (this.isDestroyed) {
       return;
     }
@@ -152,7 +155,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           this.dashboard.navigateTo(this.widgetProperties.config.nextDashboard);
           return;
         }
-      } else if (this.mode === 0) {
+      } else if (this.mode === 0 && this.isStartTimerRunning()) {
         this.mode = 1;
       }
       this.updateCanvas();
@@ -161,6 +164,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.observeDataStream('startTimePath', newValue => {
       if (!newValue.data.value) {
         this.startAtTime = 'HH:MM:SS';
+        if (this.mode === 1) {
+          this.mode = 0;
+        }
       } else {
         const isoTime = new Date(newValue.data.value);
         this.startAtTime = isoTime.toLocaleTimeString([], {
@@ -199,12 +205,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       return;
     }
 
-    this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, e.contentRect);
+    this.canvasService.setHighDPISize(this.timeToSElement, e.contentRect);
+    this.canvasService.setHighDPISize(this.startAtElement, e.contentRect);
 
-    this.maxValueTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
-    this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
-    this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
+    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
+    this.maxStartAtTextWidth = Math.floor(this.timeToSElement.width * 0.57);
+    this.maxStartAtTextHeight = Math.floor(this.timeToSElement.height * 0.1);
 
     if (this.isDestroyed) {
       return;
@@ -261,9 +268,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvas.clearCanvas(this.canvasCtx,
-      this.widgetCanvas().nativeElement.width,
-      this.heightAdjust(this.widgetCanvas().nativeElement.height));
+    this.canvasService.clearCanvas(this.timeToSContext,
+      this.timeToSElement.width,
+      this.timeToSElement.height);
 
     if (this.skRequestSubscription !== null) {
       this.skRequestSubscription.unsubscribe();
@@ -272,27 +279,27 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   private updateCanvas(): void {
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx,
-        this.widgetCanvas().nativeElement.width,
-        this.heightAdjust(this.widgetCanvas().nativeElement.height));
-      this.drawValue();
+      this.drawTimeToStart();
       this.drawStartAt();
-    }
   }
 
-  private drawValue(): void {
-    const valueText = this.getValueText();
-    this.canvas.drawText(
-      this.canvasCtx,
-      valueText,
-      Math.floor(this.widgetCanvas().nativeElement.width / 2),
-      Math.floor((this.heightAdjust(this.widgetCanvas().nativeElement.height) / 2) * 1.15),
-      this.maxValueTextWidth,
-      this.maxValueTextHeight,
-      'bold',
-      this.valueStateColor
-    );
+  private drawTimeToStart(): void {
+    if (this.timeToSContext) {
+      this.canvasService.clearCanvas(this.timeToSContext,
+        this.timeToSElement.width,
+        this.timeToSElement.height);
+      const valueText = this.getValueText();
+      this.canvasService.drawText(
+        this.timeToSContext,
+        valueText,
+        Math.floor(this.timeToSElement.width / 2),
+        Math.floor((this.timeToSElement.height / 2) * 1.15),
+        this.maxValueTextWidth,
+        this.maxValueTextHeight,
+        'bold',
+        this.valueStateColor
+      );
+    }
   }
 
   private getValueText(): string {
@@ -315,22 +322,28 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   private drawStartAt(): void {
-    const valueText = this.startAtTime != null
-      ? ` Start at: ${this.startAtTime}`
-      : ' Start at: HH:MM:SS';
+    if (this.startAtContext) {
+      this.canvasService.clearCanvas(this.startAtContext,
+        this.startAtElement.width,
+        this.startAtElement.height);
 
-    this.canvas.drawText(
-      this.canvasCtx,
-      valueText,
-      10 * this.canvas.scaleFactor,
-      Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) - 10 * this.canvas.scaleFactor),
-      this.maxMinMaxTextWidth,
-      this.maxMinMaxTextHeight,
-      'normal',
-      this.valueColor,
-      'start',
-      'alphabetic'
-    );
+      const valueText = this.startAtTime != null
+        ? ` Start at: ${this.startAtTime}`
+        : ' Start at: HH:MM:SS';
+
+      this.canvasService.drawText(
+        this.startAtContext,
+        valueText,
+        10 * this.canvasService.scaleFactor,
+        Math.floor(this.startAtElement.height - 10 * this.canvasService.scaleFactor),
+        this.maxStartAtTextWidth,
+        this.maxStartAtTextHeight,
+        'normal',
+        this.valueColor,
+        'start',
+        'alphabetic'
+      );
+    }
   }
 
   toggleMode() {

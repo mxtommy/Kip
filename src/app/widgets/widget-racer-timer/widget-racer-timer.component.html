@@ -3,7 +3,8 @@
     <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
 
     <div class="filler">
-      <canvas #widgetCanvas class="canvas"></canvas>
+      <canvas #timeToSCanvas class="canvas"></canvas>
+      <canvas #startAtCanvas class="canvas"></canvas>
     </div>
     <div class="buttonsContainer">
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
@@ -15,10 +16,10 @@
         <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('sync')">Sync</button>
         <button mat-flat-button class="other-button" (click)="sendStartTimerCommand('reset')">Reset</button>
       } @else if (mode == 2) {
-        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-60)">-1m</button>
+        <button mat-flat-button class="main-small-button" (click)="adjustStartTime(-60)">-1m</button>
         <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-1)">-1s</button>
         <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
-        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+60)">+1m</button>
+        <button mat-flat-button class="main-small-button" (click)="adjustStartTime(+60)">+1m</button>
       } @else if (mode == 3) {
         <input class="start-at" type="text" [(ngModel)]="startAtTime" (keyup.enter)="setStartTime(startAtTime)">
       }
