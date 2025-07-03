@@ -19,24 +19,27 @@ import {Subscription} from 'rxjs';
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
-  private widgetCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('widgetCanvas');
-  private canvas = inject(CanvasService);
+  private dToLineCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dToLineCanvas');
+  protected dToLineContext: CanvasRenderingContext2D;
+  protected dToLineElement: HTMLCanvasElement;
+  private lenBiasCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('lenBiasCanvas');
+  protected lenBiasContext: CanvasRenderingContext2D;
+  protected lenBiasElement: HTMLCanvasElement;
+  private canvasService = inject(CanvasService);
   private dtsValue: number = null;
   private lengthValue: number = null;
   private biasValue: number = null;
   protected labelColor: string = undefined;
   private valueColor: string = undefined;
-  private valueStateColor: string = undefined;
+  private dtsColor: string = undefined;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
-  private maxMinMaxTextWidth = 0;
-  private maxMinMaxTextHeight = 0;
+  private maxLenBiasTextWidth = 0;
+  private maxLenBiasTextHeight = 0;
 
-  private flashInterval = null;
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
 
-  protected canvasCtx: CanvasRenderingContext2D;
   private skRequestSubscription: Subscription;
 
   constructor() {
@@ -94,11 +97,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       }
     });
   }
-
-  heightAdjust(height: number): number {
-    return height;
-  }
-
   toRadians(degrees) {
     return degrees ? degrees * (Math.PI / 180) : null;
   }
@@ -108,14 +106,17 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   ngAfterViewInit(): void {
-    const canvasElement = this.widgetCanvas().nativeElement;
-    this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, canvasElement.parentElement.getBoundingClientRect());
-    this.canvasCtx = this.widgetCanvas().nativeElement.getContext('2d');
+    this.dToLineElement = this.dToLineCanvas().nativeElement;
+    this.lenBiasElement = this.lenBiasCanvas().nativeElement;
+    this.canvasService.setHighDPISize(this.dToLineElement, this.dToLineElement.parentElement.getBoundingClientRect());
+    this.canvasService.setHighDPISize(this.lenBiasElement, this.lenBiasElement.parentElement.getBoundingClientRect());
+    this.dToLineContext = this.dToLineElement.getContext('2d');
+    this.lenBiasContext = this.dToLineElement.getContext('2d');
 
-    this.maxValueTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
-    this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
-    this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
+    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.70);
+    this.maxLenBiasTextWidth = Math.floor(this.lenBiasElement.width * 0.57);
+    this.maxLenBiasTextHeight = Math.floor(this.lenBiasElement.height * 0.1);
     if (this.isDestroyed) {
       return;
     }
@@ -135,16 +136,16 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (!this.widgetProperties.config.ignoreZones) {
         switch (newValue.state) {
           case States.Alarm:
-            this.valueStateColor = this.theme().zoneAlarm;
+            this.dtsColor = this.theme().zoneAlarm;
             break;
           case States.Warn:
-            this.valueStateColor = this.theme().zoneWarn;
+            this.dtsColor = this.theme().zoneWarn;
             break;
           case States.Alert:
-            this.valueStateColor = this.theme().zoneAlert;
+            this.dtsColor = this.theme().zoneAlert;
             break;
           default:
-            this.valueStateColor = this.valueColor;
+            this.dtsColor = this.valueColor;
             break;
         }
       }
@@ -180,12 +181,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       return;
     }
 
-    this.canvas.setHighDPISize(this.widgetCanvas().nativeElement, e.contentRect);
+    this.canvasService.setHighDPISize(this.dToLineElement, e.contentRect);
+    this.canvasService.setHighDPISize(this.lenBiasElement, e.contentRect);
 
-    this.maxValueTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.70);
-    this.maxMinMaxTextWidth = Math.floor(this.widgetCanvas().nativeElement.width * 0.57);
-    this.maxMinMaxTextHeight = Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.1);
+    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.70);
+    this.maxLenBiasTextWidth = Math.floor(this.lenBiasElement.width * 0.57);
+    this.maxLenBiasTextHeight = Math.floor(this.lenBiasElement.height * 0.1);
 
     if (this.isDestroyed) {
       return;
@@ -232,19 +234,14 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         this.valueColor = this.theme().contrast;
         break;
     }
-    this.valueStateColor = this.valueColor;
+    this.dtsColor = this.valueColor;
   }
 
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    if (this.flashInterval) {
-      clearInterval(this.flashInterval);
-      this.flashInterval = null;
-    }
-    this.canvas.clearCanvas(this.canvasCtx,
-      this.widgetCanvas().nativeElement.width,
-      this.heightAdjust(this.widgetCanvas().nativeElement.height));
+    this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
+    this.canvasService.clearCanvas(this.lenBiasContext, this.lenBiasElement.width, this.lenBiasElement.height);
 
     if (this.skRequestSubscription !== null) {
       this.skRequestSubscription.unsubscribe();
@@ -253,35 +250,32 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private updateCanvas(): void {
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx,
-        this.widgetCanvas().nativeElement.width,
-        this.heightAdjust(this.widgetCanvas().nativeElement.height));
-      this.drawValue();
-      this.drawLengthBias();
-      this.drawUnit();
-    }
+      this.drawDToLine();
+      this.drawLenBias();
   }
 
-  private drawValue(): void {
-    const valueText = this.getValueText();
-    this.canvas.drawText(
-      this.canvasCtx,
-      valueText,
-      Math.floor(this.widgetCanvas().nativeElement.width / 2),
-      Math.floor((this.heightAdjust(this.widgetCanvas().nativeElement.height) / 2) * 1.15),
-      this.maxValueTextWidth,
-      this.maxValueTextHeight,
-      'bold',
-      this.valueStateColor
-    );
+  private drawDToLine(): void {
+    if (this.dToLineCanvas) {
+      this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
+      const valueText = this.getValueText();
+      this.canvasService.drawText(
+        this.dToLineContext,
+        valueText,
+        Math.floor(this.dToLineElement.width / 2),
+        Math.floor((this.dToLineElement.height / 2) * 1.15),
+        this.maxValueTextWidth,
+        this.maxValueTextHeight,
+        'bold',
+        this.dtsColor
+      );
+      this.drawUnit();
+    }
   }
 
   private getValueText(): string {
     if (this.dtsValue === null) {
       return '--';
     }
-
     return this.dtsValue.toFixed(this.widgetProperties.config.numDecimal);
   }
 
@@ -291,13 +285,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       return;
     }
 
-    this.canvas.drawText(
-      this.canvasCtx,
+    this.canvasService.drawText(
+      this.dToLineContext,
       unit,
-      Math.floor(this.widgetCanvas().nativeElement.width - 10 * this.canvas.scaleFactor),
-      Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) - 10 * this.canvas.scaleFactor),
-      Math.floor(this.widgetCanvas().nativeElement.width * 0.25),
-      Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) * 0.15),
+      Math.floor(this.dToLineElement.width - 10 * this.canvasService.scaleFactor),
+      Math.floor(this.dToLineElement.height - 10 * this.canvasService.scaleFactor),
+      Math.floor(this.dToLineElement.width * 0.25),
+      Math.floor(this.dToLineElement.height * 0.15),
       'bold',
       this.valueColor,
       'end',
@@ -305,36 +299,39 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     );
   }
 
-  private drawLengthBias(): void {
-    let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-    let valueText = this.lengthValue != null
-      ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-      : ' Line: --';
+  private drawLenBias(): void {
+    if (this.lenBiasCanvas) {
+      this.canvasService.clearCanvas(this.lenBiasContext, this.lenBiasElement.width, this.lenBiasElement.height);
+      let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+      let valueText = this.lengthValue != null
+        ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+        : ' Line: --';
 
-    valueText += '   Bias:';
-    unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-    if (this.biasValue == null) {
-      valueText += '--';
-    } else if (this.biasValue < -1) {
-      valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
-    } else if (this.biasValue > 1) {
-      valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
-    } else {
-      valueText += 'fair';
+      valueText += '   Bias:';
+      unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+      if (this.biasValue == null) {
+        valueText += '--';
+      } else if (this.biasValue < -1) {
+        valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
+      } else if (this.biasValue > 1) {
+        valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
+      } else {
+        valueText += 'fair';
+      }
+
+      this.canvasService.drawText(
+        this.lenBiasContext,
+        valueText,
+        10 * this.canvasService.scaleFactor,
+        Math.floor(this.lenBiasElement.height - 10 * this.canvasService.scaleFactor),
+        this.maxLenBiasTextWidth,
+        this.maxLenBiasTextHeight,
+        'normal',
+        this.valueColor,
+        'start',
+        'alphabetic'
+      );
     }
-
-    this.canvas.drawText(
-      this.canvasCtx,
-      valueText,
-      10 * this.canvas.scaleFactor,
-      Math.floor(this.heightAdjust(this.widgetCanvas().nativeElement.height) - 10 * this.canvas.scaleFactor),
-      this.maxMinMaxTextWidth,
-      this.maxMinMaxTextHeight,
-      'normal',
-      this.valueColor,
-      'start',
-      'alphabetic'
-    );
   }
 
   private applyDecorations(txtValue: string): string {
