@@ -3,7 +3,8 @@
     <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
 
     <div class="filler">
-      <canvas #widgetCanvas class="canvas"></canvas>
+      <canvas #dToLineCanvas class="canvas"></canvas>
+      <canvas #lenBiasCanvas class="canvas"></canvas>
     </div>
     <div class="buttonsContainer">
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
