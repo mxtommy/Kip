@@ -40,6 +40,18 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
   }
 };
 
+// Translate units from sk metadata to appropriate type category
+const typeFromUnits = (units: string): string => {
+  if (!units) {
+    return undefined;
+  }
+  // So far the only thing that has units and isn't a number is a Date.
+  if (units === "RFC 3339 (UTC)") {
+    return "Date";
+  }
+  return "number";
+};
+
 /**
  * The `IPathRegistration` interface represents a registration object used to track a path's Subjects.
  * Each registration is used to share the same Subject with multiple Observers.
@@ -348,7 +360,7 @@ export class DataService implements OnDestroy {
           path: metaPath,
           pathValue: undefined,
           pathTimestamp: undefined,
-          type: meta.meta.units ? "number" : undefined,
+          type: typeFromUnits(meta.meta.units),
           state: States.Normal,
           defaultSource: undefined,
           sources: {},
@@ -357,7 +369,7 @@ export class DataService implements OnDestroy {
         this._skData.push(pathObject);
       } else {
         if (pathObject.type === 'object' && meta.meta.units) {
-          pathObject.type = "number";
+          pathObject.type = typeFromUnits(meta.meta.units);
         }
         pathObject.meta = merge(pathObject.meta, meta.meta);
       }
