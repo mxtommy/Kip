@@ -45,11 +45,11 @@ export class ModalWidgetConfigComponent implements OnInit {
   protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
 
 
-  public titleDialog: string = "Widget Options";
+  public titleDialog = "Widget Options";
   public formMaster: UntypedFormGroup;
   public availableDataSets: IDatasetServiceDatasetConfig[];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
-  public isPathArray: boolean = false;
+  public isPathArray = false;
   public addPathEvent: IAddNewPathObject;
   public delPathEvent: string;
   public updatePathEvent: IDynamicControl[];
@@ -63,7 +63,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.colors = this.app.configurableThemeColors;
   }
 
-  private generateFormGroups(formData: Object, parent?: string): UntypedFormGroup {
+  private generateFormGroups(formData: object, parent?: string): UntypedFormGroup {
     const groups = this.fb.group({});
 
     Object.keys(formData).forEach(key => {
@@ -103,7 +103,7 @@ export class ModalWidgetConfigComponent implements OnInit {
       // Handle Primitives - property values
         if (parent == "convertUnitTo") {
           // If we are building units list
-          let unitConfig = this.widgetConfig.paths[key];
+          const unitConfig = this.widgetConfig.paths[key];
           if ( (unitConfig.pathType == "number") || ('datasetUUID' in this.widgetConfig)) {
             groups.addControl(key, new UntypedFormControl(formData[key])); //only add control if it's a number or historical graph. Strings and booleans don't have units and conversions yet...
           }

@@ -16,8 +16,8 @@ import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
 
 const defaultTheme = '';
-const configFileVersion: number = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
-const configVersion: number = 11; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
+const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
+const configVersion = 11; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
 
 @Injectable({
   providedIn: 'root'
@@ -32,9 +32,9 @@ export class AppSettingsService {
   private redNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
 
-  public proxyEnabled: boolean = false;
-  public signalKSubscribeAll: boolean = false;
-  private useDeviceToken: boolean = false;
+  public proxyEnabled = false;
+  public signalKSubscribeAll = false;
+  private useDeviceToken = false;
   private loginName: string;
   private loginPassword: string;
   public useSharedConfig: boolean;
@@ -43,7 +43,7 @@ export class AppSettingsService {
 
   private kipUUID: string;
   public signalkUrl: ISignalKUrl;
-  private widgets: Array<IWidget>;
+  private widgets: IWidget[];
   private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
   public configUpgrade = signal<boolean>(false);
@@ -74,7 +74,7 @@ export class AppSettingsService {
         this.pushSettings();
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
-        let localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
+        const localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
         if (localStorageConfig.app.configVersion !== configVersion) {
           this.checkConfigUpgradeRequired(true);
@@ -284,7 +284,7 @@ export class AppSettingsService {
   public setThemeName(newTheme: string) {
     this.themeName.next(newTheme);
     if (this.useSharedConfig) {
-      let theme: IThemeConfig = {
+      const theme: IThemeConfig = {
         themeName: newTheme
       }
       this.storage.patchConfig('IThemeConfig', theme)
@@ -368,7 +368,7 @@ export class AppSettingsService {
   }
 
   // DataSets
-  public saveDataSets(dataSets: Array<IDatasetServiceDatasetConfig>) {
+  public saveDataSets(dataSets: IDatasetServiceDatasetConfig[]) {
     this.dataSets = dataSets;
     if (this.useSharedConfig) {
       this.storage.patchConfig('Array<IDatasetDef>', dataSets);
@@ -399,7 +399,7 @@ export class AppSettingsService {
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
 
-    let newDefaultConfig: IConfig = {app: null, theme: null, dashboards: null};
+    const newDefaultConfig: IConfig = {app: null, theme: null, dashboards: null};
     newDefaultConfig.app = this.getDefaultAppConfig();
     newDefaultConfig.theme = this.getDefaultThemeConfig();
     newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
@@ -429,7 +429,7 @@ export class AppSettingsService {
    * @param reloadApp Optional Boolean. If True, the app will reload, else does nothing. Defaults to False.
    */
   public replaceConfig(configType: string, newConfig: IAppConfig | IConnectionConfig | IThemeConfig | Dashboard[], reloadApp?: boolean) {
-    let jsonConfig = JSON.stringify(newConfig);
+    const jsonConfig = JSON.stringify(newConfig);
     localStorage.setItem(configType, jsonConfig);
     if (reloadApp) {
       this.reloadApp();
@@ -438,7 +438,7 @@ export class AppSettingsService {
 
   public loadDemoConfig() {
     if (this.useSharedConfig) {
-      let demoConfig: IConfig = {
+      const demoConfig: IConfig = {
         app: DemoAppConfig,
         dashboards: DemoDashboardsConfig,
         theme: DemoThemeConfig
@@ -462,7 +462,7 @@ export class AppSettingsService {
   // builds config data oject from running data
   private buildAppStorageObject() {
 
-    let storageObject: IAppConfig = {
+    const storageObject: IAppConfig = {
       configVersion: configVersion,
       autoNightMode: this.autoNightMode.getValue(),
       redNightMode: this.redNightMode.getValue(),
@@ -475,7 +475,7 @@ export class AppSettingsService {
   }
 
   private buildConnectionStorageObject() {
-    let storageObject: IConnectionConfig = {
+    const storageObject: IConnectionConfig = {
       configVersion: configVersion,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl.url,
@@ -495,7 +495,7 @@ export class AppSettingsService {
   }
 
   private buildThemeStorageObject() {
-    let storageObject: IThemeConfig = {
+    const storageObject: IThemeConfig = {
       themeName: this.themeName.getValue()
       }
     return storageObject;
@@ -524,7 +524,7 @@ export class AppSettingsService {
 
   // Creates config from defaults and saves to LocalStorage
   private getDefaultAppConfig(): IAppConfig {
-    let config: IAppConfig = DefaultAppConfig;
+    const config: IAppConfig = DefaultAppConfig;
     config.notificationConfig = DefaultNotificationConfig;
     config.unitDefaults = DefaultUnitsConfig;
     config['configVersion'] = configVersion;
@@ -533,7 +533,7 @@ export class AppSettingsService {
   }
 
   private getDefaultConnectionConfig(): IConnectionConfig {
-    let config: IConnectionConfig = DefaultConnectionConfig;
+    const config: IConnectionConfig = DefaultConnectionConfig;
     config.kipUUID = UUID.create();
     config.signalKUrl = window.location.origin;
     localStorage.setItem('connectionConfig', JSON.stringify(config));
@@ -541,13 +541,13 @@ export class AppSettingsService {
   }
 
   private getDefaultDashboardsConfig(): Dashboard[] {
-    let config = [];
+    const config = [];
     localStorage.setItem("dashboardsConfig", JSON.stringify(config));
     return config;
   }
 
   private getDefaultThemeConfig(): IThemeConfig {
-    let config: IThemeConfig = DefaultThemeConfig;
+    const config: IThemeConfig = DefaultThemeConfig;
     localStorage.setItem("themeConfig", JSON.stringify(config));
     return config;
   }

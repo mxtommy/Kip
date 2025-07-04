@@ -14,8 +14,9 @@ module.exports = tseslint.config(
     ],
     processor: angular.processInlineTemplates,
     rules: {
+      "@typescript-eslint/no-empty-function": ["off"],
       "@angular-eslint/directive-selector": [
-        "error",
+        "off",
         {
           type: "attribute",
           prefix: "app",
@@ -23,7 +24,7 @@ module.exports = tseslint.config(
         },
       ],
       "@angular-eslint/component-selector": [
-        "error",
+        "off",
         {
           type: "element",
           prefix: "app",

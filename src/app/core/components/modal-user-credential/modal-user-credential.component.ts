@@ -22,7 +22,7 @@ export class ModalUserCredentialComponent {
     error: string;
 }>(MAT_DIALOG_DATA);
 
-  titleDialog: string = "Sign in to Signal K";
+  titleDialog = "Sign in to Signal K";
 
   protected saveCredential() {
     this.data.error = null;

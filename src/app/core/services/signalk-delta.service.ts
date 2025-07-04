@@ -54,7 +54,7 @@ export class SignalKDeltaService implements OnDestroy {
 
   // Websocket config
   private endpointWS: string = null;
-  private SubscriptionType: string = "self";
+  private SubscriptionType = "self";
   private readonly WS_RECONNECT_INTERVAL = 3000;                 // connection error retry interval
   private readonly WS_RETRY_COUNT = 3;                 // connection error retry interval
   private readonly WS_CONNECTION_SUBSCRIBE = "?subscribe=";

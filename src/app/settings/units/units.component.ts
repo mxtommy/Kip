@@ -23,7 +23,7 @@ export class SettingsUnitsComponent implements OnInit {
   private appService = inject(AppService);
 
   public unitsFormGroup = new UntypedFormGroup({});
-  protected groupUnits: {[key: string]: IUnit}[] = [];
+  protected groupUnits: Record<string, IUnit>[] = [];
 
   ngOnInit() {
     const unitsSettings: IUnitDefaults = this.appSettingsService.getDefaultUnits();

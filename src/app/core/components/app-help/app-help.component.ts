@@ -19,7 +19,7 @@ export class AppHelpComponent implements OnInit {
   private http = inject(HttpClient);
   private _router = inject(Router);
   protected helpFiles: { title: string; file: string }[] = [];
-  protected selectedFile: string = '';
+  protected selectedFile = '';
 
   ngOnInit(): void {
     this.http.get<{ title: string; file: string }[]>('assets/help-docs/menu.json')

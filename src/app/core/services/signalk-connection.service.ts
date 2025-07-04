@@ -29,7 +29,7 @@ interface ISignalKEndpointResponse {
  * `4 = Resetting
  */
 export interface IEndpointStatus {
-  operation: Number;
+  operation: number;
   message: string;
   serverDescription: string;
   httpServiceUrl: string;
@@ -55,7 +55,7 @@ export class SignalKConnectionService {
   public signalKURL: ISignalKUrl;
   private serverName: string;
   public serverVersion$ = new BehaviorSubject<string>(null);
-  private serverRoles: Array<string> = [];
+  private serverRoles: string[] = [];
   private http = inject(HttpClient);
 
   /**
@@ -157,7 +157,7 @@ export class SignalKConnectionService {
     return this.serverServiceEndpoint$.asObservable();
   }
 
-  public setServerInfo(name: string, version: string, roles: Array<string>): void {
+  public setServerInfo(name: string, version: string, roles: string[]): void {
     this.serverName = name;
     this.serverRoles = roles;
     console.log(`[Connection Service] Server Name: ${name}, Version: ${version}, Roles: ${JSON.stringify(roles)}`);
@@ -171,7 +171,7 @@ export class SignalKConnectionService {
     return this.serverVersion$.getValue();
   }
 
-  public get skServerRoles() : Array<string> {
+  public get skServerRoles() : string[] {
     return this.serverRoles;
   }
 }

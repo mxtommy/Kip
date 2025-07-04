@@ -60,16 +60,16 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
   readonly minValue = input<number>(undefined);
   readonly maxValue = input<number>(undefined);
   readonly decimals = input<number>(undefined);
-  readonly zones = input<Array<any>>(undefined);
+  readonly zones = input<any[]>(undefined);
   readonly title = input<string>(undefined);
   readonly units = input<string>(undefined);
   readonly value = input<number>(undefined);
   readonly theme = input<ITheme>(undefined, { alias: "themeColors" });
 
-  private gaugeStarted: boolean = false;
+  private gaugeStarted = false;
   private gauge;
   private gaugeOptions = {};
-  protected paddingTop: number = 0;
+  protected paddingTop = 0;
 
   ngOnInit(): void {
     this.buildOptions();
@@ -96,8 +96,8 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
     const zones = this.zones();
     if (zones) {
 
-      let sections = [];
-      let areas = [];
+      const sections = [];
+      const areas = [];
 
       // Sort zones based on lower value
       const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);

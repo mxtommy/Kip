@@ -12,12 +12,12 @@ import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-si
     imports: [ WidgetHostComponent, SvgSimpleLinearGaugeComponent ]
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  protected unitsLabel:string = "";
-  protected dataLabelValue: string = "0";
-  protected dataValue: Number = 0;
-  protected barColor: string = "";
-  protected barColorGradient: string = "";
-  protected barColorBackground: string = "";
+  protected unitsLabel = "";
+  protected dataLabelValue = "0";
+  protected dataValue = 0;
+  protected barColor = "";
+  protected barColorGradient = "";
+  protected barColorBackground = "";
 
   constructor() {
     super();

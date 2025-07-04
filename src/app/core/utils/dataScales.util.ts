@@ -12,16 +12,16 @@ import { TScaleType } from "../interfaces/signalk-interfaces";
    * @return {*}  {[number, number, number[]]} array containing calculated rounded range minimal value, maximum value and the corresponding tick array values
    */
 export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: number): {min: number, max: number, majorTicks: number[]} {
-  const tickArray = [] as Array<number>;
+  const tickArray = [] as number[];
   let niceRange = maxValue - minValue;
   let majorTickSpacing = 0;
-  let maxNoOfMajorTicks = 10;
+  const maxNoOfMajorTicks = 10;
 
 
   niceRange = calcNiceNumber(maxValue - minValue, false);
   majorTickSpacing = calcNiceNumber(niceRange / (maxNoOfMajorTicks - 1), true);
-  let niceMinValue = Math.floor(minValue / majorTickSpacing) * majorTickSpacing;
-  let niceMaxValue = Math.ceil(maxValue / majorTickSpacing) * majorTickSpacing;
+  const niceMinValue = Math.floor(minValue / majorTickSpacing) * majorTickSpacing;
+  const niceMaxValue = Math.ceil(maxValue / majorTickSpacing) * majorTickSpacing;
 
   tickArray.push(niceMinValue);
 
@@ -30,7 +30,7 @@ export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: numbe
   for (let index = 0; index < range; index++) {
     if (tickArray[index] < niceMaxValue) {
       // need to do some trick here to account for JavaScript fraction issues else when scale ticks are smaller than 1, nice numbers can't be produced ie. tick of 0.3 will be 0.30000000004 (see: https://flaviocopes.com/javascript-decimal-arithmetics/)
-      let tick = (Number(tickArray[index].toFixed(2)) * 100 + Number(majorTickSpacing.toFixed(2)) * 100) / 100;
+      const tick = (Number(tickArray[index].toFixed(2)) * 100 + Number(majorTickSpacing.toFixed(2)) * 100) / 100;
       tickArray.push(tick);
     }
   }
@@ -68,7 +68,7 @@ function calcNiceNumber(range: number, round: boolean): number {
 
 
 export function generateScaleTypeTicks(minValue: number, maxValue: number, scaleType: TScaleType, P?: number): number[] {
-  let ticks: number[] = [];
+  const ticks: number[] = [];
 
   switch (scaleType) {
     case 'linear':

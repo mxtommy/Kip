@@ -67,7 +67,7 @@ export enum Policies {
  export interface ISignalKDeltaMessage {
   // Server Hello message structure
   name?: string;
-  roles?: Array<string>;
+  roles?: string[];
   self?: string;
   version?: string;
   timestamp?:string;

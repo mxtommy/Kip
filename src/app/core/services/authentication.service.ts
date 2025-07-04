@@ -14,7 +14,7 @@ const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL chan
 const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
 const validateTokenEndpoint = 'auth/validate';
-const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
+const tokenRenewalBuffer = 60; // nb of seconds before token expiration
 
 @Injectable({
   providedIn: 'root'
@@ -78,7 +78,7 @@ export class AuthenticationService implements OnDestroy {
     // Endpoint connection observer
     this.connectionEndpointSubscription =  this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
       if (endpoint.operation === 2) {
-        let httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
+        const httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
         this.loginUrl = httpApiUrl + loginEndpoint;
         this.logoutUrl = httpApiUrl + logoutEndpoint;
         this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
@@ -183,9 +183,9 @@ export class AuthenticationService implements OnDestroy {
    * @memberof AuthenticationService
    */
   private setSession(token: string): void {
-    if (!!token) {
+    if (token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-      let authorizationToken: IAuthorizationToken = {
+      const authorizationToken: IAuthorizationToken = {
         'token' : null, 'expiry' : null, 'isDeviceAccessToken' : false
       };
 
@@ -235,7 +235,7 @@ export class AuthenticationService implements OnDestroy {
     let date = new Date(0);
 
     if(buffer) {
-      let bufferedDate = new Date(0);
+      const bufferedDate = new Date(0);
       bufferedDate.setUTCSeconds(dateAsSeconds - buffer);
       date = bufferedDate;
     } else {
@@ -285,7 +285,7 @@ export class AuthenticationService implements OnDestroy {
   public setDeviceAccessToken(token: string): void {
     if (token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-      let authorizationToken: IAuthorizationToken = {
+      const authorizationToken: IAuthorizationToken = {
         'token' : null, 'expiry' : null, 'isDeviceAccessToken' : true
       };
 

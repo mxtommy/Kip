@@ -50,9 +50,7 @@ interface ISeverityLevel {
   visual: number;
 }
 
-interface IAlarmSeverities {
-  [key: string]: ISeverityLevel;
-}
+type IAlarmSeverities = Record<string, ISeverityLevel>;
 
 
 @Injectable({
@@ -87,7 +85,7 @@ export class NotificationsService implements OnDestroy {
   private _howlPlayer: Howl;
   private _activeAlarmSoundtrack: number = null;
   private _activeHowlId: number = null;
-  private _isHowlIdMuted: boolean = false;
+  private _isHowlIdMuted = false;
 
   // Notification acknowledge timeouts references
   private _lastEmittedValue: IAlarmInfo = null;
@@ -187,7 +185,7 @@ export class NotificationsService implements OnDestroy {
   private updateNotificationsState() {
     let audioSev = 0;
     let visualSev = 0;
-    let activeNotifications: number = 0;
+    let activeNotifications = 0;
 
     for (const alarm of this._notifications) {
       if (!alarm.value || !('method' in alarm.value)  || alarm.value.method.length === 0) {

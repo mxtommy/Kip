@@ -34,7 +34,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   public readonly updatePath = output<IDynamicControl[]>();
   public readonly delPath = output<IDeleteEventObj>();
   public multiFormGroup: UntypedFormGroup = null;
-  public arrayLength: number = 0;
+  public arrayLength = 0;
   private multiCtrlArraySubscription: Subscription = null;
 
   ngOnInit(): void {
@@ -103,7 +103,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   }
 
   getFormGroup(ctrl: AbstractControl): UntypedFormGroup {
-    return <UntypedFormGroup>ctrl;
+    return ctrl as UntypedFormGroup;
   }
 
   ngOnDestroy(): void {

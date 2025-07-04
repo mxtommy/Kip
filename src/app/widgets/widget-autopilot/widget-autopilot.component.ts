@@ -22,9 +22,7 @@ interface CommandDefinition {
   value: string | number;
 }
 
-interface CommandsMap {
-  [key: string]: CommandDefinition;
-}
+type CommandsMap = Record<string, CommandDefinition>;
 
 const commands: CommandsMap = {
   "auto":    {"path":"self.steering.autopilot.state","value":"auto"},
@@ -39,7 +37,7 @@ const commands: CommandsMap = {
   "tackToStarboard":   {"path":"self.steering.autopilot.actions.tack","value":"starboard"},
   "advanceWaypoint":   {"path":"self.steering.autopilot.actions.advanceWaypoint","value":"1"}
 };
-const countDownDefault: number = 5;
+const countDownDefault = 5;
 
 
 @Component({
@@ -70,13 +68,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   // protected readonly dodgeBtn = viewChild.required<MatButton>('dodgeBtn');
 
   protected apState = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
-  protected autopilotTargetHeading: number = 0;
-  protected autopilotTargetWindHeading: number = 0;
-  protected courseTargetHeading: number = 0;
-  protected heading: number = 0;
-  protected crossTrackError: number = 0;
-  protected windAngleApparent: number = 0;
-  protected rudder: number = 0;
+  protected autopilotTargetHeading = 0;
+  protected autopilotTargetWindHeading = 0;
+  protected courseTargetHeading = 0;
+  protected heading = 0;
+  protected crossTrackError = 0;
+  protected windAngleApparent = 0;
+  protected rudder = 0;
 
   // Widget messaging countdown
   protected countdownOverlayVisibility = signal<string>('hidden');
@@ -88,8 +86,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   private handleCountDownCounterTimeout = null;
   private handleConfirmActionTimeout = null;
   private handleDisplayErrorTimeout = null;
-  protected countDownValue: number = -1;
-  private actionToBeConfirmed: string = "";
+  protected countDownValue = -1;
+  private actionToBeConfirmed = "";
 
   // Mode Menu
   protected menuOpen = signal<boolean>(false);
@@ -588,7 +586,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   protected buildAndSendCommand(cmd: string) {
-    let cmdAction = commands[cmd];
+    const cmdAction = commands[cmd];
     if (typeof cmdAction === 'undefined') {
       alert('Unknown Autopilot command: ' + cmd);
       return null;
@@ -618,12 +616,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private confirmAdvanceWaypoint(cmd: string): void {
-    let message: string = "Repeat key [Adv Wpt] to confirm";
+    const message = "Repeat key [Adv Wpt] to confirm";
     this.startConfirmCmd(cmd, message);
   }
 
   private confirmTack(cmd: string): void {
-    let direction: string = "";
+    let direction = "";
     if (cmd === "tackToPort") {
       direction = "Port";
       this.actionToBeConfirmed = cmd;
@@ -635,7 +633,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       return null;
     }
 
-    let message = `Repeat [Tack ${direction}] key to confirm`;
+    const message = `Repeat [Tack ${direction}] key to confirm`;
     this.startConfirmCmd(cmd, message);
   }
 

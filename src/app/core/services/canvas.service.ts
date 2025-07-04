@@ -47,7 +47,7 @@ export class CanvasService {
    * @return {*}  {void}
    * @memberof CanvasService
    */
-  public drawTitle(ctx: CanvasRenderingContext2D, text: string, color: string, fontWeight: string = 'normal', canvasWidth: number, canvasHeight: number): void {
+  public drawTitle(ctx: CanvasRenderingContext2D, text: string, color: string, fontWeight = 'normal', canvasWidth: number, canvasHeight: number): void {
     if (!ctx) return;
 
     this.fontsReadyPromise
@@ -62,7 +62,7 @@ export class CanvasService {
       });
   }
 
-  private drawTitleInternal(ctx: CanvasRenderingContext2D, text: string, color: string, fontWeight: string = 'normal', canvasWidth: number, canvasHeight: number): void {
+  private drawTitleInternal(ctx: CanvasRenderingContext2D, text: string, color: string, fontWeight = 'normal', canvasWidth: number, canvasHeight: number): void {
     if (!ctx) return;
 
     const maxWidth = canvasWidth - 2 * this.EDGE_BUFFER;
@@ -111,8 +111,8 @@ export class CanvasService {
     y: number = this.EDGE_BUFFER,
     maxWidth: number,
     maxHeight: number,
-    fontWeight: string = 'normal',
-    color: string = '#000',
+    fontWeight = 'normal',
+    color = '#000',
     textAlign: CanvasTextAlign = 'center',
     textBaseline: CanvasTextBaseline = 'middle'
   ): void {
@@ -135,7 +135,7 @@ export class CanvasService {
   /**
    * Draws text on the canvas with optimal font size.
    */
-  private drawTextInternal(ctx: CanvasRenderingContext2D, text: string, x: number = this.EDGE_BUFFER, y: number = this.EDGE_BUFFER, maxWidth: number, maxHeight: number, fontWeight: string = 'normal', color: string = '#000', textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle'): void {
+  private drawTextInternal(ctx: CanvasRenderingContext2D, text: string, x: number = this.EDGE_BUFFER, y: number = this.EDGE_BUFFER, maxWidth: number, maxHeight: number, fontWeight = 'normal', color = '#000', textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle'): void {
     maxWidth = maxWidth;
     maxHeight = maxHeight;
     const fontSize = this.calculateOptimalFontSize(ctx, text, maxWidth, maxHeight, fontWeight);
@@ -158,7 +158,7 @@ export class CanvasService {
    * @return {*}  {number} The optimal font size in pixels.
    * @memberof CanvasService
    */
-  public calculateOptimalFontSize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxHeight: number, fontWeight: string = 'normal'): number {
+  public calculateOptimalFontSize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxHeight: number, fontWeight = 'normal'): number {
     let minFontSize = 1;
     let maxFontSize = maxHeight;
     let fontSize = maxFontSize;

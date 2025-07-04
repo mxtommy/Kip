@@ -27,7 +27,7 @@ export class DataInspectorRowComponent implements OnInit {
   readonly type = input.required<string>();
 
   units = null;
-  selectedUnit: string = "unitless"
+  selectedUnit = "unitless"
 
   ngOnInit() {
     this.units = this._units.getConversionsForPath(this.path());

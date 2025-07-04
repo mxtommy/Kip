@@ -18,7 +18,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   private canvas = inject(CanvasService);
   protected dataValue: any = null;
-  private _timeZoneGTM: string = "";
+  private _timeZoneGTM = "";
   private _valueFontSize = 1;
   private isDestroyed = false; // guard against callbacks after destroyed
   private canvasCtx: CanvasRenderingContext2D;

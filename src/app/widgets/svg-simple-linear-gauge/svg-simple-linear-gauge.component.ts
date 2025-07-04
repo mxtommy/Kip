@@ -19,8 +19,8 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
   readonly gaugeMinValue = input.required<number>();
   readonly gaugeMaxValue = input.required<number>();
 
-  newGaugeValue: number = 1;
-  oldGaugeValue: number = 1;
+  newGaugeValue = 1;
+  oldGaugeValue = 1;
 
   constructor() { }
 
@@ -29,8 +29,8 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
     if (changes.gaugeValue) {
       if (! changes.gaugeValue.firstChange) {
         // scale value to svg gauge pixel length (195), proportional to gauge min/max set values
-        let scaleRange = this.gaugeMaxValue() - this.gaugeMinValue();
-        let scaleSliceValue = scaleRange !== 0 ? 195 / scaleRange : 0;
+        const scaleRange = this.gaugeMaxValue() - this.gaugeMinValue();
+        const scaleSliceValue = scaleRange !== 0 ? 195 / scaleRange : 0;
 
         this.oldGaugeValue = this.newGaugeValue;
         this.newGaugeValue = (changes.gaugeValue.currentValue - this.gaugeMinValue()) * scaleSliceValue;

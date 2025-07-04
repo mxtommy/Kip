@@ -164,14 +164,14 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   public availablePaths: string[] = [];
   public availableSources: string[] = [];
-  public filterSelfPaths:boolean = true;
+  public filterSelfPaths = true;
 
   ngOnInit() {
     if (this.dataset) {
       this.titleDialog = "Edit Dataset";
       this.formDataset = this.dataset;
 
-      let pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
+      const pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
       if (pathObject !== null) {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       }
@@ -185,7 +185,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
   }
 
   public changePath() { // called when we choose a new path. Resets the form old value with default info of this path
-    let pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
+    const pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     this.formDataset.pathSource = 'default';

@@ -19,21 +19,21 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  private toggleOff: string = "0 35 180 35";
-  private toggleOn: string = "0 0 180 35";
+  private toggleOff = "0 35 180 35";
+  private toggleOn = "0 0 180 35";
   private oldTheme: ITheme = null;
 
   private timeoutHandler = null;
-  private pressed: boolean = false;
-  private isSwiping: boolean = false;
-  private pointerStartX: number = 0;
-  private pointerStartY: number = 0;
+  private pressed = false;
+  private isSwiping = false;
+  private pointerStartX = 0;
+  private pointerStartY = 0;
 
   public viewBox: string = this.toggleOff;
   public labelColorEnabled = null;
   public labelColorDisabled = null;
   public valueColor = null;
-  private ctrlColor: string = '';
+  private ctrlColor = '';
 
   constructor() { }
 

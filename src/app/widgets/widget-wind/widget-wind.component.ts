@@ -14,15 +14,15 @@ import { SvgWindComponent } from '../svg-wind/svg-wind.component';
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   private zones = inject(NgZone);
-  protected currentHeading: number = 0;
-  protected courseOverGroundAngle: number = 0;
-  protected appWindAngle: number = 0;
-  protected appWindSpeed: number = 0;
-  protected trueWindAngle: number = 0;
-  protected trueWindSpeed: number = 0;
-  protected driftFlow: number = 0;
-  protected driftSet: number = 0;
-  protected waypointAngle: number = 0;
+  protected currentHeading = 0;
+  protected courseOverGroundAngle = 0;
+  protected appWindAngle = 0;
+  protected appWindSpeed = 0;
+  protected trueWindAngle = 0;
+  protected trueWindSpeed = 0;
+  protected driftFlow = 0;
+  protected driftSet = 0;
+  protected waypointAngle = 0;
   protected trueWindHistoric: {
     timestamp: number;
     heading: number;

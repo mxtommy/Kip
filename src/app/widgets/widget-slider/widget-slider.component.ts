@@ -33,10 +33,10 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   private resizeTimeout: any;
   private debounceTimeout: any
   protected handlePosition = 20;
-  protected pathValue: number = 0;
+  protected pathValue = 0;
   private lineStart = this.handlePosition;
-  private isDragStarted: boolean = false;
-  protected lineWidth: string = '0px';
+  private isDragStarted = false;
+  protected lineWidth = '0px';
   private readonly VIEWBOX_WIDTH = 200;
   private readonly LINE_START = 20;
   private readonly LINE_WIDTH = 160;

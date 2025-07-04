@@ -63,7 +63,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   authToken: IAuthorizationToken;
   isLoggedInSub: Subscription;
   isLoggedIn: boolean;
-  public proxyEnabled: boolean = false;
+  public proxyEnabled = false;
 
   endpointServiceStatus: IEndpointStatus;
   skEndpointServiceStatusSub: Subscription;
@@ -131,7 +131,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    }
 
   public openUserCredentialModal(errorMsg: string) {
-    let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
+    const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       data: {
         user: this.connectionConfig.loginName,
         password: this.connectionConfig.loginPassword,
@@ -287,7 +287,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   public useSharedConfigToggleClick(e) {
     if(e.checked) {
-      let version = this.signalKConnectionService.serverVersion$.getValue();
+      const version = this.signalKConnectionService.serverVersion$.getValue();
       if (!compare(version, '1.46.2', ">=")) {
         this.appService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better",0);
         this.connectionConfig.useSharedConfig = false;
