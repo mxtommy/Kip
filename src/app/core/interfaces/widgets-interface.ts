@@ -257,10 +257,10 @@ export interface IWidgetSvcConfig {
   /** Use by racetimer widget */
   timerLength?: number;
 
-  /** Use by racer-timer-widget */
+  /** The next dashboard to display when the racer-timer-widget counts to 0 and the boat is not OCS*/
   nextDashboard?: number;
 
-  /** Play beeps in racer-timer-widget */
+  /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */
   playBeeps?: boolean;
 }
 
