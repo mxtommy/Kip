@@ -90,7 +90,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
             volume: 0.3,
             onend: function() {
               // console.log('Finished!');
-              sound.unload();
+              // sound.unload();
               sound = undefined;
             },
             onloaderror: function() {
