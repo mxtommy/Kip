@@ -174,11 +174,11 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
+  /** To Retire - Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
   usage?: {
     [key: string]: string[];
   };
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
+  /** To Retire - Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
   typeVal?: {
     [key: string]: string;
   };

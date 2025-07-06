@@ -276,10 +276,10 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       timestamp: Date.now(),
       heading: windHeading
     });
-    const arr = this.arcForAngles(this.trueWindHistoric.map(d => d.heading));
-    this.trueWindMinHistoric = arr[0];
-    this.trueWindMaxHistoric = arr[1];
-    this.trueWindMidHistoric = arr[2];
+    const arc = this.arcForAngles(this.trueWindHistoric.map(d => d.heading));
+    this.trueWindMinHistoric = arc.min;
+    this.trueWindMaxHistoric = arc.max;
+    this.trueWindMidHistoric = arc.mid;
   }
 
   private arcForAngles(data: number[]): { min: number; max: number; mid: number } {
