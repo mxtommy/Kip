@@ -189,6 +189,7 @@ export class UnitsService implements OnDestroy {
       { measure: 'ratio', description: "Ratio 0-1 (base)" }
     ] },
     { group: 'Position', units: [
+      { measure: 'pdeg', description: "Position Degrees" },
       { measure: 'latitudeMin', description: "Latitude in minutes" },
       { measure: 'latitudeSec', description: "Latitude in seconds" },
       { measure: 'longitudeMin', description: "Longitude in minutes" },
@@ -241,14 +242,14 @@ export class UnitsService implements OnDestroy {
         }
       },
       { unit: "deg", properties: {
-          display: "\u00b0",
+          display: "Position",
           quantity: "Angle",
           quantityDisplay: "\u2220",
           description: "Latitude or longitude in decimal degrees"
         }
       },
       { unit: "rad", properties: {
-          display: "\u33ad",
+          display: "\u00b0",
           quantity: "Angle",
           quantityDisplay: "\u2220",
           description: "Angular arc in radians"
@@ -530,9 +531,9 @@ export class UnitsService implements OnDestroy {
     'percent': function(v) { return v * 100 },
     'percentraw': function(v) { return v },
     'ratio': function(v) { return v },
-// lat/lon
+// Position Degrees lat/lon
+    'pdeg': function(v) { return v; }, // Signal K uses degrees for lat/lon
     'latitudeMin': function(v) {
-        v = Qty(v, 'rad').to('deg').scalar ;
         let degree = Math.trunc(v);
         let s = 'N';
         if (v < 0) { s = 'S'; degree = degree * -1 }
@@ -541,7 +542,6 @@ export class UnitsService implements OnDestroy {
         return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
       },
     'latitudeSec': function(v) {
-      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'N';
       if (v < 0) { s = 'S'; degree = degree * -1 }
@@ -553,7 +553,6 @@ export class UnitsService implements OnDestroy {
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
     'longitudeMin': function(v) {
-      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
@@ -562,7 +561,6 @@ export class UnitsService implements OnDestroy {
       return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
     },
     'longitudeSec': function(v) {
-      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }

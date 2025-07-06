@@ -274,12 +274,6 @@ export class DataService implements OnDestroy {
     this._deltaUpdatesCounter++;
     const updatePath = this.setPathContext(dataPath.context, dataPath.path);
 
-    // Convert position values from degrees to radians
-    if (updatePath.includes('position.latitude') || updatePath.includes('position.longitude')) {
-      const degToRad = Qty.swiftConverter('deg', 'rad');
-      dataPath.value = degToRad(dataPath.value);
-    }
-
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
     if (!pathItem) {
