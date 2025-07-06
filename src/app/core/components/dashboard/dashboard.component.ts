@@ -1,9 +1,9 @@
-import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, untracked, ViewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
-import { UUID } from '../../utils/uuid';
+import { UUID } from '../../utils/uuid.util';
 import { AppService } from '../../services/app-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -47,7 +47,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   private _dialog = inject(DialogService);
   protected dashboard = inject(DashboardService);
   private _notifications = inject(NotificationsService);
-  private _destroyRef = inject(DestroyRef);
+  private readonly _destroyRef = inject(DestroyRef);
   private _uiEvent = inject(uiEventService);
   protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
@@ -86,7 +86,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     ]);
 
     effect(() => {
-      this.loadDashboard(this.dashboard.activeDashboard());
+      const dashboardId = this.dashboard.activeDashboard();
+      untracked(() => {
+        this.loadDashboard(dashboardId);
+      });
     });
   }
 

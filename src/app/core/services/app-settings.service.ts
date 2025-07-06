@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { IDatasetServiceDatasetConfig } from './data-set.service';
 import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
-import { UUID } from '../utils/uuid';
+import { UUID } from '../utils/uuid.util';
 
 import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
 import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';

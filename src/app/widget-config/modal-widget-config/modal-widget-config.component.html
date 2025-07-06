@@ -93,11 +93,21 @@
               [dateTimezone]="dateTimezoneToControl">
             </display-datetime-options>
 
-            <!-- AP gauge stuff -->
-            <mat-checkbox class="fields" *ngIf="(widgetConfig.invertRudder !== undefined)"
+            <!-- Autopilot gauge stuff -->
+            <!-- <mat-checkbox *ngIf="(widgetConfig.courseDirectionTrue !== undefined)"
+              name="courseDirectionTrue"
+              formControlName="courseDirectionTrue">
+                Display True Bearing
+            </mat-checkbox> -->
+            <mat-checkbox *ngIf="(widgetConfig.headingDirectionTrue !== undefined)"
+              name="headingDirectionTrue"
+              formControlName="headingDirectionTrue">
+                Display True Heading
+            </mat-checkbox>
+            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.invertRudder !== undefined)"
               name="invertRudder"
               formControlName="invertRudder">
-                Invert Rudder angle
+                Invert Rudder Angle
             </mat-checkbox>
 
             <!-- sail gauge stuff -->

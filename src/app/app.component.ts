@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal, model } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal, model } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -82,7 +82,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         });
 
         if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
-          const sound = new Howl({
+          let sound = new Howl({
             src: ['assets/notification.mp3'],
             autoplay: true,
             preload: true,
@@ -90,15 +90,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
             volume: 0.3,
             onend: function() {
               // console.log('Finished!');
+              sound.unload();
+              sound = undefined;
             },
             onloaderror: function() {
               console.log("snackbar: player onload error");
+              sound.unload();
+              sound = undefined;
             },
             onplayerror: function() {
               console.log("snackbar: player locked");
               this.howlPlayer.once('unlock', function() {
                 this.howlPlayer.play();
+                this.howlPlayer.unload();
+                this.howlPlayer = undefined;
               });
+              sound.unload();
+              sound = undefined;
             }
           });
           sound.play();

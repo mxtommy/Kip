@@ -11,7 +11,7 @@ import { SignalkRequestsService } from './signalk-requests.service';
 import { DataService } from './data.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
-import { UUID } from '../utils/uuid';
+import { UUID } from '../utils/uuid.util';
 import { TMethod, ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
 
@@ -427,5 +427,6 @@ export class NotificationsService implements OnDestroy {
     this._notificationConfig$.complete();
     this._notifications$.complete();
     this._alarmsInfo$.complete();
+    this._howlPlayer?.unload();
   }
 }

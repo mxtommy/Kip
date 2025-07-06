@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { UUID } from '../utils/uuid';
+import { UUID } from '../utils/uuid.util';
 import { BehaviorSubject } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 

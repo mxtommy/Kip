@@ -85,7 +85,7 @@ export interface IDeltaUpdate {
 })
 export class DataService implements OnDestroy {
   private delta = inject(SignalKDeltaService);
-  private _destroyRef = inject(DestroyRef);
+  private readonly _destroyRef = inject(DestroyRef);
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;

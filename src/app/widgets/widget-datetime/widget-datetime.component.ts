@@ -97,6 +97,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
   private getGMTOffset(timeZone: string): string {
     try {
+        if (timeZone === 'System Timezone -') return '';
         const formatter = new Intl.DateTimeFormat('en-US', {
             timeZone,
             timeZoneName: 'short'
