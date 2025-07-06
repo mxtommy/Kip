@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild} from '@angular/core';
+import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
@@ -56,7 +56,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       filterSelfPaths: true,
       paths: {
         'ttsPath': {
-          description: 'Time to Start path',
+          description: 'Time to the Start',
           path: 'self.navigation.racing.timeToStart',
           source: 'default',
           pathType: 'number',
@@ -97,8 +97,10 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     effect(() => {
       if (this.theme()) {
-        this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
+        untracked(() => {
+          this.getColors(this.widgetProperties.config.color);
+          this.updateCanvas();
+        });
       }
     });
   }
@@ -152,7 +154,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       const lastTtsValue = this.ttsValue;
       this.ttsValue = newValue.data.value;
       if (this.widgetProperties.config.ignoreZones) {
-        if (this.ttsValue === 0) {
+        if (!this.ttsValue) {
+          this.valueStateColor = this.valueColor;
+        } else if (this.ttsValue === 0) {
           this.valueStateColor = this.valueColor;
         } else if (this.ttsValue < 10) {
           this.valueStateColor = this.ttsValue % 2 === 1 ? this.theme().zoneAlarm : this.theme().zoneWarn;
@@ -388,7 +392,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     }
   }
 
-  toggleMode() {
+  public toggleMode(): void {
     console.log('toggle mode ', this.mode);
     this.mode = (this.mode + 1) % 4;
     switch (this.mode) {
@@ -407,7 +411,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.updateCanvas();
   }
 
-  sendStartTimerCommand(command) {
+  public sendStartTimerCommand(command: string): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command}, this.widgetProperties.uuid);
     console.log('Start Timer Command ', command, ' ', requestId);
     switch (command) {
@@ -423,13 +427,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     return requestId;
   }
 
-  adjustStartTime(delta: number) {
+  public adjustStartTime(delta: number): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command: 'adjust', delta}, this.widgetProperties.uuid);
     console.log('Adjust Timer: delta=', delta, ' ', requestId);
     return requestId;
   }
 
-  setStartTime(startAtTime: string) {
+  public setStartTime(startAtTime: string): void {
     const now = new Date();
     const [hours, minutes, seconds] = startAtTime.split(':').map(Number);
 

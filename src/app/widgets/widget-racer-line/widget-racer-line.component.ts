@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild} from '@angular/core';
+import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
@@ -50,7 +50,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       filterSelfPaths: true,
       paths: {
         'dtsPath': {
-          description: 'Distance to Start Line path',
+          description: 'Distance to Start Line',
           path: 'self.navigation.racing.distanceStartline',
           source: 'default',
           pathType: 'number',
@@ -92,8 +92,10 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
     effect(() => {
       if (this.theme()) {
-        this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
+        untracked(() => {
+          this.getColors(this.widgetProperties.config.color);
+          this.updateCanvas();
+        });
       }
     });
   }
@@ -134,7 +136,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.observeDataStream('dtsPath', newValue => {
       this.dtsValue = newValue.data.value;
       if (this.widgetProperties.config.ignoreZones) {
-        if (this.dtsValue < 0) {
+        if (!this.dtsValue) {
+          this.dtsColor = this.valueColor;
+        } else if (this.dtsValue < 0) {
           this.dtsColor = this.theme().zoneAlarm;
         } else if (this.dtsValue < 10) {
           this.dtsColor = this.theme().zoneWarn;
@@ -357,19 +361,19 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     return txtValue;
   }
 
-  toggleMode() {
+  public toggleMode(): void {
     console.log('toggle mode ', this.mode);
     this.mode = (this.mode + 1) % 3;
     this.updateCanvas();
   }
 
-  setLineEnd(end) {
+  public setLineEnd(end): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.widgetProperties.uuid);
     console.log('Set line end ', end, ' ', requestId);
     return requestId;
   }
 
-  adjustLineEnd(end: string, delta: number, rotate) {
+  public adjustLineEnd(end: string, delta: number, rotate): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine',
       {end, delta, rotate: rotate ? this.toRadians(rotate) : null},
       this.widgetProperties.uuid);
