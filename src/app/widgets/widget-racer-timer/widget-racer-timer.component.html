@@ -1,12 +1,12 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="textGenericWrapper" (onResize)="onResized($event)">
+  <div class="text-generic-wrapper" (onResize)="onResized($event)">
     <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
 
     <div class="filler">
       <canvas #timeToSCanvas class="canvas"></canvas>
       <canvas #startAtCanvas class="canvas"></canvas>
     </div>
-    <div class="buttonsContainer">
+    <div class="buttons-container">
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
       @if (mode == 0) {
         <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('start')">Start</button>
