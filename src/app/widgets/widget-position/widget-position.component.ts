@@ -87,11 +87,23 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   protected startWidget(): void {
     this.unsubscribeDataStream();
     this.observeDataStream('longPath', newValue => {
-      this.longPos = newValue.data.value ? newValue.data.value.toString() : '';
+      if (newValue.data.value ===  null) {
+        this.longPos = '';
+      } else if (this.widgetProperties.config.paths['longPath'].convertUnitTo === 'pdeg') {
+        this.longPos = newValue.data.value.toFixed(6) + '°';
+      } else {
+        this.longPos = newValue.data.value.toString();
+      }
       this.drawValue();
     });
     this.observeDataStream('latPath', newValue => {
-      this.latPos = newValue.data.value ? newValue.data.value.toString() : '';
+      if (newValue.data.value ===  null) {
+        this.latPos = '';
+      } else if (this.widgetProperties.config.paths['latPath'].convertUnitTo === 'pdeg') {
+        this.latPos = newValue.data.value.toFixed(7) + '°';
+      } else {
+        this.latPos = newValue.data.value.toString();
+      }
       this.drawValue();
     });
   }

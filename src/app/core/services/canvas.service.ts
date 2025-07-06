@@ -104,19 +104,32 @@ export class CanvasService {
    * @return {*}  {void}
    * @memberof CanvasService
    */
-  public drawText(ctx: CanvasRenderingContext2D, text: string, x: number = this.EDGE_BUFFER, y: number = this.EDGE_BUFFER, maxWidth: number, maxHeight: number, fontWeight: string = 'normal', color: string = '#000', textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle'): void {
+  public drawText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number = this.EDGE_BUFFER,
+    y: number = this.EDGE_BUFFER,
+    maxWidth: number,
+    maxHeight: number,
+    fontWeight: string = 'normal',
+    color: string = '#000',
+    textAlign: CanvasTextAlign = 'center',
+    textBaseline: CanvasTextBaseline = 'middle'
+  ): void {
     if (!ctx) return;
 
-    this.fontsReadyPromise
-      .then(() => {
-        requestAnimationFrame(() => {
+    if (document.fonts.status === 'loaded') {
+      this.drawTextInternal(ctx, text, x, y, maxWidth, maxHeight, fontWeight, color, textAlign, textBaseline);
+    } else {
+      this.fontsReadyPromise
+        .then(() => {
+          this.drawTextInternal(ctx, text, x, y, maxWidth, maxHeight, fontWeight, color, textAlign, textBaseline);
+        })
+        .catch((err) => {
+          console.warn('[Canvas Service] Font readiness failed:');
           this.drawTextInternal(ctx, text, x, y, maxWidth, maxHeight, fontWeight, color, textAlign, textBaseline);
         });
-      })
-      .catch((err) => {
-        console.warn('[Canvas Service] Font readiness failed:');
-        this.drawTextInternal(ctx, text, x, y, maxWidth, maxHeight, fontWeight, color, textAlign, textBaseline);
-      });
+    }
   }
 
   /**
