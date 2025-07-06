@@ -39,6 +39,7 @@ export class SvgAutopilotV2Component {
 
   protected apModeValue = signal<string>('');
   protected apModeValueAnnotation = signal<string>('');
+  protected apModeValueDirection = signal<string>('');
 
   protected apTWA = computed(() => {
     const apTWA = parseFloat(this.targetWindAngleHeading().toFixed(0))
@@ -118,34 +119,48 @@ export class SvgAutopilotV2Component {
       let xteValue = this.courseXte();
 
       untracked(() => {
-        let xte: string;
-        let xteAnnotation: string;
-
-        if (Math.abs(xteValue) > 99) {
-          xte = (xteValue / 1000).toFixed(1);
-          xteAnnotation = ' km';
-        } else {
-          xte = xteValue.toFixed(1);
-          xteAnnotation = ' m';
-        }
-
         switch (state) {
           case "auto":
           case "route":
+            let xte: string;
+            let xteAnnotation: string;
+            let xteDirection: string;
+
+            if (xteValue < 0) {
+              xteDirection = ' Prt';
+            } else if (xteValue > 0) {
+              xteDirection = ' Stbd';
+            } else {
+              xteDirection = '';
+            }
+
+            xteValue = Math.abs(xteValue);
+            if (xteValue > 999) {
+              xte = (xteValue / 1000).toFixed(1);
+              xteAnnotation = ' km';
+            } else {
+              xte = xteValue.toFixed(0);
+              xteAnnotation = ' m';
+            }
+
             this.apModeValueAnnotation.set(xteAnnotation);
             this.apModeValue.set(xte);
+            this.apModeValueDirection.set(xteDirection);
             break;
           case "standby":
             this.apModeValueAnnotation.set('');
             this.apModeValue.set('');
+            this.apModeValueDirection.set('');
             break;
           case "wind":
             this.apModeValueAnnotation.set(awa ? awa > 0 ? 'S' : 'P' : '');
             this.apModeValue.set(Math.abs(awa) + '°');
+            this.apModeValueDirection.set('');
             break;
           default:
             this.apModeValueAnnotation.set('');
             this.apModeValue.set('');
+            this.apModeValueDirection.set('');
             break;
         }
       });
