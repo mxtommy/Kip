@@ -1,148 +1,214 @@
-import { Component, Input, ElementRef, SimpleChanges, AfterViewInit, OnDestroy, input, viewChild } from '@angular/core';
-import { trigger, state, style, animate, transition } from '@angular/animations';
-import { NgIf } from '@angular/common';
+import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal } from '@angular/core';
+import { animateRotation, animateRudderWidth } from '../../core/utils/svg-animate.util';
 
 interface ISVGRotationObject {
-  oldDegreeIndicator: string;
-  newDegreeIndicator: string;
-  animationElement: ElementRef | null;
+  oldValue: number;
+  newValue: number;
 }
 
 @Component({
   selector: 'app-svg-autopilot',
-  templateUrl: './svg-autopilot.component.html',
+  templateUrl: './svg-autopilot.component.svg',
   styleUrl: './svg-autopilot.component.scss',
-  animations: [
-    trigger('fadeInOut', [
-      state('connected', style({ opacity: 0 })),
-      state('disconnected', style({ opacity: 1 })),
-      transition('connected <=> disconnected', animate('.3s')),
-    ]),
-  ],
   standalone: true,
-  imports: [NgIf]
+  imports: []
 })
-export class SvgAutopilotComponent implements AfterViewInit, OnDestroy {
-  readonly ApStencil = viewChild.required<ElementRef>('apStencil');
-  readonly countDown = viewChild.required<ElementRef>('countDown');
-  readonly compassAnimate = viewChild.required<ElementRef>('compassAnimate');
-  readonly appWindAnimate = viewChild.required<ElementRef>('appWindAnimate');
-  readonly rudderPrtAnimate = viewChild.required<ElementRef>('rudderPrtAnimate');
-  readonly rudderStbAnimate = viewChild.required<ElementRef>('rudderStbAnimate');
+export class SvgAutopilotComponent {
+  private readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
+  private readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
+  private readonly rudderStarboardRect = viewChild.required<ElementRef<SVGRectElement>>('rudderStarboardRect');
+  private readonly rudderPortRect = viewChild.required<ElementRef<SVGRectElement>>('rudderPortRect');
 
-  readonly compassHeading = input.required<number>();
-  readonly appWindAngle = input.required<number>();
-  readonly rudderAngle = input.required<number>();
-  @Input() apState!: string;
-  @Input() apTargetAppWindAngle!: number;
-  readonly isApConnected = input.required<boolean>();
+  protected readonly apState = input<string>('standby');
+  protected readonly targetPilotHeading = input.required<number>();
+  protected readonly targetWindAngleHeading = input.required<number>();
+  protected readonly rudderAngle = input.required<number>();
+  protected readonly courseXte = input.required<number>();
+  protected readonly compassHeading = input.required<number>();
+  protected readonly appWindAngle = input.required<number>();
+  protected readonly targetPilotHeadingTrue = input.required<boolean>();
+  protected readonly headingDirectionTrue = input.required<boolean>();
 
-  compassFaceplate: ISVGRotationObject = { oldDegreeIndicator: '0', newDegreeIndicator: '0', animationElement: null };
-  appWind: ISVGRotationObject = { oldDegreeIndicator: '0', newDegreeIndicator: '0', animationElement: null };
-  headingValue: string = "--";
+  protected compass : ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected awa : ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  oldRudderPrtAngle: number = 0;
-  newRudderPrtAngle: number = 0;
-  oldRudderStbAngle: number = 0;
-  newRudderStbAngle: number = 0;
+  protected oldRudderPrtAngle: number = 0;
+  protected newRudderPrtAngle: number = 0;
+  protected oldRudderStbAngle: number = 0;
+  protected newRudderStbAngle: number = 0;
 
-  activityIconVisibility: string = "hidden;";
-  errorIconVisibility: string = "hidden";
-  msgStencilVisibility: string = "hidden";
-  msgStencilInnerHTML: string = "Empty Message Stencil";
-  errorStencilVisibility: string = "hidden";
-  errorStencilInnerText: string = "Empty Error Stencil";
-  messageVisibility: string = "hidden";
-  messageInnerText: string = "";
+  protected apModeValue = signal<string>('');
+  protected apModeValueAnnotation = signal<string>('');
+  protected apModeValueDirection = signal<string>('');
 
-  ngAfterViewInit(): void {
-    this.compassFaceplate.animationElement = this.compassAnimate();
-    this.appWind.animationElement = this.appWindAnimate();
-  }
-
-  ngOnDestroy(): void {
-    this.compassFaceplate.animationElement = null;
-    this.appWind.animationElement = null;
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.compassHeading && !changes.compassHeading.firstChange) {
-      this.updateRotation(this.compassFaceplate, changes.compassHeading.currentValue);
-      this.headingValue = changes.compassHeading.currentValue.toFixed(0);
+  protected apTWA = computed(() => {
+    const apTWA = parseFloat(this.targetWindAngleHeading().toFixed(0))
+    if (apTWA == null) return;
+    return apTWA;
+  });
+  protected lockedMode = computed(() => {
+    switch (this.apState()) {
+      case "auto": return `Locked BRG`;
+      case "route": return `Locked HDG`;
+      case "wind": return "Locked AWA";
+      default: return "Standby";
     }
-
-    if (changes.apState && !changes.apState.firstChange) {
-      this.apState = this.apState.toUpperCase();
+  });
+  protected lockedHdg = computed(() => {
+    const lockedHdg = parseFloat(this.targetPilotHeading().toFixed(0));
+    const lockedAWA = parseFloat(this.targetWindAngleHeading().toFixed(0));
+     switch (this.apState()) {
+      case "auto": return lockedHdg;
+      case "route": return lockedHdg;
+      case "wind": return lockedAWA;
+      default: return "--";
     }
-
-    if (changes.apTargetAppWindAngle && !changes.apTargetAppWindAngle.firstChange) {
-      this.apTargetAppWindAngle = parseFloat(changes.apTargetAppWindAngle.currentValue.toFixed(0));
+  });
+  protected lockedHdgAnnotation = computed(() => {
+    const state = this.apState();
+    if (state === "route" || state === "auto") {
+      return this.targetPilotHeadingTrue() ? 'T' : 'M';
     }
+    return '';
+  });
+  protected hdgDirectionTrue = computed(() => {
+    return this.headingDirectionTrue() ? 'True' : 'Mag';
+  });
+  private animationFrameIds = new WeakMap<SVGGElement, number>();
+  private rudderAnimationFrames = new WeakMap<SVGRectElement, number>();
+  private readonly ANIMATION_DURATION = 1000;
+  private readonly DEG_TO_PX = 16.66666667; // 30° maps to 500px, so 1° = 500/30 = 16.6667px
 
-    if (changes.appWindAngle && !changes.appWindAngle.firstChange) {
-      this.updateRotation(this.appWind, changes.appWindAngle.currentValue);
-    }
+  constructor() {
+    effect(() => {
+      if (this.compassHeading() === null || this.compassHeading() === undefined) return;
+      const compassHeading = parseFloat(this.compassHeading().toFixed(0));
 
-    if (changes.rudderAngle && !changes.rudderAngle.firstChange) {
-      this.updateRudderAngle(changes.rudderAngle.currentValue);
-    }
-  }
+      untracked(() => {
+        this.compass.oldValue = this.compass.newValue;
+        this.compass.newValue = compassHeading;
+        if (this.rotatingDial()?.nativeElement) {
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, 500, undefined, this.animationFrameIds, [500, 560.061]);
+        }
+      });
+    });
 
-  private updateRotation(rotationObject: ISVGRotationObject, newValue: number): void {
-    rotationObject.oldDegreeIndicator = rotationObject.newDegreeIndicator;
-    rotationObject.newDegreeIndicator = newValue.toFixed(0);
-    this.smoothCircularRotation(rotationObject);
+    effect(() => {
+      const aWA = parseFloat(this.appWindAngle().toFixed(0));
+      const awa360 = (aWA + 360) % 360;
+      untracked(() => {
+        this.awa.oldValue = this.awa.newValue;
+        this.awa.newValue = awa360;
+        if (this.awaIndicator()?.nativeElement) {
+          animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds,[500, 560.061]);
+        }
+      });
+    });
+
+    effect(() => {
+      const rudderAngle = this.rudderAngle();
+      if (rudderAngle == null) return;
+      untracked(() => {
+        this.updateRudderAngle(-rudderAngle);
+      });
+    });
+
+    effect(() => {
+      const state = this.apState();
+      const awa = parseFloat(this.appWindAngle().toFixed(0));
+      let xteValue = this.courseXte();
+
+      untracked(() => {
+        switch (state) {
+          case "auto":
+          case "route":
+            let xte: string;
+            let xteAnnotation: string;
+            let xteDirection: string;
+
+            if (xteValue < 0) {
+              xteDirection = ' Prt';
+            } else if (xteValue > 0) {
+              xteDirection = ' Stbd';
+            } else {
+              xteDirection = '';
+            }
+
+            xteValue = Math.abs(xteValue);
+            if (xteValue > 999) {
+              xte = (xteValue / 1000).toFixed(1);
+              xteAnnotation = ' km';
+            } else {
+              xte = xteValue.toFixed(0);
+              xteAnnotation = ' m';
+            }
+
+            this.apModeValueAnnotation.set(xteAnnotation);
+            this.apModeValue.set(xte);
+            this.apModeValueDirection.set(xteDirection);
+            break;
+          case "standby":
+            this.apModeValueAnnotation.set('');
+            this.apModeValue.set('');
+            this.apModeValueDirection.set('');
+            break;
+          case "wind":
+            this.apModeValueAnnotation.set(awa ? awa > 0 ? 'S' : 'P' : '');
+            this.apModeValue.set(Math.abs(awa) + '°');
+            this.apModeValueDirection.set('');
+            break;
+          default:
+            this.apModeValueAnnotation.set('');
+            this.apModeValue.set('');
+            this.apModeValueDirection.set('');
+            break;
+        }
+      });
+    });
   }
 
   private updateRudderAngle(newAngle: number): void {
+    const maxAngle = 30;
+    const capped = Math.min(Math.abs(newAngle), maxAngle) * this.DEG_TO_PX;
+
     if (newAngle <= 0) {
-      this.oldRudderPrtAngle = this.newRudderPrtAngle = 0;
-      this.oldRudderStbAngle = this.newRudderStbAngle;
-      this.newRudderStbAngle = Math.round(newAngle * -7.16);
+      animateRudderWidth(
+        this.rudderStarboardRect().nativeElement,
+        this.oldRudderStbAngle,
+        capped,
+        500,
+        undefined,
+        this.rudderAnimationFrames
+      );
+      animateRudderWidth(
+        this.rudderPortRect().nativeElement,
+        this.oldRudderPrtAngle,
+        0,
+        500,
+        undefined,
+        this.rudderAnimationFrames
+      );
+      this.oldRudderStbAngle = capped;
+      this.oldRudderPrtAngle = 0;
     } else {
-      this.oldRudderStbAngle = this.newRudderStbAngle = 0;
-      this.oldRudderPrtAngle = this.newRudderPrtAngle;
-      this.newRudderPrtAngle = Math.round(newAngle * 7.16);
-    }
-
-    this.animateRudder();
-  }
-
-  private animateRudder(): void {
-    this.rudderPrtAnimate()?.nativeElement?.beginElement();
-    this.rudderStbAnimate()?.nativeElement?.beginElement();
-  }
-
-  private smoothCircularRotation(rotationElement: ISVGRotationObject): void {
-    if (!rotationElement.animationElement) return;
-
-    const oldAngle = Number(rotationElement.oldDegreeIndicator);
-    const newAngle = Number(rotationElement.newDegreeIndicator);
-    const diff = oldAngle - newAngle;
-
-    if (diff === 0) return;
-
-    if (Math.abs(diff) > 180) {
-      const specialCases = [
-        { condition: oldAngle === 359, oldVal: '0' },
-        { condition: oldAngle === 0, oldVal: '359' }
-      ];
-
-      for (const { condition, oldVal } of specialCases) {
-        if (condition) {
-          rotationElement.oldDegreeIndicator = oldVal;
-          rotationElement.animationElement.nativeElement.beginElement();
-          return;
-        }
-      }
-
-      rotationElement.newDegreeIndicator = diff > 0 ? '359' : '0';
-      rotationElement.animationElement.nativeElement.beginElement();
-      rotationElement.oldDegreeIndicator = diff > 0 ? '0' : '359';
-      rotationElement.newDegreeIndicator = newAngle.toFixed(0);
-      rotationElement.animationElement.nativeElement.beginElement();
-    } else {
-      rotationElement.animationElement.nativeElement.beginElement();
+      animateRudderWidth(
+        this.rudderPortRect().nativeElement,
+        this.oldRudderPrtAngle,
+        capped,
+        500,
+        undefined,
+        this.rudderAnimationFrames
+      );
+      animateRudderWidth(
+        this.rudderStarboardRect().nativeElement,
+        this.oldRudderStbAngle,
+        0,
+        500,
+        undefined,
+        this.rudderAnimationFrames
+      );
+      this.oldRudderPrtAngle = capped;
+      this.oldRudderStbAngle = 0;
     }
   }
 }

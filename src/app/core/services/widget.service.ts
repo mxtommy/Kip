@@ -152,14 +152,6 @@ export class WidgetService {
       componentClassName: 'WidgetAutopilotComponent'
     },
     {
-      name: 'Autopilot Head v2',
-      description: 'A modern and responsive Autopilot Head for supported Signal K v2 API autopilot devices.',
-      icon: 'autopilotWidget',
-      category: 'Components',
-      selector: 'widget-autopilot-v2',
-      componentClassName: 'WidgetAutopilotV2Component'
-    },
-    {
       name: 'Race Timer',
       description: "A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.",
       icon: 'racetimerWidget',
