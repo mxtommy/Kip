@@ -29,7 +29,7 @@ export interface IStreamStatus {
     providedIn: 'root'
   })
 export class SignalKDeltaService implements OnDestroy {
-  private _destroyRef = inject(DestroyRef); // Inject DestroyRef
+  private readonly _destroyRef = inject(DestroyRef); // Inject DestroyRef
 
   // Signal K Requests message stream Observable
   private _skRequests$ = new Subject<ISignalKDeltaMessage>();

@@ -384,21 +384,21 @@
     style="display:inline">
     <text xml:space="preserve"
       class="contrast-text"
-      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:200px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
+      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:230px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
       x="523.93127"
-      y="480.13757">{{ compass.newValue }}°</text>
+      y="480.13757">{{ compass.newValue }}<tspan style="font-weight:normal">°</tspan></text>
     <text
        xml:space="preserve"
        class="contrast-text-dim"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;display:inline;fill-opacity:1;stroke:none"
-       x="721.25275"
-       y="477.74036">{{hdgDirectionTrue()}}</text>
+       x="720"
+       y="484">{{hdgDirectionTrue()}}</text>
     <text
       xml:space="preserve"
       class="contrast-text-dim"
       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;display:inline;stroke:none"
-      x="499.38153"
-      y="315.24759">Heading</text>
+      x="245"
+      y="484">HDG</text>
   </g>
   <g id="IndicatorsLayer"
      style="display:inline">

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, effect, resource } from '@angular/core';
+import { Injectable, inject, signal, resource } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { SignalKConnectionService } from './signalk-connection.service';
 
@@ -62,19 +62,76 @@ export class SignalkPluginsService {
     );
   }
 
-  public async isEnabled(pluginId: string): Promise<boolean> {
+  /**
+   * Loads and returns the current list of plugins from the Signal K server.
+   * This method triggers a reload of the plugin information resource and waits until the data is available.
+   *
+   * @returns Promise resolving to an array of PluginInformation objects. Returns an empty array if loading fails or no plugins are found.
+   */
+  private async getPluginInformation(): Promise<PluginInformation[]> {
     this._pluginInformation.reload();
-
     // Wait for the resource to finish loading
     while (this._pluginInformation.isLoading()) {
-      await new Promise(resolve => setTimeout(resolve, 100)); // Poll every 50ms
+      // Poll every 100ms until the resource is loaded
+      await new Promise(resolve => setTimeout(resolve, 100)); // Poll every 100ms
     }
+    return this._pluginInformation.value()?.plugins || [];
+  }
 
-    const features = this._pluginInformation.value();
+  /**
+   * Checks if a plugin with the given ID is installed on the Signal K server.
+   * @param pluginId The ID of the plugin to check.
+   * @returns Promise resolving to true if the plugin is installed, false otherwise.
+   *
+   * @example
+   * // Usage in a synchronous function:
+   * signalkPluginsService.isInstalled('autopilot').then((installed) => {
+   *   if (installed) {
+   *     console.log('Autopilot plugin is installed.');
+   *   }
+   * });
+   *
+   * // Usage in an async function:
+   * const installed = await signalkPluginsService.isInstalled('autopilot');
+   * if (installed) {
+   *   console.log('Autopilot plugin is installed.');
+   * }
+   *
+   */
+  public async isInstalled(pluginId: string): Promise<boolean> {
+    const plugins = await this.getPluginInformation();
 
-    if (!features || !features.plugins || features.plugins.length === 0) {
+    if (!plugins || plugins.length === 0) {
       return false;
     }
-    return features.plugins.some((plugin) => plugin.id === pluginId && plugin.enabled);
+    return plugins.some((plugin) => plugin.id === pluginId);
+  }
+
+  /**
+   * Checks if a plugin with the given ID is both installed and enabled on the Signal K server.
+   * @param pluginId The ID of the plugin to check.
+   * @returns Promise resolving to true if the plugin is installed and enabled, false otherwise.
+   *
+   * @example
+   * // Usage in a synchronous function:
+   * signalkPluginsService.isEnabled('autopilot').then((enabled) => {
+   *   if (enabled) {
+   *     console.log('Autopilot plugin is enabled.');
+   *   }
+   * });
+   * // Usage in an async function:
+   * const enabled = await signalkPluginsService.isEnabled('autopilot');
+   * if (enabled) {
+   *   console.log('Autopilot plugin is enabled.');
+   * }
+   *
+   */
+  public async isEnabled(pluginId: string): Promise<boolean> {
+    const plugins = await this.getPluginInformation();
+
+    if (!plugins || plugins.length === 0) {
+      return false;
+    }
+    return plugins.some((plugin) => plugin.id === pluginId && plugin.enabled);
   }
 }

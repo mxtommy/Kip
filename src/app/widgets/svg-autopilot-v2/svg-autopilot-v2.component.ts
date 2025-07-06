@@ -19,15 +19,15 @@ export class SvgAutopilotV2Component {
   private readonly rudderStarboardRect = viewChild.required<ElementRef<SVGRectElement>>('rudderStarboardRect');
   private readonly rudderPortRect = viewChild.required<ElementRef<SVGRectElement>>('rudderPortRect');
 
-  protected readonly compassHeading = input.required<number>();
-  protected readonly headingDirectionTrue = input.required<boolean>();
-  protected readonly appWindAngle = input.required<number>();
-  protected readonly rudderAngle = input.required<number>();
   protected readonly apState = input<string>('standby');
-  protected readonly apTargetAppWindAngle = input.required<number>();
-  protected readonly courseTargetHeading = input.required<number>();
+  protected readonly targetPilotHeading = input.required<number>();
+  protected readonly targetWindAngleHeading = input.required<number>();
+  protected readonly rudderAngle = input.required<number>();
   protected readonly courseXte = input.required<number>();
-  protected readonly courseDirectionTrue = input.required<boolean>();
+  protected readonly compassHeading = input.required<number>();
+  protected readonly appWindAngle = input.required<number>();
+  protected readonly targetPilotHeadingTrue = input.required<boolean>();
+  protected readonly headingDirectionTrue = input.required<boolean>();
 
   protected compass : ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected awa : ISVGRotationObject = { oldValue: 0, newValue: 0 };
@@ -41,7 +41,7 @@ export class SvgAutopilotV2Component {
   protected apModeValueAnnotation = signal<string>('');
 
   protected apTWA = computed(() => {
-    const apTWA = parseFloat(this.apTargetAppWindAngle().toFixed(0))
+    const apTWA = parseFloat(this.targetWindAngleHeading().toFixed(0))
     if (apTWA == null) return;
     return apTWA;
   });
@@ -54,8 +54,8 @@ export class SvgAutopilotV2Component {
     }
   });
   protected lockedHdg = computed(() => {
-    const lockedHdg = parseFloat(this.courseTargetHeading().toFixed(0));
-    const lockedAWA = parseFloat(this.apTargetAppWindAngle().toFixed(0));
+    const lockedHdg = parseFloat(this.targetPilotHeading().toFixed(0));
+    const lockedAWA = parseFloat(this.targetWindAngleHeading().toFixed(0));
      switch (this.apState()) {
       case "auto": return lockedHdg;
       case "route": return lockedHdg;
@@ -66,7 +66,7 @@ export class SvgAutopilotV2Component {
   protected lockedHdgAnnotation = computed(() => {
     const state = this.apState();
     if (state === "route" || state === "auto") {
-      return this.courseDirectionTrue() ? 'T' : 'M';
+      return this.targetPilotHeadingTrue() ? 'T' : 'M';
     }
     return '';
   });

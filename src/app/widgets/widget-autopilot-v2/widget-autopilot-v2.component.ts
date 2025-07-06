@@ -1,9 +1,8 @@
-import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked, computed } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked, DestroyRef } from '@angular/core';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
-import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
+import { MatBadgeModule } from '@angular/material/badge';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -12,9 +11,11 @@ import { WidgetPositionComponent } from '../widget-position/widget-position.comp
 import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.component';
 import { WidgetDatetimeComponent } from "../widget-datetime/widget-datetime.component";
 import { DashboardService } from '../../core/services/dashboard.service';
+import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { isEqual } from 'lodash-es';
-import { INotification } from '../../core/services/notifications.service';
-import { MatBadgeModule } from '@angular/material/badge';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
+import { AppService } from '../../core/services/app-service';
 
 interface CommandDefinition {
   path: string;
@@ -38,12 +39,8 @@ const commands: CommandsMap = {
   "tackToStarboard":   {"path":"self.steering.autopilot.actions.tack","value":"starboard"},
   "advanceWaypoint":   {"path":"self.steering.autopilot.actions.advanceWaypoint","value":"1"}
 };
-
-const noData = '-- -- -- --';
-const noPilot = 'No pilot';
-const noHeading = '---&deg;';
 const countDownDefault: number = 5;
-const timeoutBlink = 250;
+
 
 @Component({
     selector: 'widget-autopilot-v2',
@@ -53,10 +50,14 @@ const timeoutBlink = 250;
     imports: [WidgetHostComponent, SvgAutopilotV2Component, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotV2Component extends BaseWidgetComponent implements OnInit, OnDestroy {
-  private signalkRequestsService = inject(SignalkRequestsService);
+  private readonly signalkRequestsService = inject(SignalkRequestsService);
   protected readonly dashboard = inject(DashboardService);
+  private readonly _destroyRef = inject(DestroyRef);
+  private readonly _plugins = inject(SignalkPluginsService);
+  protected readonly _app = inject(AppService);
 
-  // AP keypad
+  // Keypad buttons & layout
+  protected apGrid = signal('none'); // Autopilot button grid visibility
   protected readonly plus1Btn = viewChild.required<MatButton>('plus1Btn');
   protected readonly minus1Btn = viewChild.required<MatButton>('minus1Btn');
   protected readonly plus10Btn = viewChild.required<MatButton>('plus10Btn');
@@ -68,18 +69,14 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected readonly advWptBtn = viewChild.required<MatButton>('advWptBtn');
   // protected readonly dodgeBtn = viewChild.required<MatButton>('dodgeBtn');
 
-  protected displayName: string;
   protected apState = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
-  protected autopilotTarget: number = 0;
+  protected autopilotTargetHeading: number = 0;
+  protected autopilotTargetWindHeading: number = 0;
   protected courseTargetHeading: number = 0;
   protected heading: number = 0;
   protected crossTrackError: number = 0;
   protected windAngleApparent: number = 0;
   protected rudder: number = 0;
-
-  private skRequestSub: Subscription; // signalk-Request result observer
-
-  protected menuOpen = signal<boolean>(false);
 
   // Widget messaging countdown
   protected countdownOverlayVisibility = signal<string>('hidden');
@@ -90,23 +87,20 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected errorOverlayText = signal<string>('');
   private handleCountDownCounterTimeout = null;
   private handleConfirmActionTimeout = null;
-  private handleMessageTimeout = null;
   private handleDisplayErrorTimeout = null;
   protected countDownValue: number = -1;
   private actionToBeConfirmed: string = "";
-  private skPathToAck: string = "";
-  private notificationsArray = {};
-  protected hasNotifications = computed(() => Object.keys(this.notificationsArray).length);
-  protected alarmsCount = signal<number>(0);
 
+  // Mode Menu
+  protected menuOpen = signal<boolean>(false);
   protected menuItems = [
     { label: 'Cancel', action: 'cancel' }
   ];
   protected readonly itemHeight = 60;
   protected readonly padding = 20;
 
+  // Sub widget properties
   private embedWidgetColor = 'contrast';
-  protected apGrid = signal('none');
   protected nextWptProperties = signal<IWidget>({
     type: "widget-position",
     uuid: "db473695-42b1-4435-9d3d-ac2f27bf9665",
@@ -298,15 +292,59 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           convertUnitTo: "",
           sampleTime: 500
         },
-        "autopilotTarget": {
-          description: "Autopilot Target",
-          path: 'self.steering.autopilot.target',
+        "autopilotTargetHeading": {
+          description: "Autopilot Target Magnetic Heading",
+          path: 'self.steering.autopilot.target.headingMagnetic',
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
           isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "autopilotTargetWindHeading": {
+          description: "Autopilot Target Apparent Wind Angle",
+          path: 'self.steering.autopilot.target.windAngleApparent',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: false,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        // "courseTargetHeadingTrue": {
+        //   description: "Course Bearing True",
+        //   path: 'self.navigation.course.calcValues.bearingTrue',
+        //   source: 'default',
+        //   pathType: "number",
+        //   convertUnitTo: "deg",
+        //   isPathConfigurable: false,
+        //   showPathSkUnitsFilter: false,
+        //   pathSkUnitsFilter: 'rad',
+        //   sampleTime: 500
+        // },
+        // "courseTargetHeadingMag": {
+        //   description: "Course Bearing Magnetic",
+        //   path: 'self.navigation.course.calcValues.bearingMagnetic',
+        //   source: 'default',
+        //   pathType: "number",
+        //   convertUnitTo: "deg",
+        //   isPathConfigurable: false,
+        //   showPathSkUnitsFilter: false,
+        //   pathSkUnitsFilter: 'rad',
+        //   sampleTime: 500
+        // },
+        "courseXte": {
+          description: "Cross Track Error",
+          path: "self.navigation.course.calcValues.crossTrackError",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "m",
+          showPathSkUnitsFilter: true,
+          pathSkUnitsFilter: 'm',
           sampleTime: 500
         },
         "rudderAngle": {
@@ -315,42 +353,9 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
-          isPathConfigurable: true,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "courseTargetHeadingTrue": {
-          description: "Course Bearing True",
-          path: 'self.navigation.course.calcValues.bearingTrue',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
           isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "courseTargetHeadingMag": {
-          description: "Course Bearing Magnetic",
-          path: 'self.navigation.course.calcValues.bearingMagnetic',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "courseXte": {
-          description: "Cross Track Error",
-          path: "self.navigation.course.calcValues.crossTrackError",
-          source: "default",
-          pathType: "number",
-          isPathConfigurable: false,
-          convertUnitTo: "m",
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
           sampleTime: 500
         },
         "headingMag": {
@@ -359,7 +364,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
-          isPathConfigurable: false,
+          isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
@@ -370,7 +375,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           source: 'default',
           pathType: "number",
           convertUnitTo: "deg",
-          isPathConfigurable: false,
+          isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
@@ -398,21 +403,9 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
           sampleTime: 500
         }
       },
-      usage: {
-        "headingMag": ['wind', 'route', 'auto', 'standby'],
-        "headingTrue": ['wind', 'route', 'auto', 'standby'],
-        "windAngleApparent": ['wind'],
-        "windAngleTrueWater": ['wind'],
-      },
-      typeVal: {
-        "headingMag": 'Mag',
-        "headingTrue": 'True',
-        "windAngleApparent": 'AWA',
-        "windAngleTrueWater": 'TWA',
-      },
       invertRudder: true,
-      courseDirectionTrue: false,
       headingDirectionTrue: false,
+      courseDirectionTrue: false,
       enableTimeout: false,
       dataTimeout: 5
     };
@@ -513,12 +506,8 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
 
   ngOnInit() {
     this.validateConfig();
+    this.configureEmbedWidgets();
     this.startWidget();
-  }
-
-  protected addTestMsg() {
-    this.setNotificationMessage({"path":"notifications.autopilot.PilotWarningWindShift","value":{"state":"alarm","message":"Pilot Warning Wind Shift", "method":['sound', 'visual'], "timestamp": new Date().toISOString()}});
-    this.setNotificationMessage({"path":"notifications.autopilot.PilotWarningTack","value":{"state":"alarm","message":"Pilot Warning Tack", "method":['sound', 'visual'], "timestamp": new Date().toISOString()}});
   }
 
   private configureEmbedWidgets(): void {
@@ -546,18 +535,15 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.configureEmbedWidgets();
-    this.stopAllSubscriptions();
     this.startAllSubscriptions();
   }
 
-  ngOnDestroy() {
-    this.destroyDataStreams();
-    this.unsubscribeSKRequest();
-  }
-
   private startAllSubscriptions(): void {
-    this.observeDataStream('autopilotState', newValue => this.apState.set("auto"));//newValue.data.value));
-    this.observeDataStream('autopilotTarget', newValue => this.autopilotTarget = newValue.data.value ? newValue.data.value : 0);
+    this.unsubscribeDataStream();
+    this.observeDataStream('autopilotState', newValue => this.apState.set(newValue.data.value));
+    this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading = newValue.data.value ? newValue.data.value : 0);
+    this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading = newValue.data.value ? newValue.data.value : 0);
+    this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('rudderAngle', newValue => {
         if (newValue.data.value === null) {
           this.rudder = 0;
@@ -566,39 +552,26 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
         }
       }
     );
-    if (this.widgetProperties.config.courseDirectionTrue) {
-      this.observeDataStream('courseTargetHeadingTrue', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
-    } else {
-      this.observeDataStream('courseTargetHeadingMag', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
-    }
-    this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value ? newValue.data.value : 0);
+    // if (this.widgetProperties.config.courseDirectionTrue) {
+    //   this.observeDataStream('courseTargetHeadingTrue', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
+    // } else {
+    //   this.observeDataStream('courseTargetHeadingMag', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
+    // }
     if (this.widgetProperties.config.headingDirectionTrue) {
       this.observeDataStream('headingTrue', newValue => this.heading = newValue.data.value ? newValue.data.value : 0);
     } else {
       this.observeDataStream('headingMag', newValue => this.heading = newValue.data.value ? newValue.data.value : 0);
     }
     this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent = newValue.data.value ? newValue.data.value : 0);
-    this.subscribeSKRequest();
+    this.subscribePutResponse();
   }
 
-  private stopAllSubscriptions(): void {
-    this.unsubscribeDataStream();
-    this.unsubscribeSKRequest();
-  }
-
-  private subscribeSKRequest(): void {
-    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
+  private subscribePutResponse(): void {
+    this.signalkRequestsService.subscribeRequest().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         this.commandReceived(requestResult);
       }
     });
-  }
-
-  private unsubscribeSKRequest(): void {
-    if (this.skRequestSub !== null) {
-      this.skRequestSub.unsubscribe();
-      this.skRequestSub = null;
-    }
   }
 
   protected toggleMenu(): void {
@@ -736,79 +709,7 @@ export class WidgetAutopilotV2Component extends BaseWidgetComponent implements O
     }, 6000);
   }
 
-  private getNextNotification(skPath: string): string {
-    //TODO: getNextNotification not used anymore, remove?
-    const notificationsKeys = Object.keys(this.notificationsArray);
-    let newSkPathToAck: string = "";
-    let index: number = 0;
-    if (notificationsKeys.length > 0) {
-      if (typeof skPath !== "undefined") {
-        index = notificationsKeys.indexOf(skPath) + 1;
-      } else {
-          index = 0;
-        }
-      if (notificationsKeys.length <= index) {
-        index = 0;
-      }
-      newSkPathToAck = notificationsKeys[index];
-    }
-    return newSkPathToAck;
-  }
-
-  private setNotificationMessage(msg: INotification): void {
-    if (typeof msg.path !== 'undefined') {
-      msg.path = msg.path.replace('notifications.', '');
-      if (typeof msg.value !== 'undefined') {
-        if (msg.value.state === 'normal') {
-          if (this.msgOverlayText() === this.notificationsArray[msg.path]) {
-            this.msgOverlayText.set("");
-          }
-          delete this.notificationsArray[msg.path]
-        } else {
-            this.notificationsArray[msg.path] = msg.value.message.replace("Pilot", "");
-            this.msgOverlayText.set(this.notificationsArray[msg.path]);
-          }
-      }
-    }
-    this.alarmsCount.set(Object.keys(this.notificationsArray).length);
-    if (this.alarmsCount() > 0) {
-      if (this.msgOverlayText() == "") {
-        this.msgOverlayText.set(Object.keys(this.notificationsArray)[0]);
-      }
-    } else {
-      this.alarmsCount.set(0);
-      this.msgOverlayText.set("");
-    }
-  }
-
-  protected notificationScroll(): void {
-    if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
-      this.skPathToAck = Object.keys(this.notificationsArray)[0];
-    }
-    this.skPathToAck = this.getNextNotification(this.skPathToAck);
-    this.msgOverlayText.set(this.notificationsArray[this.skPathToAck]);
-    this.msgOverlayVisibility.set('visible');
-    clearTimeout(this.handleMessageTimeout);
-    this.handleMessageTimeout = setTimeout(() => {
-      this.msgOverlayText.set("");
-      this.msgOverlayVisibility.set('hidden');
-    }, 2000);
-  }
-
-  protected sendSilence(): void {
-    if (this.msgOverlayVisibility() !== 'visible') {
-      this.msgOverlayVisibility.set('visible');
-
-      if ((Object.keys(this.notificationsArray).length > 0) && (this.skPathToAck == "")) {
-        this.skPathToAck = Object.keys(this.notificationsArray)[0];
-      }
-    } else {
-      if (this.skPathToAck !== "") {
-        this.sendCommand({"path":"notifications." + this.skPathToAck + ".state","value":"normal"});
-      }
-      this.msgOverlayVisibility.set('hidden');
-    }
-
-    this.msgOverlayText.set(this.notificationsArray[this.skPathToAck]);
+  ngOnDestroy() {
+   this.destroyDataStreams();
   }
 }

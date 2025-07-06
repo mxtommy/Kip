@@ -48,7 +48,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   private _dialog = inject(DialogService);
   protected dashboard = inject(DashboardService);
   private _notifications = inject(NotificationsService);
-  private _destroyRef = inject(DestroyRef);
+  private readonly _destroyRef = inject(DestroyRef);
   private _uiEvent = inject(uiEventService);
   protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);

@@ -94,15 +94,15 @@
             </display-datetime-options>
 
             <!-- Autopilot gauge stuff -->
-            <mat-checkbox *ngIf="(widgetConfig.courseDirectionTrue !== undefined)"
+            <!-- <mat-checkbox *ngIf="(widgetConfig.courseDirectionTrue !== undefined)"
               name="courseDirectionTrue"
               formControlName="courseDirectionTrue">
-                Use True bearing direction
-            </mat-checkbox>
+                Display True Bearing
+            </mat-checkbox> -->
             <mat-checkbox *ngIf="(widgetConfig.headingDirectionTrue !== undefined)"
               name="headingDirectionTrue"
               formControlName="headingDirectionTrue">
-                Use True heading direction
+                Display True Heading
             </mat-checkbox>
             <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.invertRudder !== undefined)"
               name="invertRudder"
