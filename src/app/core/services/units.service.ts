@@ -5,6 +5,43 @@ import Qty from 'js-quantities';
 import { AppSettingsService } from './app-settings.service';
 import { Subscription } from 'rxjs';
 
+/**
+ * All valid Signal K numeric units supported by KIP.
+ *
+ * Allowed values:
+ * - 's'        (seconds)
+ * - 'Hz'       (hertz)
+ * - 'm3'       (cubic meters)
+ * - 'm3/s'     (cubic meters per second)
+ * - 'kg/s'     (kilograms per second)
+ * - 'kg/m3'    (kilograms per cubic meter)
+ * - 'deg'      (degrees)
+ * - 'rad'      (radians)
+ * - 'rad/s'    (radians per second)
+ * - 'A'        (amperes)
+ * - 'C'        (coulombs)
+ * - 'V'        (volts)
+ * - 'W'        (watts)
+ * - 'Nm'       (newton meters)
+ * - 'J'        (joules)
+ * - 'ohm'      (ohms)
+ * - 'm'        (meters)
+ * - 'm/s'      (meters per second)
+ * - 'm2'       (square meters)
+ * - 'K'        (kelvin)
+ * - 'Pa'       (pascals)
+ * - 'kg'       (kilograms)
+ * - 'ratio'    (ratio, 0-1)
+ * - 'm/s2'     (meters per second squared)
+ * - 'rad/s2'   (radians per second squared)
+ * - 'N'        (newtons)
+ * - 'T'        (tesla)
+ * - 'Lux'      (lux)
+ * - 'Pa/s'     (pascals per second)
+ * - 'Pa.s'     (pascal seconds)
+ * - 'unitless' (no unit)
+ * - null       (no filter)
+ */
 export type TValidSkUnits = 's' | 'Hz' | 'm3' | 'm3/s' | 'kg/s' | 'kg/m3' | 'deg' | 'rad' | 'rad/s' | 'A' | 'C' | 'V' | 'W' | 'Nm' | 'J' | 'ohm' | 'm' | 'm/s' | 'm2' | 'K' | 'Pa' | 'kg' | 'ratio' | 'm/s2' | 'rad/s2' | 'N' | 'T' | 'Lux' | 'Pa/s' | 'Pa.s' | 'unitless' | null;
 
 /**
