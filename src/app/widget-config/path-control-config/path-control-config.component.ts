@@ -104,8 +104,12 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     );
 
     this._pathFormGroup$ = this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
+      if (this.pathFormGroup.value.showPathSkUnitsFilter) {
         this.pathSkUnitsFilterControl.setValue(this.unitlessUnit);
-        this.pathFormGroup.controls['path'].updateValueAndValidity();
+      } else {
+        this.pathSkUnitsFilterControl.setValue(null);
+      }
+      this.pathFormGroup.controls['path'].updateValueAndValidity();
     });
   }
 
@@ -142,11 +146,15 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     let filteredPaths = this.getPaths();
 
     // If a unit filter is set, apply it first
-    if (this.pathSkUnitsFilterControl.value != null) {
-      filteredPaths = filteredPaths.filter(item =>
-        (item.meta && item.meta.units && item.meta.units === this.pathSkUnitsFilterControl.value.unit) ||
-        (!item.meta || !item.meta.units) && this.pathSkUnitsFilterControl.value.unit === 'unitless'
-      );
+    if (this.pathSkUnitsFilterControl.value) {
+      const selectedUnit = this.pathSkUnitsFilterControl.value.unit;
+      filteredPaths = filteredPaths.filter(item => {
+        const hasUnits = !!item.meta && !!item.meta.units;
+        const isUnitless = selectedUnit === 'unitless';
+        const matchesUnit = hasUnits && item.meta.units === selectedUnit;
+        const isActuallyUnitless = !hasUnits && isUnitless;
+        return matchesUnit || isActuallyUnitless;
+      });
     }
 
     // Then filter based on the path

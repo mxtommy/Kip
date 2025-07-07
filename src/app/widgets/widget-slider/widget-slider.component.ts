@@ -61,14 +61,14 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
       filterSelfPaths: true,
       paths: {
         'gaugePath': {
-          description: 'Numeric PUT path',
+          description: 'PUT Supported Numeric Path. IMPORTANT: Format must be set to (base)',
           path: null,
           source: null,
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "unitless",
+          convertUnitTo: null,
           showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: "unitless",
+          pathSkUnitsFilter: null,
           supportsPut: true,
           sampleTime: 500
         }

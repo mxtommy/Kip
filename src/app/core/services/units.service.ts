@@ -634,7 +634,7 @@ export class UnitsService implements OnDestroy {
     const UNITLESS = 'unitless';
     let defaultUnit: string = "unitless";
 
-    if (pathUnitType === null) {
+    if (pathUnitType === null || pathUnitType === 'RFC 3339 (UTC)') {
       return { base: UNITLESS, conversions: this._conversionList };
     } else {
       const groupList = this._conversionList.filter(unitGroup => {

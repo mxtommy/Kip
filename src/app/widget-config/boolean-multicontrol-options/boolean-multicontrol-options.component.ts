@@ -75,8 +75,8 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
         supportsPut: true,
         isPathConfigurable: true,
         showPathSkUnitsFilter: false,
-        pathSkUnitsFilter: 'unitless',
-        convertUnitTo: 'unitless',
+        pathSkUnitsFilter: null,
+        convertUnitTo: null,
         sampleTime: 500
       },
       ctrlType: 1
