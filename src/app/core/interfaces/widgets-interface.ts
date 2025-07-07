@@ -10,6 +10,16 @@ export enum ControlType {
 }
 
 /**
+ * Allowed path types for Signal K data paths.
+ * - 'number'
+ * - 'string'
+ * - 'boolean'
+ * - 'Date'
+ * - null
+ */
+export type TWidgetPathType = 'number' | 'string' | 'boolean' | 'Date' | null;
+
+/**
  * KIP Dynamic Widgets interface.
  *
  * @export
@@ -256,7 +266,6 @@ export interface IWidgetSvcConfig {
  * @interface IDynamicControl
  */
 export interface IDynamicControl {
-
   /** Display label of the control */
   ctrlLabel: string;
   /** The type of control: 1 = toggle, 2 = button, 3 = light */
@@ -302,19 +311,34 @@ export interface IWidgetPath {
   path: string | null;
   /** Required: Enforce a preferred Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thru hulls, wind vanes, engines, fuel tanks, ect.). Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K. */
   source: string | null;
-  /** Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from. Format can be: number, string, boolean or null to list all types */
-  pathType: string | null;
+  /**
+  * Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from.
+  * Allowed values are defined in {@link TWidgetPathType}.
+  * @see TWidgetPathType
+  */
+  pathType: TWidgetPathType;
   /** Only lists paths the support PUT action. Defaults to false */
   supportsPut?: boolean;
   /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
   isPathConfigurable: boolean;
   /** Hide numeric path type filter */
   showPathSkUnitsFilter?: boolean;
-  /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type, 'unitless' for paths with no meta units or null to list all types (no filter) */
+  /**
+  * Numeric path type filter to limit path search results based on SK Meta Units.
+  * Allowed values are defined in {@link TValidSkUnits}.
+  * Use 'unitless' for numeric paths with no meta units, or null to list all types of paths (no filter).
+  * @see TValidSkUnits
+  */
   pathSkUnitsFilter?: TValidSkUnits;
   /** Used to hide the path Format configuration field from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the Format for the path's value. Use this to hardcode a format configuration */
   isConvertUnitToConfigurable?: boolean;
-  /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
+  /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format.
+  * Allowed values are defined in {@link unitConversionFunctions}.
+  * Also used as a source to identify conversion group.
+  * Use null for no conversion.
+  *
+  * @see units.service unitConversionFunctions()
+  */
   convertUnitTo?: string;
   /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
   sampleTime: number;
