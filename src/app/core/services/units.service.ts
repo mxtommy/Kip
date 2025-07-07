@@ -73,9 +73,7 @@ export interface IUnit {
 /**
  * Interface for defaults Units per unit Groups to be applied
  */
-export interface IUnitDefaults {
-  [key: string]: string;
-}
+export type IUnitDefaults = Record<string, string>;
 
 /**
  * Interface for supported path value units provided by Signal K (schema v 1.7)
@@ -540,9 +538,9 @@ export class UnitsService implements OnDestroy {
       const isNegative = v < 0; // Check if the value is negative
       v = Math.abs(v); // Use the absolute value for calculations
 
-      let h = Math.floor(v / 3600);
-      let m = Math.floor(v % 3600 / 60);
-      let s = Math.floor(v % 3600 % 60);
+      const h = Math.floor(v / 3600);
+      const m = Math.floor(v % 3600 / 60);
+      const s = Math.floor(v % 3600 % 60);
 
       // Add a negative sign if the original value was negative
       return (isNegative ? '-' : '') +
@@ -584,8 +582,8 @@ export class UnitsService implements OnDestroy {
       if (v < 0) { s = 'S'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
       if (s == 'S') { r = r * -1 }
-      let minutes = Math.trunc(r);
-      let seconds = (r % 1) * 60;
+      const minutes = Math.trunc(r);
+      const seconds = (r % 1) * 60;
 
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
@@ -603,8 +601,8 @@ export class UnitsService implements OnDestroy {
       if (v < 0) { s = 'W'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
       if (s == 'W') { r = r * -1 }
-      let minutes = Math.trunc(r);
-      let seconds = (r % 1) * 60;
+      const minutes = Math.trunc(r);
+      const seconds = (r % 1) * 60;
 
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
@@ -625,7 +623,7 @@ export class UnitsService implements OnDestroy {
   public convertToUnit(unit: string, value: number): number {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
-    let num: number = +value; // sometime we get strings here. Weird! Lazy patch.
+    const num: number = +value; // sometime we get strings here. Weird! Lazy patch.
     return this.unitConversionFunctions[unit](num);
   }
 
@@ -669,7 +667,7 @@ export class UnitsService implements OnDestroy {
   public getConversionsForPath(path: string): IConversionPathList {
     const pathUnitType = this.data.getPathUnitType(path);
     const UNITLESS = 'unitless';
-    let defaultUnit: string = "unitless";
+    let defaultUnit = "unitless";
 
     if (pathUnitType === null || pathUnitType === 'RFC 3339 (UTC)') {
       return { base: UNITLESS, conversions: this._conversionList };

@@ -32,10 +32,10 @@ export class SvgAutopilotComponent {
   protected compass : ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected awa : ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  protected oldRudderPrtAngle: number = 0;
-  protected newRudderPrtAngle: number = 0;
-  protected oldRudderStbAngle: number = 0;
-  protected newRudderStbAngle: number = 0;
+  protected oldRudderPrtAngle = 0;
+  protected newRudderPrtAngle = 0;
+  protected oldRudderStbAngle = 0;
+  protected newRudderStbAngle = 0;
 
   protected apModeValue = signal<string>('');
   protected apModeValueAnnotation = signal<string>('');

@@ -132,7 +132,7 @@ export class AppService {
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
    */
-  public sendSnackbarNotification(message: string, duration: number = 10000, silent: boolean = false) {
+  public sendSnackbarNotification(message: string, duration = 10000, silent = false) {
     this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
   }
 
@@ -192,7 +192,7 @@ export class AppService {
     return this._cssThemeColorRoles;
   }
 
-  public setBrightness(brightness: number, applyNightFilters: boolean = false): void {
+  public setBrightness(brightness: number, applyNightFilters = false): void {
     const appFilterWrapper = document.body;
 
     // Set the brightness level

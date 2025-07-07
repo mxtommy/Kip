@@ -23,8 +23,8 @@ export class StorageService {
   private server = inject(SignalKConnectionService);
   private http = inject(HttpClient);
 
-  private serverEndpoint: String = null;
-  public isAppDataSupported: boolean = false;
+  private serverEndpoint: string = null;
+  public isAppDataSupported = false;
   private configFileVersion: number = null;
   public sharedConfigName: string;
   private InitConfig: IConfig = null;
@@ -85,7 +85,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public async listConfigs(forceConfigFileVersion?: number): Promise<Config[]> {
-    let serverConfigs: Config[] = [];
+    const serverConfigs: Config[] = [];
     if (!this.serverEndpoint) {
       console.warn("[Storage Service] No server endpoint set. Cannot retrieve config list");
       return null;
@@ -101,7 +101,7 @@ export class StorageService {
 
     await lastValueFrom(this.http.get<string[]>(globalUrl))
       .then((configNames: string[]) => {
-        for(let cname of configNames) {
+        for(const cname of configNames) {
           serverConfigs.push({ scope: 'global', name: cname });
         }
         console.log(`[Storage Service] Retrieved Global config list`);
@@ -113,7 +113,7 @@ export class StorageService {
 
     await lastValueFrom(this.http.get<string[]>(userUrl))
       .then((configNames: string[]) => {
-        for(let cname of configNames) {
+        for(const cname of configNames) {
           serverConfigs.push({ scope: 'user', name: cname });
         }
         console.log(`[Storage Service] Retrieved User config list`);
@@ -286,7 +286,7 @@ export class StorageService {
         break;
     }
 
-    let patch: IPatchAction = {url, document};
+    const patch: IPatchAction = {url, document};
     this.patchQueue$.next(patch);
   }
 
@@ -339,7 +339,7 @@ export class StorageService {
         break;
     }
 
-    let patch: IPatchAction = {url, document};
+    const patch: IPatchAction = {url, document};
     this.patchQueue$.next(patch);
   }
 
@@ -360,14 +360,14 @@ export class StorageService {
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion;
     }
-    let document =
+    const document =
     [
       {
           "op": "remove",
           "path": `/${name}`
       }
     ]
-    let patch: IPatchAction = {url, document};
+    const patch: IPatchAction = {url, document};
     this.patchQueue$.next(patch);
   }
 

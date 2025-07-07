@@ -7,7 +7,7 @@ import { cloneDeep,merge } from 'lodash-es';
 import Qty from 'js-quantities';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-const SELFROOTDEF: string = "self";
+const SELFROOTDEF = "self";
 
 export interface IPathUpdate {
   data: IPathData;
@@ -89,16 +89,16 @@ export class DataService implements OnDestroy {
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;
-  private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
+  private _deltaUpdatesSubject = new ReplaySubject<IDeltaUpdate>(60);
   private _deltaUpdatesCounterTimer = null;
 
   // Full skData updates for data-browser component
-  private _isSkDataFullTreeActive: boolean = false;
+  private _isSkDataFullTreeActive = false;
   private _skDataSubject$ = new BehaviorSubject<ISkPathData[]>([]);
 
   // Full skMeta updates for Zones component
   private _dataServiceMeta: IPathMetaData[] = [];
-  private _isSkMetaFullTreeActive: boolean = false;
+  private _isSkMetaFullTreeActive = false;
   private _dataServiceMetaSubject$ = new BehaviorSubject<IPathMetaData[]>([]);
 
   // Notifications
@@ -107,7 +107,7 @@ export class DataService implements OnDestroy {
   private _isReset = new Subject<boolean>();
 
   // Service data variables
-  private _selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
+  private _selfUrn = 'self'; // self urn, should get updated on first delta or rest call.
   private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 

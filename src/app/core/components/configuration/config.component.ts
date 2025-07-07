@@ -39,11 +39,11 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   private fb = inject(UntypedFormBuilder);
 
   protected readonly pageTitle: string = "Configurations";
-  public hasToken: boolean = false;
-  public isTokenTypeDevice: boolean = false;
+  public hasToken = false;
+  public isTokenTypeDevice = false;
   private tokenSub: Subscription;
 
-  public supportApplicationData: boolean = false;
+  public supportApplicationData = false;
   public serverConfigList: IRemoteConfig[] = [];
   public serverUpgradableConfigList: IRemoteConfig[] = [];
 
@@ -96,7 +96,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
         }
       })
       .catch((error: HttpErrorResponse) => {
-        let errMsg: string = null;
+        const errMsg: string = null;
 
         switch (error.status) {
           case 401:
@@ -185,7 +185,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   public getLocalConfigFromMemory(): IConfig {
-    let localConfig: IConfig = {
+    const localConfig: IConfig = {
       "app": this.appSettingsService.getAppConfig(),
       "dashboards": this.appSettingsService.getDashboardConfig(),
       "theme": this.appSettingsService.getThemeConfig(),
@@ -194,7 +194,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   public getLocalConfigFromLocalStorage(): IConfig {
-    let localConfig: IConfig = {
+    const localConfig: IConfig = {
       "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
       "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardsConfig'),
       "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),

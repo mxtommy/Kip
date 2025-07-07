@@ -9,9 +9,7 @@ interface IKipTimer {
   intervalMS: number;
 }
 
-interface IKipTimers {
-  [key: string]: IKipTimer;
-}
+type IKipTimers = Record<string, IKipTimer>;
 
 @Injectable({
   providedIn: 'root'
@@ -85,7 +83,7 @@ export class TimersService {
 
 
   public isRunning(timerName: string) : boolean {
-    let running: boolean = false;
+    let running = false;
     if (timerName in this.kipTimers) {
       running = this.kipTimers[timerName].timeoutID === null ? false : true;
     };

@@ -19,10 +19,10 @@ export class SvgBooleanLightComponent implements DoCheck {
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  private toggleOff: string = "0 35 180 35";
-  private toggleOn: string = "0 0 180 35";
+  private toggleOff = "0 35 180 35";
+  private toggleOn = "0 0 180 35";
   private ctrlState: boolean = null;
-  private ctrlColor: string = '';
+  private ctrlColor = '';
   private oldTheme: ITheme = null;
 
   public viewBox: string = this.toggleOff;

@@ -18,18 +18,18 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  private toggleOff: string = "0 35 180 35";
-  private toggleOn: string = "0 0 180 35";
+  private toggleOff = "0 35 180 35";
+  private toggleOn = "0 0 180 35";
   private ctrlState: boolean = null;
   private oldTheme: ITheme = null;
-  private isSwiping: boolean = false;
-  private pointerStartX: number = 0;
-  private pointerStartY: number = 0;
+  private isSwiping = false;
+  private pointerStartX = 0;
+  private pointerStartY = 0;
 
   public viewBox: string = this.toggleOff;
   public labelColor = null;
   public valueColor = null;
-  private ctrlColor: string = '';
+  private ctrlColor = '';
 
   constructor() { }
 

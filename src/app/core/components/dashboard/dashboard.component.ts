@@ -52,7 +52,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   @ViewChild('grid', { static: true }) private _gridstack!: GridstackComponent;
-  private _previousIsStaticState: boolean = true;
+  private _previousIsStaticState = true;
   protected gridOptions: NgGridStackOptions = {
     margin: 4,
     minRow: 12,

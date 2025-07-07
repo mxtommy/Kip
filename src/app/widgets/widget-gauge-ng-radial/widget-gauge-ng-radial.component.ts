@@ -33,14 +33,14 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   @ViewChild('radialGauge', { static: true, read: ElementRef }) gauge: ElementRef;
 
   // Gauge text value for value box rendering
-  public textValue: string = "--";
+  public textValue = "--";
   // Gauge value
-  public value: number = 0;
+  public value = 0;
 
   // Gauge options
   public gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  public colorStrokeTicks: string = "";
+  public colorStrokeTicks = "";
   public unitName: string = null;
 
   // Zones support
@@ -127,7 +127,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       if (this.state !== newValue.state) {
         this.state = newValue.state;
         //@ts-ignore
-        let option: RadialGaugeOptions = {};
+        const option: RadialGaugeOptions = {};
         if (!this.widgetProperties.config.ignoreZones) {
           // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
           switch (newValue.state) {
@@ -437,7 +437,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
     //@ts-ignore
-    let highlights: LinearGaugeOptions = {};
+    const highlights: LinearGaugeOptions = {};
     highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);

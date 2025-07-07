@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import screenfull from 'screenfull';
-declare var NoSleep: any; //3rd party library
+declare let NoSleep: any; //3rd party library
 
 @Injectable({
   providedIn: 'root'

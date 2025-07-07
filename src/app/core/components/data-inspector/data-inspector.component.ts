@@ -35,7 +35,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatSort) sort!: MatSort;
   protected readonly pageTitle = 'Data Inspector';
 
-  public pageSize: number = 25;
+  public pageSize = 25;
   protected hidePageSize = false;
   protected showFirstLastButtons = true;
   protected showPageSizeOptions = [5, 10, 25, 100];

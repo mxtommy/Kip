@@ -23,11 +23,11 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   readonly canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
   protected dataValue: number = null;
   private zoneState: string = null;
-  private currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  private valueFontSize: number = 1;
-  private flashOn: boolean = false;
+  private currentValueLength = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
+  private valueFontSize = 1;
+  private flashOn = false;
   private flashInterval = null;
-  public timerRunning: boolean = false;
+  public timerRunning = false;
   readonly timeName: string = "race";
   private warnColor: string = null;
   private warmContrast: string = null;
@@ -134,7 +134,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   public roundToMin() {
     let v = this.dataValue;
     if (this.dataValue < 0) { v = v * -1} // always positive
-    let seconds = v % 600;
+    const seconds = v % 600;
 
     if (this.dataValue > 0) {
       if (seconds > 300) {
@@ -240,7 +240,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     let valueText: string;
 
     if (this.dataValue != null) {
-      let v = Math.abs(this.dataValue); // Always positive
+      const v = Math.abs(this.dataValue); // Always positive
       const m = Math.floor(v / 600);
       const s = Math.floor((v % 600) / 10);
       const d = Math.floor(v % 10);

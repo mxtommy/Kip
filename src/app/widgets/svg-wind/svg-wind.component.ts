@@ -52,7 +52,7 @@ export class SvgWindComponent {
   protected cog: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  protected headingValue: string ="--";
+  protected headingValue ="--";
   protected appWindSpeedDisplay = computed(() => {
     const appWindSpeed = this.appWindSpeed();
     if (appWindSpeed == null) return "--";
@@ -63,7 +63,7 @@ export class SvgWindComponent {
     if (trueWindSpeed == null) return "--";
     return trueWindSpeed.toFixed(1);
   });
-  private trueWindHeading: number = 0;
+  private trueWindHeading = 0;
   protected waypointActive = signal<boolean>(false);
   protected flow = computed(() => {
     const flow = this.driftFlow();
@@ -76,15 +76,15 @@ export class SvgWindComponent {
   private stbdLaylinePrev = 0;
   private portLaylineAnimId: number | null = null;
   private stbdLaylineAnimId: number | null = null;
-  protected closeHauledLinePortPath: string = "M 500,500 500,500";
-  protected closeHauledLineStbdPath: string = "M 500,500 500,500";
+  protected closeHauledLinePortPath = "M 500,500 500,500";
+  protected closeHauledLineStbdPath = "M 500,500 500,500";
   //WindSectors
   private portSectorPrev = { min: 0, mid: 0, max: 0 };
   private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
   private portSectorAnimId: number | null = null;
   private stbdSectorAnimId: number | null = null;
-  protected portWindSectorPath: string = "";
-  protected stbdWindSectorPath: string = "";
+  protected portWindSectorPath = "";
+  protected stbdWindSectorPath = "";
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
 
@@ -343,7 +343,7 @@ export class SvgWindComponent {
     else this.stbdSectorAnimId = id;
   }
 
-  private addHeading(h1: number = 0, h2: number = 0) {
+  private addHeading(h1 = 0, h2 = 0) {
     let h3 = h1 + h2;
     while (h3 > 359) { h3 = h3 - 359; }
     while (h3 < 0) { h3 = h3 + 359; }

@@ -16,8 +16,8 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   private canvas = inject(CanvasService);
-  private latPos: string = '';
-  private longPos: string = '';
+  private latPos = '';
+  private longPos = '';
   protected labelColor: string = undefined;
   private valueColor: string = undefined;
   private maxTextWidth = 0;

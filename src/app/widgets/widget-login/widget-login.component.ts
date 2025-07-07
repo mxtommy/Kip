@@ -28,7 +28,7 @@ export class WidgetLoginComponent implements OnInit {
   }
 
   public openUserCredentialModal(errorMsg: string) {
-    let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
+    const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       disableClose: true,
       data: {
         user: this.connectionConfig.loginName,

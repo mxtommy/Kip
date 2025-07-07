@@ -127,7 +127,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   public toggle($event: IDynamicControl): void {
-    const paths = <Array<IWidgetPath>>this.widgetProperties.config.paths;
+    const paths = this.widgetProperties.config.paths as IWidgetPath[];
     const i = paths.findIndex((path: IWidgetPath) => path.pathID == $event.pathID);
     if($event.isNumeric) {
       this.signalkRequestsService.putRequest(

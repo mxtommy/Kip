@@ -71,7 +71,7 @@ export class DatasetService {
    * @memberof DatasetService
    */
   private setupServiceSubjectRegistry(uuid: string, replayDatapoints: number): void {
-    let entryIndex = this._svcSubjectObserverRegistry.findIndex(entry => entry.datasetUuid == uuid);
+    const entryIndex = this._svcSubjectObserverRegistry.findIndex(entry => entry.datasetUuid == uuid);
 
     if (entryIndex >= 0) {
       this._svcSubjectObserverRegistry[entryIndex].rxjsSubject.complete();
@@ -85,7 +85,7 @@ export class DatasetService {
   }
 
   private createDataSourceConfiguration(dsConf: IDatasetServiceDatasetConfig ): IDatasetServiceDataSource {
-    const smoothingPeriodFactor: number = 0.25;
+    const smoothingPeriodFactor = 0.25;
     const newDataSourceConfiguration: IDatasetServiceDataSource = {
       uuid: dsConf.uuid,
       pathObserverSubscription: null,
@@ -243,7 +243,7 @@ export class DatasetService {
    * @memberof DataSetService
    */
   public create(path: string, source: string, timeScaleFormat: string, period: number, label: string ) {
-    let uuid = UUID.create();
+    const uuid = UUID.create();
 
     const newSvcDataset: IDatasetServiceDatasetConfig = {
       uuid: uuid,

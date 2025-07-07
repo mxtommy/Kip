@@ -43,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpen = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
-  protected notificationsVisibility: string = 'hidden';
+  protected notificationsVisibility = 'hidden';
 
 
   protected themeName: string;

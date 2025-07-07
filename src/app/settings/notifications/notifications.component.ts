@@ -37,7 +37,7 @@ export class SettingsNotificationsComponent {
   readonly statePanel = viewChild<MatExpansionPanel>('statePanel');
   readonly soundPanel = viewChild<MatExpansionPanel>('soundPanel');
   public notificationConfig: INotificationConfig;
-  public notificationDisabledExpandPanel: boolean = false;
+  public notificationDisabledExpandPanel = false;
 
   constructor() {
     this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));

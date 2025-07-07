@@ -48,11 +48,11 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   private _pathFormGroup$: Subscription = null;
 
   // Sources control
-  public availableSources: Array<string>;
+  public availableSources: string[];
 
   // Units control
   public unitList: IConversionPathList = {base: '', conversions: []};
-  public showPathSkUnitsFilter: boolean = false;
+  public showPathSkUnitsFilter = false;
   public pathSkUnitsFilterControl = new FormControl<ISkBaseUnit | null>(null);
   public pathSkUnitsFiltersList: ISkBaseUnit[];
   public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '(null)', quantity: 'Unitless', quantityDisplay: '(null)', description: '', }};
@@ -113,7 +113,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     });
   }
 
-  ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
+  ngOnChanges(changes: Record<string, SimpleChange>) {
     //subscribe to filterSelfPaths parent formControl changes
     if (changes['filterSelfPaths'] && !changes['filterSelfPaths'].firstChange) {
       this.pathFormGroup.controls['path'].updateValueAndValidity();
@@ -163,7 +163,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private enableFormFields(setValues?: boolean): void {
-    let pathObject = this._data.getPathObject(this.pathFormGroup.controls['path'].value);
+    const pathObject = this._data.getPathObject(this.pathFormGroup.controls['path'].value);
     if (pathObject != null) {
       this.pathFormGroup.controls['sampleTime'].enable({onlySelf: false});
       if (this.pathFormGroup.controls['pathType'].value == 'number') { // convertUnitTo control not present unless pathType is number

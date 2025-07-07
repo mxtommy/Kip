@@ -22,7 +22,7 @@ export interface WidgetDescription {
 })
 export class WidgetService {
   private readonly _widgetCategories = ["Basic", "Gauges", "Components"];
-  private _widgetDefinition: Array<WidgetDescription> = [
+  private _widgetDefinition: WidgetDescription[] = [
     {
       name: 'Numeric',
       description: 'Displays numeric data in a clear and concise format with option to display minimum and maximum recorded values.',
@@ -177,7 +177,7 @@ export class WidgetService {
     }
   ];
 
-  get kipWidgets(): Array<WidgetDescription> {
+  get kipWidgets(): WidgetDescription[] {
     return this._widgetDefinition;
   }
 

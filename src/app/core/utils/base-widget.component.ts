@@ -32,7 +32,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
   /** Default Widget configuration Object properties. This Object is only used as the default configuration template when Widget is added in a KIP page. The default configuration will automatically be pushed to the AppSettings service (the configuration storage service). From then on, any configuration changes made by users using the Widget Options UI is stored in AppSettings service. defaultConfig will only be use from then on to insure missing properties are merged with their default values is needed insuring a safety net when adding new configuration properties. */
   public defaultConfig: IWidgetSvcConfig = undefined;
   /** Array of data paths use for observable automatic setup and cleanup */
-  protected dataStream: Array<IWidgetDataStream> = undefined;
+  protected dataStream: IWidgetDataStream[] = undefined;
   /** Single Observable Subscription object for all data paths */
   private dataSubscriptions: Subscription = undefined;
   /** Single Observable Subscription object for all data paths */

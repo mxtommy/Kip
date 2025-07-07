@@ -53,10 +53,11 @@ export interface IWidget {
  * @export
  * @interface IPathArray
  */
-export interface IPathArray {
+export type IPathArray = Record<
   /** Key string use to name/identify the path IWidgetPath object. Used for Observable setup */
-  [key: string]: IWidgetPath;
-}
+  string,
+  IWidgetPath
+>;
 
 /**
  * This interface defines all possible Widget configuration settings.
@@ -185,13 +186,9 @@ export interface IWidgetSvcConfig {
   sailSetupEnable?: boolean;
 
   /** To Retire - Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
-  usage?: {
-    [key: string]: string[];
-  };
+  usage?: Record<string, string[]>;
   /** To Retire - Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
-  typeVal?: {
-    [key: string]: string;
-  };
+  typeVal?: Record<string, string>;
   /** To retire. Used by Autopilot V1 */
   barColor?: string;
   /** Used by autopilot V1 Widget to autostart the AP widget */

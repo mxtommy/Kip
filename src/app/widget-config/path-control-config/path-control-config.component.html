@@ -3,7 +3,7 @@
     <div class="flex-field-100">
       <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
     </div>
-      @if (pathFormGroup.value.pathType == 'number' && showPathSkUnitsFilter) {
+      @if (pathFormGroup.value.pathType === 'number' && showPathSkUnitsFilter) {
         <div class="flex-field-fixed">
           <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
             <mat-label>
@@ -90,7 +90,7 @@
         </mat-form-field>
       </div>
       <div class="unitField">
-        @if ((pathFormGroup.value.pathType == 'number' && pathFormGroup.value.isConvertUnitToConfigurable === undefined) || (pathFormGroup.value.pathType == 'number' && pathFormGroup.value.isConvertUnitToConfigurable === true)) {
+        @if ((pathFormGroup.value.pathType === 'number' && pathFormGroup.value.isConvertUnitToConfigurable === undefined) || (pathFormGroup.value.pathType === 'number' && pathFormGroup.value.isConvertUnitToConfigurable === true)) {
           <mat-form-field class="fields">
             <mat-label>Display Format</mat-label>
             <mat-select

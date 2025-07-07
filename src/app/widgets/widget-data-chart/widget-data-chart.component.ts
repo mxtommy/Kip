@@ -532,7 +532,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           }
         }
 
-        let trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPoint.data.sma : dsPoint.data.value;
+        const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPoint.data.sma : dsPoint.data.value;
         this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
 
         const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastAverage);

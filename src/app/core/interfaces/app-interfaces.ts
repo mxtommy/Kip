@@ -46,12 +46,10 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
   type: string;
   state: TState;
   defaultSource?: string; // default source
-  sources: {
-    [sourceName: string]: { // per source data
+  sources: Record<string, { // per source data
       sourceTimestamp: string;
       sourceValue: any;
-    }
-  };
+    }>;
   meta?: ISkMetadata;
 }
 

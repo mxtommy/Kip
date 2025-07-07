@@ -21,10 +21,10 @@ function rgbaToHex(rgba: string) {
   }
 
   // Extract RGBA values
-  let [r, g, b, a = 1] = match.map(Number);
+  const [r, g, b, a = 1] = match.map(Number);
 
   // Convert alpha from 0-1 to 0-255 and then to HEX
-  let alpha = a === 1 ? '' : Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
+  const alpha = a === 1 ? '' : Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
 
   // Convert RGB to HEX
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase() + alpha;
@@ -56,16 +56,16 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
 
   // Gauge text value for value box rendering
-  protected textValue: string = "--";
+  protected textValue = "--";
   // Gauge value
-  protected value: number = 0;
+  protected value = 0;
 
   @ViewChild('compassGauge', { static: true }) ngGauge: RadialGauge;
   @ViewChild('compassGauge', { static: true, read: ElementRef }) gauge: ElementRef;
 
   protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  protected colorStrokeTicks: string = "";
+  protected colorStrokeTicks = "";
   protected unitName: string = null;
   private state: string = States.Normal;
 
@@ -156,7 +156,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       if (this.state !== newValue.state) {
         this.state = newValue.state;
         //@ts-ignore
-        let option: RadialGaugeOptions = {};
+        const option: RadialGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:

@@ -30,13 +30,13 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   @ViewChild('linearGauge', {static: true, read: ElementRef}) protected gauge: ElementRef;
 
   // Gauge text value for value box rendering
-  public textValue: string = "--";
+  public textValue = "--";
   // Gauge value
-  public value: number = 0;
+  public value = 0;
 
   // Gauge options
   public gaugeOptions = {} as LinearGaugeOptions;
-  private isGaugeVertical: Boolean = true;
+  private isGaugeVertical = true;
 
   // Zones support
   private metaSub: Subscription;
@@ -122,7 +122,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       if (this.state !== newValue.state) {
         this.state = newValue.state;
         //@ts-ignore
-        let option: LinearGaugeOptions = {};
+        const option: LinearGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         if (!this.widgetProperties.config.ignoreZones) {
           switch (newValue.state) {
@@ -197,7 +197,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
   public onResized(event: ResizeObserverEntry) {
     //@ts-ignore
-    let resize: LinearGaugeOptions = {};
+    const resize: LinearGaugeOptions = {};
     const aspectRatio = 0.3; // Aspect ratio to maintain (e.g., height/width or width/height)
 
     if (this.widgetProperties.config.gauge.subType === 'vertical') {
@@ -489,7 +489,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
     //@ts-ignore
-    let highlights: LinearGaugeOptions = {};
+    const highlights: LinearGaugeOptions = {};
     highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);

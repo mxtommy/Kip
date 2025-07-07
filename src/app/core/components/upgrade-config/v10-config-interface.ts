@@ -28,7 +28,7 @@ export interface v10IThemeConfig {
 }
 
 export interface v10IWidgetConfig {
-  widgets: Array<v10IWidget>;
+  widgets: v10IWidget[];
 }
 
 export interface v10ILayoutConfig {
@@ -73,9 +73,7 @@ export interface v10IWidget {
   config: any;
 }
 
-export interface v10IUnitDefaults {
-  [key: string]: string;
-}
+export type v10IUnitDefaults = Record<string, string>;
 
 interface v10ISplitArea {
   uuid: string; // uuid of widget of splitset, depending on type.
@@ -87,5 +85,5 @@ export interface v10ISplitSet {
   uuid: string;
   parentUUID?: string;
   direction: any;
-  splitAreas: Array<v10ISplitArea>;
+  splitAreas: v10ISplitArea[];
 }

@@ -39,7 +39,7 @@ export function animateRotation(
   element: SVGGElement,
   from: number,
   to: number,
-  duration: number = 1000,
+  duration = 1000,
   onDone?: () => void,
   frameMap?: WeakMap<SVGGElement, number>,
   center: [number, number] = [500, 500]
@@ -132,7 +132,7 @@ export function animateRudderWidth(
   element: SVGRectElement,
   from: number,
   to: number,
-  duration: number = 500,
+  duration = 500,
   onDone?: () => void,
   frameMap?: WeakMap<SVGRectElement, number>
 ) {

@@ -42,7 +42,7 @@ export class MenuNotificationsComponent {
       item => item.value && item.value.method && item.value.method.includes(Methods.Visual)
     ))
   ), {requireSync: true , equal: isEqual});
-  protected isMuted: boolean = false;
+  protected isMuted = false;
 
   protected mutePlayer(state: boolean): void {
     this.isMuted = state;
