@@ -519,7 +519,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         // Add new data point to the first dataset
         this.chart.data.datasets[0].data.push(this.transformDatasetRow(dsPoint, 0));
         // Trim the first dataset if it exceeds maxDataPoints
-        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
+        if (this.chart.data.datasets[0].data.length >= this.dataSourceInfo.maxDataPoints) {
           this.chart.data.datasets[0].data.shift();
         }
 
@@ -527,7 +527,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         if (this.widgetProperties.config.showAverageData) {
           this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
           // Trim the second dataset if it exceeds maxDataPoints
-          if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
+          if (this.chart.data.datasets[1].data.length >= this.dataSourceInfo.maxDataPoints) {
             this.chart.data.datasets[1].data.shift();
           }
         }
