@@ -239,6 +239,25 @@ export class WidgetService {
     return this._widgetCategories;
   }
 
+  /**
+   * Returns the list of widget definitions, each enriched with plugin dependency status.
+   *
+   * For each widget, this method:
+   * - Checks all unique plugin dependencies using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
+   * - Adds the following properties to each widget:
+   *   - `isDependencyValid`: `true` if all dependencies are enabled or if there are no dependencies; `false` otherwise.
+   *   - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean }` for every dependency.
+   *
+   * @returns Promise resolving to an array of WidgetDescriptionWithPluginStatus objects.
+   *
+   * Example usage:
+   * ```typescript
+   * const widgets = await widgetService.getKipWidgetsWithStatus();
+   * widgets.forEach(widget => {
+   *   console.log(widget.name, widget.isDependencyValid, widget.pluginsStatus);
+   * });
+   * ```
+   */
   public async getKipWidgetsWithStatus(): Promise<WidgetDescriptionWithPluginStatus[]> {
     const pluginCache: Record<string, boolean> = {};
 
