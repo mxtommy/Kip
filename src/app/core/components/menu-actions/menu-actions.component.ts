@@ -53,6 +53,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
     this.uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private handleKeyDown(key: string, event: KeyboardEvent): void {
     switch (key) {
       case 'e':

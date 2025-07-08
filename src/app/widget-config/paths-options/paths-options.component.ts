@@ -34,6 +34,7 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
   readonly delPathEvent = input<string>(undefined);
   readonly updatePathEvent = input<IDynamicControl[]>(undefined);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected pathsFormGroup!: any;
   protected multiCTRLArray: IDynamicControl[] = [];
 

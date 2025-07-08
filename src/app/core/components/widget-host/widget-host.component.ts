@@ -23,7 +23,7 @@ export class WidgetHostComponent {
   constructor() {
   }
 
-  public openWidgetOptions(e: Event): void {
+  public openWidgetOptions(): void {
     if (!this._dashboard.isDashboardStatic()) {
       this._dialog.openWidgetOptions({
         title: 'Widget Options',

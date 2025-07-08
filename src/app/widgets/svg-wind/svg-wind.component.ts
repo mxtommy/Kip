@@ -97,7 +97,7 @@ export class SvgWindComponent {
       const waypoint = this.waypointEnabled();
 
       untracked(() => {
-        waypoint ? this.waypointActive.set(true) : this.waypointActive.set(false);
+        this.waypointActive.set(waypoint);
       });
     });
 
@@ -139,7 +139,11 @@ export class SvgWindComponent {
           return;
         }
 
-        this.waypointEnabled() ? this.waypointActive.set(true) : this.waypointActive.set(false);
+        if (this.waypointEnabled()) {
+          this.waypointActive.set(true);
+        } else {
+          this.waypointActive.set(false);
+        }
         this.wpt.oldValue = this.wpt.newValue;
         this.wpt.newValue = wptAngle;
         if (this.wptIndicator()?.nativeElement) {

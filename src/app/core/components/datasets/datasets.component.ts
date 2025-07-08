@@ -22,12 +22,6 @@ import { FormsModule } from '@angular/forms';
 import { MatRadioModule } from '@angular/material/radio';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 
-interface settingsForm {
-  selectedPath: string;
-  selectedSource: string;
-  interval: number;
-  dataPoints: number;
-};
 
 @Component({
     selector: 'settings-datasets',

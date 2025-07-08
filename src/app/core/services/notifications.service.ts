@@ -2,7 +2,7 @@
  * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, filter, map, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
@@ -110,7 +110,9 @@ export class NotificationsService implements OnDestroy {
     });
 
     this._resetServiceSubscription = this.data.isResetService().subscribe(reset => {
-      reset ? this.reset() : null;
+      if (reset) {
+        this.reset();
+      }
     });
 
     // Init audio player

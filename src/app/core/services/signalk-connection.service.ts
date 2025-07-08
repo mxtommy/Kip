@@ -138,7 +138,7 @@ export class SignalKConnectionService {
       serverServiceEndpoints.message = error.message;
       this.handleError(error);
     } finally {
-      subscribeAll ? serverServiceEndpoints.subscribeAll = true : serverServiceEndpoints.subscribeAll = false;
+      serverServiceEndpoints.subscribeAll = !!subscribeAll;
       this.serverServiceEndpoint$.next(serverServiceEndpoints);
     }
   }

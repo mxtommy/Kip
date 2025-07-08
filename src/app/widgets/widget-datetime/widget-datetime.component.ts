@@ -17,9 +17,8 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   private canvas = inject(CanvasService);
-  protected dataValue: any = null;
+  protected dataValue: string | null = null;
   private _timeZoneGTM = "";
-  private _valueFontSize = 1;
   private isDestroyed = false; // guard against callbacks after destroyed
   private canvasCtx: CanvasRenderingContext2D;
   protected labelColor: string = undefined;

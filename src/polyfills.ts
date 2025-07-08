@@ -77,4 +77,5 @@ import 'zone.js';  // Included with Angular CLI.
 
 // Process sharing fix for util module - Angular v12 upgratde fix. This might go away as it probably
 // comes from dependencies that fails to handle proper process sharing rules
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).process = { env: { DEBUG: undefined }, };

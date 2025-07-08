@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import screenfull from 'screenfull';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare let NoSleep: any; //3rd party library
 
 @Injectable({
@@ -43,11 +44,12 @@ export class uiEventService {
       }
     } catch (error) {
       this.noSleepSupported.set(false);
-      console.warn('[Actions Menu] NoSleep is not supported by this device/browser.');
+      console.warn(`[Actions Menu] NoSleep is not supported by this device/browser. Error: ${error}`);
     }
   }
 
   private checkPwaMode(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone !== undefined;
     console.log('[Actions Menu] PWA mode:', isStandalone);
     return isStandalone;

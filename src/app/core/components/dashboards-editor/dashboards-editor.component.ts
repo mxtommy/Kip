@@ -4,7 +4,7 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
-import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, CdkDragStart, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray} from '@angular/cdk/drag-drop';
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { uiEventService } from '../../services/uiEvent.service';
@@ -90,11 +90,11 @@ export class DashboardsEditorComponent {
     });
   }
 
-  protected dragStart(e: CdkDragStart): void {
+  protected dragStart(): void {
     this._uiEvent.isDragging.set(true);
   }
 
-  protected dragEnd(e: CdkDragEnd): void {
+  protected dragEnd(): void {
     this._uiEvent.isDragging.set(false);
   }
 }

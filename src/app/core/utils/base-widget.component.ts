@@ -293,6 +293,7 @@ export abstract class BaseWidgetComponent extends BaseWidget {
     * @return {*}  {string} the final output to display
     * @memberof BaseWidgetComponent
     */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected formatWidgetNumberValue(v: any): string {
     // Check if v is not a number or is null or undefined
     if (typeof v !== 'number' || v == null) {

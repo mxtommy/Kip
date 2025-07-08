@@ -183,13 +183,13 @@
   </div>
   @if ((menuOpen())) {
     <!-- Modes Menu Overlay -->
-    <div class="svg-menu-overlay" (click)="toggleMenu()">
+    <div class="svg-menu-overlay" tabindex="0" (click)="toggleMenu()" (keyup.enter)="toggleMenu()" (keyup.space)="toggleMenu()" role="button" aria-label="Close menu">
       <!-- Centered Responsive SVG Menu -->
-      <svg [attr.viewBox]="'0 0 240 ' + menuItems.length * itemHeight" class="svg-menu" (click)="$event.stopPropagation()">
+      <svg [attr.viewBox]="'0 0 240 ' + menuItems.length * itemHeight" class="svg-menu" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" (keyup.space)="$event.stopPropagation()" role="presentation" aria-label="Menu">
         <rect x="0" y="0" width="240" [attr.height]="menuItems.length * itemHeight + padding * 2" class="svg-menu-box"/>
         <ng-container>
           @for (item of menuItems; track $index) {
-            <g style="cursor:pointer;" (click)="onMenuItemClick(item.action)">
+            <g style="cursor:pointer;" (click)="onMenuItemClick(item.action)" tabindex="0" (keyup.enter)="onMenuItemClick(item.action)" (keyup.space)="onMenuItemClick(item.action)" role="button" [attr.aria-label]="item.label">
               <rect x="0" [attr.y]="$index * itemHeight" width="240" [attr.height]="itemHeight" [attr.class]="item.action === 'cancel' ? 'cancel' : 'svg-menu-item'"/>
               <text x="120" [attr.y]="($index + 0.65) * itemHeight">
                 {{ item.label }}

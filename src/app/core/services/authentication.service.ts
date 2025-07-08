@@ -130,17 +130,22 @@ export class AuthenticationService implements OnDestroy {
    * newUrl param to indicate against what server the login should take place, if it's
    * not the current server (if we are changing the sk URL). This param must be used
    * as the AuthenticationService has no dependency on AppSettings Service and once
-   * AuthenticationService is intanciated, newUrl is the only way to change it's
-   * tartget endpoint.
+   * AuthenticationService is instantiated, newUrl is the only way to change its
+   * target endpoint.
    *
    * @param {{ usr: string; pwd: string; newUrl?: string; }} { usr, pwd, newUrl }
    * @return {*}  {Promise<void>}
+   * @throws {Error} If the login URL is not set or if the HTTP request fails.
    * @memberof AuthenticationService
+   *
+   * @description
+   * This method may throw errors or return a rejected promise if login fails due to network issues,
+   * invalid credentials, or server errors. Consumers should handle errors using try/catch or .catch().
    */
   public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
     let serverLoginFullUrl: string;
     if (newUrl) {
-      serverLoginFullUrl = newUrl + defaultApiPath + loginEndpoint;
+      serverLoginFullUrl = newUrl.replace(/\/+$/, '') + defaultApiPath + loginEndpoint;
     } else {
       serverLoginFullUrl = this.loginUrl;
     }
@@ -149,8 +154,13 @@ export class AuthenticationService implements OnDestroy {
     if (this._IsLoggedIn$.getValue()) {
       await this.logout(true);
     }
-    await lastValueFrom(this.http.post(serverLoginFullUrl, {"username" : usr, "password" : pwd}, {observe: 'response'}))
-      .then((loginResponse: HttpResponse<any>) => {
+    if (!serverLoginFullUrl) {
+      console.error("[Authentication Service] Login URL is not set. Cannot perform login.");
+      this.deleteToken();
+      throw new Error("Login URL is not set.");
+    }
+    await lastValueFrom(this.http.post<{ token: string }>(serverLoginFullUrl, {"username" : usr, "password" : pwd}, {observe: 'response'}))
+      .then((loginResponse: HttpResponse<{ token: string }>) => {
           console.log("[Authentication Service] User " + usr + " login successful");
           this.setSession(loginResponse.body.token);
       })
@@ -259,7 +269,7 @@ export class AuthenticationService implements OnDestroy {
   public async logout(isLoginAction: boolean): Promise<void> {
     localStorage.removeItem('authorization_token');
     await lastValueFrom(this.http.put(this.logoutUrl, null))
-      .then((response) => {
+      .then(() => {
         this._IsLoggedIn$.next(false);
         if (!isLoginAction) {
           this._authToken$.next(null);

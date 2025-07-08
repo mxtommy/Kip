@@ -21,8 +21,7 @@ function requireMatch(tz: ITzDefinition[]): ValidatorFn {
 }
 
 export const getDynamicTimeZones = (): ITzDefinition[] => {
-  // method is supported
-  //@ts-ignore
+  //@ts-expect-error method is supported
   const timeZones = Intl.supportedValuesOf('timeZone'); // Get all supported time zones
   const now = new Date();
 
@@ -54,10 +53,8 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
   constructor() { }
 
   ngOnInit(): void {
-    //@ts-ignore until we upgrade to TypeScript v5+
+    //@ts-expect-error until we upgrade to TypeScript v5+
     if (typeof Intl.supportedValuesOf !== "undefined") {
-      // method is supported
-      //@ts-ignore until we upgrade to TypeScript v5+
       this.tz = getDynamicTimeZones().sort((a, b) => this.compareOffsets(a.offset, b.offset));
     } else {
       // Revert to static list

@@ -21,6 +21,7 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
   path: string;
   source: string;
   timestamp: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
 }
 
@@ -41,6 +42,7 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
  */
  export interface ISkPathData {
   path: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pathValue: any;
   pathTimestamp: string;
   type: string;
@@ -48,6 +50,7 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
   defaultSource?: string; // default source
   sources: Record<string, { // per source data
       sourceTimestamp: string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sourceValue: any;
     }>;
   meta?: ISkMetadata;

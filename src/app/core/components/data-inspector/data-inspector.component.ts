@@ -125,10 +125,12 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     return `${item.key}`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSourceKey(source: { key: any, value: any }): string {
     return String(source.key);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSourceValue(item: { key: any, value: any } ): any {
     return item.value.sourceValue;
   }

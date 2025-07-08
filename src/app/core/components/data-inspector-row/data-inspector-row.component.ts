@@ -23,6 +23,7 @@ export class DataInspectorRowComponent implements OnInit {
   private _dialog = inject(MatDialog);
   readonly path = input.required<string>();
   readonly source = input<string>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly pathValue = input<any>(undefined);
   readonly type = input.required<string>();
 
@@ -34,6 +35,7 @@ export class DataInspectorRowComponent implements OnInit {
     this.selectedUnit = this.units.base;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected convertValue(value: any, type: string): any {
     if (type === 'number')
       return this._units.convertToUnit(this.selectedUnit, value);
