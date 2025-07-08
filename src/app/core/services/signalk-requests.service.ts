@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Subscription ,  Observable ,  Subject } from 'rxjs';
+import { Observable , Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AppSettingsService } from './app-settings.service';
 import { ISignalKDeltaMessage } from '../interfaces/signalk-interfaces';
@@ -43,9 +44,9 @@ export class SignalkRequestsService {
 
   constructor() {
       // Observer to get all signalk-delta messages of type request type.
-      const requestsSub: Subscription = this.signalKDeltaService.subscribeRequestUpdates().subscribe(
-        requestMessage => { this.updateRequest(requestMessage); }
-      );
+      this.signalKDeltaService.subscribeRequestUpdates()
+        .pipe(takeUntilDestroyed())
+        .subscribe(requestMessage => { this.updateRequest(requestMessage); });
     }
 
   /**
@@ -127,7 +128,7 @@ export class SignalkRequestsService {
   * the subscribeRequest Subject response. Enables Widget specific filtering.
   * @return requestId Identifier for this specific request. Enables Request specific filtering.
   */
-  public putRequest(path: string, value: any, widgetUUID: string): string {
+  public putRequest(path: string, value: unknown, widgetUUID: string): string {
     const requestId = UUID.create();
     const noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
     const selfContext = "vessels.self";    // hard coded context. Could be dynamic at some point

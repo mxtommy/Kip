@@ -8,7 +8,19 @@
     ></mat-icon>
   </div>
   <div class="item-label">
-    <p class="title no-text-select">{{ name() }}</p>
+    <p class="title no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom:0px; margin-top: 8px' : ''">{{ name() }}</p>
+    @if (pluginsStatus().length > 0) {
+      <div class="dependency no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom: 8px' : ''">
+      <span [class]="!pluginDependencyValid() ? 'dependency-error' : ''">Plugin:</span>
+      @for (plugin of pluginsStatus(); let last = $last; track $index) {
+        <span [class]="!pluginDependencyValid() ? plugin.enabled ? 'dependency-ok' : 'dependency-error' : ''">
+          {{ plugin.enabled ? '✔' : '✖' }} {{ plugin.name }}
+        </span>
+        @if (!last) {<span>, </span>}
+      }
+      </div>
+    }
     <span class="description no-text-select">{{ description() }}</span>
+
   </div>
 </div>

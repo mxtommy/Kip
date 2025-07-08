@@ -1,6 +1,6 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
-  <div class="widgets-container" (onResize)="onResized($event)">
+  <div class="widgets-container" (onResize)="onResized()">
     <svg width="100%" height="100%" viewBox="0 40 200 40">
       <rect
         class="slider-bg-bar"
@@ -40,9 +40,9 @@
       <rect #svgSlider
         cursor="pointer"
         (pointerdown)="onPointerDown($event)"
-        (pointerup)="onPointerUp($event)"
+        (pointerup)="onPointerUp()"
         (pointermove)="onPointerMove($event)"
-        (pointerleave)="onPointerLeave($event)"
+        (pointerleave)="onPointerLeave()"
         style="display:inline;fill:rgba(0, 0, 0, 0);stroke:none;stroke-width:0.3;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:0"
         width="200"
         height="40"
