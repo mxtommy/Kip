@@ -20,10 +20,10 @@ import {Subscription} from 'rxjs';
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
   private dToLineCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dToLineCanvas');
-  protected dToLineContext: CanvasRenderingContext2D;
-  protected dToLineElement: HTMLCanvasElement;
   private lenBiasCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('lenBiasCanvas');
+  protected dToLineContext: CanvasRenderingContext2D;
   protected lenBiasContext: CanvasRenderingContext2D;
+  protected dToLineElement: HTMLCanvasElement;
   protected lenBiasElement: HTMLCanvasElement;
   private canvasService = inject(CanvasService);
   private dtsValue: number = null;
@@ -57,7 +57,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           isPathConfigurable: true,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
+          pathSkUnitsFilter: 'm',
           sampleTime: 500
         },
         'lineLengthPath': {
@@ -68,7 +68,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           isPathConfigurable: true,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
+          pathSkUnitsFilter: 'm',
           sampleTime: 1000
         },
         'lineBiasPath': {
@@ -79,7 +79,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           isPathConfigurable: true,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
+          pathSkUnitsFilter: 'm',
           sampleTime: 1000
         }
       },
@@ -94,11 +94,12 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (this.theme()) {
         untracked(() => {
           this.getColors(this.widgetProperties.config.color);
-          this.updateCanvas();
+          // this.updateCanvas();
         });
       }
     });
   }
+
   toRadians(degrees) {
     return degrees ? degrees * (Math.PI / 180) : null;
   }
@@ -108,11 +109,14 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   ngAfterViewInit(): void {
+    console.log('ngAfterViewInit! ', this.dToLineCanvas);
     this.dToLineElement = this.dToLineCanvas().nativeElement;
+    console.log('dToLineElement: ', this.dToLineElement);
     this.lenBiasElement = this.lenBiasCanvas().nativeElement;
     this.canvasService.setHighDPISize(this.dToLineElement, this.dToLineElement.parentElement.getBoundingClientRect());
     this.canvasService.setHighDPISize(this.lenBiasElement, this.lenBiasElement.parentElement.getBoundingClientRect());
     this.dToLineContext = this.dToLineElement.getContext('2d');
+    console.log('dToLineContext: ', this.dToLineContext);
     this.lenBiasContext = this.dToLineElement.getContext('2d');
 
     this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
@@ -252,6 +256,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   ngOnDestroy() {
+    console.log('ngOnDestroy!');
     this.isDestroyed = true;
     this.destroyDataStreams();
     this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
@@ -295,9 +300,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   private drawUnit(): void {
     const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
-    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) {
-      return;
-    }
 
     this.canvasService.drawText(
       this.dToLineContext,
@@ -322,7 +324,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         : ' Line: --';
 
       valueText += '   Bias:';
-      unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+      unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
       if (this.biasValue == null) {
         valueText += '--';
       } else if (this.biasValue < -1) {
