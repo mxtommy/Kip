@@ -1,7 +1,6 @@
 import { Component, inject, OnDestroy } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MatButton } from '@angular/material/button';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -28,7 +27,7 @@ export class WidgetTutorialComponent extends BaseWidgetComponent implements OnDe
   protected startWidget(): void {
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
+  protected updateConfig(): void {
   }
 
   ngOnDestroy(): void {

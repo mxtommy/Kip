@@ -4,7 +4,6 @@ import { AppSettingsService } from './../../core/services/app-settings.service';
 import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { Subscription } from 'rxjs';
 
@@ -48,7 +47,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
   protected startWidget(): void {
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
+  protected updateConfig(): void {
   }
 
   private handleIframeGesture = (event: MessageEvent) => {
@@ -66,14 +65,16 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
             this.dashboard.nextDashboard();
           }
           break;
-        case 'swipeleft':
+        case 'swipeleft': {
           const leftSidebarEvent = new Event('openLeftSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(leftSidebarEvent);
           break;
-        case 'swiperight':
+        }
+        case 'swiperight':{
           const rightSidebarEvent = new Event('openRightSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(rightSidebarEvent);
           break;
+        }
         default:
           break;
       }
@@ -105,6 +106,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((iframeWindow as any).Hammer) {
       console.log("[FSK Widget] HammerJS already loaded in iframe");
       return;

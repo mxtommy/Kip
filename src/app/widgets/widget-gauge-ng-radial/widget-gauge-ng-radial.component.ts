@@ -126,7 +126,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
-        //@ts-ignore
         const option: RadialGaugeOptions = {};
         if (!this.widgetProperties.config.ignoreZones) {
           // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
@@ -187,7 +186,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   public onResized(event: ResizeObserverEntry): void {
-      //@ts-ignore
       const resize: RadialGaugeOptions = {};
       resize.height = event.contentRect.height;
       resize.width = event.contentRect.width;
@@ -335,7 +333,6 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private configureMeasuringGauge(): void {
-    const unit = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
     const scale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
 
     this.gaugeOptions.minValue = scale.min;
@@ -436,10 +433,9 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
-    //@ts-ignore
+    //@ts-expect-error - bug in highlights property definition
     const highlights: LinearGaugeOptions = {};
     highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
-    //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.ngGauge.update(highlights);
   }

@@ -1,4 +1,4 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig()">
   <div class="tutorial-container">
     @if (dashboard.isDashboardStatic()) {
       <h3>Getting Started</h3>

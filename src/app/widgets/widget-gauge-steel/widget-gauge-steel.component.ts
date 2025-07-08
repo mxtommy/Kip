@@ -13,8 +13,7 @@ import { Subscription } from 'rxjs';
     imports: [WidgetHostComponent, GaugeSteelComponent]
 })
 export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  dataValue: any = 0;
-
+  protected dataValue = 0;
   protected zones = [];
 
   // Zones support

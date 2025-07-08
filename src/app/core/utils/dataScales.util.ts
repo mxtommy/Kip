@@ -67,12 +67,11 @@ function calcNiceNumber(range: number, round: boolean): number {
 }
 
 
-export function generateScaleTypeTicks(minValue: number, maxValue: number, scaleType: TScaleType, P?: number): number[] {
+export function generateScaleTypeTicks(minValue: number, maxValue: number, scaleType: TScaleType): number[] {
   const ticks: number[] = [];
 
   switch (scaleType) {
-    case 'linear':
-      const numTicksLinear = calculateNiceLinearNumTicks(minValue, maxValue);
+    case 'linear': { const numTicksLinear = calculateNiceLinearNumTicks(minValue, maxValue);
       const rangeLinear = maxValue - minValue;
       const stepLinear = rangeLinear / (numTicksLinear - 1);
 
@@ -81,7 +80,7 @@ export function generateScaleTypeTicks(minValue: number, maxValue: number, scale
         ticks.push(tick);
       }
       break;
-
+    }
     default:
       throw new Error(`Invalid or or not implemented scale type: ${scaleType}`);
   }

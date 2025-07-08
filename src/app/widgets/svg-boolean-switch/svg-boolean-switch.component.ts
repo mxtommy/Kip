@@ -1,4 +1,4 @@
-import { Component, DoCheck, OnInit, input, output } from '@angular/core';
+import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 
@@ -12,7 +12,8 @@ export interface IDimensions {
     templateUrl: './svg-boolean-switch.component.svg',
     standalone: true
 })
-export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
+export class SvgBooleanSwitchComponent implements DoCheck {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
   readonly dimensions = input.required<IDimensions>();
@@ -32,9 +33,6 @@ export class SvgBooleanSwitchComponent implements OnInit, DoCheck {
   private ctrlColor = '';
 
   constructor() { }
-
-  ngOnInit(): void {
-  }
 
   ngDoCheck(): void {
     const data = this.data();

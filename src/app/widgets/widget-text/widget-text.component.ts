@@ -17,7 +17,7 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 export class WidgetTextComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   private canvas = inject(CanvasService);
-  private dataValue: any = null;
+  private dataValue: string | null = null;
   private canvasCtx: CanvasRenderingContext2D;
   protected labelColor: string = undefined;
   private valueColor: string = undefined;

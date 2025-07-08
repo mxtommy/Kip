@@ -155,7 +155,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
-        //@ts-ignore
         const option: RadialGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
@@ -200,7 +199,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   protected onResized(event: ResizeObserverEntry): void {
-    //@ts-ignore
     const resize: RadialGaugeOptions = {};
     resize.height = event.contentRect.height;
     resize.width = event.contentRect.width;
@@ -288,6 +286,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.setGaugeOptions(this.getColors(this.widgetProperties.config.color).color, rgbaToHex(this.getColors(this.widgetProperties.config.color).dim), rgbaToHex(this.getColors(this.widgetProperties.config.color).dimmer));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private setGaugeOptions(color: string, dim: string, dimmer: string) {
     const contrastDim = rgbaToHex(this.getColors('contrast').dim);
     this.gaugeOptions.colorBarProgress = color;
