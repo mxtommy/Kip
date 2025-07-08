@@ -179,7 +179,7 @@ export class WidgetService {
       name: 'Freeboard-SK',
       description: 'Add Freeboard-SK Chart Plotter as a widget with auto sign-in to your dashboard.',
       icon: 'freeboardWidget',
-      pluginDependency: [],
+      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider' ],
       category: 'Components',
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
@@ -188,7 +188,7 @@ export class WidgetService {
       name: 'Data Chart',
       description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
       icon: 'datachartWidget',
-      pluginDependency: ['autopilot','signalk-racer','autopilot','signalk-racer'],
+      pluginDependency: [],
       category: 'Components',
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
@@ -197,7 +197,7 @@ export class WidgetService {
       name: 'Autopilot Head',
       description: 'A basic Autopilot Head for supported Signal K v1 API autopilot devices.',
       icon: 'autopilotWidget',
-      pluginDependency: ['autopilot','signalk-racer'],
+      pluginDependency: ['autopilot'],
       category: 'Components',
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
@@ -206,7 +206,7 @@ export class WidgetService {
       name: 'Race Timer',
       description: "A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.",
       icon: 'racetimerWidget',
-      pluginDependency: ['signalk-racer'],
+      pluginDependency: [],
       category: 'Components',
       selector: 'widget-racetimer',
       componentClassName: 'WidgetRaceTimerComponent',
