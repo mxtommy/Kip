@@ -198,12 +198,12 @@ export class SvgWindComponent {
     if (!this.closeHauledLineEnabled()) return;
 
     // Animate Port Layline
-    const portLaylineRotate = this.addHeading(Number(this.twa.newValue), this.laylineAngle() * -1);
+    const portLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle() * -1);
     this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
     this.portLaylinePrev = portLaylineRotate;
 
     // Animate Starboard Layline
-    const stbdLaylineRotate = this.addHeading(Number(this.twa.newValue), this.laylineAngle());
+    const stbdLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle());
     this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
     this.stbdLaylinePrev = stbdLaylineRotate;
   }
@@ -256,10 +256,14 @@ export class SvgWindComponent {
   private windSectorsInitialized = false;
 
   private updateWindSectors() {
-    if (!this.windSectorEnabled()) return;
-    if (!this.trueWindMinHistoric()) return;
-    if (!this.trueWindMidHistoric()) return;
-    if (!this.trueWindMaxHistoric()) return;
+    if (
+      !this.windSectorEnabled() ||
+      this.trueWindMinHistoric() == null ||
+      this.trueWindMidHistoric() == null ||
+      this.trueWindMaxHistoric() == null
+    ) {
+      return;
+    }
 
     const portNew = {
       min: this.trueWindMinHistoric(),

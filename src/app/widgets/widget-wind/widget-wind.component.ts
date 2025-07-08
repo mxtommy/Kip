@@ -23,9 +23,9 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   protected driftFlow = 0;
   protected driftSet = 0;
   protected waypointAngle = 0;
-  protected trueWindHistoric: {
+  protected historicalWindDirection: {
     timestamp: number;
-    heading: number;
+    windDirection: number;
   }[] = [];
   protected trueWindMinHistoric: number;
   protected trueWindMidHistoric: number;
@@ -208,6 +208,12 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
         } else {
           this.appWindAngle = newValue.data.value;
         }
+
+        //add to historical for wind sectors
+        if (this.widgetProperties.config.windSectorEnable) {
+          const to360Angle = this.addHeading(this.currentHeading, newValue.data.value);
+          this.addHistoricalWindDirection(to360Angle);
+        }
       }
     );
 
@@ -242,11 +248,6 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           // Other path, assume it's an absolute 360 angle
           this.trueWindAngle = newValue.data.value;
         }
-
-        //add to historical for wind sectors
-        if (this.widgetProperties.config.windSectorEnable) {
-          this.addHistoricalTrue(this.trueWindAngle);
-        }
       }
     );
 
@@ -271,12 +272,12 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     });
   }
 
-  private addHistoricalTrue (windHeading: number) {
-    this.trueWindHistoric.push({
+  private addHistoricalWindDirection(windDirection: number) {
+    this.historicalWindDirection.push({
       timestamp: Date.now(),
-      heading: windHeading
+      windDirection: windDirection
     });
-    const arc = this.arcForAngles(this.trueWindHistoric.map(d => d.heading));
+    const arc = this.arcForAngles(this.historicalWindDirection.map(d => d.windDirection));
     this.trueWindMinHistoric = arc.min;
     this.trueWindMaxHistoric = arc.max;
     this.trueWindMidHistoric = arc.mid;
@@ -307,7 +308,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   private historicalCleanup() {
     const n = Date.now() - (this.widgetProperties.config.windSectorWindowSeconds * 1000);
-    this.trueWindHistoric = this.trueWindHistoric.filter(d => d.timestamp >= n);
+    this.historicalWindDirection = this.historicalWindDirection.filter(d => d.timestamp >= n);
   }
 
   private stopWindSectors() {
