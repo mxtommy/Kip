@@ -69,13 +69,10 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         'startTimePath': {
           description: 'Time of the start',
           path: 'self.navigation.racing.startTime',
-          source: 'default',
-          pathType: 'string',
+          source: null,
+          pathType: 'Date',
           isPathConfigurable: true,
-          convertUnitTo: '',
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
-          sampleTime: 1000
+          sampleTime: 500
         },
         'dtsPath': {
           description: 'Distance to Start Line path, used to determine OCS',
