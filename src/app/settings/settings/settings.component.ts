@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { SettingsUnitsComponent } from '../units/units.component';
 import { SettingsNotificationsComponent } from '../notifications/notifications.component';
 import { SettingsSignalkComponent } from '../signalk/signalk.component';
@@ -23,10 +23,7 @@ import { PageHeaderComponent } from '../../core/components/page-header/page-head
       PageHeaderComponent
   ]
 })
-export class AppSettingsComponent implements OnInit {
+export class AppSettingsComponent {
   protected readonly pageTitle: string = "Settings";
   constructor() { }
-
-  ngOnInit() {
-  }
 }

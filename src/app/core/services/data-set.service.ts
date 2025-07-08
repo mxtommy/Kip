@@ -125,8 +125,8 @@ export class DatasetService {
    */
   private startAll(): void {
     console.log("[Dataset Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
-    for (let i = 0; i < this._svcDatasetConfigs.length; i++) {
-      this.start(this._svcDatasetConfigs[i].uuid);
+    for (const config of this._svcDatasetConfigs) {
+      this.start(config.uuid);
     }
   }
 

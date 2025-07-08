@@ -3,12 +3,6 @@ import { Dashboard } from './../../services/dashboard.service';
 import { trigger, style, animate, transition } from '@angular/animations';
 
 
-interface DashboardPage {
-  idx: number;
-  name: string;
-  active: boolean;
-}
-
 @Component({
   selector: 'dashboard-scroller',
   standalone: true,

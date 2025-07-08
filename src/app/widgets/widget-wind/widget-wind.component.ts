@@ -265,7 +265,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   private startWindSectors() {
     this.zones.runOutsideAngular(() => {
-      this.windSectorObservableSub = interval(500).subscribe(x => {
+      this.windSectorObservableSub = interval(500).subscribe(() => {
         this.historicalCleanup();
       });
     });

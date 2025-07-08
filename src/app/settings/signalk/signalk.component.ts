@@ -184,7 +184,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   private serverLogin(newUrl?: string) {
       this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
-      .then( _ => {
+      .then( () => {
         location.reload();
       })
       .catch((error: HttpErrorResponse) => {
@@ -236,7 +236,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
               minUnit: "second",
               round: "second",
               displayFormats: {
+                // eslint-disable-next-line no-useless-escape
                 hour: `k:mm\''`,
+                // eslint-disable-next-line no-useless-escape
                 minute: `mm\''`,
                 second: `mm ss"`,
                 millisecond: "SSS"

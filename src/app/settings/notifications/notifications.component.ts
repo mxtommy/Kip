@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild, inject, Signal } from '@angular/core';
+import { Component, viewChild, inject, Signal } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
 import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
 import { AppService } from '../../core/services/app-service';

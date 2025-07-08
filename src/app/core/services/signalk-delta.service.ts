@@ -59,7 +59,7 @@ export class SignalKDeltaService implements OnDestroy {
   private readonly WS_RETRY_COUNT = 3;                 // connection error retry interval
   private readonly WS_CONNECTION_SUBSCRIBE = "?subscribe=";
   private readonly WS_CONNECTION_META = "&sendMeta=all"; // default but we could use none + specific paths in the future
-  private socketWS$: WebSocketSubject<any>;
+  private socketWS$: WebSocketSubject<object>;
   public socketWSCloseEvent$ = new Subject<CloseEvent>();
   public socketWSOpenEvent$ = new Subject<Event>();
 
@@ -100,7 +100,11 @@ export class SignalKDeltaService implements OnDestroy {
           }
         }
 
-        endpointStatus.subscribeAll ? this.SubscriptionType = "all" : this.SubscriptionType = "self"; // set subscription type
+        if (endpointStatus.subscribeAll) {
+          this.SubscriptionType = "all";
+        } else {
+          this.SubscriptionType = "self";
+        } // set subscription type
     });
 
     // Monitor Token changes
@@ -128,7 +132,7 @@ export class SignalKDeltaService implements OnDestroy {
     // WebSocket Open Event Handling
     this.socketWSOpenEvent$
       .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe( event => {
+      .subscribe( () => {
         this.streamEndpoint.message = "Connected";
         this.streamEndpoint.operation = 2;
         if (this.authToken) {
@@ -203,7 +207,7 @@ export class SignalKDeltaService implements OnDestroy {
   /**
    * Handles connection arguments, token and links socket Open/Close Observers
    */
-  private getNewWebSocket() {
+  private getNewWebSocket(): WebSocketSubject<object> {
     let args = this.WS_CONNECTION_SUBSCRIBE + this.SubscriptionType + this.WS_CONNECTION_META;
     if (this.authToken != null) {
       args += "&token=" + this.authToken.token;
@@ -237,7 +241,7 @@ export class SignalKDeltaService implements OnDestroy {
   *
   * `*** Do not pre-stringify the msg param ***`
   */
-  public publishDelta(msg: any): void {
+  public publishDelta(msg: object): void {
     if (this.socketWS$) {
       console.log("[Delta Service] WebSocket sending message");
       this.socketWS$.next(msg);

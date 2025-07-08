@@ -187,7 +187,9 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           minUnit: "second",
           round: "second",
           displayFormats: {
+            // eslint-disable-next-line no-useless-escape
             hour: `k:mm\''`,
+            // eslint-disable-next-line no-useless-escape
             minute: `mm\''`,
             second: `ss"`,
             millisecond: "SSS"

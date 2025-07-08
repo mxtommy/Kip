@@ -47,6 +47,6 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.gaugeBarAnimate = null as any;
+    this.gaugeBarAnimate = null;
   }
 }

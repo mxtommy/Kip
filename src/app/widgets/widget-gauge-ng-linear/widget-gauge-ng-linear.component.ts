@@ -121,7 +121,6 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
-        //@ts-ignore
         const option: LinearGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         if (!this.widgetProperties.config.ignoreZones) {
@@ -191,12 +190,11 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   }
 
   ngAfterViewInit() {
-    this.setCanvasHight
+    this.setCanvasHight();
     this.startWidget();
   }
 
   public onResized(event: ResizeObserverEntry) {
-    //@ts-ignore
     const resize: LinearGaugeOptions = {};
     const aspectRatio = 0.3; // Aspect ratio to maintain (e.g., height/width or width/height)
 
@@ -488,10 +486,8 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       gaugeZonesHighlight.push({from: lower, to: upper, color: color});
     };
-    //@ts-ignore
     const highlights: LinearGaugeOptions = {};
     highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
-    //@ts-ignore - bug in highlights property definition
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
     this.ngGauge.update(highlights);
   }

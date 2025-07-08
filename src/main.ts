@@ -35,8 +35,8 @@ import 'hammerjs';
  */
 const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
   return () => appNetInitSvc.initNetworkServices()
-    .then(res => { })
-    .catch(res => { })
+    .then(() => { })
+    .catch(() => { })
 };
 
 /**

@@ -1,5 +1,4 @@
 import { IDatasetServiceDatasetConfig } from '../services/data-set.service';
-import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from '../services/units.service';
 import { Dashboard } from './../services/dashboard.service';
 

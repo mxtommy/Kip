@@ -57,7 +57,7 @@ export class CanvasService {
         });
       })
       .catch((err) => {
-        console.warn('[Canvas Service] Font readiness failed:');
+        console.warn(`[Canvas Service] Font readiness failed: ${err}`);
         this.drawTitleInternal(ctx, text, color, fontWeight, canvasWidth, canvasHeight);
       });
   }
@@ -126,7 +126,7 @@ export class CanvasService {
           this.drawTextInternal(ctx, text, x, y, maxWidth, maxHeight, fontWeight, color, textAlign, textBaseline);
         })
         .catch((err) => {
-          console.warn('[Canvas Service] Font readiness failed:');
+          console.warn(`[Canvas Service] Font readiness failed: ${err}`);
           this.drawTextInternal(ctx, text, x, y, maxWidth, maxHeight, fontWeight, color, textAlign, textBaseline);
         });
     }
@@ -136,8 +136,6 @@ export class CanvasService {
    * Draws text on the canvas with optimal font size.
    */
   private drawTextInternal(ctx: CanvasRenderingContext2D, text: string, x: number = this.EDGE_BUFFER, y: number = this.EDGE_BUFFER, maxWidth: number, maxHeight: number, fontWeight = 'normal', color = '#000', textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle'): void {
-    maxWidth = maxWidth;
-    maxHeight = maxHeight;
     const fontSize = this.calculateOptimalFontSize(ctx, text, maxWidth, maxHeight, fontWeight);
     ctx.font = `${fontWeight} ${fontSize}px ${this.DEFAULT_FONT}`;
     ctx.fillStyle = color;

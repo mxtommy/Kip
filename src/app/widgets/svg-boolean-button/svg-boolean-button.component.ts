@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Component, DoCheck, OnInit, input, output } from '@angular/core';
+import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 
@@ -13,7 +13,8 @@ interface IDimensions {
     templateUrl: './svg-boolean-button.component.svg',
     standalone: true
 })
-export class SvgBooleanButtonComponent implements OnInit, DoCheck {
+export class SvgBooleanButtonComponent implements DoCheck {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
   readonly dimensions = input.required<IDimensions>();
@@ -34,11 +35,6 @@ export class SvgBooleanButtonComponent implements OnInit, DoCheck {
   public labelColorDisabled = null;
   public valueColor = null;
   private ctrlColor = '';
-
-  constructor() { }
-
-  ngOnInit(): void {
-  }
 
   ngDoCheck(): void {
     this.viewBox = this.pressed ? this.toggleOn : this.toggleOff;

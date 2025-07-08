@@ -68,14 +68,16 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
         case 'swipedown':
           this._dashboard.nextDashboard();
           break;
-        case 'swipeleft':
+        case 'swipeleft': {
           const leftSidebarEvent = new Event('openLeftSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(leftSidebarEvent);
           break;
-        case 'swiperight':
+        }
+        case 'swiperight':{
           const rightSidebarEvent = new Event('openRightSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(rightSidebarEvent);
           break;
+        }
         default:
           break;
       }
@@ -107,6 +109,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((iframeWindow as any).Hammer) {
       console.log('[WidgetIframe] HammerJS already loaded in iframe');
       return;
@@ -251,7 +254,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       const parsedUrl = new URL(url);
       return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
     } catch (e) {
-      console.warn('[Embed Widget] isValidUrl: Invalid URL:', url);
+      console.warn(`[Embed Widget] Invalid Url: ${url}, Error: ${e}`);
       return false;
     }
   }
@@ -264,7 +267,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       const resolvedUrl = this.isValidProtocol(parsedUrl.href) ? this._sanitizer.bypassSecurityTrustResourceUrl(parsedUrl.href) : null;
       return resolvedUrl;
     } catch (e) {
-      console.warn('[Embed Widget] Invalid URL:', rawUrl);
+      console.warn(`[Embed Widget] Can't resolve Url: ${rawUrl}, Error: ${e}`);
       return null; // Return an empty string if the URL is invalid
     }
   }

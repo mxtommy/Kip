@@ -63,7 +63,11 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
-    config.displayName ? this.widgetProperties.config.displayName = config.displayName : this.widgetProperties.config.displayName = "";
+    if (config.displayName) {
+      this.widgetProperties.config.displayName = config.displayName;
+    } else {
+      this.widgetProperties.config.displayName = "";
+    }
     this.updateCanvas();
   }
 

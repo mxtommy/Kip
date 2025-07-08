@@ -51,7 +51,7 @@
           <mat-autocomplete #pathAutoComplete="matAutocomplete">
             @for (option of filteredPaths | async; track option.path) {
               <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
-                @if (option.meta != undefined) {
+                @if (option.meta !== undefined) {
                   <span>{{option.path}}</span>
                   <br>
                   <small class="pathMetaDescription">{{option.meta.description}}</small>

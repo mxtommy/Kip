@@ -26,7 +26,7 @@
       <mat-cell class="dataCell row-cell" *matCellDef="let element">
         <div class="flex-container">
           @for (item of element.sources | keyvalue; track item.key) {
-            <data-inspector-row class="source-sub-row" [path]="element.path" [source]="getSourceKey(item)" [pathValue]="getSourceValue(item)" [type]="element.type"></data-inspector-row>
+            <data-inspector-row class="source-sub-row" [path]="element.path" [source]="getSourceKey(item )" [pathValue]="getSourceValue(item)" [type]="element.type"></data-inspector-row>
           }
         </div>
       </mat-cell>

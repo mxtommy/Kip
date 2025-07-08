@@ -121,7 +121,7 @@ export class SvgAutopilotComponent {
       untracked(() => {
         switch (state) {
           case "auto":
-          case "route":
+          case "route": {
             let xte: string;
             let xteAnnotation: string;
             let xteDirection: string;
@@ -147,6 +147,7 @@ export class SvgAutopilotComponent {
             this.apModeValue.set(xte);
             this.apModeValueDirection.set(xteDirection);
             break;
+          }
           case "standby":
             this.apModeValueAnnotation.set('');
             this.apModeValue.set('');

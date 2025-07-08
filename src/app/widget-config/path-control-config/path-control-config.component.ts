@@ -75,7 +75,11 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     // add path validator fn and validate
     this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(() => this.getPaths())]);
     this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
-    this.pathFormGroup.controls['path'].valid ? this.enableFormFields(false) : this.disablePathFields();
+    if (this.pathFormGroup.controls['path'].valid) {
+      this.enableFormFields(false);
+    } else {
+      this.disablePathFields();
+    }
 
     // If SampleTime control is not present because the path property is missing, add it.
     if (!this.pathFormGroup.controls['sampleTime']) {
@@ -88,7 +92,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       debounce(value => value === '' ? timer(0) : timer(350)),
       startWith(''),
       map(value => this.filterPaths(value || '')))
-      .subscribe((path) => {
+      .subscribe(() => {
         if (this.pathFormGroup.controls['path'].pristine) {
           return;
         } else {
@@ -103,7 +107,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
       }
     );
 
-    this._pathFormGroup$ = this.pathFormGroup.controls['pathType'].valueChanges.subscribe((pathType) => {
+    this._pathFormGroup$ = this.pathFormGroup.controls['pathType'].valueChanges.subscribe(() => {
       if (this.pathFormGroup.value.showPathSkUnitsFilter) {
         this.pathSkUnitsFilterControl.setValue(this.unitlessUnit);
       } else {
@@ -208,7 +212,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private updatePathMetaBoundDisplayName(path: string) {
-    if (!this.pathFormGroup.parent.parent.value.hasOwnProperty('displayName')) {return;}
+    if (!Object.prototype.hasOwnProperty.call(this.pathFormGroup.parent.parent.value, 'displayName')) {return;}
     const meta = this._data.getPathMeta(path);
     if (meta?.displayName) {
       this.pathFormGroup.parent.parent.controls['displayName'].setValue(meta.displayName);
@@ -216,7 +220,7 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   }
 
   private updatePathMetaBoundDisplayScale(path: string) {
-    if (!this.pathFormGroup.parent.parent.value.hasOwnProperty('displayScale')) {return;}
+    if (!Object.prototype.hasOwnProperty.call(this.pathFormGroup.parent.parent.value, 'displayScale')) {return;}
 
     const meta = this._data.getPathMeta(path);
     if (meta?.displayScale) {

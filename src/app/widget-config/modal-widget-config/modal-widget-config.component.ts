@@ -138,6 +138,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     return fg;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private generatePathFields(key: string, value: any): UntypedFormControl {
     let ctrl: UntypedFormControl = null;
 
@@ -189,7 +190,6 @@ export class ModalWidgetConfigComponent implements OnInit {
     pathsFormArray.controls.forEach((fg: UntypedFormGroup) => {
       const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
       if (pathIDCtrl.value == e.pathID) {
-        const del = pathsFormArray.controls['']
          pathsFormArray.removeAt(i);
       } else {
         i++
@@ -215,17 +215,30 @@ export class ModalWidgetConfigComponent implements OnInit {
   private setFormOptions(): void {
     if (this.formMaster.contains('courseOverGroundEnable')) {
       const ctrlGrp = this.formMaster.get('paths.courseOverGround');
-      this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
+      if (this.formMaster.controls['courseOverGroundEnable'].value) {
+        ctrlGrp.enable();
+      } else {
+        ctrlGrp.disable();
+      }
     }
     if (this.formMaster.contains('driftEnable')) {
       const setCtrl = this.formMaster.get('paths.set');
       const driftCtrl = this.formMaster.get('paths.drift');
-      this.formMaster.controls['driftEnable'].value ? setCtrl.enable() : setCtrl.disable();
-      this.formMaster.controls['driftEnable'].value ? driftCtrl.enable() : driftCtrl.disable();
+      if (this.formMaster.controls['driftEnable'].value) {
+        setCtrl.enable();
+        driftCtrl.enable();
+      } else {
+        setCtrl.disable();
+        driftCtrl.disable();
+      }
     }
     if (this.formMaster.contains('waypointEnable')) {
       const waypointCtrl = this.formMaster.get('paths.nextWaypointBearing');
-      this.formMaster.controls['waypointEnable'].value ? waypointCtrl.enable() : waypointCtrl.disable();
+      if (this.formMaster.controls['waypointEnable'].value) {
+        waypointCtrl.enable();
+      } else {
+        waypointCtrl.disable();
+      }
     }
   }
 

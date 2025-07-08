@@ -188,7 +188,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.setStaticDashboard(true);
   }
 
-  protected addNewWidget(e: any): void {
+  protected addNewWidget(e: unknown): void {
     if (!this.dashboard.isDashboardStatic()) {
       const inputX = (e as HammerInput).center.x;
       const inputY = (e as HammerInput).center.y;
@@ -209,7 +209,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
               w: 2,
               h: 3,
               id: ID,
-              // @ts-ignore
+              // @ts-expect-error TBD
               selector: data,
               input: {
                 widgetProperties: {
@@ -260,6 +260,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this._gridstack.grid.removeWidget(item);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected nextDashboard(e: any): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {

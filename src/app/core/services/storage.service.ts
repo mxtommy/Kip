@@ -13,6 +13,7 @@ export interface Config {
 
 interface IPatchAction {
   url: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   document: any
 }
 
@@ -35,7 +36,7 @@ export class StorageService {
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
-        tap((_) => console.log("[Storage Service] Remote config patch request completed successfully")),
+        tap(() => console.log("[Storage Service] Remote config patch request completed successfully")),
         catchError((error) => this.handleError(error))
       );
   }
@@ -67,7 +68,7 @@ export class StorageService {
       .pipe(
           concatMap((arg: IPatchAction) => this.patch(arg)) // insures orderly call sequencing
         )
-      .subscribe(_ => {
+      .subscribe(() => {
         //console.log("[Storage Service] Subscription results received")
       });
   }
@@ -148,7 +149,7 @@ export class StorageService {
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/" + configName;
     }
-    await lastValueFrom(this.http.get<any>(url))
+    await lastValueFrom(this.http.get<IConfig>(url))
       .then(remoteConfig => {
         conf = remoteConfig;
         console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
@@ -178,7 +179,7 @@ export class StorageService {
    */
   public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
     let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/"+ configName;
-    let response: any;
+    let response = null;
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/"+ configName;
     }
@@ -201,6 +202,7 @@ export class StorageService {
    * @param {*} value unstringified update object. The resulting outgoing POST request will automatically stringify.
    * @memberof StorageService
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public patchConfig(ObjType: string, value: any, forceConfigFileVersion?: number) {
 
     let url = this.serverEndpoint + "user/kip/" + this.configFileVersion;

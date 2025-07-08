@@ -10,7 +10,7 @@ import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConf
 import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
-import { DemoAppConfig, DemoConnectionConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
+import { DemoAppConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
 
 import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
@@ -217,7 +217,11 @@ export class AppSettingsService {
       this.nightModeBrightness.next(this.activeConfig.app.nightModeBrightness);
     }
 
-    this.activeConfig.dashboards === undefined ? this._dashboards = [] : this._dashboards = this.activeConfig.dashboards;
+    if (this.activeConfig.dashboards === undefined) {
+      this._dashboards = [];
+    } else {
+      this._dashboards = this.activeConfig.dashboards;
+    }
   }
 
   //UnitDefaults
@@ -406,12 +410,12 @@ export class AppSettingsService {
 
       if (this.useSharedConfig) {
         this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
-        .then( _ => {
+        .then( () => {
           console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
           this.reloadApp();
         })
         .catch(error => {
-          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName);
+          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName + ", with default configuration values", error);
         });
       } else {
 

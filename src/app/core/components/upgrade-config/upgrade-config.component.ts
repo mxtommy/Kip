@@ -124,6 +124,7 @@ export class UpgradeConfigComponent {
     }, 1500);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async transformConfig(rootConfig: Config): Promise<any> {
     const config = await this._storage.getConfig(rootConfig.scope, rootConfig.name, this.fileVersionToUpgrade) as unknown as v10IConfig;
     if (config.app.configVersion !== this.configVersionToUpgrade) {
@@ -167,6 +168,7 @@ export class UpgradeConfigComponent {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private transformWidget(config: any, widgetType: string): any {
     // Rule 1: Change "color" property value from "white" to "contrast"
     if (config.color === "white") {
@@ -220,6 +222,7 @@ export class UpgradeConfigComponent {
     return themeConfig;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private extractWidgetsFromSplitSets(splitSets: any[], widgets: any[], rootSplitUUID: string): NgGridStackWidget[] {
     const widgetMap = new Map(widgets.map(widget => [widget.uuid, widget])); // Map widgets by UUID
     const extractedWidgets: NgGridStackWidget[] = [];

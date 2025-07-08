@@ -8,7 +8,7 @@
  */
 
 // Metadata, Notification and Stream Subscription type restrictions.
-const states = ["normal", "nominal", "alert", "warn", "alarm", "emergency"] as ["normal", "nominal", "alert", "warn", "alarm", "emergency"];
+export const states = ["normal", "nominal", "alert", "warn", "alarm", "emergency"] as const;
 export type TState = typeof states[number];
 
 export enum States {
@@ -20,7 +20,7 @@ export enum States {
   Emergency = "emergency"
 }
 
-const types = ["linear", "logarithmic", "squareroot", "power"] as ["linear", "logarithmic", "squareroot", "power"];
+export const types = ["linear", "logarithmic", "squareroot", "power"] as const;
 export type TScaleType = typeof types[number];
 
 export enum ScaleTypes {
@@ -30,23 +30,23 @@ export enum ScaleTypes {
   Power = "power"
 }
 
-const methods = ["visual", "sound"] as ["visual", "sound"];
-export type TMethod = typeof methods[number];
+type methods = ["visual", "sound"];
+export type TMethod = methods[number];
 
 export enum Methods {
   Visual = "visual",
   Sound = "sound"
 }
 
-const formats = ["delta", "full"] as ["delta", "full"];
-export type TFormat = typeof formats[number];
+type formats = ["delta", "full"];
+export type TFormat = formats[number];
 
 export enum Formats {
   Delta = "delta",
   Full = "full"
 }
 
-const policies = ["instant", "ideal", "fixed"] as ["instant", "ideal", "fixed"];
+export const policies = ["instant", "ideal", "fixed"] as const;
 export type TPolicy = typeof policies[number];
 
 export enum Policies {
@@ -146,6 +146,7 @@ export interface ISignalKSource {
  */
 export interface ISignalKDataValueUpdate {
   path: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
 }
 
@@ -178,7 +179,7 @@ export interface ISkMetadata {
   supportsPut?: boolean; // true if the path supports PUT (write) requests
   units: string;        // required if value is present. Describe the SK type of data
   timeout?: number;     // tells the consumer how long it should consider the value valid
-  properties: {}; // Not defined by Kip. Used by GPS and Ship details and other complex data types
+  properties: object; // Not defined by Kip. Used by GPS and Ship details and other complex data types
   method?: TMethod[];
   displayScale?: ISkDisplayScale
   alertMethod?: TMethod[];

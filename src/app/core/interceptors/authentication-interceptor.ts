@@ -18,7 +18,7 @@ export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
     });
   }
 
-  intercept(req: HttpRequest<any>, next: HttpHandler) {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler) {
     let authReq = req.clone();
 
     if (this.authToken) {

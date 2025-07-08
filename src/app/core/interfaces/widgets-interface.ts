@@ -270,6 +270,7 @@ export interface IDynamicControl {
   /** A unique UUID to match against the path key name to link the control/path */
   pathID: string;
   /** The value of the control */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   /** The color of the control */
   color: string;

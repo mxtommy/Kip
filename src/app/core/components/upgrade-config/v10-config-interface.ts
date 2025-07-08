@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface v10IConnectionConfig {
   configVersion: number;
   kipUUID: string;
@@ -70,7 +71,7 @@ export interface v10IWidget {
    /** The Widget's type. Value are defined in widget-list.service */
   type: string;
    /** The Widget's configuration Object */
-  config: any;
+  config: object;
 }
 
 export type v10IUnitDefaults = Record<string, string>;

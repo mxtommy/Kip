@@ -4,7 +4,6 @@ import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
 import { cloneDeep,merge } from 'lodash-es';
-import Qty from 'js-quantities';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const SELFROOTDEF = "self";
@@ -17,6 +16,7 @@ export interface IPathUpdate {
 
 interface IPathData {
   /** The path value */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   /** The value's timestamp Date Object (in Zulu time). */
   timestamp: Date | null;
@@ -29,6 +29,7 @@ export interface IDataState {
 // Validation of Signal K RFC3339S datetype format
 const isRfc3339StringDate = (date: Date | string): boolean => {
   if (isFinite(+(date instanceof Date ? date : new Date(date)))) {
+    // eslint-disable-next-line no-useless-escape
     const rfc3339 = new RegExp("^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$");
     if (rfc3339.test(date as string)) {
       return true;

@@ -4,6 +4,7 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
+import { ISkZone } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'widget-gauge-steel',
@@ -13,9 +14,8 @@ import { Subscription } from 'rxjs';
     imports: [WidgetHostComponent, GaugeSteelComponent]
 })
 export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  dataValue: any = 0;
-
-  protected zones = [];
+  protected dataValue = 0;
+  protected zones: ISkZone[] = [];
 
   // Zones support
   private metaSub: Subscription;

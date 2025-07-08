@@ -83,7 +83,6 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   private subscribeTimer() {
     this.timerRunning = this.TimersService.isRunning(this.timeName);
-    const length = (this.widgetProperties.config.timerLength * -1) * 10;
 
     this.timerSub = this.TimersService.createTimer(this.timeName, -3000, 100).subscribe(
       newValue => {

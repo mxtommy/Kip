@@ -14,6 +14,7 @@ interface IDimensions {
     standalone: true
 })
 export class SvgBooleanLightComponent implements DoCheck {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
   readonly dimensions = input.required<IDimensions>();
