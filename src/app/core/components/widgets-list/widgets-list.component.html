@@ -13,12 +13,14 @@
     }
   </mat-button-toggle-group>
   <div>
-    @for (widgetType of widgetsList; track widgetType.selector) {
-      <widget-list-card
+    @for (widgetType of filteredWidgetsList(); track widgetType.selector) {
+      <widget-list-card [class.dependency-missing]="!widgetType.isDependencyValid"
         [svgIcon]="widgetType.icon"
         [iconSize]="48"
         [name]="widgetType.name"
         [description]="widgetType.description"
+        [pluginDependencyValid]="widgetType.isDependencyValid"
+        [pluginsStatus]="widgetType.pluginsStatus"
         (click)="onSelectWidget(widgetType.selector)"
       />
     }

@@ -10,10 +10,12 @@ import { DomSanitizer } from '@angular/platform-browser';
   styleUrl: './widget-list-card.component.scss'
 })
 export class WidgetListCardComponent {
-  public svgIcon = input.required<string>();
-  public iconSize = input.required<number>();
-  public name = input.required<string>();
-  public description = input.required<string>();
+  protected svgIcon = input.required<string>();
+  protected iconSize = input.required<number>();
+  protected name = input.required<string>();
+  protected description = input.required<string>();
+  protected pluginsStatus = input.required<{ name: string; enabled: boolean }[]>();
+  protected pluginDependencyValid = input.required<boolean>();
 
   constructor() {
     const iconRegistry = inject(MatIconRegistry);

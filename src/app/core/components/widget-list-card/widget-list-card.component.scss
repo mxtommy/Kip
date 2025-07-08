@@ -16,6 +16,7 @@
   margin: 0px;
   padding: 15px;
   border: solid 1px var(--mat-sys-outline);
+  cursor: pointer;
 }
 
 .item-container:hover {
@@ -38,13 +39,26 @@
 }
 
 .title {
-  cursor: pointer;
   font-size: var(--mat-sys-label-medium-line-height);
 }
 
 .description {
-  cursor: pointer;
   color: var(--mat-sys-outline);
+}
+
+.dependency {
+  color: var(--mat-sys-outline);
+  text-align: start;
+  font-style: italic;
+  font-size: var(--mat-sys-label-small-size);
+}
+
+.dependency-error {
+  color: var(--kip-port-color);
+}
+
+.dependency-ok {
+  color: var(--kip-starboard-color);
 }
 
 .no-text-select {

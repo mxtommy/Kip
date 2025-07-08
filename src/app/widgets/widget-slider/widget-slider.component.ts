@@ -30,8 +30,8 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   private lineStartPx: number;
   private lineWidthPx: number;
   private lineEndPx: number;
-  private resizeTimeout: any;
-  private debounceTimeout: any
+  private resizeTimeout: NodeJS.Timeout;
+  private debounceTimeout: NodeJS.Timeout;
   protected handlePosition = 20;
   protected pathValue = 0;
   private lineStart = this.handlePosition;
@@ -180,7 +180,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     this.startWidget();
   }
 
-  protected onResized(event: ResizeObserverEntry): void {
+  protected onResized(): void {
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
       this.calculateLineBounds(); // Recalculate line bounds on resize
@@ -240,14 +240,14 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     }
   }
 
-  protected onPointerUp(e: PointerEvent) {
+  protected onPointerUp() {
     this.isDragStarted = false;
 
     // Emit the raw value immediately
     this.valueChange$.next(this.pathValue);
   }
 
-  protected onPointerLeave(e: Event) {
+  protected onPointerLeave() {
     if (this.isDragStarted) {
       this.isDragStarted = false;
 

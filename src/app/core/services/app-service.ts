@@ -1,4 +1,4 @@
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
@@ -106,7 +106,15 @@ export class AppService {
     });
 
     effect(() => {
-      this._redNightMode() ? this.toggleDayNightMode() : this.toggleDayNightMode();
+      const redNightMode = this._redNightMode();
+
+      untracked(() => {
+        if (redNightMode) {
+          this.toggleDayNightMode();
+        } else {
+          this.toggleDayNightMode();
+        }
+      });
     });
 
     this.readThemeCssRoleVariables();

@@ -638,7 +638,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private sendCommand(cmdAction: CommandDefinition): void {
-    const requestId = this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
+    this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
     console.log("AP Action:\n" + JSON.stringify(cmdAction));
   }
 
