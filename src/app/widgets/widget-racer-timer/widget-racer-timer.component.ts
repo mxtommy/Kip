@@ -56,14 +56,14 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       filterSelfPaths: true,
       paths: {
         'ttsPath': {
-          description: 'Time to the Start',
+          description: 'Time to the Start in seconds',
           path: 'self.navigation.racing.timeToStart',
           source: 'default',
           pathType: 'number',
           isPathConfigurable: true,
           convertUnitTo: 's',
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 's',
           sampleTime: 500
         },
         'startTimePath': {
@@ -84,8 +84,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           pathType: 'number',
           isPathConfigurable: true,
           convertUnitTo: 'm',
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'm',
           sampleTime: 500
         },
       },
