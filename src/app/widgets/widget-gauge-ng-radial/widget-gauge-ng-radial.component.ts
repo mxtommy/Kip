@@ -33,15 +33,15 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   @ViewChild('radialGauge', { static: true, read: ElementRef }) gauge: ElementRef;
 
   // Gauge text value for value box rendering
-  public textValue = "--";
+  protected textValue = "";
   // Gauge value
-  public value = 0;
+  protected value: number = null;
 
   // Gauge options
-  public gaugeOptions = {} as RadialGaugeOptions;
+  protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  public colorStrokeTicks = "";
-  public unitName: string = null;
+  protected colorStrokeTicks = "";
+  protected unitName: string = null;
 
   // Zones support
   private metaSub: Subscription;
@@ -77,6 +77,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         enableTicks: true,
         compassUseNumbers: false,
         highlightsWidth: 5,
+        scaleStart: 180
       },
       numInt: 1,
       numDecimal: 0,
@@ -107,7 +108,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (!newValue || !newValue.data) {
+      if (!newValue || !newValue.data || newValue.data.value === null) {
         newValue = {
           data: {
             value: 0,
@@ -115,14 +116,17 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
           },
           state: States.Normal // Default state
         };
-      }
-
-      if (newValue.state == null) {
-        newValue.state = States.Normal; // Provide a default value for state
+        this.textValue = '--';
+      } else if (this.textValue === '--') {
+          this.textValue = '';
       }
 
       // Compound value to displayScale
       this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
+
+      if (newValue.state == null) {
+        newValue.state = States.Normal; // Provide a default value for state
+      }
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
@@ -301,7 +305,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorValueBoxRectEnd = '';
 
     this.gaugeOptions.ticksAngle = 360;
-    this.gaugeOptions.startAngle = 180;
+    this.gaugeOptions.startAngle = this.widgetProperties.config.gauge.scaleStart || 180;
     this.gaugeOptions.majorTicks = 0;
     this.gaugeOptions.exactTicks = true;
     this.gaugeOptions.strokeTicks = false;
