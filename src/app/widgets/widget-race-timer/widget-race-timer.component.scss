@@ -12,8 +12,8 @@
 }
 
 .button-color-red {
-  --mdc-filled-button-container-color: var(--kip-port-color);
-  --mdc-filled-button-label-text-color: var(--kip-contrast-color);
+  --mat-button-filled-container-color: var(--kip-port-color);
+  --mat-button-filled-label-text-color: var(--kip-contrast-color);
 }
 
 .timerBarContainer {
@@ -35,7 +35,7 @@
 .timer-button-groups {
   min-width: 247px;
   max-width: 100%;
-  --mdc-filled-button-container-shape: 5px;
+  --mat-button-filled-container-shape: 5px;
 }
 
 .timer-adjusters-group {
