@@ -5,7 +5,7 @@ import { UnitsService } from '../../services/units.service';
 import { MatCell } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptgroup, MatOption } from '@angular/material/core';
-import { NgFor } from '@angular/common';
+
 import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 
@@ -64,18 +64,17 @@ export class DataInspectorRowComponent implements OnInit {
     templateUrl: 'data-inspector-row-unit-modal.html',
     standalone: true,
     imports: [
-        MatDialogTitle,
-        MatDialogContent,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        NgFor,
-        MatOptgroup,
-        MatOption,
-        MatDialogActions,
-        MatButtonModule,
-        MatDialogClose
-    ],
+    MatDialogTitle,
+    MatDialogContent,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOptgroup,
+    MatOption,
+    MatDialogActions,
+    MatButtonModule,
+    MatDialogClose
+],
 })
 export class DialogUnitSelect {
   dialogRef = inject<MatDialogRef<DialogUnitSelect>>(MatDialogRef);

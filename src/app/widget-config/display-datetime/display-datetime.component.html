@@ -21,9 +21,11 @@
       </button>
     }
     <mat-autocomplete #timeZoneAutoComplete="matAutocomplete">
-      <mat-option *ngFor="let timeZone of filteredTZ | async" [value]="timeZone.label">
-        {{timeZone.offset}} - {{timeZone.label}}
-      </mat-option>
+      @for (timeZone of filteredTZ | async; track timeZone) {
+        <mat-option [value]="timeZone.label">
+          {{timeZone.offset}} - {{timeZone.label}}
+        </mat-option>
+      }
     </mat-autocomplete>
   </mat-form-field>
 </div>

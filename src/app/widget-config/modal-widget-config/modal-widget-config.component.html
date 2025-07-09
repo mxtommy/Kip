@@ -3,188 +3,219 @@
   <mat-dialog-content class="widget-config-dialog-content">
     <mat-tab-group class="tab-group-content">
       <mat-tab label="Display">
-        <config-display-chart-options class="tab-content" *ngIf="(widgetConfig.datasetUUID !== undefined)"
-          [displayName]="displayNameToControl"
-          [datasetUUID]="datasetUUIDToControl"
-          [convertUnitTo]="convertUnitToControl"
-          [showAverageData]="showAverageDataToControl"
-          [trackAgainstAverage]="trackAgainstAverageToControl"
-          [datasetAverageArray]="datasetAverageArrayToControl"
-          [showDatasetMinimumValueLine]="showDatasetMinimumValueLineToControl"
-          [showDatasetMaximumValueLine]="showDatasetMaximumValueLineToControl"
-          [showDatasetAverageValueLine]="showDatasetAverageValueLineToControl"
-          [showDatasetAngleAverageValueLine]="showDatasetAngleAverageValueLineToControl"
-
-          [startScaleAtZero]="startScaleAtZeroToControl"
-          [showLabel]="showLabelToControl"
-          [showTimeScale]="showTimeScaleToControl"
-          [showYScale]="showYScaleToControl"
-          [yScaleSuggestedMin]="yScaleSuggestedMinToControl"
-          [yScaleSuggestedMax]="yScaleSuggestedMaxToControl"
-          [enableMinMaxScaleLimit]="enableMinMaxScaleLimitToControl"
-          [yScaleMin]="yScaleMinToControl"
-          [yScaleMax]="yScaleMaxToControl"
-          [numDecimal]="numDecimalToControl"
-          [verticalGraph]="verticalGraphToControl"
-          [color]="colorToControl"
-          >
-        </config-display-chart-options>
-        <div class="display-content tab-content" *ngIf="(widgetConfig.datasetUUID === undefined)">
-          <div class="widget-options-grid">
-            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.widgetUrl !== undefined)">
-              <mat-label>URL</mat-label>
-              <input type="url" matInput placeholder="Enter URL to page/resource" name="widgetUrl" formControlName="widgetUrl">
-            </mat-form-field>
-
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.allowInput !== undefined)"
-              name="allowInput"
-              formControlName="allowInput">
-              Allow pointer events on embedded content. WARNING: this may prevent swipe
-              gestures over the Embed widget or keyboard events, while the focus is in
-              the embed, from triggering normal KIP interactions.
-            </mat-checkbox>
-
-            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.displayName !== undefined)">
-              <mat-label>Widget Label</mat-label>
-              <input matInput placeholder="Enter a label to display" name="displayName" formControlName="displayName">
-            </mat-form-field>
-
-            @if (formMaster.get('displayScale')) {
-              <mat-form-field formGroupName="displayScale" appearance="outline">
-                <mat-label>Scale Start</mat-label>
-                <input matNativeControl
-                  type="number"
-                  name="lower"
-                  formControlName="lower"
-                  placeholder="Enter number...">
-              </mat-form-field>
-              <mat-form-field formGroupName="displayScale" appearance="outline">
-                <mat-label>Scale End</mat-label>
-                <input matInput
-                  type="number"
-                  name="upper"
-                  formControlName="upper"
-                  placeholder="Enter number...">
-              </mat-form-field>
-            }
-
-            <mat-form-field *ngIf="(widgetConfig.numInt !== undefined)">
-              <mat-label>Integer Places</mat-label>
-              <input type="number" min="1" max="5" matInput placeholder="Enter or select number..." name="numInt"  formControlName="numInt" required>
-            </mat-form-field>
-            <mat-form-field *ngIf="(widgetConfig.numDecimal !== undefined)" [class.options-grid-span2]="!widgetConfig.numInt">
-              <mat-label>Decimal Places</mat-label>
-              <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal" required>
-            </mat-form-field>
-
-            <mat-checkbox *ngIf="(widgetConfig.showMin !== undefined)"
-              name="showMin"
-              formControlName="showMin">
-              Show Min recorded value
-            </mat-checkbox>
-            <mat-checkbox *ngIf="(widgetConfig.showMax !== undefined)"
-              name="showMax"
-              formControlName="showMax">
-              Show Max recorded value
-            </mat-checkbox>
-
-            <display-datetime-options class="options-grid-span2" *ngIf="(widgetConfig.dateFormat !== undefined)"
-              [dateFormat]="dateFormatToControl"
-              [dateTimezone]="dateTimezoneToControl">
-            </display-datetime-options>
-
-            <!-- Autopilot gauge stuff -->
-            <!-- <mat-checkbox *ngIf="(widgetConfig.courseDirectionTrue !== undefined)"
+        @if ((widgetConfig.datasetUUID !== undefined)) {
+          <config-display-chart-options class="tab-content"
+            [displayName]="displayNameToControl"
+            [datasetUUID]="datasetUUIDToControl"
+            [convertUnitTo]="convertUnitToControl"
+            [showAverageData]="showAverageDataToControl"
+            [trackAgainstAverage]="trackAgainstAverageToControl"
+            [datasetAverageArray]="datasetAverageArrayToControl"
+            [showDatasetMinimumValueLine]="showDatasetMinimumValueLineToControl"
+            [showDatasetMaximumValueLine]="showDatasetMaximumValueLineToControl"
+            [showDatasetAverageValueLine]="showDatasetAverageValueLineToControl"
+            [showDatasetAngleAverageValueLine]="showDatasetAngleAverageValueLineToControl"
+            [startScaleAtZero]="startScaleAtZeroToControl"
+            [showLabel]="showLabelToControl"
+            [showTimeScale]="showTimeScaleToControl"
+            [showYScale]="showYScaleToControl"
+            [yScaleSuggestedMin]="yScaleSuggestedMinToControl"
+            [yScaleSuggestedMax]="yScaleSuggestedMaxToControl"
+            [enableMinMaxScaleLimit]="enableMinMaxScaleLimitToControl"
+            [yScaleMin]="yScaleMinToControl"
+            [yScaleMax]="yScaleMaxToControl"
+            [numDecimal]="numDecimalToControl"
+            [verticalGraph]="verticalGraphToControl"
+            [color]="colorToControl"
+            >
+          </config-display-chart-options>
+        }
+        @if ((widgetConfig.datasetUUID === undefined)) {
+          <div class="display-content tab-content">
+            <div class="widget-options-grid">
+              @if ((widgetConfig.widgetUrl !== undefined)) {
+                <mat-form-field class="options-grid-span2">
+                  <mat-label>URL</mat-label>
+                  <input type="url" matInput placeholder="Enter URL to page/resource" name="widgetUrl" formControlName="widgetUrl">
+                </mat-form-field>
+              }
+              @if ((widgetConfig.allowInput !== undefined)) {
+                <mat-checkbox class="options-grid-span2"
+                  name="allowInput"
+                  formControlName="allowInput">
+                  Allow pointer events on embedded content. WARNING: this may prevent swipe
+                  gestures over the Embed widget or keyboard events, while the focus is in
+                  the embed, from triggering normal KIP interactions.
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.displayName !== undefined)) {
+                <mat-form-field class="options-grid-span2">
+                  <mat-label>Widget Label</mat-label>
+                  <input matInput placeholder="Enter a label to display" name="displayName" formControlName="displayName">
+                </mat-form-field>
+              }
+              @if (formMaster.get('displayScale')) {
+                <mat-form-field formGroupName="displayScale" appearance="outline">
+                  <mat-label>Scale Start</mat-label>
+                  <input matNativeControl
+                    type="number"
+                    name="lower"
+                    formControlName="lower"
+                    placeholder="Enter number...">
+                </mat-form-field>
+                <mat-form-field formGroupName="displayScale" appearance="outline">
+                  <mat-label>Scale End</mat-label>
+                  <input matInput
+                    type="number"
+                    name="upper"
+                    formControlName="upper"
+                    placeholder="Enter number...">
+                </mat-form-field>
+              }
+              @if ((widgetConfig.numInt !== undefined)) {
+                <mat-form-field>
+                  <mat-label>Integer Places</mat-label>
+                  <input type="number" min="1" max="5" matInput placeholder="Enter or select number..." name="numInt"  formControlName="numInt" required>
+                </mat-form-field>
+              }
+              @if ((widgetConfig.numDecimal !== undefined)) {
+                <mat-form-field [class.options-grid-span2]="!widgetConfig.numInt">
+                  <mat-label>Decimal Places</mat-label>
+                  <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal" required>
+                </mat-form-field>
+              }
+              @if ((widgetConfig.showMin !== undefined)) {
+                <mat-checkbox
+                  name="showMin"
+                  formControlName="showMin">
+                  Show Min recorded value
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.showMax !== undefined)) {
+                <mat-checkbox
+                  name="showMax"
+                  formControlName="showMax">
+                  Show Max recorded value
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.dateFormat !== undefined)) {
+                <display-datetime-options class="options-grid-span2"
+                  [dateFormat]="dateFormatToControl"
+                  [dateTimezone]="dateTimezoneToControl">
+                </display-datetime-options>
+              }
+              <!-- Autopilot gauge stuff -->
+              <!-- <mat-checkbox *ngIf="(widgetConfig.courseDirectionTrue !== undefined)"
               name="courseDirectionTrue"
               formControlName="courseDirectionTrue">
-                Display True Bearing
+              Display True Bearing
             </mat-checkbox> -->
-            <mat-checkbox *ngIf="(widgetConfig.headingDirectionTrue !== undefined)"
-              name="headingDirectionTrue"
-              formControlName="headingDirectionTrue">
+            @if ((widgetConfig.headingDirectionTrue !== undefined)) {
+              <mat-checkbox
+                name="headingDirectionTrue"
+                formControlName="headingDirectionTrue">
                 Display True Heading
-            </mat-checkbox>
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.invertRudder !== undefined)"
-              name="invertRudder"
-              formControlName="invertRudder">
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.invertRudder !== undefined)) {
+              <mat-checkbox class="options-grid-span2"
+                name="invertRudder"
+                formControlName="invertRudder">
                 Invert Rudder Angle
-            </mat-checkbox>
-
+              </mat-checkbox>
+            }
             <!-- sail gauge stuff -->
-            <mat-checkbox class="fields" *ngIf="(widgetConfig.laylineEnable !== undefined)"
-              name="laylineEnable"
-              formControlName="laylineEnable">
+            @if ((widgetConfig.laylineEnable !== undefined)) {
+              <mat-checkbox class="fields"
+                name="laylineEnable"
+                formControlName="laylineEnable">
                 Show Close-hauled Lines
-            </mat-checkbox>
-            <mat-form-field *ngIf="(widgetConfig.laylineEnable !== undefined)">
-              <mat-label>Vessel Close-hauled Angle</mat-label>
-              <input type="number" min="10" max="90" matInput placeholder="Select angle..." name="laylineAngle" formControlName="laylineAngle">
-            </mat-form-field>
-
-            <mat-checkbox *ngIf="(widgetConfig.windSectorEnable !== undefined)" name="windSectorEnable" formControlName="windSectorEnable">
-              Show Wind Sectors
-            </mat-checkbox>
-            <mat-form-field *ngIf="(widgetConfig.windSectorEnable !== undefined)">
-              <mat-label>Wind Sector Duration</mat-label>
-              <input type="number" min="1" max="90" matInput placeholder="Select or enter duration..." name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
-            </mat-form-field>
-
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.awsEnable !== undefined)" name="awsEnable" formControlName="awsEnable" (change)="setPaths()">
-              Show Apparent Wind Speed Value
-            </mat-checkbox>
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.twsEnable !== undefined)" name="twsEnable" formControlName="twsEnable" (change)="setPaths()">
-              Show True Wind Speed Value
-            </mat-checkbox>
-
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.courseOverGroundEnable !== undefined)" name="courseOverGroundEnable" formControlName="courseOverGroundEnable" (change)="setPaths()">
-              Show Course Over Ground
-            </mat-checkbox>
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.waypointEnable !== undefined)" name="waypointEnable" formControlName="waypointEnable" (change)="setPaths()">
-              Show Next Waypoint
-            </mat-checkbox>
-            <mat-checkbox class="options-grid-span2" *ngIf="(widgetConfig.driftEnable !== undefined)" name="driftEnable" formControlName="driftEnable" (change)="setPaths()">
-              Show Drift
-            </mat-checkbox>
-
-            <mat-form-field *ngIf="(widgetConfig.minValue !== undefined) && !formMaster.get('displayScale')">
-              <mat-label>Minimum Value</mat-label>
-              <input matInput type="number"
-                name="minValue"
-                formControlName="minValue"
-                placeholder="Enter or select number...">
-            </mat-form-field>
-            <mat-form-field *ngIf="(widgetConfig.maxValue !== undefined) && !formMaster.get('displayScale')">
-              <mat-label>Maximum Value</mat-label>
-              <input matInput type="number"
-                name="maxValue"
-                formControlName="maxValue"
-                placeholder="Enter or select number...">
-            </mat-form-field>
-
-            <mat-checkbox *ngIf="(widgetConfig.ignoreZones !== undefined)"
-              name="ignoreZones"
-              formControlName="ignoreZones">
-              Ignore Zones configuration
-            </mat-checkbox>
-
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.laylineEnable !== undefined)) {
+              <mat-form-field>
+                <mat-label>Vessel Close-hauled Angle</mat-label>
+                <input type="number" min="10" max="90" matInput placeholder="Select angle..." name="laylineAngle" formControlName="laylineAngle">
+              </mat-form-field>
+            }
+            @if ((widgetConfig.windSectorEnable !== undefined)) {
+              <mat-checkbox name="windSectorEnable" formControlName="windSectorEnable">
+                Show Wind Sectors
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.windSectorEnable !== undefined)) {
+              <mat-form-field>
+                <mat-label>Wind Sector Duration</mat-label>
+                <input type="number" min="1" max="90" matInput placeholder="Select or enter duration..." name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
+              </mat-form-field>
+            }
+            @if ((widgetConfig.awsEnable !== undefined)) {
+              <mat-checkbox class="options-grid-span2" name="awsEnable" formControlName="awsEnable" (change)="setPaths()">
+                Show Apparent Wind Speed Value
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.twsEnable !== undefined)) {
+              <mat-checkbox class="options-grid-span2" name="twsEnable" formControlName="twsEnable" (change)="setPaths()">
+                Show True Wind Speed Value
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.courseOverGroundEnable !== undefined)) {
+              <mat-checkbox class="options-grid-span2" name="courseOverGroundEnable" formControlName="courseOverGroundEnable" (change)="setPaths()">
+                Show Course Over Ground
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.waypointEnable !== undefined)) {
+              <mat-checkbox class="options-grid-span2" name="waypointEnable" formControlName="waypointEnable" (change)="setPaths()">
+                Show Next Waypoint
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.driftEnable !== undefined)) {
+              <mat-checkbox class="options-grid-span2" name="driftEnable" formControlName="driftEnable" (change)="setPaths()">
+                Show Drift
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.minValue !== undefined) && !formMaster.get('displayScale')) {
+              <mat-form-field>
+                <mat-label>Minimum Value</mat-label>
+                <input matInput type="number"
+                  name="minValue"
+                  formControlName="minValue"
+                  placeholder="Enter or select number...">
+              </mat-form-field>
+            }
+            @if ((widgetConfig.maxValue !== undefined) && !formMaster.get('displayScale')) {
+              <mat-form-field>
+                <mat-label>Maximum Value</mat-label>
+                <input matInput type="number"
+                  name="maxValue"
+                  formControlName="maxValue"
+                  placeholder="Enter or select number...">
+              </mat-form-field>
+            }
+            @if ((widgetConfig.ignoreZones !== undefined)) {
+              <mat-checkbox
+                name="ignoreZones"
+                formControlName="ignoreZones">
+                Ignore Zones configuration
+              </mat-checkbox>
+            }
             @if ( (widgetConfig.gauge?.type === 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType)) || widgetConfig.gauge?.type === 'ngLinear') {
               <mat-form-field formGroupName="gauge">
                 <mat-label>Highlights Width</mat-label>
                 <input type="number" min="0" max="25" matInput placeholder="Enter or select number..." name="highlightsWidth" formControlName="highlightsWidth" required>
               </mat-form-field>
             }
-
             @if (widgetConfig.gauge?.type === 'ngRadial') {
               @if (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.subType) > -1) {
                 <mat-form-field class="options-grid-span2" formGroupName="gauge">
                   <mat-label>Rotation Element</mat-label>
-                    <mat-select
-                      placeholder="Select Gauge Type..."
-                      formControlName="subType"
-                      name="subType">
-                      <mat-option value="marineCompass">Dial (Marine Compass)</mat-option>
-                      <mat-option value="baseplateCompass">Needle (Base plate compass)</mat-option>
-                    </mat-select>
+                  <mat-select
+                    placeholder="Select Gauge Type..."
+                    formControlName="subType"
+                    name="subType">
+                    <mat-option value="marineCompass">Dial (Marine Compass)</mat-option>
+                    <mat-option value="baseplateCompass">Needle (Base plate compass)</mat-option>
+                  </mat-select>
                 </mat-form-field>
                 <div formGroupName="gauge">
                   <mat-checkbox name="showValueBox" formControlName="showValueBox">
@@ -215,76 +246,75 @@
                 }
               }
             }
-
             @if (widgetConfig.gauge?.type === 'ngLinear') {
               <div formGroupName="gauge">
                 <mat-checkbox name="useNeedle"
                   formControlName="useNeedle">
-                    Use needle indicator
+                  Use needle indicator
                 </mat-checkbox>
               </div>
-
               <div formGroupName="gauge">
                 <mat-checkbox name="enableTicks"
                   formControlName="enableTicks">
-                    Enable Ticks
+                  Enable Ticks
                 </mat-checkbox>
               </div>
-
               <mat-form-field formGroupName="gauge" class="options-grid-span2">
                 <mat-label>Orientation</mat-label>
                 <mat-select
-                    placeholder="Select type..."
-                    formControlName="subType"
-                    name="subType">
-                    <mat-option value="vertical">Vertical</mat-option>
-                    <mat-option value="horizontal">Horizontal</mat-option>
+                  placeholder="Select type..."
+                  formControlName="subType"
+                  name="subType">
+                  <mat-option value="vertical">Vertical</mat-option>
+                  <mat-option value="horizontal">Horizontal</mat-option>
                 </mat-select>
               </mat-form-field>
             }
-
             @if (widgetConfig.gauge?.type === 'simpleLinear') {
               <mat-form-field formGroupName="gauge" class="options-grid-span2">
                 <mat-label>Unit Label</mat-label>
-                  <mat-select
-                    placeholder="Select label format"
-                    formControlName="unitLabelFormat"
-                    name="unitLabelFormat">
-                    <mat-option value="full">Full Label</mat-option>
-                    <mat-option value="abr">First Letter Only</mat-option>
-                  </mat-select>
+                <mat-select
+                  placeholder="Select label format"
+                  formControlName="unitLabelFormat"
+                  name="unitLabelFormat">
+                  <mat-option value="full">Full Label</mat-option>
+                  <mat-option value="abr">First Letter Only</mat-option>
+                </mat-select>
               </mat-form-field>
             }
-
-            <mat-form-field class="options-grid-span2" *ngIf="(widgetConfig.color !== undefined)">
-              <mat-label>Color</mat-label>
-              <mat-select
-                placeholder="Select Color..."
-                formControlName="color"
-                name="color"
-                required>
-                @for(color of colors; track $index) {
-                  <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-checkbox *ngIf="(widgetConfig.noBgColor !== undefined)" name="noBgColor" formControlName="noBgColor">
-              Disable background color
-            </mat-checkbox>
-            <mat-form-field *ngIf="(widgetConfig.bgColor !== undefined)">
-              <mat-label>Background Color</mat-label>
-              <mat-select
-                placeholder="Select Color..."
-                formControlName="bgColor"
-                name="bgColor"
-                required>
-                @for(color of colors; track $index) {
-                  <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
+            @if ((widgetConfig.color !== undefined)) {
+              <mat-form-field class="options-grid-span2">
+                <mat-label>Color</mat-label>
+                <mat-select
+                  placeholder="Select Color..."
+                  formControlName="color"
+                  name="color"
+                  required>
+                  @for(color of colors; track $index) {
+                    <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            @if ((widgetConfig.noBgColor !== undefined)) {
+              <mat-checkbox name="noBgColor" formControlName="noBgColor">
+                Disable background color
+              </mat-checkbox>
+            }
+            @if ((widgetConfig.bgColor !== undefined)) {
+              <mat-form-field>
+                <mat-label>Background Color</mat-label>
+                <mat-select
+                  placeholder="Select Color..."
+                  formControlName="bgColor"
+                  name="bgColor"
+                  required>
+                  @for(color of colors; track $index) {
+                    <mat-option value='{{color.value}}'>{{color.label}}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
             <!-- Steelgauge -->
             @if (widgetConfig.gauge?.type === "steel") {
               <mat-form-field formGroupName="gauge">
@@ -336,25 +366,29 @@
           </div>
           <!-- end Gauge stuff-->
         </div>
-      </mat-tab>
-<!-- Boolean Multi Child Control Config Panel -->
-      <mat-tab label="Controls" *ngIf="(widgetConfig.multiChildCtrls !== undefined)">
+      }
+    </mat-tab>
+    <!-- Boolean Multi Child Control Config Panel -->
+    @if ((widgetConfig.multiChildCtrls !== undefined)) {
+      <mat-tab label="Controls">
         <div class="tab-content">
           <div>
             <ng-template mat-tab-label>
               <span [style]="formMaster.controls.multiChildCtrls.valid ? 'display: none' : 'display: block'" class="warning fa fa-exclamation-circle"></span>&nbsp;Controls
             </ng-template>
           </div>
-            <boolean-multicontrol-options
-              [multiCtrlArray]="multiChildCtrlsToControl"
-              (addPath)="addPathGroup($event)"
-              (updatePath)="updatePath($event)"
-              (delPath)="deletePath($event)">
-            </boolean-multicontrol-options>
+          <boolean-multicontrol-options
+            [multiCtrlArray]="multiChildCtrlsToControl"
+            (addPath)="addPathGroup($event)"
+            (updatePath)="updatePath($event)"
+            (delPath)="deletePath($event)">
+          </boolean-multicontrol-options>
         </div>
       </mat-tab>
-<!-- Paths stuff -->
-      <mat-tab label="Paths" *ngIf="(widgetConfig.paths !== undefined)">
+    }
+    <!-- Paths stuff -->
+    @if ((widgetConfig.paths !== undefined)) {
+      <mat-tab label="Paths">
         <div class="tab-content">
           <div>
             <ng-template mat-tab-label>
@@ -376,91 +410,99 @@
           </paths-options>
         </div>
       </mat-tab>
-<!-- Gauge stuff -->
-        @if (widgetConfig.gauge?.type === "steel") {
-        <mat-tab label="Settings" formGroupName="gauge">
-          <div class="display-content tab-content">
+    }
+    <!-- Gauge stuff -->
+    @if (widgetConfig.gauge?.type === "steel") {
+      <mat-tab label="Settings" formGroupName="gauge">
+        <div class="display-content tab-content">
+          <mat-form-field class="options-grid-span2">
+            <mat-label>Gauge Type</mat-label>
+            <mat-select
+              placeholder="Select type..."
+              formControlName="subType"
+              name="subType">
+              <mat-option value="linear">Linear</mat-option>
+              <mat-option value="radial">Radial</mat-option>
+            </mat-select>
+          </mat-form-field>
+          @if (formMaster.value.gauge.subType === 'linear') {
+            <p>
+              <mat-checkbox
+                formControlName="digitalMeter"
+                name="digitalMeter">
+                Digital display
+              </mat-checkbox>
+            </p>
+          }
+          @if (formMaster.value.gauge.subType === 'radial') {
             <mat-form-field class="options-grid-span2">
-              <mat-label>Gauge Type</mat-label>
+              <mat-label>Dial Size</mat-label>
               <mat-select
-                  placeholder="Select type..."
-                  formControlName="subType"
-                  name="subType">
-                  <mat-option value="linear">Linear</mat-option>
-                  <mat-option value="radial">Radial</mat-option>
+                placeholder="Select size..."
+                formControlName="radialSize"
+                name="radialSize">
+                <mat-option value="quarter">1/4</mat-option>
+                <mat-option value="half">1/2</mat-option>
+                <mat-option value="three-quarter">3/4</mat-option>
+                <mat-option value="full">Full</mat-option>
               </mat-select>
             </mat-form-field>
-            @if (formMaster.value.gauge.subType === 'linear') {
-              <p>
-                <mat-checkbox
-                  formControlName="digitalMeter"
-                  name="digitalMeter">
-                    Digital display
-                </mat-checkbox>
-              </p>
-            }
-            @if (formMaster.value.gauge.subType === 'radial') {
-              <mat-form-field class="options-grid-span2">
-                <mat-label>Dial Size</mat-label>
-                <mat-select
-                    placeholder="Select size..."
-                    formControlName="radialSize"
-                    name="radialSize">
-                    <mat-option value="quarter">1/4</mat-option>
-                    <mat-option value="half">1/2</mat-option>
-                    <mat-option value="three-quarter">3/4</mat-option>
-                    <mat-option value="full">Full</mat-option>
-                </mat-select>
-              </mat-form-field>
-            }
-          </div>
+          }
+        </div>
+      </mat-tab>
+    }
+    <!-- end Gauge stuff-->
+
+    <!-- PUT Requests -->
+    @if ((widgetConfig.putEnable !== undefined) && (widgetConfig.multiChildCtrls === undefined)) {
+      <mat-tab label="Put Request">
+        <div class="tab-content">
+          <p>
+            <mat-checkbox
+              formControlName="putEnable"
+              name="putEnable"
+              >
+              Enable Put Requests
+            </mat-checkbox>
+          </p>
+          <p>
+            <mat-checkbox
+              formControlName="putMomentary"
+              name="putMomentary"
+              >
+              Momentary mode (instead of switching between on/off)
+            </mat-checkbox>
+          </p>
+          @if (formMaster.controls.putMomentary.value) {
+            <p>
+              <mat-checkbox
+                formControlName="putMomentaryValue"
+                name="putMomentaryValue"
+                >
+                Value to send on button push (checked = on, unchecked = off)
+              </mat-checkbox>
+            </p>
+          }
+        </div>
+      </mat-tab>
+    }
+    <!-- End PUT Requests-->
+
+    <!-- Charts -->
+    @if ((widgetConfig.datasetUUID !== undefined)) {
+      <mat-tab label="Dataset">
+        <ng-template mat-tab-label>
+          @if (!formMaster.controls.datasetUUID.valid) {
+            <span class="warning fa fa-exclamation-circle"></span>
+            } Dataset
+          </ng-template>
+          <config-dataset-chart-options
+            [datasetUUID]="datasetUUIDToControl"
+            [convertUnitTo]="convertUnitToControl">
+          </config-dataset-chart-options>
         </mat-tab>
       }
-<!-- end Gauge stuff-->
-
-<!-- PUT Requests -->
-      <mat-tab label="Put Request" *ngIf="(widgetConfig.putEnable !== undefined) && (widgetConfig.multiChildCtrls === undefined)">
-          <div class="tab-content">
-            <p>
-              <mat-checkbox
-                formControlName="putEnable"
-                  name="putEnable"
-                  >
-                  Enable Put Requests
-              </mat-checkbox>
-            </p>
-            <p>
-              <mat-checkbox
-              formControlName="putMomentary"
-                name="putMomentary"
-                >
-                Momentary mode (instead of switching between on/off)
-            </mat-checkbox>
-            </p>
-            <p *ngIf="formMaster.controls.putMomentary.value">
-                <mat-checkbox
-                formControlName="putMomentaryValue"
-                  name="putMomentaryValue"
-                  >
-                  Value to send on button push (checked = on, unchecked = off)
-              </mat-checkbox>
-              </p>
-
-          </div>
-      </mat-tab>
-<!-- End PUT Requests-->
-
-<!-- Charts -->
-      <mat-tab label="Dataset" *ngIf="(widgetConfig.datasetUUID !== undefined)">
-        <ng-template mat-tab-label>
-            <span *ngIf="!formMaster.controls.datasetUUID.valid" class="warning fa fa-exclamation-circle"></span> Dataset
-        </ng-template>
-        <config-dataset-chart-options
-          [datasetUUID]="datasetUUIDToControl"
-          [convertUnitTo]="convertUnitToControl">
-        </config-dataset-chart-options>
-      </mat-tab>
-<!-- end Chart -->
+      <!-- end Chart -->
 
     </mat-tab-group>
 

@@ -6,7 +6,7 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
-import { NgIf } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { CanvasService } from '../../core/services/canvas.service';
 
@@ -15,7 +15,7 @@ import { CanvasService } from '../../core/services/canvas.service';
     templateUrl: './widget-race-timer.component.html',
     styleUrls: ['./widget-race-timer.component.scss'],
     standalone: true,
-    imports: [ WidgetHostComponent, NgxResizeObserverModule, MatButton, NgIf ]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, MatButton]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private TimersService = inject(TimersService);
