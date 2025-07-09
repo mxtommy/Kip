@@ -260,9 +260,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private updateCanvas(): void {
-     this.drawDToLine();
-     this.drawLenBias();
-     this.drawUnit();
+    this.drawDToLine();
+    this.drawLenBias();
+    this.drawUnit();
   }
 
   private drawDToLine(): void {

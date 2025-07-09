@@ -107,23 +107,26 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   ngAfterViewInit(): void {
-    this.timeToSElement = this.timeToSCanvas().nativeElement;
-    this.startAtElement = this.startAtCanvas().nativeElement;
-    this.canvasService.setHighDPISize(this.timeToSElement, this.timeToSElement.parentElement.getBoundingClientRect());
-    this.canvasService.setHighDPISize(this.startAtElement, this.startAtElement.parentElement.getBoundingClientRect());
-    this.timeToSContext = this.timeToSElement.getContext('2d');
-    this.startAtContext = this.startAtElement.getContext('2d');
-
-    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
-    this.maxStartAtTextWidth = Math.floor(this.startAtElement.width * 0.57);
-    this.maxStartAtTextHeight = Math.floor(this.startAtElement.height * 0.1);
+    this.initCanvases();
     if (this.isDestroyed) {
       return;
     }
     this.startWidget();
     this.updateCanvas();
     console.log('ngAfterViewInit!');
+  }
+
+  private initCanvases() {
+    this.timeToSElement = this.timeToSCanvas().nativeElement;
+    this.startAtElement = this.startAtCanvas().nativeElement;
+    this.canvasService.setHighDPISize(this.timeToSElement, this.timeToSElement.parentElement.getBoundingClientRect());
+    this.canvasService.setHighDPISize(this.startAtElement, this.startAtElement.parentElement.getBoundingClientRect());
+    this.timeToSContext = this.timeToSElement.getContext('2d');
+    this.startAtContext = this.startAtElement.getContext('2d');
+    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
+    this.maxStartAtTextWidth = Math.floor(this.startAtElement.width * 0.57);
+    this.maxStartAtTextHeight = Math.floor(this.startAtElement.height * 0.1);
   }
 
   protected beep(frequency = 440, duration = 100) {
@@ -190,7 +193,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       if (this.widgetProperties.config.playBeeps && this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS' && lastTtsValue !== 0) {
         if (this.ttsValue === 0) {
           this.beep(500, 1000);
-        } else if (this.ttsValue < 10 ) {
+        } else if (this.ttsValue < 10) {
           this.beep(450, 100);
         } else if (this.ttsValue < 60 && this.ttsValue % 10 === 0) {
           this.beep(400, 150);
@@ -247,15 +250,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
-
-    this.canvasService.setHighDPISize(this.timeToSElement, e.contentRect);
-    this.canvasService.setHighDPISize(this.startAtElement, e.contentRect);
-
-    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
-    this.maxStartAtTextWidth = Math.floor(this.startAtElement.width * 0.57);
-    this.maxStartAtTextHeight = Math.floor(this.startAtElement.height * 0.1);
-
+    this.initCanvases();
     if (this.isDestroyed) {
       return;
     }
@@ -322,8 +317,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   private updateCanvas(): void {
-      this.drawTimeToStart();
-      this.drawStartAt();
+    this.drawTimeToStart();
+    this.drawStartAt();
   }
 
   private drawTimeToStart(): void {
@@ -444,7 +439,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     const requestId = this.signalk.putRequest(
       'navigation.racing.setStartTime',
-      { command: 'set', startTime: date.toISOString() },
+      {command: 'set', startTime: date.toISOString()},
       this.widgetProperties.uuid
     );
 
