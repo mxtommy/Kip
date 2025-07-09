@@ -96,7 +96,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       if (this.theme()) {
         untracked(() => {
           this.getColors(this.widgetProperties.config.color);
-          this.updateCanvas();
+          // this.updateCanvas();
         });
       }
     });
@@ -156,7 +156,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         } else if (this.ttsValue === 0) {
           this.valueStateColor = this.valueColor;
         } else if (this.ttsValue < 10) {
-          this.valueStateColor = this.ttsValue % 2 === 1 ? this.theme().zoneAlarm : this.theme().zoneWarn;
+          this.valueStateColor = this.dtsValue < 0 ? this.theme().zoneAlarm : this.theme().zoneWarn;
         } else if (this.ttsValue < 60) {
           this.valueStateColor = this.theme().zoneAlert;
         } else {
@@ -253,8 +253,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
     this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
-    this.maxStartAtTextWidth = Math.floor(this.timeToSElement.width * 0.57);
-    this.maxStartAtTextHeight = Math.floor(this.timeToSElement.height * 0.1);
+    this.maxStartAtTextWidth = Math.floor(this.startAtElement.width * 0.57);
+    this.maxStartAtTextHeight = Math.floor(this.startAtElement.height * 0.1);
 
     if (this.isDestroyed) {
       return;
