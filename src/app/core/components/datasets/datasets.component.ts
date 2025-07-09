@@ -11,7 +11,7 @@ import type { IDatasetServiceDatasetConfig } from '../../services/data-set.servi
 import { FilterSelfPipe } from '../../pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
-import { NgFor } from '@angular/common';
+
 import { MatSelect } from '@angular/material/select';
 import { MatStepper, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
 import { MatDivider } from '@angular/material/divider';
@@ -136,7 +136,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     templateUrl: './datasets.modal.html',
     styleUrls: ['./datasets.component.scss'],
     standalone: true,
-    imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
+    imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
 })
 export class SettingsDatasetsModalComponent implements OnInit {
   private SignalKDataService = inject(DataService);

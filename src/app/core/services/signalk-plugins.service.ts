@@ -35,7 +35,7 @@ export class SignalkPluginsService {
   private _connection = toSignal(this._connectionSvc.getServiceEndpointStatusAsO());
 
   private _pluginInformation = resource<skFeatures, unknown>({
-    loader: async ({ abortSignal }) => {
+    stream: async ({ abortSignal }) => {
       const url = this._API_URL();
       if (!url) {
         console.error('API URL not set yet.');

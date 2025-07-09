@@ -3,11 +3,15 @@
   <mat-form-field style="padding-top: 15px; padding-bottom: 15px;" appearance="outline" floatLabel="always">
     <mat-label>Unit</mat-label>
     <mat-select [(value)]="data.selectedUnit">
-      <mat-optgroup *ngFor="let unitgroup of data.units.conversions" [label]="unitgroup.group">
-        <mat-option *ngFor="let unit of unitgroup.units" [value]="unit.measure">
-          {{unit.measure}}
-        </mat-option>
-      </mat-optgroup>
+      @for (unitgroup of data.units.conversions; track unitgroup) {
+        <mat-optgroup [label]="unitgroup.group">
+          @for (unit of unitgroup.units; track unit) {
+            <mat-option [value]="unit.measure">
+              {{unit.measure}}
+            </mat-option>
+          }
+        </mat-optgroup>
+      }
     </mat-select>
   </mat-form-field>
 </mat-dialog-content>

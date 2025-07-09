@@ -3,7 +3,7 @@ import { AbstractControl, UntypedFormControl, ValidationErrors, ValidatorFn, Val
 import { Observable, Subscription, debounceTime, map, startWith } from 'rxjs';
 import { MatOption } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
-import { NgFor, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { MatAutocompleteTrigger, MatAutocomplete } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
@@ -41,7 +41,7 @@ export const getDynamicTimeZones = (): ITzDefinition[] => {
     templateUrl: './display-datetime.component.html',
     styleUrls: ['./display-datetime.component.css'],
     standalone: true,
-    imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, AsyncPipe]
+    imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, MatOption, AsyncPipe]
 })
 export class DisplayDatetimeComponent implements OnInit, OnDestroy {
   readonly dateFormat = input<UntypedFormControl>(undefined);
