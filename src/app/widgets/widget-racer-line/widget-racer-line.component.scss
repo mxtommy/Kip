@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 .text-generic-wrapper {
   position: absolute;
   display: block;
@@ -32,33 +34,47 @@
   width: calc(10% - 5px);
   height: calc(100% - 5px);
   margin: 0;
-  --mdc-filled-button-container-color: var(--kip-grey-color);
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-gray-color),
+  ));
 }
 
 .port-button {
   width: 40%;
   height: 100%;
   margin: 0;
-  --mdc-filled-button-container-color: var(--kip-port-color);
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
 }
 
 .starboard-button {
   width: 40%;
   height: 100%;
   margin: 0;
-  --mdc-filled-button-container-color: var(--kip-starboard-color);
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-starboard-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
 }
 
 .port-small-button {
   width: 20%;
   height: 100%;
   margin: 0;
-  --mdc-filled-button-container-color: var(--kip-port-color);
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
 }
 
 .starboard-small-button {
   width: 20%;
   height: 100%;
   margin: 0;
-  --mdc-filled-button-container-color: var(--kip-starboard-color);
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-starboard-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
 }

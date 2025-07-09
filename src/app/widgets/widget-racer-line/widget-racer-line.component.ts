@@ -94,7 +94,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (this.theme()) {
         untracked(() => {
           this.getColors(this.widgetProperties.config.color);
-          // this.updateCanvas();
+          this.updateCanvas();
         });
       }
     });
@@ -109,26 +109,25 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   ngAfterViewInit(): void {
-    console.log('ngAfterViewInit! ', this.dToLineCanvas);
-    this.dToLineElement = this.dToLineCanvas().nativeElement;
-    console.log('dToLineElement: ', this.dToLineElement);
-    this.lenBiasElement = this.lenBiasCanvas().nativeElement;
-    this.canvasService.setHighDPISize(this.dToLineElement, this.dToLineElement.parentElement.getBoundingClientRect());
-    this.canvasService.setHighDPISize(this.lenBiasElement, this.lenBiasElement.parentElement.getBoundingClientRect());
-    this.dToLineContext = this.dToLineElement.getContext('2d');
-    console.log('dToLineContext: ', this.dToLineContext);
-    this.lenBiasContext = this.dToLineElement.getContext('2d');
-
-    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.70);
-    this.maxLenBiasTextWidth = Math.floor(this.lenBiasElement.width * 0.57);
-    this.maxLenBiasTextHeight = Math.floor(this.lenBiasElement.height * 0.1);
+    this.initCanvasContexts();
     if (this.isDestroyed) {
       return;
     }
     this.startWidget();
     this.updateCanvas();
-    console.log('ngAfterViewInit!');
+  }
+
+  private initCanvasContexts() {
+    this.dToLineElement = this.dToLineCanvas().nativeElement;
+    this.lenBiasElement = this.lenBiasCanvas().nativeElement;
+    this.canvasService.setHighDPISize(this.dToLineElement, this.dToLineElement.parentElement.getBoundingClientRect());
+    this.canvasService.setHighDPISize(this.lenBiasElement, this.lenBiasElement.parentElement.getBoundingClientRect());
+    this.dToLineContext = this.dToLineElement.getContext('2d');
+    this.lenBiasContext = this.lenBiasElement.getContext('2d');
+    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.70);
+    this.maxLenBiasTextWidth = Math.floor(this.lenBiasElement.width * 0.57);
+    this.maxLenBiasTextHeight = Math.floor(this.lenBiasElement.height * 0.1);
   }
 
   protected startWidget(): void {
@@ -198,15 +197,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
-
-    this.canvasService.setHighDPISize(this.dToLineElement, e.contentRect);
-    this.canvasService.setHighDPISize(this.lenBiasElement, e.contentRect);
-
-    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.70);
-    this.maxLenBiasTextWidth = Math.floor(this.lenBiasElement.width * 0.57);
-    this.maxLenBiasTextHeight = Math.floor(this.lenBiasElement.height * 0.1);
-
+    this.initCanvasContexts();
     if (this.isDestroyed) {
       return;
     }
@@ -269,8 +260,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private updateCanvas(): void {
-      this.drawDToLine();
-      this.drawLenBias();
+     this.drawDToLine();
+     this.drawLenBias();
+     this.drawUnit();
   }
 
   private drawDToLine(): void {
@@ -287,7 +279,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         'bold',
         this.dtsColor
       );
-      this.drawUnit();
     }
   }
 
@@ -300,7 +291,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   private drawUnit(): void {
     const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
-
     this.canvasService.drawText(
       this.dToLineContext,
       unit,
