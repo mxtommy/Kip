@@ -35,7 +35,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   // Gauge text value for value box rendering
   protected textValue = "";
   // Gauge value
-  protected value = 0;
+  protected value: number = null;
 
   // Gauge options
   protected gaugeOptions = {} as RadialGaugeOptions;
@@ -77,6 +77,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         enableTicks: true,
         compassUseNumbers: false,
         highlightsWidth: 5,
+        scaleStart: 180
       },
       numInt: 1,
       numDecimal: 0,
@@ -304,7 +305,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.colorValueBoxRectEnd = '';
 
     this.gaugeOptions.ticksAngle = 360;
-    this.gaugeOptions.startAngle = 180;
+    this.gaugeOptions.startAngle = this.widgetProperties.config.gauge.scaleStart || 180;
     this.gaugeOptions.majorTicks = 0;
     this.gaugeOptions.exactTicks = true;
     this.gaugeOptions.strokeTicks = false;

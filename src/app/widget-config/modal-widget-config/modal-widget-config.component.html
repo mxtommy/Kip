@@ -207,6 +207,12 @@
                     <mat-option value="capacity">Capacity</mat-option>
                   </mat-select>
                 </mat-form-field>
+                @if (formMaster.value.gauge.subType === 'capacity') {
+                  <mat-form-field formGroupName="gauge">
+                    <mat-label>Progress Bar Start Angle</mat-label>
+                    <input type="number" min="1" max="360" matInput placeholder="Enter or select number..." name="scaleStart" formControlName="scaleStart" required>
+                  </mat-form-field>
+                }
               }
             }
 
