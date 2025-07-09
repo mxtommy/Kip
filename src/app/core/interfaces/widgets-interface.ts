@@ -135,7 +135,7 @@ export interface IWidgetSvcConfig {
     backgroundColor?: string;
     /** Optional. Used by GaugeSteel to set face style */
     faceColor?: string;
-    /** Optional. Angle (0-360) the progress bar should start */
+    /** Optional. Angle (1-360) the progress bar should start. 360 is same as 0 degrees */
     scaleStart?: number;
     /** Optional. Used by GaugeSteel to set radial faceplate size */
     radialSize?: string;
