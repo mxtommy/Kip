@@ -147,7 +147,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           source: "default",
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: "HH:MM:SS",
+          convertUnitTo: "D HH:MM:SS",
           showPathSkUnitsFilter: true,
           pathSkUnitsFilter: null,
           sampleTime: 500

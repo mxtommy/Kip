@@ -199,7 +199,7 @@ export class UnitsService implements OnDestroy {
       { measure: 'Minutes', description: "Minutes" },
       { measure: 'Hours', description: "Hours" },
       { measure: 'Days', description: "Days" },
-      { measure: 'HH:MM:SS', description: "Hours:Minute:seconds"}
+      { measure: 'D HH:MM:SS', description: "Day Hour:Minute:sec"}
     ] },
     { group: 'Angular Velocity', units: [
       { measure: 'rad/s', description: "Radians per second (base)" },
@@ -533,20 +533,25 @@ export class UnitsService implements OnDestroy {
     "Minutes": Qty.swiftConverter('s', 'minutes'),
     "Hours": Qty.swiftConverter('s', 'hours'),
     "Days": Qty.swiftConverter('s', 'days'),
-    "HH:MM:SS": function(v) {
+    "D HH:MM:SS": function(v) {
       v = parseInt(v, 10);
       const isNegative = v < 0; // Check if the value is negative
       v = Math.abs(v); // Use the absolute value for calculations
 
-      const h = Math.floor(v / 3600);
-      const m = Math.floor(v % 3600 / 60);
-      const s = Math.floor(v % 3600 % 60);
+      const days = Math.floor(v / 86400);
+      const h = Math.floor((v % 86400) / 3600);
+      const m = Math.floor((v % 3600) / 60);
+      const s = Math.floor(v % 60);
 
-      // Add a negative sign if the original value was negative
-      return (isNegative ? '-' : '') +
-             ('0' + h).slice(-2) + ":" +
-             ('0' + m).slice(-2) + ":" +
-             ('0' + s).slice(-2);
+      let result = (isNegative ? '-' : '');
+      if (days > 0) {
+        result += days + 'd ' + h.toString() + ':' + m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+      } else {
+        result += h.toString() + ':' +
+                  m.toString().padStart(2, '0') + ':' +
+                  s.toString().padStart(2, '0');
+      }
+      return result;
     },
 //  angularVelocity
     "rad/s": function(v) { return v; },

@@ -252,7 +252,7 @@ private updateCanvas(): void {
     }
 
     const cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-    if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'HH:MM:SS'].includes(cUnit)) {
+    if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
         return this.dataValue.toString();
     }
 
