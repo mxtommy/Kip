@@ -8,20 +8,22 @@
     </div>
     <div class="buttons-container">
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
-      @if (mode == 0) {
-        <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('start')">Start</button>
-        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-60)">-1m</button>
-        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+60)">+1m</button>
-      } @else if (mode == 1) {
-        <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('sync')">Sync</button>
-        <button mat-flat-button class="other-button" (click)="sendStartTimerCommand('reset')">Reset</button>
-      } @else if (mode == 2) {
-        <button mat-flat-button class="main-small-button" (click)="adjustStartTime(-60)">-1m</button>
-        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-1)">-1s</button>
-        <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
-        <button mat-flat-button class="main-small-button" (click)="adjustStartTime(+60)">+1m</button>
-      } @else if (mode == 3) {
-        <input class="start-at" type="text" [(ngModel)]="startAtTime" (keyup.enter)="setStartTime(startAtTime)">
+      @switch(mode) {
+        @case (0) {
+          <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('start')">Start</button>
+          <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-60)">-1m</button>
+          <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+60)">+1m</button>
+        } @case (1) {
+          <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('sync')">Sync</button>
+          <button mat-flat-button class="other-button" (click)="sendStartTimerCommand('reset')">Reset</button>
+        } @case (2) {
+          <button mat-flat-button class="main-small-button" (click)="adjustStartTime(-60)">-1m</button>
+          <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-1)">-1s</button>
+          <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
+          <button mat-flat-button class="main-small-button" (click)="adjustStartTime(+60)">+1m</button>
+        } @case (3) {
+          <input class="start-at" type="text" [(ngModel)]="startAtTime" (keyup.enter)="setStartTime(startAtTime)">
+        }
       }
     </div>
   </div>
