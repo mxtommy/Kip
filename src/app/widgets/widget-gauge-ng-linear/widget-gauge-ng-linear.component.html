@@ -2,5 +2,6 @@
   <linear-gauge class="linearGauge" id="{{widgetProperties.uuid}}" #linearGauge (onResize)="onResized($event)"
     [options]="gaugeOptions"
     [value]="value"
+    [attr.value-text]="textValue"
     ></linear-gauge>
 </widget-host>

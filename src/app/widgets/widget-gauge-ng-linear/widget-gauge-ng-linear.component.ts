@@ -30,12 +30,12 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
   @ViewChild('linearGauge', {static: true, read: ElementRef}) protected gauge: ElementRef;
 
   // Gauge text value for value box rendering
-  public textValue = "--";
+  protected textValue = "";
   // Gauge value
-  public value = 0;
+  protected value = 0;
 
   // Gauge options
-  public gaugeOptions = {} as LinearGaugeOptions;
+  protected gaugeOptions = {} as LinearGaugeOptions;
   private isGaugeVertical = true;
 
   // Zones support
@@ -101,7 +101,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (!newValue || !newValue.data) {
+      if (!newValue || !newValue.data || newValue.data.value === null) {
         newValue = {
           data: {
             value: 0,
@@ -109,15 +109,18 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
           },
           state: States.Normal // Default state
         };
+        this.textValue = '--';
+      } else if (this.textValue === '--') {
+          this.textValue = '';
       }
+
+      // Compound value to displayScale
+      this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
 
       // Validate and handle `newValue.state`
       if (newValue.state == null) {
         newValue.state = States.Normal; // Provide a default value for state
       }
-
-      // Compound value to displayScale
-      this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
 
       if (this.state !== newValue.state) {
         this.state = newValue.state;
