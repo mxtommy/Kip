@@ -554,7 +554,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private startAllSubscriptions(): void {
     this.unsubscribeDataStream();
-    this.observeDataStream('autopilotState', newValue => this.apState.set('standby'));//newValue.data.value));
+    this.observeDataStream('autopilotState', newValue => this.apState.set(newValue.data.value));
     this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value ? newValue.data.value : 0);
