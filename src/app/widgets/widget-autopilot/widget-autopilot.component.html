@@ -52,10 +52,8 @@
       <button #minus1Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('-1')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve"
-              x="49.894032"
-              y="98.734871">-1°</text>
-            <path d="M 31.033486,35.785143 68.966514,66.630677 M 31.033486,35.640825 68.966514,4.79529" />
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-1°</text>
+            <path fill="currentColor" stroke="currentColor" d="M 31.033486,35.785143 68.966514,66.630677 M 31.033486,35.640825 68.966514,4.79529" />
           </svg>
         </mat-icon>
       </button>
@@ -64,10 +62,8 @@
       <button #plus1Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('+1')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve"
-              x="50.052986"
-              y="98.734871">+1°</text>
-            <path d="M 68.966514,35.785143 31.033486,66.630677 M 68.966514,35.640825 31.033486,4.79529" />
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+1°</text>
+            <path fill="currentColor" stroke="currentColor" d="M 68.966514,35.785143 31.033486,66.630677 M 68.966514,35.640825 31.033486,4.79529" />
           </svg>
         </mat-icon>
       </button>
@@ -77,11 +73,9 @@
       <button #minus10Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('-10')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve"
-              x="49.894032"
-              y="98.734871">-10°</text>
-            <path d="M 15.778367,35.785143 53.711395,66.630677 M 15.778367,35.640825 53.711395,4.79529" />
-            <path d="M 46.288608,35.785143 84.221633,66.630677 M 46.288608,35.640825 84.221633,4.79529" />
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-10°</text>
+            <path fill="currentColor" stroke="currentColor" d="M 15.778367,35.785143 53.711395,66.630677 M 15.778367,35.640825 53.711395,4.79529" />
+            <path fill="currentColor" stroke="currentColor" d="M 46.288608,35.785143 84.221633,66.630677 M 46.288608,35.640825 84.221633,4.79529" />
           </svg>
         </mat-icon>
       </button>
@@ -90,28 +84,31 @@
       <button #plus10Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('+10')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve"
-              x="50.052986"
-              y="98.734871">+10°</text>
-            <path d="M 84.221633,35.785143 46.288605,66.630677 M 84.221633,35.640825 46.288605,4.79529" />
-            <path d="M 53.711392,35.785143 15.778367,66.630677 M 53.711392,35.640825 15.778367,4.79529" />
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+10°</text>
+            <path fill="currentColor" stroke="currentColor" d="M 84.221633,35.785143 46.288605,66.630677 M 84.221633,35.640825 46.288605,4.79529" />
+            <path fill="currentColor" stroke="currentColor" d="M 53.711392,35.785143 15.778367,66.630677 M 53.711392,35.640825 15.778367,4.79529" />
           </svg>
         </mat-icon>
       </button>
     </div>
-    <!-- Tack port / starboard buttons row -->
+    <!-- Tack buttons row -->
     <div [style.display]="apState() === 'wind' || apState() === 'standby' ? 'block' : 'none'">
       <button #prtTackBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('tackToPort')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
-            <path class="tack"
-              style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
-              d="M 12.512809,30.561249 28.414641,41.670318 8.7808256,51.708321 Z" />
-            <path  class="tack" d="m 94.531167,45.533345 a 8.5515804,8.0601101 0 0 1 -8.55158,8.06011 8.5515804,8.0601101 0 0 1 -8.55158,-8.06011 8.5515804,8.0601101 0 0 1 8.55158,-8.06011 8.5515804,8.0601101 0 0 1 8.55158,8.06011 z" />
-            <path
-              style="stroke-width:8.45947;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
-              d="M 19.881053,36.470039 A 36.704643,37.635372 0 0 1 54.605189,19.909133 36.704643,37.635372 0 0 1 84.80548,44.055681" />
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
+            <g transform="scale(-1,1) translate(-100,0)">
+              <path
+                fill="currentColor"
+                style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
+                d="M 90.5,22.5 67.5,45 96,53 Z" />
+              <path
+                fill="none" stroke="currentColor"
+                style="stroke-width:8.45947;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0"
+                d="M 76,31
+                  A 36 38 0 0 0 24,33" />
+              <circle fill="currentColor" cx="14.5" cy="45.25" r="12"/>
+            </g>
           </svg>
         </mat-icon>
       </button>
@@ -119,15 +116,18 @@
     <div [style.display]="apState() === 'wind' || apState() === 'standby' ? 'block' : 'none'">
       <button #stbTackBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('tackToStarboard')">
         <mat-icon class="svg-icon">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
-            <path class="tack"
-              style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
-              d="M 88.231151,30.561249 72.329319,41.670318 91.963134,51.708321 Z" />
-            <path class="tack" d="m 6.212793,45.533345 a 8.5515804,8.0601101 0 0 0 8.55158,8.06011 8.5515804,8.0601101 0 0 0 8.55158,-8.06011 8.5515804,8.0601101 0 0 0 -8.55158,-8.06011 8.5515804,8.0601101 0 0 0 -8.55158,8.06011 z" />
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
             <path
-              style="stroke-width:8.45947;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
-              d="M 80.862907,36.470039 A 36.704643,37.635372 0 0 0 46.138771,19.909133 36.704643,37.635372 0 0 0 15.93848,44.055681" />
+              fill="currentColor"
+              style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
+              d="M 90.5,22.5 67.5,45 96,53 Z" />
+            <path
+              fill="none" stroke="currentColor"
+              style="stroke-width:8.45947;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0"
+              d="M 76,31
+                 A 36 38 0 0 0 24,33" />
+            <circle fill="currentColor" cx="14.5" cy="45.25" r="12"/>
           </svg>
         </mat-icon>
       </button>
@@ -169,11 +169,13 @@
       <button #advWptBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('route')">
         <mat-icon class="svg-icon">
           <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
-            <text xml:space="preserve" x="49.961578" y="86.799866">Adv Wpt</text>
+            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.961578" y="86.799866">Adv Wpt</text>
             <path
+              fill="currentColor" stroke="currentColor"
               style="stroke:none"
               d="M 19.090795,4 V 63.58544 L 78.676235,33.792718 Z" />
             <path
+              fill="currentColor" stroke="currentColor"
               style="fill:none;stroke-width:9.90493;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
               d="M 75.95674,4 V 63.58544" />
           </svg>
@@ -184,15 +186,48 @@
   @if ((menuOpen())) {
     <!-- Modes Menu Overlay -->
     <div class="svg-menu-overlay" tabindex="0" (click)="toggleMenu()" (keyup.enter)="toggleMenu()" (keyup.space)="toggleMenu()" role="button" aria-label="Close menu">
-      <!-- Centered Responsive SVG Menu -->
       <svg [attr.viewBox]="'0 0 240 ' + menuItems.length * itemHeight" class="svg-menu" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" (keyup.space)="$event.stopPropagation()" role="presentation" aria-label="Menu">
-        <rect x="0" y="0" width="240" [attr.height]="menuItems.length * itemHeight + padding * 2" class="svg-menu-box"/>
+        <rect x="0" y="0" width="240" [attr.height]="menuItems.length * itemHeight" class="svg-menu-box"/>
         <ng-container>
           @for (item of menuItems; track $index) {
-            <g style="cursor:pointer;" (click)="onMenuItemClick(item.action)" tabindex="0" (keyup.enter)="onMenuItemClick(item.action)" (keyup.space)="onMenuItemClick(item.action)" role="button" [attr.aria-label]="item.label">
-              <rect x="0" [attr.y]="$index * itemHeight" width="240" [attr.height]="itemHeight" [attr.class]="item.action === 'cancel' ? 'cancel' : 'svg-menu-item'"/>
-              <text x="120" [attr.y]="($index + 0.65) * itemHeight">
-                {{ item.label }}
+            <g
+              style="cursor:pointer;"
+              (click)="!item.disabled && onMenuItemClick(item.action)"
+              tabindex="0"
+              (keyup.enter)="!item.disabled && onMenuItemClick(item.action)"
+              (keyup.space)="!item.disabled && onMenuItemClick(item.action)"
+              role="button"
+              [attr.aria-label]="item.label"
+            >
+              <rect
+                x="0"
+                [attr.y]="$index * itemHeight"
+                width="240"
+                [attr.height]="itemHeight"
+                [class]="
+                  item.isCancel
+                    ? 'svg-menu-item-cancel'
+                    : item.current
+                      ? 'svg-menu-item-current'
+                      : item.disabled
+                        ? 'svg-menu-item-disabled'
+                        : 'svg-menu-item'
+                "
+              />
+              <text
+                x="120"
+                [attr.y]="($index + 0.65) * itemHeight"
+                [class]="
+                  item.isCancel
+                    ? 'svg-menu-item-cancel-text'
+                    : item.current
+                      ? 'svg-menu-item-current-text'
+                      : item.disabled
+                        ? 'svg-menu-item-disabled-text'
+                        : 'svg-menu-item-text'
+                "
+              >
+                {{ item.current ? '\u2713 ' : '' }}{{ item.label }}
               </text>
             </g>
           }
