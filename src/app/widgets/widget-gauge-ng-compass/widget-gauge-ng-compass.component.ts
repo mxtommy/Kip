@@ -90,7 +90,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
-          isConvertUnitToConfigurable: false,
+          showConvertUnitTo: false,
           convertUnitTo: this.DEG,
           sampleTime: 500
         }

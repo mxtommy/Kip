@@ -299,7 +299,37 @@ export interface IDataHighlight {
 
 /**
  * Defines all possible properties for data paths. Combines both
- * both KIP and Signal K path features.
+ * KIP and Signal K path features. Used for widget configuration, UI, and data binding.
+ *
+ * @example
+ * ```typescript
+ * // As part of a widget config object:
+ * const widgetConfig: IWidgetSvcConfig = {
+ *   paths: {
+ *     main: {
+ *       description: 'Apparent Wind Angle',
+ *       path: 'self.environment.wind.angleApparent',
+ *       source: null,
+ *       pathType: 'number',
+ *       isPathConfigurable: true,
+ *       sampleTime: 1000
+ *     },
+ *     hidden: {
+ *       description: 'Hidden Path',
+ *       path: 'self.hidden.path',
+ *       source: null,
+ *       pathType: 'number',
+ *       isPathConfigurable: false, // Not shown in UI or validated
+ *       sampleTime: 1000
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * Notes:
+ * - Only paths with isPathConfigurable: true are included in the widget configuration UI and form validation logic.
+ * - Paths with isPathConfigurable: false are hidden from the UI and excluded from validation, allowing for hardcoded or system paths.
+ * - See also: {@link TWidgetPathType}, {@link TValidSkUnits}, and unit conversion docs in units.service.
  *
  * @export
  * @interface IWidgetPath
@@ -307,49 +337,81 @@ export interface IDataHighlight {
 export interface IWidgetPath {
   /** Required: Path description label used in the Widget settings UI */
   description: string | null | '';
-  /** Required: Signal K path (ie. self.environment.wind.angleTrueWater) of the data to be received or null value. See KIP's Data Browser or Signal K's Data Browser UI to identified possible available paths. NOTE: Not all setup will have the same paths. Path availability depends on network components and Signal K configuration that exists on each vessel. */
+  /**
+   * Required: Signal K path (ie. self.environment.wind.angleTrueWater) of the data to be received or null value.
+   * See KIP's Data Browser or Signal K's Data Browser UI to identify possible available paths.
+   * NOTE: Not all setups will have the same paths. Path availability depends on network components and Signal K configuration that exists on each vessel.
+   */
   path: string | null;
-  /** Required: Enforce a preferred Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thru hulls, wind vanes, engines, fuel tanks, ect.). Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K. */
+  /**
+   * Required: Enforce a preferred Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thru hulls, wind vanes, engines, fuel tanks, etc.).
+   * Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K.
+   */
   source: string | null;
   /**
-  * Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from.
-  * Allowed values are defined in {@link TWidgetPathType}.
-  * @see TWidgetPathType
-  */
+   * Required: Used by the Widget Options UI to filter the list of Signal K paths the user can select from.
+   * Allowed values are defined in {@link TWidgetPathType}.
+   * @see TWidgetPathType
+   */
   pathType: TWidgetPathType;
-  /** Only lists paths the support PUT action. Defaults to false */
+  /** Only lists paths that support PUT action. Defaults to false */
   supportsPut?: boolean;
-  /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
+  /**
+   * Used to hide the path configuration from the Widget Options UI and exclude it from form validation.
+   * Setting this property to `false` prevents users from seeing and changing the path in the UI,
+   * and ensures the path is not included in the configuration form or its validation logic.
+   * Use this to hardcode a path configuration or for system/hidden paths.
+   *
+   * Example:
+   *   isPathConfigurable: false // Path is hidden and not user-editable
+   */
   isPathConfigurable: boolean;
-  /** Hide numeric path type filter */
+  /**
+   * Numeric path type filter to limit path search results based on SK Meta Units.
+   * Allowed values are defined in {@link TValidSkUnits}.
+   * Use 'unitless' for numeric paths with no meta units, or null to list all types of paths (no filter).
+   * @see TValidSkUnits
+   */
+  pathSkUnitsFilter?: TValidSkUnits;
+  /**
+   * Show or hide the path form's filter dropdown control bound to
+   * pathSkUnitsFilter path property visible in Widget Options UI.
+   *
+   * This filter is available to paths with number type values.
+   */
   showPathSkUnitsFilter?: boolean;
   /**
-  * Numeric path type filter to limit path search results based on SK Meta Units.
-  * Allowed values are defined in {@link TValidSkUnits}.
-  * Use 'unitless' for numeric paths with no meta units, or null to list all types of paths (no filter).
-  * @see TValidSkUnits
-  */
-  pathSkUnitsFilter?: TValidSkUnits;
-  /** Used to hide the path Format configuration field from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the Format for the path's value. Use this to hardcode a format configuration */
-  isConvertUnitToConfigurable?: boolean;
-  /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format.
-  * Allowed values are defined in {@link unitConversionFunctions}.
-  * Also used as a source to identify conversion group.
-  * Use null for no conversion.
-  *
-  * @see units.service unitConversionFunctions()
-  */
+   * Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format.
+   * Allowed values are defined in {@link unitConversionFunctions}.
+   * Also used as a source to identify conversion group.
+   * Use null for no conversion.
+   *
+   * @see units.service unitConversionFunctions()
+   */
   convertUnitTo?: string;
-  /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
+  /**
+   * Show or hide the path form's Format dropdown control bound to convertUnitTo
+   * path property in Widget Options UI.
+   *
+   * Setting this property to "false" prevents users from seeing
+   * and changing the Format for the path's values. Use this to hardcode a
+   * format configuration.
+   */
+  showConvertUnitTo?: boolean;
+  /**
+   * Required: Used to throttle/limit the path's Observer emitted values
+   * frequency and reduce Angular change detection cycles. Configure according
+   * to data type and human perception. Value in milliseconds.
+   */
   sampleTime: number;
   /** Used as a reference ID when path is an Array and array index is not appropriate. */
   pathID?: string | null | '';
-  /** NOT IMPLEMENTED -Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
+  /** NOT IMPLEMENTED - Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
   smoothingPeriod?: number;
-  /** NOT IMPLEMENTED -Signal K - format=[delta|full] specifies delta or full format. Default: delta */
+  /** NOT IMPLEMENTED - Signal K - format=[delta|full] specifies delta or full format. Default: delta */
   format?: TFormat;
-  /** NOT IMPLEMENTED -Signal K - policy=[instant|ideal|fixed]. Default: ideal */
+  /** NOT IMPLEMENTED - Signal K - policy=[instant|ideal|fixed]. Default: ideal */
   policy?: TPolicy;
-  /** NOT IMPLEMENTED -Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
+  /** NOT IMPLEMENTED - Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
   minPeriod?: number;
 }

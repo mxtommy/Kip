@@ -29,9 +29,11 @@ export class SvgWindComponent {
   protected readonly trueWindAngle = input.required<number>();
   protected readonly twsEnabled = input.required<boolean>();
   protected readonly trueWindSpeed = input.required<number>();
+  protected readonly trueWindSpeedUnit = input.required<string>();
   protected readonly appWindAngle = input.required<number>();
   protected readonly awsEnabled = input.required<boolean>();
   protected readonly appWindSpeed = input.required<number>();
+  protected readonly appWindSpeedUnit = input.required<string>();
   protected readonly laylineAngle = input<number>(undefined);
   protected readonly closeHauledLineEnabled = input.required<boolean>();
   protected readonly sailSetupEnabled = input.required<boolean>();

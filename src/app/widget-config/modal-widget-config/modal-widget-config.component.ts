@@ -82,10 +82,21 @@ export class ModalWidgetConfigComponent implements OnInit {
             groups.addControl(key, this.fb.array([]));
             const fa = groups.get(key) as UntypedFormArray;
             Object.keys(formData[key]).forEach(pathKey => {
-              fa.push(this.generatePathArray(pathKey, this.widgetConfig.paths[pathKey]));
+              const pathObj = this.widgetConfig.paths[pathKey];
+              if (pathObj && pathObj.isPathConfigurable) {
+                fa.push(this.generatePathArray(pathKey, pathObj));
+              }
             });
           } else {
-            groups.addControl(key, this.generateFormGroups(formData[key], key));
+            // Build a FormGroup for only configurable paths
+            const pathsGroup = this.fb.group({});
+            Object.keys(formData[key]).forEach(pathKey => {
+              const pathObj = this.widgetConfig.paths[pathKey];
+              if (pathObj && pathObj.isPathConfigurable) {
+                pathsGroup.addControl(pathKey, this.generateFormGroups(pathObj, pathKey));
+              }
+            });
+            groups.addControl(key, pathsGroup);
           }
         }
 

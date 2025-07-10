@@ -464,7 +464,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "isPathConfigurable": true,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
-                  "isConvertUnitToConfigurable": false,
+                  "showConvertUnitTo": false,
                   "convertUnitTo": "deg",
                   "sampleTime": 500
                 }

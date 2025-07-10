@@ -18,8 +18,10 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   protected courseOverGroundAngle = 0;
   protected appWindAngle = 0;
   protected appWindSpeed = 0;
+  protected appWindSpeedUnit = '';
   protected trueWindAngle = 0;
   protected trueWindSpeed = 0;
+  protected trueWindSpeedUnit = '';
   protected driftFlow = 0;
   protected driftSet = 0;
   protected waypointAngle = 0;
@@ -48,6 +50,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "courseOverGround": {
@@ -58,6 +61,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          showConvertUnitTo: false,
           convertUnitTo: "deg",
           sampleTime: 500
         },
@@ -70,6 +74,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "trueWindSpeed": {
@@ -92,6 +97,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "appWindSpeed": {
@@ -114,6 +120,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "drift": {
@@ -136,6 +143,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
+          showConvertUnitTo: false,
           sampleTime: 500
         },
       },
@@ -162,7 +170,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   protected startWidget(): void {
     this.unsubscribeDataStream();
     this.stopWindSectors();
-
+    this.appWindSpeedUnit = this.widgetProperties.config.paths['trueWindSpeed'].convertUnitTo;
+    this.trueWindSpeedUnit = this.widgetProperties.config.paths['appWindSpeed'].convertUnitTo;
     this.observeDataStream('headingPath', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
         newValue.data.value = 0;

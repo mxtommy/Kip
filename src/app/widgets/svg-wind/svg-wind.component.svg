@@ -462,7 +462,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="904.27722"
         y="150.88913"
-        id="text43">kts</text>
+        id="text43">{{ trueWindSpeedUnit() }}</text>
       <text
         xml:space="preserve"
         class="true-wind"
@@ -486,7 +486,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="94.554222"
         y="150.88913"
-        id="text39">kts</text>
+        id="text39">{{ appWindSpeedUnit() }}</text>
       <text
         xml:space="preserve"
         class="app-wind"

@@ -344,7 +344,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           path: "self.navigation.course.calcValues.crossTrackError",
           source: "default",
           pathType: "number",
-          isPathConfigurable: true,
+          isPathConfigurable: false,
           convertUnitTo: "m",
           showPathSkUnitsFilter: true,
           pathSkUnitsFilter: 'm',
@@ -370,6 +370,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "headingTrue": {
@@ -381,6 +382,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "windAngleApparent": {
@@ -392,6 +394,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          showConvertUnitTo: false,
           sampleTime: 500
         },
         "windAngleTrueWater": {
@@ -403,6 +406,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          showConvertUnitTo: false,
           sampleTime: 500
         }
       },
