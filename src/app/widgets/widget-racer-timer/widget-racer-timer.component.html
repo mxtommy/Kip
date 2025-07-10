@@ -22,7 +22,7 @@
           <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
           <button mat-flat-button class="main-small-button" (click)="adjustStartTime(+60)">+1m</button>
         } @case (3) {
-          <input class="start-at" type="text" [(ngModel)]="startAtTime" (keyup.enter)="setStartTime(startAtTime)">
+          <input class="start-at" type="text" [(ngModel)]="startAtTimeEdit" (keyup.enter)="setStartTime(startAtTimeEdit)">
         }
       }
     </div>
