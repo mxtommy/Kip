@@ -84,6 +84,12 @@
                   <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal" required>
                 </mat-form-field>
               }
+              @if ((widgetConfig.nextDashboard !== undefined)) {
+                <mat-form-field [class.options-grid-span2]="!widgetConfig.numInt">
+                  <mat-label>Next Dashboard after start</mat-label>
+                  <input type="number" min="0" max="99" matInput placeholder="Enter or select number..." name="nextDashboard"  formControlName="nextDashboard">
+                </mat-form-field>
+              }
               @if ((widgetConfig.showMin !== undefined)) {
                 <mat-checkbox
                   name="showMin"
