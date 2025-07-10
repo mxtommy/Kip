@@ -98,6 +98,13 @@
                   Show Max recorded value
                 </mat-checkbox>
               }
+              @if (widgetConfig.playBeeps !== undefined) {
+                <mat-checkbox
+                  name="playBeeps"
+                  formControlName="playBeeps">
+                  Enable beeps on count down
+                </mat-checkbox>
+              }
               @if ((widgetConfig.dateFormat !== undefined)) {
                 <display-datetime-options class="options-grid-span2"
                   [dateFormat]="dateFormatToControl"
