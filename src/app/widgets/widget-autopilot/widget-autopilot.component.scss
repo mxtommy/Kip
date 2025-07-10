@@ -71,6 +71,7 @@
   cursor: pointer;
   @include mat.button-overrides((
     filled-container-color: var(--kip-blue-dim-color),
+    filled-label-text-color: var(--kip-contrast-color),
     filled-container-height: 100%
   ));
 }
@@ -129,25 +130,13 @@
     font-variant-caps: normal;
     font-variant-numeric: normal;
     font-variant-east-asian: normal;
-    fill: var(--kip-contrast-color);
-    fill-opacity: 1;
     stroke: none;
   }
   path {
-    fill: none;
-    fill-opacity: 0;
-    stroke: var(--kip-contrast-color);
-    stroke-opacity: 1;
     stroke-width :7.59058;
     stroke-linecap: round;
     stroke-miterlimit: 0;
     stroke-dasharray: none;
-  }
-  path.tack {
-    fill: var(--kip-contrast-color);
-    fill-opacity: 1;
-    stroke: var(--kip-contrast-color);
-    stroke-opacity: 1;
   }
 }
 
@@ -255,7 +244,7 @@
 }
 
 .svg-menu-box {
-  fill: var(--kip-blue-color);
+  fill: var(--mat-sys-surface);
   stroke: none;
   border-radius: 12px;
 }
@@ -273,18 +262,63 @@
   text-anchor: middle;
   text-align: center;
   alignment-baseline: middle;
-  text {
-    fill: var(--kip-contrast-color);
-  }
+}
+
+g:hover rect {
+  fill-opacity: 0.7;
+}
+g:hover text {
+  fill-opacity: 0.7;
+}
+
+g:active rect {
+  fill-opacity: 0.4;
+}
+g:active text {
+  fill-opacity: 0.4;
 }
 
 .svg-menu-item {
-  fill: transparent;
+  fill: var(--kip-blue-color);
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-text {
+  fill: var(--kip-contrast-color);
   stroke: none;
 }
 
-.cancel {
-  fill: var(--kip-grey-color);
+.svg-menu-item-current {
+  fill: var(--kip-blue-color);
+  pointer-events: none;
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-current-text {
+  fill: var(--kip-contrast-color);
+  stroke: none;
+  pointer-events: none;
+}
+
+.svg-menu-item-disabled {
+  fill: var(--kip-blue-color);
+  pointer-events: none;
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-disabled-text {
+  fill: var(--mat-sys-surface-tint);
+  stroke: none;
+  pointer-events: none;
+}
+
+.svg-menu-item-cancel {
+  fill: var(--mat-sys-outline);
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-cancel-text {
+  fill: var(--kip-contrast-color);
   stroke: none;
 }
 

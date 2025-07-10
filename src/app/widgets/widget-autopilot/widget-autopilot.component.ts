@@ -39,6 +39,13 @@ const commands: CommandsMap = {
 };
 const countDownDefault = 5;
 
+interface MenuItem {
+  label: string;
+  action: string;
+  current?: boolean;
+  isCancel?: boolean;
+  disabled?: boolean;
+}
 
 @Component({
     selector: 'widget-autopilot',
@@ -91,9 +98,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   // Mode Menu
   protected menuOpen = signal<boolean>(false);
-  protected menuItems = [
-    { label: 'Cancel', action: 'cancel' }
-  ];
+  protected menuItems: MenuItem[] = [];
   protected readonly itemHeight = 60;
   protected readonly padding = 20;
 
@@ -408,10 +413,45 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       dataTimeout: 5
     };
 
+    const allMenuItems: MenuItem[] = [
+      { label: 'Auto', action: 'auto' },
+      { label: 'Wind', action: 'wind' },
+      { label: 'Route', action: 'route' },
+      { label: 'Close', action: 'cancel', isCancel: true }
+    ];
+
     effect(() => {
       const mode = this.apState();
 
       untracked(() => {
+
+        // Set enabled/disabled state for each menu item based on mode
+        this.menuItems = allMenuItems.map(item => {
+          if (item.isCancel) return { ...item, current: false, disabled: false };
+          let enabled = false;
+          switch (mode) {
+            case 'standby':
+              enabled = (item.action === 'auto' || item.action === 'wind');
+              break;
+            case 'auto':
+              enabled = (item.action === 'wind' || item.action === 'route');
+              break;
+            case 'wind':
+              enabled = (item.action === 'auto');
+              break;
+            case 'route':
+              enabled = (item.action === 'auto');
+              break;
+            default:
+              enabled = false;
+          }
+          return {
+            ...item,
+            current: item.action === mode,
+            disabled: !enabled
+          };
+        });
+
         switch (mode) {
           case "standby":
             this.modesBtn().disabled = false;
@@ -424,11 +464,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
-            this.menuItems = [
-              { label: 'Auto', action: 'auto' },
-              { label: 'Wind', action: 'wind' },
-              { label: 'Cancel', action: 'cancel' }
-            ];
             break;
           case "auto":
             this.modesBtn().disabled = false;
@@ -441,11 +476,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
-            this.menuItems = [
-              { label: 'Wind', action: 'wind' },
-              { label: 'Route', action: 'route' },
-              { label: 'Cancel', action: 'cancel' }
-            ];
             break;
           case "wind":
             this.modesBtn().disabled = false;
@@ -458,10 +488,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.stbTackBtn().disabled = false;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
-            this.menuItems = [
-              { label: 'Auto', action: 'auto' },
-              { label: 'Cancel', action: 'cancel' }
-            ];
             break;
           case "route":
             this.modesBtn().disabled = false;
@@ -474,10 +500,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = false;
             // this.dodgeBtn().disabled = false;
-            this.menuItems = [
-              { label: 'Auto', action: 'auto' },
-              { label: 'Cancel', action: 'cancel' }
-            ];
             break;
           default:
             this.modesBtn().disabled = true;
@@ -490,12 +512,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
-            this.menuItems = [
-              { label: 'Auto', action: 'auto' },
-              { label: 'Wind', action: 'wind' },
-              { label: 'Route', action: 'route' },
-              { label: 'Cancel', action: 'cancel' }
-            ];
         }
         this.apGrid.set(mode ? 'grid' : 'none');
       });
@@ -538,7 +554,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private startAllSubscriptions(): void {
     this.unsubscribeDataStream();
-    this.observeDataStream('autopilotState', newValue => this.apState.set(newValue.data.value));
+    this.observeDataStream('autopilotState', newValue => this.apState.set('standby'));//newValue.data.value));
     this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading = newValue.data.value ? newValue.data.value : 0);
     this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value ? newValue.data.value : 0);
