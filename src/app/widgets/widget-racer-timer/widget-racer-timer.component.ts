@@ -45,6 +45,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   protected startAtElement: HTMLCanvasElement;
   private skRequestSubscription: Subscription;
   protected startAtTime = 'HH:MM:SS';
+  protected startAtTimeEdit = this.startAtTime;
 
   constructor() {
     super();
@@ -209,13 +210,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.observeDataStream('startTimePath', newValue => {
       if (!newValue.data.value) {
-        this.startAtTime = 'HH:MM:SS';
+        this.startAtTime = this.startAtTimeEdit = 'HH:MM:SS';
         if (this.mode === 1) {
           this.mode = 0;
         }
       } else {
         const isoTime = new Date(newValue.data.value);
-        this.startAtTime = isoTime.toLocaleTimeString([], {
+        this.startAtTime = this.startAtTimeEdit = isoTime.toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit'
