@@ -367,7 +367,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         >{{ apModeValueAnnotation() }}</tspan></text>
     <text xml:space="preserve"
-        [attr.display]="apState() == 'auto' || apState() == 'route' ? 'inline' : 'none'"
+        [attr.display]="apState() == 'route' ? 'inline' : 'none'"
         class="contrast-text"
         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:34.6667px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
         x="910.14893"
