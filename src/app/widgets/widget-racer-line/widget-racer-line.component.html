@@ -20,10 +20,10 @@
           <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 5, 0)">+5m</button>
         }
         @case (2) {
-          <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 0, 1)">↑1&deg;</button>
-          <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 0, -1)">↓1&deg;</button>
-          <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 0, 1)">↓1&deg;</button>
-          <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 0, -1)">↑1&deg;</button>
+          <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 0, toRadians(1))">↑1&deg;</button>
+          <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 0, toRadians(-1))">↓1&deg;</button>
+          <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 0, toRadians(1))">↓1&deg;</button>
+          <button mat-flat-button class="starboard-small-button" (click)="adjustLineEnd('stb', 0, toRadians(-1))">↑1&deg;</button>
         }
       }
     </div>

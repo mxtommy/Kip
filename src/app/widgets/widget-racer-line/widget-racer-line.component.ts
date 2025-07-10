@@ -359,17 +359,17 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.updateCanvas();
   }
 
-  public setLineEnd(end): string {
+  public setLineEnd(end: string): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.widgetProperties.uuid);
     console.log('Set line end ', end, ' ', requestId);
     return requestId;
   }
 
-  public adjustLineEnd(end: string, delta: number, rotate): string {
+  public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine',
-      {end, delta, rotate: rotate ? this.toRadians(rotate) : null},
+      {end, delta, rotate: rotateRadians ? rotateRadians : null},
       this.widgetProperties.uuid);
-    console.log('adjustLineEnd: delta ', delta, ' rotate ', rotate, ' ', requestId);
+    console.log('adjustLineEnd: delta ', delta, ' rotate ', rotateRadians, ' ', requestId);
     return requestId;
   }
 }
