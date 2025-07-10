@@ -202,8 +202,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           this.beep(350, 200);
         }
       }
-      if (this.widgetProperties.config.nextDashboard > 0 &&
+      if (this.widgetProperties.config.nextDashboard >= 0 &&
         lastTtsValue === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
+        console.log('next dashboard ', this.widgetProperties.config.nextDashboard);
         this.dashboard.setActiveDashboard(this.widgetProperties.config.nextDashboard);
       }
     });

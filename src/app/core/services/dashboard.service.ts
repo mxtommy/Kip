@@ -155,8 +155,7 @@ export class DashboardService {
     }
   }
 
-  public setActiveDashboard(dashboardFrom1: number): void {
-    const dashboard = dashboardFrom1 - 1;
+  public setActiveDashboard(dashboard: number): void {
     if (dashboard >= 0 && dashboard < this.dashboards().length) {
       this.activeDashboard.set(dashboard);
     }
