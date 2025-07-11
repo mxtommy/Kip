@@ -99,3 +99,22 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+---
+
+## Cross-Reference Instructions
+
+### **Related Files:**
+- **COPILOT.md** (Root): KIP project-specific guidelines, architecture, services, and widget development patterns
+- **README.md**: Project setup, build instructions, and general development workflow
+
+### **Usage Priority:**
+1. **KIP-Specific Development**: Follow `COPILOT.md` for widget development, Signal K integration, theming, and KIP-specific patterns
+2. **General Angular Development**: Follow this file for modern Angular v20+ coding standards, component structure, and framework best practices
+3. **Project Setup**: Refer to `README.md` for build commands, dependencies, and environment setup
+
+### **Integration Notes:**
+- When developing KIP widgets, extend `BaseWidgetComponent` as described in `COPILOT.md` AND follow the Angular v20+ patterns in this file
+- Use signals, standalone components, and modern control flow from this file within the KIP architecture from `COPILOT.md`
+- For theming and colors, always use the KIP theme system described in `COPILOT.md`, not generic CSS approaches
+- All services should follow both the Angular DI patterns here AND the KIP service architecture in `COPILOT.md`
