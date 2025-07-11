@@ -116,7 +116,7 @@ export class ModalWidgetConfigComponent implements OnInit {
           // not building Units list
           // Use switch in case we will need more Required form validator at some point.
           switch (key) {
-            case "path": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            case "path": groups.addControl(key, new UntypedFormControl(formData[key]));
             break;
 
             case "datasetUUID": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
@@ -148,7 +148,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     let ctrl: UntypedFormControl = null;
 
     switch (key) {
-      case "path": ctrl = new UntypedFormControl(value, Validators.required);
+      case "path": ctrl = new UntypedFormControl(value);
       break;
 
       case "source": ctrl = new UntypedFormControl(value, Validators.required);

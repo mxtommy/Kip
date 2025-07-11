@@ -414,4 +414,14 @@ export interface IWidgetPath {
   policy?: TPolicy;
   /** NOT IMPLEMENTED - Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
   minPeriod?: number;
+  /**
+   * Optional: Indicates if the path control must have a path value or not.
+   * - If true: The control is valid if the path is either a valid (non-empty) path or empty (null or '').
+   *   - If the path is set but not valid (malformed), the control is invalid.
+   * - If false or undefined: The control behaves as usual (no additional validation).
+   *
+   * Example:
+   *   pathRequired: true // Path must be valid or empty
+   */
+  pathRequired?: boolean;
 }

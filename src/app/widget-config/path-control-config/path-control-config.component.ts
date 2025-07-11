@@ -10,19 +10,35 @@ import { MatOption, MatOptgroup } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
-import { MatFormField, MatLabel, MatSuffix, MatError } from '@angular/material/form-field';
+import { MatFormField, MatLabel, MatSuffix, MatError, MatHint } from '@angular/material/form-field';
 import { AsyncPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { compare } from 'compare-versions';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
 import { IDynamicControl } from '../../core/interfaces/widgets-interface';
 
-
-function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
+function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const allPathsAndMeta = getPaths();
-    const pathFound = allPathsAndMeta.some(array => array.path === control.value);
-    return pathFound ? null : { requireMatch: true };
+    // If pathRequired is undefined or true, path is required and must be valid
+    const required = control.parent?.value?.pathRequired !== false;
+    const value = control.value;
+    if (required) {
+      // Required: must not be empty and must match a valid path
+      if (value === null || value === '') {
+        return { requireMatch: true };
+      }
+      const allPathsAndMeta = getPaths();
+      const pathFound = allPathsAndMeta.some(array => array.path === value);
+      return pathFound ? null : { requireMatch: true };
+    } else {
+      // Not required: valid if empty, or if matches a valid path
+      if (value === null || value === '') {
+        return null;
+      }
+      const allPathsAndMeta = getPaths();
+      const pathFound = allPathsAndMeta.some(array => array.path === value);
+      return pathFound ? null : { requireMatch: true };
+    }
   };
 }
 
@@ -31,7 +47,7 @@ function requirePathMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
     templateUrl: './path-control-config.component.html',
     styleUrls: ['./path-control-config.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule]
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule, MatHint]
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {
   private _data = inject(DataService);
@@ -73,8 +89,16 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
     }
 
     // add path validator fn and validate
-    this.pathFormGroup.controls['path'].setValidators([Validators.required, requirePathMatch(() => this.getPaths())]);
+    this.pathFormGroup.controls['path'].setValidators([
+      pathRequiredOrValidMatch(() => this.getPaths())
+    ]);
     this.pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
+    // Subscribe to pathRequired changes to re-validate path
+    if (this.pathFormGroup.controls['pathRequired']) {
+      this.pathFormGroup.controls['pathRequired'].valueChanges.subscribe(() => {
+        this.pathFormGroup.controls['path'].updateValueAndValidity();
+      });
+    }
     if (this.pathFormGroup.controls['path'].valid) {
       this.enableFormFields(false);
     } else {

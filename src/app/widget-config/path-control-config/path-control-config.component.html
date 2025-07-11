@@ -27,27 +27,34 @@
       }
       <div class="flex-field-to-100">
         <mat-form-field floatLabel="auto" appearance="fill" class="pathField">
-          <mat-label>Signal K Path</mat-label>
+          <mat-label>
+            Signal K Path
+            @if (pathFormGroup.value.pathRequired === false) {
+              <span class="optional-label">(optional)</span>
+            }
+          </mat-label>
           <input #pathInput type="text" matInput
             placeholder="Type to use autocomplete or select from list"
             formControlName="path"
-            required
             [matAutocomplete]="pathAutoComplete"
-            >
-            @if (pathFormGroup.value.path) {
-              <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-            @if (pathFormGroup.controls['path'].errors?.['required']) {
-              <mat-error>
-                Path is required. Please enter a valid Signal K path.
-              </mat-error>
-            }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
-              <mat-error>
-                Path not recognized. Please enter a path from the server's published list.
-              </mat-error>
-            }
+          >
+          @if (pathFormGroup.value.pathRequired === false) {
+            <mat-hint>Leave blank to disable this path.</mat-hint>
+          }
+          @if (pathFormGroup.value.path) {
+            <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          @if (pathFormGroup.controls['path'].errors?.['required']) {
+            <mat-error>
+              Path is required. Please enter a valid Signal K path.
+            </mat-error>
+          } @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
+            <mat-error>
+              Path not recognized. Please enter a path from the server's published list.
+            </mat-error>
+          }
           <mat-autocomplete #pathAutoComplete="matAutocomplete">
             @for (option of filteredPaths | async; track option.path) {
               <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
