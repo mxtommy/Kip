@@ -61,6 +61,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           path: 'self.navigation.racing.timeToStart',
           source: 'default',
           pathType: 'number',
+          pathRequired: true,
           isPathConfigurable: true,
           convertUnitTo: 's',
           showPathSkUnitsFilter: false,
@@ -72,6 +73,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           path: 'self.navigation.racing.startTime',
           source: 'default',
           pathType: 'Date',
+          pathRequired: false,
           isPathConfigurable: false,
           sampleTime: 500
         },
@@ -80,6 +82,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
           path: 'self.navigation.racing.distanceStartline',
           source: 'default',
           pathType: 'number',
+          pathRequired: false,
           isPathConfigurable: true,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: false,
@@ -367,22 +370,24 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         this.startAtElement.width,
         this.startAtElement.height);
 
-      const valueText = this.startAtTime != null
-        ? ` Start at: ${this.startAtTime}`
-        : ' Start at: HH:MM:SS';
+      if (this.widgetProperties.config.paths['startTimePath'].path !== '') {
+        const valueText = this.startAtTime != null
+          ? `Start at: ${this.startAtTime}`
+          : 'Start at: HH:MM:SS';
 
-      this.canvasService.drawText(
-        this.startAtContext,
-        valueText,
-        10 * this.canvasService.scaleFactor,
-        Math.floor(this.startAtElement.height - 10 * this.canvasService.scaleFactor),
-        this.maxStartAtTextWidth,
-        this.maxStartAtTextHeight,
-        'normal',
-        this.valueColor,
-        'start',
-        'alphabetic'
-      );
+        this.canvasService.drawText(
+          this.startAtContext,
+          valueText,
+          10 * this.canvasService.scaleFactor,
+          Math.floor(this.startAtElement.height - 10 * this.canvasService.scaleFactor),
+          this.maxStartAtTextWidth,
+          this.maxStartAtTextHeight,
+          'normal',
+          this.valueColor,
+          'start',
+          'alphabetic'
+        );
+      }
     }
   }
 
