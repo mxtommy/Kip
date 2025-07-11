@@ -161,3 +161,22 @@ Use the following tool and command line:
 
 **Share**
 Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged and part of the next release.
+
+## Development Instructions & Guidelines
+
+For comprehensive development guidance, please refer to these instruction files:
+
+### **Primary Instructions:**
+- **[COPILOT.md](./COPILOT.md)**: Complete KIP project guidelines including architecture, services, widget development patterns, theming, and Signal K integration
+- **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v20+ coding standards, component patterns, and framework best practices
+
+### **Development Workflow:**
+1. **Start Here**: Read `COPILOT.md` for KIP-specific architecture and patterns
+2. **Angular Standards**: Follow `.github/instructions/angular.instructions.md` for modern Angular development
+3. **Setup & Build**: Use this README for project setup and build commands
+
+### **Key Priorities:**
+- **Widget Development**: Always extend `BaseWidgetComponent` (see COPILOT.md)
+- **Angular Patterns**: Use signals, standalone components, and modern control flow
+- **Theming**: Follow KIP's theme system for consistent UI
+- **Code Quality**: Run `npm run lint` before commits (enforced by Husky)
