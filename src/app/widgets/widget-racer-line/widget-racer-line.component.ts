@@ -65,6 +65,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           path: 'self.navigation.racing.startLineLength',
           source: 'default',
           pathType: 'number',
+          pathRequired: false,
           isPathConfigurable: true,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
@@ -76,6 +77,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           path: 'self.navigation.racing.stbLineBias',
           source: 'default',
           pathType: 'number',
+          pathRequired: false,
           isPathConfigurable: true,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
@@ -308,21 +310,29 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private drawLenBias(): void {
     if (this.lenBiasCanvas) {
       this.canvasService.clearCanvas(this.lenBiasContext, this.lenBiasElement.width, this.lenBiasElement.height);
-      let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-      let valueText = this.lengthValue != null
-        ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-        : ' Line: --';
 
-      valueText += '   Bias:';
-      unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
-      if (this.biasValue == null) {
-        valueText += '--';
-      } else if (this.biasValue < -1) {
-        valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
-      } else if (this.biasValue > 1) {
-        valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
-      } else {
-        valueText += 'fair';
+      let valueText = '';
+
+      if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
+        let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+        valueText += this.lengthValue != null
+          ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+          : ' Line: --';
+        valueText += '   ';
+      }
+
+      if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
+        valueText += 'Bias:';
+        let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
+        if (this.biasValue == null) {
+          valueText += '--';
+        } else if (this.biasValue < -1) {
+          valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
+        } else if (this.biasValue > 1) {
+          valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
+        } else {
+          valueText += 'fair';
+        }
       }
 
       this.canvasService.drawText(
