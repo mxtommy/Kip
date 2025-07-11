@@ -48,9 +48,9 @@ export class SvgAutopilotComponent {
   });
   protected lockedMode = computed(() => {
     switch (this.apState()) {
-      case "auto": return `Locked BRG`;
-      case "route": return `Locked HDG`;
-      case "wind": return "Locked AWA";
+      case "auto": return `Heading Hold`;
+      case "route": return `Track`;
+      case "wind": return "Wind Hold";
       default: return "Standby";
     }
   });
@@ -67,12 +67,18 @@ export class SvgAutopilotComponent {
   protected lockedHdgAnnotation = computed(() => {
     const state = this.apState();
     if (state === "route" || state === "auto") {
-      return this.targetPilotHeadingTrue() ? 'T' : 'M';
+      return this.targetPilotHeadingTrue() ? 'True' : 'Mag';
+    }
+    if (state === "wind") {
+      if (typeof this.lockedHdg() === 'number') {
+        const hdg = this.lockedHdg() as number;
+        return hdg > 0 ? 'Stbd' : 'Port';
+      }
     }
     return '';
   });
   protected hdgDirectionTrue = computed(() => {
-    return this.headingDirectionTrue() ? 'True' : 'Mag';
+    return this.headingDirectionTrue() ? 'T' : 'M';
   });
   private animationFrameIds = new WeakMap<SVGGElement, number>();
   private rudderAnimationFrames = new WeakMap<SVGRectElement, number>();
@@ -127,7 +133,7 @@ export class SvgAutopilotComponent {
             let xteDirection: string;
 
             if (xteValue < 0) {
-              xteDirection = ' Prt';
+              xteDirection = ' Port';
             } else if (xteValue > 0) {
               xteDirection = ' Stbd';
             } else {
