@@ -1,3 +1,22 @@
+# V 3.3.0
+## New features
+* New autopilot widgets with responsive UI.
+* New Wind Steering widget UI:
+  * Added Current/Drift and Set.
+  * Improved wind speeds visibility.
+  * Apparent wind used for tack angle and sector calculation.
+* Widget plugin server dependency validation and UI enhancements.
+## Improvements
+* Add support for optional and hardcoded paths in widgets.
+* Add days:hours:minutes:Seconds to Time unit format options. Fixes #682.
+* Reduce package size.
+* Support for Date values provided in metadata. Fixes #665. Special thanks to @emonty
+* Add code linter. Special thanks to @emonty
+* Add project documentation.
+## Fixes
+* Fix bouncy slider when selecting non-default value display. Fixes #671
+* Position type paths should not be converted to radian. Fixes #670
+* Numeric Widget has scrollbar on resize for some browsers. Fixes #640
 # V 3.2.0
 ## New features
 * Add automatic reconnection on mobile OS app resume
