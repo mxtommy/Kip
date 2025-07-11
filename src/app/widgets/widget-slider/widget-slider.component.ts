@@ -66,9 +66,10 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
           source: null,
           pathType: "number",
           isPathConfigurable: true,
-          convertUnitTo: null,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: null,
+          showConvertUnitTo: false,
+          convertUnitTo: null,
           supportsPut: true,
           sampleTime: 500
         }
