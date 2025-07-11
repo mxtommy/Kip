@@ -13,10 +13,6 @@
         class="starboard"
          style="display:inline;fill:none;stroke-width:39.6875;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:0;"
          d="M 660.62476,118.68725 A 469.63541,469.63541 0 0 1 906.71619,325.18247" />
-      <path id="triangle"
-        class="fixed-dial-background"
-        style="display:inline;stroke:none"
-        d="M 499.5601,210 450,251.94996 h 100 z" />
     </g>
     <g #rotatingDial style="display:inline">
       <g transform="translate(0,59.999714)">
@@ -349,6 +345,10 @@
             y="101.96342">N</tspan></text>
         </g>
       </g>
+    <path id="triangle"
+        class="fixed-dial-background"
+        style="display:inline;stroke:none"
+        d="M 499.5601,155 450,197 h 100 z" />
   </g>
   <g id="counterAWA"
      style="display:inline">
@@ -373,37 +373,36 @@
         x="910.14893"
         y="200">{{ apModeValueDirection() }}</text>
     <text xml:space="preserve"
-      [class]="apState() == 'wind' ? 'awa-text-dim' : 'contrast-text-dim'"
+      class="contrast-text-dim"
       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="97"
-      y="90.47614">{{ lockedMode() }}</text>
-    <text xml:space="preserve"
-      [class]="apState() == 'wind' ? 'awa-text' : 'contrast-text'"
-      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:73.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
-      x="109.25"
-      y="160.33212">{{ lockedHdg() }}°<tspan
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
-        >{{ lockedHdgAnnotation() }}</tspan></text>
-  </g>
-  <g id="displayArea"
-    style="display:inline">
+      y="90.47614">HDG</text>
     <text xml:space="preserve"
       class="contrast-text"
-      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:230px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
+      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:73.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
+      x="109.25"
+      y="160.33212">{{ compass.newValue }}°<tspan
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        >{{ hdgDirectionTrue() }}</tspan></text>
+  </g>
+  <g id="displayArea" style="display:inline">
+    <text xml:space="preserve"
+      class="contrast-text"
+      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:240px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
       x="523.93127"
-      y="480.13757">{{ compass.newValue }}<tspan style="font-weight:normal">°</tspan></text>
+      y="475.13757">{{ lockedHdg() }}<tspan style="font-weight:normal;font-size:180px" dy="-38">°</tspan></text>
     <text
        xml:space="preserve"
        class="contrast-text-dim"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;display:inline;fill-opacity:1;stroke:none"
        x="720"
-       y="484">{{hdgDirectionTrue()}}</text>
+       y="484">{{ lockedHdgAnnotation() }}</text>
     <text
       xml:space="preserve"
       class="contrast-text-dim"
-      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;display:inline;stroke:none"
-      x="245"
-      y="484">HDG</text>
+      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:45px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;display:inline;stroke:none"
+      x="500"
+      y="280">{{ lockedMode() }}</text>
   </g>
   <g id="IndicatorsLayer"
      style="display:inline">
