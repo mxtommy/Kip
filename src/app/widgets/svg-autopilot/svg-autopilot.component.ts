@@ -19,7 +19,7 @@ export class SvgAutopilotComponent {
   private readonly rudderStarboardRect = viewChild.required<ElementRef<SVGRectElement>>('rudderStarboardRect');
   private readonly rudderPortRect = viewChild.required<ElementRef<SVGRectElement>>('rudderPortRect');
 
-  protected readonly apState = input<string>('standby');
+  protected readonly apState = input<string>('off-line');
   protected readonly targetPilotHeading = input.required<number>();
   protected readonly targetWindAngleHeading = input.required<number>();
   protected readonly rudderAngle = input.required<number>();
@@ -51,7 +51,8 @@ export class SvgAutopilotComponent {
       case "auto": return `Heading Hold`;
       case "route": return `Track`;
       case "wind": return "Wind Hold";
-      default: return "Standby";
+      case "standby": return "Standby";
+      default: return "Off-line";
     }
   });
   protected lockedHdg = computed(() => {
