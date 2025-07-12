@@ -432,8 +432,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       const mode = this.apState();
 
       untracked(() => {
-
-        // Set enabled/disabled state for each menu item based on mode
+        // Set enabled/disabled state for each mode menu item based
         this.menuItems = allMenuItems.map(item => {
           if (item.isCancel) return { ...item, current: false, disabled: false };
           let enabled = false;
@@ -461,6 +460,18 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         });
 
         switch (mode) {
+          case 'off-line':
+            this.modesBtn().disabled = true;
+            this.engageBtn().disabled = true;
+            this.plus1Btn().disabled = true;
+            this.plus10Btn().disabled = true;
+            this.minus1Btn().disabled = true;
+            this.minus10Btn().disabled = true;
+            this.prtTackBtn().disabled = true;
+            this.stbTackBtn().disabled = true;
+            this.advWptBtn().disabled = true;
+            // this.dodgeBtn().disabled = true;
+            break;
           case "standby":
             this.modesBtn().disabled = false;
             this.engageBtn().disabled = true;
