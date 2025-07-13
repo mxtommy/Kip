@@ -22,9 +22,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private dToLineCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dToLineCanvas');
   private lenBiasCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('lenBiasCanvas');
   protected dToLineContext: CanvasRenderingContext2D;
-  protected lenBiasContext: CanvasRenderingContext2D;
   protected dToLineElement: HTMLCanvasElement;
-  protected lenBiasElement: HTMLCanvasElement;
   private canvasService = inject(CanvasService);
   private dtsValue: number = null;
   private lengthValue: number = null;
@@ -34,8 +32,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private dtsColor: string = undefined;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
-  private maxLenBiasTextWidth = 0;
-  private maxLenBiasTextHeight = 0;
+  protected lenBiasValue: string = '';
 
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
@@ -121,15 +118,10 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   private initCanvasContexts() {
     this.dToLineElement = this.dToLineCanvas().nativeElement;
-    this.lenBiasElement = this.lenBiasCanvas().nativeElement;
     this.canvasService.setHighDPISize(this.dToLineElement, this.dToLineElement.parentElement.getBoundingClientRect());
-    this.canvasService.setHighDPISize(this.lenBiasElement, this.lenBiasElement.parentElement.getBoundingClientRect());
     this.dToLineContext = this.dToLineElement.getContext('2d');
-    this.lenBiasContext = this.lenBiasElement.getContext('2d');
-    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.70);
-    this.maxLenBiasTextWidth = Math.floor(this.lenBiasElement.width * 0.57);
-    this.maxLenBiasTextHeight = Math.floor(this.lenBiasElement.height * 0.1);
+    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.95);
+    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.95);
   }
 
   protected startWidget(): void {
@@ -253,7 +245,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.isDestroyed = true;
     this.destroyDataStreams();
     this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
-    this.canvasService.clearCanvas(this.lenBiasContext, this.lenBiasElement.width, this.lenBiasElement.height);
 
     if (this.skRequestSubscription !== null) {
       this.skRequestSubscription.unsubscribe();
@@ -308,46 +299,31 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private drawLenBias(): void {
-    if (this.lenBiasCanvas) {
-      this.canvasService.clearCanvas(this.lenBiasContext, this.lenBiasElement.width, this.lenBiasElement.height);
+    let valueText = '';
 
-      let valueText = '';
-
-      if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
-        let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-        valueText += this.lengthValue != null
-          ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-          : ' Line: --';
-        valueText += '   ';
-      }
-
-      if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
-        valueText += 'Bias:';
-        let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
-        if (this.biasValue == null) {
-          valueText += '--';
-        } else if (this.biasValue < -1) {
-          valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
-        } else if (this.biasValue > 1) {
-          valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
-        } else {
-          valueText += 'fair';
-        }
-      }
-
-      this.canvasService.drawText(
-        this.lenBiasContext,
-        valueText,
-        10 * this.canvasService.scaleFactor,
-        Math.floor(this.lenBiasElement.height - 10 * this.canvasService.scaleFactor),
-        this.maxLenBiasTextWidth,
-        this.maxLenBiasTextHeight,
-        'normal',
-        this.valueColor,
-        'start',
-        'alphabetic'
-      );
+    if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
+      let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+      valueText += this.lengthValue != null
+        ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+        : ' Line: --';
+      valueText += '   ';
     }
+
+    if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
+      valueText += 'Bias:';
+      let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
+      if (this.biasValue == null) {
+        valueText += '--';
+      } else if (this.biasValue < -1) {
+        valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
+      } else if (this.biasValue > 1) {
+        valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
+      } else {
+        valueText += 'fair';
+      }
+    }
+
+    this.lenBiasValue = valueText;
   }
 
   private applyDecorations(txtValue: string): string {
@@ -365,7 +341,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   public toggleMode(): void {
     console.log('toggle mode ', this.mode);
-    this.mode = (this.mode + 1) % 3;
+    this.mode = (this.mode + 1) % 4;
     this.updateCanvas();
   }
 

@@ -35,7 +35,8 @@
   height: calc(100% - 5px);
   margin: 0;
   @include mat.button-overrides((
-    filled-container-color: var(--kip-grey-color)
+    filled-container-color: var(--kip-blue-dim-color),
+    filled-label-text-color: var(--kip-contrast-color)
   ));
 }
 
@@ -79,10 +80,16 @@
   ));
 }
 
-.start-at {
-  width: 80%;
+.set-start-at {
+  width: 60%;
   height: 90%;
-  margin-left: 5%;
+  margin-left: 5px;
   margin-top: 0;
   font-size-adjust: 1.0;
+}
+
+.start-at {
+  margin-left: 5px;
+  font-size-adjust: 1.4;
+  vertical-align: center;
 }
