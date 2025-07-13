@@ -23,7 +23,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private signalk = inject(SignalkRequestsService);
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
-  private startAtCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('startAtCanvas');
+  protected startAtValue: string;
   private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
@@ -32,17 +32,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private valueStateColor: string = undefined;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
-  private maxStartAtTextWidth = 0;
-  private maxStartAtTextHeight = 0;
 
   private flashInterval = null;
   private isDestroyed = false; // guard against callbacks after destroyed
-  protected mode = 0;
+  protected mode = 1;
 
   protected timeToSContext: CanvasRenderingContext2D;
   protected timeToSElement: HTMLCanvasElement;
-  protected startAtContext: CanvasRenderingContext2D;
-  protected startAtElement: HTMLCanvasElement;
   private skRequestSubscription: Subscription;
   protected startAtTime = 'HH:MM:SS';
   protected startAtTimeEdit = this.startAtTime;
@@ -100,7 +96,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       if (this.theme()) {
         untracked(() => {
           this.getColors(this.widgetProperties.config.color);
-          // this.updateCanvas();
         });
       }
     });
@@ -122,15 +117,10 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   private initCanvases() {
     this.timeToSElement = this.timeToSCanvas().nativeElement;
-    this.startAtElement = this.startAtCanvas().nativeElement;
     this.canvasService.setHighDPISize(this.timeToSElement, this.timeToSElement.parentElement.getBoundingClientRect());
-    this.canvasService.setHighDPISize(this.startAtElement, this.startAtElement.parentElement.getBoundingClientRect());
     this.timeToSContext = this.timeToSElement.getContext('2d');
-    this.startAtContext = this.startAtElement.getContext('2d');
-    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.70);
-    this.maxStartAtTextWidth = Math.floor(this.startAtElement.width * 0.57);
-    this.maxStartAtTextHeight = Math.floor(this.startAtElement.height * 0.1);
+    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.95);
+    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.95);
   }
 
   protected beep(frequency = 440, duration = 100) {
@@ -186,12 +176,12 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         }
       }
       if (this.ttsValue === 0) {
-        this.mode = 1;
+        this.mode = 2;
         if (this.dtsValue < 0) {
           this.valueStateColor = this.theme().zoneAlarm;
         }
-      } else if (this.mode === 0 && this.isStartTimerRunning()) {
-        this.mode = 1;
+      } else if (this.mode === 1 && this.isStartTimerRunning()) {
+        this.mode = 2;
       }
       this.updateCanvas();
       if (this.widgetProperties.config.playBeeps && this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS' && lastTtsValue !== 0) {
@@ -215,8 +205,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.observeDataStream('startTimePath', newValue => {
       if (!newValue.data.value) {
         this.startAtTime = this.startAtTimeEdit = 'HH:MM:SS';
-        if (this.mode === 1) {
-          this.mode = 0;
+        if (this.mode === 2) {
+          this.mode = 1;
         }
       } else {
         const isoTime = new Date(newValue.data.value);
@@ -365,44 +355,25 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   private drawStartAt(): void {
-    if (this.startAtContext) {
-      this.canvasService.clearCanvas(this.startAtContext,
-        this.startAtElement.width,
-        this.startAtElement.height);
-
-      if (this.widgetProperties.config.paths['startTimePath'].path !== '') {
-        const valueText = this.startAtTime != null
-          ? `Start at: ${this.startAtTime}`
-          : 'Start at: HH:MM:SS';
-
-        this.canvasService.drawText(
-          this.startAtContext,
-          valueText,
-          10 * this.canvasService.scaleFactor,
-          Math.floor(this.startAtElement.height - 10 * this.canvasService.scaleFactor),
-          this.maxStartAtTextWidth,
-          this.maxStartAtTextHeight,
-          'normal',
-          this.valueColor,
-          'start',
-          'alphabetic'
-        );
-      }
+    if (this.widgetProperties.config.paths['startTimePath'].path !== '') {
+      this.startAtValue = this.startAtTime != null
+        ? ` Start at: ${this.startAtTime}`
+        : ' Start at: HH:MM:SS';
     }
   }
 
   public toggleMode(): void {
     console.log('toggle mode ', this.mode);
-    this.mode = (this.mode + 1) % 4;
+    this.mode = (this.mode + 1) % 5;
     switch (this.mode) {
-      case 0:
+      case 1:
         if (this.isStartTimerRunning()) {
-          this.mode = 1;
+          this.mode = 2;
         }
         break;
-      case 1:
+      case 2:
         if (this.ttsValue !== 0 && !this.isStartTimerRunning()) {
-          this.mode = 2;
+          this.mode = 3;
         }
         break;
       default:
@@ -415,11 +386,11 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     console.log('Start Timer Command ', command, ' ', requestId);
     switch (command) {
       case 'start':
-        this.mode = 1;
+        this.mode = 0;
         break;
       case 'reset':
         this.startAtTime = 'HH:MM:SS';
-        this.mode = 0;
+        this.mode = 1;
         break;
       default:
     }
@@ -438,6 +409,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     const date = new Date(now); // clone the current date
     date.setHours(hours, minutes, seconds, 0);
+    this.mode = 0;
 
     // If the scheduled time is in the past, move it to the next day
     if (date <= now) {

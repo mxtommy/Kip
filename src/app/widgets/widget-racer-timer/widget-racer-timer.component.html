@@ -4,25 +4,27 @@
 
     <div class="filler">
       <canvas #timeToSCanvas class="canvas"></canvas>
-      <canvas #startAtCanvas class="canvas"></canvas>
     </div>
     <div class="buttons-container">
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
       @switch(mode) {
         @case (0) {
+          <span class="start-at">{{startAtValue}}</span>
+        }
+        @case (1) {
           <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('start')">Start</button>
           <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-60)">-1m</button>
           <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+60)">+1m</button>
-        } @case (1) {
+        } @case (2) {
           <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('sync')">Sync</button>
           <button mat-flat-button class="other-button" (click)="sendStartTimerCommand('reset')">Reset</button>
-        } @case (2) {
+        } @case (3) {
           <button mat-flat-button class="main-small-button" (click)="adjustStartTime(-60)">-1m</button>
           <button mat-flat-button class="other-small-button" (click)="adjustStartTime(-1)">-1s</button>
           <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
           <button mat-flat-button class="main-small-button" (click)="adjustStartTime(+60)">+1m</button>
-        } @case (3) {
-          <input class="start-at" type="text" [(ngModel)]="startAtTimeEdit" (keyup.enter)="setStartTime(startAtTimeEdit)">
+        } @case (4) {
+          <input class="set-start-at" type="text" [(ngModel)]="startAtTimeEdit" (keyup.enter)="setStartTime(startAtTimeEdit)">
         }
       }
     </div>
