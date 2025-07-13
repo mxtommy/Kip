@@ -28,6 +28,8 @@
   margin: 10px 10px 10px 10px;
   z-index: 100;
   pointer-events: auto;
+  display: flex;
+  align-items: center;
 }
 
 .select-button {
@@ -81,7 +83,8 @@
 }
 
 .len-bias {
-  margin-top: 15px;
-  margin-left: 5px;
+  margin-left: 10px;
   vertical-align: center;
+  display: inline-block;
+  line-height: 1;
 }
