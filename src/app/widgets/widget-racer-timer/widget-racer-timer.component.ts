@@ -409,10 +409,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   public setStartTime(startAtTime: string): void {
     const now = new Date();
-    const [hours, minutes, seconds] = startAtTime.split(':').map(Number);
-
+    const parts = startAtTime.split(':').map(Number);
+    const hours = parts[0];
+    const minutes = parts[1];
+    const seconds = parts.length >= 3 ? parts[2] : 0;
     const date = new Date(now); // clone the current date
     date.setHours(hours, minutes, seconds, 0);
+
     this.mode = 0;
 
     // If the scheduled time is in the past, move it to the next day
