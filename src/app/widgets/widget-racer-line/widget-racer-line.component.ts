@@ -20,7 +20,6 @@ import {Subscription} from 'rxjs';
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
   private dToLineCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dToLineCanvas');
-  private lenBiasCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('lenBiasCanvas');
   protected dToLineContext: CanvasRenderingContext2D;
   protected dToLineElement: HTMLCanvasElement;
   private canvasService = inject(CanvasService);
@@ -32,7 +31,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private dtsColor: string = undefined;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
+
   protected lenBiasValue: string = '';
+  protected lenBiasFontSize: string = '1em';
 
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
@@ -191,6 +192,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
+
+    this.lenBiasFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
+
     this.initCanvasContexts();
     if (this.isDestroyed) {
       return;
@@ -304,9 +308,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
       let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
       valueText += this.lengthValue != null
-        ? ` Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-        : ' Line: --';
-      valueText += '   ';
+        ? `Line:${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+        : 'Line:--';
+      valueText += '  ';
     }
 
     if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
@@ -315,9 +319,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (this.biasValue == null) {
         valueText += '--';
       } else if (this.biasValue < -1) {
-        valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' port';
+        valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' P';
       } else if (this.biasValue > 1) {
-        valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' stbd';
+        valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' S';
       } else {
         valueText += 'fair';
       }

@@ -24,6 +24,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
   protected startAtValue: string;
+  protected startAtFontSize: string = '1em';
   private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
@@ -245,6 +246,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
+
+    this.startAtFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
+
     this.initCanvases();
     if (this.isDestroyed) {
       return;
@@ -350,15 +354,15 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     } else {
       const mm = Math.floor(minutes % 60);
       const ss = Math.floor(seconds % 60);
-      return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+      return `${mm.toString().padStart(1, '0')}:${ss.toString().padStart(2, '0')}`;
     }
   }
 
   private drawStartAt(): void {
     if (this.widgetProperties.config.paths['startTimePath'].path !== '') {
       this.startAtValue = this.startAtTime != null
-        ? ` Start at: ${this.startAtTime}`
-        : ' Start at: HH:MM:SS';
+        ? `Start at: ${this.startAtTime}`
+        : 'Start at: HH:MM:SS';
     }
   }
 
