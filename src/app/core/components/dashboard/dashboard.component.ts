@@ -274,4 +274,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       this.dashboard.previousDashboard();
     }
   }
+
+  protected editDashboard(): void {
+    this.dashboard.toggleStaticDashboard();
+  }
 }
