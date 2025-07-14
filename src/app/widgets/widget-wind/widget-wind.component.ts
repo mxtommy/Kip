@@ -115,7 +115,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           sampleTime: 500
         },
         "nextWaypointBearing": {
-          description: "Next Waypoint Bearing",
+          description: "Next Waypoint True Bearing",
           path: 'self.navigation.courseGreatCircle.nextPoint.bearingTrue',
           source: 'default',
           pathType: "number",
@@ -170,6 +170,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   ngOnInit(): void {
     this.validateConfig();
+    // TODO: ADD AP OPTION AND CHECK IF PLUGIN IS AVAILABLE
     this.startWidget();
   }
 

@@ -201,6 +201,8 @@ export interface IWidgetSvcConfig {
   courseDirectionTrue?: boolean,
   /** Used by autopilot Widget to indicate if heading direction type is Magnetic or True */
   headingDirectionTrue?: boolean,
+  /** Used by autopilot Widget to specify which autopilot instance to control (V2: '_default', 'pypilot-sk', etc. | V1: ignored) */
+  autopilotInstance?: string,
 
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;
