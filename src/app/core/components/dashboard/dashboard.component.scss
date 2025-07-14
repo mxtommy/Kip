@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 :host {
   display: flex;
   flex-direction: row;
@@ -21,4 +23,63 @@
 .layout-action-btn {
   color: var(--mat-sys-on-primary);
   background-color: var(--mat-sys-primary);
+}
+
+/* Empty Dashboard State Styles */
+.dashboard-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.empty-state-content {
+  max-width: 500px;
+  color: var(--mat-sys-inverse-on-surface);
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: var(--mat-sys-inverse-on-surface);
+  margin-bottom: 1rem;
+}
+
+.empty-state-actions {
+  .touch-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    color: var(--mat-sys-inverse-on-surface);
+    margin-top: 0.5rem;
+    animation: bounce 2s infinite;
+  }
+}
+
+.empty-state-button {
+  @include mat.button-overrides((
+    filled-label-text-color: var(--kip-widget-card-background-color),
+    filled-container-color: var(--mat-sys-inverse-on-surface),
+  ));
+}
+
+.empty-state-text {
+  color: var(--mat-sys-inverse-on-surface);
+  font-style: italic;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }

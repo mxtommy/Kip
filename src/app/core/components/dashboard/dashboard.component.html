@@ -4,7 +4,26 @@
   (swipedown)="nextDashboard($event)"
   (press)="addNewWidget($event)"
   (window:resize)="resizeGridColumns()"
-/>
+>
+  <!-- Empty state content - shown when grid has no widgets -->
+  <div empty-content class="dashboard-empty-state">
+    <div class="empty-state-content">
+      <div class="empty-state-actions">
+        <mat-icon class="empty-state-icon">dashboard</mat-icon>
+        @if (!dashboard.isDashboardStatic()) {
+          <p class="empty-state-text"><strong>Long press/click anywhere</strong> to add widgets</p>
+          <mat-icon class="touch-icon">touch_app</mat-icon>
+        } @else {
+          <p class="empty-state-text">This empty dashboard is ready to be customized.</p>
+          <button class="empty-state-button" mat-flat-button (click)="editDashboard()">
+            <mat-icon>lock_open</mat-icon>
+            Unlock and Customize
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</gridstack>
 @if (!dashboard.isDashboardStatic()) {
   <div class="edit-layout-close-icon">
     <button
