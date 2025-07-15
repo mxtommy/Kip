@@ -562,8 +562,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.plus10Btn().disabled = false;
             this.minus1Btn().disabled = false;
             this.minus10Btn().disabled = false;
-            this.prtTackBtn().disabled = true;
-            this.stbTackBtn().disabled = true;
+            this.prtTackBtn().disabled = false;
+            this.stbTackBtn().disabled = false;
             this.advWptBtn().disabled = true;
             // this.dodgeBtn().disabled = true;
             break;
@@ -615,43 +615,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     });
   }
 
-  private async checkV2Api(): Promise<boolean> {
-    try {
-      const response = await this.http.get(API_PATHS.V2_AUTOPILOTS, {
-        observe: 'response',
-        responseType: 'json'
-      }).toPromise();
-      return response?.status === 200;
-    } catch (error) {
-      // Differentiate between network errors and 404s
-      if (error && typeof error === 'object' && 'status' in error) {
-        const httpError = error as {status: number, statusText?: string};
-        if (httpError.status === 404) {
-          console.log('[Autopilot Widget] V2 API endpoint not found (404)');
-        } else if (httpError.status >= 500) {
-          console.warn('[Autopilot Widget] V2 API server error:', httpError.status, httpError.statusText);
-        } else {
-          console.log('[Autopilot Widget] V2 API error:', httpError.status, httpError.statusText);
-        }
-      } else {
-        console.log('[Autopilot Widget] V2 API network error:', error);
-      }
-      return false;
-    }
-  }
-
-  private async discoverV2Autopilots(): Promise<void> {
-    try {
-      const response = await this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS).toPromise();
-      this.availableAutopilots.set(response);
-      console.log('[Autopilot Widget] Discovered V2 autopilot instances:', response);
-      const configuredInstance = this.widgetProperties.config.autopilotInstance || DEFAULTS.AUTOPILOT_INSTANCE;
-      console.log(`[Autopilot Widget] Configured autopilot instance: '${configuredInstance}'`);
-    } catch (error) {
-      console.error('[Autopilot Widget] Failed to discover V2 autopilots:', error);
-      this.availableAutopilots.set({});
-      this.apiDetectionError.set(`Failed to discover autopilots: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+  protected startWidget(): void {
+    this.startAllSubscriptions();
   }
 
   /**
@@ -733,6 +698,45 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.discoveryInProgress.set(false);
   }
 
+  private async checkV2Api(): Promise<boolean> {
+    try {
+      const response = await this.http.get(API_PATHS.V2_AUTOPILOTS, {
+        observe: 'response',
+        responseType: 'json'
+      }).toPromise();
+      return response?.status === 200;
+    } catch (error) {
+      // Differentiate between network errors and 404s
+      if (error && typeof error === 'object' && 'status' in error) {
+        const httpError = error as {status: number, statusText?: string};
+        if (httpError.status === 404) {
+          console.log('[Autopilot Widget] V2 API endpoint not found (404)');
+        } else if (httpError.status >= 500) {
+          console.warn('[Autopilot Widget] V2 API server error:', httpError.status, httpError.statusText);
+        } else {
+          console.log('[Autopilot Widget] V2 API error:', httpError.status, httpError.statusText);
+        }
+      } else {
+        console.log('[Autopilot Widget] V2 API network error:', error);
+      }
+      return false;
+    }
+  }
+
+  private async discoverV2Autopilots(): Promise<void> {
+    try {
+      const response = await this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS).toPromise();
+      this.availableAutopilots.set(response);
+      console.log('[Autopilot Widget] Discovered V2 autopilot instances:', response);
+      const configuredInstance = this.widgetProperties.config.autopilotInstance || DEFAULTS.AUTOPILOT_INSTANCE;
+      console.log(`[Autopilot Widget] Configured autopilot instance: '${configuredInstance}'`);
+    } catch (error) {
+      console.error('[Autopilot Widget] Failed to discover V2 autopilots:', error);
+      this.availableAutopilots.set({});
+      this.apiDetectionError.set(`Failed to discover autopilots: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   private async discoverV2AutopilotOptions(): Promise<void> {
     const targetInstance = this.widgetProperties.config.autopilotInstance;
     let response: IV2AutopilotOptionsResponse;
@@ -785,10 +789,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   protected isV2CommandSupported(command: string): boolean {
     return this.autopilotCapabilities().includes(command);
-  }
-
-  protected startWidget(): void {
-    this.startAllSubscriptions();
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
