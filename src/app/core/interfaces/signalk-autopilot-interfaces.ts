@@ -21,6 +21,11 @@ export interface IV1CommandDefinition {
   value: string | number;
 }
 
+export interface IV2CommandDefinition {
+  path: string
+  value?: object;
+}
+
 /**
  * Map of V1 command names to their Signal K path definitions
  */
@@ -34,10 +39,9 @@ export type V1CommandsMap = Record<string, IV1CommandDefinition>;
  * Response structure for V2 API autopilot discovery endpoint
  * GET /signalk/v2/api/vessels/self/autopilots
  */
-export type IV2AutopilotsDiscoveryResponse = Record<string, {
-  name?: string;
-  description?: string;
-  capabilities?: string[];
+export type IV2AutopilotProvider = Record<string, {
+  provider: string;
+  isDefault: boolean;
 }>;
 
 /**
@@ -61,4 +65,68 @@ export interface IV2CommandResponse {
   status: 'success' | 'error';
   message?: string;
   data?: unknown;
+}
+
+/**
+ * Response structure for autopilot instance status and capabilities endpoint
+ * GET /signalk/v2/api/vessels/self/autopilots/{instance}
+ *
+ * This interface represents the complete state and available options for a specific
+ * autopilot instance, combining both current operational status and capability discovery.
+ *
+ * @example
+ * ```typescript
+ * {
+ *   options: {
+ *     modes: ["auto", "wind", "route", "standby"],
+ *     states: ["engaged", "disengaged"]
+ *   },
+ *   state: "engaged",
+ *   mode: "auto",
+ *   target: 185.5,
+ *   engaged: true
+ * }
+ * ```
+ */
+export interface IV2AutopilotOptionsResponse {
+  /**
+   * Available capability options for this autopilot instance
+   */
+  options: {
+    /**
+     * Array of supported autopilot modes (e.g., "auto", "wind", "route", "standby")
+     * These represent the different steering modes the autopilot can operate in
+     */
+    modes?: string[];
+    /**
+     * Array of supported autopilot states
+     * Only "engaged" and "disengaged" are valid autopilot states
+     */
+    states?: AutopilotStateDef[];
+  }
+  /**
+   * Current operational state of the autopilot device
+   * Indicates whether the autopilot is actively controlling the vessel or not
+   */
+  state: ('engaged' | 'disengaged') | null;
+  /**
+   * Current steering mode of the autopilot
+   * Determines what reference the autopilot is using (compass heading, wind angle, route, etc.)
+   */
+  mode: string | null;
+  /**
+   * Current target value for the selected mode
+   * Units depend on mode: degrees for heading modes, degrees for wind angles, etc.
+   */
+  target: number | null;
+  /**
+   * Whether the autopilot is actively engaged and steering the vessel
+   * When true, the autopilot is controlling the rudder/steering system
+   */
+  engaged: boolean;
+}
+
+interface AutopilotStateDef {
+    engaged: boolean;
+    name: string;
 }
