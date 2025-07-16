@@ -415,13 +415,10 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     const seconds = parts.length >= 3 ? parts[2] : 0;
     const date = new Date(now); // clone the current date
     date.setHours(hours, minutes, seconds, 0);
-
-    this.mode = 0;
-
-    // If the scheduled time is in the past, move it to the next day
     if (date <= now) {
       date.setDate(date.getDate() + 1);
     }
+    this.mode = 0;
 
     const requestId = this.signalk.putRequest(
       'navigation.racing.setStartTime',
