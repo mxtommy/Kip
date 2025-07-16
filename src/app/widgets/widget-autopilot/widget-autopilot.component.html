@@ -48,7 +48,7 @@
       </div>
     </div>
     <!-- -1 / +1 buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
       <button #minus1Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('-1')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
@@ -58,7 +58,7 @@
         </mat-icon>
       </button>
     </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
       <button #plus1Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('+1')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
@@ -69,7 +69,7 @@
       </button>
     </div>
     <!-- -10 / +10 buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
       <button #minus10Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('-10')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
@@ -80,7 +80,7 @@
         </mat-icon>
       </button>
     </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
       <button #plus10Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('+10')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
@@ -133,37 +133,39 @@
       </button>
     </div>
     <!-- Route widget -->
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-position [widgetProperties]="nextWptProperties()" class="embed-widget" />
     </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-datetime [widgetProperties]="etaProperties()" class="embed-widget" />
     </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-numeric [widgetProperties]="dtwProperties()" class="embed-widget"/>
     </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-numeric [widgetProperties]="ttwProperties()" class="embed-widget" />
     </div>
     <!-- Route Button row -->
     <div [style.display]="apState() === 'route' ? 'block' : 'none'">
-      <!-- <button #dodgeBtn mat-flat-button disabled="true" class="ap-btn">
-        <mat-icon class="svg-icon">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
-            <text xml:space="preserve"
-              x="49.961578"
-              y="86.799866">Dodge</text>
-            <path style="fill:none;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
-              d="M 4.6584699,36.552789 29.229283,58.159051 M 4.6584699,36.451699 29.229283,14.845436" />
-            <path style="fill:none;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
-              d="M 95.34153,36.552789 70.770717,58.159051 M 95.34153,36.451699 70.770717,14.845436" />
-            <text xml:space="preserve"
-              style="font-size:68.6095px"
-              x="50.167503"
-              y="61.058273">!</text>
-          </svg>
-        </mat-icon>
-      </button> -->
+      @if (apiVersion() === 'v2') {
+        <button #dodgeBtn mat-flat-button disabled="true" class="ap-btn" [class.ap-btn-active]="dodgeModeActive()" (click)="toggleDodge()">
+          <mat-icon class="svg-icon">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
+              <text xml:space="preserve"
+                x="49.961578"
+                y="86.799866">Dodge</text>
+              <path [style.fill]="dodgeModeActive() ? 'currentColor' : 'none'" [style.stroke]="'currentColor'" style="stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+                d="M 4.6584699,36.552789 29.229283,58.159051 M 4.6584699,36.451699 29.229283,14.845436" />
+              <path [style.fill]="dodgeModeActive() ? 'currentColor' : 'none'" [style.stroke]="'currentColor'" style="stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+                d="M 95.34153,36.552789 70.770717,58.159051 M 95.34153,36.451699 70.770717,14.845436" />
+              <text xml:space="preserve"
+                style="font-size:68.6095px"
+                x="50.167503"
+                y="61.058273">!</text>
+            </svg>
+          </mat-icon>
+        </button>
+      }
     </div>
     <div [style.display]="apState() === 'route' ? 'block' : 'none'">
       <button #advWptBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('route')">
@@ -171,7 +173,7 @@
           <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.961578" y="86.799866">Adv Wpt</text>
             <path
-              fill="currentColor" stroke="currentColor"
+              fill="currentColor"
               style="stroke:none"
               d="M 19.090795,4 V 63.58544 L 78.676235,33.792718 Z" />
             <path

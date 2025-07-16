@@ -23,7 +23,7 @@
  * @requires HttpClient, Angular Signals
  */
 
-import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked, DestroyRef, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,6 +40,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { isEqual } from 'lodash-es';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom, lastValueFrom, Observable, finalize } from 'rxjs';
 import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
 import { AppService } from '../../core/services/app-service';
 import {
@@ -137,7 +138,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   protected apiDetectionError = signal<string | null>(null);
 
   // Request management
-  private currentDiscoveryRequest?: Promise<void>;
+  private currentRequests = new Set<Observable<unknown>>();
 
   // Keypad buttons & layout
   protected apGrid = signal('none'); // Autopilot button grid visibility
@@ -150,9 +151,18 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   protected readonly modesBtn = viewChild.required<MatButton>('modesBtn');
   protected readonly engageBtn = viewChild.required<MatButton>('disengageBtn');
   protected readonly advWptBtn = viewChild.required<MatButton>('advWptBtn');
-  // protected readonly dodgeBtn = viewChild.required<MatButton>('dodgeBtn');
+  protected readonly dodgeBtn = viewChild<MatButton>('dodgeBtn');
 
-  protected apState = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
+  protected apStatePath = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
+  protected apState = computed<string | null>(() => {
+    const state = this.apStatePath();
+    if (state === 'auto' || state === 'compass') return 'auto';
+    if (state === 'wind') return 'wind';
+    if (state === 'route' || state === 'gps') return 'route';
+    if (state === 'standby') return 'standby';
+    if (state === 'off-line') return 'off-line';
+    return this.apStatePath();
+  });
   protected dodgeModeActive = signal<boolean>(false);
   protected autopilotTargetHeading = 0;
   protected autopilotTargetWindHeading = 0;
@@ -391,17 +401,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         //   pathSkUnitsFilter: 'rad',
         //   sampleTime: 500
         // },
-        "courseXte": {
-          description: "Cross Track Error",
-          path: "self.navigation.course.calcValues.crossTrackError",
-          source: "default",
-          pathType: "number",
-          isPathConfigurable: false,
-          convertUnitTo: "m",
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: 'm',
-          sampleTime: 500
-        },
         "rudderAngle": {
           description: "Rudder Angle",
           path: 'self.steering.rudderAngle',
@@ -411,6 +410,18 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           isPathConfigurable: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
+        "courseXte": {
+          description: "Cross Track Error",
+          path: "self.navigation.course.calcValues.crossTrackError",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: false,
+          convertUnitTo: "m",
+          showPathSkUnitsFilter: true,
+          pathRequired: false,
+          pathSkUnitsFilter: 'm',
           sampleTime: 500
         },
         "headingMag": {
@@ -541,7 +552,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.prtTackBtn().disabled = true;
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
-            // this.dodgeBtn().disabled = true;
+            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
             break;
           case "standby":
             this.modesBtn().disabled = false;
@@ -553,7 +564,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.prtTackBtn().disabled = true;
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
-            // this.dodgeBtn().disabled = true;
+            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
             break;
           case "auto":
             this.modesBtn().disabled = false;
@@ -565,7 +576,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.prtTackBtn().disabled = false;
             this.stbTackBtn().disabled = false;
             this.advWptBtn().disabled = true;
-            // this.dodgeBtn().disabled = true;
+            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
             break;
           case "wind":
             this.modesBtn().disabled = false;
@@ -577,19 +588,30 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.prtTackBtn().disabled = false;
             this.stbTackBtn().disabled = false;
             this.advWptBtn().disabled = true;
-            // this.dodgeBtn().disabled = true;
+            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
             break;
           case "route":
             this.modesBtn().disabled = false;
             this.engageBtn().disabled = false;
-            this.plus1Btn().disabled = true;
-            this.plus10Btn().disabled = true;
-            this.minus1Btn().disabled = true;
-            this.minus10Btn().disabled = true;
+            if (this.dodgeModeActive()) {
+              this.plus1Btn().disabled = false;
+              this.plus10Btn().disabled = false;
+              this.minus1Btn().disabled = false;
+              this.minus10Btn().disabled = false;
+            } else {
+              this.plus1Btn().disabled = true;
+              this.plus10Btn().disabled = true;
+              this.minus1Btn().disabled = true;
+              this.minus10Btn().disabled = true;
+            }
             this.prtTackBtn().disabled = true;
             this.stbTackBtn().disabled = true;
-            this.advWptBtn().disabled = false;
-            // this.dodgeBtn().disabled = false;
+            if (this.dodgeModeActive()) {
+              this.advWptBtn().disabled = true;
+            } else {
+              this.advWptBtn().disabled = false;
+            }
+            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = false;
             break;
           default:
             this.modesBtn().disabled = true;
@@ -601,7 +623,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             this.prtTackBtn().disabled = true;
             this.stbTackBtn().disabled = true;
             this.advWptBtn().disabled = true;
-            // this.dodgeBtn().disabled = true;
+            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
         }
         this.apGrid.set(mode || mode === null ? 'grid' : 'none');
       });
@@ -689,7 +711,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
     // No API available
     console.warn('[Autopilot Widget] No Autopilot detected');
-    this.apState.set('off-line');
+    this.apStatePath.set('off-line');
     this.apiDetectionError.set('[Autopilot Widget] No autopilot API available');
 
     this.errorOverlayText.set('No Autopilot detected');
@@ -700,10 +722,14 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private async checkV2Api(): Promise<boolean> {
     try {
-      const response = await this.http.get(API_PATHS.V2_AUTOPILOTS, {
-        observe: 'response',
-        responseType: 'json'
-      }).toPromise();
+      const response = await firstValueFrom(
+        this.makeHttpRequest(
+          this.http.get(API_PATHS.V2_AUTOPILOTS, {
+            observe: 'response',
+            responseType: 'json'
+          })
+        )
+      );
       return response?.status === 200;
     } catch (error) {
       // Differentiate between network errors and 404s
@@ -725,7 +751,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private async discoverV2Autopilots(): Promise<void> {
     try {
-      const response = await this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS).toPromise();
+      const response = await firstValueFrom(
+        this.makeHttpRequest(
+          this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS)
+        )
+      );
       this.availableAutopilots.set(response);
       console.log('[Autopilot Widget] Discovered V2 autopilot instances:', response);
       const configuredInstance = this.widgetProperties.config.autopilotInstance || DEFAULTS.AUTOPILOT_INSTANCE;
@@ -745,9 +775,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       // TODO: Support multiple AP instances
       // Get AP supported modes and states from the specific instance
       try {
-        response = await this.http.get<IV2AutopilotOptionsResponse>(
-          V2_ENDPOINT_TEMPLATES.BASE(targetInstance)
-        ).toPromise();
+        response = await firstValueFrom(
+          this.makeHttpRequest(
+            this.http.get<IV2AutopilotOptionsResponse>(
+              V2_ENDPOINT_TEMPLATES.BASE(targetInstance)
+            )
+          )
+        );
       } catch {
         response = FAILSAFE_OPTIONS_RESPONSE;
         console.log(`[Autopilot Widget] Default AP discovery endpoint error for instance '${targetInstance}'`);
@@ -795,11 +829,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     const previousInstance = this.widgetProperties.config.autopilotInstance;
     this.widgetProperties.config = config;
 
-    // Cancel any ongoing discovery and wait for it to settle
-    if (this.currentDiscoveryRequest) {
-      console.log('[Autopilot Widget] Cancelling ongoing discovery request during config update');
-      this.currentDiscoveryRequest = undefined;
-    }
+    // Cancel any ongoing HTTP requests
+    this.cancelAllHttpRequests();
 
     // If autopilot instance changed and we're using V2 API, re-discover endpoints
     const newInstance = config.autopilotInstance;
@@ -808,7 +839,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       this.discoveryInProgress.set(true);
       this.apiDetectionError.set(null);
 
-      this.currentDiscoveryRequest = this.discoverV2AutopilotOptions().then(() => {
+      this.discoverV2AutopilotOptions().then(() => {
         console.log('[Autopilot Widget] Endpoint discovery completed successfully, starting subscriptions');
         this.startAllSubscriptions();
       }).catch(error => {
@@ -835,10 +866,10 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (this.apiVersion()) {
       this.observeDataStream('autopilotState', newValue => {
         if (newValue.data?.value) {
-          this.apState.set(newValue.data.value);
+          this.apStatePath.set(newValue.data.value);
           console.warn(`[Autopilot Widget] Autopilot state updated: ${newValue.data.value}`);
         } else {
-          this.apState.set('off-line');
+          this.apStatePath.set('off-line');
           console.warn('[Autopilot Widget] Autopilot state is null or not available');
         }
       });
@@ -867,7 +898,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent = newValue.data.value != null ? newValue.data.value : 0);
     }
     if (this.apiVersion() === 'v1') {
-      // Subscribe to V1 autopilot state changes
+      // Subscribe to V1 autopilot PUT state changes
       this.subscribePutResponse();
     }
   }
@@ -880,17 +911,26 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     });
   }
 
-  protected toggleMenu(): void {
-    this.menuOpen.set(!this.menuOpen());
+  /**
+   * Creates a managed HTTP request with automatic cancellation and tracking
+   * @param observable The HTTP Observable to manage
+   * @returns Observable with takeUntilDestroyed and tracking
+   */
+  private makeHttpRequest<T>(observable: Observable<T>): Observable<T> {
+    const request = observable.pipe(takeUntilDestroyed(this._destroyRef));
+    this.currentRequests.add(request);
+
+    return request.pipe(
+      finalize(() => this.currentRequests.delete(request))
+    );
   }
 
-  protected onMenuItemClick(action: string): void {
-    if (action === 'cancel') {
-      this.toggleMenu();
-      return;
-    }
-    this.buildAndSendCommand(action);
-    this.menuOpen.set(false);
+  /**
+   * Cancels all ongoing HTTP requests
+   */
+  private cancelAllHttpRequests(): void {
+    // Observables with takeUntilDestroyed() auto-cancel, just clear tracking
+    this.currentRequests.clear();
   }
 
   protected buildAndSendCommand(cmd: string): void {
@@ -979,33 +1019,34 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       return;
     }
 
+    const dodge = this.dodgeModeActive();
     let targetCommand: IV2CommandDefinition;
 
     switch (cmd) {
       case '+1':
         targetCommand = {
-          path: this.v2Endpoints().adjustHeading,
+          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
           value: { value: +1 , units: "deg" }
         };
         this.sendRestCommand('PUT', targetCommand);
         break;
       case '+10':
         targetCommand = {
-          path: this.v2Endpoints().adjustHeading,
+          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
           value: { value: +10 , units: "deg" }
         };
         this.sendRestCommand('PUT', targetCommand);
         break;
       case '-1':
         targetCommand = {
-          path: this.v2Endpoints().adjustHeading,
+          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
           value: { value: -1 , units: "deg" }
         };
         this.sendRestCommand('PUT', targetCommand);
         break;
       case '-10':
         targetCommand = {
-          path: this.v2Endpoints().adjustHeading,
+          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
           value: { value: -10 , units: "deg" }
         };
         this.sendRestCommand('PUT', targetCommand);
@@ -1099,13 +1140,25 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
       switch(method) {
         case 'POST':
-          response = await this.http.post<IV2CommandResponse>(cmd.path, undefined).toPromise();
+          response = await lastValueFrom(
+            this.makeHttpRequest(
+              this.http.post<IV2CommandResponse>(cmd.path, undefined)
+            )
+          );
           break;
         case 'PUT':
-          response = await this.http.put<IV2CommandResponse>(cmd.path, cmd.value == null ? undefined : cmd.value).toPromise();
+          response = await lastValueFrom(
+            this.makeHttpRequest(
+              this.http.put<IV2CommandResponse>(cmd.path, cmd.value == null ? undefined : cmd.value)
+            )
+          );
           break;
         case 'DELETE':
-          response = await this.http.delete<IV2CommandResponse>(cmd.path).toPromise();
+          response = await lastValueFrom(
+            this.makeHttpRequest(
+              this.http.delete<IV2CommandResponse>(cmd.path)
+            )
+          );
           break;
         default:
           console.error('[Autopilot Widget] Unsupported REST method:', method);
@@ -1159,7 +1212,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   // V2 Dodge Method (class only - no UI yet)
-  protected engageDodge(): void {
+  protected toggleDodge(): void {
     if (this.apiVersion() === 'v2') {
       this.sendV2Command('dodge');
     } else {
@@ -1268,9 +1321,22 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }, DEFAULTS.ERROR_DISPLAY_DURATION);
   }
 
+  protected toggleMenu(): void {
+    this.menuOpen.set(!this.menuOpen());
+  }
+
+  protected onMenuItemClick(action: string): void {
+    if (action === 'cancel') {
+      this.toggleMenu();
+      return;
+    }
+    this.buildAndSendCommand(action);
+    this.menuOpen.set(false);
+  }
+
   ngOnDestroy() {
-    // Cancel any ongoing discovery requests
-    this.currentDiscoveryRequest = undefined;
+    // Cancel all ongoing HTTP requests
+    this.cancelAllHttpRequests();
 
     // Clear any pending timeouts
     clearTimeout(this.handleCountDownCounterTimeout);
