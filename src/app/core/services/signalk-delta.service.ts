@@ -73,6 +73,13 @@ export class SignalKDeltaService implements OnDestroy {
   private auth = inject(AuthenticationService);
   private zones = inject(NgZone); // NgZone to run outside Angular zone - NOT to be confused with SK zones
 
+  // Object flattening configuration - conservative settings for performance
+  private readonly FLATTEN_CONFIG = {
+    maxDepth: 3,        // Object recursive depth limit
+    maxObjectSize: 20,  // Object number of property limit
+    enableFlattening: true // Enable or disable recursive flattening of objects
+  };
+
   constructor() {
     // Monitor Connection Service Endpoint Status
     this.server.serverServiceEndpoint$
@@ -299,25 +306,54 @@ export class SignalKDeltaService implements OnDestroy {
           } else {
             // It's a path value source update.
             if ((typeof(item.value) == 'object') && (item.value !== null)) {
-              Object.keys(item.value).forEach(key => {
-                const dataPath: IPathValueData = {
-                  context: context,
-                  path: `${item.path}.${key}`,
-                  source: update.$source,
-                  timestamp: update.timestamp,
-                  value: item.value[key],
-                };
+              // Check if recursive flattening is enabled and possible
+              if (this.FLATTEN_CONFIG.enableFlattening &&
+                  this.canFlattenCompletely(item.value, this.FLATTEN_CONFIG.maxDepth, this.FLATTEN_CONFIG.maxObjectSize)) {
 
-                if (update.$source == "defaults" && item.path == "") { // defaults are SK special ship description values that have no path. Removing first dot so it attaches to self properly
-                  dataPath.path = dataPath.path.slice(1);
-                }
+                // Perform recursive flattening
+                const flattenedItems = this.flattenObjectValue(item.value, item.path);
 
-                if (context != this._selfUrn && item.path == "") { // data from non self root nodes (other vessel, atoms, stations, buoy, etc.) may have no path. Removing first dot so it attaches to external root node context properly
-                  dataPath.path = dataPath.path.slice(1);
-                }
+                flattenedItems.forEach(flatItem => {
+                  const dataPath: IPathValueData = {
+                    context: context,
+                    path: flatItem.path,
+                    source: update.$source,
+                    timestamp: update.timestamp,
+                    value: flatItem.value,
+                  };
 
-                this._skValue$.next(dataPath);
-              });
+                  if (update.$source == "defaults" && item.path == "") {
+                    dataPath.path = dataPath.path.slice(1);
+                  }
+
+                  if (context != this._selfUrn && item.path == "") {
+                    dataPath.path = dataPath.path.slice(1);
+                  }
+
+                  this._skValue$.next(dataPath);
+                });
+              } else {
+                // Fall back to single-level flattening for objects that exceed limits
+                Object.keys(item.value).forEach(key => {
+                  const dataPath: IPathValueData = {
+                    context: context,
+                    path: `${item.path}.${key}`,
+                    source: update.$source,
+                    timestamp: update.timestamp,
+                    value: item.value[key],
+                  };
+
+                  if (update.$source == "defaults" && item.path == "") {
+                    dataPath.path = dataPath.path.slice(1);
+                  }
+
+                  if (context != this._selfUrn && item.path == "") {
+                    dataPath.path = dataPath.path.slice(1);
+                  }
+
+                  this._skValue$.next(dataPath);
+                });
+              }
             } else {
               // It's a Primitive type or a null value
               const dataPath: IPathValueData = {
@@ -333,6 +369,56 @@ export class SignalKDeltaService implements OnDestroy {
         });
       }
     });
+  }
+
+
+  /**
+   * Validates if an object can be completely flattened within configured limits.
+   * Uses all-or-nothing approach to prevent partial flattening.
+   */
+  private canFlattenCompletely(obj: unknown, maxDepth: number, maxSize: number, currentDepth = 0): boolean {
+    if (currentDepth >= maxDepth) {
+      return false;
+    }
+
+    if (typeof obj !== 'object' || obj === null) {
+      return true;
+    }
+
+    const keys = Object.keys(obj);
+    if (keys.length > maxSize) {
+      return false;
+    }
+
+    // Check all nested objects recursively
+    for (const key of keys) {
+      if (!this.canFlattenCompletely((obj as Record<string, unknown>)[key], maxDepth, maxSize, currentDepth + 1)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Recursively flattens an object into an array of path-value pairs.
+   * Only called after validation confirms complete flattening is possible.
+   */
+  private flattenObjectValue(obj: unknown, basePath: string, currentDepth = 0): {path: string, value: unknown}[] {
+    const results: {path: string, value: unknown}[] = [];
+
+    if (typeof obj !== 'object' || obj === null || currentDepth >= this.FLATTEN_CONFIG.maxDepth) {
+      return [{ path: basePath, value: obj }];
+    }
+
+    const keys = Object.keys(obj);
+    for (const key of keys) {
+      const newPath = basePath ? `${basePath}.${key}` : key;
+      const nestedResults = this.flattenObjectValue((obj as Record<string, unknown>)[key], newPath, currentDepth + 1);
+      results.push(...nestedResults);
+    }
+
+    return results;
   }
 
   private parseSkMeta(metadata: ISignalKMeta, context: string) {
