@@ -12,8 +12,8 @@
         </mat-form-field>
       </td>
       <td class="connect-cell">
-        <button mat-flat-button class="connect-btn" type="submit" [disabled]="!connectionForm.form.valid">
-          Connect
+        <button mat-flat-button class="connect-btn" type="submit" [disabled]="!connectionForm.form.valid || isConnecting">
+          {{ isConnecting ? 'Validating...' : 'Connect' }}
         </button>
       </td>
     </tr>

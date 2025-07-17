@@ -21,6 +21,7 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule, bootstrapApplication } from '@angular/platform-browser';
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
+import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
 import 'hammerjs';
@@ -122,6 +123,7 @@ bootstrapApplication(AppComponent, {
     DataService,
     SignalKConnectionService,
     SignalKDeltaService,
+    ConnectionStateMachine,
     DatasetService,
     DashboardService,
     UnitsService,

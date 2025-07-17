@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { DataService } from './data.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { StorageService } from './storage.service';
+import { ConnectionStateMachine } from './connection-state-machine.service';
 
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
@@ -28,6 +29,7 @@ export class AppNetworkInitService implements OnDestroy {
 
   private connection = inject(SignalKConnectionService);
   private auth = inject(AuthenticationService);
+  private connectionStateMachine = inject(ConnectionStateMachine);
   private router = inject(Router);
   private delta = inject(SignalKDeltaService); // Init to get data before app starts
   private data = inject(DataService); // Init to get data before app starts
@@ -45,7 +47,12 @@ export class AppNetworkInitService implements OnDestroy {
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
-        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled, this.config.signalKSubscribeAll);
+        // Use SignalKConnectionService to initialize connection with the configured URL
+        await this.connection.initializeConnection(
+          {url: this.config.signalKUrl, new: false},
+          this.config.proxyEnabled,
+          this.config.signalKSubscribeAll
+        );
       }
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
@@ -68,6 +75,14 @@ export class AppNetworkInitService implements OnDestroy {
       return Promise.reject("[AppInit Network Service] Services loaded. Connection issue");
     } finally {
       console.log("[AppInit Network Service] Initialization completed");
+      // Enable WebSocket functionality now that initialization is complete
+      this.connectionStateMachine.enableWebSocketMode();
+
+      // Start WebSocket connection if HTTP discovery was successful
+      if (this.connectionStateMachine.isHTTPConnected()) {
+        console.log("[AppInit Network Service] Starting WebSocket connection after initialization");
+        this.connectionStateMachine.startWebSocketConnection();
+      }
     }
   }
 
