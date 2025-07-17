@@ -8,6 +8,7 @@ import { IDeltaUpdate, DataService } from '../../core/services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { ConnectionStateMachine } from '../../core/services/connection-state-machine.service';
 import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
@@ -52,12 +53,14 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private signalKConnectionService = inject(SignalKConnectionService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private deltaService = inject(SignalKDeltaService);
+  private connectionStateMachine = inject(ConnectionStateMachine);
   auth = inject(AuthenticationService);
 
 
   readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
 
   connectionConfig: IConnectionConfig;
+  isConnecting = false; // Loading state for connect button
 
   authTokenSub: Subscription;
   authToken: IAuthorizationToken;
@@ -147,60 +150,57 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     });
   }
 
-  public  connectToServer() {
+  public async connectToServer() {
     if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
       this.openUserCredentialModal("Credentials required");
       return;
     }
 
-    if ((this.connectionConfig.signalKUrl !== this.appSettingsService.signalkUrl.url) || (this.connectionConfig.proxyEnabled !== this.appSettingsService.proxyEnabled ) || (this.connectionConfig.signalKSubscribeAll !== this.appSettingsService.signalKSubscribeAll )) {
+    // Start loading state
+    this.isConnecting = true;
+
+    try {
+      console.log('[Settings-SignalK] Validating Signal K server before connecting...');
+
+      // Step 1: Validate the URL before proceeding
+      await this.signalKConnectionService.validateSignalKUrl(this.connectionConfig.signalKUrl);
+
+      console.log('[Settings-SignalK] Validation successful - proceeding with connection');
+
+      // Step 2: Save the new configuration to localStorage
       this.appSettingsService.setConnectionConfig(this.connectionConfig);
 
-      if (this.connectionConfig.useSharedConfig) {
-        this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if ( this.authToken) {
+      // Step 3: Properly close WebSocket and HTTP connections
+      this.connectionStateMachine.shutdown('Configuration changed - restarting app');
+
+      // Step 4: Clean up authentication token if switching from shared to individual config
+      if (this.authToken && !this.connectionConfig.useSharedConfig && !this.authToken.isDeviceAccessToken) {
         this.auth.deleteToken();
-        location.reload();
-      } else {
-        location.reload();
       }
 
-    } else {
-      this.appSettingsService.setConnectionConfig(this.connectionConfig);
-      // Same URL - no need to resetSignalK(). Just login, new token reset will reload WebSockets
-      // and HTTP_INTERCEPTOR will intercept the new token automatically on all HTTP calls (except for WebSocket).
-      if ((this.authToken && this.authToken.isDeviceAccessToken) && this.connectionConfig.useSharedConfig) {
-        this.serverLogin(this.connectionConfig.signalKUrl);
-      } else if ((this.authToken && !this.authToken.isDeviceAccessToken) && !this.connectionConfig.useSharedConfig) {
-        this.deleteToken();
-        location.reload();
-      } else if (this.connectionConfig.useSharedConfig) {
-        this.serverLogin(this.connectionConfig.signalKUrl);
-      } else {
-        location.reload();
-      }
+      // Step 5: Reload immediately - APP_INITIALIZER will handle connection and authentication with new URL
+      location.reload();
+
+    } catch (error) {
+      // Validation failed - show error and stay on current page
+      this.isConnecting = false;
+      const errorMessage = error.message || 'Unknown validation error';
+      console.error('[Settings-SignalK] Server validation failed:', errorMessage);
+      this.appService.sendSnackbarNotification(`Connection failed: ${errorMessage}`, 8000, false);
     }
   }
 
   private serverLogin(newUrl?: string) {
       this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
       .then( () => {
+        // Authentication successful - reload to start with new config
         location.reload();
       })
       .catch((error: HttpErrorResponse) => {
-        if (error.status == 401) {
-          this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valid credentials");
-          console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
-        } else if (error.status == 404) {
-          this.appService.sendSnackbarNotification("Sign in failed: Login API not found", 5000, false);
-          console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
-        } else if (error.status == 0) {
-          this.appService.sendSnackbarNotification("Sign in failed: Cannot reach server at Signal K URL", 5000, false);
-          console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at Signal K URL:" + error.message);
-        } else {
-          this.appService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
-          console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
-        }
+        // Authentication failed - but we still need to reload since config was already saved
+        // The retry mechanism will handle connection issues after reload
+        console.log(`[Setting-SignalK Component] Authentication failed but reloading anyway: ${error.message}`);
+        location.reload();
       });
   }
 
@@ -300,6 +300,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   };
 
   ngOnDestroy() {
+    this.isConnecting = false; // Reset loading state
     this.skEndpointServiceStatusSub.unsubscribe();
     this.skStreamStatusSub.unsubscribe();
     this.authTokenSub.unsubscribe();

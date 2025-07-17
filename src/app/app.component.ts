@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, viewChild, inject, EventEmitter, AfterVie
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
-import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
+import { SignalKDeltaService } from './core/services/signalk-delta.service';
+import { ConnectionStateMachine, IConnectionStatus } from './core/services/connection-state-machine.service';
 import { AppService } from './core/services/app-service';
 import { Howl } from 'howler';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -30,6 +31,7 @@ import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/l
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private _snackBar = inject(MatSnackBar);
   private _deltaService = inject(SignalKDeltaService);
+  private _connectionStateMachine = inject(ConnectionStateMachine);
   private _app = inject(AppService);
   private _dashboard = inject(DashboardService);
   private _uiEvent = inject(uiEventService);
@@ -69,7 +71,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     // Connection Status Notification sub
-    this.connectionStatusSub = this._deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
+    this.connectionStatusSub = this._connectionStateMachine.status$.subscribe((status: IConnectionStatus) => {
+      console.log(`[AppComponent] Received connection status: ${status.state} (op: ${status.operation}) - ${status.message}`);
       this.displayConnectionsStatusNotification(status);
       }
     );
@@ -138,26 +141,39 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
-    switch (streamStatus.operation) {
+  private displayConnectionsStatusNotification(connectionStatus: IConnectionStatus) {
+    const message = connectionStatus.message;
+    console.log(`[AppComponent] Displaying notification: ${message}`);
+
+    // Use legacy operation codes for compatibility
+    switch (connectionStatus.operation) {
       case 0: // not connected
-        this._app.sendSnackbarNotification("Not connected to server.", 5000, true);
+        this._app.sendSnackbarNotification(message, 5000, true);
         break;
 
       case 1: // connecting
-        this._app.sendSnackbarNotification("Connecting to server.", 2000, true);
+        this._app.sendSnackbarNotification(message, 5000, true); // Increased from 2000 to see it longer
        break;
 
       case 2: // connected
-        this._app.sendSnackbarNotification("Connection successful.", 2000, false);
+        this._app.sendSnackbarNotification(message, 2000, false);
         break;
 
-      case 3: // connection error
-        this._app.sendSnackbarNotification("Error connecting to server.", 0, false);
+      case 3: // connection error/retrying
+        this._app.sendSnackbarNotification(message, 5000, false); // Changed from 0 (indefinite) to 5000 to avoid blocking
+        break;
+
+      case 4: // resetting
+        this._app.sendSnackbarNotification(message, 3000, true);
+        break;
+
+      case 5: // permanent failure
+        this._app.sendSnackbarNotification(message, 0, false);
         break;
 
       default:
-        this._app.sendSnackbarNotification("Unknown stream connection status.", 0, false);
+        console.error(`[AppComponent] Unknown operation code: ${connectionStatus.operation} for state: ${connectionStatus.state}`);
+        this._app.sendSnackbarNotification(`Unknown connection status: ${connectionStatus.state}`, 0, false);
         break;
     }
   }

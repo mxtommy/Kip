@@ -1,11 +1,12 @@
 import { DestroyRef, inject, Injectable, NgZone, OnDestroy } from '@angular/core';
-import { BehaviorSubject, delay, Observable, of, retry, Subject, fromEvent } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
 import { IMeta, IPathValueData } from "../interfaces/app-interfaces";
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service'
 import { AuthenticationService, IAuthorizationToken } from './authentication.service';
+import { ConnectionStateMachine, ConnectionState } from './connection-state-machine.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
@@ -55,8 +56,6 @@ export class SignalKDeltaService implements OnDestroy {
   // Websocket config
   private endpointWS: string = null;
   private SubscriptionType = "self";
-  private readonly WS_RECONNECT_INTERVAL = 5000;       // connection error retry interval
-  private readonly WS_RETRY_COUNT = 5;                 // connection error retry interval
   private readonly WS_CONNECTION_SUBSCRIBE = "?subscribe=";
   private readonly WS_CONNECTION_META = "&sendMeta=all"; // default but we could use none + specific paths in the future
   private socketWS$: WebSocketSubject<object>;
@@ -66,11 +65,9 @@ export class SignalKDeltaService implements OnDestroy {
   // Token
   private authToken: IAuthorizationToken = null;
 
-  // Array to store the timeout IDs
-  private timeoutIds: NodeJS.Timeout[] = [];
-
   private server = inject(SignalKConnectionService);
   private auth = inject(AuthenticationService);
+  private connectionStateMachine = inject(ConnectionStateMachine);
   private zones = inject(NgZone); // NgZone to run outside Angular zone - NOT to be confused with SK zones
 
   // Object flattening configuration - conservative settings for performance
@@ -81,65 +78,66 @@ export class SignalKDeltaService implements OnDestroy {
   };
 
   constructor() {
-    // Monitor Connection Service Endpoint Status
+    // Register WebSocket retry callback with ConnectionStateMachine
+    this.connectionStateMachine.setWebSocketRetryCallback(() => {
+      console.log('[Delta Service] Executing WebSocket retry via callback');
+      this.retryWebSocketConnection();
+    });
+
+    // Monitor Connection Service Endpoint Status for WebSocket URL
     this.server.serverServiceEndpoint$
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe((endpointStatus: IEndpointStatus) => {
-      let reason: string = null;
-        if (endpointStatus.operation === 2) {
-          reason = "New endpoint";
-        } else {
-          reason = "Connection stopped";
-        }
-
         if (endpointStatus.operation === 2) {
           this.endpointWS = endpointStatus.WsServiceUrl;
 
-          if (this.socketWS$ && this.streamEndpoint.operation !== 4) {
-            this.closeWS(reason);
-          }
-
-          this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
-
-        } else {
-          if (this.socketWS$ && endpointStatus.operation !== 1 && this.streamEndpoint.operation !== 4) {
-            this.closeWS(reason);
+          // Set subscription type
+          if (endpointStatus.subscribeAll) {
+            this.SubscriptionType = "all";
+          } else {
+            this.SubscriptionType = "self";
           }
         }
+      });
 
-        if (endpointStatus.subscribeAll) {
-          this.SubscriptionType = "all";
-        } else {
-          this.SubscriptionType = "self";
-        } // set subscription type
-    });
+    // Monitor ConnectionStateMachine state changes
+    this.connectionStateMachine.state$
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe((state: ConnectionState) => {
+        switch (state) {
+          case ConnectionState.WebSocketConnecting:
+            this.handleWebSocketConnecting();
+            break;
+          case ConnectionState.Connected:
+            // Connection handled by WebSocket open event
+            break;
+          case ConnectionState.Disconnected:
+          case ConnectionState.WebSocketError:
+          case ConnectionState.PermanentFailure:
+            this.handleDisconnection();
+            break;
+        }
+      });
 
     // Monitor Token changes
     this.auth.authToken$
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe((token: IAuthorizationToken) => {
-        if (this.authToken != token) { // When token changes, reconnect WebSocket with new token
+        if (this.authToken != token) {
           this.authToken = token;
 
-          let reason: string = null;
-          if (token) {
-            reason = "New token";
-          } else {
-            reason = "Deleted Token";
-          }
-
-          // Only if the socket is in Connected or Connecting state.
-          if (this.socketWS$ && (this.streamEndpoint.operation === 2 || this.streamEndpoint.operation === 1) ) {
-            this.closeWS(reason);
-            this.timeoutIds.push(setTimeout(() => { this.connectWS(reason) }, 250)); // need a delay so WebSocket Close Observer has time to complete before connecting again.
+          // If WebSocket is connected, reconnect with new token
+          if (this.socketWS$ && this.connectionStateMachine.isFullyConnected()) {
+            this.closeWS('Token changed');
+            this.connectionStateMachine.startWebSocketConnection();
           }
         }
-    });
+      });
 
     // WebSocket Open Event Handling
     this.socketWSOpenEvent$
       .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe( () => {
+      .subscribe(() => {
         this.streamEndpoint.message = "Connected";
         this.streamEndpoint.operation = 2;
         if (this.authToken) {
@@ -148,24 +146,29 @@ export class SignalKDeltaService implements OnDestroy {
           console.log("[Delta Service] WebSocket connected without Authorization Token");
         }
         this.streamEndpoint$.next(this.streamEndpoint);
-    });
+
+        // Notify ConnectionStateMachine of successful WebSocket connection
+        this.connectionStateMachine.onWebSocketConnected();
+      });
 
     // WebSocket closed Event Handling
     this.socketWSCloseEvent$
       .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe( event => {
-        if(event.wasClean) {
+      .subscribe(event => {
+        if (event.wasClean) {
+          console.log('[Delta Service] WebSocket closed cleanly');
           this.streamEndpoint.message = "WebSocket closed";
           this.streamEndpoint.operation = 0;
-          console.log('[Delta Service] WebSocket closed');
         } else {
           console.log('[Delta Service] WebSocket terminated due to socket error');
           this.streamEndpoint.message = "WebSocket error";
           this.streamEndpoint.operation = 3;
-          console.log('[Delta Service] WebSocket closed');
+
+          // Notify ConnectionStateMachine of WebSocket error
+          this.connectionStateMachine.onWebSocketError('WebSocket connection lost');
         }
         this.streamEndpoint$.next(this.streamEndpoint);
-    });
+      });
 
     // Listen for visibility (app suspend, background or screenlock) change events
     fromEvent(document, 'visibilitychange')
@@ -182,10 +185,10 @@ export class SignalKDeltaService implements OnDestroy {
   }
 
   /**
-   * Connect WebSocket to server. Endpoint URL taken from Connection Service and
-   * authentication token is taken from Authentication service
+   * Connect WebSocket to server. Called by ConnectionStateMachine.
+   * No retry logic - that's handled by ConnectionStateMachine.
    */
-   public connectWS(reason: string): void {
+  public connectWS(reason: string): void {
     this.streamEndpoint.message = "Connecting";
     this.streamEndpoint.operation = 1;
     console.log(`[Delta Service] ${reason}: WebSocket opening...`);
@@ -195,20 +198,68 @@ export class SignalKDeltaService implements OnDestroy {
 
     // Running outside Angular's zone to prevent unnecessary change detection cycles
     this.zones.runOutsideAngular(() => {
-      this.socketWS$.pipe(
-        retry({
-          count: this.WS_RETRY_COUNT,
-          delay: (error, retryCount) => {
-            console.error(`[Delta Service] WebSocket error (attempt ${retryCount}): ${JSON.stringify(error, ["code", "message", "type"])}`);
-            return of(error).pipe(delay(this.WS_RECONNECT_INTERVAL));
+      this.socketWS$.pipe(takeUntilDestroyed(this._destroyRef))
+        .subscribe({
+          next: msgWS => this.processWebsocketMessage(msgWS),
+          error: err => {
+            console.error('[Delta Service] WebSocket error:', err);
+            // Note: ConnectionStateMachine error reporting is handled in the close event handler
+            // to avoid duplicate error reports for the same connection failure
           }
-        })
-      ).pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe({
-        next: msgWS => this.processWebsocketMessage(msgWS),
-        error: err => console.error('[Delta Service] WebSocket connection failed after maximum retries:', err)
-      });
+        });
     });
+  }
+
+  /**
+   * Handle WebSocket connecting state from ConnectionStateMachine
+   */
+  /**
+   * Retry WebSocket connection without changing ConnectionStateMachine state
+   */
+  private retryWebSocketConnection(): void {
+    console.log('[Delta Service] Retrying WebSocket connection');
+    if (!this.endpointWS) {
+      console.warn('[Delta Service] No WebSocket endpoint available for retry');
+      this.connectionStateMachine.onWebSocketError('No WebSocket endpoint available');
+      return;
+    }
+
+    // Close existing connection if any
+    if (this.socketWS$) {
+      this.closeWS('Retrying connection');
+    }
+
+    // Start new WebSocket connection
+    this.connectWS('WebSocket retry attempt');
+  }
+
+  private handleWebSocketConnecting(): void {
+    if (!this.endpointWS) {
+      console.warn('[Delta Service] No WebSocket endpoint available');
+      this.connectionStateMachine.onWebSocketError('No WebSocket endpoint available');
+      return;
+    }
+
+    // Close existing connection if any
+    if (this.socketWS$) {
+      this.closeWS('Starting new connection');
+    }
+
+    // Start new WebSocket connection
+    this.connectWS('ConnectionStateMachine request');
+  }
+
+  /**
+   * Handle disconnection states from ConnectionStateMachine
+   */
+  private handleDisconnection(): void {
+    if (this.socketWS$) {
+      this.closeWS('ConnectionStateMachine disconnection');
+    }
+
+    this.streamEndpoint.message = "Not connected";
+    this.streamEndpoint.operation = 0;
+    this.streamEndpoint$.next(this.streamEndpoint);
   }
 
   /**
@@ -253,13 +304,7 @@ export class SignalKDeltaService implements OnDestroy {
       console.log("[Delta Service] WebSocket sending message");
       this.socketWS$.next(msg);
     } else {
-      this.timeoutIds.push(setTimeout(() => {
-        if (this.socketWS$) {
-          console.log("[Delta Service] WebSocket retry sending message");
-          this.socketWS$.next(msg);
-        }
-       }, 1000));
-      console.log("[Delta Service] No WebSocket present to send message");
+      console.log("[Delta Service] No WebSocket present to send message - dropping message");
     }
   }
 
@@ -469,12 +514,16 @@ export class SignalKDeltaService implements OnDestroy {
    * @param reason Reason for triggering the reconnection logic.
    */
   private checkAndReconnect(reason: string): void {
-    if (this.streamEndpoint.operation !== 2) { // Not connected
-      console.log(`[Delta Service] ${reason}: WebSocket not connected, attempting to reconnect...`);
-      this.closeWS(reason); // Ensure any existing connection is closed
-      this.timeoutIds.push(setTimeout(() => this.connectWS(reason), 250)); // Reconnect with a slight delay
+    if (!this.connectionStateMachine.isFullyConnected()) {
+      console.log(`[Delta Service] ${reason}: Not fully connected, requesting reconnection...`);
+      // Let ConnectionStateMachine handle the reconnection logic
+      if (this.connectionStateMachine.isHTTPConnected()) {
+        this.connectionStateMachine.startWebSocketConnection();
+      } else {
+        console.log(`[Delta Service] ${reason}: HTTP not connected, cannot start WebSocket`);
+      }
     } else {
-      console.log(`[Delta Service] ${reason}: WebSocket is already connected.`);
+      console.log(`[Delta Service] ${reason}: Already fully connected.`);
     }
   }
 
@@ -499,7 +548,5 @@ export class SignalKDeltaService implements OnDestroy {
     this.socketWSOpenEvent$.complete();
     this.socketWSCloseEvent$.complete();
     this.socketWS$?.complete();
-    // Clear all the timers
-    this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
   }
 }
