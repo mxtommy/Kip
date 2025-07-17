@@ -56,11 +56,12 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         'ttsPath': {
           description: 'Time to the Start in seconds',
           path: 'self.navigation.racing.timeToStart',
-          source: 'default',
+          source: null
           pathType: 'number',
           pathRequired: true,
-          isPathConfigurable: true,
+          isPathConfigurable: false,
           convertUnitTo: 's',
+          showConvertUnitTo: false,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 's',
           sampleTime: 500
