@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
+import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
@@ -8,9 +8,9 @@ import {CanvasService} from '../../core/services/canvas.service';
 import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
 import {MatButton} from '@angular/material/button';
-import {Subscription} from 'rxjs';
 import {FormsModule} from '@angular/forms';
 import {DashboardService} from '../../core/services/dashboard.service';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'widget-racer-timer',
@@ -40,7 +40,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   protected timeToSContext: CanvasRenderingContext2D;
   protected timeToSElement: HTMLCanvasElement;
-  private skRequestSubscription: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
   protected startAtTime = 'HH:MM:SS';
   protected startAtTimeEdit = this.startAtTime;
 
@@ -56,7 +56,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         'ttsPath': {
           description: 'Time to the Start in seconds',
           path: 'self.navigation.racing.timeToStart',
-          source: null
+          source: null,
           pathType: 'number',
           pathRequired: true,
           isPathConfigurable: false,
@@ -226,7 +226,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       this.dtsValue = newValue.data.value;
     });
 
-    this.skRequestSubscription = this.signalk.subscribeRequest().subscribe(requestResult => {
+    this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
       }
@@ -310,11 +310,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.canvasService.clearCanvas(this.timeToSContext,
       this.timeToSElement.width,
       this.timeToSElement.height);
-
-    if (this.skRequestSubscription !== null) {
-      this.skRequestSubscription.unsubscribe();
-      this.skRequestSubscription = null;
-    }
   }
 
   private updateCanvas(): void {

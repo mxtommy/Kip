@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
+import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
@@ -8,7 +8,7 @@ import {CanvasService} from '../../core/services/canvas.service';
 import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
 import {MatButton} from '@angular/material/button';
-import {Subscription} from 'rxjs';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'widget-racer-line',
@@ -38,7 +38,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
 
-  private skRequestSubscription: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
     super();
@@ -174,7 +174,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       this.updateCanvas();
     });
 
-    this.skRequestSubscription = this.signalk.subscribeRequest().subscribe(requestResult => {
+    this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
       }
@@ -249,11 +249,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.isDestroyed = true;
     this.destroyDataStreams();
     this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
-
-    if (this.skRequestSubscription !== null) {
-      this.skRequestSubscription.unsubscribe();
-      this.skRequestSubscription = null;
-    }
   }
 
   private updateCanvas(): void {
