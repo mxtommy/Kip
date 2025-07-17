@@ -72,7 +72,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     // Connection Status Notification sub
     this.connectionStatusSub = this._connectionStateMachine.status$.subscribe((status: IConnectionStatus) => {
-      console.log(`[AppComponent] Received connection status: ${status.state} (op: ${status.operation}) - ${status.message}`);
       this.displayConnectionsStatusNotification(status);
       }
     );
@@ -143,7 +142,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private displayConnectionsStatusNotification(connectionStatus: IConnectionStatus) {
     const message = connectionStatus.message;
-    console.log(`[AppComponent] Displaying notification: ${message}`);
 
     // Use legacy operation codes for compatibility
     switch (connectionStatus.operation) {

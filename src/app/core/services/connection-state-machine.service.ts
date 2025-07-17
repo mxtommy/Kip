@@ -183,14 +183,12 @@ export class ConnectionStateMachine {
                              this.currentState === ConnectionState.Connected;
 
     if (!canStartWebSocket) {
-      // If we're still discovering HTTP, this is expected - just log debug info
+      // If we're still discovering HTTP, this is expected
       if (this.currentState === ConnectionState.HTTPDiscovering) {
-        console.debug('[ConnectionStateMachine] WebSocket start requested during HTTP discovery - will start after HTTP completes');
         return;
       }
 
       // For other states, this might be unexpected
-      console.warn(`[ConnectionStateMachine] Cannot start WebSocket - current state: ${this.currentState}`);
       return;
     }
 
