@@ -97,6 +97,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       if (this.theme()) {
         untracked(() => {
           this.getColors(this.widgetProperties.config.color);
+          this.updateCanvas();
         });
       }
     });
