@@ -52,7 +52,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           path: 'self.navigation.racing.distanceStartline',
           source: null,
           pathType: 'number',
-          pathRequired: false,
+          pathRequired: true,
           isPathConfigurable: false,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
