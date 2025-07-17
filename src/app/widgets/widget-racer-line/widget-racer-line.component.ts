@@ -296,7 +296,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       Math.floor(this.dToLineElement.width * 0.25),
       Math.floor(this.dToLineElement.height * 0.15),
       'bold',
-      this.valueColor,
+      this.dtsColor,
       'end',
       'alphabetic'
     );
@@ -308,13 +308,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
       let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
       valueText += this.lengthValue != null
-        ? `Line:${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-        : 'Line:--';
+        ? `Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
+        : 'Line: --';
       valueText += '  ';
     }
 
     if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
-      valueText += 'Bias:';
+      valueText += ' Bias: ';
       let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
       if (this.biasValue == null) {
         valueText += '--';
