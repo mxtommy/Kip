@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, untracked, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, signal, untracked, ViewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
@@ -43,17 +43,18 @@ import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-sli
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy{
-  private _app = inject(AppService);
-  private _dialog = inject(DialogService);
-  protected dashboard = inject(DashboardService);
-  private _notifications = inject(NotificationsService);
+  private readonly _app = inject(AppService);
+  private readonly _dialog = inject(DialogService);
+  protected readonly dashboard = inject(DashboardService);
+  private readonly _notifications = inject(NotificationsService);
   private readonly _destroyRef = inject(DestroyRef);
-  private _uiEvent = inject(uiEventService);
-  protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
-  protected isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
+  private readonly _uiEvent = inject(uiEventService);
+  protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
+  protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
+  protected isLoading = signal(true);
   @ViewChild('grid', { static: true }) private _gridstack!: GridstackComponent;
   private _previousIsStaticState = true;
-  protected gridOptions: NgGridStackOptions = {
+  protected readonly gridOptions: NgGridStackOptions = {
     margin: 4,
     minRow: 12,
     maxRow: 12,
@@ -88,7 +89,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     effect(() => {
       const dashboardId = this.dashboard.activeDashboard();
       untracked(() => {
-        this.loadDashboard(dashboardId);
+        // Only load if GridStack is ready, otherwise let ngAfterViewInit handle it
+        if (this._gridstack?.grid) {
+          this.loadDashboard(dashboardId);
+        }
       });
     });
   }
@@ -134,6 +138,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
     setTimeout(() => {
       this.loadDashboard(this.dashboard.activeDashboard());
+      // Ensure loading is set to false after GridStack is fully ready
+      this.isLoading.set(false);
     });
   }
 
@@ -172,6 +178,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   protected loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
     this._gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
+    // Only set loading to false if GridStack is fully initialized
+    if (this._gridstack?.grid) {
+      this.isLoading.set(false);
+    }
   }
 
   protected saveDashboard(): void {
