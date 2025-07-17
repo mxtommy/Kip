@@ -1,3 +1,12 @@
+# V 3.4.0
+## New features
+* Enhanced empty dashboard experience with intuitive visual guidance and one-click customization prompts for seamless onboarding
+## Improvements
+* Advanced recursive data flattening engine converting complex nested objects into accessible data paths for improved widget compatibility
+* Completely redesigned networking architecture with state machine management for enhanced connection reliability, performance, and user experience
+## Fixes
+* Autopilot widget now properly handles 'off-line' connection states with appropriate visual indicators
+* Removed unit conversion option from slider widget UI to preserve original path format integrity
 # V 3.3.0
 ## New features
 * New autopilot widget with responsive UI.
