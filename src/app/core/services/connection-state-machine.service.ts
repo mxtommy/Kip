@@ -1,4 +1,4 @@
-import { Injectable, inject, DestroyRef } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
@@ -43,9 +43,6 @@ export interface IConnectionConfig {
   providedIn: 'root'
 })
 export class ConnectionStateMachine {
-  private readonly _destroyRef = inject(DestroyRef);
-
-  // Configuration constants
   private readonly config: IConnectionConfig = {
     httpRetryCount: 3,
     webSocketRetryCount: 5,
@@ -242,17 +239,6 @@ export class ConnectionStateMachine {
   }
 
   /**
-   * Manually disconnect
-   */
-  public disconnect(reason = 'Manual disconnect'): void {
-    console.log(`[ConnectionStateMachine] Disconnecting: ${reason}`);
-    this.clearRetryTimer();
-    this._httpRetryCount = 0;
-    this._webSocketRetryCount = 0;
-    this.setState(ConnectionState.Disconnected, 'Disconnected');
-  }
-
-  /**
    * Gracefully shutdown all connections before app restart
    */
   public shutdown(reason = 'App shutdown'): void {
@@ -263,17 +249,6 @@ export class ConnectionStateMachine {
     this._webSocketRetryCount = 0;
     // Set to disconnected state to trigger cleanup in dependent services
     this.setState(ConnectionState.Disconnected, 'Application restarting...');
-  }
-
-  /**
-   * Reset to allow new connection attempts
-   */
-  public reset(): void {
-    console.log('[ConnectionStateMachine] Resetting connection state');
-    this.clearRetryTimer();
-    this._httpRetryCount = 0;
-    this._webSocketRetryCount = 0;
-    this.setState(ConnectionState.Disconnected, 'Ready to connect');
   }
 
   /**
@@ -294,9 +269,8 @@ export class ConnectionStateMachine {
   }
 
   /**
-   * Private methods
+   * Check if currently connected (HTTP or WebSocket)
    */
-
   private setState(state: ConnectionState, message: string, retryCount?: number, maxRetries?: number): void {
     this._currentState$.next(state);
 

@@ -1,5 +1,5 @@
-import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../core/services/app-service';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
@@ -7,16 +7,14 @@ import { SignalKConnectionService, IEndpointStatus } from '../../core/services/s
 import { IDeltaUpdate, DataService } from '../../core/services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
-import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { ConnectionStateMachine } from '../../core/services/connection-state-machine.service';
 import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
-import { HttpErrorResponse } from '@angular/common/http';
 import { compare } from 'compare-versions';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { SlicePipe } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
-import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatSlideToggle, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +24,11 @@ import 'chartjs-adapter-date-fns';
 
 
 
+/**
+ * Signal K settings component for managing server connection configuration.
+ * Handles URL validation, authentication, connection establishment, and
+ * real-time monitoring of connection status and data stream statistics.
+ */
 @Component({
     selector: 'settings-signalk',
     templateUrl: './signalk.component.html',
@@ -46,55 +49,39 @@ import 'chartjs-adapter-date-fns';
 })
 
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
-  dialog = inject(MatDialog);
-  private appSettingsService = inject(AppSettingsService);
-  protected appService = inject(AppService);
-  private DataService = inject(DataService);
-  private signalKConnectionService = inject(SignalKConnectionService);
-  private signalkRequestsService = inject(SignalkRequestsService);
-  private deltaService = inject(SignalKDeltaService);
-  private connectionStateMachine = inject(ConnectionStateMachine);
-  auth = inject(AuthenticationService);
+  private readonly dialog = inject(MatDialog);
+  private readonly appSettingsService = inject(AppSettingsService);
+  protected readonly appService = inject(AppService);
+  private readonly DataService = inject(DataService);
+  private readonly signalKConnectionService = inject(SignalKConnectionService);
+  private readonly deltaService = inject(SignalKDeltaService);
+  private readonly connectionStateMachine = inject(ConnectionStateMachine);
+  protected readonly auth = inject(AuthenticationService);
+  private readonly destroyRef = inject(DestroyRef);
 
 
-  readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
+  protected readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
 
-  connectionConfig: IConnectionConfig;
-  isConnecting = false; // Loading state for connect button
+  public connectionConfig: IConnectionConfig;
+  public isConnecting = false; // Loading state for connect button
 
-  authTokenSub: Subscription;
-  authToken: IAuthorizationToken;
-  isLoggedInSub: Subscription;
-  isLoggedIn: boolean;
-  public proxyEnabled = false;
+  public authToken: IAuthorizationToken;
 
-  endpointServiceStatus: IEndpointStatus;
-  skEndpointServiceStatusSub: Subscription;
-  streamStatus: IStreamStatus;
-  skStreamStatusSub: Subscription;
+  public endpointServiceStatus: IEndpointStatus;
+  public streamStatus: IStreamStatus;
 
 
-  signalkDeltaUpdatesStatsSubscription: Subscription;
-
-  lastSecondsUpdate: number; //number of updates from server in last second
-  updatesSeconds: number[]  = [];
-
-  _chart: Chart = null;
-  textColor; // store the color of text for the graph...
+  private _chart: Chart = null;
+  private textColor: string; // Store the computed text color for chart styling
 
   ngOnInit() {
-    // init current value. IsLoggedInSub BehaviorSubject will send last value and component will trigger last notifications even if old
-    if (this.auth.isLoggedIn$) {
-      this.isLoggedIn = true;
-    } else {
-      this.isLoggedIn = false;
-    }
-
     // get Signal K connection configuration
     this.connectionConfig = this.appSettingsService.getConnectionConfig();
 
-    // get token status
-    this.authTokenSub = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
+    // get authentication token status
+    this.auth.authToken$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((token: IAuthorizationToken) => {
       if (token) {
         this.authToken = token;
       } else {
@@ -102,18 +89,17 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       }
     });
 
-    // get logged in status
-    this.isLoggedInSub = this.auth.isLoggedIn$.subscribe(isLoggedIn => {
-      this.isLoggedIn = isLoggedIn;
-    });
-
-    // get for Signal K connection status
-    this.skEndpointServiceStatusSub = this.signalKConnectionService.getServiceEndpointStatusAsO().subscribe((status: IEndpointStatus) => {
+    // get Signal K connection status
+    this.signalKConnectionService.getServiceEndpointStatusAsO().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((status: IEndpointStatus) => {
           this.endpointServiceStatus = status;
     });
 
-    // get Delta Service status
-    this.skStreamStatusSub = this.deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus): void => {
+    // get Delta Service WebSocket stream status
+    this.deltaService.getDataStreamStatusAsO().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
     });
   }
@@ -123,8 +109,10 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     this._chart?.destroy();
     this.startChart();
 
-    // Get WebSocket Delta update per seconds stats
-    this.signalkDeltaUpdatesStatsSubscription = this.DataService.getSignalkDeltaUpdateStatistics().subscribe((update: IDeltaUpdate) => {
+    // Get real-time WebSocket Delta update statistics for chart
+    this.DataService.getSignalkDeltaUpdateStatistics().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((update: IDeltaUpdate) => {
       this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
       if (this._chart.data.datasets[0].data.length > 60) {
         this._chart.data.datasets[0].data.shift();
@@ -133,6 +121,10 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     });
    }
 
+  /**
+   * Opens the user credential modal dialog for authentication.
+   * @param errorMsg Optional error message to display in the modal
+   */
   public openUserCredentialModal(errorMsg: string) {
     const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       data: {
@@ -142,14 +134,21 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       }
     });
 
-    dialogRef.afterClosed().subscribe(data => {
-      if (!data) {return} //clicked cancel
+    dialogRef.afterClosed().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(data => {
+      if (!data) {return} // User clicked cancel
       this.connectionConfig.loginName = data.user;
       this.connectionConfig.loginPassword = data.password;
       this.connectToServer();
     });
   }
 
+  /**
+   * Validates the Signal K server URL and establishes connection.
+   * Handles the complete connection workflow including validation,
+   * configuration saving, connection cleanup, and app reload.
+   */
   public async connectToServer() {
     if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
       this.openUserCredentialModal("Credentials required");
@@ -181,37 +180,19 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       // Step 5: Reload immediately - APP_INITIALIZER will handle connection and authentication with new URL
       location.reload();
 
-    } catch (error) {
+    } catch (error: unknown) {
       // Validation failed - show error and stay on current page
       this.isConnecting = false;
-      const errorMessage = error.message || 'Unknown validation error';
+      const errorMessage = (error as Error)?.message || 'Unknown validation error';
       console.error('[Settings-SignalK] Server validation failed:', errorMessage);
       this.appService.sendSnackbarNotification(`Connection failed: ${errorMessage}`, 8000, false);
     }
   }
 
-  private serverLogin(newUrl?: string) {
-      this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
-      .then( () => {
-        // Authentication successful - reload to start with new config
-        location.reload();
-      })
-      .catch((error: HttpErrorResponse) => {
-        // Authentication failed - but we still need to reload since config was already saved
-        // The retry mechanism will handle connection issues after reload
-        console.log(`[Setting-SignalK Component] Authentication failed but reloading anyway: ${error.message}`);
-        location.reload();
-      });
-  }
-
-  public requestDeviceAccessToken() {
-    this.signalkRequestsService.requestDeviceAccessToken();
-  }
-
-  public deleteToken() {
-    this.auth.deleteToken();
-  }
-
+  /**
+   * Initializes the Chart.js line chart for displaying WebSocket delta statistics.
+   * Creates a time-series chart showing data update frequency over time.
+   */
   private startChart() {
     this._chart = new Chart(this.lineGraph().nativeElement.getContext('2d'),{
       type: 'line',
@@ -276,22 +257,21 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
             labels: {
               color: this.textColor,
             }
-          },
-          // streaming: {
-          //   duration: 60000,
-          //   delay: 1000,
-          //   frameRate: 15,
-          //  }
+          }
         }
       }
     });
   }
 
-  public useSharedConfigToggleClick(e) {
-    if(e.checked) {
-      const version = this.signalKConnectionService.serverVersion$.getValue();
+  /**
+   * Handles the shared configuration toggle change event.
+   * Validates Signal K server version compatibility and opens credential modal.
+   */
+  public useSharedConfigToggleClick(e: MatSlideToggleChange): void {
+    if (e.checked) {
+      const version: string = this.signalKConnectionService.serverVersion$.getValue();
       if (!compare(version, '1.46.2', ">=")) {
-        this.appService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better",0);
+        this.appService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better", 0);
         this.connectionConfig.useSharedConfig = false;
         return;
       }
@@ -300,12 +280,6 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   };
 
   ngOnDestroy() {
-    this.isConnecting = false; // Reset loading state
-    this.skEndpointServiceStatusSub.unsubscribe();
-    this.skStreamStatusSub.unsubscribe();
-    this.authTokenSub.unsubscribe();
-    this.isLoggedInSub.unsubscribe();
-    this.signalkDeltaUpdatesStatsSubscription.unsubscribe();
     this._chart?.destroy();
   }
 }

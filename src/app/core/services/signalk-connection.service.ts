@@ -73,33 +73,14 @@ export class SignalKConnectionService {
   private currentSubscribeAll?: boolean;
 
   /**
- * Retrieves and publishes target server information and supported service
- * endpoint addresses.
- *
- * This method resets the Signal K connection by connecting to the specified
- * Signal K server URL, retrieving the server's endpoint information, and
- * publishing the server's status and endpoint addresses. It also handles
- * proxy mode if enabled and sets the delta service subscription mode.
- *
- * @UsageNote Resetting the connection is a trigger for many
- * services & components (Delta, Settings, etc.).
- *
- * @param {ISignalKUrl} skUrl - The Signal K server URL object.
- * @param {boolean} [proxyEnabled] - Optional flag to enable proxy mode.
- * @param {boolean} [subscribeAll] - Optional flag to subscribe to all Delta messages. If false, only subscribes to self.*.
- * @return {Promise<void>} - A promise that resolves when the operation is complete.
- * @memberof SignalKConnectionService
- */
-
-/**
- * Validates if a Signal K server is reachable at the given URL.
- * This is a lightweight check that only verifies HTTP connectivity
- * without storing any configuration or affecting the current connection.
- *
- * @param {string} url - The Signal K server URL to validate.
- * @return {Promise<void>} - A promise that resolves if valid, rejects with error if invalid.
- * @memberof SignalKConnectionService
- */
+   * Validates if a Signal K server is reachable at the given URL.
+   * This is a lightweight check that only verifies HTTP connectivity
+   * without storing any configuration or affecting the current connection.
+   *
+   * @param {string} url - The Signal K server URL to validate.
+   * @return {Promise<void>} - A promise that resolves if valid, rejects with error if invalid.
+   * @memberof SignalKConnectionService
+   */
   public async validateSignalKUrl(url: string): Promise<void> {
     if (!url) {
       throw new Error("Please enter a server URL");
@@ -160,20 +141,20 @@ export class SignalKConnectionService {
     }
   }
 
-/**
- * Resets the Signal K connection by establishing a new connection to the
- * Signal K server URL, retrieving the server's endpoint information, and
- * starting the HTTP discovery process.
- *
- * @param {ISignalKUrl} skUrl - The Signal K server URL object.
- * @param {boolean} [proxyEnabled] - Optional flag to enable proxy mode.
- * @param {boolean} [subscribeAll] - Optional flag to subscribe to all Delta messages.
- * @return {Promise<void>} - A promise that resolves when the operation is complete.
- * @memberof SignalKConnectionService
- */
+  /**
+   * Initializes the Signal K connection by establishing a new connection to the
+   * Signal K server URL, retrieving the server's endpoint information, and
+   * starting the HTTP discovery process.
+   *
+   * @param {ISignalKUrl} skUrl - The Signal K server URL object.
+   * @param {boolean} [proxyEnabled] - Optional flag to enable proxy mode.
+   * @param {boolean} [subscribeAll] - Optional flag to subscribe to all Delta messages.
+   * @return {Promise<void>} - A promise that resolves when the operation is complete.
+   * @memberof SignalKConnectionService
+   */
   public async initializeConnection(skUrl: ISignalKUrl, proxyEnabled?: boolean, subscribeAll?: boolean): Promise<void> {
     if (!skUrl.url) {
-      console.log("[Connection Service] Connection reset called with null or empty URL value");
+      console.log("[Connection Service] Connection initialization called with null or empty URL value");
       return;
     }
 
@@ -263,8 +244,7 @@ export class SignalKConnectionService {
     }
 
     console.log(`[SignalKConnectionService] Retrying connection to ${this.signalKURL.url}`);
-    // Don't call resetSignalK as it would reset the retry count
-    // Instead, perform only the HTTP request part
+    // Perform only the HTTP request part without affecting retry count
     this.performHTTPDiscovery();
   }
 

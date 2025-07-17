@@ -211,9 +211,6 @@ export class SignalKDeltaService implements OnDestroy {
   }
 
   /**
-   * Handle WebSocket connecting state from ConnectionStateMachine
-   */
-  /**
    * Retry WebSocket connection without changing ConnectionStateMachine state
    */
   private retryWebSocketConnection(): void {
@@ -294,7 +291,7 @@ export class SignalKDeltaService implements OnDestroy {
   /**
   * Send message to WebSocket stream recipient (SignalK server).
   * @param msg JSON formatted message to be sent. If the WebSocket is not
-  * available, one retry after 1 sec will be made. The socket parser will automatically
+  * available, the message will be dropped. The socket parser will automatically
   * stringify the message.
   *
   * `*** Do not pre-stringify the msg param ***`
