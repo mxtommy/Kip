@@ -155,9 +155,9 @@ export class DashboardService {
     }
   }
 
-  public setActiveDashboard(dashboard: number): void {
-    if (dashboard >= 0 && dashboard < this.dashboards().length) {
-      this.activeDashboard.set(dashboard);
+  public setActiveDashboard(itemIndex: number): void {
+    if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
+      this.activeDashboard.set(itemIndex);
     }
   }
 
