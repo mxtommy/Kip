@@ -50,9 +50,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         'dtsPath': {
           description: 'Distance to Start Line',
           path: 'self.navigation.racing.distanceStartline',
-          source: null,
+          source: 'default',
           pathType: 'number',
-          pathRequired: true,
+          pathRequired: false,
           isPathConfigurable: false,
           convertUnitTo: 'm',
           showPathSkUnitsFilter: true,
@@ -62,7 +62,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         'lineLengthPath': {
           description: 'Length of the start line',
           path: 'self.navigation.racing.startLineLength',
-          source: null,
+          source: 'default',
           pathType: 'number',
           pathRequired: false,
           isPathConfigurable: false,
@@ -74,7 +74,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         'lineBiasPath': {
           description: 'Bias of the start line to starboard end',
           path: 'self.navigation.racing.stbLineBias',
-          source: null,
+          source: 'default',
           pathType: 'number',
           pathRequired: false,
           isPathConfigurable: false,
