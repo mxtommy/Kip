@@ -198,15 +198,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
-        if (this.widgetProperties.config.playBeeps) {
-          if (requestResult.statusCode === 200) {
-            this.beep(600, 50)
-          } else {
-            this.errorMessage = 'Error: ' + requestResult.message;
-            this.mode = -1;
-            this.beep(300, 1000);
-            this.updateCanvas();
-          }
+        if (requestResult.statusCode === 200) {
+          this.beep(600, 50)
+        } else {
+          this.errorMessage = 'Error: ' + requestResult.message;
+          this.mode = -1;
+          this.beep(300, 1000);
+          this.updateCanvas();
         }
       }
     });
@@ -234,19 +232,21 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   protected beep(frequency = 440, duration = 100) {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+    if (this.widgetProperties.config.playBeeps) {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
 
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency; // Hz
-    gainNode.gain.value = 0.1; // volume
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency; // Hz
+      gainNode.gain.value = 0.1; // volume
 
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + duration / 1000);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration / 1000);
+    }
   }
 
   private getColors(color: string): void {
