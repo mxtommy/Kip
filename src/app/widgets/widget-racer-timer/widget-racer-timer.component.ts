@@ -128,19 +128,21 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   protected beep(frequency = 440, duration = 100) {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+    if (this.widgetProperties.config.playBeeps) {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
 
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency; // Hz
-    gainNode.gain.value = 0.1; // volume
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency; // Hz
+      gainNode.gain.value = 0.1; // volume
 
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + duration / 1000);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration / 1000);
+    }
   }
 
   protected startWidget(): void {
@@ -188,7 +190,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         this.mode = 2;
       }
       this.updateCanvas();
-      if (this.widgetProperties.config.playBeeps && this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS' && lastTtsValue !== 0) {
+      if (this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS' && lastTtsValue !== 0) {
         if (this.ttsValue === 0) {
           this.beep(500, 1000);
         } else if (this.ttsValue < 10) {
@@ -230,15 +232,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
-        if (this.widgetProperties.config.playBeeps) {
-          if (requestResult.statusCode === 200) {
-            this.beep(600, 50);
-          } else {
-            this.errorMessage = 'Error: ' + requestResult.message;
-            this.mode = -1;
-            this.beep(300, 1000);
-            this.updateCanvas();
-          }
+        if (requestResult.statusCode === 200) {
+          this.beep(600, 50);
+        } else {
+          this.errorMessage = 'Error: ' + requestResult.message;
+          this.mode = -1;
+          this.beep(300, 1000);
+          this.updateCanvas();
         }
       }
     });
