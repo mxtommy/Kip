@@ -21,11 +21,6 @@ export interface IV1CommandDefinition {
   value: string | number;
 }
 
-export interface IV2CommandDefinition {
-  path: string
-  value?: object;
-}
-
 /**
  * Map of V1 command names to their Signal K path definitions
  */
@@ -34,6 +29,11 @@ export type V1CommandsMap = Record<string, IV1CommandDefinition>;
 // ========================================
 // V2 API Core Interfaces
 // ========================================
+
+export interface IV2CommandDefinition {
+  path: string
+  value?: object;
+}
 
 /**
  * Response structure for V2 API autopilot discovery endpoint
@@ -94,7 +94,7 @@ export interface IV2AutopilotOptionsResponse {
    */
   options: {
     /**
-     * Array of supported autopilot modes (e.g., "auto", "wind", "route", "standby")
+     * Array of supported autopilot modes (e.g., "auto", "wind", "route")
      * These represent the different steering modes the autopilot can operate in
      */
     modes?: string[];
@@ -124,6 +124,11 @@ export interface IV2AutopilotOptionsResponse {
    * When true, the autopilot is controlling the rudder/steering system
    */
   engaged: boolean;
+}
+
+// response structure for V2 API Default Autopilot Identifier
+export interface IV2DefaultProviderId {
+    id: string;
 }
 
 interface AutopilotStateDef {

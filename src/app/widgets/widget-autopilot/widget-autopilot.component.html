@@ -2,16 +2,16 @@
   <div [style.display]="apGrid()" class="autopilot-grid-container">
     <!-- Modes row -->
     <div class="ap-modes">
-      <button #modesBtn mat-flat-button disabled="true" class="ap-btn ap-btn-ctrlbar" (click)="toggleMenu()">
+      <button mat-flat-button [disabled]="(apState() === 'off-line') || (apMode() === 'off-line')" class="ap-btn ap-btn-ctrlbar" (click)="toggleMenu()">
         <mat-icon class="svg-icon-ctrlbar">
           <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
             <text xml:space="preserve"
               x="50"
-              y="10.7">Mode {{ apState() | titlecase }} &nbsp;&vellip;</text>
+              y="10.7">Mode {{ apMode() | titlecase }} &nbsp;&vellip;</text>
           </svg>
         </mat-icon>
       </button>
-      <button #disengageBtn mat-flat-button  disabled="true" class="ap-btn ap-btn-ctrlbar ap-btn-engage" (click)="buildAndSendCommand('standby')">
+      <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-engage' : 'ap-btn ap-btn-ctrlbar ap-btn-disengage'" (click)="buildAndSendCommand('standby')">
         <mat-icon class="svg-icon-ctrlbar">
           <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
             <text xml:space="preserve"
@@ -24,7 +24,7 @@
      <!-- AP Screen row -->
     <div class="ap-screen">
       <app-svg-autopilot
-        [apState]="apState()"
+        [apMode]="apMode()"
         [targetPilotHeading]="autopilotTargetHeading"
         [targetWindAngleHeading]="autopilotTargetWindHeading"
         [compassHeading]="heading"
@@ -48,8 +48,8 @@
       </div>
     </div>
     <!-- -1 / +1 buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button #minus1Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('-1')">
+    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('-1')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-1°</text>
@@ -58,8 +58,8 @@
         </mat-icon>
       </button>
     </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button #plus1Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('+1')">
+    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('+1')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+1°</text>
@@ -69,8 +69,8 @@
       </button>
     </div>
     <!-- -10 / +10 buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button #minus10Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('-10')">
+    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('-10')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-10°</text>
@@ -80,8 +80,8 @@
         </mat-icon>
       </button>
     </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' || (apState() === 'route' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button #plus10Btn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('+10')">
+    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('+10')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+10°</text>
@@ -92,8 +92,8 @@
       </button>
     </div>
     <!-- Tack buttons row -->
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
-      <button #prtTackBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('tackToPort')">
+    <div [style.display]="tackBtnVisibility() ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('tackToPort')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
@@ -113,8 +113,8 @@
         </mat-icon>
       </button>
     </div>
-    <div [style.display]="apState() === 'wind' || apState() === 'auto' || apState() === 'standby' ? 'block' : 'none'">
-      <button #stbTackBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('tackToStarboard')">
+    <div [style.display]="tackBtnVisibility() ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('tackToStarboard')">
         <mat-icon class="svg-icon">
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
@@ -133,22 +133,22 @@
       </button>
     </div>
     <!-- Route widget -->
-    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
+    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-position [widgetProperties]="nextWptProperties()" class="embed-widget" />
     </div>
-    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
+    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-datetime [widgetProperties]="etaProperties()" class="embed-widget" />
     </div>
-    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
+    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-numeric [widgetProperties]="dtwProperties()" class="embed-widget"/>
     </div>
-    <div [style.display]="apState() === 'route' && !this.dodgeModeActive() ? 'block' : 'none'">
+    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
       <widget-numeric [widgetProperties]="ttwProperties()" class="embed-widget" />
     </div>
     <!-- Route Button row -->
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
+    <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
       @if (apiVersion() === 'v2') {
-        <button #dodgeBtn mat-flat-button disabled="true" class="ap-btn" [class.ap-btn-active]="dodgeModeActive()" (click)="toggleDodge()">
+        <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" [class.ap-btn-active]="dodgeModeActive()" (click)="toggleDodge()">
           <mat-icon class="svg-icon">
             <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
               <text xml:space="preserve"
@@ -167,15 +167,15 @@
         </button>
       }
     </div>
-    <div [style.display]="apState() === 'route' ? 'block' : 'none'">
-      <button #advWptBtn mat-flat-button disabled="true" class="ap-btn" (click)="buildAndSendCommand('route')">
+    <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
+      <button mat-flat-button [disabled]="apBtnDisabled() || dodgeModeActive()" class="ap-btn" (click)="buildAndSendCommand('route')">
         <mat-icon class="svg-icon">
           <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
             <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.961578" y="86.799866">Adv Wpt</text>
             <path
               fill="currentColor"
               style="stroke:none"
-              d="M 19.090795,4 V 63.58544 L 78.676235,33.792718 Z" />
+              d="M 12.090795,4 V 63.58544 L 71.676235,33.792718 Z" />
             <path
               fill="currentColor" stroke="currentColor"
               style="fill:none;stroke-width:9.90493;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
@@ -188,10 +188,10 @@
   @if ((menuOpen())) {
     <!-- Modes Menu Overlay -->
     <div class="svg-menu-overlay" tabindex="0" (click)="toggleMenu()" (keyup.enter)="toggleMenu()" (keyup.space)="toggleMenu()" role="button" aria-label="Close menu">
-      <svg [attr.viewBox]="'0 0 240 ' + menuItems.length * itemHeight" class="svg-menu" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" (keyup.space)="$event.stopPropagation()" role="presentation" aria-label="Menu">
-        <rect x="0" y="0" width="240" [attr.height]="menuItems.length * itemHeight" class="svg-menu-box"/>
+      <svg [attr.viewBox]="'0 0 240 ' + menuItems().length * itemHeight" class="svg-menu" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" (keyup.space)="$event.stopPropagation()" role="presentation" aria-label="Menu">
+        <rect x="0" y="0" width="240" [attr.height]="menuItems().length * itemHeight" class="svg-menu-box"/>
         <ng-container>
-          @for (item of menuItems; track $index) {
+          @for (item of menuItems(); track $index) {
             <g
               style="cursor:pointer;"
               (click)="!item.disabled && onMenuItemClick(item.action)"

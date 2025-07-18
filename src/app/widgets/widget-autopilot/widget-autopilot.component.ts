@@ -23,9 +23,9 @@
  * @requires HttpClient, Angular Signals
  */
 
-import { Component, OnInit, OnDestroy, viewChild, inject, signal, effect, untracked, DestroyRef, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, untracked, DestroyRef, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -50,15 +50,26 @@ import {
   IV2AutopilotProvider,
   IV2AutopilotOptionsResponse,
   IV1CommandDefinition,
-  V1CommandsMap
+  V1CommandsMap,
+  IV2DefaultProviderId
 } from '../../core/interfaces/signalk-autopilot-interfaces';
+
+interface MenuItem {
+  label: string;
+  action: string;
+  current?: boolean;
+  isCancel?: boolean;
+  disabled?: boolean;
+}
 
 // Shared constants for API paths and configuration
 const API_PATHS = {
   V1_PLUGIN: 'autopilot',
+  V1_MODE_PATH: 'self.steering.autopilot.state',
   V2_BASE: '/signalk/v2/api',
   V2_VESSELS_SELF: '/signalk/v2/api/vessels/self',
   V2_AUTOPILOTS: '/signalk/v2/api/vessels/self/autopilots',
+  V2_DEFAULT_AUTOPILOT_ID: "/signalk/v2/api/vessels/self/autopilots/_providers/_default",
   V2_COURSE: '/signalk/v2/api/vessels/self/navigation/course'
 } as const;
 
@@ -74,25 +85,7 @@ const V2_ENDPOINT_TEMPLATES: Record<string, (instance: string) => string> = {
   ADJUST_HEADING: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/target/adjust`,
 };
 
-const FAILSAFE_OPTIONS_RESPONSE: IV2AutopilotOptionsResponse = {
-  options: {
-    modes: [],
-    states: []
-  },
-  state: null,
-  mode: 'off-line',
-  target: null,
-  engaged: false
-};
-
-const DEFAULTS = {
-  AUTOPILOT_INSTANCE: '_default',
-  COUNTDOWN_SECONDS: 5,
-  ERROR_DISPLAY_DURATION: 6000,
-  MESSAGE_DISPLAY_DURATION: 5000
-} as const;
-
-const commands: V1CommandsMap = {
+const COMMANDS: V1CommandsMap = {
   "auto":    {"path":"self.steering.autopilot.state","value":"auto"},
   "wind":    {"path":"self.steering.autopilot.state","value":"wind"},
   "route":   {"path":"self.steering.autopilot.state","value":"route"},
@@ -104,15 +97,30 @@ const commands: V1CommandsMap = {
   "tackToPort":   {"path":"self.steering.autopilot.actions.tack","value":"port"},
   "tackToStarboard":   {"path":"self.steering.autopilot.actions.tack","value":"starboard"},
   "advanceWaypoint":   {"path":"self.steering.autopilot.actions.advanceWaypoint","value":"1"},
+  // V2-only commands
+  "compass":   {"path": "v2 only command", "value": "v2 only command"},
+  "gps":   {"path": "v2 only command", "value": "v2 only command"},
+  "true wind":   {"path": "v2 only command", "value": "v2 only command"},
+  "nav":   {"path": "v2 only command", "value": "v2 only command"},
 } as const;
 
-interface MenuItem {
-  label: string;
-  action: string;
-  current?: boolean;
-  isCancel?: boolean;
-  disabled?: boolean;
-}
+const DEFAULTS = {
+  AUTOPILOT_INSTANCE: '_default',
+  COUNTDOWN_SECONDS: 5,
+  ERROR_DISPLAY_DURATION: 6000,
+  MESSAGE_DISPLAY_DURATION: 5000
+} as const;
+
+const FAILSAFE_OPTIONS_RESPONSE: IV2AutopilotOptionsResponse = {
+  options: {
+    modes: [],
+    states: []
+  },
+  state: null,
+  mode: 'off-line',
+  target: null,
+  engaged: false
+};
 
 @Component({
     selector: 'widget-autopilot',
@@ -132,37 +140,17 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   // API Version Detection
   protected apiVersion = signal<'v1' | 'v2' | null>(null);
   protected v2Endpoints = signal<IV2ApiEndpoints | null>(null);
-  protected autopilotCapabilities = signal<string[]>([]);
   protected availableAutopilots = signal<IV2AutopilotProvider>({});
+  protected autopilotPlugin = signal<string | null>(null);
+  protected autopilotCapabilities = signal<string[]>([]);
+  protected apiReady = signal(false);
   protected discoveryInProgress = signal<boolean>(false);
   protected apiDetectionError = signal<string | null>(null);
 
-  // Request management
-  private currentRequests = new Set<Observable<unknown>>();
-
-  // Keypad buttons & layout
-  protected apGrid = signal('none'); // Autopilot button grid visibility
-  protected readonly plus1Btn = viewChild.required<MatButton>('plus1Btn');
-  protected readonly minus1Btn = viewChild.required<MatButton>('minus1Btn');
-  protected readonly plus10Btn = viewChild.required<MatButton>('plus10Btn');
-  protected readonly minus10Btn = viewChild.required<MatButton>('minus10Btn');
-  protected readonly stbTackBtn = viewChild.required<MatButton>('stbTackBtn');
-  protected readonly prtTackBtn = viewChild.required<MatButton>('prtTackBtn');
-  protected readonly modesBtn = viewChild.required<MatButton>('modesBtn');
-  protected readonly engageBtn = viewChild.required<MatButton>('disengageBtn');
-  protected readonly advWptBtn = viewChild.required<MatButton>('advWptBtn');
-  protected readonly dodgeBtn = viewChild<MatButton>('dodgeBtn');
-
-  protected apStatePath = signal<string | null>(null); // Current Pilot Mode - used for display, keyboard state and buildCommand function
-  protected apState = computed<string | null>(() => {
-    const state = this.apStatePath();
-    if (state === 'auto' || state === 'compass') return 'auto';
-    if (state === 'wind') return 'wind';
-    if (state === 'route' || state === 'gps') return 'route';
-    if (state === 'standby') return 'standby';
-    if (state === 'off-line') return 'off-line';
-    return this.apStatePath();
-  });
+  // Autopilot state Management
+  protected apState = signal<string | null>(null);
+  protected apEngaged = signal<boolean | null>(null);
+  protected apMode = signal<string | null>(null);
   protected dodgeModeActive = signal<boolean>(false);
   protected autopilotTargetHeading = 0;
   protected autopilotTargetWindHeading = 0;
@@ -171,6 +159,54 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   protected crossTrackError = 0;
   protected windAngleApparent = 0;
   protected rudder = 0;
+
+  // Request management
+  private currentRequests = new Set<Observable<unknown>>();
+
+  // Keypad buttons & layout
+  protected apGrid = signal('none'); // Autopilot button grid visibility
+  protected readonly apEngageBtnDisabled = computed(() => {
+    const apiVersion = this.apiVersion()
+    const mode = this.apMode();
+
+    if (apiVersion === "v1") {
+      return (mode === 'standby' || mode === 'off-line') ? true : false;
+    }
+    return false;
+  });
+  protected readonly apBtnDisabled = computed(() => {
+    const apiVersion = this.apiVersion()
+    const engaged = this.apEngaged();
+
+    if (apiVersion === "v1") {
+      return this.apMode() === 'standby' ? true : false;
+    }
+    if ( engaged ) {
+      return false;
+    }
+    return true;
+  });
+  protected readonly adjustHdgBtnVisibility = computed(() => {
+    const mode = this.apMode();
+    if ( mode === 'auto' ||  mode === 'compass' ||  mode === 'gps' || mode === 'wind' || mode === 'true wind' || mode === 'standby') {
+      return true;
+    }
+    return false;
+  });
+  protected readonly tackBtnVisibility = computed(() => {
+    const mode = this.apMode();
+    if ( mode === 'auto' ||  mode === 'compass' ||  mode === 'gps' || mode === 'wind' || mode === 'true wind' || mode === 'standby') {
+      return true;
+    }
+    return false;
+  });
+  protected readonly routeBtnVisibility = computed(() => {
+    const mode = this.apMode();
+    if ( mode === 'route' ||  mode === 'nav') {
+      return true;
+    }
+    return false;
+  });
 
   // Widget messaging countdown
   protected countdownOverlayVisibility = signal<string>('hidden');
@@ -188,8 +224,36 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   private actionToBeConfirmed = "";
 
   // Mode Menu
+  protected menuItems = computed<MenuItem[]>(() => {
+    const mode = this.apMode();
+    let menuItems: MenuItem[] = [];
+
+    untracked(() => {
+      if (this.apiVersion() === 'v2') {
+        if (this.autopilotPlugin() == 'pypilot-autopilot-provider') {
+          const allAPModes: MenuItem[] = [
+            { label: 'Compass', action: 'compass' },
+            { label: 'GPS', action: 'gps' },
+            { label: 'Wind', action: 'wind' },
+            { label: 'True Wind', action: 'true wind' },
+            { label: 'Navigation', action: 'nav' },
+            { label: 'Close', action: 'cancel', isCancel: true }
+          ];
+          menuItems = this.parseMenuItems(allAPModes, mode);
+        } // else if (this.autopilotPlugin() == 'signalk-autopilot-provider') { }
+      } else if (this.apiVersion() === 'v1') {
+        const allAPModes: MenuItem[] = [
+          { label: 'Auto', action: 'auto' },
+          { label: 'Wind', action: 'wind' },
+          { label: 'Route', action: 'route' },
+          { label: 'Close', action: 'cancel', isCancel: true }
+        ];
+        menuItems = this.parseMenuItems(allAPModes, mode);
+      }
+    });
+    return menuItems;
+  });
   protected menuOpen = signal<boolean>(false);
-  protected menuItems: MenuItem[] = [];
   protected readonly itemHeight = 60;
   protected readonly padding = 20;
 
@@ -357,6 +421,26 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           convertUnitTo: "",
           sampleTime: 500
         },
+        "autopilotMode": {
+          description: "Autopilot Mode",
+          path: 'self.steering.autopilot.mode',
+          source: 'default',
+          pathType: "string",
+          isPathConfigurable: false,
+          showPathSkUnitsFilter: false,
+          convertUnitTo: "",
+          sampleTime: 500
+        },
+        "autopilotEngaged": {
+          description: "Autopilot Engaged",
+          path: 'self.steering.autopilot.engaged',
+          source: 'default',
+          pathType: "boolean",
+          isPathConfigurable: false,
+          showPathSkUnitsFilter: false,
+          convertUnitTo: "",
+          sampleTime: 500
+        },
         "autopilotTargetHeading": {
           description: "Autopilot Target Magnetic Heading",
           path: 'self.steering.autopilot.target.headingMagnetic',
@@ -485,18 +569,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       autopilotInstance: DEFAULTS.AUTOPILOT_INSTANCE
     };
 
-    const allMenuItems: MenuItem[] = [
-      { label: 'Auto', action: 'auto' },
-      { label: 'Wind', action: 'wind' },
-      { label: 'Route', action: 'route' },
-      { label: 'Close', action: 'cancel', isCancel: true }
-    ];
-
     // API Version monitoring effect
     effect(() => {
       const version = this.apiVersion();
 
       untracked(() => {
+        if (!this.apiReady()) return; // Don't run until API detection is done
+
         if (version) {
           const capabilities = this.autopilotCapabilities();
           if (version === 'v2') {
@@ -510,135 +589,52 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
     // Button state management effect
     effect(() => {
-      const mode = this.apState();
+      const mode = this.apMode();
 
       untracked(() => {
-        // Set enabled/disabled state for each mode menu item based
-        this.menuItems = allMenuItems.map(item => {
-          if (item.isCancel) return { ...item, current: false, disabled: false };
-          let enabled = false;
-          switch (mode) {
-            case 'standby':
-              enabled = (item.action === 'auto' || item.action === 'wind');
-              break;
-            case 'auto':
-              enabled = (item.action === 'wind' || item.action === 'route');
-              break;
-            case 'wind':
-              enabled = (item.action === 'auto');
-              break;
-            case 'route':
-              enabled = (item.action === 'auto');
-              break;
-            default:
-              enabled = false;
-          }
-          return {
-            ...item,
-            current: item.action === mode,
-            disabled: !enabled
-          };
-        });
-
-        switch (mode) {
-          case null:
-          case 'off-line':
-            this.modesBtn().disabled = true;
-            this.engageBtn().disabled = true;
-            this.plus1Btn().disabled = true;
-            this.plus10Btn().disabled = true;
-            this.minus1Btn().disabled = true;
-            this.minus10Btn().disabled = true;
-            this.prtTackBtn().disabled = true;
-            this.stbTackBtn().disabled = true;
-            this.advWptBtn().disabled = true;
-            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
-            break;
-          case "standby":
-            this.modesBtn().disabled = false;
-            this.engageBtn().disabled = true;
-            this.plus1Btn().disabled = true;
-            this.plus10Btn().disabled = true;
-            this.minus1Btn().disabled = true;
-            this.minus10Btn().disabled = true;
-            this.prtTackBtn().disabled = true;
-            this.stbTackBtn().disabled = true;
-            this.advWptBtn().disabled = true;
-            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
-            break;
-          case "auto":
-            this.modesBtn().disabled = false;
-            this.engageBtn().disabled = false;
-            this.plus1Btn().disabled = false;
-            this.plus10Btn().disabled = false;
-            this.minus1Btn().disabled = false;
-            this.minus10Btn().disabled = false;
-            this.prtTackBtn().disabled = false;
-            this.stbTackBtn().disabled = false;
-            this.advWptBtn().disabled = true;
-            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
-            break;
-          case "wind":
-            this.modesBtn().disabled = false;
-            this.engageBtn().disabled = false;
-            this.plus1Btn().disabled = false;
-            this.plus10Btn().disabled = false;
-            this.minus1Btn().disabled = false;
-            this.minus10Btn().disabled = false;
-            this.prtTackBtn().disabled = false;
-            this.stbTackBtn().disabled = false;
-            this.advWptBtn().disabled = true;
-            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
-            break;
-          case "route":
-            this.modesBtn().disabled = false;
-            this.engageBtn().disabled = false;
-            if (this.dodgeModeActive()) {
-              this.plus1Btn().disabled = false;
-              this.plus10Btn().disabled = false;
-              this.minus1Btn().disabled = false;
-              this.minus10Btn().disabled = false;
-            } else {
-              this.plus1Btn().disabled = true;
-              this.plus10Btn().disabled = true;
-              this.minus1Btn().disabled = true;
-              this.minus10Btn().disabled = true;
-            }
-            this.prtTackBtn().disabled = true;
-            this.stbTackBtn().disabled = true;
-            if (this.dodgeModeActive()) {
-              this.advWptBtn().disabled = true;
-            } else {
-              this.advWptBtn().disabled = false;
-            }
-            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = false;
-            break;
-          default:
-            this.modesBtn().disabled = true;
-            this.engageBtn().disabled = true;
-            this.plus1Btn().disabled = true;
-            this.plus10Btn().disabled = true;
-            this.minus1Btn().disabled = true;
-            this.minus10Btn().disabled = true;
-            this.prtTackBtn().disabled = true;
-            this.stbTackBtn().disabled = true;
-            this.advWptBtn().disabled = true;
-            if (this.dodgeBtn()) this.dodgeBtn()!.disabled = true;
-        }
-        this.apGrid.set(mode || mode === null ? 'grid' : 'none');
+        if (!this.apiReady()) return; // Don't run until API detection is done
+        this.apGrid.set(mode ? 'grid' : 'none');
       });
     });
   }
 
   ngOnInit() {
     this.validateConfig();
+
+    // this.apiVersion.set('v2');
+    // const targetInstance: string = this.widgetProperties.config.autopilotInstance;
+    // const endpoints: IV2ApiEndpoints = {
+    //     engage: V2_ENDPOINT_TEMPLATES.ENGAGE(targetInstance),
+    //     disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(targetInstance),
+    //     mode: V2_ENDPOINT_TEMPLATES.MODE(targetInstance),
+    //     target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(targetInstance),
+    //     tack: V2_ENDPOINT_TEMPLATES.TACK(targetInstance),
+    //     gybe: V2_ENDPOINT_TEMPLATES.GYBE(targetInstance),
+    //     dodge: V2_ENDPOINT_TEMPLATES.DODGE(targetInstance),
+    //     adjustHeading: V2_ENDPOINT_TEMPLATES.ADJUST_HEADING(targetInstance)
+    //   };
+    //   this.v2Endpoints.set(endpoints);
+    //   this.availableAutopilots.set({ 'pypilot-id': { provider: 'pypilot-autopilot-provider', isDefault: true } });
+    //   this.autopilotPlugin.set('pypilot-autopilot-provider');
+    //   this.autopilotCapabilities.set(['nav', 'wind','compass', 'gps', 'true wind']);
+    //   this.apiReady.set(true);
+    //   this.discoveryInProgress.set(false);
+    //   this.apiDetectionError.set(null);
+
     this.detectAutopilotApi().then(() => {
       this.startWidget();
     });
   }
 
   protected startWidget(): void {
-    this.startAllSubscriptions();
+    if (this.apiVersion() === 'v2') {
+      this.startV2Subscriptions();
+    } else if (this.apiVersion() === 'v1') {
+      this.startV1Subscriptions();
+    } else {
+      this.unsubscribeDataStream();
+      console.warn('[Autopilot Widget] No valid API version detected, skipping autopilot subscriptions');
+    }
   }
 
   /**
@@ -673,14 +669,35 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         const autopilots = this.availableAutopilots();
         const instanceCount = autopilots ? Object.keys(autopilots).length : 0;
         if (instanceCount > 0) {
+          console.log('[Autopilot Widget] V2 API detected with autopilots:', JSON.stringify(autopilots));
+          // Get default AP ID
+          const response = await firstValueFrom(
+            this.makeHttpRequest(
+              this.http.get<IV2DefaultProviderId>(API_PATHS.V2_DEFAULT_AUTOPILOT_ID)
+            )
+          );
+          const autopilotId = response.id;
+
+          if (autopilots && autopilots[autopilotId]) {
+            this.autopilotPlugin.set(autopilots[autopilotId].provider);
+            console.log(`[Autopilot Widget] Provider for autopilot ID '${autopilotId}': ${this.autopilotPlugin()}`);
+          } else {
+            console.warn(`[Autopilot Widget] No provider found for autopilot ID '${autopilotId}'`);
+            this.autopilotPlugin.set(null);
+          }
+
+
           await this.discoverV2AutopilotOptions();
-          console.log('[Autopilot Widget] V2 API detected with autopilots:', this.availableAutopilots());
           this.discoveryInProgress.set(false);
+
+          const configuredInstance = this.widgetProperties.config.autopilotInstance || DEFAULTS.AUTOPILOT_INSTANCE;
+          console.log(`[Autopilot Widget] Target autopilot instance: '${configuredInstance}'`);
 
           // Clear any persistent error overlay from previous offline state
           this.errorOverlayVisibility.set('hidden');
           this.errorOverlayText.set('');
           this.isPersistentError = false;
+          this.apiReady.set(true);
           return;
         }
        console.log('[Autopilot Widget] No V2 Autopilot present, checking V1...');
@@ -697,6 +714,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         this.autopilotCapabilities.set(['auto', 'wind', 'route', 'standby', 'tack']);
         console.log('[Autopilot Widget] V1 API detected');
         this.discoveryInProgress.set(false);
+        this.apiReady.set(true);
 
         this.errorOverlayVisibility.set('hidden');
         this.errorOverlayText.set('');
@@ -711,13 +729,14 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
     // No API available
     console.warn('[Autopilot Widget] No Autopilot detected');
-    this.apStatePath.set('off-line');
-    this.apiDetectionError.set('[Autopilot Widget] No autopilot API available');
+    this.apMode.set('off-line');
+    this.discoveryInProgress.set(false);
+    this.apiReady.set(true);
 
+    this.apiDetectionError.set('[Autopilot Widget] No autopilot API available');
     this.errorOverlayText.set('No Autopilot detected');
     this.errorOverlayVisibility.set('visible');
     this.isPersistentError = true;
-    this.discoveryInProgress.set(false);
   }
 
   private async checkV2Api(): Promise<boolean> {
@@ -757,9 +776,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         )
       );
       this.availableAutopilots.set(response);
-      console.log('[Autopilot Widget] Discovered V2 autopilot instances:', response);
-      const configuredInstance = this.widgetProperties.config.autopilotInstance || DEFAULTS.AUTOPILOT_INSTANCE;
-      console.log(`[Autopilot Widget] Configured autopilot instance: '${configuredInstance}'`);
+      console.log('[Autopilot Widget] Discovered V2 autopilot instances:', JSON.stringify(response));
     } catch (error) {
       console.error('[Autopilot Widget] Failed to discover V2 autopilots:', error);
       this.availableAutopilots.set({});
@@ -782,6 +799,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             )
           )
         );
+        console.log('[Autopilot Widget] V2 Autopilot Options response:', JSON.stringify(response));
       } catch {
         response = FAILSAFE_OPTIONS_RESPONSE;
         console.log(`[Autopilot Widget] Default AP discovery endpoint error for instance '${targetInstance}'`);
@@ -800,9 +818,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       };
 
       this.v2Endpoints.set(endpoints);
-      this.autopilotCapabilities.set(response.options.modes || []);
+      console.log(`[Autopilot Widget] V2 endpoints configured for instance '${targetInstance}':`, JSON.stringify(endpoints));
 
-      console.log(`[Autopilot Widget] V2 endpoints configured for instance '${targetInstance}':`, endpoints);
+      this.autopilotCapabilities.set(response.options.modes || []);
+      console.log(`[Autopilot Widget] V2 autopilot Capabilities:`, JSON.stringify(response.options.modes));
+
     } catch (error) {
       console.error('[Autopilot Widget] Failed to discover V2 endpoints:', error);
       const fallbackEndpoints: IV2ApiEndpoints = {
@@ -841,7 +861,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
       this.discoverV2AutopilotOptions().then(() => {
         console.log('[Autopilot Widget] Endpoint discovery completed successfully, starting subscriptions');
-        this.startAllSubscriptions();
+        this.startWidget();
       }).catch(error => {
         console.error('[Autopilot Widget] Failed to re-discover V2 endpoints after config change:', error);
         this.apiDetectionError.set(`Failed to re-discover endpoints: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -856,51 +876,81 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
 
     // For V1 or no instance change, start subscriptions immediately
-    this.startAllSubscriptions();
+    this.startWidget();
   }
 
-  private startAllSubscriptions(): void {
+  private startV2Subscriptions(): void {
     this.unsubscribeDataStream();
 
-    // Only subscribe to autopilot state if we have a valid API
-    if (this.apiVersion()) {
-      this.observeDataStream('autopilotState', newValue => {
-        if (newValue.data?.value) {
-          this.apStatePath.set(newValue.data.value);
-          console.warn(`[Autopilot Widget] Autopilot state updated: ${newValue.data.value}`);
-        } else {
-          this.apStatePath.set('off-line');
-          console.warn('[Autopilot Widget] Autopilot state is null or not available');
-        }
-      });
-      this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading = newValue.data.value != null ? newValue.data.value : 0);
-      this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading = newValue.data.value != null ? newValue.data.value : 0);
-      this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value != null ? newValue.data.value : 0);
-      this.observeDataStream('rudderAngle', newValue => {
-          if (newValue.data.value === null) {
-            this.rudder = 0;
-          } else {
-            this.rudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
-          }
-        }
-      );
-
-      // if (this.widgetProperties.config.courseDirectionTrue) {
-      //   this.observeDataStream('courseTargetHeadingTrue', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
-      // } else {
-      //   this.observeDataStream('courseTargetHeadingMag', newValue => this.courseTargetHeading = newValue.data.value ? newValue.data.value : 0);
-      // }
-      if (this.widgetProperties.config.headingDirectionTrue) {
-        this.observeDataStream('headingTrue', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
+    this.observeDataStream('autopilotState', newValue => {
+      if (newValue.data?.value) {
+        this.apState.set(newValue.data.value);
+        console.warn(`[Autopilot Widget] Autopilot state updated: ${newValue.data.value}`);
       } else {
-        this.observeDataStream('headingMag', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
+        this.apState.set('off-line');
+        console.warn('[Autopilot Widget] Autopilot state is null or not available');
       }
-      this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent = newValue.data.value != null ? newValue.data.value : 0);
+    });
+    this.observeDataStream('autopilotMode', newValue => {
+      if (newValue.data?.value) {
+        this.apMode.set(newValue.data.value);
+        console.warn(`[Autopilot Widget] Autopilot mode updated: ${newValue.data.value}`);
+      } else {
+        this.apMode.set('off-line');
+        console.warn('[Autopilot Widget] Autopilot mode is null or not available');
+      }
+    });
+    this.observeDataStream('autopilotEngaged', newValue => {
+      if (newValue.data?.value) {
+        this.apEngaged.set(newValue.data.value);
+        console.warn(`[Autopilot Widget] Autopilot engaged updated: ${newValue.data.value}`);
+      } else {
+        this.apEngaged.set(false);
+        console.warn('[Autopilot Widget] Autopilot engaged is null or not available');
+      }
+    });
+
+    this.startDataSubscription();
+  }
+
+  private startV1Subscriptions(): void {
+    this.unsubscribeDataStream();
+
+    // For V1, we use this single legacy path
+    this.widgetProperties.config.paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
+    this.observeDataStream('autopilotMode', newValue => {
+      if (newValue.data?.value) {
+        this.apMode.set(newValue.data.value);
+      } else {
+        this.apMode.set('off-line');
+        console.warn('[Autopilot Widget] Autopilot V1 mode state is null or not available');
+      }
+    });
+
+    this.startDataSubscription();
+
+    // Subscribe to V1 autopilot PUT state changes
+    this.subscribePutResponse();
+  }
+
+  private startDataSubscription(): void {
+    this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading = newValue.data.value != null ? newValue.data.value : 0);
+    this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading = newValue.data.value != null ? newValue.data.value : 0);
+    this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value != null ? newValue.data.value : 0);
+    this.observeDataStream('rudderAngle', newValue => {
+        if (newValue.data.value === null) {
+          this.rudder = 0;
+        } else {
+          this.rudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
+        }
+      }
+    );
+    if (this.widgetProperties.config.headingDirectionTrue) {
+      this.observeDataStream('headingTrue', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
+    } else {
+      this.observeDataStream('headingMag', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
     }
-    if (this.apiVersion() === 'v1') {
-      // Subscribe to V1 autopilot PUT state changes
-      this.subscribePutResponse();
-    }
+    this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent = newValue.data.value != null ? newValue.data.value : 0);
   }
 
   private subscribePutResponse(): void {
@@ -934,7 +984,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   protected buildAndSendCommand(cmd: string): void {
-    const cmdAction = commands[cmd];
+    const cmdAction = COMMANDS[cmd];
     if (typeof cmdAction === 'undefined') {
       alert('Unknown Autopilot command: ' + cmd);
       return;
@@ -946,7 +996,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       this.confirmTack(cmd);
       return;
     }
-    if ((cmd === 'route') && (this.apState() === 'route') && (this.actionToBeConfirmed === '')) {
+    if ( ((cmd === 'route' && this.apMode() === 'route') || (cmd === 'route' && this.apMode() === 'nav')) && (this.actionToBeConfirmed === '')) {
       this.confirmAdvanceWaypoint(cmd);
       return;
     }
@@ -956,17 +1006,20 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         const direction = cmd === 'tackToPort' ? 'port' : 'starboard';
         this.performTackOrGybe('tack', direction);
       }
-      if ((cmd === 'route') && (this.apState() === 'route')) {
-        this.commandVersion(cmd, commands['advanceWaypoint']);
+      if ( (cmd === 'route' && this.apMode() === 'route') || (cmd === 'route' && this.apMode() === 'nav') ) {
+        this.routeCommand(cmd, COMMANDS['advanceWaypoint']);
       }
       return;
     }
-    this.commandVersion(cmd, cmdAction);
+    this.routeCommand(cmd, cmdAction);
   }
 
-  private commandVersion(cmd: string, cmdAction: IV1CommandDefinition): void {
+  private routeCommand(cmd: string, cmdAction: IV1CommandDefinition): void {
     if (this.apiVersion() === 'v2') {
-      this.sendV2Command(cmd, cmdAction);
+      if (cmd === 'route' && this.apMode() === 'nav') {
+        cmd = 'advanceWaypoint';
+      }
+      this.sendV2Command(cmd);
     } else if (this.apiVersion() === 'v1' && !cmdAction.path.startsWith('v2:')) {
       // V1 command
       this.sendV1Command(cmdAction);
@@ -1012,7 +1065,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
    * @param cmdAction Optional V1 command for compatibility (unused in V2)
    * @param value Optional command value (direction for tack/gybe, heading for target)
    */
-  private async sendV2Command(cmd: string, cmdAction?: IV1CommandDefinition, value?: object): Promise<void> {
+  private async sendV2Command(cmd: string, value?: object): Promise<void> {
     const endpoints = this.v2Endpoints();
     if (!endpoints) {
       console.error('V2 endpoints not available');
@@ -1025,98 +1078,126 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     switch (cmd) {
       case '+1':
         targetCommand = {
-          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
+          path: dodge ? endpoints.adjustHeading : endpoints.dodge,
           value: { value: +1 , units: "deg" }
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case '+10':
         targetCommand = {
-          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
+          path: !dodge ? endpoints.adjustHeading : endpoints.dodge,
           value: { value: +10 , units: "deg" }
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case '-1':
         targetCommand = {
-          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
+          path: !dodge ? endpoints.adjustHeading : endpoints.dodge,
           value: { value: -1 , units: "deg" }
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case '-10':
         targetCommand = {
-          path: dodge ? this.v2Endpoints().adjustHeading : this.v2Endpoints().dodge,
+          path: !dodge ? endpoints.adjustHeading : endpoints.dodge,
           value: { value: -10 , units: "deg" }
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case 'target_heading':
         targetCommand = {
-          path: this.v2Endpoints().target,
+          path: endpoints.target,
           value: value
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case 'auto':
         targetCommand = {
-          path: this.v2Endpoints().mode,
+          path: endpoints.mode,
           value: {value: "auto"}
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
+        break;
+      case 'compass':
+        targetCommand = {
+          path: endpoints.mode,
+          value: {value: "compass"}
+        };
+        this.executeRestRequest('PUT', targetCommand);
+        break;
+      case 'gps':
+        targetCommand = {
+          path: endpoints.mode,
+          value: {value: "gps"}
+        };
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case 'wind':
         targetCommand = {
-          path: this.v2Endpoints().mode,
+          path: endpoints.mode,
           value: {value: "wind"}
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
+        break;
+      case 'true wind':
+        targetCommand = {
+          path: endpoints.mode,
+          value: {value: "true wind"}
+        };
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case 'route':
         targetCommand = {
-          path: this.v2Endpoints().mode,
+          path: endpoints.mode,
           value: {value: "route"}
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
-      case 'standby':
+      case 'nav':
         targetCommand = {
-          path: this.v2Endpoints().mode,
-          value: {value: "standby"}
+          path: endpoints.mode,
+          value: {value: "nav"}
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
+        break;
+      case 'standby': {
+          const targetCommand: IV2CommandDefinition = {
+            path: this.apEngaged() ? `${endpoints.disengage}` : `${endpoints.engage}`
+          };
+          this.executeRestRequest('POST', targetCommand);
+        }
         break;
       case 'advanceWaypoint':
         targetCommand = {
           path: `${API_PATHS.V2_COURSE}/activeRoute/nextPoint`
         };
-        this.sendRestCommand('PUT', targetCommand);
+        this.executeRestRequest('PUT', targetCommand);
         break;
       case 'tack':
         targetCommand = {
-          path: `${this.v2Endpoints().tack}/${value}`
+          path: `${endpoints.tack}/${(value as { value: string }).value}`
         };
-        this.sendRestCommand('POST', targetCommand);
+        this.executeRestRequest('POST', targetCommand);
         break;
       case 'gybe':
         targetCommand = {
-          path: `${this.v2Endpoints().gybe}/${value}`
+          path: `${endpoints.gybe}/${value}`
         };
-        this.sendRestCommand('POST', targetCommand);
+        this.executeRestRequest('POST', targetCommand);
         break;
       case 'dodge':
         targetCommand = {
-          path: this.v2Endpoints().dodge
+          path: endpoints.dodge
         };
 
         if (this.dodgeModeActive()) {
-          this.sendRestCommand('DELETE', targetCommand).then(response => {
+          this.executeRestRequest('DELETE', targetCommand).then(response => {
             if (response.status === 'success') {
               this.dodgeModeActive.set(false);
             }
           });
         } else {
-          this.sendRestCommand('POST', targetCommand).then(response => {
+          this.executeRestRequest('POST', targetCommand).then(response => {
             if (response.status === 'success') {
               this.dodgeModeActive.set(true);
             }
@@ -1134,7 +1215,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
   }
 
-  private async sendRestCommand(method: 'POST' | 'PUT' | 'DELETE', cmd: IV2CommandDefinition): Promise<IV2CommandResponse> {
+  private async executeRestRequest(method: 'POST' | 'PUT' | 'DELETE', cmd: IV2CommandDefinition): Promise<IV2CommandResponse> {
     try {
       let response: IV2CommandResponse;
 
@@ -1165,10 +1246,10 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       }
 
       if (response && response.status === 'success') {
-        console.log('[Autopilot Widget] Command executed successfully:', cmd.path);
+        console.log('[Autopilot Widget] V2 Command executed successfully:', cmd.path);
         return response;
       } else {
-        console.warn('[Autopilot Widget] Command completed with non-success status:', response);
+        console.warn('[Autopilot Widget] V2 Command completed with non-success status:', JSON.stringify(response));
         return response || { status: 'error', message: 'Invalid response format', data: null };
       }
     } catch (error) {
@@ -1192,12 +1273,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): void {
     if (this.apiVersion() === 'v2') {
-      this.sendV2Command(operation, null, {value: direction});
+      this.sendV2Command(operation, {value: direction});
     } else {
       // Fall back to V1
       if (operation !== 'tack') return;
       console.log(`[Autopilot Widget] Executing V1 tack to ${direction}`);
-      const cmdAction = commands[direction === 'port' ? 'tackToPort' : 'tackToStarboard'];
+      const cmdAction = COMMANDS[direction === 'port' ? 'tackToPort' : 'tackToStarboard'];
       this.signalkRequestsService.putRequest(cmdAction.path, cmdAction.value, this.widgetProperties.uuid);
     }
   }
@@ -1205,7 +1286,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   // V2 Absolute Target Method (class only - no UI yet)
   protected setAbsoluteTarget(heading: number): void {
     if (this.apiVersion() === 'v2') {
-      this.sendV2Command('target_heading', null, {"value": heading, "units": "deg"});
+      this.sendV2Command('target_heading', {"value": heading, "units": "deg"});
     } else {
       console.error('[Autopilot Widget] Absolute target only available in V2 API');
     }
@@ -1334,6 +1415,42 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.menuOpen.set(false);
   }
 
+  private parseMenuItems(menuItems: MenuItem[], mode: string): MenuItem[] {
+    // Set enabled/disabled state for each mode menu item based
+    const parsedMenuItems = menuItems.map(item => {
+      if (item.isCancel) return { ...item, current: false, disabled: false };
+
+      let enabled = false;
+      if (this.apiVersion() === 'v1') {
+        switch (mode) {
+          case 'standby':
+            enabled = (item.action === 'auto' || item.action === 'wind');
+            break;
+          case 'auto':
+            enabled = (item.action === 'wind' || item.action === 'route');
+            break;
+          case 'wind':
+            enabled = (item.action === 'auto');
+            break;
+          case 'route':
+            enabled = (item.action === 'auto');
+            break;
+          default:
+            enabled = false;
+        }
+      } else if (this.apiVersion() === 'v2') {
+        // For V2, check if the action is in the capabilities
+        enabled = this.autopilotCapabilities().includes(item.action);
+      }
+      return {
+        ...item,
+        current: item.action === mode,
+        disabled: !enabled
+      };
+    });
+    return parsedMenuItems;
+  }
+
   ngOnDestroy() {
     // Cancel all ongoing HTTP requests
     this.cancelAllHttpRequests();
@@ -1343,9 +1460,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     clearTimeout(this.handleConfirmActionTimeout);
     clearTimeout(this.handleDisplayErrorTimeout);
     clearTimeout(this.handleMessageTimeout);
-
-    // Clear persistent error flag
-    this.isPersistentError = false;
 
     // Clean up data streams
     this.destroyDataStreams();
