@@ -56,9 +56,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         'ttsPath': {
           description: 'Time to the Start in seconds',
           path: 'self.navigation.racing.timeToStart',
-          source: null,
+          source: 'default',
           pathType: 'number',
-          pathRequired: true,
+          pathRequired: false,
           isPathConfigurable: false,
           convertUnitTo: 's',
           showConvertUnitTo: false,
@@ -69,7 +69,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         'startTimePath': {
           description: 'Time of the start',
           path: 'self.navigation.racing.startTime',
-          source: null,
+          source: 'default',
           pathType: 'Date',
           pathRequired: false,
           isPathConfigurable: false,
@@ -78,7 +78,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         'dtsPath': {
           description: 'Distance to Start Line path, used to determine OCS',
           path: 'self.navigation.racing.distanceStartline',
-          source: null,
+          source: 'default',
           pathType: 'number',
           pathRequired: false,
           isPathConfigurable: false,
