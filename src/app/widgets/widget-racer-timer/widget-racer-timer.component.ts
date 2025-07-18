@@ -23,9 +23,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private signalk = inject(SignalkRequestsService);
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
-  protected errorMessage: string = '';
+  protected errorMessage = '';
   protected startAtValue: string;
-  protected infoFontSize: string = '1em';
+  protected infoFontSize = '1em';
   private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
@@ -129,7 +129,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   protected beep(frequency = 440, duration = 100) {
     if (this.widgetProperties.config.playBeeps) {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
