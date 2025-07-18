@@ -23,8 +23,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private signalk = inject(SignalkRequestsService);
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
+  protected errorMessage: string = '';
   protected startAtValue: string;
-  protected startAtFontSize: string = '1em';
+  protected infoFontSize: string = '1em';
   private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
@@ -229,6 +230,16 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
+        if (this.widgetProperties.config.playBeeps) {
+          if (requestResult.statusCode === 200) {
+            this.beep(600, 50);
+          } else {
+            this.errorMessage = 'Error: ' + requestResult.message;
+            this.mode = -1;
+            this.beep(300, 1000);
+            this.updateCanvas();
+          }
+        }
       }
     });
   }
@@ -249,7 +260,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       return;
     }
 
-    this.startAtFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
+    this.infoFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
 
     this.initCanvases();
     if (this.isDestroyed) {
@@ -365,6 +376,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   public toggleMode(): void {
     console.log('toggle mode ', this.mode);
+    this.errorMessage = '';
     this.mode = (this.mode + 1) % 5;
     switch (this.mode) {
       case 1:
