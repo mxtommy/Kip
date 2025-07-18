@@ -32,9 +32,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
 
-  protected errorMessage: string = '';
-  protected lenBiasValue: string = '';
-  protected infoFontSize: string = '1em';
+  protected errorMessage = '';
+  protected lenBiasValue = '';
+  protected infoFontSize = '1em';
 
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
@@ -233,7 +233,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   protected beep(frequency = 440, duration = 100) {
     if (this.widgetProperties.config.playBeeps) {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
@@ -348,7 +348,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     let valueText = '';
 
     if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
-      let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
+      const unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
       valueText += this.lengthValue != null
         ? `Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
         : 'Line: --';
@@ -357,7 +357,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
     if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
       valueText += ' Bias: ';
-      let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
+      const unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
       if (this.biasValue == null) {
         valueText += '--';
       } else if (this.biasValue < -1) {
