@@ -32,8 +32,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
 
+  protected errorMessage: string = '';
   protected lenBiasValue: string = '';
-  protected lenBiasFontSize: string = '1em';
+  protected infoFontSize: string = '1em';
 
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
@@ -46,6 +47,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.defaultConfig = {
       displayName: 'DTS',
       filterSelfPaths: true,
+      playBeeps: true,
       paths: {
         'dtsPath': {
           description: 'Distance to Start Line',
@@ -176,8 +178,36 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     });
 
     this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
+      // e.g.
+      // {
+      //   "requestId":"c8ce9f72-5218-4e9b-88fe-4fcc1966574d",
+      //   "state":"COMPLETED",
+      //   "statusCode":200,
+      //   "widgetUUID":"0ad57184-5030-497c-a775-b1cbe06a9d02",
+      //   "message":"Put start line end: OK",
+      //   "statusCodeDescription":"The request was successfully."
+      // },
+      // {
+      //   "requestId":"fc015ba8-1e1a-45dd-a788-75107e334dcd",
+      //   "state":"COMPLETED",
+      //   "statusCode":405,
+      //   "widgetUUID":"0ad57184-5030-497c-a775-b1cbe06a9d02",
+      //   "message":"PUT not supported for navigation.racing.setStartLine",
+      //   "statusCodeDescription":"The server does not support the request."
+      // }
+
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
+        if (this.widgetProperties.config.playBeeps) {
+          if (requestResult.statusCode === 200) {
+            this.beep(600, 50)
+          } else {
+            this.errorMessage = 'Error: ' + requestResult.message;
+            this.mode = -1;
+            this.beep(300, 1000);
+            this.updateCanvas();
+          }
+        }
       }
     });
   }
@@ -194,13 +224,29 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       return;
     }
 
-    this.lenBiasFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
+    this.infoFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
 
     this.initCanvasContexts();
     if (this.isDestroyed) {
       return;
     }
     this.updateCanvas();
+  }
+
+  protected beep(frequency = 440, duration = 100) {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency; // Hz
+    gainNode.gain.value = 0.1; // volume
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration / 1000);
   }
 
   private getColors(color: string): void {
@@ -341,6 +387,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   public toggleMode(): void {
     console.log('toggle mode ', this.mode);
+    this.errorMessage = '';
     this.mode = (this.mode + 1) % 4;
     this.updateCanvas();
   }

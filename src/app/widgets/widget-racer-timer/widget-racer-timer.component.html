@@ -8,8 +8,11 @@
     <div class="buttons-container">
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
       @switch(mode) {
+        @case (-1) {
+          <span class="start-at" [style.font-size]="infoFontSize">{{errorMessage}}</span>
+        }
         @case (0) {
-          <span class="start-at" [style.font-size]="startAtFontSize">{{startAtValue}}</span>
+          <span class="start-at" [style.font-size]="infoFontSize">{{startAtValue}}</span>
         }
         @case (1) {
           <button mat-flat-button class="main-button" (click)="sendStartTimerCommand('start')">Start</button>
@@ -24,7 +27,7 @@
           <button mat-flat-button class="other-small-button" (click)="adjustStartTime(+1)">+1s</button>
           <button mat-flat-button class="main-small-button" (click)="adjustStartTime(+60)">+1m</button>
         } @case (4) {
-          <input class="set-start-at" type="text" [style.font-size]="startAtFontSize" [(ngModel)]="startAtTimeEdit" (keyup.enter)="setStartTime(startAtTimeEdit)">
+          <input class="set-start-at" type="text" [style.font-size]="infoFontSize" [(ngModel)]="startAtTimeEdit" (keyup.enter)="setStartTime(startAtTimeEdit)">
         }
       }
     </div>
