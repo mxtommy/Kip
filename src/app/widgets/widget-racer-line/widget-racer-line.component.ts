@@ -205,6 +205,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           this.mode = -1;
           this.beep(300, 1000);
           this.updateCanvas();
+          this.app.sendSnackbarNotification('Please check the Signalk-racer plugin installation/configuration', 5000, true);
         }
       }
     });
