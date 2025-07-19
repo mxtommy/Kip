@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, signal, untracked, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
@@ -62,6 +62,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     acceptWidgets: false,
     resizable: {handles: 'all'},
   }
+  private _boundHandleKeyDown = this.handleKeyDown.bind(this);
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -85,16 +86,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetLabelComponent,
       WidgetSliderComponent
     ]);
-
-    effect(() => {
-      const dashboardId = this.dashboard.activeDashboard();
-      untracked(() => {
-        // Only load if GridStack is ready, otherwise let ngAfterViewInit handle it
-        if (this._gridstack?.grid) {
-          this.loadDashboard(dashboardId);
-        }
-      });
-    });
   }
 
   ngAfterViewInit(): void {
@@ -132,7 +123,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
     this.resizeGridColumns();
     this._uiEvent.addHotkeyListener(
-      (key, event) => this.handleKeyDown(key, event),
+      this._boundHandleKeyDown,
       { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
     );
 
@@ -151,7 +142,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     // Remove the reference to the GridstackComponent
     this._gridstack = null;
 
-    this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
+    this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 
   private handleKeyDown(key: string, event: KeyboardEvent): void {
@@ -167,19 +158,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   /**
-   * @description load a dashboard from configuration
+   * Load a dashboard from configuration in batch mode
    * @protected
    * @param {number} dashboardId the ID of the dashboard to load
-   * @param {boolean} [addRemove] Optional (default true). If false, removes all widgets from
-   * the grid before loading the dashboard. This is useful when loading a different dashboard.
-   * If cancelling layout changes, use true.
+   *
    * @memberof DashboardComponent
    */
   protected loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
-    this._gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
-    // Only set loading to false if GridStack is fully initialized
     if (this._gridstack?.grid) {
+      this._gridstack.grid.batchUpdate();
+      this._gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+      this._gridstack.grid.commit();
       this.isLoading.set(false);
     }
   }
@@ -231,7 +221,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
             this._gridstack.grid.addWidget(newWidget);
           });
         } else {
-          this._app.sendSnackbarNotification('Add Widget Error: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
+          this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
         }
       }
     }
@@ -270,11 +260,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this._gridstack.grid.removeWidget(item);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected nextDashboard(e: any): void {
+  protected nextDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.nextDashboard();
+      if (this._gridstack?.grid) {
+        setTimeout(() => {
+          this.loadDashboard(this.dashboard.activeDashboard());
+        }, 0);
+      }
     }
   }
 
@@ -282,6 +276,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.previousDashboard();
+      if (this._gridstack?.grid) {
+        setTimeout(() => {
+          this.loadDashboard(this.dashboard.activeDashboard());
+        }, 0);
+      }
     }
   }
 
