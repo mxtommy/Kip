@@ -1,6 +1,7 @@
 # V 3.4.1
 ## Fixes
-* Fix path configuration option requiredPath nulling paths.
+* Improve dashboard loading speed and keydown handling
+* Fix null path configuration option when path is not required
 # V 3.4.0
 ## New features
 * Enhanced empty dashboard experience with intuitive visual guidance and one-click customization prompts for seamless onboarding
