@@ -63,37 +63,43 @@ export class ModalWidgetConfigComponent implements OnInit {
     Object.keys(formData).forEach(key => {
       // handle Objects
       if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
-
         if (key == "multiChildCtrls") {
           groups.addControl(key, this.fb.array([]));
           const fa = groups.get(key) as UntypedFormArray;
-
           formData[key].forEach((ctrl: IDynamicControl) => {
             fa.push(this.generateCtrlArray(ctrl));
           });
-
         } else if (key == "displayScale") {
           groups.addControl(key, this.generateFormGroups(formData[key], key));
         } else if (key == "gauge") {
           groups.addControl(key, this.generateFormGroups(formData[key], key));
-        }else if (key == "paths") {
-          if (this.widgetConfig.multiChildCtrls !== undefined) { // build as formArray if multi control type widget only
+        } else if (key == "autopilot") {
+          groups.addControl(key, this.generateFormGroups(formData[key], key));
+        } else if (key == "paths") {
+          if (this.widgetConfig.multiChildCtrls !== undefined) {
             this.isPathArray = true;
             groups.addControl(key, this.fb.array([]));
             const fa = groups.get(key) as UntypedFormArray;
             Object.keys(formData[key]).forEach(pathKey => {
               const pathObj = this.widgetConfig.paths[pathKey];
-              if (pathObj && pathObj.isPathConfigurable) {
-                fa.push(this.generatePathArray(pathKey, pathObj));
+              if (pathObj) {
+                const pathGroup = this.generatePathArray(pathKey, pathObj);
+                if (!pathObj.isPathConfigurable) {
+                  pathGroup.disable(); // disables validation, but value is kept in getRawValue()
+                }
+                fa.push(pathGroup);
               }
             });
           } else {
-            // Build a FormGroup for only configurable paths
             const pathsGroup = this.fb.group({});
             Object.keys(formData[key]).forEach(pathKey => {
               const pathObj = this.widgetConfig.paths[pathKey];
-              if (pathObj && pathObj.isPathConfigurable) {
-                pathsGroup.addControl(pathKey, this.generateFormGroups(pathObj, pathKey));
+              if (pathObj) {
+                const pathGroup = this.generateFormGroups(pathObj, pathKey);
+                if (!pathObj.isPathConfigurable) {
+                  pathGroup.disable(); // disables validation,
+                }
+                pathsGroup.addControl(pathKey, pathGroup);
               }
             });
             groups.addControl(key, pathsGroup);

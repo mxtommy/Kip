@@ -74,6 +74,9 @@ export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDes
   public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '(null)', quantity: 'Unitless', quantityDisplay: '(null)', description: '', }};
 
   ngOnInit() {
+    // Do not process if path is disabled. Disabled path control (isPathConfigurable: false
+    // widget property) means the path is hardcoded and cannot be changed by the user.
+    if (this.pathFormGroup.controls['path'].disabled) return;
     // Path Unit filter setup
     this.pathSkUnitsFiltersList = this._units.skBaseUnits.sort((a, b) => {
       return a.properties.quantity > b.properties.quantity ? 1 : -1;
