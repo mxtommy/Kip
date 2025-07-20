@@ -1,3 +1,6 @@
+# V 3.4.2
+## Fixes
+* Stripped Vessel Base Delta path first character
 # V 3.4.1
 ## Fixes
 * Improve dashboard loading speed and keydown handling
