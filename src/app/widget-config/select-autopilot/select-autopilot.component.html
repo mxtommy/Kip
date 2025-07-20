@@ -1,24 +1,13 @@
 <div class="display-content tab-content">
-  <div [formGroup]="autopilotFormGroup" class="widget-options-grid">
-
-    <mat-checkbox
-      name="headingDirectionTrue"
-      formControlName="headingDirectionTrue">
-      Display True Heading
-    </mat-checkbox>
-
-    <mat-checkbox
-      name="invertRudder"
-      formControlName="invertRudder">
-      Invert Rudder Angle
-    </mat-checkbox>
-
-    <div>
-      <h3>Discovery</h3>
-      <p>Autopilot API Version: {{ apiVersion() }}</p>
-      <p>Autopilot Plugin: {{ pluginId() }}</p>
+  <div [formGroup]="autopilotFormGroup" class="autopilot-options">
+    <div class="flex-item-rounded-card rounded-card-color" style="margin-block: 10px;">
+      <h3 style="margin-block-start: 0px;">Signal K Service Discovery</h3>
+      <ul>
+        <li><b>API Version:</b> {{ apiVersion() }}</li>
+        <li><b>Plugin:</b> {{ pluginId() }}</li>
+      </ul>
     </div>
-    <mat-form-field class="options-grid-span2">
+    <mat-form-field>
       <mat-label>Target Autopilot</mat-label>
       <mat-select
         placeholder="Select autopilot..."
@@ -26,13 +15,24 @@
         name="instanceId"
         (selectionChange)="onAutopilotInstanceIdChange($event)"
         required>
+        <mat-option value=''>No autopilot</mat-option>
         @for(ap of apInstances(); track $index) {
           <mat-option value='{{ap}}'>{{ ap | titlecase}}</mat-option>
-        } @empty {
-          <mat-option value=''>No autopilot detected</mat-option>
         }
       </mat-select>
     </mat-form-field>
-    <p>Autopilot supported modes: {{ modes() }}</p>
+    <div class="flex-item-rounded-card rounded-card-color" style="margin-block: 10px;margin-left: 10px;margin-right: 10px;">
+      <b>Supported modes:</b> {{ modes() }}
+    </div>
+    <mat-checkbox
+      name="headingDirectionTrue"
+      formControlName="headingDirectionTrue">
+      Display True Heading
+    </mat-checkbox>
+    <mat-checkbox
+      name="invertRudder"
+      formControlName="invertRudder">
+      Invert Rudder Angle Indicator
+    </mat-checkbox>
   </div>
 </div>

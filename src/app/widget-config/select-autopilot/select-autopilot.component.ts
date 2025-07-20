@@ -1,3 +1,32 @@
+/**
+ * SelectAutopilotComponent
+ *
+ * Manages Signal K autopilot API detection, instance selection, and configuration.
+ *
+ * Features:
+ * - Detects available autopilot API version (prefers V2, falls back to V1 plugin).
+ * - Discovers autopilot instances and supported modes.
+ * - Updates the provided reactive form group with API version, plugin ID, and supported modes.
+ * - Handles UI state for discovery progress and error overlays.
+ * - Provides selection UI for autopilot instance and configuration options.
+ *
+ * State Management:
+ * - Uses Angular signals for API version, available autopilots, plugin ID, discovery progress, and errors.
+ * - Updates the reactive form group (`autopilotFormGroup`) with detected values.
+ *
+ * Methods:
+ * - ngOnInit: Initializes the form group and starts API detection.
+ * - detectAutopilotApi: Orchestrates API version detection and instance discovery.
+ * - checkV2Api: Checks if the V2 API endpoint is available.
+ * - discoverV2Autopilots: Retrieves available V2 autopilot instances.
+ * - discoverV2AutopilotOptions: Gets supported modes and states for a selected instance.
+ * - onAutopilotInstanceIdChange: Handles instance selection and updates modes in the form.
+ * - makeHttpRequest: Manages HTTP requests with cancellation and tracking.
+ *
+ * Usage:
+ * - Used in widget configuration to allow users to select and configure autopilot options.
+ * - Integrates with Angular Reactive Forms and Material
+ */
 import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
 import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
 import { IV2AutopilotOptionsResponse, IV2AutopilotProvider } from '../../core/interfaces/signalk-autopilot-interfaces';
@@ -73,7 +102,6 @@ ngOnInit(): void {
   this.detectAutopilotApi();
 }
 
-
 /**
    * Detects available autopilot API version and configures endpoints
    *
@@ -132,8 +160,6 @@ ngOnInit(): void {
 
     // No API available
     console.warn('[Autopilot Options] No Autopilot detected');
-
-    //TODO: Add no AP Detected to list with value null
     this.discoveryInProgress.set(false);
   }
 
@@ -213,7 +239,11 @@ ngOnInit(): void {
 
   protected onAutopilotInstanceIdChange(e: MatSelectChange): void {
     const selectedInstanceId = e.value;
-    if (e.value === '') return;
+    if (e.value === "") {
+      this.modes.set("");
+      this.autopilotFormGroup.get('modes')?.setValue("", { emitEvent: false });
+      return;
+    }
     console.log('[Autopilot Options] Selected Autopilot Instance ID:', selectedInstanceId);
     if (this.apiVersion() === 'v2') {
       this.discoverV2AutopilotOptions(selectedInstanceId)
