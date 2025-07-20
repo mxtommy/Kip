@@ -1,0 +1,38 @@
+<div class="display-content tab-content">
+  <div [formGroup]="autopilotFormGroup" class="widget-options-grid">
+
+    <mat-checkbox
+      name="headingDirectionTrue"
+      formControlName="headingDirectionTrue">
+      Display True Heading
+    </mat-checkbox>
+
+    <mat-checkbox
+      name="invertRudder"
+      formControlName="invertRudder">
+      Invert Rudder Angle
+    </mat-checkbox>
+
+    <div>
+      <h3>Discovery</h3>
+      <p>Autopilot API Version: {{ apiVersion() }}</p>
+      <p>Autopilot Plugin: {{ pluginId() }}</p>
+    </div>
+    <mat-form-field class="options-grid-span2">
+      <mat-label>Target Autopilot</mat-label>
+      <mat-select
+        placeholder="Select autopilot..."
+        formControlName="instanceId"
+        name="instanceId"
+        (selectionChange)="onAutopilotInstanceIdChange($event)"
+        required>
+        @for(ap of apInstances(); track $index) {
+          <mat-option value='{{ap}}'>{{ ap | titlecase}}</mat-option>
+        } @empty {
+          <mat-option value=''>No autopilot detected</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <p>Autopilot supported modes: {{ modes() }}</p>
+  </div>
+</div>

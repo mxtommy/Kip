@@ -31,8 +31,8 @@
         [courseXte]="crossTrackError"
         [appWindAngle]="windAngleApparent"
         [rudderAngle]="rudder"
-        [targetPilotHeadingTrue]="widgetProperties.config.courseDirectionTrue"
-        [headingDirectionTrue]="widgetProperties.config.headingDirectionTrue"
+        [targetPilotHeadingTrue]="widgetProperties.config.autopilot.courseDirectionTrue"
+        [headingDirectionTrue]="widgetProperties.config.autopilot.headingDirectionTrue"
       ></app-svg-autopilot>
       <div class="ap-screen-overlay" [style.visibility]="countdownOverlayVisibility()">
         <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
@@ -147,7 +147,7 @@
     </div>
     <!-- Route Button row -->
     <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
-      @if (apiVersion() === 'v2') {
+      @if (widgetProperties.config.autopilot.apiVersion === 'v2') {
         <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" [class.ap-btn-active]="dodgeModeActive()" (click)="toggleDodge()">
           <mat-icon class="svg-icon">
             <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">

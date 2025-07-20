@@ -187,22 +187,8 @@ export interface IWidgetSvcConfig {
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** To Retire - Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
-  usage?: Record<string, string[]>;
-  /** To Retire - Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
-  typeVal?: Record<string, string>;
-  /** To retire. Used by Autopilot V1 */
-  barColor?: string;
-  /** Used by autopilot V1 Widget to autostart the AP widget */
-  autoStart?: boolean;
-  /** Used by autopilot Widget to invert rudder angle value */
-  invertRudder?: boolean;
-  /** Used by autopilot Widget to indicate if bearing direction type is Magnetic or True */
-  courseDirectionTrue?: boolean,
-  /** Used by autopilot Widget to indicate if heading direction type is Magnetic or True */
-  headingDirectionTrue?: boolean,
-  /** Used by autopilot Widget to specify which autopilot instance to control (V2: '_default', 'pypilot-sk', etc. | V1: ignored) */
-  autopilotInstance?: string,
+  /** Used by autopilot Widget to configure autopilot settings */
+  autopilot?: IAutopilotConfig,
 
   /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
   convertUnitTo?: string;
@@ -258,6 +244,29 @@ export interface IWidgetSvcConfig {
 
   /** Use by racetimer widget */
   timerLength?: number;
+}
+
+export interface IAutopilotConfig {
+  /** Set rudder angle inversion */
+  invertRudder: boolean;
+  /** Set bearing direction type is Magnetic or True */
+  courseDirectionTrue: boolean,
+  /** Set heading direction type is Magnetic or True */
+  headingDirectionTrue: boolean,
+  /** Set API version of the autopilot. v1 only supports Signal K autopilot plugin (also known as Raymarine autopilot) */
+  apiVersion: "v1" | "v2",
+  /** The autopilot provider supports multiple autopilot
+   * operating simultaneously. Set the autopilot instance ID to control
+   * ('_default', 'pypilot-1', 'pypilot-2', 'raymarine-1', etc.). Use
+   * default to control the primary instance selected by the provider -
+   * see API for details.
+   *
+   * V2 only property. In V1 mode, this property is ignored */
+  instanceId: string | null,
+  /** Set autopilot plugin ID  ('pypilot-autopilot-provider', 'autopilot', etc.). autopilot is the v1 Signal K autopilot plugin ID. */
+  pluginId: string | null,
+  /** Set autopilot supported operational modes. This is defined by each autopilot plugin */
+  modes: string | null,
 }
 
 /**

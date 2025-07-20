@@ -23,7 +23,7 @@
  * @requires HttpClient, Angular Signals
  */
 
-import { Component, OnInit, OnDestroy, inject, signal, effect, untracked, DestroyRef, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,18 +40,14 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { isEqual } from 'lodash-es';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, lastValueFrom, Observable, finalize } from 'rxjs';
-import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
+import { lastValueFrom, Observable, finalize } from 'rxjs';
 import { AppService } from '../../core/services/app-service';
 import {
-  IV2ApiEndpoints,
   IV2CommandDefinition,
   IV2CommandResponse,
-  IV2AutopilotProvider,
-  IV2AutopilotOptionsResponse,
   IV1CommandDefinition,
   V1CommandsMap,
-  IV2DefaultProviderId
+  IV2ApiEndpoints
 } from '../../core/interfaces/signalk-autopilot-interfaces';
 
 interface MenuItem {
@@ -64,12 +60,9 @@ interface MenuItem {
 
 // Shared constants for API paths and configuration
 const API_PATHS = {
-  V1_PLUGIN: 'autopilot',
   V1_MODE_PATH: 'self.steering.autopilot.state',
   V2_BASE: '/signalk/v2/api',
-  V2_VESSELS_SELF: '/signalk/v2/api/vessels/self',
   V2_AUTOPILOTS: '/signalk/v2/api/vessels/self/autopilots',
-  V2_DEFAULT_AUTOPILOT_ID: "/signalk/v2/api/vessels/self/autopilots/_providers/_default",
   V2_COURSE: '/signalk/v2/api/vessels/self/navigation/course'
 } as const;
 
@@ -105,28 +98,15 @@ const COMMANDS: V1CommandsMap = {
 } as const;
 
 const DEFAULTS = {
-  AUTOPILOT_INSTANCE: '_default',
   COUNTDOWN_SECONDS: 5,
   ERROR_DISPLAY_DURATION: 6000,
   MESSAGE_DISPLAY_DURATION: 5000
 } as const;
 
-const FAILSAFE_OPTIONS_RESPONSE: IV2AutopilotOptionsResponse = {
-  options: {
-    modes: [],
-    states: []
-  },
-  state: null,
-  mode: 'off-line',
-  target: null,
-  engaged: false
-};
-
 @Component({
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
@@ -134,18 +114,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   private readonly http = inject(HttpClient);
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
-  private readonly _plugins = inject(SignalkPluginsService);
   protected readonly _app = inject(AppService);
 
-  // API Version Detection
-  protected apiVersion = signal<'v1' | 'v2' | null>(null);
-  protected v2Endpoints = signal<IV2ApiEndpoints | null>(null);
-  protected availableAutopilots = signal<IV2AutopilotProvider>({});
-  protected autopilotPlugin = signal<string | null>(null);
-  protected autopilotCapabilities = signal<string[]>([]);
-  protected apiReady = signal(false);
-  protected discoveryInProgress = signal<boolean>(false);
-  protected apiDetectionError = signal<string | null>(null);
+  private apiEndpoints: IV2ApiEndpoints;;
 
   // Autopilot state Management
   protected apState = signal<string | null>(null);
@@ -164,19 +135,20 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   private currentRequests = new Set<Observable<unknown>>();
 
   // Keypad buttons & layout
-  protected apGrid = signal('none'); // Autopilot button grid visibility
+  protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
   protected readonly apEngageBtnDisabled = computed(() => {
-    const apiVersion = this.apiVersion()
     const mode = this.apMode();
-
-    if (apiVersion === "v1") {
+    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    if (!apiVersion) {
+      return true;
+    } else if (apiVersion === "v1") {
       return (mode === 'standby' || mode === 'off-line') ? true : false;
     }
     return false;
   });
   protected readonly apBtnDisabled = computed(() => {
-    const apiVersion = this.apiVersion()
     const engaged = this.apEngaged();
+    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
 
     if (apiVersion === "v1") {
       return this.apMode() === 'standby' ? true : false;
@@ -226,11 +198,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   // Mode Menu
   protected menuItems = computed<MenuItem[]>(() => {
     const mode = this.apMode();
+    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    const plugin = this.widgetProperties.config.autopilot.pluginId;
     let menuItems: MenuItem[] = [];
 
     untracked(() => {
-      if (this.apiVersion() === 'v2') {
-        if (this.autopilotPlugin() == 'pypilot-autopilot-provider') {
+      if (apiVersion === 'v2') {
+        if (plugin == 'pypilot-autopilot-provider') {
           const allAPModes: MenuItem[] = [
             { label: 'Compass', action: 'compass' },
             { label: 'GPS', action: 'gps' },
@@ -241,7 +215,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           ];
           menuItems = this.parseMenuItems(allAPModes, mode);
         } // else if (this.autopilotPlugin() == 'signalk-autopilot-provider') { }
-      } else if (this.apiVersion() === 'v1') {
+      } else if (apiVersion === 'v1') {
         const allAPModes: MenuItem[] = [
           { label: 'Auto', action: 'auto' },
           { label: 'Wind', action: 'wind' },
@@ -413,8 +387,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       paths: {
         "autopilotState": {
           description: "Autopilot State",
-          path: 'self.steering.autopilot.state',
-          source: 'default',
+          path: "self.steering.autopilot.state",
+          source: "default",
           pathType: "string",
           isPathConfigurable: false,
           showPathSkUnitsFilter: false,
@@ -423,8 +397,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         },
         "autopilotMode": {
           description: "Autopilot Mode",
-          path: 'self.steering.autopilot.mode',
-          source: 'default',
+          path: "self.steering.autopilot.mode",
+          source: "default",
           pathType: "string",
           isPathConfigurable: false,
           showPathSkUnitsFilter: false,
@@ -561,331 +535,114 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           sampleTime: 500
         }
       },
-      invertRudder: true,
-      headingDirectionTrue: false,
-      courseDirectionTrue: false,
+      autopilot : { // Will be set during API detection in widget Options
+        invertRudder: true,
+        headingDirectionTrue: false,
+        courseDirectionTrue: false,
+        apiVersion: null,
+        instanceId: null,
+        pluginId: null,
+        modes: null // Default modes for V1
+      },
       enableTimeout: false,
       dataTimeout: 5,
-      autopilotInstance: DEFAULTS.AUTOPILOT_INSTANCE
     };
-
-    // API Version monitoring effect
-    effect(() => {
-      const version = this.apiVersion();
-
-      untracked(() => {
-        if (!this.apiReady()) return; // Don't run until API detection is done
-
-        if (version) {
-          const capabilities = this.autopilotCapabilities();
-          if (version === 'v2') {
-            console.log(`[Autopilot Widget] API ${version} | Default AP Capabilities: [${capabilities.join(', ')}]`);
-          } else {
-            console.log(`[Autopilot Widget] API ${version} active with Raymarine plugin capabilities`);
-          }
-        }
-      });
-    });
-
-    // Button state management effect
-    effect(() => {
-      const mode = this.apMode();
-
-      untracked(() => {
-        if (!this.apiReady()) return; // Don't run until API detection is done
-        this.apGrid.set(mode ? 'grid' : 'none');
-      });
-    });
   }
 
   ngOnInit() {
     this.validateConfig();
-
-    // this.apiVersion.set('v2');
-    // const targetInstance: string = this.widgetProperties.config.autopilotInstance;
-    // const endpoints: IV2ApiEndpoints = {
-    //     engage: V2_ENDPOINT_TEMPLATES.ENGAGE(targetInstance),
-    //     disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(targetInstance),
-    //     mode: V2_ENDPOINT_TEMPLATES.MODE(targetInstance),
-    //     target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(targetInstance),
-    //     tack: V2_ENDPOINT_TEMPLATES.TACK(targetInstance),
-    //     gybe: V2_ENDPOINT_TEMPLATES.GYBE(targetInstance),
-    //     dodge: V2_ENDPOINT_TEMPLATES.DODGE(targetInstance),
-    //     adjustHeading: V2_ENDPOINT_TEMPLATES.ADJUST_HEADING(targetInstance)
-    //   };
-    //   this.v2Endpoints.set(endpoints);
-    //   this.availableAutopilots.set({ 'pypilot-id': { provider: 'pypilot-autopilot-provider', isDefault: true } });
-    //   this.autopilotPlugin.set('pypilot-autopilot-provider');
-    //   this.autopilotCapabilities.set(['nav', 'wind','compass', 'gps', 'true wind']);
-    //   this.apiReady.set(true);
-    //   this.discoveryInProgress.set(false);
-    //   this.apiDetectionError.set(null);
-
-    this.detectAutopilotApi().then(() => {
-      this.startWidget();
-    });
+    this.startWidget();
   }
 
   protected startWidget(): void {
-    if (this.apiVersion() === 'v2') {
-      this.startV2Subscriptions();
-    } else if (this.apiVersion() === 'v1') {
-      this.startV1Subscriptions();
-    } else {
+    const err: skRequest = {
+      statusCode: 500,
+      statusCodeDescription: 'Autopilot widget not configured',
+      requestId: '',
+      state: ''
+    };
+
+    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    const instanceId = this.widgetProperties.config.autopilot.instanceId;
+    const pluginId = this.widgetProperties.config.autopilot.pluginId;
+
+    // Helper for persistent error state
+    const setPersistentError = (message: string) => {
       this.unsubscribeDataStream();
-      console.warn('[Autopilot Widget] No valid API version detected, skipping autopilot subscriptions');
-    }
-  }
+      console.error(`[Autopilot Widget] ${message}`);
+      this.displayApError(err);
+      this.isPersistentError = true;
+      this.apMode.set('off-line');
+      this.apState.set('off-line');
+      this.apEngaged.set(false);
+    };
 
-  /**
-   * Detects available autopilot API version and configures endpoints
-   *
-   * Detection Logic:
-   * 1. First attempts V2 API detection via /signalk/v2/api/vessels/self/autopilots
-   * 2. If V2 available, discovers autopilot instances and capabilities
-   * 3. Falls back to V1 plugin detection (signalk-autopilot)
-   * 4. Sets persistent error state if no API found
-   *
-   * State Management:
-   * - Sets discoveryInProgress during detection
-   * - Updates apiVersion signal with detected version
-   * - Configures v2Endpoints for discovered instances
-   * - Handles error overlays for offline state
-   *
-   * @returns Promise<void> Resolves when detection complete
-   * @throws Never throws - all errors handled internally
-   */
-  private async detectAutopilotApi(): Promise<void> {
-    console.log('[Autopilot Widget] Starting API detection...');
-    this.discoveryInProgress.set(true);
-    this.apiDetectionError.set(null);
+    this.unsubscribeDataStream();
 
-    try {
-      // Try V2 API first - check for autopilots endpoint
-      const v2Available = await this.checkV2Api();
-      if (v2Available) {
-        this.apiVersion.set('v2');
-        await this.discoverV2Autopilots();
-        const autopilots = this.availableAutopilots();
-        const instanceCount = autopilots ? Object.keys(autopilots).length : 0;
-        if (instanceCount > 0) {
-          console.log('[Autopilot Widget] V2 API detected with autopilots:', JSON.stringify(autopilots));
-          // Get default AP ID
-          const response = await firstValueFrom(
-            this.makeHttpRequest(
-              this.http.get<IV2DefaultProviderId>(API_PATHS.V2_DEFAULT_AUTOPILOT_ID)
-            )
-          );
-          const autopilotId = response.id;
-
-          if (autopilots && autopilots[autopilotId]) {
-            this.autopilotPlugin.set(autopilots[autopilotId].provider);
-            console.log(`[Autopilot Widget] Provider for autopilot ID '${autopilotId}': ${this.autopilotPlugin()}`);
-          } else {
-            console.warn(`[Autopilot Widget] No provider found for autopilot ID '${autopilotId}'`);
-            this.autopilotPlugin.set(null);
-          }
-
-
-          await this.discoverV2AutopilotOptions();
-          this.discoveryInProgress.set(false);
-
-          const configuredInstance = this.widgetProperties.config.autopilotInstance || DEFAULTS.AUTOPILOT_INSTANCE;
-          console.log(`[Autopilot Widget] Target autopilot instance: '${configuredInstance}'`);
-
-          // Clear any persistent error overlay from previous offline state
-          this.errorOverlayVisibility.set('hidden');
-          this.errorOverlayText.set('');
-          this.isPersistentError = false;
-          this.apiReady.set(true);
-          return;
-        }
-       console.log('[Autopilot Widget] No V2 Autopilot present, checking V1...');
-      }
-    } catch (error) {
-      console.error('[Autopilot Widget] Error checking V2 API, checking V1...', error);
-    }
-
-    try {
-      // Fall back to V1 plugin detection
-      const v1Enabled = await this._plugins.isEnabled(API_PATHS.V1_PLUGIN);
-      if (v1Enabled) {
-        this.apiVersion.set('v1');
-        this.autopilotCapabilities.set(['auto', 'wind', 'route', 'standby', 'tack']);
-        console.log('[Autopilot Widget] V1 API detected');
-        this.discoveryInProgress.set(false);
-        this.apiReady.set(true);
-
-        this.errorOverlayVisibility.set('hidden');
-        this.errorOverlayText.set('');
-        this.isPersistentError = false;
-        return;
-      }
-      console.log('[Autopilot Widget] V1 API plugin (signalk-autopilot) not found')
-    } catch (error) {
-      console.error('[Autopilot Widget] V1 plugin detection failed:', error);
-      this.apiDetectionError.set(`V1 detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-
-    // No API available
-    console.warn('[Autopilot Widget] No Autopilot detected');
-    this.apMode.set('off-line');
-    this.discoveryInProgress.set(false);
-    this.apiReady.set(true);
-
-    this.apiDetectionError.set('[Autopilot Widget] No autopilot API available');
-    this.errorOverlayText.set('No Autopilot detected');
-    this.errorOverlayVisibility.set('visible');
-    this.isPersistentError = true;
-  }
-
-  private async checkV2Api(): Promise<boolean> {
-    try {
-      const response = await firstValueFrom(
-        this.makeHttpRequest(
-          this.http.get(API_PATHS.V2_AUTOPILOTS, {
-            observe: 'response',
-            responseType: 'json'
-          })
-        )
-      );
-      return response?.status === 200;
-    } catch (error) {
-      // Differentiate between network errors and 404s
-      if (error && typeof error === 'object' && 'status' in error) {
-        const httpError = error as {status: number, statusText?: string};
-        if (httpError.status === 404) {
-          console.log('[Autopilot Widget] V2 API endpoint not found (404)');
-        } else if (httpError.status >= 500) {
-          console.warn('[Autopilot Widget] V2 API server error:', httpError.status, httpError.statusText);
-        } else {
-          console.log('[Autopilot Widget] V2 API error:', httpError.status, httpError.statusText);
-        }
-      } else {
-        console.log('[Autopilot Widget] V2 API network error:', error);
-      }
-      return false;
-    }
-  }
-
-  private async discoverV2Autopilots(): Promise<void> {
-    try {
-      const response = await firstValueFrom(
-        this.makeHttpRequest(
-          this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS)
-        )
-      );
-      this.availableAutopilots.set(response);
-      console.log('[Autopilot Widget] Discovered V2 autopilot instances:', JSON.stringify(response));
-    } catch (error) {
-      console.error('[Autopilot Widget] Failed to discover V2 autopilots:', error);
-      this.availableAutopilots.set({});
-      this.apiDetectionError.set(`Failed to discover autopilots: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private async discoverV2AutopilotOptions(): Promise<void> {
-    const targetInstance = this.widgetProperties.config.autopilotInstance;
-    let response: IV2AutopilotOptionsResponse;
-
-    try {
-      // TODO: Support multiple AP instances
-      // Get AP supported modes and states from the specific instance
-      try {
-        response = await firstValueFrom(
-          this.makeHttpRequest(
-            this.http.get<IV2AutopilotOptionsResponse>(
-              V2_ENDPOINT_TEMPLATES.BASE(targetInstance)
-            )
-          )
-        );
-        console.log('[Autopilot Widget] V2 Autopilot Options response:', JSON.stringify(response));
-      } catch {
-        response = FAILSAFE_OPTIONS_RESPONSE;
-        console.log(`[Autopilot Widget] Default AP discovery endpoint error for instance '${targetInstance}'`);
-      }
-
-      // Build endpoint URLs using the target instance
-      const endpoints: IV2ApiEndpoints = {
-        engage: V2_ENDPOINT_TEMPLATES.ENGAGE(targetInstance),
-        disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(targetInstance),
-        mode: V2_ENDPOINT_TEMPLATES.MODE(targetInstance),
-        target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(targetInstance),
-        tack: V2_ENDPOINT_TEMPLATES.TACK(targetInstance),
-        gybe: V2_ENDPOINT_TEMPLATES.GYBE(targetInstance),
-        dodge: V2_ENDPOINT_TEMPLATES.DODGE(targetInstance),
-        adjustHeading: V2_ENDPOINT_TEMPLATES.ADJUST_HEADING(targetInstance)
-      };
-
-      this.v2Endpoints.set(endpoints);
-      console.log(`[Autopilot Widget] V2 endpoints configured for instance '${targetInstance}':`, JSON.stringify(endpoints));
-
-      this.autopilotCapabilities.set(response.options.modes || []);
-      console.log(`[Autopilot Widget] V2 autopilot Capabilities:`, JSON.stringify(response.options.modes));
-
-    } catch (error) {
-      console.error('[Autopilot Widget] Failed to discover V2 endpoints:', error);
-      const fallbackEndpoints: IV2ApiEndpoints = {
-        engage: V2_ENDPOINT_TEMPLATES.ENGAGE(targetInstance),
-        disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(targetInstance),
-        mode: V2_ENDPOINT_TEMPLATES.MODE(targetInstance),
-        target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(targetInstance),
-        tack: V2_ENDPOINT_TEMPLATES.TACK(targetInstance),
-        gybe: V2_ENDPOINT_TEMPLATES.GYBE(targetInstance),
-        dodge: V2_ENDPOINT_TEMPLATES.DODGE(targetInstance),
-        adjustHeading: V2_ENDPOINT_TEMPLATES.ADJUST_HEADING(targetInstance)
-      };
-      this.v2Endpoints.set(fallbackEndpoints);
-      this.autopilotCapabilities.set(FAILSAFE_OPTIONS_RESPONSE.options.modes);
-      console.log(`[Autopilot Widget] Using fallback V2 endpoints for instance '${targetInstance}'`);
-    }
-  }
-
-  protected isV2CommandSupported(command: string): boolean {
-    return this.autopilotCapabilities().includes(command);
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    const previousInstance = this.widgetProperties.config.autopilotInstance;
-    this.widgetProperties.config = config;
-
-    // Cancel any ongoing HTTP requests
-    this.cancelAllHttpRequests();
-
-    // If autopilot instance changed and we're using V2 API, re-discover endpoints
-    const newInstance = config.autopilotInstance;
-    if (this.apiVersion() === 'v2' && previousInstance !== newInstance) {
-      console.log(`[Autopilot Widget] Autopilot instance changed from '${previousInstance}' to '${newInstance}', re-discovering endpoints`);
-      this.discoveryInProgress.set(true);
-      this.apiDetectionError.set(null);
-
-      this.discoverV2AutopilotOptions().then(() => {
-        console.log('[Autopilot Widget] Endpoint discovery completed successfully, starting subscriptions');
-        this.startWidget();
-      }).catch(error => {
-        console.error('[Autopilot Widget] Failed to re-discover V2 endpoints after config change:', error);
-        this.apiDetectionError.set(`Failed to re-discover endpoints: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        console.warn('[Autopilot Widget] Blocking subscription restart due to discovery failure');
-        // Don't call startAllSubscriptions() on failure - block to prevent using stale data
-      }).finally(() => {
-        this.discoveryInProgress.set(false);
-      });
-
-      // For V2 with instance change, only start subscriptions after successful discovery
+    if (!apiVersion) {
+      setPersistentError('Not configured with autopilot API version, skipping initialization');
       return;
     }
 
-    // For V1 or no instance change, start subscriptions immediately
+    if (apiVersion === 'v2') {
+      if (!instanceId) {
+        setPersistentError('No autopilot instance ID configured for V2 API, skipping initialization');
+        return;
+      }
+      if (!pluginId) {
+        setPersistentError('No autopilot plugin ID configured for V2 API, skipping initialization');
+        return;
+      }
+      this.apiEndpoints = this.setV2Endpoint(instanceId);
+      this.startV2Subscriptions();
+      return;
+    }
+
+    if (apiVersion === 'v1') {
+      this.startV1Subscriptions();
+      return;
+    }
+
+    // Unknown API version
+    setPersistentError(`Unknown autopilot API version: ${apiVersion}`);
+  }
+
+  private setV2Endpoint(instanceId: string): IV2ApiEndpoints {
+    const endpoints: IV2ApiEndpoints = {
+      engage: V2_ENDPOINT_TEMPLATES.ENGAGE(instanceId),
+      disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(instanceId),
+      mode: V2_ENDPOINT_TEMPLATES.MODE(instanceId),
+      target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(instanceId),
+      tack: V2_ENDPOINT_TEMPLATES.TACK(instanceId),
+      gybe: V2_ENDPOINT_TEMPLATES.GYBE(instanceId),
+      dodge: V2_ENDPOINT_TEMPLATES.DODGE(instanceId),
+      adjustHeading: V2_ENDPOINT_TEMPLATES.ADJUST_HEADING(instanceId)
+    };
+    return endpoints;
+  }
+
+  protected isV2CommandSupported(command: string): boolean {
+    return this.widgetProperties.config.autopilot.modes.includes(command);
+  }
+
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    // Cancel any ongoing HTTP requests
+    this.cancelAllHttpRequests();
+
+    // Clear any error or message overlays
+    this.isPersistentError = false;
+    this.errorOverlayVisibility.set("hidden");
+    this.errorOverlayText.set("");
+    this.apEngaged.set(null);
+
     this.startWidget();
   }
 
   private startV2Subscriptions(): void {
-    this.unsubscribeDataStream();
-
     this.observeDataStream('autopilotState', newValue => {
       if (newValue.data?.value) {
         this.apState.set(newValue.data.value);
-        console.warn(`[Autopilot Widget] Autopilot state updated: ${newValue.data.value}`);
       } else {
         this.apState.set('off-line');
         console.warn('[Autopilot Widget] Autopilot state is null or not available');
@@ -894,7 +651,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.observeDataStream('autopilotMode', newValue => {
       if (newValue.data?.value) {
         this.apMode.set(newValue.data.value);
-        console.warn(`[Autopilot Widget] Autopilot mode updated: ${newValue.data.value}`);
       } else {
         this.apMode.set('off-line');
         console.warn('[Autopilot Widget] Autopilot mode is null or not available');
@@ -903,7 +659,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     this.observeDataStream('autopilotEngaged', newValue => {
       if (newValue.data?.value) {
         this.apEngaged.set(newValue.data.value);
-        console.warn(`[Autopilot Widget] Autopilot engaged updated: ${newValue.data.value}`);
       } else {
         this.apEngaged.set(false);
         console.warn('[Autopilot Widget] Autopilot engaged is null or not available');
@@ -914,8 +669,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private startV1Subscriptions(): void {
-    this.unsubscribeDataStream();
-
     // For V1, we use this single legacy path
     this.widgetProperties.config.paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
     this.observeDataStream('autopilotMode', newValue => {
@@ -926,11 +679,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         console.warn('[Autopilot Widget] Autopilot V1 mode state is null or not available');
       }
     });
-
     this.startDataSubscription();
 
     // Subscribe to V1 autopilot PUT state changes
     this.subscribePutResponse();
+    // Not used in V1, but needed for UI state management
+    this.apState.set(null);
   }
 
   private startDataSubscription(): void {
@@ -941,11 +695,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         if (newValue.data.value === null) {
           this.rudder = 0;
         } else {
-          this.rudder = this.widgetProperties.config.invertRudder ? -newValue.data.value : newValue.data.value;
+          this.rudder = this.widgetProperties.config.autopilot.invertRudder ? -newValue.data.value : newValue.data.value;
         }
       }
     );
-    if (this.widgetProperties.config.headingDirectionTrue) {
+    if (this.widgetProperties.config.autopilot.headingDirectionTrue) {
       this.observeDataStream('headingTrue', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
     } else {
       this.observeDataStream('headingMag', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
@@ -1015,12 +769,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private routeCommand(cmd: string, cmdAction: IV1CommandDefinition): void {
-    if (this.apiVersion() === 'v2') {
+    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    if (apiVersion === 'v2') {
       if (cmd === 'route' && this.apMode() === 'nav') {
         cmd = 'advanceWaypoint';
       }
       this.sendV2Command(cmd);
-    } else if (this.apiVersion() === 'v1' && !cmdAction.path.startsWith('v2:')) {
+    } else if (apiVersion === 'v1' && !cmdAction.path.startsWith('v2:')) {
       // V1 command
       this.sendV1Command(cmdAction);
     } else {
@@ -1042,20 +797,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   /**
    * Executes V2 autopilot commands using REST endpoints
    *
-   * Command Mapping:
-   * ┌─────────────────┬─────────┬──────────────────────────────────────┐
-   * │ Command         │ Method  │ Endpoint Pattern                     │
-   * ├─────────────────┼─────────┼──────────────────────────────────────┤
-   * │ +1, +10, -1, -10│ PUT     │ /autopilots/{instance}/target/adjust │
-   * │ auto/wind/route │ PUT     │ /autopilots/{instance}/mode          │
-   * │ standby         │ PUT     │ /autopilots/{instance}/mode          │
-   * │ target_heading  │ PUT     │ /autopilots/{instance}/target        │
-   * │ advanceWaypoint │ PUT     │ /navigation/course/activeRoute/...   │
-   * │ tack            │ POST    │ /autopilots/{instance}/tack/{dir}    │
-   * │ gybe            │ POST    │ /autopilots/{instance}/gybe/{dir}    │
-   * │ dodge           │ POST/DEL│ /autopilots/{instance}/dodge         │
-   * └─────────────────┴─────────┴──────────────────────────────────────┘
-   *
    * Special Handling:
    * - Dodge mode: Toggles between POST (activate) and DELETE (deactivate)
    * - Tack/Gybe: Appends direction to endpoint path
@@ -1066,7 +807,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
    * @param value Optional command value (direction for tack/gybe, heading for target)
    */
   private async sendV2Command(cmd: string, value?: object): Promise<void> {
-    const endpoints = this.v2Endpoints();
+    const endpoints = this.apiEndpoints;
     if (!endpoints) {
       console.error('V2 endpoints not available');
       return;
@@ -1078,7 +819,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     switch (cmd) {
       case '+1':
         targetCommand = {
-          path: dodge ? endpoints.adjustHeading : endpoints.dodge,
+          path: !dodge ? endpoints.adjustHeading : endpoints.dodge,
           value: { value: +1 , units: "deg" }
         };
         this.executeRestRequest('PUT', targetCommand);
@@ -1246,7 +987,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       }
 
       if (response && response.status === 'success') {
-        console.log('[Autopilot Widget] V2 Command executed successfully:', cmd.path);
+        // console.log('[Autopilot Widget] V2 Command executed successfully:', cmd.path);
         return response;
       } else {
         console.warn('[Autopilot Widget] V2 Command completed with non-success status:', JSON.stringify(response));
@@ -1259,7 +1000,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       this.displayApError({
         statusCode: 500,
         statusCodeDescription: 'V2 Command Failed',
-        message: `Failed to execute ${method} ${cmd.path}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to execute ${method} ${cmd.path}`,
         widgetUUID: this.widgetProperties.uuid
       } as skRequest);
 
@@ -1272,12 +1013,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): void {
-    if (this.apiVersion() === 'v2') {
+    if (this.widgetProperties.config.autopilot.apiVersion === 'v2') {
       this.sendV2Command(operation, {value: direction});
     } else {
       // Fall back to V1
       if (operation !== 'tack') return;
-      console.log(`[Autopilot Widget] Executing V1 tack to ${direction}`);
+      // console.log(`[Autopilot Widget] Executing V1 tack to ${direction}`);
       const cmdAction = COMMANDS[direction === 'port' ? 'tackToPort' : 'tackToStarboard'];
       this.signalkRequestsService.putRequest(cmdAction.path, cmdAction.value, this.widgetProperties.uuid);
     }
@@ -1285,7 +1026,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   // V2 Absolute Target Method (class only - no UI yet)
   protected setAbsoluteTarget(heading: number): void {
-    if (this.apiVersion() === 'v2') {
+    if (this.widgetProperties.config.autopilot.apiVersion === 'v2') {
       this.sendV2Command('target_heading', {"value": heading, "units": "deg"});
     } else {
       console.error('[Autopilot Widget] Absolute target only available in V2 API');
@@ -1294,7 +1035,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   // V2 Dodge Method (class only - no UI yet)
   protected toggleDodge(): void {
-    if (this.apiVersion() === 'v2') {
+    if (this.widgetProperties.config.autopilot.apiVersion === 'v2') {
       this.sendV2Command('dodge');
     } else {
       console.warn('[Autopilot Widget] Dodge mode only available in V2 API');
@@ -1311,7 +1052,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     if (cmdResult.statusCode != 200){
       this.displayApError(cmdResult);
     } else {
-      console.log("AP Received: \n" + JSON.stringify(cmdResult));
+      // console.log("AP Received: \n" + JSON.stringify(cmdResult));
     }
   }
 
@@ -1417,11 +1158,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private parseMenuItems(menuItems: MenuItem[], mode: string): MenuItem[] {
     // Set enabled/disabled state for each mode menu item based
+    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
     const parsedMenuItems = menuItems.map(item => {
       if (item.isCancel) return { ...item, current: false, disabled: false };
 
       let enabled = false;
-      if (this.apiVersion() === 'v1') {
+      if (apiVersion === 'v1') {
         switch (mode) {
           case 'standby':
             enabled = (item.action === 'auto' || item.action === 'wind');
@@ -1438,9 +1180,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           default:
             enabled = false;
         }
-      } else if (this.apiVersion() === 'v2') {
+      } else if (apiVersion === 'v2') {
         // For V2, check if the action is in the capabilities
-        enabled = this.autopilotCapabilities().includes(item.action);
+        enabled = this.widgetProperties.config.autopilot.modes.includes(item.action);
       }
       return {
         ...item,

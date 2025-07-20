@@ -22,13 +22,14 @@ import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
+import { SelectAutopilotComponent } from '../select-autopilot/select-autopilot.component';
 
 @Component({
     selector: 'modal-widget-config',
     templateUrl: './modal-widget-config.component.html',
     styleUrls: ['./modal-widget-config.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent]
+    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
