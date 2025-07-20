@@ -363,15 +363,6 @@ export class SignalKDeltaService implements OnDestroy {
                     timestamp: update.timestamp,
                     value: flatItem.value,
                   };
-
-                  if (update.$source == "defaults" && item.path == "") {
-                    dataPath.path = dataPath.path.slice(1);
-                  }
-
-                  if (context != this._selfUrn && item.path == "") {
-                    dataPath.path = dataPath.path.slice(1);
-                  }
-
                   this._skValue$.next(dataPath);
                 });
               } else {
@@ -384,15 +375,6 @@ export class SignalKDeltaService implements OnDestroy {
                     timestamp: update.timestamp,
                     value: item.value[key],
                   };
-
-                  if (update.$source == "defaults" && item.path == "") {
-                    dataPath.path = dataPath.path.slice(1);
-                  }
-
-                  if (context != this._selfUrn && item.path == "") {
-                    dataPath.path = dataPath.path.slice(1);
-                  }
-
                   this._skValue$.next(dataPath);
                 });
               }
