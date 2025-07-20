@@ -35,6 +35,22 @@ export interface WidgetDescription {
    */
   category: TWidgetCategories;
   /**
+   * Minimal width constraint of the widget in grid cells.
+   */
+  minWidth: number;
+  /**
+   * Minimal height constraint of the widget in grid cells.
+   */
+  minHeight: number;
+  /**
+   * The default width of the widget in grid cells upon creation.
+   */
+  defaultWidth: number;
+  /**
+   * The default height of the widget in grid cells upon creation.
+   */
+  defaultHeight: number;
+  /**
    * The selector for the widget component, which will be used in the dashboard
    * to instantiate the widget.
    */
@@ -62,8 +78,12 @@ export class WidgetService {
       name: 'Numeric',
       description: 'Displays numeric data in a clear and concise format with option to display minimum and maximum recorded values.',
       icon: 'numericWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
     },
@@ -71,8 +91,12 @@ export class WidgetService {
       name: 'Text',
       description: 'Displays text data with customizable color formatting option.',
       icon: 'textWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
     },
@@ -80,8 +104,12 @@ export class WidgetService {
       name: 'Date & Time',
       description: 'Displays date and time data with fully custom formatting options and timezone correction.',
       icon: 'datetimeWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
     },
@@ -89,8 +117,12 @@ export class WidgetService {
       name: 'Position',
       description: 'Displays latitude and longitude for location tracking and navigation.',
       icon: 'positionWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-position',
       componentClassName: 'WidgetPositionComponent',
     },
@@ -98,8 +130,12 @@ export class WidgetService {
       name: 'Switch Panel',
       description: 'A switch panel group with multiple controls including toggle switches, indicator lights, and press buttons for digital switching and other operations.',
       icon: 'switchpanelWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
@@ -107,8 +143,12 @@ export class WidgetService {
       name: 'Slider',
       description: 'A range slider that allows users to adjust values, such as controlling lighting intensity from 0% to 100%.',
       icon: 'sliderWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-slider',
       componentClassName: 'WidgetSliderComponent'
     },
@@ -116,8 +156,12 @@ export class WidgetService {
       name: 'Static Label',
       description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
       icon: 'labelWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Basic',
+      pluginDependency: [],
       selector: 'widget-label',
       componentClassName: 'WidgetLabelComponent'
     },
@@ -125,8 +169,12 @@ export class WidgetService {
       name: 'Simple Linear',
       description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
       icon: 'simpleLinearGauge',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Gauges',
+      pluginDependency: [],
       selector: 'widget-simple-linear',
       componentClassName: 'WidgetSimpleLinearComponent'
     },
@@ -134,8 +182,12 @@ export class WidgetService {
       name: 'Linear',
       description: 'A horizontal or vertical linear gauge that supports zones highlights. ',
       icon: 'linearGauge',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Gauges',
+      pluginDependency: [],
       selector: 'widget-gauge-ng-linear',
       componentClassName: 'WidgetGaugeNgLinearComponent'
     },
@@ -143,8 +195,12 @@ export class WidgetService {
       name: 'Radial',
       description: 'A radial gauge that supports various configurations, including capacity and measurement dials and zones highlight.',
       icon: 'radialGauge',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Gauges',
+      pluginDependency: [],
       selector: 'widget-gauge-ng-radial',
       componentClassName: 'WidgetGaugeNgRadialComponent'
     },
@@ -152,8 +208,12 @@ export class WidgetService {
       name: 'Compass',
       description: 'A faceplate or card rotating compass gauge with various cardinal point indicator options.',
       icon: 'compassGauge',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Gauges',
+      pluginDependency: [],
       selector: 'widget-gauge-ng-compass',
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
@@ -161,8 +221,12 @@ export class WidgetService {
       name: 'Steel Style',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Gauges',
+      pluginDependency: [],
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
     },
@@ -170,8 +234,12 @@ export class WidgetService {
       name: 'Wind Steering',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
       icon: 'windsteeringWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Components',
+      pluginDependency: [],
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
     },
@@ -179,8 +247,12 @@ export class WidgetService {
       name: 'Freeboard-SK',
       description: 'Add Freeboard-SK Chart Plotter as a widget with auto sign-in to your dashboard.',
       icon: 'freeboardWidget',
-      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider' ],
+      minWidth: 3,
+      minHeight: 4,
+      defaultWidth: 3,
+      defaultHeight: 7,
       category: 'Components',
+      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider' ],
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
     },
@@ -188,8 +260,12 @@ export class WidgetService {
       name: 'Data Chart',
       description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
       icon: 'datachartWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 2,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Components',
+      pluginDependency: [],
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
     },
@@ -197,8 +273,12 @@ export class WidgetService {
       name: 'Autopilot Head',
       description: 'A basic Autopilot Head for supported Signal K v1 API autopilot devices.',
       icon: 'autopilotWidget',
-      pluginDependency: ['autopilot'],
+      minWidth: 2,
+      minHeight: 7,
+      defaultWidth: 2,
+      defaultHeight: 7,
       category: 'Components',
+      pluginDependency: ['autopilot'],
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
@@ -206,8 +286,12 @@ export class WidgetService {
       name: 'Race Timer',
       description: "A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.",
       icon: 'racetimerWidget',
-      pluginDependency: [],
+      minWidth: 3,
+      minHeight: 3,
+      defaultWidth: 3,
+      defaultHeight: 4,
       category: 'Components',
+      pluginDependency: [],
       selector: 'widget-racetimer',
       componentClassName: 'WidgetRaceTimerComponent',
     },
@@ -215,8 +299,12 @@ export class WidgetService {
       name: 'Embed Webpage Viewer',
       description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not supported.',
       icon: 'embedWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Components',
+      pluginDependency: [],
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
     },
@@ -224,8 +312,12 @@ export class WidgetService {
       name: 'Tutorial',
       description: "KIP's getting started tutorial widget.",
       icon: 'tutorialWidget',
-      pluginDependency: [],
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
       category: 'Components',
+      pluginDependency: [],
       selector: 'widget-tutorial',
       componentClassName: 'WidgetTutorialComponent',
     }

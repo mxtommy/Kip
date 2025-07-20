@@ -12,6 +12,7 @@ import { NotificationBadgeComponent } from "../notification-badge/notification-b
 import { NotificationsService } from '../../services/notifications.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { uiEventService } from '../../services/uiEvent.service';
+import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
@@ -200,20 +201,23 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe(data => {
-            if (!data) {return} //clicked cancel
+          }, true).subscribe( data => {
+            if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
             const ID = UUID.create();
+            const widget = data as WidgetDescription;
+
             const newWidget: NgGridStackWidget = {
               x: gridCell.x,
               y: gridCell.y,
-              w: 2,
-              h: 3,
+              w: widget.defaultWidth,
+              h: widget.defaultHeight,
+              minW: widget.minWidth,
+              minH: widget.minHeight,
               id: ID,
-              // @ts-expect-error TBD
-              selector: data,
+              selector: widget.selector,
               input: {
                 widgetProperties: {
-                  type: data,
+                  type: widget.selector,
                   uuid: ID,
                 }
               }
