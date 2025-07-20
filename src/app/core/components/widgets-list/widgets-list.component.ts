@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonToggleChange, MatButtonToggleModule } from '@angular/material/button-toggle';
-import { WidgetDescriptionWithPluginStatus, WidgetService } from '../../services/widget.service';
+import { WidgetDescriptionWithPluginStatus, WidgetService, WidgetDescription } from '../../services/widget.service';
 import { WidgetListCardComponent } from '../widget-list-card/widget-list-card.component';
 import { MatDialogRef } from '@angular/material/dialog';
 
@@ -33,7 +33,34 @@ export class WidgetsListComponent implements OnInit {
     this._widgetCategory.set(category.value);
   }
 
-  protected onSelectWidget(widgetSelector: string): void {
-    this._dialogRef.close(widgetSelector);
+  protected onSelectWidget(selectedWidget: WidgetDescriptionWithPluginStatus): void {
+    const {
+      name,
+      description,
+      icon,
+      minWidth,
+      minHeight,
+      defaultWidth,
+      defaultHeight,
+      category,
+      pluginDependency,
+      selector,
+      componentClassName
+    } = selectedWidget;
+
+    const widget: WidgetDescription = {
+      name,
+      description,
+      icon,
+      minWidth,
+      minHeight,
+      defaultWidth,
+      defaultHeight,
+      category,
+      pluginDependency,
+      selector,
+      componentClassName
+    };
+    this._dialogRef.close(widget);
   }
 }
