@@ -1,14 +1,6 @@
 {
   "name": "@mxtommy/kip",
-<<<<<<< HEAD
-<<<<<<< HEAD
-  "version": "3.4.2",
-=======
-  "version": "3.4.0-beta.5",
->>>>>>> 90ed379b (bump version to 3.4.0-beta.5 and update target endpoint to TARGET_HEADING)
-=======
-  "version": "3.5.0-beta.1",
->>>>>>> 94eb2ee9 (v2 beta1)
+  "version": "3.4.2-beta.1",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
