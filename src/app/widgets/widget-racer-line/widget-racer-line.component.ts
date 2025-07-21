@@ -48,6 +48,12 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       displayName: 'DTS',
       filterSelfPaths: true,
       playBeeps: true,
+      convertUnitTo: 'm',
+      numDecimal: 0,
+      ignoreZones: true,
+      color: 'contrast',
+      enableTimeout: false,
+      dataTimeout: 5,
       paths: {
         'dtsPath': {
           description: 'Distance to Start Line',
@@ -85,12 +91,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
           pathSkUnitsFilter: 'm',
           sampleTime: 1000
         }
-      },
-      numDecimal: 0,
-      color: 'contrast',
-      enableTimeout: false,
-      dataTimeout: 5,
-      ignoreZones: true
+      }
     };
 
     effect(() => {
@@ -129,6 +130,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   protected startWidget(): void {
+    this.widgetProperties.config.paths['dtsPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
+    this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
+    this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
     this.unsubscribeDataStream();
     this.dtsValue = null;
     this.lengthValue = null;

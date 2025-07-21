@@ -24,8 +24,8 @@
 
 .buttons-container {
   height: 20%;
-  width: calc(100% - 20px);
-  margin: 0 10px 0 10px;
+  width: 100%;
+  margin: 0;
   z-index: 100;
   pointer-events: auto;
   display: flex;
@@ -33,7 +33,7 @@
 }
 
 .select-button {
-  width: 10%;
+  width: 5%;
   height: 90%;
   margin: 0;
   @include mat.button-overrides((
