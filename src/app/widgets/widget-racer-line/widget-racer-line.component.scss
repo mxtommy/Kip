@@ -83,7 +83,22 @@
 }
 
 .len-bias {
-  margin-left: 10px;
+  margin: 0;
+  vertical-align: center;
+  display: inline-block;
+  line-height: 1;
+}
+
+.boat {
+  color: var(--kip-starboard-color);
+  margin: 0;
+  vertical-align: center;
+  display: inline-block;
+  line-height: 1;
+}
+.pin {
+  color: var(--kip-port-color);
+  margin: 0;
   vertical-align: center;
   display: inline-block;
   line-height: 1;

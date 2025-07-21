@@ -202,8 +202,12 @@ export interface IWidgetSvcConfig {
   /** Used by autopilot Widget to indicate if heading direction type is Magnetic or True */
   headingDirectionTrue?: boolean,
 
-  /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
+  /** Used by historical data Widget: Set the data conversion format. */
   convertUnitTo?: string;
+
+  /** Used to select a group for the convertUnitTo conversion. */
+  convertUnitToGroup?: string;
+
   /** Used by historical data Widget */
   datasetUUID?: string;
   /** NOTE: Retired property - Used by historical data Widget */

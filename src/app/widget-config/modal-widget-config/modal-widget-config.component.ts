@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDia
 
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { MatOption } from '@angular/material/core';
+import {MatOptgroup, MatOption} from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatInput } from '@angular/material/input';
@@ -28,7 +28,7 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     templateUrl: './modal-widget-config.component.html',
     styleUrls: ['./modal-widget-config.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent]
+  imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, MatOptgroup]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);

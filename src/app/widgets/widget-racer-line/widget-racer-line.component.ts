@@ -33,7 +33,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private maxValueTextHeight = 0;
 
   protected errorMessage = '';
-  protected lenBiasValue = '';
+  protected portBiasValue = '';
+  protected lineLengthValue = '';
+  protected stbBiasValue = '';
   protected infoFontSize = '1em';
 
   private isDestroyed = false; // guard against callbacks after destroyed
@@ -49,6 +51,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       filterSelfPaths: true,
       playBeeps: true,
       convertUnitTo: 'm',
+      convertUnitToGroup: 'Length',
       numDecimal: 0,
       ignoreZones: true,
       color: 'contrast',
@@ -130,6 +133,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   protected startWidget(): void {
+    this.widgetProperties.config.paths['dtsPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
+    this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
+    this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
     this.unsubscribeDataStream();
     this.dtsValue = null;
     this.lengthValue = null;
@@ -331,7 +337,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private drawUnit(): void {
-    const unit = this.widgetProperties.config.convertUnitTo;
+    const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
     this.canvasService.drawText(
       this.dToLineContext,
       unit,
@@ -347,36 +353,25 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private drawLenBias(): void {
-    let valueText = '';
-
     if (this.widgetProperties.config.paths['lineLengthPath'].path !== '') {
       const unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-      valueText += this.lengthValue != null
-        ? `Line: ${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}`
-        : 'Line: --';
-      valueText += '  ';
+      this.lineLengthValue = `―${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}―`;
     }
-
     if (this.widgetProperties.config.paths['lineBiasPath'].path !== '') {
-      valueText += ' Bias: ';
       const unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
-      if (this.biasValue == null) {
-        valueText += '--';
-      } else if (this.biasValue < -1) {
-        valueText += (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit + ' P';
-      } else if (this.biasValue > 1) {
-        valueText += this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit + ' S';
+      if (this.biasValue < 0) {
+        this.portBiasValue = '+' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit;
+        this.stbBiasValue = this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit;
       } else {
-        valueText += 'fair';
+        this.portBiasValue = ' ' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit;
+        this.stbBiasValue = ' +' + this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit;
       }
     }
-
-    this.lenBiasValue = valueText;
   }
 
   private applyDecorations(txtValue: string): string {
     // apply decoration when required
-    switch (this.widgetProperties.config.convertUnitTo) {
+    switch (this.widgetProperties.config.paths['dtsPath'].convertUnitTo) {
       case 'percent':
       case 'percentraw':
         txtValue += '%';
