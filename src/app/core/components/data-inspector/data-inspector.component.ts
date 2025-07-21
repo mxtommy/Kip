@@ -21,7 +21,6 @@ import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/l
     selector: 'data-inspector',
     templateUrl: './data-inspector.component.html',
     styleUrls: ['./data-inspector.component.scss'],
-    standalone: true,
     imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatIconModule]
 })
 export class DataInspectorComponent implements AfterViewInit, OnDestroy {

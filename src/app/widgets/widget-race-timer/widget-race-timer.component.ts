@@ -14,7 +14,6 @@ import { CanvasService } from '../../core/services/canvas.service';
     selector: 'widget-racetimer',
     templateUrl: './widget-race-timer.component.html',
     styleUrls: ['./widget-race-timer.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, MatButton]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {

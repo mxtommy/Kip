@@ -40,7 +40,6 @@ export const getDynamicTimeZones = (): ITzDefinition[] => {
     selector: 'display-datetime-options',
     templateUrl: './display-datetime.component.html',
     styleUrls: ['./display-datetime.component.css'],
-    standalone: true,
     imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, MatOption, AsyncPipe]
 })
 export class DisplayDatetimeComponent implements OnInit, OnDestroy {

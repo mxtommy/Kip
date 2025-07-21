@@ -21,7 +21,6 @@ import { adjustLinearScaleAndMajorTicks } from '../../core/utils/dataScales.util
     selector: 'widget-gauge-ng-linear',
     templateUrl: './widget-gauge-ng-linear.component.html',
     styleUrls: ['./widget-gauge-ng-linear.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule]
 })
 

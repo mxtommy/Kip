@@ -21,7 +21,6 @@ import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
     selector: 'widget-gauge-ng-radial',
     templateUrl: './widget-gauge-ng-radial.component.html',
     styleUrls: ['./widget-gauge-ng-radial.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule]
 })
 export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

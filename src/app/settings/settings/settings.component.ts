@@ -11,7 +11,6 @@ import { PageHeaderComponent } from '../../core/components/page-header/page-head
     selector: 'settings',
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss'],
-    standalone: true,
     imports: [
       MatTabGroup,
       MatTab,

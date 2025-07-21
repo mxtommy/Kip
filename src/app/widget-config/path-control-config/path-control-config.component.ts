@@ -46,7 +46,6 @@ function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn 
     selector: 'path-control-config',
     templateUrl: './path-control-config.component.html',
     styleUrls: ['./path-control-config.component.scss'],
-    standalone: true,
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule, MatHint]
 })
 export class ModalPathControlConfigComponent implements OnInit, OnChanges, OnDestroy {

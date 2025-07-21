@@ -28,7 +28,6 @@ interface IRemoteConfig {
     selector: 'settings-config',
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
-    standalone: true,
     imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy {

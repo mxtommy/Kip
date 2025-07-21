@@ -9,7 +9,6 @@ import { DashboardService } from '../../core/services/dashboard.service';
     selector: 'widget-iframe',
     templateUrl: './widget-iframe.component.html',
     styleUrls: ['./widget-iframe.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent]
 })
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
