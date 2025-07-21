@@ -33,7 +33,6 @@ import 'chartjs-adapter-date-fns';
     selector: 'settings-signalk',
     templateUrl: './signalk.component.html',
     styleUrls: ['./signalk.component.scss'],
-    standalone: true,
     imports: [
         FormsModule,
         MatFormField,

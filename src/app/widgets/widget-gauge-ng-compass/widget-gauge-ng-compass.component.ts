@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect, viewChild } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
@@ -60,8 +60,8 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   // Gauge value
   protected value = 0;
 
-  @ViewChild('compassGauge', { static: true }) ngGauge: RadialGauge;
-  @ViewChild('compassGauge', { static: true, read: ElementRef }) gauge: ElementRef;
+  readonly ngGauge = viewChild<RadialGauge>('compassGauge');
+  readonly gauge = viewChild('compassGauge', { read: ElementRef });
 
   protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
@@ -121,7 +121,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   protected startWidget(): void {
     this.setGaugeConfig();
-    this.ngGauge.update(this.gaugeOptions);
+    this.ngGauge().update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
 
@@ -173,7 +173,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           default:
             option.colorValueText = this.theme().contrast; // Fallback for unknown or null state
         }
-        this.ngGauge.update(option);
+        this.ngGauge().update(option);
       }
     });
   }
@@ -185,12 +185,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   private setCanvasHight(): void {
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const gaugeSize = this.gauge().nativeElement.getBoundingClientRect();
     const resize: RadialGaugeOptions = {};
     resize.height = gaugeSize.height;
     resize.width = gaugeSize.width;
 
-    this.ngGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   ngAfterViewInit(): void {
@@ -203,7 +203,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     resize.height = event.contentRect.height;
     resize.width = event.contentRect.width;
 
-    this.ngGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   private setGaugeConfig(): void {
@@ -336,8 +336,5 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
   ngOnDestroy(): void {
     this.destroyDataStreams();
-    // Clear references to DOM elements
-    this.ngGauge = null;
-    this.gauge = null;
   }
 }

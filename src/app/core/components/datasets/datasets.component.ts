@@ -27,7 +27,6 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
     selector: 'settings-datasets',
     templateUrl: './datasets.component.html',
     styleUrls: ['./datasets.component.scss'],
-    standalone: true,
     imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider, PageHeaderComponent]
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
@@ -135,7 +134,6 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     selector: 'settings-datasets-modal',
     templateUrl: './datasets.modal.html',
     styleUrls: ['./datasets.component.scss'],
-    standalone: true,
     imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
 })
 export class SettingsDatasetsModalComponent implements OnInit {

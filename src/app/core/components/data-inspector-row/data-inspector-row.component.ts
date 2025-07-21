@@ -15,7 +15,6 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
     templateUrl: './data-inspector-row.component.html',
     styleUrls: ['./data-inspector-row.component.css'],
     encapsulation: ViewEncapsulation.None,
-    standalone: true,
     imports: [MatCell, MatButtonModule]
 })
 export class DataInspectorRowComponent implements OnInit {
@@ -62,7 +61,6 @@ export class DataInspectorRowComponent implements OnInit {
 @Component({
     selector: 'dialog-unit-selector',
     templateUrl: 'data-inspector-row-unit-modal.html',
-    standalone: true,
     imports: [
     MatDialogTitle,
     MatDialogContent,

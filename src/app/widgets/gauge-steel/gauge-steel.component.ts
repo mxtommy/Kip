@@ -46,7 +46,6 @@ export const SteelFrameColors = {
     selector: 'gauge-steel',
     templateUrl: './gauge-steel.component.html',
     styleUrls: ['./gauge-steel.component.scss'],
-    standalone: true,
     imports: [NgxResizeObserverModule]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges {

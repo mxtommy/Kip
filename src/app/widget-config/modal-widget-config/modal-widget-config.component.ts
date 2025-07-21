@@ -27,7 +27,6 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
     selector: 'modal-widget-config',
     templateUrl: './modal-widget-config.component.html',
     styleUrls: ['./modal-widget-config.component.scss'],
-    standalone: true,
     imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { ViewChild, ElementRef, Component, SimpleChanges, OnChanges, OnDestroy, input } from '@angular/core';
+import { ElementRef, Component, SimpleChanges, OnChanges, input, viewChild } from '@angular/core';
 
 @Component({
     selector: 'svg-simple-linear-gauge',
@@ -6,8 +6,8 @@ import { ViewChild, ElementRef, Component, SimpleChanges, OnChanges, OnDestroy, 
     styleUrl: './svg-simple-linear-gauge.component.scss',
     standalone: true
 })
-export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
-  @ViewChild('gaugeBarAnimate', {static: false}) gaugeBarAnimate: ElementRef;
+export class SvgSimpleLinearGaugeComponent implements OnChanges {
+  readonly gaugeBarAnimate = viewChild<ElementRef>('gaugeBarAnimate');
   readonly displayName = input.required<string>();
   readonly displayNameColor = input.required<string>();
   readonly dataValue = input.required<string>();
@@ -35,18 +35,15 @@ export class SvgSimpleLinearGaugeComponent implements OnChanges, OnDestroy {
         this.oldGaugeValue = this.newGaugeValue;
         this.newGaugeValue = (changes.gaugeValue.currentValue - this.gaugeMinValue()) * scaleSliceValue;
 
-        if (this.gaugeBarAnimate?.nativeElement) {
+        if (this.gaugeBarAnimate()?.nativeElement) {
           requestAnimationFrame(() => {
-            if (this.gaugeBarAnimate?.nativeElement) {
-              this.gaugeBarAnimate.nativeElement.beginElement();
+            const gaugeBarAnimate = this.gaugeBarAnimate();
+            if (gaugeBarAnimate?.nativeElement) {
+              gaugeBarAnimate.nativeElement.beginElement();
             }
           });
         }
       }
     }
-  }
-
-  ngOnDestroy() {
-    this.gaugeBarAnimate = null;
   }
 }

@@ -14,7 +14,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { NgIf, NgFor } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 
@@ -28,8 +28,7 @@ interface IRemoteConfig {
     selector: 'settings-config',
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
-    standalone: true,
-    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
+    imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy {
   private appSettingsService = inject(AppSettingsService);

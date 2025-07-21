@@ -8,7 +8,6 @@ import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-si
     selector: 'widget-simple-linear',
     templateUrl: './widget-simple-linear.component.html',
     styleUrls: ['./widget-simple-linear.component.css'],
-    standalone: true,
     imports: [ WidgetHostComponent, SvgSimpleLinearGaugeComponent ]
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
