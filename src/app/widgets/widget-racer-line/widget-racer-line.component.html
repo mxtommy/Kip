@@ -9,10 +9,16 @@
       <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
       @switch(mode) {
         @case(-1) {
-          &nbsp;<span class="len-bias" [style.font-size]="infoFontSize">{{errorMessage}}</span>
+          <span class="len-bias" [style.font-size]="infoFontSize">{{errorMessage}}</span>
         }
         @case(0) {
-          &nbsp;<span class="pin" [style.font-size]="infoFontSize">{{portBiasValue}}</span><span class="pin" [style.font-size]="infoFontSize">🚩</span><span class="len-bias" [style.font-size]="infoFontSize">{{lineLengthValue}}</span><span class="boat" [style.font-size]="infoFontSize">🛥</span><span class="boat" [style.font-size]="infoFontSize">{{stbBiasValue}}</span>
+          <span class="info-container">
+            <span class="pin" [style.font-size]="infoFontSize">{{portBiasValue}}</span>
+            <span class="pin" [style.font-size]="infoFontSize">⚑</span>
+            <span class="len-bias" [style.font-size]="infoFontSize">{{lineLengthValue}}</span>
+            <span class="boat" [style.font-size]="infoFontSize">🛥⚑</span>
+            <span class="boat" [style.font-size]="infoFontSize">{{stbBiasValue}}</span>
+          </span>
         }
         @case(1) {
           <button mat-flat-button class="port-button" (click)="setLineEnd('port')">Port End</button>

@@ -82,7 +82,15 @@
   ));
 }
 
+.info-container {
+  display: inline-block;
+  width: 100%;
+  text-align: left;
+  padding-left: 10px;
+}
+
 .len-bias {
+  font-weight: bold;
   margin: 0;
   vertical-align: center;
   display: inline-block;
@@ -91,6 +99,7 @@
 
 .boat {
   color: var(--kip-starboard-color);
+  font-weight: bold;
   margin: 0;
   vertical-align: center;
   display: inline-block;
@@ -98,6 +107,7 @@
 }
 .pin {
   color: var(--kip-port-color);
+  font-weight: bold;
   margin: 0;
   vertical-align: center;
   display: inline-block;
