@@ -9,16 +9,14 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <form
         name="saveConfigForm"
-        (ngSubmit)="
-          saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)
-        "
+        (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
         #saveConfigForm="ngForm"
       >
         <h2>Backup</h2>
         <p style="margin-bottom: 16px">
           Create a backup of the current active configuration on the server.
         </p>
-        <div *ngIf="hasToken; else elseBlock">
+        <div *ngIf="hasToken; else elseBlockBackup">
           <mat-form-field style="width: 25%">
             <mat-label>Scope</mat-label>
             <mat-select
@@ -46,7 +44,7 @@
             Device token
           </div>
         </div>
-        <ng-template #elseBlock>
+        <ng-template #elseBlockBackup>
           <div class="no-token-notice">
             <p>Server authentication or Device Token required</p>
           </div>
@@ -74,7 +72,7 @@
         <p style="margin-bottom: 16px">
           Select a backup configuration to permanently delete from the server.
         </p>
-        <div *ngIf="hasToken; else elseBlock">
+        <div *ngIf="hasToken; else elseBlockDelete">
           <mat-form-field style="width: 100%">
             <mat-label>Configuration</mat-label>
             <mat-select
@@ -91,7 +89,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <ng-template #elseBlock>
+        <ng-template #elseBlockDelete>
           <div class="no-token-notice">
             <p>Authentication or Device Token required</p>
           </div>
@@ -115,7 +113,7 @@
         <p style="margin-bottom: 16px">
           Replace the current configuration with a backup from the server.
         </p>
-        <div *ngIf="hasToken; else elseBlock">
+        <div *ngIf="hasToken; else elseBlockRestore">
           <mat-form-field style="width: 100%">
             <mat-label>Configuration</mat-label>
             <mat-select formControlName="sourceTarget">
@@ -128,7 +126,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <ng-template #elseBlock>
+        <ng-template #elseBlockRestore>
           <div class="no-token-notice">
             <p>Authentication or Device Token required</p>
           </div>
