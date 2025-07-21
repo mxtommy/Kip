@@ -130,9 +130,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   protected startWidget(): void {
-    this.widgetProperties.config.paths['dtsPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
-    this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
-    this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
     this.unsubscribeDataStream();
     this.dtsValue = null;
     this.lengthValue = null;
@@ -334,7 +331,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private drawUnit(): void {
-    const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
+    const unit = this.widgetProperties.config.convertUnitTo;
     this.canvasService.drawText(
       this.dToLineContext,
       unit,
@@ -379,7 +376,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   private applyDecorations(txtValue: string): string {
     // apply decoration when required
-    switch (this.widgetProperties.config.paths['dtsPath'].convertUnitTo) {
+    switch (this.widgetProperties.config.convertUnitTo) {
       case 'percent':
       case 'percentraw':
         txtValue += '%';
