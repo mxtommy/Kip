@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, input } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input } from '@angular/core';
 import { AbstractControl, UntypedFormControl, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subscription, debounceTime, map, startWith } from 'rxjs';
 import { MatOption } from '@angular/material/core';
@@ -7,6 +7,7 @@ import { AsyncPipe } from '@angular/common';
 import { MatAutocompleteTrigger, MatAutocomplete } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface ITzDefinition {
   offset: string;
@@ -42,9 +43,10 @@ export const getDynamicTimeZones = (): ITzDefinition[] => {
     styleUrls: ['./display-datetime.component.css'],
     imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, MatOption, AsyncPipe]
 })
-export class DisplayDatetimeComponent implements OnInit, OnDestroy {
+export class DisplayDatetimeComponent implements OnInit {
+  private readonly _destroyRef = inject(DestroyRef);
   readonly dateFormat = input<UntypedFormControl>(undefined);
-  @Input () dateTimezone: UntypedFormControl;
+  readonly dateTimezone = input<UntypedFormControl>(undefined);
   private tz: ITzDefinition[] = [];
   public filteredTZ: Observable<ITzDefinition[]>;
   private filteredTZSubscription: Subscription = null;
@@ -1731,16 +1733,16 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
     }
 
     this.tz.unshift({ offset: "", label: "System Timezone -" });
-    this.dateTimezone.setValidators([Validators.required, requireMatch(this.tz)]);
+    this.dateTimezone().setValidators([Validators.required, requireMatch(this.tz)]);
 
     // add autocomplete filtering
-    this.filteredTZ = this.dateTimezone.valueChanges.pipe(
+    this.filteredTZ = this.dateTimezone().valueChanges.pipe(
       debounceTime(500),
       startWith(''),
       map(value => this.filterTZ(value || ''))
     );
 
-    this.filteredTZSubscription = this.filteredTZ.subscribe();
+    this.filteredTZSubscription = this.filteredTZ.pipe(takeUntilDestroyed(this._destroyRef)).subscribe();
   }
 
   private filterTZ( value: string ): ITzDefinition[] {
@@ -1761,9 +1763,5 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
     };
 
     return parseOffset(offsetA) - parseOffset(offsetB);
-  }
-
-  ngOnDestroy(): void {
-    this.filteredTZSubscription?.unsubscribe();
   }
 }

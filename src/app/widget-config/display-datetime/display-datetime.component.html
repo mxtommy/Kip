@@ -12,11 +12,11 @@
     <input type="text" matInput
       placeholder="Type to use autocomplete"
       name="dateTimezone"
-      [formControl]="dateTimezone"
+      [formControl]="dateTimezone()"
       required
       [matAutocomplete]="timeZoneAutoComplete">
-    @if (dateTimezone.value) {
-      <button mat-icon-button matSuffix aria-label="Clear" (click)="dateTimezone.setValue('')">
+    @if (dateTimezone().value) {
+      <button mat-icon-button matSuffix aria-label="Clear" (click)="dateTimezone().setValue('')">
         <span class="fa-solid fa-close"></span>
       </button>
     }
