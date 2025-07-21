@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect, viewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -28,8 +28,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   private readonly LINE: string = "line";
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
 
-  @ViewChild('radialGauge', { static: true }) ngGauge: RadialGauge;
-  @ViewChild('radialGauge', { static: true, read: ElementRef }) gauge: ElementRef;
+  readonly ngGauge = viewChild<RadialGauge>('radialGauge');
+  readonly gauge = viewChild('radialGauge', { read: ElementRef });
 
   // Gauge text value for value box rendering
   protected textValue = "";
@@ -100,7 +100,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
 
   protected startWidget(): void {
     this.setGaugeConfig();
-    this.ngGauge.update(this.gaugeOptions);
+    this.ngGauge().update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
@@ -154,7 +154,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
               option.colorValueText = this.getColors(this.widgetProperties.config.color).color;
           }
         }
-        this.ngGauge.update(option);
+        this.ngGauge().update(option);
       }
     });
 
@@ -175,12 +175,12 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private setCanvasHight(): void {
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const gaugeSize = this.gauge().nativeElement.getBoundingClientRect();
     const resize: RadialGaugeOptions = {};
     resize.height = gaugeSize.height;
     resize.width = gaugeSize.width;
 
-    this.ngGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   ngAfterViewInit(): void {
@@ -193,7 +193,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       resize.height = event.contentRect.height;
       resize.width = event.contentRect.width;
 
-      this.ngGauge.update(resize);
+      this.ngGauge().update(resize);
   }
 
   private setGaugeConfig(): void {
@@ -440,15 +440,11 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     const highlights: LinearGaugeOptions = {};
     highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
     highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
-    this.ngGauge.update(highlights);
+    this.ngGauge().update(highlights);
   }
 
   ngOnDestroy() {
     this.destroyDataStreams();
     this.metaSub?.unsubscribe();
-    // Clear references to DOM elements
-    this.ngGauge = null;
-    this.gauge = null;
-
   }
 }

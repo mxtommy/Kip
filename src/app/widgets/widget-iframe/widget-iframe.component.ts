@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -14,7 +14,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private _sanitizer = inject(DomSanitizer);
   protected _dashboard = inject(DashboardService);
-  @ViewChild('plainIframe', { static: false }) iframe!: ElementRef<HTMLIFrameElement>;
+  readonly iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
   protected widgetUrl: SafeResourceUrl | null = null;
   protected displayTransparentOverlay = signal<string>('block');
 
@@ -43,8 +43,9 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngAfterViewInit() {
-    if (this.iframe) {
-      this.iframe.nativeElement.onload = () => this.injectHammerJS();
+    const iframe = this.iframe();
+    if (iframe) {
+      iframe.nativeElement.onload = () => this.injectHammerJS();
     }
   }
 
@@ -100,8 +101,8 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
   private injectHammerJS() {
     const baseHref = document.getElementsByTagName('base')[0]?.href || '/';
-    const iframeWindow = this.iframe.nativeElement.contentWindow;
-    const iframeDocument = this.iframe.nativeElement.contentDocument;
+    const iframeWindow = this.iframe().nativeElement.contentWindow;
+    const iframeDocument = this.iframe().nativeElement.contentDocument;
 
     if (!iframeDocument || !iframeWindow) {
       console.error('[WidgetIframe] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue or iframe not fully loaded.');
@@ -122,7 +123,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   private injectSwipeHandler() {
-    const iframeDocument = this.iframe.nativeElement.contentDocument;
+    const iframeDocument = this.iframe().nativeElement.contentDocument;
     if (!iframeDocument) {
       console.error('[WidgetIframe] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
       return;

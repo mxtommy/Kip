@@ -1,5 +1,5 @@
 import { MatIconModule } from '@angular/material/icon';
-import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, ViewChild, Signal, effect } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { DataService } from '../../services/data.service';
 import { ISkPathData } from "../../interfaces/app-interfaces";
@@ -30,8 +30,8 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private isPhonePortrait: Signal<BreakpointState>;
   private filterSubject = new Subject<string>();
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  readonly paginator = viewChild.required(MatPaginator);
+  readonly sort = viewChild.required(MatSort);
   protected readonly pageTitle = 'Data Inspector';
 
   public pageSize = 25;
@@ -97,8 +97,8 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
       });
 
     // Assign paginator and sort to the tableData
-    this.tableData.paginator = this.paginator;
-    this.tableData.sort = this.sort;
+    this.tableData.paginator = this.paginator();
+    this.tableData.sort = this.sort();
 
     // Add a custom sorting accessor for the "supportsPut" column
     this.tableData.sortingDataAccessor = (item, property) => {
