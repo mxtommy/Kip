@@ -233,7 +233,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
         console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
         if (requestResult.statusCode === 200) {
-          this.beep(600, 50);
+          this.beep(600, 20);
         } else {
           this.errorMessage = 'Error: ' + requestResult.message;
           this.mode = -1;
