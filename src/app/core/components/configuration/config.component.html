@@ -11,44 +11,47 @@
         name="saveConfigForm"
         (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
         #saveConfigForm="ngForm"
-      >
+        >
         <h2>Backup</h2>
         <p style="margin-bottom: 16px">
           Create a backup of the current active configuration on the server.
         </p>
-        <div *ngIf="hasToken; else elseBlockBackup">
-          <mat-form-field style="width: 25%">
-            <mat-label>Scope</mat-label>
-            <mat-select
-              name="serverConfiScope"
-              [(ngModel)]="saveConfigScope"
-              required
-            >
-              <mat-option value="global"> Global </mat-option>
-              <mat-option value="user"> User </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field style="width: 70%; padding-left: 3%">
-            <mat-label>Configuration Name</mat-label>
-            <input
-              matInput
-              name="serverConfigName"
-              placeholder="Enter a name for the configuration"
-              [(ngModel)]="saveConfigName"
-              [ngModelOptions]="{ standalone: false }"
-              required
-            />
-          </mat-form-field>
-          <div *ngIf="!hasToken">
-            Writing to the server requires "Login to Server" authentication or a
-            Device token
+        @if (hasToken) {
+          <div>
+            <mat-form-field style="width: 25%">
+              <mat-label>Scope</mat-label>
+              <mat-select
+                name="serverConfiScope"
+                [(ngModel)]="saveConfigScope"
+                required
+                >
+                <mat-option value="global"> Global </mat-option>
+                <mat-option value="user"> User </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field style="width: 70%; padding-left: 3%">
+              <mat-label>Configuration Name</mat-label>
+              <input
+                matInput
+                name="serverConfigName"
+                placeholder="Enter a name for the configuration"
+                [(ngModel)]="saveConfigName"
+                [ngModelOptions]="{ standalone: false }"
+                required
+                />
+            </mat-form-field>
+            @if (!hasToken) {
+              <div>
+                Writing to the server requires "Login to Server" authentication or a
+                Device token
+              </div>
+            }
           </div>
-        </div>
-        <ng-template #elseBlockBackup>
+        } @else {
           <div class="no-token-notice">
             <p>Server authentication or Device Token required</p>
           </div>
-        </ng-template>
+        }
         <div class="formActionFooter">
           <mat-divider class="formActionDivider"></mat-divider>
           <button
@@ -56,7 +59,7 @@
             type="submit"
             [disabled]="!hasToken || !saveConfigForm.valid"
             color="accent"
-          >
+            >
             Create
           </button>
         </div>
@@ -67,33 +70,35 @@
         name="deleteConfigForm"
         (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name)"
         #deleteConfigForm="ngForm"
-      >
+        >
         <h2>Delete</h2>
         <p style="margin-bottom: 16px">
           Select a backup configuration to permanently delete from the server.
         </p>
-        <div *ngIf="hasToken; else elseBlockDelete">
-          <mat-form-field style="width: 100%">
-            <mat-label>Configuration</mat-label>
-            <mat-select
-              name="selectedDeleteItem"
-              [(ngModel)]="deleteConfigItem"
-              required
-            >
-              <mat-option
-                *ngFor="let config of serverConfigList"
-                [value]="config"
-              >
-                {{ config.scope }} / {{ config.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <ng-template #elseBlockDelete>
+        @if (hasToken) {
+          <div>
+            <mat-form-field style="width: 100%">
+              <mat-label>Configuration</mat-label>
+              <mat-select
+                name="selectedDeleteItem"
+                [(ngModel)]="deleteConfigItem"
+                required
+                >
+                @for (config of serverConfigList; track config) {
+                  <mat-option
+                    [value]="config"
+                    >
+                    {{ config.scope }} / {{ config.name }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        } @else {
           <div class="no-token-notice">
             <p>Authentication or Device Token required</p>
           </div>
-        </ng-template>
+        }
         <div class="formActionFooter">
           <mat-divider class="formActionDivider"></mat-divider>
           <button
@@ -101,7 +106,7 @@
             type="submit"
             [disabled]="!hasToken || !deleteConfigForm.valid"
             color="accent"
-          >
+            >
             Delete
           </button>
         </div>
@@ -113,24 +118,26 @@
         <p style="margin-bottom: 16px">
           Replace the current configuration with a backup from the server.
         </p>
-        <div *ngIf="hasToken; else elseBlockRestore">
-          <mat-form-field style="width: 100%">
-            <mat-label>Configuration</mat-label>
-            <mat-select formControlName="sourceTarget">
-              <mat-option
-                *ngFor="let config of serverConfigList"
-                [value]="config"
-              >
-                {{ config.scope }} / {{ config.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <ng-template #elseBlockRestore>
+        @if (hasToken) {
+          <div>
+            <mat-form-field style="width: 100%">
+              <mat-label>Configuration</mat-label>
+              <mat-select formControlName="sourceTarget">
+                @for (config of serverConfigList; track $index) {
+                  <mat-option
+                    [value]="config"
+                    >
+                    {{ config.scope }} / {{ config.name }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        } @else {
           <div class="no-token-notice">
             <p>Authentication or Device Token required</p>
           </div>
-        </ng-template>
+        }
         <div class="formActionFooter">
           <mat-divider class="formActionDivider"></mat-divider>
           <button
@@ -138,7 +145,7 @@
             type="submit"
             color="accent"
             [disabled]="!this.copyConfigForm.valid"
-          >
+            >
             Restore
           </button>
         </div>
@@ -156,7 +163,7 @@
             type="button"
             class="adv-btn"
             (click)="downloadJsonConfig()"
-          >
+            >
             Download
           </button>
         </div>
@@ -174,7 +181,7 @@
             (change)="uploadJsonConfig($event)"
             accept=".json"
             hidden
-          />
+            />
           <!-- Material button to trigger file input -->
           <button mat-flat-button class="adv-btn" (click)="fileInput.click()">
             Upload
@@ -192,7 +199,7 @@
             type="button"
             class="adv-btn"
             (click)="loadDemoConfig()"
-          >
+            >
             Demo
           </button>
         </div>
@@ -209,7 +216,7 @@
             type="button"
             class="adv-btn"
             (click)="resetConfigToDefault()"
-          >
+            >
             Default
           </button>
         </div>
@@ -225,7 +232,7 @@
             type="button"
             class="adv-btn"
             (click)="resetConnectionToDefault()"
-          >
+            >
             Connection
           </button>
         </div>
