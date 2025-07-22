@@ -1,8 +1,15 @@
-import { Component, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, signal, inject } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { IDataHighlight, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-simple-linear-gauge.component';
+import { States } from '../../core/interfaces/signalk-interfaces';
+import { Subscription } from 'rxjs';
+import { getColors } from '../../core/utils/themeColors.utils';
+import { isEqual } from 'lodash-es';
+import { getHighlights } from '../../core/utils/zones-highlight.utils';
+import { UnitsService } from '../../core/services/units.service';
+
 
 @Component({
     selector: 'widget-simple-linear',
@@ -11,12 +18,15 @@ import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-si
     imports: [ WidgetHostComponent, SvgSimpleLinearGaugeComponent ]
 })
 export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  protected unitsLabel = "";
-  protected dataLabelValue = "0";
-  protected dataValue = 0;
-  protected barColor = "";
-  protected barColorGradient = "";
-  protected barColorBackground = "";
+  private  readonly _units = inject(UnitsService);
+  protected readonly unitsLabel = signal<string>("");
+  protected readonly dataLabelValue = signal<string>("0");
+  protected readonly dataValue = signal<number>(null);
+  protected readonly barColor = signal<string>("");
+  protected readonly barColorGradient = signal<string>("");
+  protected readonly barColorBackground = signal<string>("");
+  protected readonly highlights = signal<IDataHighlight[]>([], {equal: isEqual});
+  private zonesSub: Subscription;
 
   constructor() {
     super();
@@ -48,6 +58,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
       },
       numInt: 1,
       numDecimal: 2,
+      ignoreZones: false,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5
@@ -56,6 +67,7 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
     effect(() => {
       if (this.theme()) {
         this.updateGaugeSettings();
+        this.startWidget();
       }
     });
   }
@@ -66,73 +78,110 @@ export class WidgetSimpleLinearComponent extends BaseWidgetComponent implements 
   }
 
   protected startWidget(): void {
+    this.unsubscribeDataStream();
+    this.unsubscribeMetaStream();
+    this.zonesSub?.unsubscribe();
     // set Units label sting based on gauge config
     if (this.widgetProperties.config.gauge.unitLabelFormat == "abr") {
-      this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1);
+      this.unitsLabel.set(this.widgetProperties.config.paths['gaugePath'].convertUnitTo.substr(0,1));
     } else {
-      this.unitsLabel = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
+      this.unitsLabel.set(this.widgetProperties.config.paths['gaugePath'].convertUnitTo);
     }
 
-    this.unsubscribeDataStream();
     this.observeDataStream('gaugePath', newValue => {
       if (newValue.data.value == null) {
-        this.dataValue = 0;
-        this.dataLabelValue = "--";
+        this.dataValue.set(this.widgetProperties.config.displayScale.lower);
+        this.dataLabelValue.set("--");
       } else {
-        this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
-        this.dataLabelValue = this.dataValue.toFixed(this.widgetProperties.config.numDecimal)
+        this.dataValue.set(Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper));
+        this.dataLabelValue.set(this.dataValue().toFixed(this.widgetProperties.config.numDecimal));
+      }
+
+      if (!this.widgetProperties.config.ignoreZones) {
+        switch (newValue.state) {
+          case States.Alarm:
+            this.barColor.set(this.theme().zoneAlarm);
+            break;
+          case States.Warn:
+            this.barColor.set(this.theme().zoneWarn);
+            break;
+          case States.Alert:
+            this.barColor.set(this.theme().zoneAlert);
+            break;
+          case States.Nominal:
+            this.barColor.set(this.theme().zoneNominal);
+            break;
+          default:
+            this.barColor.set(getColors(this.widgetProperties.config.color, this.theme()).color);
+        }
       }
     });
+
+    if (!this.widgetProperties.config.ignoreZones) {
+      this.observeMetaStream();
+      this.zonesSub = this.zones$.subscribe(zones => {
+        if (zones && zones.length > 0) {
+          this.highlights.set(getHighlights(zones, this.theme(), this.widgetProperties.config.paths['gaugePath'].convertUnitTo, this._units, this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper));
+        } else {
+          this.highlights.set([]);
+        }
+      });
+    }
+    else {
+      this.highlights.set([]);
+    }
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.startWidget();
     this.updateGaugeSettings();
+    this.startWidget();
   }
 
   private updateGaugeSettings() {
-    this.barColorBackground = this.theme().background;
+    this.barColorBackground.set(this.theme().background);
     switch (this.widgetProperties.config.color) {
       case "contrast":
-        this.barColor = this.theme().contrast;
-        this.barColorGradient = this.theme().contrastDimmer;
+        this.barColor.set(this.theme().contrast);
+        this.barColorGradient.set(this.theme().contrastDimmer);
         break;
       case "blue":
-        this.barColor = this.theme().blue;
-        this.barColorGradient = this.theme().blueDimmer;
+        this.barColor.set(this.theme().blue);
+        this.barColorGradient.set(this.theme().blueDimmer);
         break;
       case "green":
-        this.barColor = this.theme().green;
-        this.barColorGradient = this.theme().greenDimmer;
+        this.barColor.set(this.theme().green);
+        this.barColorGradient.set(this.theme().greenDimmer);
         break;
       case "pink":
-        this.barColor = this.theme().pink;
-        this.barColorGradient = this.theme().pinkDimmer;
+        this.barColor.set(this.theme().pink);
+        this.barColorGradient.set(this.theme().pinkDimmer);
         break;
       case "orange":
-        this.barColor = this.theme().orange;
-        this.barColorGradient = this.theme().orangeDimmer;
+        this.barColor.set(this.theme().orange);
+        this.barColorGradient.set(this.theme().orangeDimmer);
         break;
       case "purple":
-        this.barColor = this.theme().purple;
-        this.barColorGradient = this.theme().purpleDimmer;
+        this.barColor.set(this.theme().purple);
+        this.barColorGradient.set(this.theme().purpleDimmer);
         break;
       case "grey":
-        this.barColor = this.theme().grey;
-        this.barColorGradient = this.theme().greyDimmer;
+        this.barColor.set(this.theme().grey);
+        this.barColorGradient.set(this.theme().greyDimmer);
         break;
       case "yellow":
-        this.barColor = this.theme().yellow;
-        this.barColorGradient = this.theme().yellowDimmer;
+        this.barColor.set(this.theme().yellow);
+        this.barColorGradient.set(this.theme().yellowDimmer);
         break;
       default:
-        this.barColor = this.theme().contrast;
-        this.barColorGradient = this.theme().contrastDimmer;
+        this.barColor.set(this.theme().contrast);
+        this.barColorGradient.set(this.theme().contrastDimmer);
     }
   }
 
   ngOnDestroy() {
     this.destroyDataStreams();
+    this.unsubscribeMetaStream();
+    this.zonesSub?.unsubscribe();
   }
 }
