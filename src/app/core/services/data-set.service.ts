@@ -45,7 +45,9 @@ interface IDatasetServiceObserverRegistration {
   rxjsSubject: ReplaySubject<IDatasetServiceDatapoint>;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class DatasetService {
   private appSettings = inject(AppSettingsService);
   private data = inject(DataService);
@@ -74,8 +76,13 @@ export class DatasetService {
     const entryIndex = this._svcSubjectObserverRegistry.findIndex(entry => entry.datasetUuid == uuid);
 
     if (entryIndex >= 0) {
+      //TODO: Remove debug logging
+      console.warn(`[Dataset Service] Replacing ReplaySubject for UUID: ${uuid}`);
       this._svcSubjectObserverRegistry[entryIndex].rxjsSubject.complete();
       this._svcSubjectObserverRegistry.splice(entryIndex, 1);
+    } else {
+      //TODO: Remove debug logging
+      console.log(`[Dataset Service] Creating new ReplaySubject for UUID: ${uuid}`);
     }
 
     this._svcSubjectObserverRegistry.push({
@@ -85,6 +92,8 @@ export class DatasetService {
   }
 
   private createDataSourceConfiguration(dsConf: IDatasetServiceDatasetConfig ): IDatasetServiceDataSource {
+    //TODO: Remove debug logging
+    console.log(`[Dataset Service] Creating data source config for UUID: ${dsConf.uuid}`);
     const smoothingPeriodFactor = 0.25;
     const newDataSourceConfiguration: IDatasetServiceDataSource = {
       uuid: dsConf.uuid,
@@ -148,6 +157,8 @@ export class DatasetService {
    * @memberof DataSetService
    */
   private start(uuid: string): void {
+    //TODO: Remove debug logging
+    console.log(`[Dataset Service] start() called for UUID: ${uuid}`);
     const configuration = this._svcDatasetConfigs.find(configuration => configuration.uuid == uuid);
     if (!configuration) {
       console.warn(`[Dataset Service] Dataset UUID:${uuid} not found`);
@@ -180,6 +191,7 @@ export class DatasetService {
         // Add new datapoint to historicalData
         const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
+        console.log(`[Dataset Service] Pushing new datapoint to ReplaySubject for UUID: ${dataSource.uuid}. Buffer length: ${dataSource.historicalData.length}`);
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
       }
     );
@@ -195,6 +207,8 @@ export class DatasetService {
    * @memberof DataSetService
    */
   private stop(uuid: string) {
+    //TODO: Remove debug logging
+    console.log(`[Dataset Service] stop() called for UUID: ${uuid}`);
     const dsIndex = this._svcDataSource.findIndex(d => d.uuid == uuid);
     console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
     this._svcDataSource[dsIndex].pathObserverSubscription.unsubscribe();
@@ -270,6 +284,8 @@ export class DatasetService {
    * @memberof DataSetService
    */
   public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
+    //TODO: Remove debug logging
+    console.log(`[Dataset Service] edit() called for UUID: ${datasetConfig.uuid}`);
     const existingConfig = this._svcDatasetConfigs.find(conf => conf.uuid === datasetConfig.uuid);
     if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
       console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
@@ -294,6 +310,8 @@ export class DatasetService {
   * @memberof DataSetService
   */
   public remove(uuid: string): void {
+    //TODO: Remove debug logging
+    console.log(`[Dataset Service] remove() called for UUID: ${uuid}`);
     this.stop(uuid);
     console.log(`[Dataset Service] Removing Dataset: ${uuid}`);
     // Clean service data entries
