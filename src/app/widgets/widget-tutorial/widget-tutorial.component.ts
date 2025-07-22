@@ -9,7 +9,6 @@ import { DashboardService } from '../../core/services/dashboard.service';
     selector: 'widget-tutorial',
     templateUrl: './widget-tutorial.component.html',
     styleUrls: ['./widget-tutorial.component.scss'],
-    standalone: true,
     imports: [ WidgetHostComponent, MatButton]
 })
 export class WidgetTutorialComponent extends BaseWidgetComponent implements OnDestroy {

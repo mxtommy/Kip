@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
@@ -55,7 +55,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   protected isLoading = signal(true);
-  @ViewChild('grid', { static: true }) private _gridstack!: GridstackComponent;
+  private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
   protected readonly gridOptions: NgGridStackOptions = {
     margin: 4,
@@ -96,20 +96,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   ngAfterViewInit(): void {
     this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
       if (isStatic) {
-        this._gridstack.grid.setStatic(isStatic);
+        this._gridstack().grid.setStatic(isStatic);
         if (isStatic !== this._previousIsStaticState) {
           this.saveDashboard();
           this._previousIsStaticState = isStatic;
         }
       } else {
-        this._gridstack.grid.setStatic(isStatic);
+        this._gridstack().grid.setStatic(isStatic);
         this._previousIsStaticState = isStatic;
       }
     });
 
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
-        this._gridstack.grid.getGridItems().forEach((item: GridItemHTMLElement) => {
+        this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
           if (item.gridstackNode.id === action.id) {
             switch (action.operation) {
               case 'delete':
@@ -141,12 +141,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
   ngOnDestroy(): void {
     // Destroy the Gridstack instance to clean up internal resources
-    if (this._gridstack?.grid) {
-      this._gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+    const _gridstack = this._gridstack();
+    if (_gridstack?.grid) {
+      _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
     }
-    // Remove the reference to the GridstackComponent
-    this._gridstack = null;
-
     this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 
@@ -159,7 +157,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   protected resizeGridColumns(): void {
-    this._gridstack.grid.cellHeight(window.innerHeight / this._gridstack.grid.getRow());
+    this._gridstack().grid.cellHeight(window.innerHeight / this._gridstack().grid.getRow());
   }
 
   /**
@@ -171,16 +169,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
    */
   protected loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
-    if (this._gridstack?.grid) {
-      this._gridstack.grid.batchUpdate();
-      this._gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
-      this._gridstack.grid.commit();
+    const _gridstack = this._gridstack();
+    if (_gridstack?.grid) {
+      _gridstack.grid.batchUpdate();
+      _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+      _gridstack.grid.commit();
       this.isLoading.set(false);
     }
   }
 
   protected saveDashboard(): void {
-    const serializedData = this._gridstack.grid.save(false, false) as NgGridStackWidget[] || null;
+    const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
@@ -197,11 +196,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     if (!this.dashboard.isDashboardStatic()) {
       const inputX = (e as HammerInput).center.x;
       const inputY = (e as HammerInput).center.y;
-      const gridCell = this._gridstack.grid.getCellFromPixel({left: inputX, top: inputY});
-      const isCellEmpty = this._gridstack.grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
+      const gridCell = this._gridstack().grid.getCellFromPixel({left: inputX, top: inputY});
+      const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
 
       if (isCellEmpty) {
-        if (this._gridstack.grid.willItFit({x: gridCell.x, y: gridCell.y, w: 2, h: 3})) {
+        if (this._gridstack().grid.willItFit({x: gridCell.x, y: gridCell.y, w: 2, h: 3})) {
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
@@ -226,7 +225,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
                 }
               }
             };
-            this._gridstack.grid.addWidget(newWidget);
+            this._gridstack().grid.addWidget(newWidget);
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
@@ -251,13 +250,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       }
     } as NgGridStackWidget;
 
-    if(this._gridstack.grid.willItFit(newItem)) {
-      this._gridstack.grid.addWidget(newItem);
+    const _gridstack = this._gridstack();
+    if(_gridstack.grid.willItFit(newItem)) {
+      _gridstack.grid.addWidget(newItem);
     } else {
       newItem.h = 2;
       newItem.w = 2;
-      if(this._gridstack.grid.willItFit(newItem)) {
-        this._gridstack.grid.addWidget(newItem);
+      if(_gridstack.grid.willItFit(newItem)) {
+        _gridstack.grid.addWidget(newItem);
       } else {
        this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
       }
@@ -265,14 +265,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   private deleteWidget(item: GridItemHTMLElement): void {
-    this._gridstack.grid.removeWidget(item);
+    this._gridstack().grid.removeWidget(item);
   }
 
   protected nextDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.nextDashboard();
-      if (this._gridstack?.grid) {
+      if (this._gridstack()?.grid) {
         setTimeout(() => {
           this.loadDashboard(this.dashboard.activeDashboard());
         }, 0);
@@ -284,7 +284,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.previousDashboard();
-      if (this._gridstack?.grid) {
+      if (this._gridstack()?.grid) {
         setTimeout(() => {
           this.loadDashboard(this.dashboard.activeDashboard());
         }, 0);

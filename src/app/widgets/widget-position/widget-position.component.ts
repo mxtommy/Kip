@@ -10,7 +10,6 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
     selector: 'widget-position',
     templateUrl: './widget-position.component.html',
     styleUrls: ['./widget-position.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
 })
 export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {

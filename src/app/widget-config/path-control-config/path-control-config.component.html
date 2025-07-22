@@ -1,9 +1,9 @@
-@if (pathFormGroup.value.isPathConfigurable) {
-  <div [formGroup]="pathFormGroup" class="flex-container rounded-card rounded-card-color">
+@if (pathFormGroup().value.isPathConfigurable) {
+  <div [formGroup]="pathFormGroup()" class="flex-container rounded-card rounded-card-color">
     <div class="flex-field-100">
-      <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
+      <span [style.color]="pathFormGroup().enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup().value.description}}</span>
     </div>
-      @if (pathFormGroup.value.pathType === 'number' && showPathSkUnitsFilter) {
+      @if (pathFormGroup().value.pathType === 'number' && showPathSkUnitsFilter) {
         <div class="flex-field-fixed">
           <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
             <mat-label>
@@ -16,7 +16,7 @@
             <mat-select #pathUnitsFilter
               [formControl]="pathSkUnitsFilterControl"
               panelWidth=""
-              (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
+              (selectionChange)="pathFormGroup().controls['path'].setValue(pathInput.value)">
               <mat-option>All</mat-option>
               @for (item of pathSkUnitsFiltersList; track $index) {
                 <mat-option [value]="item">{{item.properties.quantity}}: {{item.properties.display}}</mat-option>
@@ -29,7 +29,7 @@
         <mat-form-field floatLabel="auto" appearance="fill" class="pathField">
           <mat-label>
             Signal K Path
-            @if (pathFormGroup.value.pathRequired === false) {
+            @if (pathFormGroup().value.pathRequired === false) {
               <span class="optional-label">(optional)</span>
             }
           </mat-label>
@@ -38,19 +38,19 @@
             formControlName="path"
             [matAutocomplete]="pathAutoComplete"
           >
-          @if (pathFormGroup.value.pathRequired === false) {
+          @if (pathFormGroup().value.pathRequired === false) {
             <mat-hint>Leave blank to disable this path.</mat-hint>
           }
-          @if (pathFormGroup.value.path) {
-            <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
+          @if (pathFormGroup().value.path) {
+            <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup().controls['path'].setValue('')">
               <mat-icon>close</mat-icon>
             </button>
           }
-          @if (pathFormGroup.controls['path'].errors?.['required']) {
+          @if (pathFormGroup().controls['path'].errors?.['required']) {
             <mat-error>
               Path is required. Please enter a valid Signal K path.
             </mat-error>
-          } @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
+          } @else if (pathFormGroup().controls['path'].errors?.['requireMatch']) {
             <mat-error>
               Path not recognized. Please enter a path from the server's published list.
             </mat-error>
@@ -97,7 +97,7 @@
         </mat-form-field>
       </div>
       <div class="unitField">
-        @if ((pathFormGroup.value.pathType === 'number' && pathFormGroup.value.showConvertUnitTo === undefined) || (pathFormGroup.value.pathType === 'number' && pathFormGroup.value.showConvertUnitTo === true)) {
+        @if ((pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === undefined) || (pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === true)) {
           <mat-form-field class="fields">
             <mat-label>Display Format</mat-label>
             <mat-select

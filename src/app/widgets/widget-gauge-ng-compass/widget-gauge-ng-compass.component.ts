@@ -5,7 +5,7 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect, viewChild } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
@@ -13,6 +13,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { States } from '../../core/interfaces/signalk-interfaces';
+import { getColors } from '../../core/utils/themeColors.utils';
 
 function rgbaToHex(rgba: string) {
   const match = rgba.match(/(\d+(\.\d+)?|\.\d+)/g);
@@ -60,8 +61,9 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   // Gauge value
   protected value = 0;
 
-  @ViewChild('compassGauge', { static: true }) ngGauge: RadialGauge;
-  @ViewChild('compassGauge', { static: true, read: ElementRef }) gauge: ElementRef;
+  readonly ngGauge = viewChild<RadialGauge>('compassGauge');
+  readonly gauge = viewChild('compassGauge', { read: ElementRef });
+  private initCompleted = false;
 
   protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
@@ -109,19 +111,19 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
     effect(() => {
       if (this.theme()) {
-       this.startWidget();
+        if (!this.initCompleted) return;
+        this.startWidget();
       }
     });
   }
 
   ngOnInit() {
     this.validateConfig();
-    this.setGaugeConfig();
   }
 
   protected startWidget(): void {
     this.setGaugeConfig();
-    this.ngGauge.update(this.gaugeOptions);
+    this.ngGauge().update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
 
@@ -134,7 +136,6 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           },
           state: States.Normal // Default state
         };
-
         this.value = 0;
         this.textValue = '--';
       } else {
@@ -173,7 +174,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           default:
             option.colorValueText = this.theme().contrast; // Fallback for unknown or null state
         }
-        this.ngGauge.update(option);
+        this.ngGauge().update(option);
       }
     });
   }
@@ -185,17 +186,18 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   private setCanvasHight(): void {
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const gaugeSize = this.gauge().nativeElement.getBoundingClientRect();
     const resize: RadialGaugeOptions = {};
     resize.height = gaugeSize.height;
     resize.width = gaugeSize.width;
 
-    this.ngGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   ngAfterViewInit(): void {
     this.setCanvasHight();
     this.startWidget();
+    this.initCompleted = true;
   }
 
   protected onResized(event: ResizeObserverEntry): void {
@@ -203,7 +205,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     resize.height = event.contentRect.height;
     resize.width = event.contentRect.width;
 
-    this.ngGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   private setGaugeConfig(): void {
@@ -283,12 +285,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.animationRule = "linear";
     this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 50; // prevent data and animation delay collisions
     // gauge does not support rbg abd rgba color values
-    this.setGaugeOptions(this.getColors(this.widgetProperties.config.color).color, rgbaToHex(this.getColors(this.widgetProperties.config.color).dim), rgbaToHex(this.getColors(this.widgetProperties.config.color).dimmer));
+    this.setGaugeOptions(getColors(this.widgetProperties.config.color, this.theme()).color, rgbaToHex(getColors(this.widgetProperties.config.color, this.theme()).dim), rgbaToHex(getColors(this.widgetProperties.config.color, this.theme()).dimmer));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private setGaugeOptions(color: string, dim: string, dimmer: string) {
-    const contrastDim = rgbaToHex(this.getColors('contrast').dim);
+    const contrastDim = rgbaToHex(getColors('contrast', this.theme()).dim);
     this.gaugeOptions.colorBarProgress = color;
     this.gaugeOptions.colorBorderMiddle = dim;
     this.gaugeOptions.colorBorderMiddleEnd = dim;
@@ -320,24 +322,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
   }
 
-  private getColors(color: string): { color: string, dim: string, dimmer: string } {
-    const themePalette = {
-      "contrast": { color: this.theme().contrast, dim: this.theme().contrastDim, dimmer: this.theme().contrastDimmer },
-      "blue": { color: this.theme().blue, dim: this.theme().blueDim, dimmer: this.theme().blueDimmer },
-      "green": { color: this.theme().green, dim: this.theme().greenDim, dimmer: this.theme().greenDimmer },
-      "pink": { color: this.theme().pink, dim: this.theme().pinkDim, dimmer: this.theme().pinkDimmer },
-      "orange": { color: this.theme().orange, dim: this.theme().orangeDim, dimmer: this.theme().orangeDimmer },
-      "purple": { color: this.theme().purple, dim: this.theme().purpleDim, dimmer: this.theme().purpleDimmer },
-      "yellow": { color: this.theme().yellow, dim: this.theme().yellowDim, dimmer: this.theme().yellowDimmer },
-      "grey": { color: this.theme().grey, dim: this.theme().greyDim, dimmer: this.theme().yellowDimmer }
-    };
-    return themePalette[color];
-  }
-
   ngOnDestroy(): void {
     this.destroyDataStreams();
-    // Clear references to DOM elements
-    this.ngGauge = null;
-    this.gauge = null;
   }
 }

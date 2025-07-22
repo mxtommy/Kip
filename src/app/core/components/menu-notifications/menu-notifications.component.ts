@@ -15,7 +15,6 @@ import isEqual from 'lodash-es/isEqual';
     selector: 'menu-notifications',
     templateUrl: './menu-notifications.component.html',
     styleUrls: ['./menu-notifications.component.scss'],
-    standalone: true,
     imports: [MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, MatIconModule, SlicePipe]
 })
 export class MenuNotificationsComponent {

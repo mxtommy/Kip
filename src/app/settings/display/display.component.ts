@@ -17,7 +17,6 @@ import { DataService } from '../../core/services/data.service';
     selector: 'settings-display',
     templateUrl: './display.component.html',
     styleUrls: ['./display.component.scss'],
-    standalone: true,
     imports: [
         FormsModule,
         MatCheckbox,

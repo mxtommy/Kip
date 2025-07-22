@@ -17,7 +17,6 @@ import { WidgetTitleComponent } from "../../core/components/widget-title/widget-
     selector: 'widget-boolean-switch',
     templateUrl: './widget-boolean-switch.component.html',
     styleUrls: ['./widget-boolean-switch.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
 })
 export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

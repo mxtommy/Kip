@@ -25,7 +25,6 @@ import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/l
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    standalone: true,
     imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {

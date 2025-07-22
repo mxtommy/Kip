@@ -11,7 +11,6 @@ import { WidgetTitleComponent } from "../../core/components/widget-title/widget-
     selector: 'widget-numeric',
     templateUrl: './widget-numeric.component.html',
     styleUrls: ['./widget-numeric.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {

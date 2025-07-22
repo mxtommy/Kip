@@ -10,7 +10,6 @@ import { ISkZone } from '../../core/interfaces/signalk-interfaces';
     selector: 'widget-gauge-steel',
     templateUrl: './widget-gauge-steel.component.html',
     styleUrls: ['./widget-gauge-steel.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, GaugeSteelComponent]
 })
 export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
@@ -111,6 +110,7 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
 
   ngOnDestroy() {
     this.destroyDataStreams();
+    this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
   }
 }
