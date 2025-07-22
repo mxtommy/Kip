@@ -44,9 +44,13 @@
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
   "devDependencies": {
     "@angular-devkit/build-angular": "^20.0.5",
     "@angular/animations": "20.0.6",
+    "@angular/build": "^20.0.5",
     "@angular/cdk": "20.0.5",
     "@angular/cli": "^20.0.5",
     "@angular/common": "20.0.6",

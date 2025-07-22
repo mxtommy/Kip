@@ -110,6 +110,7 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
 
   ngOnDestroy() {
     this.destroyDataStreams();
+    this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
   }
 }
