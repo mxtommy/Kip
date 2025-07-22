@@ -9,6 +9,7 @@ import {SignalkRequestsService} from '../../core/services/signalk-requests.servi
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
 import {MatButton} from '@angular/material/button';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
   selector: 'widget-racer-line',
@@ -38,6 +39,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   protected stbBiasValue = '';
   protected infoFontSize = '1em';
 
+  private initCompleted = false;
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = 0;
 
@@ -99,29 +101,27 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
     effect(() => {
       if (this.theme()) {
+        if (!this.initCompleted) return;
         untracked(() => {
-          this.getColors(this.widgetProperties.config.color);
+          getColors(this.widgetProperties.config.color, this.theme());
           this.updateCanvas();
         });
       }
     });
   }
 
-  toRadians(degrees) {
-    return degrees ? degrees * (Math.PI / 180) : null;
-  }
-
   ngOnInit(): void {
     this.validateConfig();
+    getColors(this.widgetProperties.config.color, this.theme());
   }
 
   ngAfterViewInit(): void {
+    this.initCompleted = true;
     this.initCanvasContexts();
     if (this.isDestroyed) {
       return;
     }
     this.startWidget();
-    this.updateCanvas();
   }
 
   private initCanvasContexts() {
@@ -140,7 +140,8 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.dtsValue = null;
     this.lengthValue = null;
     this.biasValue = null;
-    this.getColors(this.widgetProperties.config.color);
+
+    this.drawUnit();
     this.observeDataStream('dtsPath', newValue => {
       this.dtsValue = newValue.data.value;
       if (this.widgetProperties.config.ignoreZones) {
@@ -171,40 +172,21 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
             break;
         }
       }
-      this.updateCanvas();
+      this.updateCanvas()
     });
 
     this.observeDataStream('lineLengthPath', newValue => {
       this.lengthValue = newValue.data.value;
-      this.updateCanvas();
+      this.updateCanvas()
     });
 
     this.observeDataStream('lineBiasPath', newValue => {
       this.biasValue = newValue.data.value;
-      this.updateCanvas();
+      this.drawLenBias();
     });
 
     this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
-      // e.g.
-      // {
-      //   "requestId":"c8ce9f72-5218-4e9b-88fe-4fcc1966574d",
-      //   "state":"COMPLETED",
-      //   "statusCode":200,
-      //   "widgetUUID":"0ad57184-5030-497c-a775-b1cbe06a9d02",
-      //   "message":"Put start line end: OK",
-      //   "statusCodeDescription":"The request was successfully."
-      // },
-      // {
-      //   "requestId":"fc015ba8-1e1a-45dd-a788-75107e334dcd",
-      //   "state":"COMPLETED",
-      //   "statusCode":405,
-      //   "widgetUUID":"0ad57184-5030-497c-a775-b1cbe06a9d02",
-      //   "message":"PUT not supported for navigation.racing.setStartLine",
-      //   "statusCodeDescription":"The server does not support the request."
-      // }
-
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
-        console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
         if (requestResult.statusCode === 200) {
           this.beep(600, 20)
         } else {
@@ -221,11 +203,9 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-    this.updateCanvas();
   }
 
   protected onResized(e: ResizeObserverEntry) {
-    console.log('resize widget');
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
@@ -255,55 +235,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       oscillator.start();
       oscillator.stop(audioCtx.currentTime + duration / 1000);
     }
-  }
-
-  private getColors(color: string): void {
-    switch (color) {
-      case 'contrast':
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-      case 'blue':
-        this.labelColor = this.theme().blueDim;
-        this.valueColor = this.theme().blue;
-        break;
-      case 'green':
-        this.labelColor = this.theme().greenDim;
-        this.valueColor = this.theme().green;
-        break;
-      case 'pink':
-        this.labelColor = this.theme().pinkDim;
-        this.valueColor = this.theme().pink;
-        break;
-      case 'orange':
-        this.labelColor = this.theme().orangeDim;
-        this.valueColor = this.theme().orange;
-        break;
-      case 'purple':
-        this.labelColor = this.theme().purpleDim;
-        this.valueColor = this.theme().purple;
-        break;
-      case 'grey':
-        this.labelColor = this.theme().greyDim;
-        this.valueColor = this.theme().grey;
-        break;
-      case 'yellow':
-        this.labelColor = this.theme().yellowDim;
-        this.valueColor = this.theme().yellow;
-        break;
-      default:
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-    }
-    this.dtsColor = this.valueColor;
-  }
-
-  ngOnDestroy() {
-    console.log('ngOnDestroy!');
-    this.isDestroyed = true;
-    this.destroyDataStreams();
-    this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
   }
 
   private updateCanvas(): void {
@@ -387,7 +318,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   public toggleMode(): void {
-    console.log('toggle mode ', this.mode);
     this.errorMessage = '';
     this.mode = (this.mode + 1) % 4;
     this.updateCanvas();
@@ -395,7 +325,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   public setLineEnd(end: string): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.widgetProperties.uuid);
-    console.log('Set line end ', end, ' ', requestId);
     return requestId;
   }
 
@@ -403,7 +332,16 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine',
       {end, delta, rotate: rotateRadians ? rotateRadians : null},
       this.widgetProperties.uuid);
-    console.log('adjustLineEnd: delta ', delta, ' rotate ', rotateRadians, ' ', requestId);
     return requestId;
+  }
+
+  protected toRadians(degrees: number): number | null {
+    return degrees ? degrees * (Math.PI / 180) : null;
+  }
+
+  ngOnDestroy() {
+    this.isDestroyed = true;
+    this.destroyDataStreams();
+    this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
   }
 }

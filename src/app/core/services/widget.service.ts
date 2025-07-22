@@ -283,8 +283,8 @@ export class WidgetService {
       componentClassName: 'WidgetAutopilotComponent'
     },
     {
-      name: 'Race Timer',
-      description: 'A simple race start countdown timer. The timer can be started, paused, reset and the countdown duration specified.',
+      name: 'Countdown Timer',
+      description: 'A simple race start countdown timer. The timer can be started, paused, synched, reset and the countdown duration specified.',
       icon: 'racetimerWidget',
       minWidth: 3,
       minHeight: 3,
@@ -296,8 +296,8 @@ export class WidgetService {
       componentClassName: 'WidgetRaceTimerComponent',
     },
     {
-      name: 'Racer Start Line',
-      description: 'A race start line widget that integrates with the signalk-racer plugin to show and adjust the start line.',
+      name: 'Racer - Start Line Insight',
+      description: 'Gain a tactical advantage for racing starts: set and adjust the port and starboard ends of the start line, see your distance to the line, the favored end, and how much the line is favored or unfavored. Includes visual integration with Freeboard SK for interactive line adjustment and display.',
       icon: 'racerlineWidget',
       minWidth: 2,
       minHeight: 2,
@@ -309,8 +309,8 @@ export class WidgetService {
       componentClassName: 'WidgetRacerLineComponent',
     },
     {
-      name: 'Racer Start Timer',
-      description: 'A race start timer that integrates withe the signalk-racer plugin. The line can be set and the timer can be started, paused, reset and the countdown duration specified.',
+      name: 'Racer - Start Timer',
+      description: 'An advanced racing countdown timer that indicates if you are OCS (On Course Side). Set the start line, choose your countdown duration, easily adjust the timer, or set the exact start time. At the start, automatically switches to your desired dashboard—unless you are over early.',
       icon: 'racertimerWidget',
       minWidth: 2,
       minHeight: 2,
