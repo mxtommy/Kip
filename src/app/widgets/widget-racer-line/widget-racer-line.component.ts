@@ -356,13 +356,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     if (this.widgetProperties.config.paths['lineLengthPath'].path !== '' && this.lengthValue) {
       let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
       if (unit === 'feet')
-        unit = "'";
+        unit = '′';
       this.lineLengthValue = `―${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}―`;
     }
     if (this.widgetProperties.config.paths['lineBiasPath'].path !== '' && this.biasValue) {
       let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
       if (unit === 'feet')
-        unit = "'";
+        unit = '′';
       if (this.biasValue < 0) {
         this.portBiasValue = '+' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit;
         this.stbBiasValue = this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit;
