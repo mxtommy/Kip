@@ -24,8 +24,8 @@
 
 .buttons-container {
   height: 20%;
-  width: 100%;
-  margin: 0;
+  width: calc(100% - 20px);
+  margin: 0 10px;
   z-index: 100;
   pointer-events: auto;
   display: flex;
@@ -43,9 +43,9 @@
 }
 
 .port-button {
-  width: 40%;
+  width: calc(40% - 5px);
   height: 90%;
-  margin: 0;
+  margin: 0 0 0 5px;
   @include mat.button-overrides((
     filled-container-color: var(--kip-port-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -53,9 +53,9 @@
 }
 
 .starboard-button {
-  width: 40%;
+  width: calc(40% - 5px);
   height: 90%;
-  margin: 0;
+  margin: 0 0 0 5px;
   @include mat.button-overrides((
     filled-container-color: var(--kip-starboard-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -63,9 +63,9 @@
 }
 
 .port-small-button {
-  width: 20%;
+  width: calc(20% - 5px);
   height: 90%;
-  margin: 0;
+  margin: 0 0 0 5px;
   @include mat.button-overrides((
     filled-container-color: var(--kip-port-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -73,9 +73,9 @@
 }
 
 .starboard-small-button {
-  width: 20%;
+  width: calc(20% - 5px);
   height: 90%;
-  margin: 0;
+  margin: 0 0 0 5px;
   @include mat.button-overrides((
     filled-container-color: var(--kip-starboard-color),
     filled-label-text-color: var(--kip-contrast-color)
