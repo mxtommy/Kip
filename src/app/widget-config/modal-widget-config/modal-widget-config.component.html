@@ -84,6 +84,30 @@
                   <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal" required>
                 </mat-form-field>
               }
+              @if ((widgetConfig.nextDashboard !== undefined)) {
+                <mat-form-field [class.options-grid-span2]="!widgetConfig.numInt">
+                  <mat-label>Next Dashboard after start</mat-label>
+                  <input type="number" min="0" max="99" matInput placeholder="Enter or select number..." name="nextDashboard"  formControlName="nextDashboard">
+                </mat-form-field>
+              }
+              @if ((widgetConfig.convertUnitTo !== undefined)) {
+                <mat-form-field class="fields">
+                  <mat-label>Display Units</mat-label>
+                  <mat-select placeholder="Select unit" formControlName="convertUnitTo" required>
+                    @for (group of unitList.conversions; track $index) {
+                      @if (!widgetConfig.convertUnitToGroup || widgetConfig.convertUnitToGroup === '' || widgetConfig.convertUnitToGroup === group.group) {
+                        <mat-optgroup [label]="group.group">
+                          @for (unit of group.units; track $index) {
+                            <mat-option [value]="unit.measure">
+                              {{unit.description}}
+                            </mat-option>
+                          }
+                        </mat-optgroup>
+                      }
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
               @if ((widgetConfig.showMin !== undefined)) {
                 <mat-checkbox
                   name="showMin"
@@ -96,6 +120,13 @@
                   name="showMax"
                   formControlName="showMax">
                   Show Max recorded value
+                </mat-checkbox>
+              }
+              @if (widgetConfig.playBeeps !== undefined) {
+                <mat-checkbox
+                  name="playBeeps"
+                  formControlName="playBeeps">
+                  Enable beeps on count down
                 </mat-checkbox>
               }
               @if ((widgetConfig.dateFormat !== undefined)) {

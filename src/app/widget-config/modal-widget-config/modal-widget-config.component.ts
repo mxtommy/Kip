@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDia
 
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { MatOption } from '@angular/material/core';
+import {MatOptgroup, MatOption} from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatInput } from '@angular/material/input';

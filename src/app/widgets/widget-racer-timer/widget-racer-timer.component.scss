@@ -1,0 +1,98 @@
+@use '@angular/material' as mat;
+
+.text-generic-wrapper {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 80%;
+  z-index: inherit;
+}
+
+.canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: inherit;
+}
+
+.filler {
+  width: 100%;
+  height: 100%;
+}
+
+.buttons-container {
+  height: 20%;
+  width: calc(100% - 20px);
+  margin: 0 10px;
+  z-index: 100;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+}
+
+.select-button {
+  width: 5%;
+  height: 90%;
+  margin: 0;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-blue-dim-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.main-button {
+  width: calc(40% - 5px);
+  height: 90%;
+  margin: 0 0 0 5px;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.other-button {
+  width: calc(40% - 5px);
+  height: 90%;
+  margin: 0 0 0 5px;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-blue-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.main-small-button {
+  width: calc(20% - 5px);
+  height: 90%;
+  margin: 0 0 0 5px;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.other-small-button {
+  width: calc(20% - 5px);
+  height: 90%;
+  margin: 0 0 0 5px;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-blue-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.set-start-at {
+  width: 60%;
+  height: 90%;
+  margin-left: 5px;
+  margin-top: 0;
+  background-color: var(--kip-contrast-color);
+}
+
+.start-at {
+  margin-left: 10px;
+  vertical-align: center;
+  display: inline-block;
+  line-height: 1;
+}

@@ -29,6 +29,8 @@ import { WidgetSteelGaugeComponent } from '../../../widgets/widget-gauge-steel/w
 import { WidgetIframeComponent } from '../../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetPositionComponent } from '../../../widgets/widget-position/widget-position.component';
 import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/widget-race-timer.component';
+import { WidgetRacerLineComponent } from '../../../widgets/widget-racer-line/widget-racer-line.component';
+import { WidgetRacerTimerComponent } from '../../../widgets/widget-racer-timer/widget-racer-timer.component';
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
@@ -79,6 +81,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetFreeboardskComponent,
       WidgetAutopilotComponent,
       WidgetDataChartComponent,
+      WidgetRacerLineComponent,
+      WidgetRacerTimerComponent,
       WidgetRaceTimerComponent,
       WidgetIframeComponent,
       WidgetTutorialComponent,
