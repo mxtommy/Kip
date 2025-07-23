@@ -9,7 +9,6 @@ import { SvgWindComponent } from '../svg-wind/svg-wind.component';
 @Component({
     selector: 'widget-wind-steer',
     templateUrl: './widget-wind.component.html',
-    standalone: true,
     imports: [ SvgWindComponent, WidgetHostComponent ]
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {

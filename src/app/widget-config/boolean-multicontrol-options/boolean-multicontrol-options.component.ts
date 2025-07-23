@@ -18,7 +18,6 @@ export interface IAddNewPathObject {
     selector: 'boolean-multicontrol-options',
     templateUrl: './boolean-multicontrol-options.component.html',
     styleUrls: ['./boolean-multicontrol-options.component.css'],
-    standalone: true,
     imports: [
         FormsModule,
         ReactiveFormsModule,

@@ -18,7 +18,6 @@ export interface IAddNewPath {
     selector: 'paths-options',
     templateUrl: './paths-options.component.html',
     styleUrls: ['./paths-options.component.scss'],
-    standalone: true,
     imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, ModalPathControlConfigComponent, ObjectKeysPipe]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {

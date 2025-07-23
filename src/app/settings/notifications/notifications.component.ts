@@ -17,7 +17,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
     selector: 'settings-notifications',
     templateUrl: './notifications.component.html',
     styleUrls: ['./notifications.component.scss'],
-    standalone: true,
 
     imports: [
         FormsModule,

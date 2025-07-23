@@ -390,12 +390,12 @@
       class="contrast-text"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:240px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
       x="523.93127"
-      y="475.13757">{{ lockedHdg() }}<tspan style="font-weight:normal;font-size:180px" dy="-38">°</tspan></text>
+      y="480">{{ lockedHdg() }}<tspan style="font-weight:normal;font-size:180px" dy="-38">°</tspan></text>
     <text
        xml:space="preserve"
        class="contrast-text-dim"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;display:inline;fill-opacity:1;stroke:none"
-       x="720"
+       x="730"
        y="484">{{ lockedHdgAnnotation() }}</text>
     <text
       xml:space="preserve"

@@ -9,7 +9,6 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'widget-freeboardsk',
-    standalone: true,
     templateUrl: './widget-freeboardsk.component.html',
     styleUrl: './widget-freeboardsk.component.scss',
     imports: [WidgetHostComponent, SafePipe]

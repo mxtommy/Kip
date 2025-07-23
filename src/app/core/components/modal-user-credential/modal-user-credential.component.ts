@@ -11,7 +11,6 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-modal-user-credential',
     templateUrl: './modal-user-credential.component.html',
     styleUrls: ['./modal-user-credential.component.scss'],
-    standalone: true,
     imports: [FormsModule, MatDialogTitle, MatDialogContent, MatFormField, MatLabel, MatInput, MatError, MatDivider, MatDialogActions, MatButton, MatDialogClose]
 })
 export class ModalUserCredentialComponent {

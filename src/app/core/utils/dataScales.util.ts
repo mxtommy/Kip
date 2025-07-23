@@ -1,5 +1,11 @@
 import { TScaleType } from "../interfaces/signalk-interfaces";
 
+export interface IScale {
+  min: number;
+  max: number;
+  majorTicks: number[];
+}
+
 /**
    * Returns an adjusted scale range, with major tick values that are well rounded ie. limiting
    * tick value factions as best as possible. Note that the min/max value are starting points.
@@ -11,7 +17,7 @@ import { TScaleType } from "../interfaces/signalk-interfaces";
    * @param {number} maxValue suggested range max value
    * @return {*}  {[number, number, number[]]} array containing calculated rounded range minimal value, maximum value and the corresponding tick array values
    */
-export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: number): {min: number, max: number, majorTicks: number[]} {
+export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: number): IScale {
   const tickArray = [] as number[];
   let niceRange = maxValue - minValue;
   let majorTickSpacing = 0;
@@ -29,10 +35,13 @@ export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: numbe
 
   for (let index = 0; index < range; index++) {
     if (tickArray[index] < niceMaxValue) {
-      // need to do some trick here to account for JavaScript fraction issues else when scale ticks are smaller than 1, nice numbers can't be produced ie. tick of 0.3 will be 0.30000000004 (see: https://flaviocopes.com/javascript-decimal-arithmetics/)
       const tick = (Number(tickArray[index].toFixed(2)) * 100 + Number(majorTickSpacing.toFixed(2)) * 100) / 100;
       tickArray.push(tick);
     }
+  }
+  // Ensure the last tick is the niceMaxValue
+  if (tickArray[tickArray.length - 1] !== niceMaxValue) {
+    tickArray.push(niceMaxValue);
   }
   return {min: niceMinValue, max: niceMaxValue, majorTicks: tickArray};
 }
