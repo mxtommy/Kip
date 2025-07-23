@@ -131,10 +131,16 @@ ngOnInit(): void {
         this.apiVersion.set('v2');
         this.autopilotFormGroup.get('apiVersion')?.setValue('v2', { emitEvent: false });
         await this.discoverV2Autopilots();
-        this.pluginId.set(this.autopilotPlugin());
-        this.autopilotFormGroup.get('pluginId')?.setValue(this.autopilotPlugin(), { emitEvent: false });
-        this.discoveryInProgress.set(false);
-        return;
+
+        // Check if there is at least one autopilot instance
+        if (this.availableAutopilots() && Object.keys(this.availableAutopilots()).length > 0) {
+          this.pluginId.set(this.autopilotPlugin());
+          this.autopilotFormGroup.get('pluginId')?.setValue(this.autopilotPlugin(), { emitEvent: false });
+          this.discoveryInProgress.set(false);
+          return;
+        } else {
+          console.warn('[Autopilot Options] No V2 autopilot plugin found');
+        }
       }
     } catch (error) {
       console.error('[Autopilot Options] Error checking V2 API, checking V1...', error);
@@ -199,8 +205,15 @@ ngOnInit(): void {
           this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS)
         )
       );
-      this.availableAutopilots.set(response);
-      console.log('[Autopilot Options] Discovered V2 autopilot instances:', JSON.stringify(response));
+
+      // Check if there is at least one autopilot instance
+      if (response && Object.keys(response).length > 0) {
+        this.availableAutopilots.set(response);
+        console.log('[Autopilot Options] Discovered V2 autopilot instances:', JSON.stringify(response));
+      } else {
+        this.availableAutopilots.set({});
+        console.warn('[Autopilot Options] No V2 autopilot plugin found in response.');
+      }
     } catch (error) {
       console.error('[Autopilot Options] Failed to discover V2 autopilots:', error);
       this.availableAutopilots.set({});
