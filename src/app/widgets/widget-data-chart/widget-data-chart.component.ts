@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -34,7 +34,8 @@ interface IDataSetRow {
   styleUrl: './widget-data-chart.component.scss'
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  private dsService = inject(DatasetService);
+  private readonly dsService = inject(DatasetService);
+  private readonly ngZone = inject(NgZone);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
@@ -554,7 +555,9 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
 
-        this.chart?.update('quiet');
+        this.ngZone.runOutsideAngular(() => {
+          this.chart?.update('quiet');
+        });
       }
     );
   }
