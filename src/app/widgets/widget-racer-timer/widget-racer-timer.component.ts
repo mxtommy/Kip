@@ -116,7 +116,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     }
     this.startWidget();
     this.updateCanvas();
-    console.log('ngAfterViewInit!');
   }
 
   private initCanvases() {
@@ -203,7 +202,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       }
       if (this.widgetProperties.config.nextDashboard >= 0 &&
         lastTtsValue === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
-        console.log('next dashboard ', this.widgetProperties.config.nextDashboard);
         this.dashboard.setActiveDashboard(this.widgetProperties.config.nextDashboard);
       }
     });
@@ -231,7 +229,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID === this.widgetProperties.uuid) {
-        console.log('RESULT RECEIVED: ', JSON.stringify(requestResult));
         if (requestResult.statusCode === 200) {
           this.beep(600, 20);
         } else {
@@ -256,7 +253,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   protected onResized(e: ResizeObserverEntry) {
-    console.log('resize widget');
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
@@ -376,7 +372,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   public toggleMode(): void {
-    console.log('toggle mode ', this.mode);
     this.errorMessage = '';
     this.mode = (this.mode + 1) % 5;
     switch (this.mode) {
@@ -397,7 +392,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   public sendStartTimerCommand(command: string): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command}, this.widgetProperties.uuid);
-    console.log('Start Timer Command ', command, ' ', requestId);
     switch (command) {
       case 'start':
         this.mode = 0;
@@ -413,7 +407,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   public adjustStartTime(delta: number): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command: 'adjust', delta}, this.widgetProperties.uuid);
-    console.log('Adjust Timer: delta=', delta, ' ', requestId);
     return requestId;
   }
 
@@ -430,12 +423,10 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     }
     this.mode = 0;
 
-    const requestId = this.signalk.putRequest(
+    /* const requestId = this.signalk.putRequest(
       'navigation.racing.setStartTime',
       {command: 'set', startTime: date.toISOString()},
       this.widgetProperties.uuid
-    );
-
-    console.log('Set Timer: startAtTime=', startAtTime, ' →', date.toISOString(), 'requestId=', requestId);
+    ); */
   }
 }

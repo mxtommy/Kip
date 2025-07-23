@@ -1,16 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormsModule, ReactiveFormsModule }    from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
-import { MatButton } from '@angular/material/button';
-import { MatDivider } from '@angular/material/divider';
-import {MatOptgroup, MatOption} from '@angular/material/core';
-import { MatSelect } from '@angular/material/select';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatInput } from '@angular/material/input';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
-
-import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { BooleanMultiControlOptionsComponent, IAddNewPathObject } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
@@ -22,12 +19,13 @@ import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
     selector: 'modal-widget-config',
     templateUrl: './modal-widget-config.component.html',
     styleUrls: ['./modal-widget-config.component.scss'],
-    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent]
+    imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
@@ -36,7 +34,6 @@ export class ModalWidgetConfigComponent implements OnInit {
   private units = inject(UnitsService);
   private app = inject(AppService);
   protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
-
 
   public titleDialog = "Widget Options";
   public formMaster: UntypedFormGroup;
