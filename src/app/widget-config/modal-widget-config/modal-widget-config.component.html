@@ -418,7 +418,7 @@
         <div class="tab-content">
           <div>
             <ng-template mat-tab-label>
-              <span [style]="formMaster.controls.paths.valid ? 'display: none' : 'display: block'" class="warning material-icons">
+              <span [style]="formMaster.controls.paths.valid || this.formMaster.controls.paths.disabled ? 'display: none' : 'display: block'" class="warning material-icons">
                 error
               </span>
               &nbsp;Paths
