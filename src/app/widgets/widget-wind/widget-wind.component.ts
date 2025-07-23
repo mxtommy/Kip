@@ -169,7 +169,6 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   ngOnInit(): void {
     this.validateConfig();
-    // TODO: ADD AP OPTION AND CHECK IF PLUGIN IS AVAILABLE
     this.startWidget();
   }
 
