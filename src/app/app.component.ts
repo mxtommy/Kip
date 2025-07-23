@@ -19,6 +19,7 @@ import { uiEventService } from './core/services/uiEvent.service';
 import { DialogService } from './core/services/dialog.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { DatasetService } from './core/services/data-set.service';
 
 
 @Component({
@@ -37,6 +38,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private _dialog = inject(DialogService);
   public appSettingsService = inject(AppSettingsService);
   public authenticationService = inject(AuthenticationService);
+  private readonly _dataSet = inject(DatasetService);
   private _responsive = inject(BreakpointObserver);
   public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
 
