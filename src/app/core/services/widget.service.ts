@@ -166,7 +166,7 @@ export class WidgetService {
       componentClassName: 'WidgetLabelComponent'
     },
     {
-      name: 'Simple Linear',
+      name: "Simple Linear",
       description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
       icon: 'simpleLinearGauge',
       minWidth: 1,
@@ -335,7 +335,7 @@ export class WidgetService {
       componentClassName: 'WidgetIframeComponent',
     },
     {
-      name: 'Tutorial',
+      name: "Tutorial",
       description: "KIP's getting started tutorial widget.",
       icon: 'tutorialWidget',
       minWidth: 1,
