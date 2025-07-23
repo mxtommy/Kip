@@ -45,7 +45,9 @@ interface IDatasetServiceObserverRegistration {
   rxjsSubject: ReplaySubject<IDatasetServiceDatapoint>;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class DatasetService {
   private appSettings = inject(AppSettingsService);
   private data = inject(DataService);
