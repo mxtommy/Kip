@@ -11,6 +11,7 @@ import {MatButton} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import {DashboardService} from '../../core/services/dashboard.service';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
   selector: 'widget-racer-timer',
@@ -50,7 +51,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.defaultConfig = {
       displayName: 'TTS',
-      nextDashboard: 1,
+      nextDashboard: 0,
       playBeeps: true,
       filterSelfPaths: true,
       paths: {
@@ -98,7 +99,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     effect(() => {
       if (this.theme()) {
         untracked(() => {
-          this.getColors(this.widgetProperties.config.color);
+          this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+          this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
           this.updateCanvas();
         });
       }
@@ -148,7 +150,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.unsubscribeDataStream();
     this.ttsValue = null;
     this.dtsValue = null;
-    this.getColors(this.widgetProperties.config.color);
+    this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+    this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
     this.observeDataStream('ttsPath', newValue => {
       const lastTtsValue = this.ttsValue;
       this.ttsValue = newValue.data.value;
@@ -266,48 +269,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.updateCanvas();
   }
 
-  private getColors(color: string): void {
-    switch (color) {
-      case 'contrast':
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-      case 'blue':
-        this.labelColor = this.theme().blueDim;
-        this.valueColor = this.theme().blue;
-        break;
-      case 'green':
-        this.labelColor = this.theme().greenDim;
-        this.valueColor = this.theme().green;
-        break;
-      case 'pink':
-        this.labelColor = this.theme().pinkDim;
-        this.valueColor = this.theme().pink;
-        break;
-      case 'orange':
-        this.labelColor = this.theme().orangeDim;
-        this.valueColor = this.theme().orange;
-        break;
-      case 'purple':
-        this.labelColor = this.theme().purpleDim;
-        this.valueColor = this.theme().purple;
-        break;
-      case 'grey':
-        this.labelColor = this.theme().greyDim;
-        this.valueColor = this.theme().grey;
-        break;
-      case 'yellow':
-        this.labelColor = this.theme().yellowDim;
-        this.valueColor = this.theme().yellow;
-        break;
-      default:
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-    }
-    this.valueStateColor = this.valueColor;
-  }
-
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
@@ -335,7 +296,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         this.timeToSContext,
         valueText,
         Math.floor(this.timeToSElement.width / 2),
-        Math.floor((this.timeToSElement.height / 2) * 1.15),
+        Math.floor((this.timeToSElement.height / 2) * 1.3),
         this.maxValueTextWidth,
         this.maxValueTextHeight,
         'bold',
