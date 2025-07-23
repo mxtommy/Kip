@@ -103,7 +103,8 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (this.theme()) {
         if (!this.initCompleted) return;
         untracked(() => {
-          getColors(this.widgetProperties.config.color, this.theme());
+          this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+          this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
           this.updateCanvas();
         });
       }
@@ -112,7 +113,8 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   ngOnInit(): void {
     this.validateConfig();
-    getColors(this.widgetProperties.config.color, this.theme());
+    this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+    this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
   ngAfterViewInit(): void {
@@ -251,7 +253,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         this.dToLineContext,
         valueText,
         Math.floor(this.dToLineElement.width / 2),
-        Math.floor((this.dToLineElement.height / 2) * 1.15),
+        Math.floor((this.dToLineElement.height / 2) * 1.3),
         this.maxValueTextWidth,
         this.maxValueTextHeight,
         'bold',
@@ -273,7 +275,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       this.dToLineContext,
       unit,
       Math.floor(this.dToLineElement.width - 10 * this.canvasService.scaleFactor),
-      Math.floor(this.dToLineElement.height - 10 * this.canvasService.scaleFactor),
+      Math.floor(this.dToLineElement.height - 7 * this.canvasService.scaleFactor),
       Math.floor(this.dToLineElement.width * 0.25),
       Math.floor(this.dToLineElement.height * 0.15),
       'bold',
