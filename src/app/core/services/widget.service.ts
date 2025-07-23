@@ -323,7 +323,7 @@ export class WidgetService {
     },
     {
       name: 'Embed Webpage Viewer',
-      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not supported.',
+      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not enabled by default but are supported.',
       icon: 'embedWidget',
       minWidth: 1,
       minHeight: 1,
