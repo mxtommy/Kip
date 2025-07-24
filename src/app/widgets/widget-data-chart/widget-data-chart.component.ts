@@ -519,19 +519,32 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
       (dsPoint: IDatasetServiceDatapoint) => {
 
+        if (!dsPoint) {
+              console.warn('DatasetService emitted an undefined or null datapoint:', dsPoint);
+        }
+
         // Add new data point to the first dataset
-        this.chart.data.datasets[0].data.push(this.transformDatasetRow(dsPoint, 0));
+        const point = this.transformDatasetRow(dsPoint, 0);
+        console.log('Transformed point:', point);
+
+        this.chart.data.datasets[0].data.push(point);
+        console.warn(`value: ${dsPoint.data.value}, SMA: ${dsPoint.data.sma}`);
         // Trim the first dataset if it exceeds maxDataPoints
-        if (this.chart.data.datasets[0].data.length >= this.dataSourceInfo.maxDataPoints) {
+        console.warn(`Dataset 0 length: ${this.chart.data.datasets[0].data.length}`);
+        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
           this.chart.data.datasets[0].data.shift();
+          console.warn(`Dataset 0 trimmed: ${this.chart.data.datasets[0].data.length}`);
         }
 
         // Add new data point to the second dataset (average dataset)
         if (this.widgetProperties.config.showAverageData) {
           this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
+          console.warn(`Average last: ${dsPoint.data.lastAverage}, Min: ${dsPoint.data.lastMinimum}, Max: ${dsPoint.data.lastMaximum}`);
           // Trim the second dataset if it exceeds maxDataPoints
-          if (this.chart.data.datasets[1].data.length >= this.dataSourceInfo.maxDataPoints) {
+          console.warn(`Dataset 1 length: ${this.chart.data.datasets[1].data.length}`);
+          if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
             this.chart.data.datasets[1].data.shift();
+            console.warn(`Dataset 1 trimmed: ${this.chart.data.datasets[1].data.length}`);
           }
         }
 
