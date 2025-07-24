@@ -179,12 +179,12 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     });
 
     this.observeDataStream('lineLengthPath', newValue => {
-      this.lengthValue = newValue.data.value;
+      this.lengthValue = 1000;//newValue.data.value;
       this.updateCanvas()
     });
 
     this.observeDataStream('lineBiasPath', newValue => {
-      this.biasValue = newValue.data.value;
+      this.biasValue = 1000;//newValue.data.value;
       this.drawLenBias();
     });
 
