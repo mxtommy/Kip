@@ -24,7 +24,8 @@
   position: absolute;
   top: 48px;
   width: 135px;
-  overflow-y: scroll;
+  overflow-y: auto;
+  scrollbar-width: none;
   overflow-x: hidden;
   scroll-behavior: smooth;
   // -webkit-overflow-scrolling: touch;
