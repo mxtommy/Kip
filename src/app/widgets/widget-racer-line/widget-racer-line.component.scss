@@ -23,6 +23,7 @@
 }
 
 .buttons-container {
+  position: relative;
   height: 24%;
   width: calc(100% - 20px);
   margin: 0 10px;
@@ -31,6 +32,34 @@
   pointer-events: auto;
   display: flex;
   align-items: center;
+}
+
+.buttons-svg-icon {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+.svg-content {
+  width: 100%;
+  height: 100%;
+  padding: 0em;
+  text {
+    font-family: Roboto;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor:middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    stroke: none;
+  }
 }
 
 .select-button {

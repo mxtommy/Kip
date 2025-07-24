@@ -1,3 +1,4 @@
+import { MatIconModule } from '@angular/material/icon';
 import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
@@ -7,7 +8,7 @@ import {NgxResizeObserverModule} from 'ngx-resize-observer';
 import {CanvasService} from '../../core/services/canvas.service';
 import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
-import {MatButton} from '@angular/material/button';
+import { MatButtonModule} from '@angular/material/button';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
 
@@ -16,7 +17,7 @@ import { getColors } from '../../core/utils/themeColors.utils';
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
   standalone: true,
-  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);

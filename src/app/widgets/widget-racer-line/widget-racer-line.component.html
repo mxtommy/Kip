@@ -6,7 +6,13 @@
       <canvas #dToLineCanvas class="canvas"></canvas>
     </div>
     <div class="buttons-container">
-      <button mat-flat-button class="select-button" (click)="toggleMode()">&#8942;</button>
+      <button mat-flat-button class="select-button" (click)="toggleMode()">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text xml:space="preserve" x="50" y="35" style="font-size: 90px;">&vellip;</text>
+          </svg>
+        </mat-icon>
+      </button>
       @switch(mode) {
         @case(-1) {
           <span class="len-bias" [style.font-size]="infoFontSize">{{errorMessage}}</span>
@@ -21,8 +27,20 @@
           </span>
         }
         @case(1) {
-          <button mat-flat-button class="port-button" (click)="setLineEnd('port')">Port End</button>
-          <button mat-flat-button class="starboard-button" (click)="setLineEnd('stb')">Stbd End</button>
+          <button mat-flat-button class="port-button" (click)="setLineEnd('port')">
+            <mat-icon class="buttons-svg-icon">
+              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+                <text xml:space="preserve" x="50" y="12">Port End</text>
+              </svg>
+            </mat-icon>
+          </button>
+          <button mat-flat-button class="starboard-button" (click)="setLineEnd('stb')">
+            <mat-icon class="buttons-svg-icon">
+              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+                <text xml:space="preserve" x="50" y="12">Stbd End</text>
+              </svg>
+            </mat-icon>
+          </button>
         }
         @case (2) {
           <button mat-flat-button class="port-small-button" (click)="adjustLineEnd('port', 5, 0)">+5m</button>
