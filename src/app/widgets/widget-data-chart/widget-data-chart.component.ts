@@ -110,19 +110,23 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   protected startWidget(): void {
+    console.log('[Chart Lifecycle] startWidget called');
     this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
 
     if (this.datasetConfig) {
+      console.log('[Chart Lifecycle] setChartOptions will reset datasets');
       this.setChartOptions();
 
       if (!this.chart) {
+        console.log('[Chart Lifecycle] Creating new Chart instance');
         this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
           type: this.lineChartType,
           data: this.lineChartData,
           options: this.lineChartOptions
         });
       } else {
+        console.log('[Chart Lifecycle] Updating existing Chart instance');
         this.chart.update();
       }
 
@@ -136,6 +140,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private setChartOptions() {
+    console.log('[Chart Lifecycle] setChartOptions called, datasets will be cleared');
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
@@ -603,6 +608,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   };
 
   ngOnDestroy(): void {
+    console.log('[Chart Lifecycle] ngOnDestroy called, destroying chart and unsubscribing');
     this.destroyDataStreams();
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
