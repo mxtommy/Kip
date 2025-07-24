@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, viewChild, inject, EventEmitter, AfterViewInit, effect, Signal, model } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
@@ -29,21 +29,20 @@ import { DatasetService } from './core/services/data-set.service';
     imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  private _snackBar = inject(MatSnackBar);
-  private _deltaService = inject(SignalKDeltaService);
-  private _connectionStateMachine = inject(ConnectionStateMachine);
-  private _app = inject(AppService);
-  private _dashboard = inject(DashboardService);
-  private _uiEvent = inject(uiEventService);
-  private _dialog = inject(DialogService);
-  public appSettingsService = inject(AppSettingsService);
-  public authenticationService = inject(AuthenticationService);
-  private readonly _dataSet = inject(DatasetService);
-  private _responsive = inject(BreakpointObserver);
-  public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
+  private readonly _snackBar = inject(MatSnackBar);
+  private readonly _deltaService = inject(SignalKDeltaService); // Loading of SignalKDeltaService to start collecting deltas
+  private readonly _connectionStateMachine = inject(ConnectionStateMachine);
+  private readonly _app = inject(AppService);
+  private readonly _dashboard = inject(DashboardService);
+  private readonly _uiEvent = inject(uiEventService);
+  private readonly _dialog = inject(DialogService);
+  public readonly appSettingsService = inject(AppSettingsService);
+  public readonly authenticationService = inject(AuthenticationService);
+  private readonly _dataSet = inject(DatasetService); // Early loading of DatasetService
+  private readonly _responsive = inject(BreakpointObserver);
 
-  protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
-  protected actionsSidenavOpen = model<boolean>(false);
+
+  protected actionsSidenavOpened = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected notificationsVisibility = 'hidden';
@@ -62,7 +61,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           component: 'upgrade-config',
         }, true).subscribe(data => {
           if (!data) {return} //clicked cancel
-
         });
       }
     });
@@ -138,6 +136,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       this.onSwipeRight(event);
     } else if (key === 'arrowleft') {
       this.onSwipeLeft(event);
+    } else if (key === 'escape') {
+      this.backdropClicked();
+    }
+  }
+
+  protected escapeKeyPressed(key: string): void {
+    key= key.toLocaleLowerCase();
+    if (key === 'escape') {
+      this.backdropClicked();
     }
   }
 
@@ -181,12 +188,18 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
       if (this.isPhonePortrait().matches) {
-        this.actionsSidenavOpen.set(false);
+        this.actionsSidenavOpened.set(false);
         this.notificationsSidenavOpened.set(true);
       } else {
-        this.notificationsSidenavOpened.set(true);
+        this.actionsSidenavOpened.set(false);
+        this.notificationsSidenavOpened.update(opened => !opened);
       }
     }
+  }
+
+  protected backdropClicked(): void {
+    this.notificationsSidenavOpened.update(opened => opened ? !opened : false);
+    this.actionsSidenavOpened.update(opened => opened ? !opened : false);
   }
 
   protected onSwipeLeft(e: Event): void {
@@ -194,9 +207,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       e.preventDefault();
       if (this.isPhonePortrait().matches) {
         this.notificationsSidenavOpened.set(false);
-        this.actionsSidenavOpen.set(true);
+        this.actionsSidenavOpened.set(true);
       } else {
-        this.actionsSidenavOpen.set(true);
+        this.notificationsSidenavOpened.set(false);
+        this.actionsSidenavOpened.update(opened => !opened);
       }
     }
   }
