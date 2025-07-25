@@ -1,7 +1,6 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
   <div class="text-generic-wrapper" (onResize)="onResized($event)">
     <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"/>
-
     <div class="filler">
       <canvas #dToLineCanvas class="canvas"></canvas>
     </div>
@@ -14,23 +13,20 @@
         </mat-icon>
       </button>
       @switch(mode) {
-        @case(-1) {
-          <span class="len-bias" [style.font-size]="infoFontSize">{{ errorMessage }}</span>
-        }
         @case(0) {
           <div class="pin-container">
             <svg width="100%" height="100%" viewBox="0 0 70 18" preserveAspectRatio="xMidYMid meet" class="svg-content pin">
-              <text xml:space="preserve" x="33" y="14">{{ portBiasValue }}</text>
+              <text xml:space="preserve" x="33" y="14">{{ portBiasValue() }}</text>
             </svg>
           </div>
           <div class="len-bias-container">
             <svg width="100%" height="100%" viewBox="0 0 90 12" preserveAspectRatio="xMidYMid meet" class="svg-content len-bias">
-              <text xml:space="preserve" x="45" y="9"><tspan class="pin">⚑</tspan>{{ lineLengthValue }}<tspan class="boat">⚑</tspan></text>
+              <text xml:space="preserve" x="45" y="9"><tspan class="pin">⚑</tspan>{{ lineLengthValue() }}<tspan class="boat">⚑</tspan></text>
             </svg>
           </div>
           <div class="boat-container">
             <svg width="100%" height="100%" viewBox="0 0 70 18" preserveAspectRatio="xMidYMid meet" class="svg-content boat">
-              <text xml:space="preserve" x="33" y="14">{{ stbBiasValue }}</text>
+              <text xml:space="preserve" x="33" y="14">{{ stbBiasValue() }}</text>
             </svg>
           </div>
         }
@@ -113,4 +109,8 @@
       }
     </div>
   </div>
+  @if (!dashboard.isDashboardStatic()) {
+    <div class="widgetOverlay">
+    </div>
+  }
 </widget-host>

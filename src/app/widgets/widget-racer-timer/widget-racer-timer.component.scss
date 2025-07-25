@@ -102,9 +102,26 @@
 }
 
 .start-at {
+  height: 100%;
+  width: 100%;
   flex: 1 1 auto;
   svg {
     fill: var(--kip-contrast-color);
+    text {
+      font-family: Roboto;
+      font-size: 9px;
+      font-weight: normal;
+      text-align: center;
+      text-anchor: middle;
+      font-style: normal;
+      font-variant: normal;
+      font-stretch: normal;
+      font-variant-ligatures: normal;
+      font-variant-caps: normal;
+      font-variant-numeric: normal;
+      font-variant-east-asian: normal;
+      stroke: none;
+    }
   }
 }
 
@@ -135,4 +152,20 @@
     font-variant-east-asian: normal;
     stroke: none;
   }
+}
+
+.svg-start-at {
+  text {
+    fill: var(--kip-contrast-dim-color);
+  }
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  bottom: 0;
+  color: transparent;
+  z-index: 21;
 }

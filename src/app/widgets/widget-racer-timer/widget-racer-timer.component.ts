@@ -24,8 +24,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private signalk = inject(SignalkRequestsService);
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
-  protected errorMessage = signal<string>('');
-  protected startAtValue = signal<string>('');
   private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
@@ -236,11 +234,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         if (requestResult.statusCode === 200) {
           this.beep(600, 20);
         } else {
-          this.errorMessage.set('Error: ' + requestResult.message);
-          this.mode.set(-1);
-          this.beep(300, 1000);
-          this.updateCanvas();
-          this.app.sendSnackbarNotification('Please check the Signalk-racer plugin installation/configuration', 5000, true);
+          this.app.sendSnackbarNotification(`Please check the Signalk-racer plugin installation/configuration. Error: ${requestResult.message}`, 0, false);
         }
       }
     });
@@ -282,7 +276,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   private updateCanvas(): void {
     this.drawTimeToStart();
-    this.drawStartAt();
   }
 
   private drawTimeToStart(): void {
@@ -323,16 +316,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     }
   }
 
-  private drawStartAt(): void {
-    if (this.widgetProperties.config.paths['startTimePath'].path !== '') {
-      const startAtText = this.startAtTime() != null ? this.startAtTime() : 'HH:MM:SS';
-      this.startAtTime.set(`Start at: ${startAtText}`);
-      this.startAtValue.set(this.startAtTime());
-    }
-  }
-
   public toggleMode(): void {
-    this.errorMessage.set('');
     this.mode.update(val => (val + 1) % 5);
 
     switch (this.mode()) {
