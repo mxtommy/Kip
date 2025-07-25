@@ -1,4 +1,5 @@
-import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, signal, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
@@ -7,19 +8,20 @@ import {NgxResizeObserverModule} from 'ngx-resize-observer';
 import {CanvasService} from '../../core/services/canvas.service';
 import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
 import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
-import {MatButton} from '@angular/material/button';
+import { MatButtonModule} from '@angular/material/button';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { DashboardService } from '../../core/services/dashboard.service';
 
 @Component({
   selector: 'widget-racer-line',
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
-  standalone: true,
-  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
+  protected readonly dashboard = inject(DashboardService);
   private dToLineCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dToLineCanvas');
   protected dToLineContext: CanvasRenderingContext2D;
   protected dToLineElement: HTMLCanvasElement;
@@ -27,16 +29,15 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private dtsValue: number = null;
   private lengthValue: number = null;
   private biasValue: number = null;
-  protected labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private dtsColor: string = undefined;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
 
-  protected errorMessage = '';
-  protected portBiasValue = '';
-  protected lineLengthValue = '';
-  protected stbBiasValue = '';
+  protected portBiasValue = signal<string>('');
+  protected lineLengthValue = signal<string>('');
+  protected stbBiasValue = signal<string>('');
   protected infoFontSize = '1em';
 
   private initCompleted = false;
@@ -103,7 +104,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (this.theme()) {
         if (!this.initCompleted) return;
         untracked(() => {
-          this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+          this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
           this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
           this.updateCanvas();
         });
@@ -113,7 +114,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   ngOnInit(): void {
     this.validateConfig();
-    this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
     this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
@@ -192,11 +193,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         if (requestResult.statusCode === 200) {
           this.beep(600, 20)
         } else {
-          this.errorMessage = 'Error: ' + requestResult.message;
-          this.mode = -1;
-          this.beep(300, 1000);
-          this.updateCanvas();
-          this.app.sendSnackbarNotification('Please check the Signalk-racer plugin installation/configuration', 5000, true);
+          this.app.sendSnackbarNotification(`Please check the Signalk-racer plugin installation/configuration. Error: ${requestResult.message}`, 0, false);
         }
       }
     });
@@ -290,18 +287,18 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
       if (unit === 'feet')
         unit = '′';
-      this.lineLengthValue = `―${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}―`;
+      this.lineLengthValue.set(`―${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}―`);
     }
     if (this.widgetProperties.config.paths['lineBiasPath'].path !== '' && this.biasValue) {
       let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
       if (unit === 'feet')
         unit = '′';
       if (this.biasValue < 0) {
-        this.portBiasValue = '+' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit;
-        this.stbBiasValue = this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit;
+        this.portBiasValue.set('+' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit);
+        this.stbBiasValue.set(this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit);
       } else {
-        this.portBiasValue = ' ' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit;
-        this.stbBiasValue = ' +' + this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit;
+        this.portBiasValue.set(' ' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit);
+        this.stbBiasValue.set(' +' + this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit);
       }
     }
   }
@@ -320,7 +317,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   public toggleMode(): void {
-    this.errorMessage = '';
     this.mode = (this.mode + 1) % 4;
     this.updateCanvas();
   }

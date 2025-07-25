@@ -1,11 +1,16 @@
 @use '@angular/material' as mat;
+:host {
+  overflow: clip;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
 
 .text-generic-wrapper {
-  position: absolute;
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
-  z-index: inherit;
 }
 
 .canvas {
@@ -23,30 +28,44 @@
 }
 
 .buttons-container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  column-gap: 2%;
+  position: relative;
   height: 24%;
-  width: calc(100% - 20px);
-  margin: 0 10px;
-  padding-bottom: 14px;
+  width: 100%;
+  padding: 0px 10px 14px 10px;
   z-index: 20;
   pointer-events: auto;
-  display: flex;
   align-items: center;
 }
 
-.select-button {
-  width: 5%;
-  height: 90%;
-  margin: 0;
+.button {
+  min-width: 0px;
+  width: 100%;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   @include mat.button-overrides((
-    filled-container-color: var(--kip-blue-dim-color),
+    filled-container-height: 100%,
+    filled-horizontal-padding: 0px,
+    filled-icon-spacing: 0px,
+  ));
+}
+
+.select-button {
+  flex: none;
+  width: 18%;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-blue-color),
     filled-label-text-color: var(--kip-contrast-color)
   ));
 }
 
 .main-button {
-  width: calc(40% - 5px);
-  height: 90%;
-  margin: 0 0 0 5px;
+  flex: 1 1 auto;
   @include mat.button-overrides((
     filled-container-color: var(--kip-port-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -54,9 +73,7 @@
 }
 
 .other-button {
-  width: calc(40% - 5px);
-  height: 90%;
-  margin: 0 0 0 5px;
+  flex: 1 1 auto;
   @include mat.button-overrides((
     filled-container-color: var(--kip-blue-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -64,9 +81,7 @@
 }
 
 .main-small-button {
-  width: calc(20% - 5px);
-  height: 90%;
-  margin: 0 0 0 5px;
+  flex: 1 1 auto;
   @include mat.button-overrides((
     filled-container-color: var(--kip-port-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -74,9 +89,7 @@
 }
 
 .other-small-button {
-  width: calc(20% - 5px);
-  height: 90%;
-  margin: 0 0 0 5px;
+  flex: 1 1 auto;
   @include mat.button-overrides((
     filled-container-color: var(--kip-blue-color),
     filled-label-text-color: var(--kip-contrast-color)
@@ -84,16 +97,75 @@
 }
 
 .set-start-at {
-  width: 60%;
-  height: 90%;
-  margin-left: 5px;
-  margin-top: 0;
+  flex: 1 1 auto;
   background-color: var(--kip-contrast-color);
 }
 
 .start-at {
-  margin-left: 10px;
-  vertical-align: center;
-  display: inline-block;
-  line-height: 1;
+  height: 100%;
+  width: 100%;
+  flex: 1 1 auto;
+  svg {
+    fill: var(--kip-contrast-color);
+    text {
+      font-family: Roboto;
+      font-size: 9px;
+      font-weight: normal;
+      text-align: center;
+      text-anchor: middle;
+      font-style: normal;
+      font-variant: normal;
+      font-stretch: normal;
+      font-variant-ligatures: normal;
+      font-variant-caps: normal;
+      font-variant-numeric: normal;
+      font-variant-east-asian: normal;
+      stroke: none;
+    }
+  }
+}
+
+.buttons-svg-icon {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+.svg-content {
+  width: 100%;
+  height: 100%;
+  padding: 0em;
+  margin: 0em;
+  text {
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor:middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    stroke: none;
+  }
+}
+
+.svg-start-at {
+  text {
+    fill: var(--kip-contrast-dim-color);
+  }
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  bottom: 0;
+  color: transparent;
+  z-index: 21;
 }
