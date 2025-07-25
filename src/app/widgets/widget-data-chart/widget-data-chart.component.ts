@@ -34,8 +34,8 @@ interface IDataSetRow {
   styleUrl: './widget-data-chart.component.scss'
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  private dsService = inject(DatasetService);
-  private ngZone = inject(NgZone);
+  private readonly dsService = inject(DatasetService);
+  private readonly ngZone = inject(NgZone);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
