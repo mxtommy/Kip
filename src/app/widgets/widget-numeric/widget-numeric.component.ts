@@ -19,7 +19,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private canvasMinMax = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMinMax');
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   private canvas = inject(CanvasService);
-  private dataValue: number = null;ù
+  private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
   protected labelColor = signal<string>(undefined);
