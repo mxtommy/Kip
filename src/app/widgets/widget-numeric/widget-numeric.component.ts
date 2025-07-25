@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild, signal } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -6,6 +6,7 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
+import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
     selector: 'widget-numeric',
@@ -21,7 +22,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
-  protected labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
   private maxValueTextWidth = 0;
@@ -67,7 +68,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
     effect(() => {
       if (this.theme()) {
-        this.getColors(this.widgetProperties.config.color);
+        this.setColors();
         this.updateCanvas();
         this.updateCanvasUnit();
       }
@@ -101,7 +102,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
-    this.getColors(this.widgetProperties.config.color);
+    this.setColors();
     this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
       // Initialize min/max
@@ -155,46 +156,9 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.updateCanvasUnit();
   }
 
-  private getColors(color: string): void {
-    switch (color) {
-      case "contrast":
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-      case "blue":
-        this.labelColor = this.theme().blueDim;
-        this.valueColor = this.theme().blue;
-        break;
-      case "green":
-        this.labelColor = this.theme().greenDim;
-        this.valueColor = this.theme().green;
-        break;
-      case "pink":
-        this.labelColor = this.theme().pinkDim;
-        this.valueColor = this.theme().pink;
-        break;
-      case "orange":
-        this.labelColor = this.theme().orangeDim;
-        this.valueColor = this.theme().orange;
-        break;
-      case "purple":
-        this.labelColor = this.theme().purpleDim;
-        this.valueColor = this.theme().purple;
-        break;
-      case "grey":
-        this.labelColor = this.theme().greyDim;
-        this.valueColor = this.theme().grey;
-        break;
-      case "yellow":
-        this.labelColor = this.theme().yellowDim;
-        this.valueColor = this.theme().yellow;
-        break;
-      default:
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-    }
-    this.valueStateColor = this.valueColor;
+  private setColors(): void {
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
+    this.valueStateColor = this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
   ngOnDestroy() {
@@ -259,22 +223,27 @@ private updateCanvas(): void {
   }
 
   private drawUnit(): void {
-    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
+  const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+  if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
 
-    this.canvas.drawText(
-      this.canvasUnitCtx,
-      unit,
-      Math.floor(this.canvasUnit().nativeElement.width - 10 * this.canvas.scaleFactor),
-      Math.floor(this.canvasUnit().nativeElement.height - 10 * this.canvas.scaleFactor),
-      Math.floor(this.canvasUnit().nativeElement.width * 0.25),
-      Math.floor(this.canvasUnit().nativeElement.height * 0.15),
-      'bold',
-      this.valueColor,
-      'end',
-      'alphabetic'
-    );
-  }
+  const marginX = 10 * this.canvas.scaleFactor;
+  const marginY = 5 * this.canvas.scaleFactor;
+  const canvasWidth = this.canvasUnit().nativeElement.width;
+  const canvasHeight = this.canvasUnit().nativeElement.height;
+
+  this.canvas.drawText(
+    this.canvasUnitCtx,
+    unit,
+    canvasWidth - marginX,    // X: right edge minus margin
+    canvasHeight - marginY,   // Y: bottom edge minus margin
+    Math.floor(canvasWidth * 0.25),
+    Math.floor(canvasHeight * 0.15),
+    'bold',
+    this.valueColor,
+    'end',        // right-aligned
+    'bottom'      // baseline at the bottom
+  );
+}
 
   private drawMinMax(): void {
 
@@ -292,14 +261,14 @@ private updateCanvas(): void {
     this.canvas.drawText(
       this.canvasMinMaxCtx,
       valueText,
-      10 * this.canvas.scaleFactor,
-      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor),
+      10 * this.canvas.scaleFactor, // X: left edge plus margin
+      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor), // Y: bottom edge minus margin
       this.maxMinMaxTextWidth,
       this.maxMinMaxTextHeight,
       'normal',
       this.valueColor,
-      'start',
-      'alphabetic'
+      'start',      // left-aligned
+      'alphabetic'  // baseline at the bottom
     );
   }
 

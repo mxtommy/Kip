@@ -1,5 +1,5 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor"/>
+  <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"/>
   <div class="widgets-container" (onResize)="onResized()">
     <svg width="100%" height="100%" viewBox="0 40 200 40">
       <rect
@@ -13,7 +13,7 @@
         style="display:inline;stroke-width:1.57144" />
       <rect
         [attr.width]="lineWidth"
-        [attr.fill]="barColor"
+        [attr.fill]="barColor()"
         height="8"
         rx="4.5"
         id="rect3"

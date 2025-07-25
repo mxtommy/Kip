@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
+import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
     selector: 'widget-position',
@@ -17,7 +18,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   private canvas = inject(CanvasService);
   private latPos = '';
   private longPos = '';
-  protected labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private maxTextWidth = 0;
   private maxTextHeight = 0;
@@ -63,7 +64,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
     effect(() => {
       if (this.theme()) {
-        this.getColors(this.widgetProperties.config.color);
+        this.setColors();
         this.drawValue();
       }
     });
@@ -85,6 +86,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
   protected startWidget(): void {
     this.unsubscribeDataStream();
+    this.setColors();
     this.observeDataStream('longPath', newValue => {
       if (newValue.data.value ===  null) {
         this.longPos = '';
@@ -116,7 +118,6 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.getColors(this.widgetProperties.config.color);
     this.startWidget();
   }
 
@@ -129,45 +130,9 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     this.drawValue();
   }
 
-  private getColors(color: string): void {
-    switch (color) {
-      case 'white':
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-      case 'blue':
-        this.labelColor = this.theme().blueDim;
-        this.valueColor = this.theme().blue;
-        break;
-      case 'green':
-        this.labelColor = this.theme().greenDim;
-        this.valueColor = this.theme().green;
-        break;
-      case 'pink':
-        this.labelColor = this.theme().pinkDim;
-        this.valueColor = this.theme().pink;
-        break;
-      case 'orange':
-        this.labelColor = this.theme().orangeDim;
-        this.valueColor = this.theme().orange;
-        break;
-      case 'purple':
-        this.labelColor = this.theme().purpleDim;
-        this.valueColor = this.theme().purple;
-        break;
-      case 'grey':
-        this.labelColor = this.theme().greyDim;
-        this.valueColor = this.theme().grey;
-        break;
-      case 'yellow':
-        this.labelColor = this.theme().yellowDim;
-        this.valueColor = this.theme().yellow;
-        break;
-      default:
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
-        break;
-    }
+  private setColors(): void {
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
+    this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
   private calculateFontSizeAndPositions(): void {

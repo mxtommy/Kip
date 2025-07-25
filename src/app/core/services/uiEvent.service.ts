@@ -27,7 +27,7 @@ export class uiEventService {
       });
     } else {
       this.fullscreenSupported.set(false);
-      console.log('[Actions Menu] Fullscreen mode is not supported by device/browser.');
+      console.log('[UI Event Service] Fullscreen mode is not supported by device/browser.');
     }
 
     this.checkNoSleepSupport();
@@ -40,18 +40,18 @@ export class uiEventService {
     try {
       this.noSleep = new NoSleep();
       if (typeof this.noSleep.enable !== 'function' || typeof this.noSleep.disable !== 'function') {
-        throw new Error('[Actions Menu] NoSleep methods not available');
+        throw new Error('[UI Event Service] NoSleep methods not available');
       }
     } catch (error) {
       this.noSleepSupported.set(false);
-      console.warn(`[Actions Menu] NoSleep is not supported by this device/browser. Error: ${error}`);
+      console.warn(`[UI Event Service] NoSleep is not supported by this device/browser. Error: ${error}`);
     }
   }
 
   private checkPwaMode(): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone !== undefined;
-    console.log('[Actions Menu] PWA mode:', isStandalone);
+    console.log('[UI Event Service] PWA mode:', isStandalone);
     return isStandalone;
   }
 
@@ -63,7 +63,7 @@ export class uiEventService {
         this.noSleep.disable();
       }
       this.noSleepStatus.set(!this.noSleepStatus());
-      console.log('[Actions Menu] NoSleep active:', this.noSleepStatus());
+      console.log('[UI Event Service] NoSleep active:', this.noSleepStatus());
     }
   }
 
@@ -81,7 +81,7 @@ export class uiEventService {
       this.fullscreenStatus.set(!this.fullscreenStatus());
     } else {
       this.fullscreenSupported.set(false);
-      console.log('[Actions Menu] Fullscreen mode is not supported by this browser.');
+      console.log('[UI Event Service] Fullscreen mode is not supported by this browser.');
     }
   }
 
