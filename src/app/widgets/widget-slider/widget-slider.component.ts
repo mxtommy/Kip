@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -23,8 +23,8 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
-  protected labelColor: string = undefined;
-  protected barColor: string = undefined;
+  protected labelColor = signal<string>(undefined)
+  protected barColor = signal<string>(undefined);
   private skRequestSub = new Subscription; // Request result observer
 
   private lineStartPx: number;
@@ -259,8 +259,8 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
 
   private getColors(color: string): void {
     const colors = this.colorMap.get(color) || this.colorMap.get("contrast");
-    this.labelColor = colors.label;
-    this.barColor = colors.bar;
+    this.labelColor.set(colors.label);
+    this.barColor.set(colors.bar);
   }
 
   ngOnDestroy(): void {

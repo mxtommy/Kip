@@ -12,6 +12,7 @@ import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-but
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
+import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
     selector: 'widget-boolean-switch',
@@ -26,7 +27,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   public switchControls = signal<IDynamicControl[]>([]);
   private skRequestSub = new Subscription; // Request result observer
 
-  protected labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
 
   private nbCtrl: number = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0};
@@ -48,7 +49,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
     effect(() => {
       if (this.theme()) {
-        this.getColors(this.widgetProperties.config.color);
+        this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
       }
     });
   }
@@ -62,6 +63,7 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
   }
 
   protected startWidget(): void {
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
     this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
 
     // Build control array
@@ -98,7 +100,6 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.getColors(this.widgetProperties.config.color);
     this.startWidget();
   }
 
@@ -140,38 +141,6 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
         $event.value,
         this.widgetProperties.uuid
       );
-    }
-  }
-
-  private getColors(color: string): void {
-    switch (color) {
-      case "contrast":
-        this.labelColor = this.theme().contrastDim;
-        break;
-      case "blue":
-        this.labelColor = this.theme().blueDim;
-        break;
-      case "green":
-        this.labelColor = this.theme().greenDim;
-        break;
-      case "pink":
-        this.labelColor = this.theme().pinkDim;
-        break;
-      case "orange":
-        this.labelColor = this.theme().orangeDim;
-        break;
-      case "purple":
-        this.labelColor = this.theme().purpleDim;
-        break;
-      case "grey":
-        this.labelColor = this.theme().greyDim;
-        break;
-      case "yellow":
-        this.labelColor = this.theme().yellowDim;
-        break;
-      default:
-        this.labelColor = this.theme().contrastDim;
-        break;
     }
   }
 
