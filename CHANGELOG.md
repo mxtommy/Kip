@@ -1,3 +1,21 @@
+# V 3.5.0
+## New features
+* Gain tactical racing advantages with new signalk-racer plugin integrated widgets for start line analysis and  race countdowns. _Contribution by @gregw_
+## Improvements
+* Optimized dashboard loading and switching speed for a more responsive user experience.
+* Optimized Data Chart widget for significantly faster loading and smoother performance.
+* Added Simple Linear widget zones support.
+* Automatic detection of Signal K Autopilot API version for seamless integration.
+* Enforced widget minimum dimension restrictions for better layout consistency.
+* General framework updates and codebase refactoring for maintainability and performance.
+## Fixes
+* Widget options "Paths" tab form was marking disabled fields as invalid.
+* DatasetService now initializes correctly on app startup.
+* Data Chart widget no longer resets data when automatic night mode is enabled.
+* Gauge widgets now correctly distribute highlights with dynamic scales.
+* Sidebar swipe gesture functionality restored.
+## New Contributors
+* @gregw made their first contribution
 # V 3.4.2
 ## Fixes
 * Stripped Vessel Base Delta path first character
