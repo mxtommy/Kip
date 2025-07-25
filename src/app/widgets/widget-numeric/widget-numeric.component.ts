@@ -223,22 +223,27 @@ private updateCanvas(): void {
   }
 
   private drawUnit(): void {
-    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
+  const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+  if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
 
-    this.canvas.drawText(
-      this.canvasUnitCtx,
-      unit,
-      Math.floor(this.canvasUnit().nativeElement.width - 10 * this.canvas.scaleFactor),
-      Math.floor(this.canvasUnit().nativeElement.height - 10 * this.canvas.scaleFactor),
-      Math.floor(this.canvasUnit().nativeElement.width * 0.25),
-      Math.floor(this.canvasUnit().nativeElement.height * 0.15),
-      'bold',
-      this.valueColor,
-      'end',
-      'alphabetic'
-    );
-  }
+  const marginX = 10 * this.canvas.scaleFactor;
+  const marginY = 5 * this.canvas.scaleFactor;
+  const canvasWidth = this.canvasUnit().nativeElement.width;
+  const canvasHeight = this.canvasUnit().nativeElement.height;
+
+  this.canvas.drawText(
+    this.canvasUnitCtx,
+    unit,
+    canvasWidth - marginX,    // X: right edge minus margin
+    canvasHeight - marginY,   // Y: bottom edge minus margin
+    Math.floor(canvasWidth * 0.25),
+    Math.floor(canvasHeight * 0.15),
+    'bold',
+    this.valueColor,
+    'end',        // right-aligned
+    'bottom'      // baseline at the bottom
+  );
+}
 
   private drawMinMax(): void {
 
@@ -256,14 +261,14 @@ private updateCanvas(): void {
     this.canvas.drawText(
       this.canvasMinMaxCtx,
       valueText,
-      10 * this.canvas.scaleFactor,
-      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor),
+      10 * this.canvas.scaleFactor, // X: left edge plus margin
+      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor), // Y: bottom edge minus margin
       this.maxMinMaxTextWidth,
       this.maxMinMaxTextHeight,
       'normal',
       this.valueColor,
-      'start',
-      'alphabetic'
+      'start',      // left-aligned
+      'alphabetic'  // baseline at the bottom
     );
   }
 
