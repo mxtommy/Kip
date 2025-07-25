@@ -12,8 +12,8 @@
 * Widget options "Paths" tab form was marking disabled fields as invalid.
 * DatasetService now initializes correctly on app startup.
 * Data Chart widget no longer resets data when automatic night mode is enabled.
-* Gauge widgets now correctly distribute highlights with dynamic scales.
-* Sidebar swipe gesture functionality restored.
+* Gauge widgets now correctly distribute highlights over dynamic scales.
+* Sidebar swipe gesture functionality stops responding.
 ## New Contributors
 * @gregw made their first contribution
 # V 3.4.2
