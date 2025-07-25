@@ -95,7 +95,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       if (this.theme()) {
         if (this.datasetConfig) {
           this.setChartOptions();
-          this.chart.config.options = this.lineChartOptions;
+          this.setDatasetsColors();
         }
       }
     });
@@ -110,23 +110,20 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   protected startWidget(): void {
-    console.log('[Chart Lifecycle] startWidget called');
     this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
 
     if (this.datasetConfig) {
-      console.log('[Chart Lifecycle] setChartOptions will reset datasets');
+      this.createDatasets();
       this.setChartOptions();
 
       if (!this.chart) {
-        console.log('[Chart Lifecycle] Creating new Chart instance');
         this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
           type: this.lineChartType,
           data: this.lineChartData,
           options: this.lineChartOptions
         });
       } else {
-        console.log('[Chart Lifecycle] Updating existing Chart instance');
         this.chart.update();
       }
 
@@ -140,44 +137,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private setChartOptions() {
-    console.log('[Chart Lifecycle] setChartOptions called, datasets will be cleared');
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
-
-    this.lineChartData.datasets = [];
-    this.lineChartData.datasets.push(
-      {
-        label: 'Value',
-        data: [],
-        order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
-        parsing: false,
-        tension: 0,
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        pointHitRadius: 0,
-        borderColor: this.getThemeColors().valueLine,
-        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 0 : 3,
-        fill: this.widgetProperties.config.trackAgainstAverage ? true : false,
-        backgroundColor: this.getThemeColors().valueFill,
-      }
-    );
-
-    this.lineChartData.datasets.push(
-      {
-        label: 'Average',
-        data: [],
-        order: this.widgetProperties.config.trackAgainstAverage ? 0 : 1,
-        parsing: false,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        pointHitRadius: 0,
-        borderColor: this.getThemeColors().averageLine,
-        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 3 : 0,
-        fill: this.widgetProperties.config.trackAgainstAverage ? false : true,
-        backgroundColor: this.getThemeColors().averageFill,
-      }
-    );
 
     this.lineChartOptions.scales = {
       x: {
@@ -323,6 +284,54 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         display: false
       }
     }
+  }
+
+  private createDatasets() {
+    console.log('[Chart Lifecycle] createDataSet called, datasets will be cleared');
+    this.lineChartData.datasets = [];
+    this.lineChartData.datasets.push(
+      {
+        label: 'Value',
+        data: [],
+        order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
+        parsing: false,
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointHitRadius: 0,
+        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 0 : 3,
+        fill: this.widgetProperties.config.trackAgainstAverage ? true : false,
+      }
+    );
+
+    this.lineChartData.datasets.push(
+      {
+        label: 'Average',
+        data: [],
+        order: this.widgetProperties.config.trackAgainstAverage ? 0 : 1,
+        parsing: false,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointHitRadius: 0,
+        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 3 : 0,
+        fill: this.widgetProperties.config.trackAgainstAverage ? false : true,
+      }
+    );
+
+    this.setDatasetsColors();
+  }
+
+  private setDatasetsColors(): void {
+    this.lineChartData.datasets.forEach((dataset) => {
+      if (dataset.label === 'Value') {
+        dataset.borderColor = this.getThemeColors().valueLine;
+        dataset.backgroundColor = this.getThemeColors().valueFill;
+      } else if (dataset.label === 'Average') {
+        dataset.borderColor = this.getThemeColors().averageLine;
+        dataset.backgroundColor = this.getThemeColors().averageFill;
+      }
+    });
   }
 
   private getThemeColors(): IChartColors {
@@ -524,32 +533,19 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
       (dsPoint: IDatasetServiceDatapoint) => {
 
-        if (!dsPoint) {
-              console.warn('DatasetService emitted an undefined or null datapoint:', dsPoint);
-        }
-
         // Add new data point to the first dataset
-        const point = this.transformDatasetRow(dsPoint, 0);
-        console.log('Transformed point:', point);
-
-        this.chart.data.datasets[0].data.push(point);
-        console.warn(`value: ${dsPoint.data.value}, SMA: ${dsPoint.data.sma}`);
+        this.chart.data.datasets[0].data.push(this.transformDatasetRow(dsPoint, 0));
         // Trim the first dataset if it exceeds maxDataPoints
-        console.warn(`Dataset 0 length: ${this.chart.data.datasets[0].data.length}`);
         if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
           this.chart.data.datasets[0].data.shift();
-          console.warn(`Dataset 0 trimmed: ${this.chart.data.datasets[0].data.length}`);
         }
 
         // Add new data point to the second dataset (average dataset)
         if (this.widgetProperties.config.showAverageData) {
           this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
-          console.warn(`Average last: ${dsPoint.data.lastAverage}, Min: ${dsPoint.data.lastMinimum}, Max: ${dsPoint.data.lastMaximum}`);
           // Trim the second dataset if it exceeds maxDataPoints
-          console.warn(`Dataset 1 length: ${this.chart.data.datasets[1].data.length}`);
           if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
             this.chart.data.datasets[1].data.shift();
-            console.warn(`Dataset 1 trimmed: ${this.chart.data.datasets[1].data.length}`);
           }
         }
 
@@ -608,7 +604,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   };
 
   ngOnDestroy(): void {
-    console.log('[Chart Lifecycle] ngOnDestroy called, destroying chart and unsubscribing');
     this.destroyDataStreams();
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
