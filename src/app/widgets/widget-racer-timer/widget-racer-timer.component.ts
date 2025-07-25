@@ -1,36 +1,35 @@
-import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
-import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
-import {States} from '../../core/interfaces/signalk-interfaces';
-import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
-import {IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
-import {NgxResizeObserverModule} from 'ngx-resize-observer';
-import {CanvasService} from '../../core/services/canvas.service';
-import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
-import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
-import {MatButton} from '@angular/material/button';
-import {FormsModule} from '@angular/forms';
-import {DashboardService} from '../../core/services/dashboard.service';
-import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, model, OnDestroy, OnInit, signal, untracked, viewChild } from '@angular/core';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { States } from '../../core/interfaces/signalk-interfaces';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { CanvasService } from '../../core/services/canvas.service';
+import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
+import { MatButtonModule } from '@angular/material/button';
+import { DashboardService } from '../../core/services/dashboard.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'widget-racer-timer',
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
-  standalone: true,
-  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButton, FormsModule]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule, FormsModule]
 })
 export class WidgetRacerTimerComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
-  protected errorMessage = '';
-  protected startAtValue: string;
-  protected infoFontSize = '1em';
+  protected errorMessage = signal<string>('');
+  protected startAtValue = signal<string>('');
   private canvasService = inject(CanvasService);
   private ttsValue: number = null;
   private dtsValue: number = null;
-  protected labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
   private maxValueTextWidth = 0;
@@ -38,13 +37,13 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   private flashInterval = null;
   private isDestroyed = false; // guard against callbacks after destroyed
-  protected mode = 1;
+  protected mode = signal<number>(1);
 
   protected timeToSContext: CanvasRenderingContext2D;
   protected timeToSElement: HTMLCanvasElement;
   private readonly destroyRef = inject(DestroyRef);
-  protected startAtTime = 'HH:MM:SS';
-  protected startAtTimeEdit = this.startAtTime;
+  protected startAtTime = signal<string>('00:00:00');
+  protected startAtTimeEdit = model<string>('');
 
   constructor() {
     super();
@@ -99,7 +98,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     effect(() => {
       if (this.theme()) {
         untracked(() => {
-          this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+          this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
           this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
           this.updateCanvas();
         });
@@ -150,7 +149,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.unsubscribeDataStream();
     this.ttsValue = null;
     this.dtsValue = null;
-    this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
     this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
     this.observeDataStream('ttsPath', newValue => {
       const lastTtsValue = this.ttsValue;
@@ -184,15 +183,15 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         }
       }
       if (this.ttsValue === 0) {
-        this.mode = 2;
+        this.mode.set(2);
         if (this.dtsValue < 0) {
           this.valueStateColor = this.theme().zoneAlarm;
         }
-      } else if (this.mode === 1 && this.isStartTimerRunning()) {
-        this.mode = 2;
+      } else if (this.mode() === 1 && this.isStartTimerRunning()) {
+        this.mode.set(2);
       }
       this.updateCanvas();
-      if (this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS' && lastTtsValue !== 0) {
+      if (this.startAtTime() !== null && this.startAtTime() !== 'HH:MM:SS' && lastTtsValue !== 0) {
         if (this.ttsValue === 0) {
           this.beep(500, 1000);
         } else if (this.ttsValue < 10) {
@@ -211,17 +210,19 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
     this.observeDataStream('startTimePath', newValue => {
       if (!newValue.data.value) {
-        this.startAtTime = this.startAtTimeEdit = 'HH:MM:SS';
-        if (this.mode === 2) {
-          this.mode = 1;
+        this.startAtTime.set('HH:MM:SS');
+        this.startAtTimeEdit.set('HH:MM:SS');
+        if (this.mode() === 2) {
+          this.mode.set(1);
         }
       } else {
         const isoTime = new Date(newValue.data.value);
-        this.startAtTime = this.startAtTimeEdit = isoTime.toLocaleTimeString([], {
+        this.startAtTimeEdit.set(isoTime.toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit'
-        });
+        }));
+        this.startAtTime.set(this.startAtTimeEdit());
       }
       this.updateCanvas();
     });
@@ -235,8 +236,8 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         if (requestResult.statusCode === 200) {
           this.beep(600, 20);
         } else {
-          this.errorMessage = 'Error: ' + requestResult.message;
-          this.mode = -1;
+          this.errorMessage.set('Error: ' + requestResult.message);
+          this.mode.set(-1);
           this.beep(300, 1000);
           this.updateCanvas();
           this.app.sendSnackbarNotification('Please check the Signalk-racer plugin installation/configuration', 5000, true);
@@ -246,7 +247,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   private isStartTimerRunning(): boolean {
-    return this.ttsValue > 0 && this.startAtTime !== null && this.startAtTime !== 'HH:MM:SS';
+    return this.ttsValue > 0 && this.startAtTime() !== null && this.startAtTime() !== 'HH:MM:SS';
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -259,8 +260,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
       return;
     }
-
-    this.infoFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
 
     this.initCanvases();
     if (this.isDestroyed) {
@@ -326,24 +325,25 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
 
   private drawStartAt(): void {
     if (this.widgetProperties.config.paths['startTimePath'].path !== '') {
-      this.startAtValue = this.startAtTime != null
-        ? `Start at: ${this.startAtTime}`
-        : 'Start at: HH:MM:SS';
+      const startAtText = this.startAtTime() != null ? this.startAtTime() : 'HH:MM:SS';
+      this.startAtTime.set(`Start at: ${startAtText}`);
+      this.startAtValue.set(this.startAtTime());
     }
   }
 
   public toggleMode(): void {
-    this.errorMessage = '';
-    this.mode = (this.mode + 1) % 5;
-    switch (this.mode) {
+    this.errorMessage.set('');
+    this.mode.update(val => (val + 1) % 5);
+
+    switch (this.mode()) {
       case 1:
         if (this.isStartTimerRunning()) {
-          this.mode = 2;
+          this.mode.set(2);
         }
         break;
       case 2:
         if (this.ttsValue !== 0 && !this.isStartTimerRunning()) {
-          this.mode = 3;
+          this.mode.set(3);
         }
         break;
       default:
@@ -355,11 +355,11 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command}, this.widgetProperties.uuid);
     switch (command) {
       case 'start':
-        this.mode = 0;
+        this.mode.set(0);
         break;
       case 'reset':
-        this.startAtTime = 'HH:MM:SS';
-        this.mode = 1;
+        this.startAtTime.set('HH:MM:SS');
+        this.mode.set(1);
         break;
       default:
     }
@@ -371,9 +371,9 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     return requestId;
   }
 
-  public setStartTime(startAtTime: string): void {
+  public setStartTime(): void {
     const now = new Date();
-    const parts = startAtTime.split(':').map(Number);
+    const parts = this.startAtTimeEdit().split(':').map(Number);
     const hours = parts[0];
     const minutes = parts[1];
     const seconds = parts.length >= 3 ? parts[2] : 0;
@@ -382,12 +382,11 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     if (date <= now) {
       date.setDate(date.getDate() + 1);
     }
-    this.mode = 0;
+    this.mode.set(0);
 
-    /* const requestId = this.signalk.putRequest(
-      'navigation.racing.setStartTime',
+    this.signalk.putRequest('navigation.racing.setStartTime',
       {command: 'set', startTime: date.toISOString()},
       this.widgetProperties.uuid
-    ); */
+    );
   }
 }

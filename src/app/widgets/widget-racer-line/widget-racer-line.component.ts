@@ -1,5 +1,5 @@
 import { MatIconModule } from '@angular/material/icon';
-import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, untracked, viewChild} from '@angular/core';
+import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, signal, untracked, viewChild} from '@angular/core';
 import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
 import {States} from '../../core/interfaces/signalk-interfaces';
 import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
@@ -16,7 +16,6 @@ import { getColors } from '../../core/utils/themeColors.utils';
   selector: 'widget-racer-line',
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
-  standalone: true,
   imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -28,7 +27,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private dtsValue: number = null;
   private lengthValue: number = null;
   private biasValue: number = null;
-  protected labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private dtsColor: string = undefined;
   private maxValueTextWidth = 0;
@@ -104,7 +103,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
       if (this.theme()) {
         if (!this.initCompleted) return;
         untracked(() => {
-          this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+          this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
           this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
           this.updateCanvas();
         });
@@ -114,7 +113,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   ngOnInit(): void {
     this.validateConfig();
-    this.labelColor = getColors(this.widgetProperties.config.color, this.theme()).dim;
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
     this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
@@ -179,12 +178,12 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     });
 
     this.observeDataStream('lineLengthPath', newValue => {
-      this.lengthValue = 1000;//newValue.data.value;
+      this.lengthValue = newValue.data.value;
       this.updateCanvas()
     });
 
     this.observeDataStream('lineBiasPath', newValue => {
-      this.biasValue = 1000;//newValue.data.value;
+      this.biasValue = newValue.data.value;
       this.drawLenBias();
     });
 

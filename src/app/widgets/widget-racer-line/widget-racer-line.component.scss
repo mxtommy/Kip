@@ -59,7 +59,7 @@
   flex: none;
   width: 18%;
   @include mat.button-overrides((
-    filled-container-color: var(--kip-blue-dim-color),
+    filled-container-color: var(--kip-blue-color),
     filled-label-text-color: var(--kip-contrast-color)
   ));
 }
