@@ -96,7 +96,14 @@
 .ap-btn-engage {
   @include mat.button-overrides((
     filled-horizontal-padding: 0rem,
-    filled-container-color: var(--kip-zone-alarm-color),
+    filled-container-color: var(--kip-port-color),
+  ));
+}
+
+.ap-btn-disengage {
+  @include mat.button-overrides((
+    filled-horizontal-padding: 0rem,
+    filled-container-color: var(--kip-starboard-color),
   ));
 }
 
@@ -200,10 +207,6 @@
 .svg-route {
   text {
     font-size: 25px;
-  }
-  path {
-    fill: var(--kip-contrast-color);
-    fill-opacity: 1;
   }
 }
 

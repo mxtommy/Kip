@@ -528,81 +528,36 @@ export const DemoDashboardsConfig: Dashboard[] = [
             "type": "widget-autopilot",
             "uuid": "daa21350-009e-4d99-8209-364f9b99caee",
             "config": {
-              "displayName": "N2k Autopilot",
               "filterSelfPaths": true,
               "paths": {
-                "apState": {
+                "autopilotState": {
                   "description": "Autopilot State",
                   "path": "self.steering.autopilot.state",
                   "source": "default",
                   "pathType": "string",
-                  "isPathConfigurable": true,
+                  "isPathConfigurable": false,
                   "showPathSkUnitsFilter": false,
                   "convertUnitTo": "",
                   "sampleTime": 500
                 },
-                "apTargetHeadingMag": {
-                  "description": "Autopilot Target Heading Mag",
+                "autopilotTargetHeading": {
+                  "description": "Autopilot Target Magnetic Heading",
                   "path": "self.steering.autopilot.target.headingMagnetic",
                   "source": "default",
                   "pathType": "number",
                   "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
+                  "isPathConfigurable": false,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
                   "sampleTime": 500
                 },
-                "apTargetWindAngleApp": {
-                  "description": "Autopilot Target Wind Angle Apparent",
+                "autopilotTargetWindHeading": {
+                  "description": "Autopilot Target Apparent Wind Angle",
                   "path": "self.steering.autopilot.target.windAngleApparent",
                   "source": "default",
                   "pathType": "number",
                   "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "rad",
-                  "sampleTime": 500
-                },
-                "headingMag": {
-                  "description": "Heading Magnetic",
-                  "path": "self.navigation.headingMagnetic",
-                  "source": "default",
-                  "pathType": "number",
-                  "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "rad",
-                  "sampleTime": 500
-                },
-                "headingTrue": {
-                  "description": "Heading True",
-                  "path": "self.navigation.headingTrue",
-                  "source": "default",
-                  "pathType": "number",
-                  "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "rad",
-                  "sampleTime": 500
-                },
-                "windAngleApparent": {
-                  "description": "Wind Angle Apparent",
-                  "path": "self.environment.wind.angleApparent",
-                  "source": "default",
-                  "pathType": "number",
-                  "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "rad",
-                  "sampleTime": 500
-                },
-                "windAngleTrueWater": {
-                  "description": "Wind Angle True Water",
-                  "path": "self.environment.wind.angleTrueWater",
-                  "source": "default",
-                  "pathType": "number",
-                  "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
+                  "isPathConfigurable": false,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
                   "sampleTime": 500
@@ -613,42 +568,82 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "source": "default",
                   "pathType": "number",
                   "convertUnitTo": "deg",
-                  "isPathConfigurable": true,
+                  "isPathConfigurable": false,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
                   "sampleTime": 500
+                },
+                "courseXte": {
+                  "description": "Cross Track Error",
+                  "path": "self.navigation.course.calcValues.crossTrackError",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": false,
+                  "convertUnitTo": "m",
+                  "showPathSkUnitsFilter": true,
+                  "pathRequired": false,
+                  "pathSkUnitsFilter": "m",
+                  "sampleTime": 500
+                },
+                "headingMag": {
+                  "description": "Magnetic Heading",
+                  "path": "self.navigation.headingMagnetic",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
+                },
+                "headingTrue": {
+                  "description": "True Heading",
+                  "path": "self.navigation.headingTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
+                },
+                "windAngleApparent": {
+                  "description": "Apparent Wind Angle",
+                  "path": "self.environment.wind.angleApparent",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
+                },
+                "windAngleTrueWater": {
+                  "description": "Wind Angle True Water",
+                  "path": "self.environment.wind.angleTrueWater",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
                 }
               },
-              "usage": {
-                "headingMag": [
-                  "wind",
-                  "route",
-                  "auto",
-                  "standby"
-                ],
-                "headingTrue": [
-                  "wind",
-                  "route",
-                  "auto",
-                  "standby"
-                ],
-                "windAngleApparent": [
-                  "wind"
-                ],
-                "windAngleTrueWater": [
-                  "wind"
-                ]
-              },
-              "typeVal": {
-                "headingMag": "Mag",
-                "headingTrue": "True",
-                "windAngleApparent": "AWA",
-                "windAngleTrueWater": "TWA"
-              },
-              "barColor": "accent",
-              "autoStart": false,
+              "invertRudder": true,
+              "headingDirectionTrue": false,
+              "courseDirectionTrue": false,
               "enableTimeout": false,
-              "dataTimeout": 5
+              "dataTimeout": 5,
+              "autopilotInstance": "_default"
             }
           }
         }

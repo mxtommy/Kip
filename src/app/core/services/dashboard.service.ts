@@ -155,6 +155,12 @@ export class DashboardService {
     }
   }
 
+  public setActiveDashboard(itemIndex: number): void {
+    if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
+      this.activeDashboard.set(itemIndex);
+    }
+  }
+
   public navigateToActive(): void {
     this._router.navigate(['/dashboard', this.activeDashboard()]);
   }

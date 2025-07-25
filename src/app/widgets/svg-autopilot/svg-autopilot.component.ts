@@ -19,7 +19,7 @@ export class SvgAutopilotComponent {
   private readonly rudderStarboardRect = viewChild.required<ElementRef<SVGRectElement>>('rudderStarboardRect');
   private readonly rudderPortRect = viewChild.required<ElementRef<SVGRectElement>>('rudderPortRect');
 
-  protected readonly apState = input<string>('off-line');
+  protected readonly apMode = input<string>('off-line');
   protected readonly targetPilotHeading = input.required<number>();
   protected readonly targetWindAngleHeading = input.required<number>();
   protected readonly rudderAngle = input.required<number>();
@@ -47,18 +47,19 @@ export class SvgAutopilotComponent {
     return apTWA;
   });
   protected lockedMode = computed(() => {
-    switch (this.apState()) {
-      case "auto": return `Heading Hold`;
-      case "route": return `Track`;
-      case "wind": return "Wind Hold";
-      case "standby": return "Standby";
-      default: return "Off-line";
-    }
+    const mode = this.apMode();
+      if (mode === "auto" || mode === "compass") return `Heading Hold`;
+      if (mode === "gps") return "GPS Hold";
+      if (mode === "route" || mode === "nav") return `Track`;
+      if (mode === "wind") return "Wind Hold";
+      if (mode === "wind true") return "Wind True Hold";
+      if (mode === "standby") return "Standby";
+      return "Off-line";
   });
   protected lockedHdg = computed(() => {
     const lockedHdg = parseFloat(this.targetPilotHeading().toFixed(0));
     const lockedAWA = parseFloat(this.targetWindAngleHeading().toFixed(0));
-     switch (this.apState()) {
+     switch (this.apMode()) {
       case "auto": return lockedHdg;
       case "route": return lockedHdg;
       case "wind": return lockedAWA;
@@ -66,7 +67,7 @@ export class SvgAutopilotComponent {
     }
   });
   protected lockedHdgAnnotation = computed(() => {
-    const state = this.apState();
+    const state = this.apMode();
     if (state === "route" || state === "auto") {
       return this.targetPilotHeadingTrue() ? 'True' : 'Mag';
     }
@@ -121,7 +122,7 @@ export class SvgAutopilotComponent {
     });
 
     effect(() => {
-      const state = this.apState();
+      const state = this.apMode();
       const awa = parseFloat(this.appWindAngle().toFixed(0));
       let xteValue = this.courseXte();
 

@@ -353,21 +353,21 @@
   <g id="counterAWA"
      style="display:inline">
     <text xml:space="preserve"
-      [attr.display]="apState() == 'wind' || apState() == 'route' ? 'inline' : 'none'"
-      [class]="apState() == 'wind' ? 'awa-text-dim' : 'contrast-text-dim'"
+      [attr.display]="apMode() == 'wind' || apMode() == 'route' ? 'inline' : 'none'"
+      [class]="apMode() == 'wind' ? 'awa-text-dim' : 'contrast-text-dim'"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="910.14893"
-      y="90.67927"> {{ apState() === 'route' ? 'XTE' : 'AWA' }}</text>
+      y="90.67927"> {{ apMode() === 'route' ? 'XTE' : 'AWA' }}</text>
     <text xml:space="preserve"
-      [attr.display]="apState() == 'wind' || apState() == 'route' ? 'inline' : 'none'"
-      [class]="apState() == 'wind' ? 'awa-text' : 'contrast-text'"
+      [attr.display]="apMode() == 'wind' || apMode() == 'route' ? 'inline' : 'none'"
+      [class]="apMode() == 'wind' ? 'awa-text' : 'contrast-text'"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:73.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="907.84814"
       y="160.33212">{{ apModeValue() }}<tspan
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         >{{ apModeValueAnnotation() }}</tspan></text>
     <text xml:space="preserve"
-        [attr.display]="apState() == 'route' ? 'inline' : 'none'"
+        [attr.display]="apMode() == 'route' ? 'inline' : 'none'"
         class="contrast-text"
         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:34.6667px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
         x="910.14893"
@@ -407,7 +407,7 @@
   <g id="IndicatorsLayer"
      style="display:inline">
     <g #awaIndicator
-      [attr.display]="apState() == 'wind' ? 'inline' : 'none'"
+      [attr.display]="apMode() == 'wind' ? 'inline' : 'none'"
        transform="matrix(0.78967872,0,0,0.78967872,95.846484,6.0520865)">
       <path
          d="m 451.77021,55.078207 42.08541,-33.202814 a 12.555638,12.555638 0.26446337 0 1 15.64423,0.07221 l 42.20046,33.930296 a 15.557694,15.557694 71.53185 0 1 5.32954,15.957795 L 504.17034,279.76529 a 2.5373267,2.5373267 0.02614114 0 1 -4.91879,-0.002 L 446.37431,70.966036 a 15.416336,15.416336 108.75875 0 1 5.3959,-15.887829 z"
