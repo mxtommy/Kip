@@ -6,14 +6,13 @@
 * Optimized Data Chart widget for significantly faster loading and smoother performance.
 * Added Simple Linear widget zones support.
 * Automatic detection of Signal K Autopilot API version for seamless integration.
-* Enforced widget minimum dimension restrictions for better layout consistency.
+* Enforced widget minimum dimension for better layout consistency.
 * General framework updates and codebase refactoring for maintainability and performance.
 ## Fixes
-* Widget options "Paths" tab form was marking disabled fields as invalid.
-* DatasetService now initializes correctly on app startup.
-* Data Chart widget no longer resets data when automatic night mode is enabled.
-* Gauge widgets now correctly distribute highlights over dynamic scales.
-* Sidebar swipe gesture functionality stops responding.
+* Dataset service does initialize on early app startup.
+* Data Chart widget resets data when automatic night mode is enabled.
+* Gauge widgets does not correctly distribute highlights over dynamic scales.
+* Sidebar swipe gesture functionality stops responding in one direction.
 ## New Contributors
 * @gregw made their first contribution
 # V 3.4.2

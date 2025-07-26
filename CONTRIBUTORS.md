@@ -1,16 +1,31 @@
 KIP contributors (sorted alphabetically)
 ============================================
 
-* **[ahm4711](https://github.com/ahm4711)**
+* **[ahm4711](https://github.com/ahm4711) / Alexander Holland-Moritz**
   * Vertical historical graphs
 
-* **[David Godin](https://github.com/godind)**
+* **[David Godin](https://github.com/godind) / David G**
+  * Maintainer
 
-  * Performance improvements
-  * Code and framework refactoring 
-  * UI polishing, code documentation
-  * Additional Widgets
+* **[Greg Wilkins](https://github.com/gregw)**
+  * Racing widgets (Start Line Insight & Racer Start Timer)
 
-* **[Thomas St-Pierre](https://github.com/mxtommy)**
+* **[Michael Shulman](https://github.com/mshulman)**
+* **Monty Taylor**
+* **Tech Gardeners**
+* **VibroAxe / James Kinsman**
+* **amirlanesman**
+* **dependabot[bot]**
+* **instantchow**
+* **Jared Jensen**
+* **Mantas Šidlauskas**
+* **Michael Haberler**
+* **philipa**
+* **Rene**
 
-  * Original Author and maintainer
+* **[Thomas St-Pierre](https://github.com/mxtommy) / mxtommy**
+  * Original Author
+
+---
+
+_This list is based on commit history. If you contributed and are missing, please open a PR!_

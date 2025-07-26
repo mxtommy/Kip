@@ -74,7 +74,7 @@ KIP is built with modern web technologies and is open-source under the MIT licen
 ## Reusable Widget Library
 All KIP Widgets are visual presentation controls that are very versatile with multiple advanced configuration options available to suit your needs:
 - **Numeric display**: Create gauges to display any numerical data sent by your system - SOG, Depth, Winds Speed, VMG, refrigerator temperature, weather data, etc.
-- **Text display**: Create gauges to display any textual data sent by your system - MPPT state, vessel details,Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statues available, etc.
+- **Text display**: Create gauges to display any textual data sent by your system - MPPT state, vessel details, Next Waypoint, Fusion radio song information, noon and sun phases, any system components configuration detail or statuses available, etc.
 - **Label**: A static text widget.
 - **Date display**: a timezone aware control with flexible presentation formatting support.
 - **Position display**: Position coordinates in textual format.
@@ -82,14 +82,16 @@ All KIP Widgets are visual presentation controls that are very versatile with mu
 - **Slider**: A versatile control that allows users to adjust values within a defined range by sliding. Commonly used for settings like light intensity, volume control, or any parameter requiring fine-tuned adjustments.
 - **Simple Linear gauge**: A visual display for electrical numerical data - chargers, MPPT, shunt, etc.
 - **Linear gauge**: Visually display any numerical data on a vertically or horizontally scale - Tank and reservoir levels, battery remaining capacity, etc.
-- **Radial gauge**: Visually display any numerical data on a radial scale - Boat Speed,Eond Speed, engine RPM,etc.
-- **Compass gauge**: A card or marine compass to display directionnal data such as heading, bearing to next waypoint, wind angle, etc.
-- **Radial and linear Steel gauge**: Old school look & fell gauges.
+- **Radial gauge**: Visually display any numerical data on a radial scale - Boat Speed, Wind Speed, engine RPM, etc.
+- **Compass gauge**: A card or marine compass to display directional data such as heading, bearing to next waypoint, wind angle, etc.
+- **Radial and linear Steel gauge**: Old school look & feel gauges.
 - **Wind Steering Display**: Your typical sailboat wind gauge.
 - **Freeboard-SK Chart Plotter**: A high quality Signal K implementation of Freeboard integration widget.
 - **Autopilot Head**: Operate your autopilot from any device remotely.
 - **Data Chart**: Visualize data trends over time.
 - **Race Timer**: Track regatta start sequence.
+- **Start Line Insight**: Analyze and visualize the start line for tactical racing advantage, including favored end and distance-to-line.
+- **Racer Start Timer**: Advanced race countdown timer with OCS (On Course Side) detection and automatic dashboard switching.
 - **Embedded Webpage**: A powerful way of displaying web based apps published on your Signal K server such as Grafana and Node-RED dashboard or your own standalone webapp.
 
 Get the latest version of KIP to see what's new!
