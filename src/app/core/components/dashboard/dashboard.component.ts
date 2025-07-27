@@ -37,6 +37,7 @@ import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.co
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
+import { ActivatedRoute } from '@angular/router';
 
 
 @Component({
@@ -47,6 +48,7 @@ import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widg
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy{
+  private readonly activatedRoute = inject(ActivatedRoute);
   private readonly _app = inject(AppService);
   private readonly _dialog = inject(DialogService);
   protected readonly dashboard = inject(DashboardService);
@@ -55,17 +57,16 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   private readonly _uiEvent = inject(uiEventService);
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
-  protected isLoading = signal(true);
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
-  protected readonly gridOptions: NgGridStackOptions = {
+  protected readonly gridOptions = signal<NgGridStackOptions>({
     margin: 4,
     minRow: 12,
     maxRow: 12,
     float: true,
     acceptWidgets: false,
     resizable: {handles: 'all'},
-  }
+  });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
 
   constructor() {
@@ -96,6 +97,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   ngAfterViewInit(): void {
+    this.resizeGridColumns();
+    this._uiEvent.addHotkeyListener(
+      this._boundHandleKeyDown,
+      { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
+    );
+
     this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
       if (isStatic) {
         this._gridstack().grid.setStatic(isStatic);
@@ -128,16 +135,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       }
     });
 
-    this.resizeGridColumns();
-    this._uiEvent.addHotkeyListener(
-      this._boundHandleKeyDown,
-      { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
-    );
-
-    setTimeout(() => {
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
+      const id = params['id'];
+      let pageIdParam : number | null = null;
+      if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
+        pageIdParam = Number(id);
+      }
+      this.dashboard.setActiveDashboard(pageIdParam ?? this.dashboard.activeDashboard());
       this.loadDashboard(this.dashboard.activeDashboard());
-      // Ensure loading is set to false after GridStack is fully ready
-      this.isLoading.set(false);
     });
   }
 
@@ -164,19 +169,19 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
   /**
    * Load a dashboard from configuration in batch mode
-   * @protected
    * @param {number} dashboardId the ID of the dashboard to load
    *
    * @memberof DashboardComponent
    */
-  protected loadDashboard(dashboardId: number): void {
+  private loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
     const _gridstack = this._gridstack();
     if (_gridstack?.grid) {
-      _gridstack.grid.batchUpdate();
-      _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
-      _gridstack.grid.commit();
-      this.isLoading.set(false);
+      setTimeout(() => {
+        _gridstack.grid.batchUpdate();
+        _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+        _gridstack.grid.commit();
+      }, 0);
     }
   }
 
@@ -273,24 +278,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   protected nextDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-      this.dashboard.nextDashboard();
-      if (this._gridstack()?.grid) {
-        setTimeout(() => {
-          this.loadDashboard(this.dashboard.activeDashboard());
-        }, 0);
-      }
+      this.dashboard.navigateToNextDashboard();
     }
   }
 
   protected previousDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-      this.dashboard.previousDashboard();
-      if (this._gridstack()?.grid) {
-        setTimeout(() => {
-          this.loadDashboard(this.dashboard.activeDashboard());
-        }, 0);
-      }
+      this.dashboard.navigateToPreviousDashboard();
     }
   }
 
