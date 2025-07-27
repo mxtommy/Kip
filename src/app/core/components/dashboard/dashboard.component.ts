@@ -37,6 +37,7 @@ import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.co
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
 import { ActivatedRoute } from '@angular/router';
+import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 
 
 @Component({
