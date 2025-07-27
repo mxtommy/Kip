@@ -13,6 +13,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'widget-racer-timer',
@@ -21,7 +22,8 @@ import { FormsModule } from '@angular/forms';
   imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule, FormsModule]
 })
 export class WidgetRacerTimerComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private signalk = inject(SignalkRequestsService);
+  private readonly signalk = inject(SignalkRequestsService);
+  private readonly router = inject(Router);
   protected dashboard = inject(DashboardService);
   private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
   private canvasService = inject(CanvasService);
@@ -202,7 +204,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       }
       if (this.widgetProperties.config.nextDashboard >= 0 &&
         lastTtsValue === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
-        this.dashboard.setActiveDashboard(this.widgetProperties.config.nextDashboard);
+        this.router.navigate(['/dashboard', this.widgetProperties.config.nextDashboard]);
       }
     });
 
