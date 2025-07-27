@@ -36,7 +36,6 @@ import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
-import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { ActivatedRoute } from '@angular/router';
 
 
