@@ -231,7 +231,7 @@ export class WidgetService {
       componentClassName: 'WidgetSteelGaugeComponent'
     },
     {
-      name: 'Wind Steering',
+      name: 'Windsteer',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
       icon: 'windsteeringWidget',
       minWidth: 1,
@@ -242,6 +242,19 @@ export class WidgetService {
       pluginDependency: [],
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
+    },
+    {
+      name: 'Racesteer',
+      description: 'A dynamic race steering display that fuses polar performance data with live environmental conditions, guiding you to the optimal steering, tacking, and gybing angles for maximum speed. Instantly see how your performance stacks up against competition polars, helping you make smarter tactical decisions on the water.',
+      icon: 'racesteeringWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Components',
+      pluginDependency: ['signalk-polar-performance-plugin'],
+      selector: 'widget-racesteer',
+      componentClassName: 'WidgetRacesteerComponent'
     },
     {
       name: 'Freeboard-SK',
