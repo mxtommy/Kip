@@ -16,7 +16,6 @@ interface ISVGRotationObject {
 })
 export class SvgRacesteerComponent {
   protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
-  protected readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
   protected readonly twaIndicator = viewChild.required<ElementRef<SVGGElement>>('twaIndicator');
   protected readonly wptIndicator = viewChild.required<ElementRef<SVGGElement>>('wptIndicator');
   protected readonly setIndicator = viewChild.required<ElementRef<SVGGElement>>('setIndicator');
@@ -25,18 +24,12 @@ export class SvgRacesteerComponent {
   protected readonly compassHeading = input.required<number>();
   protected readonly courseOverGroundAngle = input<number>(undefined);
   protected readonly courseOverGroundEnabled = input.required<boolean>();
+  protected readonly polarSpeedRatio = input.required<number>();
   protected readonly trueWindAngle = input.required<number>();
-  protected readonly twsEnabled = input.required<boolean>();
   protected readonly trueWindSpeed = input.required<number>();
   protected readonly trueWindSpeedUnit = input.required<string>();
-  protected readonly appWindAngle = input.required<number>();
-  protected readonly awsEnabled = input.required<boolean>();
-  protected readonly appWindSpeed = input.required<number>();
-  protected readonly appWindSpeedUnit = input.required<string>();
   protected readonly laylineAngle = input<number>(undefined);
-  protected readonly closeHauledLineEnabled = input.required<boolean>();
-  protected readonly sailSetupEnabled = input.required<boolean>();
-  protected readonly windSectorEnabled = input.required<boolean>();
+  protected readonly sailSetupEnabled = input.required<boolean>();;
   protected readonly driftEnabled = input.required<boolean>();
   protected readonly driftSet = input<number>(undefined);
   protected readonly driftFlow = input<number>(undefined);
@@ -45,20 +38,16 @@ export class SvgRacesteerComponent {
   protected readonly trueWindMinHistoric = input<number>(undefined);
   protected readonly trueWindMidHistoric = input<number>(undefined);
   protected readonly trueWindMaxHistoric = input<number>(undefined);
+  protected readonly gradianColor = input.required<{ start: string; stop: string }>();
 
   protected compass: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected twa: ISVGRotationObject = { oldValue: 0, newValue: 0 };
-  protected awa: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected wpt: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected cog: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
   protected headingValue ="--";
-  protected appWindSpeedDisplay = computed(() => {
-    const appWindSpeed = this.appWindSpeed();
-    if (appWindSpeed == null) return "--";
-    return appWindSpeed.toFixed(1);
-  });
+  private windSectorsInitialized = false;
   protected trueWindSpeedDisplay = computed(() => {
     const trueWindSpeed = this.trueWindSpeed();
     if (trueWindSpeed == null) return "--";
@@ -77,8 +66,11 @@ export class SvgRacesteerComponent {
   private stbdLaylinePrev = 0;
   private portLaylineAnimId: number | null = null;
   private stbdLaylineAnimId: number | null = null;
-  protected closeHauledLinePortPath = "M 500,500 500,500";
-  protected closeHauledLineStbdPath = "M 500,500 500,500";
+  private readonly CENTER = 600;
+  private readonly RADIUS = 491;
+  private readonly ANIMATION_DURATION = 1000;
+  protected closeHauledLinePortPath = signal<string>(`M ${this.CENTER},${this.CENTER} ${this.CENTER},${this.CENTER}`);
+  protected closeHauledLineStbdPath = signal<string>(`M ${this.CENTER},${this.CENTER} ${this.CENTER},${this.CENTER}`);
   //WindSectors
   private portSectorPrev = { min: 0, mid: 0, max: 0 };
   private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
@@ -86,12 +78,12 @@ export class SvgRacesteerComponent {
   private stbdSectorAnimId: number | null = null;
   protected portWindSectorPath = "";
   protected stbdWindSectorPath = "";
+  // Speed Line
+  protected speedLineTipY = signal<number>(600);
+  protected speedTipPoints = signal<string>('600,570 580,600 620,600');
+  protected speedRatioColor = signal<string>('');
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
-
-  private readonly CENTER = 500;
-  private readonly RADIUS = 350;
-  private readonly ANIMATION_DURATION = 1000;
 
   constructor() {
     effect(() => {
@@ -111,7 +103,7 @@ export class SvgRacesteerComponent {
         this.compass.newValue = heading;
         this.headingValue = heading.toString();
         if (this.rotatingDial()?.nativeElement) {
-          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
           this.updateCloseHauledLines();
           this.updateWindSectors();
         }
@@ -126,7 +118,7 @@ export class SvgRacesteerComponent {
         this.cog.oldValue = this.cog.newValue;
         this.cog.newValue =  cogAngle - this.compass.newValue;
         if (this.cogIndicator()?.nativeElement) {
-          animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
         }
       });
     });
@@ -148,20 +140,7 @@ export class SvgRacesteerComponent {
         this.wpt.oldValue = this.wpt.newValue;
         this.wpt.newValue = wptAngle;
         if (this.wptIndicator()?.nativeElement) {
-          animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
-        }
-      });
-    });
-
-    effect(() => {
-      const appWindAngle = parseFloat(this.appWindAngle().toFixed(0));
-      if (appWindAngle == null) return;
-
-      untracked(() => {
-        this.awa.oldValue = this.awa.newValue;
-        this.awa.newValue = appWindAngle;
-        if (this.awaIndicator()?.nativeElement) {
-          animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
         }
       });
     });
@@ -175,9 +154,17 @@ export class SvgRacesteerComponent {
         this.trueWindHeading = trueWindAngle;
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
          if (this.twaIndicator()?.nativeElement) {
-          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
           this.updateCloseHauledLines();
         }
+      });
+    });
+
+    effect(() => {
+      const ratio = this.polarSpeedRatio();
+
+      untracked(() => {
+        this.animateSpeedLine(ratio);
       });
     });
 
@@ -189,22 +176,20 @@ export class SvgRacesteerComponent {
         this.set.oldValue = this.set.newValue;
         this.set.newValue =  driftSet;
         if (this.setIndicator()?.nativeElement) {
-          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
         }
       });
     });
   }
 
   private updateCloseHauledLines(): void {
-    if (!this.closeHauledLineEnabled()) return;
-
     // Animate Port Layline
-    const portLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle() * -1);
+    const portLaylineRotate = this.addHeading(Number(this.twa.newValue), this.laylineAngle() * -1);
     this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
     this.portLaylinePrev = portLaylineRotate;
 
     // Animate Starboard Layline
-    const stbdLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle());
+    const stbdLaylineRotate = this.addHeading(Number(this.twa.newValue), this.laylineAngle());
     this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
     this.stbdLaylinePrev = stbdLaylineRotate;
   }
@@ -234,9 +219,9 @@ export class SvgRacesteerComponent {
       const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
 
       if (isPort) {
-        this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+        this.closeHauledLinePortPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
       } else {
-        this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+        this.closeHauledLineStbdPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
       }
 
       if (progress < 1) {
@@ -254,11 +239,8 @@ export class SvgRacesteerComponent {
     else this.stbdLaylineAnimId = id;
   }
 
-  private windSectorsInitialized = false;
-
   private updateWindSectors() {
     if (
-      !this.windSectorEnabled() ||
       this.trueWindMinHistoric() == null ||
       this.trueWindMidHistoric() == null ||
       this.trueWindMaxHistoric() == null
@@ -350,6 +332,49 @@ export class SvgRacesteerComponent {
     const id = requestAnimationFrame(animate);
     if (isPort) this.portSectorAnimId = id;
     else this.stbdSectorAnimId = id;
+  }
+
+  private animateSpeedLine(ratio: number): void {
+    // Clamp ratio between 0 and 1
+    ratio = Math.max(0, Math.min(1, ratio));
+
+    // The line grows from y=600 (base) to y=140 (top)
+    const yBase = 600;
+    const yTop = 146;
+    const length = yBase - yTop;
+    const tipY = yBase - length * ratio;
+
+    this.speedLineTipY.set(tipY);
+
+    // Triangle tip at (600, tipY-30), base at (580, tipY), (620, tipY)
+    // (30px height, 40px base width)
+    const tipHeight = 30;
+    const tipBaseHalf = 20;
+    const tipApexY = tipY - tipHeight;
+    this.speedTipPoints.set(`${600},${tipApexY} ${600 - tipBaseHalf},${tipY} ${600 + tipBaseHalf},${tipY}`);
+    this.speedRatioColor.set(this.interpolateColor(this.gradianColor().start, this.gradianColor().stop, ratio));
+  }
+
+  private interpolateColor(color1: string, color2: string, ratio: number): string {
+    // Clamp ratio
+    ratio = Math.max(0, Math.min(1, ratio));
+
+    // Helper to parse hex color to [r,g,b]
+    function hexToRgb(hex: string): [number, number, number] {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      const num = parseInt(hex, 16);
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+    }
+
+    const [r1, g1, b1] = hexToRgb(color1);
+    const [r2, g2, b2] = hexToRgb(color2);
+
+    const r = Math.round(r1 + (r2 - r1) * ratio);
+    const g = Math.round(g1 + (g2 - g1) * ratio);
+    const b = Math.round(b1 + (b2 - b1) * ratio);
+
+    return `rgb(${r},${g},${b})`;
   }
 
   private addHeading(h1 = 0, h2 = 0) {

@@ -13,7 +13,8 @@ svg {
 }
 
 .fixed-dial-background {
-  fill: var(--kip-grey-color);
+  fill: none;
+  stroke: var(--kip-grey-color);
 }
 
 .rotating-dial-Backplate {
@@ -50,7 +51,7 @@ svg {
 }
 
 .true-wind {
-  fill: var(--kip-yellow-color);
+  fill: var(--kip-blue-color);
 }
 
 .true-wind-label {
@@ -70,15 +71,34 @@ svg {
 }
 
 .next-waypoint {
-  stroke: var(--kip-green-color);
+  stroke: var(--kip-orange-color);
+  stroke-width:15;
+  fill: none;
 }
 
 .next-waypoint-bar {
   stroke: var(--kip-grey-color);
 }
 
-.laylines {
-  stroke:  var(--kip-contrast-color);
+.portLayline {
+  stroke:  var(--kip-port-color);
+  stroke-width: 5;
+}
+
+.stbdLayline {
+  stroke:  var(--kip-starboard-color);
+  stroke-width: 5;
+}
+
+.direction-line {
+  stroke: var(--kip-contrast-color);
+  stroke-width: 5;
+}
+
+.speed-line {
+  stroke: var(--kip-blue-color);
+  stroke-width: 10;
+  fill: var(--kip-blue-color);
 }
 
 .wind-sector-port {
@@ -91,4 +111,6 @@ svg {
 
 .drift-arrow {
   stop-color: var(--kip-blue-color);
+  stroke: var(--kip-widget-card-background-color);
+  stroke-width: 3;
 }
