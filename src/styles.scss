@@ -234,6 +234,25 @@ body {
   border-left: 5px solid var(--kip-green-color);
 }
 
+/* Make gridstack resize handles larger */
+.grid-stack .ui-resizable-se,
+.grid-stack .ui-resizable-sw,
+.grid-stack .ui-resizable-ne,
+.grid-stack .ui-resizable-nw {
+  width: 32px;
+  height: 32px;
+}
+
+.grid-stack .ui-resizable-e,
+.grid-stack .ui-resizable-w {
+  width: 32px;
+}
+
+.grid-stack .ui-resizable-n,
+.grid-stack .ui-resizable-s {
+  height: 32px;
+}
+
 /***************************************************
 * Default styles for markdown (help docs) content
 ***************************************************/
