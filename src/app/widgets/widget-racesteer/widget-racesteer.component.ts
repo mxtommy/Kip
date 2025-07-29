@@ -14,15 +14,18 @@ import { SvgRacesteerComponent } from '../svg-racesteer/svg-racesteer.component'
 export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   private zones = inject(NgZone);
   protected currentHeading = signal<number>(0);
-  protected courseOverGroundAngle = signal<number>(0);
+  protected tackTrue = signal<number>(0);
   protected polarSpeedRatio = signal<number>(null);
   protected trueWindAngle = signal<number>(0);
   protected trueWindSpeed = signal<number>(0);
   protected targetAngle = signal<number>(0);
-  protected trueWindSpeedUnit = signal<string>('');
+  protected optimalWindAngle = signal<number>(0);
+  protected targetVMG = signal<number>(0);
+  protected VMG = signal<number>(0);
   protected driftFlow = signal<number>(0);
   protected driftSet = signal<number>(0);
   protected waypointAngle = signal<number>(0);
+  protected vmgToWaypoint = signal<number>(0);
   protected gradianColor = signal<{ start: string; stop: string } | undefined>(undefined);
   protected historicalWindDirection: {
     timestamp: number;
@@ -51,26 +54,26 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           showConvertUnitTo: false,
           sampleTime: 500
         },
-        "courseOverGround": {
-          description: "True Course Over Ground",
-          path: 'self.navigation.courseOverGroundTrue',
+        "tackTrue": {
+          description: "True Tack",
+          path: 'self.performance.tackTrue',
           source: 'default',
           pathType: "number",
-          isPathConfigurable: true,
-          pathRequired: false,
+          isPathConfigurable: false,
+          pathRequired: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           showConvertUnitTo: false,
           convertUnitTo: "deg",
           sampleTime: 500
         },
-        "trueWindAngle": {
-          description: "True Wind Angle",
-          path: 'self.environment.wind.angleTrueWater',
+        "windAngleTrueWaterDamped": {
+          description: "Wind Angle True Water Damped",
+          path: 'self.environment.wind.angleTrueWaterDamped',
           source: 'default',
           pathType: "number",
-          isPathConfigurable: true,
-          pathRequired: false,
+          isPathConfigurable: false,
+          pathRequired: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
@@ -83,7 +86,7 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           source: 'default',
           pathType: "number",
           isPathConfigurable: true,
-          pathRequired: false,
+          pathRequired: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'm/s',
           convertUnitTo: "knots",
@@ -95,7 +98,7 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           source: "default",
           pathType: "number",
           isPathConfigurable: false,
-          pathRequired: false,
+          pathRequired: true,
           showPathSkUnitsFilter: false,
           showConvertUnitTo: false,
           convertUnitTo: "ratio",
@@ -107,10 +110,46 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           source: "default",
           pathType: "number",
           isPathConfigurable: false,
-          pathRequired: false,
+          pathRequired: true,
           showPathSkUnitsFilter: false,
           showConvertUnitTo: false,
           convertUnitTo: "deg",
+          sampleTime: 0
+        },
+        "optimalWindAngle": {
+          description: "Optimal Wind Angle",
+          path: "self.performance.optimumWindAngle",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: false,
+          pathRequired: true,
+          showPathSkUnitsFilter: false,
+          showConvertUnitTo: false,
+          convertUnitTo: "deg",
+          sampleTime: 0
+        },
+        "targetVMG": {
+          description: "Target Velocity Made Good",
+          path: "self.performance.targetVelocityMadeGood",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: false,
+          pathRequired: true,
+          showPathSkUnitsFilter: false,
+          showConvertUnitTo: false,
+          convertUnitTo: "knots",
+          sampleTime: 0
+        },
+        "VMG": {
+          description: "Velocity Made Good",
+          path: "self.performance.velocityMadeGood",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: false,
+          pathRequired: true,
+          showPathSkUnitsFilter: false,
+          showConvertUnitTo: false,
+          convertUnitTo: "knots",
           sampleTime: 0
         },
         "nextWaypointBearing": {
@@ -124,8 +163,23 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
+        "vmgToWaypoint": {
+          description: "Velocity Made Good to Waypoint",
+          path: 'self.performance.velocityMadeGoodToWaypoint',
+          source: 'default',
+          pathType: "number",
+          isPathConfigurable: false,
+          pathRequired: false,
+          showPathSkUnitsFilter: false,
+          convertUnitTo: "knots",
+          showConvertUnitTo: false,
+          sampleTime: 1000
+        },
+
+
+
         "set": {
           description: "True Drift Set",
           path: 'self.environment.current.setTrue',
@@ -155,7 +209,6 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
       windSectorWindowSeconds: 5,
       laylineAngle: 40,
       waypointEnable: true,
-      courseOverGroundEnable: true,
       driftEnable: true,
       sailSetupEnable: false,
       enableTimeout: false,
@@ -172,7 +225,7 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
   protected startWidget(): void {
     this.unsubscribeDataStream();
     this.stopWindSectors();
-    this.trueWindSpeedUnit.set(this.widgetProperties.config.paths['trueWindSpeed'].convertUnitTo);
+
     this.observeDataStream('headingPath', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
         newValue.data.value = 0;
@@ -180,11 +233,74 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
       this.currentHeading.set(newValue.data.value);
     });
 
-    this.observeDataStream('courseOverGround', newValue => {
+    this.observeDataStream('windAngleTrueWaterDamped', newValue => {
       if (newValue.data.value == null) { // act upon data timeout of null
         newValue.data.value = 0;
       }
-      this.courseOverGroundAngle.set(newValue.data.value);
+      this.trueWindAngle.set(this.addHeading(this.currentHeading(), newValue.data.value));
+      const to360Angle =  this.addHeading(this.currentHeading(), newValue.data.value);
+      this.addHistoricalWindDirection(to360Angle);
+    });
+
+    this.observeDataStream('trueWindSpeed', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.trueWindSpeed.set(newValue.data.value);
+    });
+
+    this.observeDataStream('tackTrue', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.tackTrue.set(Math.round(newValue.data.value));
+    });
+
+    this.observeDataStream('nextWaypointBearing', newValue => {
+      const value = newValue.data.value;
+      const waypointAngle = value < 0 ? 360 + value : value;
+      this.waypointAngle.set(Math.round(this.addHeading(-this.currentHeading(), waypointAngle)));
+    });
+
+    this.observeDataStream('vmgToWaypoint', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.vmgToWaypoint.set(newValue.data.value.toFixed(1));
+    });
+
+    this.observeDataStream('polarSpeedRatio', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.polarSpeedRatio.set(newValue.data.value);
+    });
+
+    this.observeDataStream('targetAngle', newValue => {
+      const value = newValue.data.value;
+      const targetAngle = value < 0 ? 360 + value : value;
+      this.targetAngle.set(targetAngle);
+    });
+
+    this.observeDataStream('optimalWindAngle', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.optimalWindAngle.set(newValue.data.value);
+    });
+
+    this.observeDataStream('targetVMG', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.targetVMG.set(newValue.data.value.toFixed(1));
+    });
+
+    this.observeDataStream('VMG', newValue => {
+      if (newValue.data.value == null) { // act upon data timeout of null
+        newValue.data.value = 0;
+      }
+      this.VMG.set(newValue.data.value.toFixed(1));
     });
 
     this.observeDataStream('drift', newValue => {
@@ -198,58 +314,8 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
       if (newValue.data.value == null) { // act upon data timeout of null
           newValue.data.value = 0
       }
-      this.driftSet.set(newValue.data.value);
+      this.driftSet.set(this.addHeading(-this.currentHeading(), newValue.data.value));
     });
-
-    this.observeDataStream('nextWaypointBearing', newValue => {
-      if (newValue.data.value < 0) {// stb
-        this.waypointAngle.set(360 + newValue.data.value); // adding a negative number subtracts it...
-      } else {
-        this.waypointAngle.set(newValue.data.value);
-      }
-    });
-
-    this.observeDataStream('polarSpeedRatio', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.polarSpeedRatio.set(newValue.data.value);
-    });
-
-    this.observeDataStream('targetAngle', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.targetAngle.set(newValue.data.value);
-    });
-
-    this.observeDataStream('trueWindSpeed', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.trueWindSpeed.set(newValue.data.value);
-    });
-
-    this.observeDataStream('trueWindAngle', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-        // Depending on path, this number can either be an absolute 360 deg value
-        // or a +/-180 deg value relative to boat - usually includes the word angle.
-        // 1 to 180 for stb
-        // -1 to -180 for port
-        // The display dial needs the value in 0-360
-        const path = this.widgetProperties.config.paths['trueWindAngle'].path;
-        if (path.includes('angleTrueWater') || path.includes('angleTrueGround')) {
-          //-180 to 180, we need to account for boat heading
-          this.trueWindAngle.set(this.addHeading(this.currentHeading(), newValue.data.value));
-          this.addHistoricalWindDirection(this.trueWindAngle());
-        } else {
-          // Other path, assume it's an absolute 360 angle
-          this.trueWindAngle.set(newValue.data.value);
-        }
-      }
-    );
 
     this.startWindSectors();
   }

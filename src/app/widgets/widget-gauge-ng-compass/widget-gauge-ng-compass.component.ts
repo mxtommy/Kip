@@ -74,7 +74,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   private readonly negToPortPaths = [
     "self.environment.wind.angleApparent",
     "self.environment.wind.angleTrueGround",
-    "self.environment.wind.angleTrueWater"
+    "self.environment.wind.angleTrueWater",
+    "self.environment.wind.angleTrueWaterDamped",
+    "self.performance.beatAngle",
+    "self.performance.gybeAngle",
+    "self.performance.targetAngle",
+    "self.performance.optimumWindAngle"
   ];
 
   constructor() {

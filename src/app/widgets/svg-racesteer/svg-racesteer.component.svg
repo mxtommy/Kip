@@ -393,87 +393,103 @@
   </g>
   <g id="LayerWindShift">
     <path id="portSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-      [attr.d]="portWindSectorPath"
+      [style.display]="portWindSectorPath() != 'none' ? 'inline' : 'none'"
+      [attr.d]="portWindSectorPath()"
       class="wind-sector-port"
       style="fill-opacity:0.4;stroke:none" />
     <path id="StbdSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-      [attr.d]="stbdWindSectorPath"
+      [style.display]="stbdWindSectorPath() != 'none' ? 'inline' : 'none'"
+      [attr.d]="stbdWindSectorPath()"
       class="wind-sector-stbd"
       style="fill-opacity:0.4;stroke:none" />
   </g>
   <g id="LayerLayline">
     <path id="PortLayline"
        [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
-       [attr.d]="closeHauledLinePortPath()"
+       [attr.d]="laylinePortPath()"
        class="portLayline" />
     <path id="StbdLayline"
        [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
-       [attr.d]="closeHauledLineStbdPath()"
+       [attr.d]="laylineStbdPath()"
        class="stbdLayline" />
   </g>
   <g id="layerCounter">
-    <g id="twsCounter">
+    <g id="tackCounter">
       <text
         xml:space="preserve"
-        class="true-wind-label"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-        x="1004.27722"
-        y="150.88913"
-        id="text43">{{ trueWindSpeedUnit() }}</text>
+        class="tack-label"
+        x="1055"
+        y="85">Tack/Gybe</text>
+      <rect
+        class="tack-box"
+        id="rect1"
+        width="215"
+        height="100"
+        x="950"
+        y="100"
+        rx="20" />
       <text
         xml:space="preserve"
-        class="true-wind"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-        x="1003.84814"
-        y="114.73512"
-        id="text42">{{ trueWindSpeedDisplay() }}</text>
-      <text
-        xml:space="preserve"
-        class="true-wind-label"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-        x="1005.25897"
-        y="52.894646"
-        id="text41">TWS</text>
+        class="tack-value"
+        x="1063"
+        y="180"
+        id="text42">{{ tackTrue() }}<tspan style="font-weight:normal;">°<tspan style="font-weight:normal;font-size:30px;">T</tspan></tspan></text>
     </g>
-    <g id="awsCounter"
-      [style.display]="true ? 'inline' : 'none'">
+    <g id="windVmgCounter">
       <text
         xml:space="preserve"
-        class="app-wind-label"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-        x="194.554222"
-        y="150.88913"
-        id="text39">asdf</text>
+        class="tack-label"
+        x="600"
+        y="760">Wind VMG</text>
       <text
         xml:space="preserve"
-        class="app-wind"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-        x="194.580925"
-        y="114.63747"
-        id="text40">asdf</text>
+        class="wind-vmg-value"
+        [style.fill]="targetVMGOffsetRatioColor()"
+        x="600"
+        y="830">{{ targetVMG() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
       <text
-       xml:space="preserve"
-       class="app-wind-label"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:34.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
-       x="195.967644"
-       y="52.894646"
-       id="text39-7">AWS</text>
+        xml:space="preserve"
+        class="wind-vmg-offset"
+        [style.fill]="targetVMGOffsetRatioColor()"
+        x="600"
+        y="870">{{ targetVMGOffset() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
+    </g>
+    <g id="waypointCounter">
+      <text
+        xml:space="preserve"
+        class="tack-label"
+        x="1055"
+        y="1030">Waypoint</text>
+      <rect
+        class="waypoint-box"
+        width="268"
+        height="140"
+        x="920"
+        y="1045"
+        rx="20" />
+      <text
+        xml:space="preserve"
+        class="waypoint-value"
+        x="1050"
+        y="1100"><tspan class="tack-label">VMG: </tspan>{{ vmgToWaypoint() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
+      <text
+        xml:space="preserve"
+        class="waypoint-value"
+        x="1050"
+        y="1165"><tspan class="tack-label">HDG: </tspan>{{ waypointAngle() }}<tspan style="font-weight:normal;">°<tspan style="font-weight:normal;font-size:30px;">T</tspan></tspan></text>
     </g>
   </g>
   <g id="layerIndicators"
     style="display:inline">
-    <g #cogIndicator
-      [attr.display]="courseOverGroundEnabled() ? 'inline' : 'none'">
+    <g #tackIndicator>
       <path
-        class="course-over-ground"
-        style="stroke-width:14.7329;stroke-linecap:square"
-        d="m 606.20767,272.99458 a 6.3888631,8.8250643 0 0 1 -6.38888,8.82508 6.3888631,8.8250643 0 0 1 -6.38888,-8.82508 6.3888631,8.8250643 0 0 1 6.38888,-8.82509 6.3888631,8.8250643 0 0 1 6.38888,8.82509 z M 576.25472,130.811298 593.47058,113.265068 c 3.6173,-3.6867571 9.44162,-3.6867571 13.05892,0 l 17.21586,17.546106 c 3.6173,3.686743 3.6173,9.622786 0,13.309544 l -17.21595,17.54623 c -3.61721,3.686757 -9.44153,3.686757 -13.05893,0 L 576.25472,144.120841 c -3.6174,-3.686743 -3.6174,-9.622924 0,-13.309543 z m 17.20533,-16.510116 h 12.77766 V 273.26408 h -12.77766 z" />
+        class="tack-angle"
+        d="m 606.20767,245.99458 a 6.3888631,8.8250643 0 0 1 -6.38888,8.82508 6.3888631,8.8250643 0 0 1 -6.38888,-8.82508 6.3888631,8.8250643 0 0 1 6.38888,-8.82509 6.3888631,8.8250643 0 0 1 6.38888,8.82509 z M 576.25472,103.811298 593.47058,86.265068 c 3.6173,-3.6867571 9.44162,-3.6867571 13.05892,0 l 17.21586,17.546106 c 3.6173,3.686743 3.6173,9.622786 0,13.309544 l -17.21595,17.54623 c -3.61721,3.686757 -9.44153,3.686757 -13.05893,0 L 576.25472,117.120841 c -3.6174,-3.686743 -3.6174,-9.622924 0,-13.309543 z m 17.20533,-16.510116 h 12.77766 V 246.26408 h -12.77766 z" />
     </g>
     <g #twaIndicator>
       <path
         class="true-wind"
+        [style.fill]="windAnglePerformanceRatioColor()"
         d="m 451.77021,55.078207 42.08541,-33.202814 a 12.555638,12.555638 0.26446337 0 1 15.64423,0.07221 l 42.20046,33.930296 a 15.557694,15.557694 71.53185 0 1 5.32954,15.957795 L 504.17034,279.76529 a 2.5373267,2.5373267 0.02614114 0 1 -4.91879,-0.002 L 446.37431,70.966036 a 15.416336,15.416336 108.75875 0 1 5.3959,-15.887829 z"
         style="display:inline;stroke:none;stroke-width:5.8876;stroke-miterlimit:0"
         transform="matrix(0.60410307,0,0,0.70555435,296.91787,121.152867)" />
@@ -488,8 +504,8 @@
     <g #wptIndicator
       [attr.display]="waypointActive() ? 'inline' : 'none'">
       <ellipse class="next-waypoint"
-        cx="600" cy="250"
-        rx="18" ry="18" />
+        cx="600" cy="248"
+        rx="20" ry="20" />
     </g>
   </g>
   <g id="layerDirectionSpeed">
@@ -513,7 +529,7 @@
   </g>
   <g id="layerHeading">
     <rect
-      class="heading-background"
+      class="heading-box"
        style="stroke-width:5;stroke-opacity:0.5"
        id="rect1"
        width="260"
@@ -523,10 +539,10 @@
        rx="20" />
     <text
       class="contrast-text"
-      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:106.667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none;stroke-width:5;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:107px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none;stroke-width:5;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
       x="600"
       y="98">
-      <tspan>{{headingValue}}<tspan style="font-weight:normal;">°</tspan></tspan>
+      {{headingValue()}}<tspan style="font-weight:normal;">°</tspan>
     </text>
   </g>
 </svg>

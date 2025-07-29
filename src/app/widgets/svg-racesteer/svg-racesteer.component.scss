@@ -29,7 +29,7 @@ svg {
   stroke: var(--kip-port-color);
 }
 
-.heading-background {
+.heading-box {
   stroke: var(--kip-grey-color);
   fill: var(--kip-widget-card-background-color);
 }
@@ -50,24 +50,85 @@ svg {
   fill: var(--kip-widget-card-background-color);
 }
 
+.tack-box {
+  stroke: var(--kip-yellow-dim-color);
+  fill: var(--kip-widget-card-background-color);
+  stroke-width: 5;
+}
+
+.tack-value {
+  fill: var(--kip-contrast-color);
+  font-family: Roboto;
+  font-size: 80px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  stroke: none;
+}
+
+.tack-label {
+  fill: var(--kip-contrast-dim-color);
+  font-family:Roboto;
+  font-size:35px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  stroke: none;
+}
+
+.waypoint-box {
+  stroke: var(--kip-orange-dim-color);
+  fill: var(--kip-widget-card-background-color);
+  stroke-width: 5;
+}
+
+.waypoint-value {
+  fill: var(--kip-contrast-color);
+  font-family: Roboto;
+  font-size: 50px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  stroke: none;
+}
+
+.wind-vmg-value {
+  fill: var(--kip-contrast-color);
+  font-family: Roboto;
+  font-size: 80px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  stroke: none;
+}
+
+.wind-vmg-offset {
+  fill: var(--kip-contrast-color);
+  font-family: Roboto;
+  font-size: 35px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  stroke: none;
+}
+
 .true-wind {
-  fill: var(--kip-blue-color);
-}
-
-.true-wind-label {
-  fill: var(--kip-yellow-dim-color);
-}
-
-.app-wind {
-    fill: var(--kip-orange-color);
+    fill: var(--kip-blue-color);
 }
 
 .app-wind-label {
     fill: var(--kip-orange-dim-color);
 }
 
-.course-over-ground {
-  fill: var(--kip-pink-color);
+.tack-angle {
+  fill: var(--kip-yellow-color);
+  stroke-width: 15;
+  stroke-linecap: square;
 }
 
 .next-waypoint {
