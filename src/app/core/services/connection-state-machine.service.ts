@@ -46,7 +46,7 @@ export class ConnectionStateMachine {
   private readonly config: IConnectionConfig = {
     httpRetryCount: 3,
     webSocketRetryCount: 5,
-    retryIntervals: [1000, 2000, 4000], // Exponential backoff: 1s, 2s, 4s
+    retryIntervals: [2000, 3000, 5000], // Exponential backoff: 2s, 3s, 5s
     notificationDebounceMs: 0
   };
 
@@ -219,23 +219,14 @@ export class ConnectionStateMachine {
       return;
     }
 
-    if (this._webSocketRetryCount < this.config.webSocketRetryCount) {
-      this._webSocketRetryCount++;
-      this.setState(
-        ConnectionState.WebSocketRetrying,
-        `WebSocket connection failed. Retrying (${this._webSocketRetryCount}/${this.config.webSocketRetryCount})...`,
-        this._webSocketRetryCount,
-        this.config.webSocketRetryCount
-      );
-      this.scheduleWebSocketRetry();
-    } else {
-      this.setState(
-        ConnectionState.PermanentFailure,
-        `WebSocket connection failed after ${this.config.webSocketRetryCount} attempts. Server unreachable.`,
-        this.config.webSocketRetryCount,
-        this.config.webSocketRetryCount
-      );
-    }
+    this._webSocketRetryCount++;
+    this.setState(
+      ConnectionState.WebSocketRetrying,
+      `WebSocket connection failed. Retry attempt ${this._webSocketRetryCount}...`,
+      this._webSocketRetryCount,
+      this.config.webSocketRetryCount
+    );
+    this.scheduleWebSocketRetry();
   }
 
   /**
@@ -348,10 +339,8 @@ export class ConnectionStateMachine {
 
   private scheduleWebSocketRetry(): void {
     this.clearRetryTimer();
-    const retryIndex = Math.min(this._webSocketRetryCount - 1, this.config.retryIntervals.length - 1);
-    const delay = this.config.retryIntervals[retryIndex];
 
-    console.log(`[ConnectionStateMachine] Scheduling WebSocket retry in ${delay}ms`);
+    console.log(`[ConnectionStateMachine] Scheduling WebSocket retry in ${this.config.retryIntervals[1]}ms`);
     this._retryTimeout = setTimeout(() => {
       // Trigger WebSocket reconnection attempt via callback
       // Don't change state here - let the WebSocket result determine the new state
@@ -368,7 +357,7 @@ export class ConnectionStateMachine {
           this.config.webSocketRetryCount
         );
       }
-    }, delay);
+    }, this.config.retryIntervals[1]);
   }
 
   private clearRetryTimer(): void {
