@@ -284,7 +284,7 @@ export class WidgetService {
     },
     {
       name: 'Autopilot Head',
-      description: 'A basic Autopilot Head for supported Signal K v1 API autopilot devices.',
+      description: 'Provides typical autopilot controls for Signal K v1 & v2 Autopilot API devices. Requires a compatible hardware-specific Autopilot plugin for full functionality.',
       icon: 'autopilotWidget',
       minWidth: 2,
       minHeight: 7,
