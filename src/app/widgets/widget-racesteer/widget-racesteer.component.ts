@@ -52,7 +52,7 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
         "tackTrue": {
           description: "True Tack",
@@ -65,7 +65,7 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           pathSkUnitsFilter: 'rad',
           showConvertUnitTo: false,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 0
         },
         "windAngleTrueWaterDamped": {
           description: "Wind Angle True Water Damped",
