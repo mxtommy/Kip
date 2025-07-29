@@ -17,7 +17,9 @@ svg {
 }
 
 .rotating-dial-Backplate {
-  fill: var(--mat-sys-background);
+  stroke: var(--mat-sys-background);
+  fill: none;
+  stroke-width: 95;
 }
 
 .starboard  {

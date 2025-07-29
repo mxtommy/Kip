@@ -77,15 +77,15 @@ export class SvgWindComponent {
   private stbdLaylinePrev = 0;
   private portLaylineAnimId: number | null = null;
   private stbdLaylineAnimId: number | null = null;
-  protected closeHauledLinePortPath = "M 500,500 500,500";
-  protected closeHauledLineStbdPath = "M 500,500 500,500";
+  protected closeHauledLinePortPath = signal<string>("M 500,500 500,500");
+  protected closeHauledLineStbdPath = signal<string>("M 500,500 500,500");
   //WindSectors
   private portSectorPrev = { min: 0, mid: 0, max: 0 };
   private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
   private portSectorAnimId: number | null = null;
   private stbdSectorAnimId: number | null = null;
-  protected portWindSectorPath = "";
-  protected stbdWindSectorPath = "";
+  protected portWindSectorPath = signal<string>("");
+  protected stbdWindSectorPath = signal<string>("");
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
 
@@ -234,9 +234,9 @@ export class SvgWindComponent {
       const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
 
       if (isPort) {
-        this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+        this.closeHauledLinePortPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
       } else {
-        this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+        this.closeHauledLineStbdPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
       }
 
       if (progress < 1) {
@@ -332,9 +332,9 @@ export class SvgWindComponent {
       const path = `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
 
       if (isPort) {
-        this.portWindSectorPath = path;
+        this.portWindSectorPath.set(path);
       } else {
-        this.stbdWindSectorPath = path;
+        this.stbdWindSectorPath.set(path);
       }
 
       if (progress < 1) {
