@@ -1,3 +1,9 @@
+# V 3.5.1
+## Fixes
+* Dashboard ID URL not redirecting to dashboard instance (/mxtommy/kip/#/dashboard/1)
+* Widget resize handles too small to operate with fingers on smaller screens
+* Display network connection and socket error messages only
+* WebSocket retry should not stop after five attempts
 # V 3.5.0
 ## New features
 * Gain tactical racing advantages with new signalk-racer plugin integrated widgets for start line analysis and  race countdowns. _Contribution by @gregw_
