@@ -177,9 +177,6 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
           showConvertUnitTo: false,
           sampleTime: 1000
         },
-
-
-
         "set": {
           description: "True Drift Set",
           path: 'self.environment.current.setTrue',
@@ -246,7 +243,7 @@ export class WidgetRacesteerComponent extends BaseWidgetComponent implements OnI
       if (newValue.data.value == null) { // act upon data timeout of null
         newValue.data.value = 0;
       }
-      this.trueWindSpeed.set(newValue.data.value);
+      this.trueWindSpeed.set(90);//newValue.data.value);
     });
 
     this.observeDataStream('tackTrue', newValue => {

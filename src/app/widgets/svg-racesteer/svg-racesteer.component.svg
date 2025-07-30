@@ -93,14 +93,14 @@
     <g id="fixedDial">
       <circle id="dialBackground"
         class="fixed-dial-background"
-        style="display:inline;stroke-width:40"
-        cx="600" cy="600" r="470" />
+        style="display:inline;stroke-width:46"
+        cx="600" cy="620" r="516" />
     </g>
     <g #rotatingDial>
       <g id="barsAndText"
         class="contrast-stroke"
         style="display:inline"
-        transform="translate(100,100)">
+        transform="scale(1.1) translate(45,64)">
         <path
           style="fill:none;fill-opacity:0;stroke-width:4.18042;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
           d="m 416.35095,19.837399 2.78142,15.77426"
@@ -418,21 +418,20 @@
       <text
         xml:space="preserve"
         class="tack-label"
-        x="1055"
-        y="85">Tack/Gybe</text>
+        x="1062"
+        y="80">Tack/Gybe</text>
       <rect
         class="tack-box"
-        id="rect1"
-        width="215"
+        x="936"
+        y="95"
+        width="252"
         height="100"
-        x="950"
-        y="100"
         rx="20" />
       <text
         xml:space="preserve"
         class="tack-value"
-        x="1063"
-        y="180"
+        x="1072"
+        y="175"
         id="text42">{{ tackTrue() }}<tspan style="font-weight:normal;">°<tspan style="font-weight:normal;font-size:30px;">T</tspan></tspan></text>
     </g>
     <g id="windVmgCounter">
@@ -440,57 +439,56 @@
         xml:space="preserve"
         class="tack-label"
         x="600"
-        y="760">Wind VMG</text>
+        y="780">Wind VMG</text>
       <text
         xml:space="preserve"
         class="wind-vmg-value"
         [style.fill]="targetVMGOffsetRatioColor()"
-        x="600"
-        y="830">{{ targetVMG() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
+        x="610"
+        y="850">{{ targetVMG() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
       <text
         xml:space="preserve"
         class="wind-vmg-offset"
         [style.fill]="targetVMGOffsetRatioColor()"
-        x="600"
-        y="870">{{ targetVMGOffset() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
+        x="610"
+        y="890">{{ targetVMGOffset() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
     </g>
     <g id="waypointCounter">
       <text
         xml:space="preserve"
         class="tack-label"
-        x="1055"
+        x="1062"
         y="1030">Waypoint</text>
       <rect
         class="waypoint-box"
-        width="268"
-        height="140"
-        x="920"
+        x="936"
         y="1045"
+        width="252"
+        height="140"
         rx="20" />
       <text
         xml:space="preserve"
         class="waypoint-value"
-        x="1050"
+        x="1060"
         y="1100"><tspan class="tack-label">VMG: </tspan>{{ vmgToWaypoint() }}<tspan style="font-weight:normal;font-size:30px;"> kts</tspan></text>
       <text
         xml:space="preserve"
         class="waypoint-value"
-        x="1050"
+        x="1060"
         y="1165"><tspan class="tack-label">HDG: </tspan>{{ waypointAngle() }}<tspan style="font-weight:normal;">°<tspan style="font-weight:normal;font-size:30px;">T</tspan></tspan></text>
     </g>
   </g>
-  <g id="layerIndicators"
-    style="display:inline">
+  <g id="layerIndicators" style="display:inline">
     <g #tackIndicator>
       <path
         class="tack-angle"
-        d="m 606.20767,245.99458 a 6.3888631,8.8250643 0 0 1 -6.38888,8.82508 6.3888631,8.8250643 0 0 1 -6.38888,-8.82508 6.3888631,8.8250643 0 0 1 6.38888,-8.82509 6.3888631,8.8250643 0 0 1 6.38888,8.82509 z M 576.25472,103.811298 593.47058,86.265068 c 3.6173,-3.6867571 9.44162,-3.6867571 13.05892,0 l 17.21586,17.546106 c 3.6173,3.686743 3.6173,9.622786 0,13.309544 l -17.21595,17.54623 c -3.61721,3.686757 -9.44153,3.686757 -13.05893,0 L 576.25472,117.120841 c -3.6174,-3.686743 -3.6174,-9.622924 0,-13.309543 z m 17.20533,-16.510116 h 12.77766 V 246.26408 h -12.77766 z" />
+        d="m 606.20767,217.99458 a 6.3888631,8.8250643 0 0 1 -6.38888,8.82508 6.3888631,8.8250643 0 0 1 -6.38888,-8.82508 6.3888631,8.8250643 0 0 1 6.38888,-8.82509 6.3888631,8.8250643 0 0 1 6.38888,8.82509 z M 576.25472,75.811298 593.47058,58.265068 c 3.6173,-3.6867571 9.44162,-3.6867571 13.05892,0 l 17.21586,17.546106 c 3.6173,3.686743 3.6173,9.622786 0,13.309544 l -17.21595,17.54623 c -3.61721,3.686757 -9.44153,3.686757 -13.05893,0 L 576.25472,89.120841 c -3.6174,-3.686743 -3.6174,-9.622924 0,-13.309543 z m 17.20533,-16.510116 h 12.77766 V 218.26408 h -12.77766 z" />
     </g>
     <g #twaIndicator>
       <path
         class="true-wind"
         [style.fill]="windAnglePerformanceRatioColor()"
-        d="m 451.77021,55.078207 42.08541,-33.202814 a 12.555638,12.555638 0.26446337 0 1 15.64423,0.07221 l 42.20046,33.930296 a 15.557694,15.557694 71.53185 0 1 5.32954,15.957795 L 504.17034,279.76529 a 2.5373267,2.5373267 0.02614114 0 1 -4.91879,-0.002 L 446.37431,70.966036 a 15.416336,15.416336 108.75875 0 1 5.3959,-15.887829 z"
+        d="m 451.77021,5.469207 42.08541,-33.202814 a 12.555638,12.555638 0.26446337 0 1 15.64423,0.07221 l 42.20046,33.930296 a 15.557694,15.557694 71.53185 0 1 5.32954,15.957795 L 504.17034,230.15629 a 2.5373267,2.5373267 0.02614114 0 1 -4.91879,-0.002 L 446.37431,21.357036 a 15.416336,15.416336 108.75875 0 1 5.3959,-15.887829 z"
         style="display:inline;stroke:none;stroke-width:5.8876;stroke-miterlimit:0"
         transform="matrix(0.60410307,0,0,0.70555435,296.91787,121.152867)" />
       <text
@@ -504,17 +502,17 @@
     <g #wptIndicator
       [attr.display]="waypointActive() ? 'inline' : 'none'">
       <ellipse class="next-waypoint"
-        cx="600" cy="248"
-        rx="20" ry="20" />
+        cx="600" cy="225"
+        rx="23" ry="23" />
     </g>
   </g>
   <g id="layerDirectionSpeed">
-    <line id="directionLine" class="direction-line" x1="600" y1="600" x2="600" y2="110" />
-    <line id="speedLine" class="speed-line" x1="600" y1="600" x2="600" [attr.y2]="speedLineTipY()" [style.stroke]="speedRatioColor()" />
+    <line id="directionLine" class="direction-line" x1="600" y1="620" x2="600" y2="110" />
+    <line id="speedLine" class="speed-line" x1="600" y1="620" x2="600" [attr.y2]="speedLineTipY()" [style.stroke]="speedRatioColor()" />
     <polygon id="speedTip" class="speed-line" [style.fill]="speedRatioColor()" [style.stroke]="speedRatioColor()"
       [attr.points]="speedTipPoints()" />
   </g>
-  <g id="layerDrift"
+  <g id="layerDrift" transform="translate(0, 20)"
      [style.display]="driftEnabled() ? 'inline' : 'none'">
     <path #setIndicator id="setArrow" class="drift-arrow"
       style="fill:url(#linearGradient14)"
@@ -532,16 +530,16 @@
       class="heading-box"
        style="stroke-width:5;stroke-opacity:0.5"
        id="rect1"
-       width="260"
-       height="100"
-       x="470"
+       width="290"
+       height="117"
+       x="455"
        y="10"
        rx="20" />
     <text
       class="contrast-text"
-      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:107px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none;stroke-width:5;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
-      x="600"
-      y="98">
+      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:120px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none;stroke-width:5;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+      x="615"
+      y="110">
       {{headingValue()}}<tspan style="font-weight:normal;">°</tspan>
     </text>
   </g>

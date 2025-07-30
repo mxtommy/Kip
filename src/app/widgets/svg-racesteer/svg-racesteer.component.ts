@@ -92,11 +92,12 @@ export class SvgRacesteerComponent {
   private stbdLaylinePrev = 0;
   private portLaylineAnimId: number | null = null;
   private stbdLaylineAnimId: number | null = null;
-  private readonly CENTER = 600;
-  private readonly RADIUS = 491;
+  private readonly CENTER_X = 600;
+  private readonly CENTER_Y = 620;
+  private readonly RADIUS = 540;
   private readonly ANIMATION_DURATION = 1000;
-  protected laylinePortPath = signal<string>(`M ${this.CENTER},${this.CENTER} ${this.CENTER},${this.CENTER}`);
-  protected laylineStbdPath = signal<string>(`M ${this.CENTER},${this.CENTER} ${this.CENTER},${this.CENTER}`);
+  protected laylinePortPath = signal<string>(`M ${this.CENTER_X},${this.CENTER_Y} ${this.CENTER_X},${this.CENTER_Y}`);
+  protected laylineStbdPath = signal<string>(`M ${this.CENTER_X},${this.CENTER_Y} ${this.CENTER_X},${this.CENTER_Y}`);
   //Wind Sectors
   private portSectorPrev = { min: 0, mid: 0, max: 0 };
   private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
@@ -105,7 +106,7 @@ export class SvgRacesteerComponent {
   protected portWindSectorPath = signal<string>('');
   protected stbdWindSectorPath = signal<string>('');
   // Speed Line
-  protected speedLineTipY = signal<number>(600);
+  protected speedLineTipY = signal<number>(620);
   protected speedTipPoints = signal<string>('600,570 580,600 620,600');
   protected speedRatioColor = signal<string>('');
   private speedLinePrevRatio = 0;
@@ -132,7 +133,7 @@ export class SvgRacesteerComponent {
         this.compass.newValue = heading;
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
-          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
           this.updateLaylines();
           this.updateWindSectors();
         }
@@ -147,7 +148,7 @@ export class SvgRacesteerComponent {
         this.tack.oldValue = this.tack.newValue;
         this.tack.newValue =  tackAngle - this.compass.newValue;
         if (this.tackIndicator()?.nativeElement) {
-          animateRotation(this.tackIndicator().nativeElement, this.tack.oldValue, this.tack.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
+          animateRotation(this.tackIndicator().nativeElement, this.tack.oldValue, this.tack.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
         }
       });
     });
@@ -169,7 +170,7 @@ export class SvgRacesteerComponent {
         this.wpt.oldValue = this.wpt.newValue;
         this.wpt.newValue = wptAngle;
         if (this.wptIndicator()?.nativeElement) {
-          animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
+          animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
         }
       });
     });
@@ -183,7 +184,7 @@ export class SvgRacesteerComponent {
         this.trueWindHeading = trueWindAngle;
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
          if (this.twaIndicator()?.nativeElement) {
-          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
+          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
           this.updateLaylines();
         }
       });
@@ -194,8 +195,8 @@ export class SvgRacesteerComponent {
 
       // Clamp ratio
       const clampedRatio = Math.max(0, Math.min(1, ratio));
-      const yBase = 600;
-      const yTop = 146;
+      const yBase = 620;
+      const yTop = 166;
       const length = yBase - yTop;
       const newTipY = yBase - length * clampedRatio;
 
@@ -215,7 +216,7 @@ export class SvgRacesteerComponent {
         this.set.oldValue = this.set.newValue;
         this.set.newValue =  driftSet;
         if (this.setIndicator()?.nativeElement) {
-          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 600]);
+          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
         }
       });
     });
@@ -254,13 +255,13 @@ export class SvgRacesteerComponent {
 
       // Calculate endpoint
       const radian = (currentAngle * Math.PI) / 180;
-      const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
-      const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
+      const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER_X);
+      const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER_Y);
 
       if (isPort) {
-        this.laylinePortPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
+        this.laylinePortPath.set(`M ${this.CENTER_X},${this.CENTER_Y} L ${x},${y}`);
       } else {
-        this.laylineStbdPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
+        this.laylineStbdPath.set(`M ${this.CENTER_X},${this.CENTER_Y} L ${x},${y}`);
       }
 
       if (progress < 1) {
@@ -340,17 +341,17 @@ export class SvgRacesteerComponent {
       const midAngle = this.addHeading(this.addHeading(mid, Number(this.compass.newValue) * -1), this.targetAngle() * (isPort ? -1 : 1));
       const maxAngle = this.addHeading(this.addHeading(max, Number(this.compass.newValue) * -1), this.targetAngle() * (isPort ? -1 : 1));
 
-      const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
-      const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
-      const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER;
-      const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER;
-      const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER;
-      const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER;
+      const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER_X;
+      const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER_Y;
+      const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER_X;
+      const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER_Y;
+      const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER_X;
+      const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER_Y;
 
       const largeArcFlag = Math.abs(angle([minX, minY], [midX, midY], [maxX, maxY])) > Math.PI / 2 ? 0 : 1;
       const sweepFlag = angle([maxX, maxY], [minX, minY], [midX, midY]) > 0 ? 0 : 1;
 
-      const path = `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
+      const path = `M ${this.CENTER_X},${this.CENTER_Y} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
 
       if (isPort) {
         this.portWindSectorPath.set(path);
