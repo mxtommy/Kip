@@ -38,7 +38,6 @@ import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label
 import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
 import { ActivatedRoute } from '@angular/router';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
-import { WidgetNumericChartComponent } from '../../../widgets/widget-numeric-chart/widget-numeric-chart.component';
 import { DatasetService } from '../../services/data-set.service';
 
 
@@ -95,8 +94,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetRacesteerComponent,
       WidgetPositionComponent,
       WidgetLabelComponent,
-      WidgetSliderComponent,
-      WidgetNumericChartComponent
+      WidgetSliderComponent
     ]);
   }
 

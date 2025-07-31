@@ -49,7 +49,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private loadDatasets() {
-    this.tableData.data = this.dsService.list();
+    this.tableData.data = this.dsService.list().filter(ds => ds.editable !== false);
   }
 
   ngAfterViewInit() {
@@ -101,7 +101,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
-    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label);
+    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label, true, true);
     this.loadDatasets();
   }
 

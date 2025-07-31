@@ -25,13 +25,13 @@ interface IDataSetRow {
 }
 
 @Component({
-  selector: 'simple-data-chart',
+  selector: 'minichart',
   standalone: true,
   imports: [],
-  templateUrl: './simple-data-chart.component.html',
-  styleUrls: ['./simple-data-chart.component.scss'],
+  templateUrl: './minichart.component.html',
+  styleUrls: ['./minichart.component.scss'],
 })
-export class SimpleDataChartComponent implements OnDestroy {
+export class MinichartComponent implements OnDestroy {
   protected readonly theme = input.required<ITheme>();
   public color: string = null;
   public dataPath: string = null;

@@ -76,7 +76,7 @@ export class WidgetService {
   private readonly _widgetDefinition: WidgetDescription[] = [
     {
       name: 'Numeric',
-      description: 'Displays numeric data in a clear and concise format with option to display minimum and maximum recorded values.',
+      description: 'Displays numeric data in a clear and concise format, with options to show minimum and/or maximum recorded values. Includes an optional background minichart for quick visual trend insights.',
       icon: 'numericWidget',
       minWidth: 1,
       minHeight: 1,
@@ -86,19 +86,6 @@ export class WidgetService {
       pluginDependency: [],
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
-    },
-    {
-      name: 'Numeric Chart',
-      description: 'Displays numeric data in a clear and concise format with option to display minimum and maximum recorded values.',
-      icon: 'numericWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
-      selector: 'widget-numeric-chart',
-      componentClassName: 'WidgetNumericChartComponent'
     },
     {
       name: 'Text',

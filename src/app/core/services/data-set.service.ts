@@ -30,6 +30,7 @@ export interface IDatasetServiceDatasetConfig {
   timeScaleFormat: TimeScaleFormat;  // Dataset time scale measure.
   period: number;           // Number of datapoints to capture.
   label:  string;           // label of the historicalData
+  editable?: boolean;       // Whether the dataset is editable, or created with Widgets and not editable by user
 };
 
 export interface IDatasetServiceDataSourceInfo {
@@ -163,8 +164,7 @@ export class DatasetService {
     this.setupServiceSubjectRegistry(newDataSourceConfig.uuid, newDataSourceConfig.maxDataPoints);
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
-    console.log(`[Dataset Service] Starting Dataset recording process: ${newDataSourceConfig.uuid}`);
-    console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
+    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
 
     // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
     function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
@@ -250,7 +250,7 @@ export class DatasetService {
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, forced_id?: string ): string | null {
+  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string ): string | null {
     if (!path || !source || !timeScaleFormat || !period || !label) return null;
     const uuid = forced_id || UUID.create();
 
@@ -262,9 +262,10 @@ export class DatasetService {
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
+      editable: editable
     };
 
-    console.log(`[Dataset Service] Creating new ${serialize ? '' : 'non-'}persistent Dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
+    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'minichart '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 
