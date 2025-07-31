@@ -234,6 +234,8 @@ export interface IWidgetSvcConfig {
   yScaleMin?: number;
   /** Chart y scale maximum */
   yScaleMax?: number;
+  /** Inverse Chart Y axis */
+  inverseYAxis?: boolean;
   /** Chart scale minimum value */
   minValue?: number;
   /** Chart scale maximum value */

@@ -19,12 +19,15 @@ export interface IDatasetServiceDatapoint {
     lastMaximum?: number;
   }
 }
+
+type TimeScaleFormat = "hour" | "minute" | "second";
+
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
   path: string;
   pathSource: string;
   baseUnit: string;         // The path's Signal K base unit type
-  timeScaleFormat: string;  // Dataset time scale measure. Can be: millisecond, second, minute, hour
+  timeScaleFormat: TimeScaleFormat;  // Dataset time scale measure.
   period: number;           // Number of datapoints to capture.
   label:  string;           // label of the historicalData
 };
@@ -240,12 +243,16 @@ export class DatasetService {
    *
    * @param {string} path Signal K path of the data to record
    * @param {string} source The path's chosen source
-   * @param {string} timeScaleFormat The the duration of the historicalData: racing, minute, hour, day.
+   * @param {TimeScaleFormat} timeScaleFormat The duration of the historicalData: "hour", "minute", "second". See {@link TimeScaleFormat}
+   * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
    * @param {string} label Name of the historicalData
+   * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
+   * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: string, period: number, label: string ) {
-    const uuid = UUID.create();
+  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, forced_id?: string ): string | null {
+    if (!path || !source || !timeScaleFormat || !period || !label) return null;
+    const uuid = forced_id || UUID.create();
 
     const newSvcDataset: IDatasetServiceDatasetConfig = {
       uuid: uuid,
@@ -257,18 +264,21 @@ export class DatasetService {
       label: label,
     };
 
-    console.log(`[Dataset Service] Creating new Dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
+    console.log(`[Dataset Service] Creating new ${serialize ? '' : 'non-'}persistent Dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 
     this.start(uuid);
-    this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    if (serialize === true) {
+      this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    }
+    return uuid;
   }
 
   /**
    * Updates the historicalData definition and persists it's configuration to application settings.
    *
-   * @param {IDatasetServiceDatasetConfig} historicalData historicalData configuration object of type IDatasetServiceDatasetConfig
+   * @param {IDatasetServiceDatasetConfig} datasetConfig historicalData configuration object of type IDatasetServiceDatasetConfig
    * @memberof DataSetService
    */
   public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
@@ -293,18 +303,22 @@ export class DatasetService {
   * updates Dataset Service config to storage.
   *
   * @param {string} uuid The historicalData's UUID to remote
+  * @param {boolean} [serialize] If true, the dataset configuration removal will be persisted to application settings. If set to false, dataset will still be present in the configuration on app restart. Defaults to true.
   * @memberof DataSetService
   */
-  public remove(uuid: string): void {
+  public remove(uuid: string, serialize = true ): void {
+    if (!uuid || uuid === "") return;
     this.stop(uuid);
-    console.log(`[Dataset Service] Removing Dataset: ${uuid}`);
+    console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
     // stop Subject Observers
     this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
     this._svcSubjectObserverRegistry.splice(this._svcSubjectObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
 
-    this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    if (serialize === true) {
+      this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    }
   }
 
   /**

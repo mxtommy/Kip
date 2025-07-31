@@ -1,16 +1,14 @@
-import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input } from '@angular/core';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
+import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale} from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { ITheme } from '../../core/services/app-service';
+import { UnitsService } from '../../core/services/units.service';
 
-Chart.register(annotationPlugin, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
+Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale);
 
 interface IChartColors {
     valueLine: string,
@@ -27,13 +25,24 @@ interface IDataSetRow {
 }
 
 @Component({
-  selector: 'widget-data-chart',
+  selector: 'simple-data-chart',
   standalone: true,
-  imports: [WidgetHostComponent],
-  templateUrl: './widget-data-chart.component.html',
-  styleUrl: './widget-data-chart.component.scss'
+  imports: [],
+  templateUrl: './simple-data-chart.component.html',
+  styleUrls: ['./simple-data-chart.component.scss'],
 })
-export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SimpleDataChartComponent implements OnDestroy {
+  protected readonly theme = input.required<ITheme>();
+  public color: string = null;
+  public dataPath: string = null;
+  public dataSource: string = null;
+  public convertUnitTo: string = null;
+  public numDecimal: number = null;
+  public yScaleMin: number = null;
+  public yScaleMax: number = null;
+  public inverseYAxis = false;
+  public verticalChart = false;
+  protected unitsService = inject(UnitsService);
   private readonly dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
@@ -61,36 +70,21 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
+   private config = {
+    datasetUUID: null,
+    invertData: false, // Not used
+    datasetAverageArray: 'sma',
+    showAverageData: false,
+    trackAgainstAverage: false,
+    startScaleAtZero: false,
+    verticalGraph: false,
+    yScaleSuggestedMin: null,
+    yScaleSuggestedMax: null,
+    enableMinMaxScaleLimit: false,
+    dataPoints: 0.2
+  };
+
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: 'Chart Label',
-      filterSelfPaths: true,
-      convertUnitTo: "unitless",
-      datasetUUID: null,
-      invertData: false,
-      datasetAverageArray: 'sma',
-      showAverageData: true,
-      trackAgainstAverage: false,
-      showDatasetMinimumValueLine: false,
-      showDatasetMaximumValueLine: false,
-      showDatasetAverageValueLine: true,
-      showDatasetAngleAverageValueLine: false,
-      showLabel: false,
-      showTimeScale: false,
-      startScaleAtZero: false,
-      verticalGraph: false,
-      showYScale: false,
-      yScaleSuggestedMin: null,
-      yScaleSuggestedMax: null,
-      enableMinMaxScaleLimit: false,
-      yScaleMin: null,
-      yScaleMax: null,
-      numDecimal: 1,
-      color: 'contrast',
-    };
-
     effect(() => {
       if (this.theme()) {
         if (this.datasetConfig) {
@@ -99,23 +93,17 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         }
       }
     });
-   }
-
-  ngOnInit(): void {
-    this.validateConfig();
   }
 
-  ngAfterViewInit(): void {
-    this.startWidget();
-  }
+  public startChart(): void {
+    this.config.datasetUUID = this.dsService.create(this.dataPath, this.dataSource, 'minute', this.config.dataPoints, `simple-chart-${Math.random().toString(36).substring(2, 15)}`, false);
 
-  protected startWidget(): void {
-    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
+    this.datasetConfig = this.dsService.getDatasetConfig(this.config.datasetUUID);
+    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.config.datasetUUID);
 
     if (this.datasetConfig) {
-      this.createDatasets();
       this.setChartOptions();
+      this.createDatasets();
 
       if (!this.chart) {
         this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
@@ -131,23 +119,18 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     }
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.startWidget();
-  }
-
   private setChartOptions() {
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
+    this.lineChartOptions.indexAxis = this.verticalChart ? 'y' : 'x';
+
     this.lineChartOptions.scales = {
       x: {
         type: "time",
-        display: this.widgetProperties.config.showTimeScale,
+        display: false,
         title: {
-          display: true,
-          text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
-          align: "center"
+          display: false
         },
         time: {
           unit: this.datasetConfig.timeScaleFormat as TimeUnit,
@@ -170,18 +153,19 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           }
         },
         grid: {
-          display: true,
+          display: false,
           color: this.theme().contrastDimmer
         }
       },
       y: {
-        display: this.widgetProperties.config.showYScale,
+        display: false,
         position: "right",
-        suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
-        suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
-        min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
-        max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
-        beginAtZero: this.widgetProperties.config.startScaleAtZero,
+        suggestedMin: this.config.enableMinMaxScaleLimit ? null : this.yScaleMin,
+        suggestedMax: this.config.enableMinMaxScaleLimit ? null : this.yScaleMax,
+        min: this.config.enableMinMaxScaleLimit ? this.yScaleMin : null,
+        max: this.config.enableMinMaxScaleLimit ? this.yScaleMax : null,
+        beginAtZero: this.config.startScaleAtZero,
+        reverse: this.inverseYAxis,
         title: {
           display: false,
           text: "Value Axis",
@@ -189,97 +173,20 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         },
         ticks: {
           maxTicksLimit: 8,
-          precision: this.widgetProperties.config.numDecimal,
+          precision: this.numDecimal,
           color: this.getThemeColors().averageChartLine,
           major: {
             enabled: true,
           }
         },
         grid: {
-          display: true,
-          color: this.theme().contrastDimmer,
+          display: false,
+          color: this.theme().contrastDimmer
         }
       }
     }
 
     this.lineChartOptions.plugins = {
-      subtitle: {
-        display: this.widgetProperties.config.showLabel,
-        align: "start",
-        padding: {
-          top: -31,
-          bottom: 4
-        },
-        text: `  ${this.widgetProperties.config.displayName}`,
-        font: {
-          size: 14,
-        },
-        color: this.getThemeColors().chartLabel
-      },
-      title: {
-        display: true,
-        align: "end",
-        padding: {
-          top: 6,
-          bottom: 10
-        },
-        text: "",
-        font: {
-          size: 22,
-
-        },
-        color: this.getThemeColors().chartValue
-      },
-      annotation : {
-        annotations: {
-          minimumLine: {
-            type: 'line',
-            scaleID: 'y',
-            display: this.widgetProperties.config.showDatasetMinimumValueLine,
-            value: null,
-            drawTime: 'afterDatasetsDraw',
-            label: {
-              display: true,
-              position: "start",
-              yAdjust: 12,
-              padding: 4,
-              color: this.getThemeColors().averageChartLine,
-              backgroundColor: 'rgba(63,63,63,0.0)'
-            }
-          },
-          maximumLine: {
-            type: 'line',
-            scaleID: 'y',
-            display: this.widgetProperties.config.showDatasetMaximumValueLine,
-            value: null,
-            drawTime: 'afterDatasetsDraw',
-            label: {
-              display: true,
-              position: "start",
-              yAdjust: -12,
-              padding: 4,
-              color: this.getThemeColors().averageChartLine,
-              backgroundColor: 'rgba(63,63,63,0.0)'
-            }
-          },
-          averageLine: {
-            type: 'line',
-            scaleID: 'y',
-            display: this.widgetProperties.config.showDatasetAverageValueLine,
-            value: null,
-            borderDash: [6, 6],
-            borderColor: this.getThemeColors().averageChartLine,
-            drawTime: 'afterDatasetsDraw',
-            label: {
-              display: true,
-              position: "start",
-              padding: 4,
-              color: this.getThemeColors().chartValue,
-              backgroundColor: 'rgba(63,63,63,0.7)'
-            }
-          }
-        }
-      },
       legend: {
         display: false
       }
@@ -287,19 +194,20 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private createDatasets() {
+    const fillDirection = this.lineChartOptions.scales?.y?.reverse ? 'start' : true;
     this.lineChartData.datasets = [];
     this.lineChartData.datasets.push(
       {
         label: 'Value',
         data: [],
-        order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
+        order: 0,
         parsing: false,
-        tension: 0,
+        tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 0 : 3,
-        fill: this.widgetProperties.config.trackAgainstAverage ? true : false,
+        borderWidth: 3,
+        fill: fillDirection,
       }
     );
 
@@ -307,14 +215,14 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       {
         label: 'Average',
         data: [],
-        order: this.widgetProperties.config.trackAgainstAverage ? 0 : 1,
+        order: 1,
         parsing: false,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 3 : 0,
-        fill: this.widgetProperties.config.trackAgainstAverage ? false : true,
+        borderWidth: 3,
+        fill: fillDirection,
       }
     );
 
@@ -323,18 +231,13 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
   private setDatasetsColors(): void {
     this.lineChartData.datasets.forEach((dataset) => {
-      if (dataset.label === 'Value') {
-        dataset.borderColor = this.getThemeColors().valueLine;
-        dataset.backgroundColor = this.getThemeColors().valueFill;
-      } else if (dataset.label === 'Average') {
-        dataset.borderColor = this.getThemeColors().averageLine;
-        dataset.backgroundColor = this.getThemeColors().averageFill;
-      }
+      dataset.borderColor = this.getThemeColors().averageLine;
+      dataset.backgroundColor = this.getThemeColors().averageFill;
     });
   }
 
   private getThemeColors(): IChartColors {
-    const widgetColor = this.widgetProperties.config.color;
+    const widgetColor = this.color;
     const colors: IChartColors = {
       valueLine: null,
       valueFill: null,
@@ -347,7 +250,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
     switch (widgetColor) {
       case "contrast":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().contrastDimmer;
           colors.valueFill = this.theme().contrastDimmer;
           colors.averageLine = this.theme().contrast;
@@ -365,7 +268,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "blue":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().blueDimmer;
           colors.valueFill = this.theme().blueDimmer;
           colors.averageLine = this.theme().blue;
@@ -383,7 +286,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "green":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().greenDimmer;
           colors.valueFill = this.theme().greenDimmer;
           colors.averageLine = this.theme().green;
@@ -401,7 +304,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "pink":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().pinkDimmer;
           colors.valueFill = this.theme().pinkDimmer;
           colors.averageLine = this.theme().pink;
@@ -419,7 +322,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "orange":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().orangeDimmer;
           colors.valueFill = this.theme().orangeDimmer;
           colors.averageLine = this.theme().orange;
@@ -437,7 +340,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "purple":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().purpleDimmer;
           colors.valueFill = this.theme().purpleDimmer;
           colors.averageLine = this.theme().purple;
@@ -455,7 +358,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "grey":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().greyDimmer;
           colors.valueFill = this.theme().greyDimmer;
           colors.averageLine = this.theme().grey;
@@ -473,7 +376,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         break;
 
       case "yellow":
-        if (this.widgetProperties.config.trackAgainstAverage) {
+        if (this.config.trackAgainstAverage) {
           colors.valueLine = this.theme().yellowDimmer;
           colors.valueFill = this.theme().yellowDimmer;
           colors.averageLine = this.theme().yellow;
@@ -493,43 +396,9 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     return colors;
   }
 
-  private getUnitsLabel(): string {
-    let label: string = null;
-
-    switch (this.widgetProperties.config.convertUnitTo) {
-
-      case "percent":
-      case "percentraw":
-        label = "%";
-        break;
-
-      case "latitudeMin":
-        label = "latitude in minutes";
-        break;
-
-      case "latitudeSec":
-        label = "latitude in secondes";
-        break;
-
-      case "longitudeMin":
-        label = "longitude in minutes";
-        break;
-
-      case "longitudeSec":
-        label = "longitude in secondes";
-        break;
-
-      default:
-        label = this.widgetProperties.config.convertUnitTo;
-        break;
-    }
-
-    return label;
-  }
-
   private startStreaming(): void {
     this.dsServiceSub?.unsubscribe();
-    this.dsServiceSub = this.dsService.getDatasetObservable(this.widgetProperties.config.datasetUUID).subscribe(
+    this.dsServiceSub = this.dsService.getDatasetObservable(this.config.datasetUUID).subscribe(
       (dsPoint: IDatasetServiceDatapoint) => {
 
         // Add new data point to the first dataset
@@ -540,32 +409,12 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         }
 
         // Add new data point to the second dataset (average dataset)
-        if (this.widgetProperties.config.showAverageData) {
-          this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.widgetProperties.config.datasetAverageArray));
+        if (this.config.showAverageData) {
+          this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.config.datasetAverageArray));
           // Trim the second dataset if it exceeds maxDataPoints
           if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
             this.chart.data.datasets[1].data.shift();
           }
-        }
-
-        const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPoint.data.sma : dsPoint.data.value;
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
-
-        const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastAverage);
-        const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMinimum);
-        const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPoint.data.lastMaximum);
-
-        if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
-          this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-        if (this.chart.options.plugins.annotation.annotations.minimumLine.value != lastMinimum) {
-          this.chart.options.plugins.annotation.annotations.minimumLine.value = lastMinimum;
-          this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `${lastMinimum.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-        if (this.chart.options.plugins.annotation.annotations.maximumLine.value != lastMaximum) {
-          this.chart.options.plugins.annotation.annotations.maximumLine.value = lastMaximum;
-          this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
 
         this.ngZone.runOutsideAngular(() => {
@@ -576,35 +425,57 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private transformDatasetRow(row: IDatasetServiceDatapoint, datasetType): IDataSetRow  {
-    const newRow: IDataSetRow = {x: row.timestamp, y: null};
+    let newRow: IDataSetRow;
 
-    // Check if its a value or an average row
-    if (datasetType === 0) {
-      newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.value);
+    if (this.verticalChart) {
+      // Vertical chart: x = value, y = time
+      newRow = { x: null, y: row.timestamp };
+      if (datasetType === 0) {
+        newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.value);
+      } else {
+        switch (this.config.datasetAverageArray) {
+          case "sma":
+            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.sma);
+            break;
+          case "ema":
+            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.ema);
+            break;
+          case "dema":
+            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.doubleEma);
+            break;
+          case "avg":
+            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.lastAverage);
+            break;
+        }
+      }
     } else {
-      switch (this.widgetProperties.config.datasetAverageArray) {
-        case "sma":
-          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.sma);
-          break;
-        case "ema":
-          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.ema);
-          break;
-
-        case "dema":
-          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.doubleEma);
-          break;
-
-        case "avg":
-          newRow.y = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, row.data.lastAverage);
-          break;
+      // Standard chart: x = time, y = value
+      newRow = { x: row.timestamp, y: null };
+      if (datasetType === 0) {
+        newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.value);
+      } else {
+        switch (this.config.datasetAverageArray) {
+          case "sma":
+            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.sma);
+            break;
+          case "ema":
+            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.ema);
+            break;
+          case "dema":
+            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.doubleEma);
+            break;
+          case "avg":
+            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.lastAverage);
+            break;
+        }
       }
     }
     return newRow;
   };
 
   ngOnDestroy(): void {
-    this.destroyDataStreams();
     this.dsServiceSub?.unsubscribe();
+    this.dsService.remove(this.config.datasetUUID, false);
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
   }
