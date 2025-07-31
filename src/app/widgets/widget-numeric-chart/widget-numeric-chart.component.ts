@@ -64,6 +64,7 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
       yScaleMin: 0,
       yScaleMax: 10,
       inverseYAxis: false,
+      verticalChart: false,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
@@ -156,6 +157,7 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
     this.miniChart().yScaleMin = this.widgetProperties.config.yScaleMin;
     this.miniChart().yScaleMax = this.widgetProperties.config.yScaleMax;
     this.miniChart().inverseYAxis = this.widgetProperties.config.inverseYAxis;
+    this.miniChart().verticalChart = this.widgetProperties.config.verticalChart;
   }
 
   protected onResized(e: ResizeObserverEntry) {

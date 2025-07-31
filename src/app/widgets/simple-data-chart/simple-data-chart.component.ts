@@ -41,7 +41,7 @@ export class SimpleDataChartComponent implements OnDestroy {
   public yScaleMin: number = null;
   public yScaleMax: number = null;
   public inverseYAxis = false;
-  public verticalChart = false;
+  public verticalChart = null;
   protected unitsService = inject(UnitsService);
   private readonly dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
@@ -72,12 +72,10 @@ export class SimpleDataChartComponent implements OnDestroy {
 
    private config = {
     datasetUUID: null,
-    invertData: false, // Not used
     datasetAverageArray: 'sma',
     showAverageData: false,
     trackAgainstAverage: false,
     startScaleAtZero: false,
-    verticalGraph: false,
     yScaleSuggestedMin: null,
     yScaleSuggestedMax: null,
     enableMinMaxScaleLimit: false,
@@ -125,11 +123,73 @@ export class SimpleDataChartComponent implements OnDestroy {
 
     this.lineChartOptions.indexAxis = this.verticalChart ? 'y' : 'x';
 
-    this.lineChartOptions.scales = {
-      x: {
-        type: "time",
-        display: false,
-        title: {
+    if (this.verticalChart) {
+      this.lineChartOptions.scales = {
+        x: {
+          display: false,
+          position: "right",
+          suggestedMin: this.config.enableMinMaxScaleLimit ? null : this.yScaleMin,
+          suggestedMax: this.config.enableMinMaxScaleLimit ? null : this.yScaleMax,
+          min: this.config.enableMinMaxScaleLimit ? this.yScaleMin : null,
+          max: this.config.enableMinMaxScaleLimit ? this.yScaleMax : null,
+          beginAtZero: this.config.startScaleAtZero,
+          reverse: this.inverseYAxis,
+          title: {
+            display: false,
+            text: "Value Axis",
+            align: "center"
+          },
+          ticks: {
+            maxTicksLimit: 8,
+            precision: this.numDecimal,
+            color: this.getThemeColors().averageChartLine,
+            major: {
+              enabled: true,
+            }
+          },
+          grid: {
+            display: false,
+            color: this.theme().contrastDimmer
+          }
+        },
+        y: {
+          type: "time",
+          display: false,
+            title: {
+            display: false
+          },
+          time: {
+            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+            minUnit: "second",
+            round: "second",
+            displayFormats: {
+              // eslint-disable-next-line no-useless-escape
+              hour: `k:mm\''`,
+              // eslint-disable-next-line no-useless-escape
+              minute: `mm\''`,
+              second: `ss"`,
+              millisecond: "SSS"
+            },
+          },
+          ticks: {
+            autoSkip: false,
+            color: this.getThemeColors().averageChartLine,
+            major: {
+              enabled: true
+            }
+          },
+          grid: {
+            display: false,
+            color: this.theme().contrastDimmer
+          }
+        }
+      };
+    } else {
+      this.lineChartOptions.scales = {
+        x: {
+          type: "time",
+          display: false,
+          title: {
           display: false
         },
         time: {
@@ -156,34 +216,35 @@ export class SimpleDataChartComponent implements OnDestroy {
           display: false,
           color: this.theme().contrastDimmer
         }
-      },
-      y: {
-        display: false,
-        position: "right",
-        suggestedMin: this.config.enableMinMaxScaleLimit ? null : this.yScaleMin,
-        suggestedMax: this.config.enableMinMaxScaleLimit ? null : this.yScaleMax,
-        min: this.config.enableMinMaxScaleLimit ? this.yScaleMin : null,
-        max: this.config.enableMinMaxScaleLimit ? this.yScaleMax : null,
-        beginAtZero: this.config.startScaleAtZero,
-        reverse: this.inverseYAxis,
-        title: {
-          display: false,
-          text: "Value Axis",
-          align: "center"
         },
-        ticks: {
-          maxTicksLimit: 8,
-          precision: this.numDecimal,
-          color: this.getThemeColors().averageChartLine,
-          major: {
-            enabled: true,
+        y: {
+          display: false,
+          position: "right",
+          suggestedMin: this.config.enableMinMaxScaleLimit ? null : this.yScaleMin,
+          suggestedMax: this.config.enableMinMaxScaleLimit ? null : this.yScaleMax,
+          min: this.config.enableMinMaxScaleLimit ? this.yScaleMin : null,
+          max: this.config.enableMinMaxScaleLimit ? this.yScaleMax : null,
+          beginAtZero: this.config.startScaleAtZero,
+          reverse: this.inverseYAxis,
+          title: {
+            display: false,
+            text: "Value Axis",
+            align: "center"
+          },
+          ticks: {
+            maxTicksLimit: 8,
+            precision: this.numDecimal,
+            color: this.getThemeColors().averageChartLine,
+            major: {
+              enabled: true,
+            }
+          },
+          grid: {
+            display: false,
+            color: this.theme().contrastDimmer
           }
-        },
-        grid: {
-          display: false,
-          color: this.theme().contrastDimmer
         }
-      }
+      };
     }
 
     this.lineChartOptions.plugins = {
@@ -424,54 +485,37 @@ export class SimpleDataChartComponent implements OnDestroy {
     );
   }
 
-  private transformDatasetRow(row: IDatasetServiceDatapoint, datasetType): IDataSetRow  {
-    let newRow: IDataSetRow;
+  private transformDatasetRow(row: IDatasetServiceDatapoint, datasetType): IDataSetRow {
+    const convert = (v: number) => this.unitsService.convertToUnit(this.convertUnitTo, v);
 
     if (this.verticalChart) {
       // Vertical chart: x = value, y = time
-      newRow = { x: null, y: row.timestamp };
       if (datasetType === 0) {
-        newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.value);
+        return { x: convert(row.data.value), y: row.timestamp };
       } else {
-        switch (this.config.datasetAverageArray) {
-          case "sma":
-            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.sma);
-            break;
-          case "ema":
-            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.ema);
-            break;
-          case "dema":
-            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.doubleEma);
-            break;
-          case "avg":
-            newRow.x = this.unitsService.convertToUnit(this.convertUnitTo, row.data.lastAverage);
-            break;
-        }
+        const avgMap = {
+          sma: row.data.sma,
+          ema: row.data.ema,
+          dema: row.data.doubleEma,
+          avg: row.data.lastAverage
+        };
+        return { x: convert(avgMap[this.config.datasetAverageArray]), y: row.timestamp };
       }
     } else {
       // Standard chart: x = time, y = value
-      newRow = { x: row.timestamp, y: null };
       if (datasetType === 0) {
-        newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.value);
+        return { x: row.timestamp, y: convert(row.data.value) };
       } else {
-        switch (this.config.datasetAverageArray) {
-          case "sma":
-            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.sma);
-            break;
-          case "ema":
-            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.ema);
-            break;
-          case "dema":
-            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.doubleEma);
-            break;
-          case "avg":
-            newRow.y = this.unitsService.convertToUnit(this.convertUnitTo, row.data.lastAverage);
-            break;
-        }
+        const avgMap = {
+          sma: row.data.sma,
+          ema: row.data.ema,
+          dema: row.data.doubleEma,
+          avg: row.data.lastAverage
+        };
+        return { x: row.timestamp, y: convert(avgMap[this.config.datasetAverageArray]) };
       }
     }
-    return newRow;
-  };
+  }
 
   ngOnDestroy(): void {
     this.dsServiceSub?.unsubscribe();

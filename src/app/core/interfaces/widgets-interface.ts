@@ -236,6 +236,8 @@ export interface IWidgetSvcConfig {
   yScaleMax?: number;
   /** Inverse Chart Y axis */
   inverseYAxis?: boolean;
+  /** Chart data flow direction. True = vertical (top to bottom), False = horizontal (left to right) */
+  verticalChart?: boolean;
   /** Chart scale minimum value */
   minValue?: number;
   /** Chart scale maximum value */
