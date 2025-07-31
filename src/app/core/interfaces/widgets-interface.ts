@@ -106,6 +106,8 @@ export interface IWidgetSvcConfig {
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */
   numInt?: number;
+  /** Display the mini chart or not flag */
+  showMiniChart?: boolean;
 
   /** The widget's path configuration property used for Observable setup. This property can be either contain an object with one key:string per path with it's value as a IWidgetPath object, or an Array of IWidgetPaths. Array is used by multi-control widgets where key:strings Objects are not appropriate. The Key:string Object should be used for typical widgets. */
   paths?: IPathArray | IWidgetPath[];

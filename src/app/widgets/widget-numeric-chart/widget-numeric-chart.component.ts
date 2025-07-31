@@ -16,10 +16,11 @@ import { SimpleDataChartComponent } from '../simple-data-chart/simple-data-chart
     imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, SimpleDataChartComponent]
 })
 export class WidgetNumericChartComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  protected miniChart = viewChild.required(SimpleDataChartComponent);
+  protected miniChart = viewChild(SimpleDataChartComponent);
   private canvasUnit = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasUnit');
   private canvasMinMax = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMinMax');
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
+  protected showMiniChart = signal<boolean>(false);
   private canvas = inject(CanvasService);
   private dataValue: number = null;
   private maxValue: number = null;
@@ -61,6 +62,7 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
       showMax: false,
       showMin: false,
       numDecimal: 1,
+      showMiniChart: false,
       yScaleMin: 0,
       yScaleMax: 10,
       inverseYAxis: false,
@@ -82,7 +84,7 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
 
   ngOnInit(): void {
     this.validateConfig();
-    this.setMiniChart();
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
   }
 
   ngAfterViewInit(): void {
@@ -99,12 +101,18 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
     this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
     if (this.isDestroyed) return;
+
+    if (this.showMiniChart() && this.miniChart()) {
+      this.setMiniChart();
+    }
     this.startWidget();
     this.updateCanvasUnit();
   }
 
   protected startWidget(): void {
-    this.miniChart().startChart();
+    if (this.showMiniChart() && this.miniChart()) {
+      this.miniChart().startChart();
+    }
     this.unsubscribeDataStream();
     this.minValue = null;
     this.maxValue = null;
@@ -141,11 +149,17 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.setMiniChart();
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
 
-    this.startWidget();
-    this.updateCanvas();
-    this.updateCanvasUnit();
+    // Defer to next tick so viewChild is ready if just shown
+    setTimeout(() => {
+      if (this.showMiniChart() && this.miniChart()) {
+        this.setMiniChart();
+      }
+      this.startWidget();
+      this.updateCanvas();
+      this.updateCanvasUnit();
+    });
   }
 
   private setMiniChart(): void {
