@@ -7,18 +7,23 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
 import { getColors } from '../../core/utils/themeColors.utils';
+import { MinichartComponent } from '../minichart/minichart.component';
+import { DatasetService } from '../../core/services/data-set.service';
 
 @Component({
     selector: 'widget-numeric',
     templateUrl: './widget-numeric.component.html',
     styleUrls: ['./widget-numeric.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MinichartComponent]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
+  protected miniChart = viewChild(MinichartComponent);
   private canvasUnit = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasUnit');
   private canvasMinMax = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMinMax');
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
-  private canvas = inject(CanvasService);
+  protected showMiniChart = signal<boolean>(false);
+  private readonly canvas = inject(CanvasService);
+  private readonly _dataset = inject(DatasetService);
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
@@ -59,7 +64,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       showMax: false,
       showMin: false,
       numDecimal: 1,
-      numInt: 1,
+      showMiniChart: false,
+      yScaleMin: 0,
+      yScaleMax: 10,
+      inverseYAxis: false,
+      verticalChart: false,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
@@ -77,6 +86,7 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
   ngOnInit(): void {
     this.validateConfig();
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
   }
 
   ngAfterViewInit(): void {
@@ -93,11 +103,20 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
     if (this.isDestroyed) return;
+
+    this.manageDatasetAndChart();
+
+    if (this.showMiniChart() && this.miniChart()) {
+      this.setMiniChart();
+    }
     this.startWidget();
     this.updateCanvasUnit();
   }
 
   protected startWidget(): void {
+    if (this.showMiniChart() && this.miniChart()) {
+      this.miniChart().startChart();
+    }
     this.unsubscribeDataStream();
     this.minValue = null;
     this.maxValue = null;
@@ -134,9 +153,49 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.startWidget();
-    this.updateCanvas();
-    this.updateCanvasUnit();
+
+    this.manageDatasetAndChart();
+
+    // Defer to next tick so viewChild is ready if just shown
+    setTimeout(() => {
+      if (this.showMiniChart() && this.miniChart()) {
+        this.setMiniChart();
+      }
+      this.startWidget();
+      this.updateCanvas();
+      this.updateCanvasUnit();
+    });
+  }
+
+  private manageDatasetAndChart(): void {
+    const pathInfo = this.widgetProperties.config.paths['numericPath'];
+    if (!pathInfo || !pathInfo.path || !pathInfo.source) return;
+
+    if (this.widgetProperties.config.showMiniChart) {
+      if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
+        this._dataset.create(pathInfo.path, pathInfo.source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
+      }
+    } else {
+      // Remove dataset if it exists
+      this._dataset.list()
+        .filter(ds => ds.uuid === this.widgetProperties.uuid)
+        .forEach(ds => this._dataset.remove(ds.uuid));
+    }
+
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
+  }
+
+  private setMiniChart(): void {
+    this.miniChart().dataPath = this.widgetProperties.config.paths['numericPath'].path;
+    this.miniChart().dataSource = this.widgetProperties.config.paths['numericPath'].source;
+    this.miniChart().color = this.widgetProperties.config.color;
+    this.miniChart().convertUnitTo = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    this.miniChart().numDecimal = this.widgetProperties.config.numDecimal;
+    this.miniChart().yScaleMin = this.widgetProperties.config.yScaleMin;
+    this.miniChart().yScaleMax = this.widgetProperties.config.yScaleMax;
+    this.miniChart().inverseYAxis = this.widgetProperties.config.inverseYAxis;
+    this.miniChart().verticalChart = this.widgetProperties.config.verticalChart;
+    this.miniChart().datasetUUID = this.widgetProperties.uuid;
   }
 
   protected onResized(e: ResizeObserverEntry) {
@@ -258,17 +317,22 @@ private updateCanvas(): void {
     }
     valueText = valueText.trim();
 
+
+    const marginX = 10 * this.canvas.scaleFactor;
+    const marginY = 5 * this.canvas.scaleFactor;
+    const canvasHeight = this.canvasUnit().nativeElement.height;
+
     this.canvas.drawText(
       this.canvasMinMaxCtx,
       valueText,
-      10 * this.canvas.scaleFactor, // X: left edge plus margin
-      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor), // Y: bottom edge minus margin
+      marginX, // X: left edge plus margin
+      Math.floor(canvasHeight - marginY), // Y: bottom edge minus margin
       this.maxMinMaxTextWidth,
       this.maxMinMaxTextHeight,
       'normal',
       this.valueColor,
       'start',      // left-aligned
-      'alphabetic'  // baseline at the bottom
+      'bottom'  // baseline at the bottom
     );
   }
 

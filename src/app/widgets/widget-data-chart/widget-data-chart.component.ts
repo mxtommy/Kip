@@ -287,7 +287,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private createDatasets() {
-    console.log('[Chart Lifecycle] createDataSet called, datasets will be cleared');
     this.lineChartData.datasets = [];
     this.lineChartData.datasets.push(
       {

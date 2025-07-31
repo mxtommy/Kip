@@ -19,14 +19,18 @@ export interface IDatasetServiceDatapoint {
     lastMaximum?: number;
   }
 }
+
+type TimeScaleFormat = "hour" | "minute" | "second";
+
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
   path: string;
   pathSource: string;
   baseUnit: string;         // The path's Signal K base unit type
-  timeScaleFormat: string;  // Dataset time scale measure. Can be: millisecond, second, minute, hour
+  timeScaleFormat: TimeScaleFormat;  // Dataset time scale measure.
   period: number;           // Number of datapoints to capture.
   label:  string;           // label of the historicalData
+  editable?: boolean;       // Whether the dataset is editable, or created with Widgets and not editable by user
 };
 
 export interface IDatasetServiceDataSourceInfo {
@@ -160,8 +164,7 @@ export class DatasetService {
     this.setupServiceSubjectRegistry(newDataSourceConfig.uuid, newDataSourceConfig.maxDataPoints);
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
-    console.log(`[Dataset Service] Starting Dataset recording process: ${newDataSourceConfig.uuid}`);
-    console.log(`[Dataset Service] Path: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
+    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
 
     // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
     function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
@@ -240,12 +243,16 @@ export class DatasetService {
    *
    * @param {string} path Signal K path of the data to record
    * @param {string} source The path's chosen source
-   * @param {string} timeScaleFormat The the duration of the historicalData: racing, minute, hour, day.
+   * @param {TimeScaleFormat} timeScaleFormat The duration of the historicalData: "hour", "minute", "second". See {@link TimeScaleFormat}
+   * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
    * @param {string} label Name of the historicalData
+   * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
+   * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: string, period: number, label: string ) {
-    const uuid = UUID.create();
+  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string ): string | null {
+    if (!path || !source || !timeScaleFormat || !period || !label) return null;
+    const uuid = forced_id || UUID.create();
 
     const newSvcDataset: IDatasetServiceDatasetConfig = {
       uuid: uuid,
@@ -255,27 +262,39 @@ export class DatasetService {
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
+      editable: editable
     };
 
-    console.log(`[Dataset Service] Creating new Dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
+    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'minichart '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 
     this.start(uuid);
-    this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    if (serialize === true) {
+      this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    }
+    return uuid;
   }
 
   /**
-   * Updates the historicalData definition and persists it's configuration to application settings.
+   * Updates an existing dataset configuration and persists the changes to application settings.
    *
-   * @param {IDatasetServiceDatasetConfig} historicalData historicalData configuration object of type IDatasetServiceDatasetConfig
-   * @memberof DataSetService
+   * - If the dataset with the given UUID does not exist, returns false.
+   * - If the configuration has not changed, returns false and avoids unnecessary restart.
+   * - Otherwise, stops the current dataset, updates its configuration, restarts it, and saves all configs.
+   *
+   * @param {IDatasetServiceDatasetConfig} datasetConfig The updated dataset configuration object.
+   * @returns {boolean} True if the dataset was updated and restarted, false if not found or unchanged.
+   * @memberof DatasetService
    */
-  public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
+  public edit(datasetConfig: IDatasetServiceDatasetConfig): boolean {
     const existingConfig = this._svcDatasetConfigs.find(conf => conf.uuid === datasetConfig.uuid);
+    if (!existingConfig) {
+      return false; // Dataset not found
+    }
     if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
       console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
-      return; // Avoid unnecessary stop/start
+      return false; // Avoid unnecessary stop/start
     }
 
     this.stop(datasetConfig.uuid);
@@ -285,26 +304,37 @@ export class DatasetService {
 
     this.start(datasetConfig.uuid);
     this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    return true;
   }
 
   /**
-  * Stops DataSource recording process, deletes historicalData configuration, service registry entry, and
-  * completes the Subject so that Observers (widgets) terminates their subscriptions and
-  * updates Dataset Service config to storage.
-  *
-  * @param {string} uuid The historicalData's UUID to remote
-  * @memberof DataSetService
-  */
-  public remove(uuid: string): void {
+   * Removes a dataset and all associated resources from the DatasetService.
+   *
+   * - Stops the data source recording process for the given UUID.
+   * - Deletes the dataset configuration and removes it from the service registry.
+   * - Completes the Subject so that all observers (widgets) terminate their subscriptions.
+   * - Optionally persists the removal to application settings (default: true).
+   *
+   * @param {string} uuid The UUID of the dataset to remove.
+   * @param {boolean} [serialize=true] If true, the removal is persisted to application settings. If false, the dataset will reappear on app restart.
+   * @returns {boolean} True if the dataset was found and removed, false otherwise.
+   * @memberof DatasetService
+   */
+  public remove(uuid: string, serialize = true ): boolean {
+   if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
+
     this.stop(uuid);
-    console.log(`[Dataset Service] Removing Dataset: ${uuid}`);
+    console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
     // stop Subject Observers
     this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
     this._svcSubjectObserverRegistry.splice(this._svcSubjectObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
 
-    this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    if (serialize === true) {
+      this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    }
+    return true;
   }
 
   /**

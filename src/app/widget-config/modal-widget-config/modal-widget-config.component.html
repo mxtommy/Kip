@@ -79,10 +79,24 @@
                 </mat-form-field>
               }
               @if ((widgetConfig.numDecimal !== undefined)) {
-                <mat-form-field [class.options-grid-span2]="!widgetConfig.numInt">
+                <mat-form-field [class]="widgetConfig.showMiniChart !== undefined ? 'options-grid-span2' : ''">
                   <mat-label>Decimal Places</mat-label>
                   <input type="number" min="0" max="5" matInput placeholder="Enter or select number..." name="numDecimal"  formControlName="numDecimal" required>
                 </mat-form-field>
+              }
+              @if ((widgetConfig.showMin !== undefined)) {
+                <mat-checkbox
+                  name="showMin"
+                  formControlName="showMin">
+                  Show Min recorded value
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.showMax !== undefined)) {
+                <mat-checkbox
+                  name="showMax"
+                  formControlName="showMax">
+                  Show Max recorded value
+                </mat-checkbox>
               }
               @if ((widgetConfig.nextDashboard !== undefined)) {
                 <mat-form-field [class.options-grid-span2]="!widgetConfig.numInt">
@@ -107,20 +121,6 @@
                     }
                   </mat-select>
                 </mat-form-field>
-              }
-              @if ((widgetConfig.showMin !== undefined)) {
-                <mat-checkbox
-                  name="showMin"
-                  formControlName="showMin">
-                  Show Min recorded value
-                </mat-checkbox>
-              }
-              @if ((widgetConfig.showMax !== undefined)) {
-                <mat-checkbox
-                  name="showMax"
-                  formControlName="showMax">
-                  Show Max recorded value
-                </mat-checkbox>
               }
               @if (widgetConfig.playBeeps !== undefined) {
                 <mat-checkbox
@@ -306,6 +306,39 @@
                     }
                   </mat-select>
                 </mat-form-field>
+              }
+              @if ((widgetConfig.showMiniChart !== undefined)) {
+                <mat-checkbox class="options-grid-span2"
+                  name="showMiniChart"
+                  formControlName="showMiniChart">
+                  Show Background Graph <i>(Too many graphs may affect performance)</i>
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.yScaleMin !== undefined)) {
+                <mat-form-field>
+                  <mat-label>Suggested Scale Start</mat-label>
+                  <input type="number" matInput placeholder="Enter or select number..." name="yScaleMin"  formControlName="yScaleMin" required>
+                </mat-form-field>
+              }
+              @if ((widgetConfig.yScaleMax !== undefined)) {
+                <mat-form-field>
+                  <mat-label>Suggested Scale End</mat-label>
+                  <input type="number" matInput placeholder="Enter or select number..." name="yScaleMax"  formControlName="yScaleMax" required>
+                </mat-form-field>
+              }
+              @if ((widgetConfig.inverseYAxis !== undefined)) {
+                <mat-checkbox
+                  name="inverseYAxis"
+                  formControlName="inverseYAxis">
+                  Inverse Scale Axis
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.verticalChart !== undefined)) {
+                <mat-checkbox
+                  name="verticalChart"
+                  formControlName="verticalChart">
+                  Vertical Data Graph
+                </mat-checkbox>
               }
               @if ((widgetConfig.noBgColor !== undefined)) {
                 <mat-checkbox name="noBgColor" formControlName="noBgColor">
