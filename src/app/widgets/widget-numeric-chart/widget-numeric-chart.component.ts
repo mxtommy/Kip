@@ -8,6 +8,7 @@ import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
 import { getColors } from '../../core/utils/themeColors.utils';
 import { SimpleDataChartComponent } from '../simple-data-chart/simple-data-chart.component';
+import { DatasetService } from '../../core/services/data-set.service';
 
 @Component({
     selector: 'widget-numeric-chart',
@@ -21,7 +22,8 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
   private canvasMinMax = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMinMax');
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
   protected showMiniChart = signal<boolean>(false);
-  private canvas = inject(CanvasService);
+  private readonly canvas = inject(CanvasService);
+  private readonly _dataset = inject(DatasetService);
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
@@ -102,6 +104,8 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
     this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
     if (this.isDestroyed) return;
 
+    this.manageDatasetAndChart();
+
     if (this.showMiniChart() && this.miniChart()) {
       this.setMiniChart();
     }
@@ -149,7 +153,8 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
+
+    this.manageDatasetAndChart();
 
     // Defer to next tick so viewChild is ready if just shown
     setTimeout(() => {
@@ -162,6 +167,24 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
     });
   }
 
+  private manageDatasetAndChart(): void {
+    const pathInfo = this.widgetProperties.config.paths['numericPath'];
+    if (!pathInfo || !pathInfo.path || !pathInfo.source) return;
+
+    if (this.widgetProperties.config.showMiniChart) {
+      if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
+        this._dataset.create(pathInfo.path, pathInfo.source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, this.widgetProperties.uuid);
+      }
+    } else {
+      // Remove dataset if it exists
+      this._dataset.list()
+        .filter(ds => ds.uuid === this.widgetProperties.uuid)
+        .forEach(ds => this._dataset.remove(ds.uuid));
+    }
+
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
+  }
+
   private setMiniChart(): void {
     this.miniChart().dataPath = this.widgetProperties.config.paths['numericPath'].path;
     this.miniChart().dataSource = this.widgetProperties.config.paths['numericPath'].source;
@@ -172,6 +195,7 @@ export class WidgetNumericChartComponent extends BaseWidgetComponent implements 
     this.miniChart().yScaleMax = this.widgetProperties.config.yScaleMax;
     this.miniChart().inverseYAxis = this.widgetProperties.config.inverseYAxis;
     this.miniChart().verticalChart = this.widgetProperties.config.verticalChart;
+    this.miniChart().datasetUUID = this.widgetProperties.uuid;
   }
 
   protected onResized(e: ResizeObserverEntry) {

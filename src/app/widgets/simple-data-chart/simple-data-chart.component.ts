@@ -42,6 +42,7 @@ export class SimpleDataChartComponent implements OnDestroy {
   public yScaleMax: number = null;
   public inverseYAxis = false;
   public verticalChart = null;
+  public datasetUUID: string = null;
   protected unitsService = inject(UnitsService);
   private readonly dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
@@ -71,7 +72,6 @@ export class SimpleDataChartComponent implements OnDestroy {
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
    private config = {
-    datasetUUID: null,
     datasetAverageArray: 'sma',
     showAverageData: false,
     trackAgainstAverage: false,
@@ -79,7 +79,6 @@ export class SimpleDataChartComponent implements OnDestroy {
     yScaleSuggestedMin: null,
     yScaleSuggestedMax: null,
     enableMinMaxScaleLimit: false,
-    dataPoints: 0.2
   };
 
   constructor() {
@@ -94,10 +93,9 @@ export class SimpleDataChartComponent implements OnDestroy {
   }
 
   public startChart(): void {
-    this.config.datasetUUID = this.dsService.create(this.dataPath, this.dataSource, 'minute', this.config.dataPoints, `simple-chart-${Math.random().toString(36).substring(2, 15)}`, false);
-
-    this.datasetConfig = this.dsService.getDatasetConfig(this.config.datasetUUID);
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.config.datasetUUID);
+    if (!this.datasetUUID) return;
+    this.datasetConfig = this.dsService.getDatasetConfig(this.datasetUUID);
+    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.datasetUUID);
 
     if (this.datasetConfig) {
       this.setChartOptions();
@@ -459,7 +457,7 @@ export class SimpleDataChartComponent implements OnDestroy {
 
   private startStreaming(): void {
     this.dsServiceSub?.unsubscribe();
-    this.dsServiceSub = this.dsService.getDatasetObservable(this.config.datasetUUID).subscribe(
+    this.dsServiceSub = this.dsService.getDatasetObservable(this.datasetUUID).subscribe(
       (dsPoint: IDatasetServiceDatapoint) => {
 
         // Add new data point to the first dataset
@@ -519,7 +517,6 @@ export class SimpleDataChartComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.dsServiceSub?.unsubscribe();
-    this.dsService.remove(this.config.datasetUUID, false);
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
   }

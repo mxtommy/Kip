@@ -276,16 +276,24 @@ export class DatasetService {
   }
 
   /**
-   * Updates the historicalData definition and persists it's configuration to application settings.
+   * Updates an existing dataset configuration and persists the changes to application settings.
    *
-   * @param {IDatasetServiceDatasetConfig} datasetConfig historicalData configuration object of type IDatasetServiceDatasetConfig
-   * @memberof DataSetService
+   * - If the dataset with the given UUID does not exist, returns false.
+   * - If the configuration has not changed, returns false and avoids unnecessary restart.
+   * - Otherwise, stops the current dataset, updates its configuration, restarts it, and saves all configs.
+   *
+   * @param {IDatasetServiceDatasetConfig} datasetConfig The updated dataset configuration object.
+   * @returns {boolean} True if the dataset was updated and restarted, false if not found or unchanged.
+   * @memberof DatasetService
    */
-  public edit(datasetConfig: IDatasetServiceDatasetConfig): void {
+  public edit(datasetConfig: IDatasetServiceDatasetConfig): boolean {
     const existingConfig = this._svcDatasetConfigs.find(conf => conf.uuid === datasetConfig.uuid);
+    if (!existingConfig) {
+      return false; // Dataset not found
+    }
     if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
       console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
-      return; // Avoid unnecessary stop/start
+      return false; // Avoid unnecessary stop/start
     }
 
     this.stop(datasetConfig.uuid);
@@ -295,19 +303,25 @@ export class DatasetService {
 
     this.start(datasetConfig.uuid);
     this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    return true;
   }
 
   /**
-  * Stops DataSource recording process, deletes historicalData configuration, service registry entry, and
-  * completes the Subject so that Observers (widgets) terminates their subscriptions and
-  * updates Dataset Service config to storage.
-  *
-  * @param {string} uuid The historicalData's UUID to remote
-  * @param {boolean} [serialize] If true, the dataset configuration removal will be persisted to application settings. If set to false, dataset will still be present in the configuration on app restart. Defaults to true.
-  * @memberof DataSetService
-  */
-  public remove(uuid: string, serialize = true ): void {
-    if (!uuid || uuid === "") return;
+   * Removes a dataset and all associated resources from the DatasetService.
+   *
+   * - Stops the data source recording process for the given UUID.
+   * - Deletes the dataset configuration and removes it from the service registry.
+   * - Completes the Subject so that all observers (widgets) terminate their subscriptions.
+   * - Optionally persists the removal to application settings (default: true).
+   *
+   * @param {string} uuid The UUID of the dataset to remove.
+   * @param {boolean} [serialize=true] If true, the removal is persisted to application settings. If false, the dataset will reappear on app restart.
+   * @returns {boolean} True if the dataset was found and removed, false otherwise.
+   * @memberof DatasetService
+   */
+  public remove(uuid: string, serialize = true ): boolean {
+   if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
+
     this.stop(uuid);
     console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
@@ -319,6 +333,7 @@ export class DatasetService {
     if (serialize === true) {
       this.appSettings.saveDataSets(this._svcDatasetConfigs);
     }
+    return true;
   }
 
   /**

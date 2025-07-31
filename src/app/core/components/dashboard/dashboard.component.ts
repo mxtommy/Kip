@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
-import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
@@ -39,6 +39,7 @@ import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-sli
 import { ActivatedRoute } from '@angular/router';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { WidgetNumericChartComponent } from '../../../widgets/widget-numeric-chart/widget-numeric-chart.component';
+import { DatasetService } from '../../services/data-set.service';
 
 
 @Component({
@@ -56,6 +57,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   private readonly _notifications = inject(NotificationsService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
+  private readonly _dataset = inject(DatasetService);
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
@@ -274,7 +276,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   private deleteWidget(item: GridItemHTMLElement): void {
+    const ngNode = item.gridstackNode as NgGridStackNode;
+
     this._gridstack().grid.removeWidget(item);
+
+    if (ngNode.selector === 'widget-numeric-chart') {
+      // Perform any specific cleanup or actions for numeric chart widgets
+      this._dataset.remove(ngNode.id);
+    }
   }
 
   protected nextDashboard(e: Event): void {
