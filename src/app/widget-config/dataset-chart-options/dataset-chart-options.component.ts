@@ -24,7 +24,7 @@ export class DatasetChartOptionsComponent implements OnInit {
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
   ngOnInit(): void {
-    this.availableDataSets = this.datasetService.list().sort();
+    this.availableDataSets = this.datasetService.list().filter(ds => ds.editable !== false).sort();
     const datasetUUID = this.datasetUUID();
     if (datasetUUID.value) {
       this.setPathUnits(datasetUUID.value);

@@ -354,8 +354,12 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('numDecimal') as UntypedFormControl;
   }
 
-  get verticalGraphToControl(): UntypedFormControl {
-    return this.formMaster.get('verticalGraph') as UntypedFormControl;
+  get verticalChartToControl(): UntypedFormControl {
+    return this.formMaster.get('verticalChart') as UntypedFormControl;
+  }
+
+  get inverseYAxisToControl(): UntypedFormControl {
+    return this.formMaster.get('inverseYAxis') as UntypedFormControl;
   }
 
   get colorToControl(): UntypedFormControl {
