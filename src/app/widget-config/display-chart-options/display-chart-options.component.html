@@ -62,6 +62,11 @@
             Track Against Moving Average
         </mat-checkbox>
       </div>
+      <mat-checkbox
+        name="verticalChart"
+        [formControl]="verticalChart()">
+        Vertical Data Graph
+      </mat-checkbox>
     </div>
 
     <div class="flex-item-rounded-card rounded-card-color">
@@ -93,8 +98,10 @@
           </div>
 
           <mat-radio-button class="chart-option-radio-button"
-          (change)="setScaleControls($event)"
-          [value]="true">Fixed Scale</mat-radio-button>
+            (change)="setScaleControls($event)"
+            [value]="true">
+              Fixed Scale
+          </mat-radio-button>
 
           <div class="chart-option-radio-button-config">
             <div class="chart-option-radio-button-config-item">
@@ -117,15 +124,18 @@
             </div>
           </div>
         </mat-radio-group>
-
         <mat-checkbox class="full-width"
           name="showYScale"
           [formControl]="showYScale()">
             Show Scale Ticks
         </mat-checkbox>
+        <mat-checkbox
+          name="inverseYAxis"
+          [formControl]="inverseYAxis()">
+          Inverse Scale
+        </mat-checkbox>
       </div>
     </div>
-
     <div class="flex-item-rounded-card rounded-card-color">
       <div>
         <p class="no-margin">Time Scale</p>
@@ -136,7 +146,6 @@
         </mat-checkbox>
       </div>
     </div>
-
     <div class="flex-item-rounded-card rounded-card-color">
       <div>
         <p class="no-margin">Dataset</p>

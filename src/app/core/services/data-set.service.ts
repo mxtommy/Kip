@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom } from 'rxjs';
+import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom, concat, skip, from } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
 import { UUID } from'../utils/uuid.util'
@@ -353,6 +353,38 @@ export class DatasetService {
     }
 
     return null;
+  }
+
+  /**
+   * Returns an observable that emits a batch of the last N datapoints as an array,
+   * then continues emitting live datapoints one by one.
+   *
+   * @param {string} dataSetUuid The UUID of the dataset
+   * @param {number} batchSize The number of datapoints to batch for new subscribers
+   * @returns {Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint>}
+   */
+  public getDatasetBatchThenLiveObservable(
+    dataSetUuid: string
+  ): Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint> {
+    const registration = this._svcSubjectObserverRegistry.find(
+      registration => registration.datasetUuid == dataSetUuid
+    );
+    if (!registration) return null;
+
+    const subject = registration.rxjsSubject;
+
+    // Access the current buffer (not public API, but widely used)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const buffer = (subject as any)._buffer ? (subject as any)._buffer.slice() : [];
+
+    // 1. Emit the batch (all buffered items) immediately
+    const batch$ = from([buffer]);
+
+    // 2. Live: skip the buffered items and emit new ones as they arrive
+    const live$ = subject.pipe(skip(buffer.length));
+
+    // 3. Concatenate: batch first, then live
+    return concat(batch$, live$);
   }
 
   /**

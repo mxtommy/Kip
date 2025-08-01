@@ -200,8 +200,6 @@ export interface IWidgetSvcConfig {
 
   /** Used by historical data Widget */
   datasetUUID?: string;
-  /** NOTE: Retired property - Used by historical data Widget */
-  invertData?: boolean;
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
   /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
@@ -244,8 +242,6 @@ export interface IWidgetSvcConfig {
   minValue?: number;
   /** Chart scale maximum value */
   maxValue?: number;
-  /** Used by historical data Widget */
-  verticalGraph?: boolean;
 
  /** Used by IFrame widget: URL lo load in the iframe */
   widgetUrl?: string;

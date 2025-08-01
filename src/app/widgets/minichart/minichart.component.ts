@@ -457,62 +457,76 @@ export class MinichartComponent implements OnDestroy {
 
   private startStreaming(): void {
     this.dsServiceSub?.unsubscribe();
-    this.dsServiceSub = this.dsService.getDatasetObservable(this.datasetUUID).subscribe(
-      (dsPoint: IDatasetServiceDatapoint) => {
 
-        // Add new data point to the first dataset
-        this.chart.data.datasets[0].data.push(this.transformDatasetRow(dsPoint, 0));
-        // Trim the first dataset if it exceeds maxDataPoints
+    const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(
+      this.datasetUUID
+    );
+
+    this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+      if (Array.isArray(dsPointOrBatch)) {
+        // Initial batch: fill the chart with the last N points
+        const valueRows = this.transformDatasetRows(dsPointOrBatch, 0);
+        this.chart.data.datasets[0].data.push(...valueRows);
+        if (this.config.showAverageData) {
+          const avgRows = this.transformDatasetRows(dsPointOrBatch, this.config.datasetAverageArray);
+          this.chart.data.datasets[1].data.push(...avgRows);
+        }
+      } else {
+        // Live: handle new single datapoint
+        const valueRow = this.transformDatasetRows([dsPointOrBatch], 0)[0];
+        this.chart.data.datasets[0].data.push(valueRow);
         if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
           this.chart.data.datasets[0].data.shift();
         }
 
-        // Add new data point to the second dataset (average dataset)
         if (this.config.showAverageData) {
-          this.chart.data.datasets[1].data.push(this.transformDatasetRow(dsPoint, this.config.datasetAverageArray));
-          // Trim the second dataset if it exceeds maxDataPoints
+          const avgRow = this.transformDatasetRows([dsPointOrBatch], this.config.datasetAverageArray)[0];
+          this.chart.data.datasets[1].data.push(avgRow);
           if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
             this.chart.data.datasets[1].data.shift();
           }
         }
-
-        this.ngZone.runOutsideAngular(() => {
-          this.chart?.update('quiet');
-        });
       }
-    );
+
+      this.ngZone.runOutsideAngular(() => {
+        this.chart?.update('quiet');
+      });
+    });
   }
 
-  private transformDatasetRow(row: IDatasetServiceDatapoint, datasetType): IDataSetRow {
-    const convert = (v: number) => this.unitsService.convertToUnit(this.convertUnitTo, v);
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
+    const convert = (v: number) =>
+      this.unitsService.convertToUnit(this.convertUnitTo, v);
+    const verticalChart = this.verticalChart;
+    const avgKey = this.config.datasetAverageArray;
 
-    if (this.verticalChart) {
-      // Vertical chart: x = value, y = time
-      if (datasetType === 0) {
-        return { x: convert(row.data.value), y: row.timestamp };
+    return rows.map(row => {
+      if (verticalChart) {
+        if (datasetType === 0) {
+          return { x: convert(row.data.value), y: row.timestamp };
+        } else {
+          const avgMap = {
+            sma: row.data.sma,
+            ema: row.data.ema,
+            dema: row.data.doubleEma,
+            avg: row.data.lastAverage
+          };
+          return { x: convert(avgMap[avgKey]), y: row.timestamp };
+        }
       } else {
-        const avgMap = {
-          sma: row.data.sma,
-          ema: row.data.ema,
-          dema: row.data.doubleEma,
-          avg: row.data.lastAverage
-        };
-        return { x: convert(avgMap[this.config.datasetAverageArray]), y: row.timestamp };
+        if (datasetType === 0) {
+          return { x: row.timestamp, y: convert(row.data.value) };
+        } else {
+          const avgMap = {
+            sma: row.data.sma,
+            ema: row.data.ema,
+            dema: row.data.doubleEma,
+            avg: row.data.lastAverage
+          };
+          return { x: row.timestamp, y: convert(avgMap[avgKey]) };
+        }
       }
-    } else {
-      // Standard chart: x = time, y = value
-      if (datasetType === 0) {
-        return { x: row.timestamp, y: convert(row.data.value) };
-      } else {
-        const avgMap = {
-          sma: row.data.sma,
-          ema: row.data.ema,
-          dema: row.data.doubleEma,
-          avg: row.data.lastAverage
-        };
-        return { x: row.timestamp, y: convert(avgMap[this.config.datasetAverageArray]) };
-      }
-    }
+    });
   }
 
   ngOnDestroy(): void {

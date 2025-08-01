@@ -1,21 +1,21 @@
 
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { WidgetNumericChartComponent } from './widget-numeric.component';
+import { WidgetNumericComponent } from './widget-numeric.component';
 
 describe('WidgetNumericChartComponent', () => {
-  let component: WidgetNumericChartComponent;
-  let fixture: ComponentFixture<WidgetNumericChartComponent>;
+  let component: WidgetNumericComponent;
+  let fixture: ComponentFixture<WidgetNumericComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [WidgetNumericChartComponent]
+    imports: [WidgetNumericComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(WidgetNumericChartComponent);
+    fixture = TestBed.createComponent(WidgetNumericComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
