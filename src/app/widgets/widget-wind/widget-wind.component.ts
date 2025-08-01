@@ -164,6 +164,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       driftEnable: true,
       awsEnable: true,
       twsEnable: true,
+      twaEnable: true,
       sailSetupEnable: false,
       enableTimeout: false,
       dataTimeout: 5

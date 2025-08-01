@@ -186,6 +186,8 @@ export interface IWidgetSvcConfig {
   awsEnable?: boolean;
   /** Used by wind Widget: enable/disable True Wind Speed UI feature */
   twsEnable?: boolean;
+  /** Used by wind Widget: enable/disable True Wind Angle UI indicator feature */
+  twaEnable?: boolean;
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 

@@ -141,7 +141,7 @@
                 <mat-checkbox class="fields"
                   name="laylineEnable"
                   formControlName="laylineEnable">
-                  Show Close-hauled Lines
+                  Close-hauled Lines
                 </mat-checkbox>
               }
               @if ((widgetConfig.laylineEnable !== undefined)) {
@@ -152,38 +152,43 @@
               }
               @if ((widgetConfig.windSectorEnable !== undefined)) {
                 <mat-checkbox name="windSectorEnable" formControlName="windSectorEnable">
-                  Show Wind Sectors
+                  Wind Sectors
                 </mat-checkbox>
               }
               @if ((widgetConfig.windSectorEnable !== undefined)) {
                 <mat-form-field>
-                  <mat-label>Wind Sector Duration</mat-label>
+                  <mat-label>Sector Duration</mat-label>
                   <input type="number" min="1" max="90" matInput placeholder="Select or enter duration..." name="windSectorWindowSeconds"  formControlName="windSectorWindowSeconds">
                 </mat-form-field>
               }
               @if ((widgetConfig.awsEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="awsEnable" formControlName="awsEnable">
-                  Show Apparent Wind Speed Value
+                <mat-checkbox name="awsEnable" formControlName="awsEnable">
+                  Apparent Wind Speed Value
                 </mat-checkbox>
               }
               @if ((widgetConfig.twsEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="twsEnable" formControlName="twsEnable">
-                  Show True Wind Speed Value
+                <mat-checkbox name="twsEnable" formControlName="twsEnable">
+                  True Wind Speed Value
                 </mat-checkbox>
               }
               @if ((widgetConfig.courseOverGroundEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="courseOverGroundEnable" formControlName="courseOverGroundEnable">
-                  Show Course Over Ground
+                <mat-checkbox name="courseOverGroundEnable" formControlName="courseOverGroundEnable">
+                  Course Over Ground
+                </mat-checkbox>
+              }
+              @if ((widgetConfig.twaEnable !== undefined)) {
+                <mat-checkbox name="twaEnable" formControlName="twaEnable">
+                  True Wind Angle Indicator
                 </mat-checkbox>
               }
               @if ((widgetConfig.waypointEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="waypointEnable" formControlName="waypointEnable">
-                  Show Next Waypoint
+                <mat-checkbox name="waypointEnable" formControlName="waypointEnable">
+                  Next Waypoint
                 </mat-checkbox>
               }
               @if ((widgetConfig.driftEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="driftEnable" formControlName="driftEnable">
-                  Show Drift
+                <mat-checkbox name="driftEnable" formControlName="driftEnable">
+                 Drift
                 </mat-checkbox>
               }
               @if ((widgetConfig.minValue !== undefined) && !formMaster.get('displayScale')) {
