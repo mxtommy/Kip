@@ -173,14 +173,8 @@ export class AuthenticationService implements OnDestroy {
   private handleError(error: HttpErrorResponse) {
     if (error.status === 0) {
       // A client-side or network error occurred. Handle it accordingly.
-      console.error('[Authentication Service] An error occurred:', error.error);
       this.deleteToken();
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
-      console.error(`[Authentication Service] Backend returned code ${error.status}, body was: `, error.error);
     }
-    // Return an observable with a user-facing error message.
     throw error;
   }
 

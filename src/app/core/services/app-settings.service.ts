@@ -364,7 +364,9 @@ export class AppSettingsService {
 
   public saveDashboards(dashboards: Dashboard[]) {
     if (this.useSharedConfig) {
-      this.storage.patchConfig('Dashboards', dashboards);
+      if (this.storage.storageServiceReady$.getValue()) {
+        this.storage.patchConfig('Dashboards', dashboards);
+      }
     } else {
       this.saveLDashboardsConfigToLocalStorage(dashboards);
     }
@@ -409,14 +411,16 @@ export class AppSettingsService {
     newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
 
       if (this.useSharedConfig) {
-        this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
-        .then( () => {
-          console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
-          this.reloadApp();
-        })
-        .catch(error => {
-          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName + ", with default configuration values", error);
-        });
+        if (this.storage.storageServiceReady$.getValue()) {
+          this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
+            .then(() => {
+              console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
+              this.reloadApp();
+            })
+            .catch(error => {
+              console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName + ", with default configuration values", error);
+            });
+        }
       } else {
 
         this.reloadApp();
