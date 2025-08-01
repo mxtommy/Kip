@@ -27,6 +27,7 @@ export class SvgWindComponent {
   protected readonly courseOverGroundEnabled = input.required<boolean>();
   protected readonly trueWindAngle = input.required<number>();
   protected readonly twsEnabled = input.required<boolean>();
+  protected readonly twaEnabled = input.required<boolean>();
   protected readonly trueWindSpeed = input.required<number>();
   protected readonly trueWindSpeedUnit = input.required<string>();
   protected readonly appWindAngle = input.required<number>();
