@@ -4,7 +4,8 @@ import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
-import { tap, concatMap, catchError, lastValueFrom } from 'rxjs';
+import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject } from 'rxjs';
+import { AuthenticationService } from './authentication.service';
 
 export interface Config {
   name: string,
@@ -23,13 +24,17 @@ interface IPatchAction {
 export class StorageService {
   private server = inject(SignalKConnectionService);
   private http = inject(HttpClient);
+  private readonly _auth = inject(AuthenticationService);
 
   private serverEndpoint: string = null;
   public isAppDataSupported = false;
   private configFileVersion: number = null;
   public sharedConfigName: string;
   private InitConfig: IConfig = null;
-  public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
+  public storageServiceReady$ = new BehaviorSubject<boolean>(false);
+  private _isLoggedIn = false;
+  private _networkStatus: IEndpointStatus = undefined;
+
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
   private patch = function(arg: IPatchAction) { // http JSON Patch function
@@ -44,17 +49,14 @@ export class StorageService {
   constructor() {
       const server = this.server;
 
-      server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
-        if (status.httpServiceUrl !== null) {
-          this.serverEndpoint = status.httpServiceUrl.substring(0,status.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
-          console.log("[Storage Service] Service startup. AppData API set to: " + this.serverEndpoint);
-        }
+      this._auth.isLoggedIn$.subscribe((isLoggedIn) => {
+        this._isLoggedIn = isLoggedIn;
+        this.isStorageServiceReady();
+      });
 
-        if (status.operation === 2) {
-          this.storageServiceReady$.next(true);
-        } else {
-          this.storageServiceReady$.next(false);
-        }
+      server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
+        this._networkStatus = status;
+        this.isStorageServiceReady();
       });
 
       server.serverVersion$.subscribe(version => {
@@ -73,6 +75,25 @@ export class StorageService {
       });
   }
 
+  private isStorageServiceReady(): void {
+    if (this._networkStatus?.httpServiceUrl) {
+      this.serverEndpoint = this._networkStatus.httpServiceUrl.substring(0,this._networkStatus.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
+      console.log("[Storage Service] Service startup. AppData API set to: " + this.serverEndpoint);
+    }
+
+    if (this._networkStatus?.operation === 2 && this._isLoggedIn && this.serverEndpoint) {
+      this.storageServiceReady$.next(true);
+    } else {
+      this.storageServiceReady$.next(false);
+    }
+  }
+
+  private ensureReady(): void {
+    if (!this.storageServiceReady$.getValue()) {
+      throw new Error('[StorageService] Not ready: storageServiceReady is false');
+    }
+  }
+
   /**
    * Retrieves server Application Data config lists for Kip in both Global
    * and User scopes for the current app version.
@@ -86,6 +107,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public async listConfigs(forceConfigFileVersion?: number): Promise<Config[]> {
+    this.ensureReady();
     const serverConfigs: Config[] = [];
     if (!this.serverEndpoint) {
       console.warn("[Storage Service] No server endpoint set. Cannot retrieve config list");
@@ -143,6 +165,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public async getConfig(scope: string, configName: string, forceConfigFileVersion?: number, isInitLoad?: boolean): Promise<IConfig> {
+    this.ensureReady();
     let conf: IConfig = null;
     let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/" + configName;
 
@@ -178,6 +201,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
+    this.ensureReady();
     let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/"+ configName;
     let response = null;
     if (forceConfigFileVersion) {
@@ -204,7 +228,7 @@ export class StorageService {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public patchConfig(ObjType: string, value: any, forceConfigFileVersion?: number) {
-
+    this.ensureReady();
     let url = this.serverEndpoint + "user/kip/" + this.configFileVersion;
     let document;
     if (forceConfigFileVersion) {
@@ -303,6 +327,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public patchGlobal(configName: string, scope: string, config: IConfig, operation: string, fileVersion?: number) {
+    this.ensureReady();
     let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
     if (fileVersion) {
       url = this.serverEndpoint + scope + "/kip/" + fileVersion;
@@ -358,6 +383,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public removeItem(scope: string, name: string, forceConfigFileVersion?: number) {
+    this.ensureReady();
     let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion;
@@ -377,6 +403,7 @@ export class StorageService {
    * *** Not implemented
    */
   public clear() {
+    this.ensureReady();
 
   }
 

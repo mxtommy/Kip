@@ -70,9 +70,14 @@ export class AppNetworkInitService implements OnDestroy {
       }
 
     } catch (error) {
-      console.warn("[AppInit Network Service] Services loaded. Connection attempt unsuccessful");
-      console.error(error);
-      return Promise.reject("[AppInit Network Service] Services loaded. Connection issue");
+      if (error.status === 0) {
+        console.warn("[AppInit Network Service] Initialization failed. Network error. Redirecting to settings page.");
+      } else if (error.status === 401) {
+        console.warn("[AppInit Network Service] Initialization failed. Unauthorized access. Redirecting to login page.");
+      } else {
+        console.warn("[AppInit Network Service] Initialization failed. Error: ", JSON.stringify(error));
+      }
+      return Promise.reject("[AppInit Network Service] Startup completed with connection issue.");
     } finally {
       console.log("[AppInit Network Service] Initialization completed");
       // Enable WebSocket functionality now that initialization is complete
@@ -96,7 +101,7 @@ export class AppNetworkInitService implements OnDestroy {
         } else if (error.status === 401) {
           this.router.navigate(['/login']);
         }
-        console.error("[AppInit Network Service] Login failure. Server returned: " + JSON.stringify(error.error));
+        throw error;  // Re-throw the error to be handled by the caller
       }
     }
   }
