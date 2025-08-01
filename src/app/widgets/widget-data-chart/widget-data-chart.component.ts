@@ -28,7 +28,6 @@ interface IDataSetRow {
 
 @Component({
   selector: 'widget-data-chart',
-  standalone: true,
   imports: [WidgetHostComponent],
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss'
@@ -147,6 +146,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         y: {
           type: "time",
           display: this.widgetProperties.config.showTimeScale,
+          suggestedMin: "",
+          suggestedMax: "",
           title: {
             display: true,
             text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
@@ -178,8 +179,9 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           }
         },
         x: {
+          type: "linear",
           display: this.widgetProperties.config.showYScale,
-          position: "right",
+          position: "bottom",
           suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
           suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
           min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
