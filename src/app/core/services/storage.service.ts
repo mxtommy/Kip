@@ -78,11 +78,11 @@ export class StorageService {
   private isStorageServiceReady(): void {
     if (this._networkStatus?.httpServiceUrl) {
       this.serverEndpoint = this._networkStatus.httpServiceUrl.substring(0,this._networkStatus.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
-      console.log("[Storage Service] Service startup. AppData API set to: " + this.serverEndpoint);
     }
 
     if (this._networkStatus?.operation === 2 && this._isLoggedIn && this.serverEndpoint) {
       this.storageServiceReady$.next(true);
+      console.log(`[Remote Storage Service] Authenticated ${this._isLoggedIn} ,AppData API: ${this.serverEndpoint}`);
     } else {
       this.storageServiceReady$.next(false);
     }

@@ -98,10 +98,15 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "showMax": false,
               "showMin": false,
               "numDecimal": 1,
-              "numInt": 1,
-              "color": "yellow",
+              "showMiniChart": true,
+              "yScaleMin": 0,
+              "yScaleMax": 100,
+              "inverseYAxis": false,
+              "verticalChart": false,
+              "color": "blue",
               "enableTimeout": false,
-              "dataTimeout": 5
+              "dataTimeout": 5,
+              "ignoreZones": false
             }
           }
         },
@@ -121,47 +126,16 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "filterSelfPaths": true,
               "paths": {
                 "headingPath": {
-                  "description": "Heading",
+                  "description": "True Heading",
                   "path": "self.navigation.headingTrue",
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": true,
+                  "pathRequired": true,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
                   "convertUnitTo": "deg",
-                  "sampleTime": 500
-                },
-                "courseOverGround": {
-                  "description": "Course Over Ground",
-                  "path": "self.navigation.courseOverGroundTrue",
-                  "source": "default",
-                  "pathType": "number",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "rad",
-                  "convertUnitTo": "deg",
-                  "sampleTime": 500
-                },
-                "trueWindAngle": {
-                  "description": "True Wind Angle",
-                  "path": "self.environment.wind.angleTrueWater",
-                  "source": "default",
-                  "pathType": "number",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "rad",
-                  "convertUnitTo": "deg",
-                  "sampleTime": 500
-                },
-                "trueWindSpeed": {
-                  "description": "True Wind Speed",
-                  "path": "self.environment.wind.speedTrue",
-                  "source": "default",
-                  "pathType": "number",
-                  "isPathConfigurable": true,
-                  "showPathSkUnitsFilter": false,
-                  "pathSkUnitsFilter": "m/s",
-                  "convertUnitTo": "knots",
+                  "showConvertUnitTo": false,
                   "sampleTime": 500
                 },
                 "appWindAngle": {
@@ -170,9 +144,11 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": true,
+                  "pathRequired": true,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
                   "convertUnitTo": "deg",
+                  "showConvertUnitTo": false,
                   "sampleTime": 500
                 },
                 "appWindSpeed": {
@@ -181,20 +157,86 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": true,
+                  "pathRequired": true,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "m/s",
                   "convertUnitTo": "knots",
                   "sampleTime": 500
                 },
+                "trueWindAngle": {
+                  "description": "True Wind Angle",
+                  "path": "self.environment.wind.angleTrueWater",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
+                },
+                "trueWindSpeed": {
+                  "description": "True Wind Speed",
+                  "path": "self.environment.wind.speedTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "m/s",
+                  "convertUnitTo": "knots",
+                  "sampleTime": 500
+                },
+                "courseOverGround": {
+                  "description": "True Course Over Ground",
+                  "path": "self.navigation.courseOverGroundTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "showConvertUnitTo": false,
+                  "convertUnitTo": "deg",
+                  "sampleTime": 500
+                },
                 "nextWaypointBearing": {
-                  "description": "Next Waypoint Bearing",
+                  "description": "Next Waypoint True Bearing",
                   "path": "self.navigation.courseGreatCircle.nextPoint.bearingTrue",
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": true,
+                  "pathRequired": false,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
                   "convertUnitTo": "deg",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
+                },
+                "set": {
+                  "description": "True Drift Set",
+                  "path": "self.environment.current.setTrue",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
+                  "convertUnitTo": "deg",
+                  "showConvertUnitTo": false,
+                  "sampleTime": 500
+                },
+                "drift": {
+                  "description": "Drift Speed Impact",
+                  "path": "self.environment.current.drift",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "pathRequired": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "m/s",
+                  "convertUnitTo": "knots",
                   "sampleTime": 500
                 }
               },
@@ -204,6 +246,9 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "laylineAngle": 40,
               "waypointEnable": true,
               "courseOverGroundEnable": true,
+              "driftEnable": true,
+              "awsEnable": true,
+              "twsEnable": true,
               "sailSetupEnable": false,
               "enableTimeout": false,
               "dataTimeout": 5
@@ -247,13 +292,16 @@ export const DemoDashboardsConfig: Dashboard[] = [
                 "type": "ngRadial",
                 "subType": "measuring",
                 "enableTicks": true,
-                "compassUseNumbers": false
+                "compassUseNumbers": false,
+                "highlightsWidth": 5,
+                "scaleStart": 180
               },
               "numInt": 1,
               "numDecimal": 1,
               "enableTimeout": false,
               "color": "yellow",
-              "dataTimeout": 5
+              "dataTimeout": 5,
+              "ignoreZones": false
             }
           }
         },
@@ -288,10 +336,15 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "showMax": true,
               "showMin": true,
               "numDecimal": 1,
-              "numInt": 1,
+              "showMiniChart": false,
+              "yScaleMin": 0,
+              "yScaleMax": 10,
+              "inverseYAxis": false,
+              "verticalChart": false,
               "color": "contrast",
               "enableTimeout": false,
-              "dataTimeout": 5
+              "dataTimeout": 5,
+              "ignoreZones": false
             }
           }
         },
@@ -312,7 +365,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "filterSelfPaths": true,
               "convertUnitTo": "knots",
               "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-              "invertData": false,
+              "inverseYAxis": false,
               "datasetAverageArray": "sma",
               "showAverageData": true,
               "trackAgainstAverage": false,
@@ -323,7 +376,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "showLabel": false,
               "showTimeScale": true,
               "startScaleAtZero": false,
-              "verticalGraph": false,
+              "verticalChart": false,
               "showYScale": true,
               "yScaleSuggestedMin": null,
               "yScaleSuggestedMax": null,
@@ -331,7 +384,9 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "yScaleMin": null,
               "yScaleMax": null,
               "numDecimal": 1,
-              "color": "green"
+              "color": "orange",
+              "invertData": false,
+              "verticalGraph": false
             }
           }
         },
@@ -339,42 +394,51 @@ export const DemoDashboardsConfig: Dashboard[] = [
         "y": 6
       },
       {
+        "x": 0,
+        "y": 8,
         "w": 3,
         "h": 4,
-        "id": "05414722-733a-4483-89b0-07f3945ffd97",
-        "selector": "widget-numeric",
+        "minW": 1,
+        "minH": 1,
+        "id": "5289a84d-18fd-4ee7-9724-72249af403f2",
+        "selector": "widget-position",
         "input": {
           "widgetProperties": {
-            "type": "widget-numeric",
-            "uuid": "05414722-733a-4483-89b0-07f3945ffd97",
+            "type": "widget-position",
+            "uuid": "5289a84d-18fd-4ee7-9724-72249af403f2",
             "config": {
-              "displayName": "Engine Room",
+              "displayName": "Position",
               "filterSelfPaths": true,
               "paths": {
-                "numericPath": {
-                  "description": "Numeric Data",
-                  "path": "self.environment.inside.engineRoom.temperature",
+                "longPath": {
+                  "description": "Longitude",
+                  "path": "self.navigation.position.longitude",
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": true,
-                  "convertUnitTo": "celsius",
+                  "convertUnitTo": "longitudeMin",
+                  "showPathSkUnitsFilter": true,
+                  "pathSkUnitsFilter": null,
+                  "sampleTime": 500
+                },
+                "latPath": {
+                  "description": "Latitude",
+                  "path": "self.navigation.position.latitude",
+                  "source": "default",
+                  "pathType": "number",
+                  "isPathConfigurable": true,
+                  "convertUnitTo": "latitudeMin",
                   "showPathSkUnitsFilter": true,
                   "pathSkUnitsFilter": null,
                   "sampleTime": 500
                 }
               },
-              "showMax": false,
-              "showMin": false,
-              "numDecimal": 1,
-              "numInt": 1,
-              "color": "blue",
+              "color": "grey",
               "enableTimeout": false,
               "dataTimeout": 5
             }
           }
-        },
-        "x": 0,
-        "y": 8
+        }
       },
       {
         "w": 5,
@@ -391,7 +455,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "paths": {
                 "gaugePath": {
                   "description": "Numeric Data",
-                  "path": "self.electrical.batteries.0.voltage",
+                  "path": "self.electrical.batteries.1.voltage",
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": true,
@@ -412,6 +476,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               },
               "numInt": 1,
               "numDecimal": 2,
+              "ignoreZones": false,
               "color": "green",
               "enableTimeout": false,
               "dataTimeout": 5
