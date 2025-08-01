@@ -206,7 +206,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "path": "self.navigation.courseGreatCircle.nextPoint.bearingTrue",
                   "source": "default",
                   "pathType": "number",
-                  "isPathConfigurable": true,
+                  "isPathConfigurable": false,
                   "pathRequired": false,
                   "showPathSkUnitsFilter": false,
                   "pathSkUnitsFilter": "rad",
