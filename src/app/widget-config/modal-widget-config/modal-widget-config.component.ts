@@ -50,7 +50,6 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.availableDataSets = this.DatasetService.list().sort();
     this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
-    this.setFormOptions();
     this.colors = this.app.configurableThemeColors;
   }
 
@@ -81,7 +80,7 @@ export class ModalWidgetConfigComponent implements OnInit {
               const pathObj = this.widgetConfig.paths[pathKey];
               if (pathObj) {
                 const pathGroup = this.generatePathArray(pathKey, pathObj);
-                if (!pathObj.isPathConfigurable) {
+                if (pathObj.isPathConfigurable === false) {
                   pathGroup.disable(); // disables validation, but value is kept in getRawValue()
                 }
                 fa.push(pathGroup);
@@ -93,7 +92,7 @@ export class ModalWidgetConfigComponent implements OnInit {
               const pathObj = this.widgetConfig.paths[pathKey];
               if (pathObj) {
                 const pathGroup = this.generateFormGroups(pathObj, pathKey);
-                if (!pathObj.isPathConfigurable) {
+                if (pathObj.isPathConfigurable === false) {
                   pathGroup.disable(); // disables validation,
                 }
                 pathsGroup.addControl(pathKey, pathGroup);
@@ -211,43 +210,6 @@ export class ModalWidgetConfigComponent implements OnInit {
 
     // Explicitly update the form's value object
     this.formMaster.updateValueAndValidity();
-  }
-
-  /**
-   * EnablePaths
-   */
-  public setPaths() {
-    this.setFormOptions();
-  }
-
-  private setFormOptions(): void {
-    if (this.formMaster.contains('courseOverGroundEnable')) {
-      const ctrlGrp = this.formMaster.get('paths.courseOverGround');
-      if (this.formMaster.controls['courseOverGroundEnable'].value) {
-        ctrlGrp.enable();
-      } else {
-        ctrlGrp.disable();
-      }
-    }
-    if (this.formMaster.contains('driftEnable')) {
-      const setCtrl = this.formMaster.get('paths.set');
-      const driftCtrl = this.formMaster.get('paths.drift');
-      if (this.formMaster.controls['driftEnable'].value) {
-        setCtrl.enable();
-        driftCtrl.enable();
-      } else {
-        setCtrl.disable();
-        driftCtrl.disable();
-      }
-    }
-    if (this.formMaster.contains('waypointEnable')) {
-      const waypointCtrl = this.formMaster.get('paths.nextWaypointBearing');
-      if (this.formMaster.controls['waypointEnable'].value) {
-        waypointCtrl.enable();
-      } else {
-        waypointCtrl.disable();
-      }
-    }
   }
 
   get convertUnitToControl(): UntypedFormControl {
