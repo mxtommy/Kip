@@ -162,27 +162,27 @@
                 </mat-form-field>
               }
               @if ((widgetConfig.awsEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="awsEnable" formControlName="awsEnable" (change)="setPaths()">
+                <mat-checkbox class="options-grid-span2" name="awsEnable" formControlName="awsEnable">
                   Show Apparent Wind Speed Value
                 </mat-checkbox>
               }
               @if ((widgetConfig.twsEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="twsEnable" formControlName="twsEnable" (change)="setPaths()">
+                <mat-checkbox class="options-grid-span2" name="twsEnable" formControlName="twsEnable">
                   Show True Wind Speed Value
                 </mat-checkbox>
               }
               @if ((widgetConfig.courseOverGroundEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="courseOverGroundEnable" formControlName="courseOverGroundEnable" (change)="setPaths()">
+                <mat-checkbox class="options-grid-span2" name="courseOverGroundEnable" formControlName="courseOverGroundEnable">
                   Show Course Over Ground
                 </mat-checkbox>
               }
               @if ((widgetConfig.waypointEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="waypointEnable" formControlName="waypointEnable" (change)="setPaths()">
+                <mat-checkbox class="options-grid-span2" name="waypointEnable" formControlName="waypointEnable">
                   Show Next Waypoint
                 </mat-checkbox>
               }
               @if ((widgetConfig.driftEnable !== undefined)) {
-                <mat-checkbox class="options-grid-span2" name="driftEnable" formControlName="driftEnable" (change)="setPaths()">
+                <mat-checkbox class="options-grid-span2" name="driftEnable" formControlName="driftEnable">
                   Show Drift
                 </mat-checkbox>
               }
@@ -437,7 +437,7 @@
         <div class="tab-content">
           <div>
             <ng-template mat-tab-label>
-              <span [style]="formMaster.controls.paths.valid || this.formMaster.controls.paths.disabled ? 'display: none' : 'display: block'" class="warning material-icons">
+              <span [style]="formMaster.controls.paths.valid || formMaster.controls.paths.disabled ? 'display: none' : 'display: block'" class="warning material-icons">
                 error
               </span>
               &nbsp;Paths

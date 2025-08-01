@@ -76,7 +76,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     });
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
-    this.getServerConfigList();
+    if(this.hasToken) this.getServerConfigList();
     // this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
 
