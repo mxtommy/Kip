@@ -1,3 +1,10 @@
+# V 3.6.0
+## Improvements
+* Numeric widget now features mini background charts for instant visual trend insights
+* Data Chart widget now supports vertical orientation and inverted value scales for greater flexibility
+* Data Chart loading speed and resource usage significantly improved, enabling smoother performance with large datasets
+## Fixes
+* Fixed login loop bug in V3.4+ when KIP is run on Signal K server and authentication is denied
 # V 3.5.1
 ## Fixes
 * Dashboard ID URL not redirecting to dashboard instance (/mxtommy/kip/#/dashboard/1)
