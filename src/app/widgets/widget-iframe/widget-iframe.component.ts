@@ -63,10 +63,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     if (event.data.gesture && event.data.eventData.instanceId === this.widgetProperties.uuid) {
       switch (event.data.gesture) {
         case 'swipeup':
-          this._dashboard.previousDashboard();
+          this._dashboard.navigateToPreviousDashboard();
           break;
         case 'swipedown':
-          this._dashboard.nextDashboard();
+          this._dashboard.navigateToNextDashboard();
           break;
         case 'swipeleft': {
           const leftSidebarEvent = new Event('openLeftSidenav', { bubbles: true, cancelable: true });
