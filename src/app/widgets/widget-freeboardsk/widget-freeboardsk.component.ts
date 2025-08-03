@@ -56,12 +56,12 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
       switch (event.data.gesture) {
         case 'swipeup':
           if (this.dashboard.isDashboardStatic()) {
-            this.dashboard.previousDashboard();
+            this.dashboard.navigateToPreviousDashboard();
           }
           break;
         case 'swipedown':
           if (this.dashboard.isDashboardStatic()) {
-            this.dashboard.nextDashboard();
+            this.dashboard.navigateToNextDashboard();
           }
           break;
         case 'swipeleft': {
