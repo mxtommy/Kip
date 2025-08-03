@@ -27,12 +27,12 @@ interface IDataSetRow {
 }
 
 @Component({
-  selector: 'widget-data-chart',
+  selector: 'widget-windtrends-chart',
   imports: [WidgetHostComponent],
-  templateUrl: './widget-data-chart.component.html',
-  styleUrl: './widget-data-chart.component.scss'
+  templateUrl: './widget-windtrends-chart.component.html',
+  styleUrl: './widget-windtrends-chart.component.scss'
 })
-export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
@@ -79,7 +79,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       showLabel: false,
       showTimeScale: false,
       startScaleAtZero: false,
-      verticalChart: false,
       showYScale: false,
       yScaleSuggestedMin: null,
       yScaleSuggestedMax: null,
@@ -98,7 +97,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         }
       }
     });
-   }
+    }
 
   ngOnInit(): void {
     this.validateConfig();
@@ -139,138 +138,59 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
-    this.lineChartOptions.indexAxis = this.widgetProperties.config.verticalChart ? 'y' : 'x';
+    this.lineChartOptions.indexAxis = 'y';
 
-    if (this.widgetProperties.config.verticalChart) {
-      this.lineChartOptions.scales = {
-        y: {
-          type: "time",
-          display: this.widgetProperties.config.showTimeScale,
-          suggestedMin: "",
-          suggestedMax: "",
-          title: {
-            display: true,
-            text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
-            align: "center"
+    this.lineChartOptions.scales = {
+      y: {
+        type: "time",
+        display: this.widgetProperties.config.showTimeScale,
+        position: "left",
+        suggestedMin: "",
+        suggestedMax: "",
+        title: {
+          display: true,
+          text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
+          align: "center"
+        },
+        time: {
+          unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+          minUnit: "second",
+          round: "second",
+          displayFormats: {
+            // eslint-disable-next-line no-useless-escape
+            hour: `k:mm\''`,
+            // eslint-disable-next-line no-useless-escape
+            minute: `mm\''`,
+            second: `ss"`,
+            millisecond: "SSS"
           },
-          time: {
-            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
-            minUnit: "second",
-            round: "second",
-            displayFormats: {
-              // eslint-disable-next-line no-useless-escape
-              hour: `k:mm\''`,
-              // eslint-disable-next-line no-useless-escape
-              minute: `mm\''`,
-              second: `ss"`,
-              millisecond: "SSS"
-            },
-          },
-          ticks: {
-            autoSkip: false,
-            color: this.getThemeColors().averageChartLine,
-            major: {
-              enabled: true
-            }
-          },
-          grid: {
-            display: true,
-            color: this.theme().contrastDimmer
+        },
+        ticks: {
+          autoSkip: false,
+          color: this.getThemeColors().averageChartLine,
+          major: {
+            enabled: true
           }
         },
-        x: {
-          type: "linear",
-          display: this.widgetProperties.config.showYScale,
-          position: "bottom",
-          suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
-          suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
-          min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
-          max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
-          beginAtZero: this.widgetProperties.config.startScaleAtZero,
-          reverse: this.widgetProperties.config.inverseYAxis,
-          title: {
-            display: false,
-            text: "Value Axis",
-            align: "center"
-          },
-          ticks: {
-            maxTicksLimit: 8,
-            precision: this.widgetProperties.config.numDecimal,
-            color: this.getThemeColors().averageChartLine,
-            major: {
-              enabled: true,
-            }
-          },
-          grid: {
-            display: true,
-            color: this.theme().contrastDimmer,
-          }
+        grid: {
+          display: true,
+          color: this.theme().contrastDimmer
         }
-      }
-    } else {
-      this.lineChartOptions.scales = {
-        x: {
-          type: "time",
-          display: this.widgetProperties.config.showTimeScale,
-          title: {
-            display: true,
-            text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
-            align: "center"
-          },
-          time: {
-            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
-            minUnit: "second",
-            round: "second",
-            displayFormats: {
-              // eslint-disable-next-line no-useless-escape
-              hour: `k:mm\''`,
-              // eslint-disable-next-line no-useless-escape
-              minute: `mm\''`,
-              second: `ss"`,
-              millisecond: "SSS"
-            },
-          },
-          ticks: {
-            autoSkip: false,
-            color: this.getThemeColors().averageChartLine,
-            major: {
-              enabled: true
-            }
-          },
-          grid: {
-            display: true,
-            color: this.theme().contrastDimmer
-          }
+      },
+      x: {
+        type: "linear",
+        position: "top",
+        beginAtZero: false,
+        min: 45,
+        max: 90,
+        title: { display: true, text: "Direction (°)", align: "center" },
+        ticks: {
+          callback: (value: number) => ((value + 360) % 360).toFixed(0), // wrap-around formatting
+
         },
-        y: {
-          display: this.widgetProperties.config.showYScale,
-          position: "right",
-          suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
-          suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
-          min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
-          max: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMax : null,
-          beginAtZero: this.widgetProperties.config.startScaleAtZero,
-          reverse: this.widgetProperties.config.inverseYAxis,
-          title: {
-            display: false,
-            text: "Value Axis",
-            align: "center"
-          },
-          ticks: {
-            maxTicksLimit: 8,
-            precision: this.widgetProperties.config.numDecimal,
-            color: this.getThemeColors().averageChartLine,
-            major: {
-              enabled: true,
-            }
-          },
-          grid: {
-            display: true,
-            color: this.theme().contrastDimmer,
-          }
-        }
+        grid: { display: true }
       }
-    }
+    };
 
     this.lineChartOptions.plugins = {
       subtitle: {
@@ -304,7 +224,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         annotations: {
           minimumLine: {
             type: 'line',
-            scaleID: this.widgetProperties.config.verticalChart ? 'x' : 'y',
+            scaleID: 'x',
             display: this.widgetProperties.config.showDatasetMinimumValueLine,
             value: null,
             drawTime: 'afterDatasetsDraw',
@@ -319,7 +239,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           },
           maximumLine: {
             type: 'line',
-            scaleID: this.widgetProperties.config.verticalChart ? 'x' : 'y',
+            scaleID: 'x',
             display: this.widgetProperties.config.showDatasetMaximumValueLine,
             value: null,
             drawTime: 'afterDatasetsDraw',
@@ -334,8 +254,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           },
           averageLine: {
             type: 'line',
-            scaleID: this.widgetProperties.config.verticalChart ? 'x' : 'y',
-            display: this.widgetProperties.config.showDatasetAverageValueLine,
+            scaleID: 'x',
+            display: true,
             value: null,
             borderDash: [6, 6],
             borderColor: this.getThemeColors().averageChartLine,
@@ -357,65 +277,149 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   private createDatasets() {
-    let valueFillDirection: string | boolean;
-    let averageFillDirection: string | boolean;
-
-    if (this.widgetProperties.config.inverseYAxis && this.widgetProperties.config.trackAgainstAverage) {
-      valueFillDirection = "start";
-      averageFillDirection = false;
-    } else if (this.widgetProperties.config.inverseYAxis && !this.widgetProperties.config.trackAgainstAverage) {
-      valueFillDirection = false;
-      averageFillDirection = "start";
-    } else if (!this.widgetProperties.config.inverseYAxis && this.widgetProperties.config.trackAgainstAverage) {
-      valueFillDirection = true;
-      averageFillDirection = false;
-    } else {
-      valueFillDirection = false;
-      averageFillDirection = true;
-    }
-
     this.lineChartData.datasets = [];
     this.lineChartData.datasets.push(
       {
         label: 'Value',
         data: [],
-        order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
+        order: 2,
         parsing: false,
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 0 : 3,
-        fill: valueFillDirection,
-      }
-    );
-
-    this.lineChartData.datasets.push(
+        borderWidth: 3,
+        fill: false,
+      },
       {
-        label: 'Average',
+        label: 'SMA',
         data: [],
-        order: this.widgetProperties.config.trackAgainstAverage ? 0 : 1,
+        order: 0,
         parsing: false,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: this.widgetProperties.config.trackAgainstAverage ? 3 : 0,
-        fill: averageFillDirection,
+        borderWidth: 5,
+        fill: 2,
+      },
+      {
+        label: 'lastAverage',
+        data: [],
+        order: 1,
+        parsing: false,
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointHitRadius: 0,
+        borderWidth: 5,
+        fill: false,
       }
     );
 
     this.setDatasetsColors();
   }
 
+  private startStreaming(): void {
+    this.dsServiceSub?.unsubscribe();
+
+    const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(
+      this.widgetProperties.config.datasetUUID
+    );
+
+    this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+      if (Array.isArray(dsPointOrBatch)) {
+        // Initial batch: fill the chart with the last N points
+        const valueRows = this.transformDatasetRows(dsPointOrBatch, 'value');
+        this.chart.data.datasets[0].data.push(...valueRows);
+
+        const avgRows = this.transformDatasetRows(dsPointOrBatch, 'sma');
+        this.chart.data.datasets[1].data.push(...avgRows);
+
+        const lastAvgRows = this.transformDatasetRows(dsPointOrBatch, 'avg');
+        this.chart.data.datasets[2].data.push(...lastAvgRows);
+
+      } else {
+        // Live: handle new single datapoint
+        const valueRow = this.transformDatasetRows([dsPointOrBatch], 'value')[0];
+        this.chart.data.datasets[0].data.push(valueRow);
+
+        const avgRow = this.transformDatasetRows([dsPointOrBatch], 'sma')[0];
+        this.chart.data.datasets[1].data.push(avgRow);
+
+        const lastAvgRows = this.transformDatasetRows([dsPointOrBatch], 'avg')[0];
+        this.chart.data.datasets[2].data.push(lastAvgRows);
+
+        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
+          this.chart.data.datasets[0].data.shift();
+          this.chart.data.datasets[1].data.shift();
+          this.chart.data.datasets[2].data.shift();
+        }
+
+
+
+        // ... (rest of your live update logic for title, annotation, etc.)
+        const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPointOrBatch.data.sma : dsPointOrBatch.data.value;
+        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
+
+        const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastAverage);
+        const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMinimum);
+        const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMaximum);
+
+        if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
+
+          // Calculate dynamic scale range
+          const minDiff = Math.abs(lastAverage - lastMinimum);
+          const maxDiff = Math.abs(lastMaximum - lastAverage);
+          const dynamicScaleRange = Math.max(minDiff, maxDiff) * 1.1;
+
+          this.chart.options.scales.x.min = lastAverage - dynamicScaleRange;
+          this.chart.options.scales.x.max = lastAverage + dynamicScaleRange;
+          this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
+          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
+        }
+        if (this.chart.options.plugins.annotation.annotations.minimumLine.value != lastMinimum) {
+          this.chart.options.plugins.annotation.annotations.minimumLine.value = lastMinimum;
+          this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `${lastMinimum.toFixed(this.widgetProperties.config.numDecimal)}`;
+        }
+        if (this.chart.options.plugins.annotation.annotations.maximumLine.value != lastMaximum) {
+          this.chart.options.plugins.annotation.annotations.maximumLine.value = lastMaximum;
+          this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
+        }
+      }
+
+      this.ngZone.runOutsideAngular(() => {
+        this.chart?.update('quiet');
+      });
+    });
+  }
+
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string): IDataSetRow[] {
+    const convert = (v: number) => this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, v);
+
+    return rows.map(row => {
+      const rowMapping = {
+        value: row.data.value,
+        sma: row.data.sma,
+        ema: row.data.ema,
+        dema: row.data.doubleEma,
+        avg: row.data.lastAverage
+      };
+      return { x: convert(rowMapping[datasetType]), y: row.timestamp };
+    });
+  }
+
   private setDatasetsColors(): void {
     this.lineChartData.datasets.forEach((dataset) => {
-      if (dataset.label === 'Value') {
+      if (dataset.label === 'SMA') {
+        dataset.borderColor = this.theme().port;
+        dataset.backgroundColor = this.theme().contrastDim;
+      } else if (dataset.label === 'Value') {
         dataset.borderColor = this.getThemeColors().valueLine;
         dataset.backgroundColor = this.getThemeColors().valueFill;
-      } else if (dataset.label === 'Average') {
-        dataset.borderColor = this.getThemeColors().averageLine;
-        dataset.backgroundColor = this.getThemeColors().averageFill;
+      } else if (dataset.label === 'lastAverage') {
+        dataset.borderColor = this.theme().contrast;
+        dataset.backgroundColor = this.theme().port;
       }
     });
   }
@@ -612,101 +616,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     }
 
     return label;
-  }
-
-  private startStreaming(): void {
-    this.dsServiceSub?.unsubscribe();
-
-    const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(
-      this.widgetProperties.config.datasetUUID
-    );
-
-    this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
-      if (Array.isArray(dsPointOrBatch)) {
-        // Initial batch: fill the chart with the last N points
-        const valueRows = this.transformDatasetRows(dsPointOrBatch, 0);
-        this.chart.data.datasets[0].data.push(...valueRows);
-        if (this.widgetProperties.config.showAverageData) {
-          const avgRows = this.transformDatasetRows(dsPointOrBatch, this.widgetProperties.config.datasetAverageArray);
-          this.chart.data.datasets[1].data.push(...avgRows);
-        }
-      } else {
-        // Live: handle new single datapoint
-        const valueRow = this.transformDatasetRows([dsPointOrBatch], 0)[0];
-        this.chart.data.datasets[0].data.push(valueRow);
-        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
-          this.chart.data.datasets[0].data.shift();
-        }
-
-        if (this.widgetProperties.config.showAverageData) {
-          const avgRow = this.transformDatasetRows([dsPointOrBatch], this.widgetProperties.config.datasetAverageArray)[0];
-          this.chart.data.datasets[1].data.push(avgRow);
-          if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
-            this.chart.data.datasets[1].data.shift();
-          }
-        }
-
-        // ... (rest of your live update logic for title, annotation, etc.)
-        const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPointOrBatch.data.sma : dsPointOrBatch.data.value;
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
-
-        const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastAverage);
-        const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMinimum);
-        const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMaximum);
-
-        if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
-          this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-        if (this.chart.options.plugins.annotation.annotations.minimumLine.value != lastMinimum) {
-          this.chart.options.plugins.annotation.annotations.minimumLine.value = lastMinimum;
-          this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `${lastMinimum.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-        if (this.chart.options.plugins.annotation.annotations.maximumLine.value != lastMaximum) {
-          this.chart.options.plugins.annotation.annotations.maximumLine.value = lastMaximum;
-          this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-      }
-
-      this.ngZone.runOutsideAngular(() => {
-        this.chart?.update('quiet');
-      });
-    });
-  }
-
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
-    const convert = (v: number) =>
-      this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, v);
-    const verticalChart = this.widgetProperties.config.verticalChart;
-    const avgKey = this.widgetProperties.config.datasetAverageArray;
-
-    return rows.map(row => {
-      if (verticalChart) {
-        if (datasetType === 0) {
-          return { x: convert(row.data.value), y: row.timestamp };
-        } else {
-          const avgMap = {
-            sma: row.data.sma,
-            ema: row.data.ema,
-            dema: row.data.doubleEma,
-            avg: row.data.lastAverage
-          };
-          return { x: convert(avgMap[avgKey]), y: row.timestamp };
-        }
-      } else {
-        if (datasetType === 0) {
-          return { x: row.timestamp, y: convert(row.data.value) };
-        } else {
-          const avgMap = {
-            sma: row.data.sma,
-            ema: row.data.ema,
-            dema: row.data.doubleEma,
-            avg: row.data.lastAverage
-          };
-          return { x: row.timestamp, y: convert(avgMap[avgKey]) };
-        }
-      }
-    });
   }
 
   ngOnDestroy(): void {

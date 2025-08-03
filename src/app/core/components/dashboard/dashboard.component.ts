@@ -39,6 +39,7 @@ import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-sli
 import { ActivatedRoute, Router } from '@angular/router';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { DatasetService } from '../../services/data-set.service';
+import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 
 
 @Component({
@@ -95,7 +96,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetRacesteerComponent,
       WidgetPositionComponent,
       WidgetLabelComponent,
-      WidgetSliderComponent
+      WidgetSliderComponent,
+      WidgetWindTrendsChartComponent
     ]);
   }
 

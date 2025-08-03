@@ -231,6 +231,19 @@ export class WidgetService {
       componentClassName: 'WidgetSteelGaugeComponent'
     },
     {
+      name: 'Wind Trends',
+      description: 'Visualize True wind trends on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
+      icon: 'datachartWidget',
+      minWidth: 2,
+      minHeight: 4,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauges',
+      pluginDependency: [],
+      selector: 'widget-windtrends-chart',
+      componentClassName: 'WidgetWindTrendsChartComponent'
+    },
+    {
       name: 'Windsteer',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
       icon: 'windsteeringWidget',
