@@ -204,10 +204,12 @@ export class SignalKConnectionService {
       if (proxyEnabled) {
         console.debug("[Connection Service] Proxy Mode Enabled");
         serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
-        serverServiceEndpoints.WsServiceUrl = (window.location.protocol == 'https:' ? 'wss://' : 'ws://') + window.location.host + new URL(wsUrl).pathname;
+        serverServiceEndpoints.WsServiceUrl = window.location.protocol.replace('http', 'ws') + '//' + window.location.host + new URL(wsUrl).pathname;
       } else {
         serverServiceEndpoints.httpServiceUrl = httpUrl;
-        serverServiceEndpoints.WsServiceUrl = wsUrl;
+        // Only override ws:// to wss:// when page is HTTPS, otherwise keep original
+        const isHttpsPage = window.location.protocol === 'https:';
+        serverServiceEndpoints.WsServiceUrl = isHttpsPage ? wsUrl.replace('ws://', 'wss://') : wsUrl;
       }
 
       console.debug("[Connection Service] HTTP URI: " + serverServiceEndpoints.httpServiceUrl);
@@ -293,10 +295,12 @@ export class SignalKConnectionService {
       if (this.currentProxyEnabled) {
         console.debug("[Connection Service] Proxy Mode Enabled");
         serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
-        serverServiceEndpoints.WsServiceUrl = (window.location.protocol == 'https:' ? 'wss://' : 'ws://') + window.location.host + new URL(wsUrl).pathname;
+        serverServiceEndpoints.WsServiceUrl = window.location.protocol.replace('http', 'ws') + '//' + window.location.host + new URL(wsUrl).pathname;
       } else {
         serverServiceEndpoints.httpServiceUrl = httpUrl;
-        serverServiceEndpoints.WsServiceUrl = wsUrl;
+        // Only override ws:// to wss:// when page is HTTPS, otherwise keep original
+        const isHttpsPage = window.location.protocol === 'https:';
+        serverServiceEndpoints.WsServiceUrl = isHttpsPage ? wsUrl.replace('ws://', 'wss://') : wsUrl;
       }
 
       // Notify ConnectionStateMachine of success
