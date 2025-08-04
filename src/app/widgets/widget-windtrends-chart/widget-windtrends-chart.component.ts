@@ -6,7 +6,7 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
 
@@ -301,7 +301,53 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         pointHoverRadius: 0,
         pointHitRadius: 0,
         borderWidth: 5,
-        fill: 2,
+        fill: {
+          target: {
+            value: 0
+          },
+          // @ts-expect-error sadly, Chart.js types are not up to date with the latest API
+          above: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea, data } = chart;
+
+            if (!chartArea) {
+              return null; // This happens on initial render before chartArea is defined
+            }
+            if (!data.datasets[2].data.length) {
+              return null; // We need some data
+            }
+
+            return this.aboveGradian(ctx, chartArea);
+          },
+          // @ts-expect-error sadly, Chart.js types are not up to date with the latest API
+          below: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea, data } = chart;
+
+            if (!chartArea) {
+              return null; // This happens on initial render before chartArea is defined
+            }
+            if (!data.datasets[2].data.length) {
+              return null; // We need some data
+            }
+
+            return this.belowGradian(ctx, chartArea);
+          },
+        }, // Will be set dynamically based on lastAverage
+        borderColor: (context) => {
+          const chart = context.chart;
+          const { ctx, chartArea, data } = chart;
+
+          if (!chartArea) {
+            return null; // This happens on initial render before chartArea is defined
+          }
+          if (!data.datasets[2].data.length) {
+            return null; // We need some data
+          }
+
+          return this.lineGradian(ctx, chartArea);
+        },
+        backgroundColor: 'red'
       },
       {
         label: 'lastAverage',
@@ -312,7 +358,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: 5,
+        borderWidth: 0,
         fill: false,
       }
     );
@@ -356,35 +402,29 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           this.chart.data.datasets[2].data.shift();
         }
 
-
-
-        // ... (rest of your live update logic for title, annotation, etc.)
+        // Update Title value
         const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPointOrBatch.data.sma : dsPointOrBatch.data.value;
         this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
 
-        const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastAverage);
+        const last = this.chart.data.datasets[2].data.length -1;
+        this.chart.data.datasets[1].fill.target.value = this.chart.data.datasets[2].data[last].x;
+
+        // Update last average, min, max lines
+        const lastAverage = this.chart.data.datasets[2].data[last].x;
         const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMinimum);
         const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMaximum);
 
+        // Calculate dynamic scale range
+        const minDiff = Math.abs(lastAverage - lastMinimum);
+        const maxDiff = Math.abs(lastMaximum - lastAverage);
+        const dynamicScaleRange = Math.max(minDiff, maxDiff) * 1.1;
+        this.chart.options.scales.x.min = lastAverage - dynamicScaleRange;
+        this.chart.options.scales.x.max = lastAverage + dynamicScaleRange;
+
+        // Draw average line
         if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
-
-          // Calculate dynamic scale range
-          const minDiff = Math.abs(lastAverage - lastMinimum);
-          const maxDiff = Math.abs(lastMaximum - lastAverage);
-          const dynamicScaleRange = Math.max(minDiff, maxDiff) * 1.1;
-
-          this.chart.options.scales.x.min = lastAverage - dynamicScaleRange;
-          this.chart.options.scales.x.max = lastAverage + dynamicScaleRange;
           this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
           this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-        if (this.chart.options.plugins.annotation.annotations.minimumLine.value != lastMinimum) {
-          this.chart.options.plugins.annotation.annotations.minimumLine.value = lastMinimum;
-          this.chart.options.plugins.annotation.annotations.minimumLine.label.content = `${lastMinimum.toFixed(this.widgetProperties.config.numDecimal)}`;
-        }
-        if (this.chart.options.plugins.annotation.annotations.maximumLine.value != lastMaximum) {
-          this.chart.options.plugins.annotation.annotations.maximumLine.value = lastMaximum;
-          this.chart.options.plugins.annotation.annotations.maximumLine.label.content = `${lastMaximum.toFixed(this.widgetProperties.config.numDecimal)}`;
         }
       }
 
@@ -409,17 +449,46 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     });
   }
 
+  private aboveGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
+    const mid = (chartArea.left + (chartArea.width / 2));
+    const gradientBackground = ctx.createLinearGradient(chartArea.left, 0, mid, 0);
+
+    gradientBackground.addColorStop(0, this.theme().orangeDimmer);
+    gradientBackground.addColorStop(0.5, this.theme().orange);
+
+    return gradientBackground;
+  }
+
+  private belowGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
+    const mid = (chartArea.left + (chartArea.width / 2));
+    const gradientBackground = ctx.createLinearGradient(mid, 0, chartArea.right, 0);
+
+    gradientBackground.addColorStop(0, this.theme().greenDimmer);
+    gradientBackground.addColorStop(0.5, this.theme().green);
+
+    return gradientBackground;
+  }
+
+  private lineGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
+    const gradientBorder = ctx.createLinearGradient(0, 0, chartArea.right, 0);
+    const r = (chartArea.left + (chartArea.width / 2)) / chartArea.right;
+
+    gradientBorder.addColorStop(0, this.theme().port);
+    gradientBorder.addColorStop(r, this.theme().port);
+    gradientBorder.addColorStop(r, this.theme().starboard);
+    gradientBorder.addColorStop(1, this.theme().starboard);
+
+    return gradientBorder;
+  }
+
   private setDatasetsColors(): void {
     this.lineChartData.datasets.forEach((dataset) => {
-      if (dataset.label === 'SMA') {
-        dataset.borderColor = this.theme().port;
-        dataset.backgroundColor = this.theme().contrastDim;
-      } else if (dataset.label === 'Value') {
+      if (dataset.label === 'Value') {
         dataset.borderColor = this.getThemeColors().valueLine;
         dataset.backgroundColor = this.getThemeColors().valueFill;
       } else if (dataset.label === 'lastAverage') {
-        dataset.borderColor = this.theme().contrast;
-        dataset.backgroundColor = this.theme().port;
+        dataset.borderColor = null;
+        dataset.backgroundColor = null;
       }
     });
   }
