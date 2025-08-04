@@ -1,3 +1,8 @@
+# V 3.6.1
+## Fixes
+* Dashboard swipe gesture over Freeboard-SK and Embed widgets not changing dashboard. Fixes #744
+* Path Options form with hardcoded paths falsy reported as invalid 
+* Display of Windsteer widget's True Wind Angle indicator is not optional
 # V 3.6.0
 ## Improvements
 * Numeric widget now features mini background charts for instant visual trend insights
