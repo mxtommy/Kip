@@ -46,7 +46,7 @@ export class SettingsNotificationsComponent {
   public saveAllSettings():void {
     this.settings.setNotificationConfig(cloneDeep(this.notificationConfig));
     this.notificationsForm().form.markAsPristine();
-    this.app.sendSnackbarNotification("Configuration saved", 5000, false);
+    this.app.sendSnackbarNotification("Configuration saved", 3000, false);
   }
 
   public togglePanel(e: MatSlideToggleChange): void {

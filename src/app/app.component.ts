@@ -67,7 +67,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Snackbar Notifications sub
     this._app.getSnackbarAppNotifications().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(appNotification => {
-      this._snackBar.open(appNotification.message, 'dismiss', {
+      this._snackBar.open(appNotification.message, appNotification.action, {
           duration: appNotification.duration,
           verticalPosition: 'top'
         });
@@ -150,19 +150,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
 
       case 1: // connecting
-        //this._app.sendSnackbarNotification(message, 5000, true); // Increased from 2000 to see it longer
-       break;
-
       case 2: // connected
-        //this._app.sendSnackbarNotification(message, 2000, false);
         break;
 
       case 3: // connection error/retrying
-        this._app.sendSnackbarNotification(message, 3000, false); // Changed from 0 (indefinite) to 3000 to avoid blocking
+        this._app.sendSnackbarNotification(message, 3000, false, ""); // Changed from 0 (indefinite) to 3000 to avoid blocking
         break;
 
       case 4: // resetting
-        this._app.sendSnackbarNotification(message, 3000, true);
+        this._app.sendSnackbarNotification(message, 3000, true, "");
         break;
 
       case 5: // permanent failure
@@ -172,7 +168,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       default:
         console.error(`[AppComponent] Unknown operation code: ${connectionStatus.operation} for state: ${connectionStatus.state}`);
         this._app.sendSnackbarNotification(`Unknown connection status: ${connectionStatus.state}`, 0, false);
-        break;
     }
   }
 

@@ -10,6 +10,7 @@ import * as packageInfo from '../../../../package.json';
  */
 export interface AppNotification {
   message: string;
+  action?: string;
   duration: number;
   silent: boolean;
 }
@@ -140,8 +141,8 @@ export class AppService {
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
    */
-  public sendSnackbarNotification(message: string, duration = 10000, silent = false) {
-    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
+  public sendSnackbarNotification(message: string, duration = 10000, silent = false, action = "Dismiss") {
+    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent, action: action });
   }
 
   /**
