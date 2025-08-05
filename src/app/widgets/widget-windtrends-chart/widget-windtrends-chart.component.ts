@@ -1,4 +1,4 @@
-import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
 import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -33,8 +33,9 @@ interface IDataSetRow {
   styleUrl: './widget-windtrends-chart.component.scss'
 })
 export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly dsService = inject(DatasetService);
+  private readonly _dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
+  private readonly _dataset = inject(DatasetService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData <'line', {x: number, y: number} []> = {
     datasets: []
@@ -45,7 +46,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       line: {
         pointRadius: 0, // disable for all `'line'` datasets
         pointHoverRadius: 0, // disable for all `'line'` datasets
-        tension:  0.4,
+        tension:  0.3,
       }
     },
     animations: {
@@ -56,7 +57,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   }
   public lineChartType: ChartType = 'line';
   private chart;
-  private dsServiceSub: Subscription = null;
+  private _dsServiceSub: Subscription = null;
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
@@ -65,11 +66,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
     this.defaultConfig = {
       filterSelfPaths: true,
-      convertUnitTo: "unitless",
-      datasetUUID: null,
-      datasetAverageArray: 'sma',
-      numDecimal: 1,
       color: 'contrast',
+      timeScale: ''
     };
 
     effect(() => {
@@ -84,6 +82,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
   ngOnInit(): void {
     this.validateConfig();
+    this.createServiceDataset();
   }
 
   ngAfterViewInit(): void {
@@ -91,8 +90,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   }
 
   protected startWidget(): void {
-    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
+    this.datasetConfig = this._dsService.getDatasetConfig(this.widgetProperties.uuid);
+    this.dataSourceInfo = this._dsService.getDataSourceInfo(this.widgetProperties.uuid);
 
     if (this.datasetConfig) {
       this.createDatasets();
@@ -105,7 +104,9 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           options: this.lineChartOptions
         });
       } else {
-        this.chart.update();
+        this.ngZone.runOutsideAngular(() => {
+          this.chart?.update('quiet');
+        });
       }
 
       this.startStreaming();
@@ -114,7 +115,23 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    // Create dataset if it does not exist
+    if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
+      this._dataset.remove(this.widgetProperties.uuid);
+    }
+    this.createServiceDataset();
     this.startWidget();
+  }
+
+  private createServiceDataset(): void {
+    if (this.widgetProperties.config.timeScale === '') return;
+    const pathInfo = "self.environment.wind.directionTrue";
+    const source = "default";
+
+    // Create dataset if it does not exist
+    if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
+      this._dataset.create(pathInfo, source, this.widgetProperties.config.timeScale as TimeScaleFormat, 30, `windtrends-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
+    }
   }
 
   private setChartOptions() {
@@ -130,7 +147,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         position: "right",
         title: {
           display: true,
-          text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
+          text: `${this.datasetConfig.timeScaleFormat}`,
           align: "center"
         },
         time: {
@@ -147,6 +164,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         ticks: {
           maxTicksLimit: 6,
           autoSkip: false,
+          includeBounds: true,
+          align: 'inner',
           major: {
             enabled: true
           },
@@ -163,8 +182,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         type: "linear",
         position: "top",
         beginAtZero: false,
-        min: 45,
-        max: 90,
+        min: 0,
+        max: 360,
         title: {
           display: false
          },
@@ -183,25 +202,12 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     };
 
     this.lineChartOptions.plugins = {
-      subtitle: {
-        display: true,
-        align: "start",
-        padding: {
-          top: -70,
-          bottom: 35
-        },
-        text: `  TWD`,
-        font: {
-          size: 28
-        },
-        color: this.getThemeColors().chartLabel
-      },
       title: {
         display: true,
         align: "center",
         padding: {
-          top: 0,
-          bottom: 0
+          top: -3,
+          bottom: -20
         },
         text: "",
         font: {
@@ -209,6 +215,19 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
         },
         color: this.getThemeColors().chartValue
+      },
+      subtitle: {
+        display: true,
+        align: "start",
+        padding: {
+          top: -45,
+          bottom: 10
+        },
+        text: `  TWD`,
+        font: {
+          size: 28
+        },
+        color: this.getThemeColors().chartLabel
       },
       annotation : {
         annotations: {
@@ -218,7 +237,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             display: true,
             value: null,
             borderColor: this.getThemeColors().averageChartLine,
-            drawTime: 'afterDatasetsDraw',
+            drawTime: 'beforeDatasetsDraw',
             borderWidth: 4,
             label: {
               xAdjust: 0,
@@ -230,7 +249,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
                 size: 22,
               },
               color: this.getThemeColors().chartValue,
-              backgroundColor: 'rgba(63,63,63,1)'
+              backgroundColor: 'rgba(63,63,63,1)',
+              drawTime: 'afterDatasetsDraw',
             }
           }
         }
@@ -249,6 +269,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         data: [],
         order: 2,
         parsing: false,
+        normalized: true,
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 0,
@@ -261,6 +282,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         data: [],
         order: 0,
         parsing: false,
+        normalized: true,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 0,
@@ -287,6 +309,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         data: [],
         order: 1,
         parsing: false,
+        normalized: true,
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 0,
@@ -294,20 +317,70 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         borderWidth: 0,
         borderColor: '',
         fill: false,
+        hidden: true,
+      },
+      {
+        label: 'lastMinimum',
+        data: [],
+        order: 3,
+        parsing: false,
+        normalized: true,
+        hidden: true,
+      },
+      {
+        label: 'lastMaximum',
+        data: [],
+        order: 4,
+        parsing: false,
+        normalized: true,
+        hidden: true,
       }
     );
 
     this.setDatasetsColors();
   }
 
-  private startStreaming(): void {
-    this.dsServiceSub?.unsubscribe();
+  private updateChartAfterDataChange() {
+    // Update Title value
+    const lastData = this.chart.data.datasets[2].data;
+    const last = lastData.length - 1;
+    const lastAverage = lastData[last]?.x ?? 0;
+    const trackValue: number = this.chart.data.datasets[0].data[last]?.x ?? 0;
+    this.chart.options.plugins.title.text = `${trackValue.toFixed(0)}°`;
 
-    const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(
-      this.widgetProperties.config.datasetUUID
+    // Update last min/max lines
+    const lastMinimum = this.chart.data.datasets[3].data[last]?.x ?? 0;
+    const lastMaximum = this.chart.data.datasets[4].data[last]?.x ?? 0;
+
+    // Calculate dynamic x value scale range
+    const minDiff = Math.abs(lastAverage - lastMinimum);
+    const maxDiff = Math.abs(lastMaximum - lastAverage);
+    const dynamicScaleRange = Math.max(minDiff, maxDiff);
+    this.chart.options.scales.x.min = lastAverage - dynamicScaleRange;
+    this.chart.options.scales.x.max = lastAverage + dynamicScaleRange;
+
+    // Update dynamic y axis time range
+    const yData = this.chart.data.datasets[0].data;
+    if (yData.length > 0) {
+      this.chart.options.scales.y.min = yData[0].y;
+      this.chart.options.scales.y.max = yData[yData.length - 1].y;
+    }
+
+    // Draw average line
+    if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
+      this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
+      this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(0)}°`;
+    }
+  }
+
+  private startStreaming(): void {
+    this._dsServiceSub?.unsubscribe();
+
+    const batchThenLive$ = this._dsService.getDatasetBatchThenLiveObservable(
+      this.widgetProperties.uuid
     );
 
-    this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+    this._dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
       if (Array.isArray(dsPointOrBatch)) {
         // Initial batch: fill the chart with the last N points
         const valueRows = this.transformDatasetRows(dsPointOrBatch, 'value');
@@ -319,6 +392,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         const lastAvgRows = this.transformDatasetRows(dsPointOrBatch, 'avg');
         this.chart.data.datasets[2].data.push(...lastAvgRows);
 
+        const lastMinRows = this.transformDatasetRows(dsPointOrBatch, 'min');
+        this.chart.data.datasets[3].data.push(...lastMinRows);
+
+        const lastMaxRows = this.transformDatasetRows(dsPointOrBatch, 'max');
+        this.chart.data.datasets[4].data.push(...lastMaxRows);
       } else {
         // Live: handle new single datapoint
         const valueRow = this.transformDatasetRows([dsPointOrBatch], 'value')[0];
@@ -330,35 +408,22 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         const lastAvgRows = this.transformDatasetRows([dsPointOrBatch], 'avg')[0];
         this.chart.data.datasets[2].data.push(lastAvgRows);
 
+        const lastMinRows = this.transformDatasetRows([dsPointOrBatch], 'min')[0];
+        this.chart.data.datasets[3].data.push(lastMinRows);
+
+        const lastMaxRows = this.transformDatasetRows([dsPointOrBatch], 'max')[0];
+        this.chart.data.datasets[4].data.push(lastMaxRows);
+
         if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
           this.chart.data.datasets[0].data.shift();
           this.chart.data.datasets[1].data.shift();
           this.chart.data.datasets[2].data.shift();
-        }
-
-        // Update Title value
-        const trackValue: number = dsPointOrBatch.data.value;
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(0)}°`;
-
-        // Update last average, min, max lines
-        const last = this.chart.data.datasets[2].data.length -1;
-        const lastAverage = this.chart.data.datasets[2].data[last].x;
-        const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMinimum);
-        const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMaximum);
-
-        // Calculate dynamic scale range
-        const minDiff = Math.abs(lastAverage - lastMinimum);
-        const maxDiff = Math.abs(lastMaximum - lastAverage);
-        const dynamicScaleRange = Math.max(minDiff, maxDiff) * 1.1;
-        this.chart.options.scales.x.min = lastAverage - dynamicScaleRange;
-        this.chart.options.scales.x.max = lastAverage + dynamicScaleRange;
-
-        // Draw average line
-        if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
-          this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(0)}°`;
+          this.chart.data.datasets[3].data.shift();
+          this.chart.data.datasets[4].data.shift();
         }
       }
+
+      this.updateChartAfterDataChange();
 
       this.ngZone.runOutsideAngular(() => {
         this.chart?.update('quiet');
@@ -367,7 +432,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   }
 
   private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string): IDataSetRow[] {
-    const convert = (v: number) => this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, v);
+    const convert = (v: number) => this.unitsService.convertToUnit("deg", v);
 
     return rows.map(row => {
       const rowMapping = {
@@ -375,7 +440,9 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         sma: row.data.sma,
         ema: row.data.ema,
         dema: row.data.doubleEma,
-        avg: row.data.lastAverage
+        avg: row.data.lastAverage,
+        min: row.data.lastMinimum,
+        max: row.data.lastMaximum
       };
       return { x: convert(rowMapping[datasetType]), y: row.timestamp };
     });
@@ -500,7 +567,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
   ngOnDestroy(): void {
     this.destroyDataStreams();
-    this.dsServiceSub?.unsubscribe();
+    this._dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
   }

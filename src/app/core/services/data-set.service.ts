@@ -20,7 +20,7 @@ export interface IDatasetServiceDatapoint {
   }
 }
 
-type TimeScaleFormat = "hour" | "minute" | "second";
+export type TimeScaleFormat = "hour" | "minute" | "second" | "Last Minute" | "Last 5 Minutes" | "Last 30 Minutes";
 
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
@@ -102,9 +102,27 @@ export class DatasetService {
     }
 
     switch (dsConf.timeScaleFormat) {
+      case "Last 30 Minutes":
+        newDataSourceConfiguration.maxDataPoints = 120; // 30 min * sampleTime
+        newDataSourceConfiguration.sampleTime = 15000; // 15 seconds
+        newDataSourceConfiguration.smoothingPeriod = 60; // moving average points to use
+        break;
+
+      case "Last 5 Minutes":
+        newDataSourceConfiguration.maxDataPoints = 60; // 5 min * sampleTime
+        newDataSourceConfiguration.sampleTime = 5000; // 5 seconds
+        newDataSourceConfiguration.smoothingPeriod = 30; // moving average points to use
+        break;
+
+      case "Last Minute":
+        newDataSourceConfiguration.maxDataPoints = 60; // 1 min * sampleTime
+        newDataSourceConfiguration.sampleTime = 1000; // 1 second
+        newDataSourceConfiguration.smoothingPeriod = 30; // moving average points to use
+        break;
+
       case "hour":
-        newDataSourceConfiguration.maxDataPoints = dsConf.period * 60; // hours * 60 min
-        newDataSourceConfiguration.sampleTime = 60000; // 1 minute
+        newDataSourceConfiguration.maxDataPoints = dsConf.period * 120; // hours * 60 min
+        newDataSourceConfiguration.sampleTime = 30000; // 30 seconds
         newDataSourceConfiguration.smoothingPeriod = Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor); // moving average points to use
         break;
 
@@ -247,6 +265,8 @@ export class DatasetService {
    * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
+   * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
+   * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
@@ -265,7 +285,7 @@ export class DatasetService {
       editable: editable
     };
 
-    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'minichart '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
+    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 

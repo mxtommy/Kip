@@ -281,9 +281,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
     this._gridstack().grid.removeWidget(item);
 
-    if (ngNode.selector === 'widget-numeric-chart') {
-      // Perform any specific cleanup or actions for numeric chart widgets
-      this._dataset.remove(ngNode.id);
+    switch (ngNode.selector) {
+      case 'widget-numeric-chart':
+      case 'widget-windtrends-chart':
+        // Perform any specific cleanup or actions for dataset enabled widgets
+        this._dataset.remove(ngNode.id);
+        break;
     }
   }
 

@@ -313,6 +313,20 @@
                   </mat-select>
                 </mat-form-field>
               }
+              @if ((widgetConfig.timeScale !== undefined)) {
+                <mat-form-field class="options-grid-span2">
+                  <mat-label>Scale Span</mat-label>
+                  <mat-select
+                    placeholder="Select span duration..."
+                    formControlName="timeScale"
+                    name="timeScale"
+                    required>
+                    <mat-option value="Last Minute">1 Minute</mat-option>
+                    <mat-option value="Last 5 Minutes">5 Minutes</mat-option>
+                    <mat-option value="Last 30 Minutes">30 Minutes</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              }
               @if ((widgetConfig.showMiniChart !== undefined)) {
                 <mat-checkbox class="options-grid-span2"
                   name="showMiniChart"

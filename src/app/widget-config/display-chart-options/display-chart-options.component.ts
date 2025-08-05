@@ -49,11 +49,13 @@ export class DisplayChartOptionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;
-    if (!this.showAverageData().value) {
+    if (this.showAverageData() && !this.showAverageData()?.value) {
       this.trackAgainstAverage().disable();
     }
 
-    this.setValueScaleOptionsControls(this.enableMinMaxScaleLimit().value);
+    if (this.enableMinMaxScaleLimit()) {
+      this.setValueScaleOptionsControls(this.enableMinMaxScaleLimit().value);
+    }
   }
 
   private setValueScaleOptionsControls(enableMinMaxScaleLimit: boolean) {
