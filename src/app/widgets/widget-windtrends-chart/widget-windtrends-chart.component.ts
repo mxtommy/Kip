@@ -6,7 +6,7 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
 
@@ -64,27 +64,10 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     super();
 
     this.defaultConfig = {
-      displayName: 'Chart Label',
       filterSelfPaths: true,
       convertUnitTo: "unitless",
       datasetUUID: null,
-      inverseYAxis: false,
       datasetAverageArray: 'sma',
-      showAverageData: true,
-      trackAgainstAverage: false,
-      showDatasetMinimumValueLine: false,
-      showDatasetMaximumValueLine: false,
-      showDatasetAverageValueLine: true,
-      showDatasetAngleAverageValueLine: false,
-      showLabel: false,
-      showTimeScale: false,
-      startScaleAtZero: false,
-      showYScale: false,
-      yScaleSuggestedMin: null,
-      yScaleSuggestedMax: null,
-      enableMinMaxScaleLimit: false,
-      yScaleMin: null,
-      yScaleMax: null,
       numDecimal: 1,
       color: 'contrast',
     };
@@ -143,19 +126,15 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     this.lineChartOptions.scales = {
       y: {
         type: "time",
-        display: this.widgetProperties.config.showTimeScale,
-        position: "left",
-        suggestedMin: "",
-        suggestedMax: "",
+        display: true,
+        position: "right",
         title: {
           display: true,
           text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
           align: "center"
         },
         time: {
-          unit: this.datasetConfig.timeScaleFormat as TimeUnit,
           minUnit: "second",
-          round: "second",
           displayFormats: {
             // eslint-disable-next-line no-useless-escape
             hour: `k:mm\''`,
@@ -166,11 +145,14 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           },
         },
         ticks: {
+          maxTicksLimit: 6,
           autoSkip: false,
-          color: this.getThemeColors().averageChartLine,
           major: {
             enabled: true
-          }
+          },
+          font: {
+            size: 16,
+          },
         },
         grid: {
           display: true,
@@ -183,89 +165,72 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         beginAtZero: false,
         min: 45,
         max: 90,
-        title: { display: true, text: "Direction (°)", align: "center" },
+        title: {
+          display: false
+         },
         ticks: {
           callback: (value: number) => ((value + 360) % 360).toFixed(0), // wrap-around formatting
-
+          count: 2,
+          font: {
+            size: 20,
+          },
         },
-        grid: { display: true }
+        grid: {
+          display: true,
+          color: this.theme().contrastDimmer
+         }
       }
     };
 
     this.lineChartOptions.plugins = {
       subtitle: {
-        display: this.widgetProperties.config.showLabel,
+        display: true,
         align: "start",
         padding: {
-          top: -31,
-          bottom: 4
+          top: -70,
+          bottom: 35
         },
-        text: `  ${this.widgetProperties.config.displayName}`,
+        text: `  TWD`,
         font: {
-          size: 14,
+          size: 28
         },
         color: this.getThemeColors().chartLabel
       },
       title: {
         display: true,
-        align: "end",
+        align: "center",
         padding: {
-          top: 6,
-          bottom: 10
+          top: 0,
+          bottom: 0
         },
         text: "",
         font: {
-          size: 22,
+          size: 62,
 
         },
         color: this.getThemeColors().chartValue
       },
       annotation : {
         annotations: {
-          minimumLine: {
-            type: 'line',
-            scaleID: 'x',
-            display: this.widgetProperties.config.showDatasetMinimumValueLine,
-            value: null,
-            drawTime: 'afterDatasetsDraw',
-            label: {
-              display: true,
-              position: "start",
-              yAdjust: 12,
-              padding: 4,
-              color: this.getThemeColors().averageChartLine,
-              backgroundColor: 'rgba(63,63,63,0.0)'
-            }
-          },
-          maximumLine: {
-            type: 'line',
-            scaleID: 'x',
-            display: this.widgetProperties.config.showDatasetMaximumValueLine,
-            value: null,
-            drawTime: 'afterDatasetsDraw',
-            label: {
-              display: true,
-              position: "start",
-              yAdjust: -12,
-              padding: 4,
-              color: this.getThemeColors().averageChartLine,
-              backgroundColor: 'rgba(63,63,63,0.0)'
-            }
-          },
           averageLine: {
             type: 'line',
             scaleID: 'x',
             display: true,
             value: null,
-            borderDash: [6, 6],
             borderColor: this.getThemeColors().averageChartLine,
             drawTime: 'afterDatasetsDraw',
+            borderWidth: 4,
             label: {
+              xAdjust: 0,
+              yAdjust: -8,
               display: true,
               position: "start",
-              padding: 4,
+              padding: 8,
+              font: {
+                size: 22,
+              },
               color: this.getThemeColors().chartValue,
-              backgroundColor: 'rgba(63,63,63,0.7)'
+              backgroundColor: 'rgba(63,63,63,1)'
             }
           }
         }
@@ -288,7 +253,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: 3,
+        borderWidth: 1,
         fill: false,
       },
       {
@@ -300,40 +265,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: 5,
-        fill: {
-          target: {
-            value: 0
-          },
-          // @ts-expect-error sadly, Chart.js types are not up to date with the latest API
-          above: (context) => {
-            const chart = context.chart;
-            const { ctx, chartArea, data } = chart;
-
-            if (!chartArea) {
-              return null; // This happens on initial render before chartArea is defined
-            }
-            if (!data.datasets[2].data.length) {
-              return null; // We need some data
-            }
-
-            return this.aboveGradian(ctx, chartArea);
-          },
-          // @ts-expect-error sadly, Chart.js types are not up to date with the latest API
-          below: (context) => {
-            const chart = context.chart;
-            const { ctx, chartArea, data } = chart;
-
-            if (!chartArea) {
-              return null; // This happens on initial render before chartArea is defined
-            }
-            if (!data.datasets[2].data.length) {
-              return null; // We need some data
-            }
-
-            return this.belowGradian(ctx, chartArea);
-          },
-        }, // Will be set dynamically based on lastAverage
+        borderWidth: 10,
+        fill: false, // Will be set dynamically based on lastAverage
         borderColor: (context) => {
           const chart = context.chart;
           const { ctx, chartArea, data } = chart;
@@ -359,6 +292,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         pointHoverRadius: 0,
         pointHitRadius: 0,
         borderWidth: 0,
+        borderColor: '',
         fill: false,
       }
     );
@@ -403,13 +337,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         }
 
         // Update Title value
-        const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPointOrBatch.data.sma : dsPointOrBatch.data.value;
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
-
-        const last = this.chart.data.datasets[2].data.length -1;
-        this.chart.data.datasets[1].fill.target.value = this.chart.data.datasets[2].data[last].x;
+        const trackValue: number = dsPointOrBatch.data.value;
+        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(0)}°`;
 
         // Update last average, min, max lines
+        const last = this.chart.data.datasets[2].data.length -1;
         const lastAverage = this.chart.data.datasets[2].data[last].x;
         const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMinimum);
         const lastMaximum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMaximum);
@@ -424,7 +356,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         // Draw average line
         if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
           this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(this.widgetProperties.config.numDecimal)}`;
+          this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(0)}°`;
         }
       }
 
@@ -449,26 +381,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     });
   }
 
-  private aboveGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
-    const mid = (chartArea.left + (chartArea.width / 2));
-    const gradientBackground = ctx.createLinearGradient(chartArea.left, 0, mid, 0);
-
-    gradientBackground.addColorStop(0, this.theme().orangeDimmer);
-    gradientBackground.addColorStop(0.5, this.theme().orange);
-
-    return gradientBackground;
-  }
-
-  private belowGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
-    const mid = (chartArea.left + (chartArea.width / 2));
-    const gradientBackground = ctx.createLinearGradient(mid, 0, chartArea.right, 0);
-
-    gradientBackground.addColorStop(0, this.theme().greenDimmer);
-    gradientBackground.addColorStop(0.5, this.theme().green);
-
-    return gradientBackground;
-  }
-
   private lineGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
     const gradientBorder = ctx.createLinearGradient(0, 0, chartArea.right, 0);
     const r = (chartArea.left + (chartArea.width / 2)) / chartArea.right;
@@ -486,9 +398,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       if (dataset.label === 'Value') {
         dataset.borderColor = this.getThemeColors().valueLine;
         dataset.backgroundColor = this.getThemeColors().valueFill;
-      } else if (dataset.label === 'lastAverage') {
-        dataset.borderColor = null;
-        dataset.backgroundColor = null;
       }
     });
   }
@@ -507,184 +416,86 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
     switch (widgetColor) {
       case "contrast":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().contrastDimmer;
-          colors.valueFill = this.theme().contrastDimmer;
-          colors.averageLine = this.theme().contrast;
-          colors.averageFill = this.theme().contrast;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().contrast;
-          colors.valueFill = this.theme().contrast;
-          colors.averageLine = this.theme().contrastDimmer;
-          colors.averageFill = this.theme().contrastDimmer;
-          colors.chartValue = this.theme().contrast;
-        }
-        colors.averageChartLine = this.theme().contrastDim;
+        colors.valueLine = this.theme().contrastDim;
+        colors.valueFill = this.theme().contrastDimmer;
+        colors.averageLine = this.theme().contrast;
+        colors.averageFill = this.theme().contrast;
+        colors.chartValue = this.theme().contrast;
+        colors.averageChartLine = this.theme().contrast;
         colors.chartLabel = this.theme().contrastDim;
         break;
 
       case "blue":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().blueDimmer;
-          colors.valueFill = this.theme().blueDimmer;
-          colors.averageLine = this.theme().blue;
-          colors.averageFill = this.theme().blue;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().blue;
-          colors.valueFill = this.theme().blue;
-          colors.averageLine = this.theme().blueDimmer;
-          colors.averageFill = this.theme().blueDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+        colors.valueLine = this.theme().blueDim;
+        colors.valueFill = this.theme().blueDimmer;
+        colors.averageLine = this.theme().blue;
+        colors.averageFill = this.theme().blue;
+        colors.chartValue = this.theme().blue;
         colors.averageChartLine = this.theme().blueDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().blueDim;
         break;
 
       case "green":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().greenDimmer;
-          colors.valueFill = this.theme().greenDimmer;
-          colors.averageLine = this.theme().green;
-          colors.averageFill = this.theme().green;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().green;
-          colors.valueFill = this.theme().green;
-          colors.averageLine = this.theme().greenDimmer;
-          colors.averageFill = this.theme().greenDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+         colors.valueLine = this.theme().greenDim;
+        colors.valueFill = this.theme().greenDimmer;
+        colors.averageLine = this.theme().green;
+        colors.averageFill = this.theme().green;
+        colors.chartValue = this.theme().green;
         colors.averageChartLine = this.theme().greenDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().greenDim;
         break;
 
       case "pink":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().pinkDimmer;
-          colors.valueFill = this.theme().pinkDimmer;
-          colors.averageLine = this.theme().pink;
-          colors.averageFill = this.theme().pink;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().pink;
-          colors.valueFill = this.theme().pink;
-          colors.averageLine = this.theme().pinkDimmer;
-          colors.averageFill = this.theme().pinkDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+         colors.valueLine = this.theme().pinkDim;
+        colors.valueFill = this.theme().pinkDimmer;
+        colors.averageLine = this.theme().pink;
+        colors.averageFill = this.theme().pink;
+        colors.chartValue = this.theme().pink;
         colors.averageChartLine = this.theme().pinkDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().pinkDim;
         break;
 
       case "orange":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().orangeDimmer;
-          colors.valueFill = this.theme().orangeDimmer;
-          colors.averageLine = this.theme().orange;
-          colors.averageFill = this.theme().orange;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().orange;
-          colors.valueFill = this.theme().orange;
-          colors.averageLine = this.theme().orangeDimmer;
-          colors.averageFill = this.theme().orangeDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+        colors.valueLine = this.theme().orangeDim;
+        colors.valueFill = this.theme().orangeDimmer;
+        colors.averageLine = this.theme().orange;
+        colors.averageFill = this.theme().orange;
+        colors.chartValue = this.theme().orange;
         colors.averageChartLine = this.theme().orangeDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().orangeDim;
         break;
 
       case "purple":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().purpleDimmer;
-          colors.valueFill = this.theme().purpleDimmer;
-          colors.averageLine = this.theme().purple;
-          colors.averageFill = this.theme().purple;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().purple;
-          colors.valueFill = this.theme().purple;
-          colors.averageLine = this.theme().purpleDimmer;
-          colors.averageFill = this.theme().purpleDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+         colors.valueLine = this.theme().purpleDim;
+        colors.valueFill = this.theme().purpleDimmer;
+        colors.averageLine = this.theme().purple;
+        colors.averageFill = this.theme().purple;
+        colors.chartValue = this.theme().purple;
         colors.averageChartLine = this.theme().purpleDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().purpleDim;
         break;
 
       case "grey":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().greyDimmer;
-          colors.valueFill = this.theme().greyDimmer;
-          colors.averageLine = this.theme().grey;
-          colors.averageFill = this.theme().grey;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().grey;
-          colors.valueFill = this.theme().grey;
-          colors.averageLine = this.theme().greyDimmer;
-          colors.averageFill = this.theme().greyDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+         colors.valueLine = this.theme().greyDim;
+        colors.valueFill = this.theme().greyDimmer;
+        colors.averageLine = this.theme().grey;
+        colors.averageFill = this.theme().grey;
+        colors.chartValue = this.theme().grey;
         colors.averageChartLine = this.theme().greyDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().greyDim;
         break;
 
       case "yellow":
-        if (this.widgetProperties.config.trackAgainstAverage) {
-          colors.valueLine = this.theme().yellowDimmer;
-          colors.valueFill = this.theme().yellowDimmer;
-          colors.averageLine = this.theme().yellow;
-          colors.averageFill = this.theme().yellow;
-          colors.chartValue = colors.averageLine;
-        } else {
-          colors.valueLine = this.theme().yellow;
-          colors.valueFill = this.theme().yellow;
-          colors.averageLine = this.theme().yellowDimmer;
-          colors.averageFill = this.theme().yellowDimmer;
-          colors.chartValue = colors.valueFill;
-        }
+         colors.valueLine = this.theme().yellowDim;
+        colors.valueFill = this.theme().yellowDimmer;
+        colors.averageLine = this.theme().yellow;
+        colors.averageFill = this.theme().yellow;
+        colors.chartValue = this.theme().yellow;
         colors.averageChartLine = this.theme().yellowDim;
-        colors.chartLabel = this.theme().contrastDim;
+        colors.chartLabel = this.theme().yellowDim;
         break;
     }
     return colors;
-  }
-
-  private getUnitsLabel(): string {
-    let label: string = null;
-
-    switch (this.widgetProperties.config.convertUnitTo) {
-
-      case "percent":
-      case "percentraw":
-        label = "%";
-        break;
-
-      case "latitudeMin":
-        label = "latitude in minutes";
-        break;
-
-      case "latitudeSec":
-        label = "latitude in secondes";
-        break;
-
-      case "longitudeMin":
-        label = "longitude in minutes";
-        break;
-
-      case "longitudeSec":
-        label = "longitude in secondes";
-        break;
-
-      default:
-        label = this.widgetProperties.config.convertUnitTo;
-        break;
-    }
-
-    return label;
   }
 
   ngOnDestroy(): void {
