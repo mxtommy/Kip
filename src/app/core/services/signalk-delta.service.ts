@@ -494,15 +494,14 @@ export class SignalKDeltaService implements OnDestroy {
    */
   private checkAndReconnect(reason: string): void {
     if (!this.connectionStateMachine.isFullyConnected()) {
-      console.log(`[Delta Service] ${reason}: Not fully connected, requesting reconnection...`);
-      // Let ConnectionStateMachine handle the reconnection logic
-      if (this.connectionStateMachine.isHTTPConnected()) {
+      if (this.connectionStateMachine.isHTTPConnected()  && this.connectionStateMachine.currentState !== ConnectionState.WebSocketRetrying) {
+        console.log(`[Delta Service] ${reason}: WebSocket disconnected, requesting reconnection...`);
         this.connectionStateMachine.startWebSocketConnection();
       } else {
         console.log(`[Delta Service] ${reason}: HTTP not connected, cannot start WebSocket`);
       }
     } else {
-      console.log(`[Delta Service] ${reason}: Already fully connected.`);
+      console.log(`[Delta Service] ${reason}: Connection is active.`);
     }
   }
 

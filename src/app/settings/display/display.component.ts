@@ -68,6 +68,7 @@ export class SettingsDisplayComponent implements OnInit {
     } else {
       this._settings.setThemeName("");
     }
+    this._app.sendSnackbarNotification("Configuration saved", 3000, false);
   }
 
   protected isAutoNightModeSupported(e: MatCheckboxChange): void {
