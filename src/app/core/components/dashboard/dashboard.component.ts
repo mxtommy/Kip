@@ -303,7 +303,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.toggleStaticDashboard();
   }
 
-  navigateToHelp(): void {
+  protected navigateToHelp(): void {
     this._router.navigate(['/help']);
   }
 }
