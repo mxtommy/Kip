@@ -36,7 +36,7 @@ import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { DatasetService } from '../../services/data-set.service';
 
@@ -57,6 +57,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
+  protected readonly _router = inject(Router);
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
@@ -300,5 +301,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
   protected editDashboard(): void {
     this.dashboard.toggleStaticDashboard();
+  }
+
+  protected navigateToHelp(): void {
+    this._router.navigate(['/help']);
   }
 }

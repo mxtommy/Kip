@@ -69,6 +69,24 @@
   ));
 }
 
+.empty-state-help {
+  position: fixed;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-state-help-button {
+  @include mat.button-overrides((
+    text-label-text-color: var(--mat-sys-outline-variant),
+    text-hover-state-layer-opacity: 0.7,
+    text-state-layer-color: var(--mat-sys-primary-fixed-dim)
+  ));
+}
+
 .empty-state-text {
   color: var(--mat-sys-outline-variant);
   font-style: italic;
