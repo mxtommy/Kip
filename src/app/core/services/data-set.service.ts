@@ -105,19 +105,19 @@ export class DatasetService {
       case "Last 30 Minutes":
         newDataSourceConfiguration.maxDataPoints = 120; // 30 min * sampleTime
         newDataSourceConfiguration.sampleTime = 15000; // 15 seconds
-        newDataSourceConfiguration.smoothingPeriod = 60; // moving average points to use
+        newDataSourceConfiguration.smoothingPeriod = 50; // moving average points to use
         break;
 
       case "Last 5 Minutes":
         newDataSourceConfiguration.maxDataPoints = 60; // 5 min * sampleTime
         newDataSourceConfiguration.sampleTime = 5000; // 5 seconds
-        newDataSourceConfiguration.smoothingPeriod = 30; // moving average points to use
+        newDataSourceConfiguration.smoothingPeriod = 25; // moving average points to use
         break;
 
       case "Last Minute":
         newDataSourceConfiguration.maxDataPoints = 60; // 1 min * sampleTime
         newDataSourceConfiguration.sampleTime = 1000; // 1 second
-        newDataSourceConfiguration.smoothingPeriod = 30; // moving average points to use
+        newDataSourceConfiguration.smoothingPeriod = 25; // moving average points to use
         break;
 
       case "hour":

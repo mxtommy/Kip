@@ -283,7 +283,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         order: 0,
         parsing: false,
         normalized: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
