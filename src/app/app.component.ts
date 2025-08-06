@@ -49,7 +49,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       if (this.appSettingsService.configUpgrade()) {
         this._dialog.openFrameDialog({
-          title: 'Configuration Upgrade',
+          title: 'Upgrade Instructions',
           component: 'upgrade-config',
         }, true).subscribe(data => {
           if (!data) {return} //clicked cancel
