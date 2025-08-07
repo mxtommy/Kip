@@ -6,10 +6,11 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 ## How to use the Data Inspector
 1. **Filter Paths**:
-   - Use the filter input box to narrow down the list of paths. For example:
+   - Use the filter input box to narrow down the list of paths using any part of the path, source or value. For example:
      - Type `self.` to view paths related to your vessel.
      - Type `environment` to view environmental data like wind or temperature.
      - Type `speed` to view any speed related data like wind speed, max speed, polar speed, etc.
+     - Type `derived` to view all path from source derived-data .
 
 2. **Sort and Navigate**:
    - Click on column headers to sort the data by Path, PUT Support, or Source.
