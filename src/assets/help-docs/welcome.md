@@ -3,8 +3,8 @@ KIP supports multiple input modes for seamless navigation across devices.
 
 | Actions                    | Touch         | Mouse                        | Keyboard Shortcuts                                 |
 |----------------------------|--------------|------------------------------|----------------------------------------------------|
-| Open Actions menu          | Swipe left    | Click, drag left, and release| <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>→</kbd> (Right Arrow) |
-| Open Notification menu     | Swipe right   | Click, drag right, and release| <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>←</kbd> (Left Arrow)  |
+| Open Actions menu          | Swipe left    | Click, drag left, and release| <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>←</kbd> (Left Arrow) |
+| Open Notification menu     | Swipe right   | Click, drag right, and release| <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>→</kbd> (Right Arrow)  |
 | Cycle through dashboards   | Swipe up/down | Click, drag up/down, and release| <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>↑</kbd>/<kbd>↓</kbd> (Up/Down Arrow) |
 | Toggle Fullscreen          | N/A           | N/A                          | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd>  |
 | Toggle Night mode          | N/A           | N/A                          | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>N</kbd>  |
