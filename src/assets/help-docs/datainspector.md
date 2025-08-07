@@ -23,7 +23,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 2. **PUT Support**:
    - You can see if a path supports PUT operations, indicated by a green checkmark in the **PUT Support** column.
-   - For more details on PUT support and how to use it, refer to the Updating Signal K Data Guide.
+   - For more details on PUT support and how to use it, refer to the **Updating Signal K Data** help documentation.
 
 3. **Multiple Data Sources**:
    - The Data Inspector displays how many sources are providing data for each path.
@@ -43,7 +43,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
   - Check if a path supports PUT operations before configuring widgets like the Switch Panel or Slider.
 
 - **Troubleshoot Data Issues**:
-  - The Data Inspector is a good troubleshooting tool, but it should be matched with the Signal K Data Browser when trying to understand raw data and what is going on. The combination of these tools provides a more complete picture of the data and its behavior.
+  - The Data Inspector is a good troubleshooting tool, but it should be matched with the Signal K Data Browser when trying to understand raw data and what is going on. The combination of these tools provides a more complete picture of the data, it's processing and its behavior.
 
 ## Summary
 
