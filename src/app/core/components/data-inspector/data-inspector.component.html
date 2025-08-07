@@ -2,7 +2,7 @@
 <div class="data-inspector-container">
   <mat-form-field class="filter-field">
     <mat-label>Filter</mat-label>
-    <input matInput (keyup)="applyFilter($event)" placeholder="Ex: navigation" value="self." #input>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Type any part of the path, source or value..." value="" #input>
   </mat-form-field>
 
   <mat-table class="table-content-area mat-elevation-z8" [dataSource]="tableData" [trackBy]="trackByPath" matSort matSortActive="path" matSortDirection="asc">
