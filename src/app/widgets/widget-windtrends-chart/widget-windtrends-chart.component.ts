@@ -22,7 +22,8 @@ interface IChartColors {
 }
 interface IDataSetRow {
   x: number,
-  y: number
+  y: number,     // age in ms (computed each update), or temporary ts at insert
+  ts?: number    // original timestamp in ms, used to recompute age
 }
 
 @Component({
@@ -181,36 +182,41 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
     this.lineChartOptions.scales = {
       y: {
-        type: "time",
+        type: "linear",
         display: true,
         position: "right",
+        reverse: true, // 0 (now) at top; older increases downward
         title: {
           display: true,
           text: `${this.datasetConfig.timeScaleFormat}`,
           align: "center"
         },
-        time: {
-          minUnit: "second",
-          displayFormats: {
-            // eslint-disable-next-line no-useless-escape
-            hour: `k:mm\''`,
-            // eslint-disable-next-line no-useless-escape
-            minute: `mm\''`,
-            second: `ss"`,
-            millisecond: "SSS"
-          },
-        },
         ticks: {
-          maxTicksLimit: 6,
+          count: 7,            // 7 lines including start/end
           autoSkip: false,
           includeBounds: true,
           align: 'inner',
-          major: {
-            enabled: true
-          },
-          font: {
-            size: 16,
-          },
+          major: { enabled: true },
+          font: { size: 16 },
+          callback: (value: number) => {
+            const ms = Number(value);
+            const fmt = this.datasetConfig?.timeScaleFormat;
+            const windowMs = this.getWindowMs(fmt);
+            // Special formatting for 5-minute scale: mm:ss
+            if (fmt === 'Last 5 Minutes') {
+              const m = Math.floor(ms / 60_000);
+              const s = Math.round((ms % 60_000) / 1000);
+              const ss = s.toString().padStart(2, '0');
+              return `${m}:${ss}`;
+            }
+            // >= 10 minutes → minutes; else seconds
+            if (windowMs >= 10 * 60_000) {
+              const m = Math.round(ms / 60_000);
+              return `${m}'`;
+            }
+            const s = Math.round(ms / 1000);
+            return `${s}"`;
+          }
         },
         grid: {
           display: true,
@@ -257,22 +263,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         },
         grid: {
           display: true,
-          color: (ctx) => {
-            const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
-            const center = this.xCenter ?? Number.NaN;
-            const step = this.xStep ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
-            const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
-            return isCenter ? this.theme().contrast : this.theme().contrastDimmer;
-          },
-          lineWidth: (ctx) => {
-            const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
-            const center = this.xCenter ?? Number.NaN;
-            const step = this.xStep ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
-            const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
-            return isCenter ? 4 : 1;
-          }
+          color: this.theme().contrastDimmer,
+          lineWidth: 1
         }
       }
     };
@@ -504,7 +496,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     // Map back to rows, skipping nulls
     return rows.map((row, idx) => ({
       x: unwrapped[idx],
-      y: row.timestamp
+      y: row.timestamp, // temporarily store timestamp; converted to age in updateChartAfterDataChange
+      ts: row.timestamp,
     }));
   }
 
@@ -540,14 +533,41 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   this.xCenter = (xMin + xMax) / 2;
   this.xStep = step;
 
-    // Update dynamic y axis time range
-    const yData = this.chart.data.datasets[0].data;
-    if (yData.length > 0) {
-      this.chart.options.scales.y.min = yData[0].y;
-      this.chart.options.scales.y.max = yData[yData.length - 1].y;
+    // Fixed, non-scrolling y-axis window (relative age)
+    const windowMs = this.getWindowMs(this.datasetConfig?.timeScaleFormat);
+    const data0 = this.chart.data.datasets[0].data as (IDataSetRow[]);
+    if (data0.length > 0) {
+      const lastTs = data0[data0.length - 1]?.ts ?? data0[data0.length - 1]?.y;
+      // Recompute y for all datasets as age (ms) relative to lastTs
+      this.chart.data.datasets.forEach(ds => {
+        (ds.data as IDataSetRow[]).forEach(p => {
+          const ts = p.ts ?? p.y;
+          p.y = Math.max(0, Math.min(windowMs, (lastTs as number) - ts));
+        });
+      });
+      // Lock y scale to [0, window]
+      this.chart.options.scales.y.min = 0;
+      this.chart.options.scales.y.max = windowMs;
+      // 7 ticks => 6 intervals
+      const step = windowMs / 6;
+      const yScale = this.chart.options.scales as unknown as { y: { ticks?: { stepSize?: number } } };
+      yScale.y.ticks = { ...(yScale.y.ticks ?? {}), stepSize: step };
     }
 
   // removed annotation averageLine updates
+  }
+
+  private getWindowMs(fmt: TimeScaleFormat | undefined): number {
+    switch (fmt) {
+      case 'Last 30 Minutes':
+        return 30 * 60_000;
+      case 'Last 5 Minutes':
+        return 5 * 60_000;
+      case 'Last Minute':
+        return 60_000;
+      default:
+        return 60_000; // fallback 1 minute
+    }
   }
 
   private lineGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
