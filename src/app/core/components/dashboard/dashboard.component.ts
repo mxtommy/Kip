@@ -39,6 +39,7 @@ import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-sli
 import { ActivatedRoute, Router } from '@angular/router';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { DatasetService } from '../../services/data-set.service';
+import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 
 
 @Component({
@@ -95,7 +96,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetRacesteerComponent,
       WidgetPositionComponent,
       WidgetLabelComponent,
-      WidgetSliderComponent
+      WidgetSliderComponent,
+      WidgetWindTrendsChartComponent
     ]);
   }
 
@@ -279,9 +281,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
     this._gridstack().grid.removeWidget(item);
 
-    if (ngNode.selector === 'widget-numeric-chart') {
-      // Perform any specific cleanup or actions for numeric chart widgets
-      this._dataset.remove(ngNode.id);
+    switch (ngNode.selector) {
+      case 'widget-numeric-chart':
+      case 'widget-windtrends-chart': {
+        // Perform any specific cleanup or actions for dataset enabled widgets
+        const allDatasets = this._dataset.list() as { uuid: string }[];
+        const toRemove = allDatasets?.filter(ds => ds.uuid === ngNode.id || ds.uuid?.startsWith(`${ngNode.id}-`)) || [];
+        toRemove.forEach(ds => this._dataset.remove(ds.uuid));
+        break;
+      }
     }
   }
 

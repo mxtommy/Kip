@@ -1,12 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { SignalkPluginsService } from './signalk-plugins.service';
 
-export const WIDGET_CATEGORIES = ['Basic', 'Gauges', 'Components'] as const;
+export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
 export enum WidgetCategories {
-  Basic = "Basic",
-  Gauges = "Gauges",
-  Components = "Components"
+  Core = "Core",
+  Gauge = "Gauge",
+  Component = "Component",
+  Racing = "Racing"
 }
 export interface WidgetDescription {
   /**
@@ -72,7 +73,7 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 })
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
-  private readonly _widgetCategories = ["Basic", "Gauges", "Components"];
+  private readonly _widgetCategories = ["Core", "Gauge", "Component", "Racing"];
   private readonly _widgetDefinition: WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -82,7 +83,7 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
+      category: 'Core',
       pluginDependency: [],
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
@@ -95,7 +96,7 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
+      category: 'Core',
       pluginDependency: [],
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
@@ -108,7 +109,7 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
+      category: 'Core',
       pluginDependency: [],
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
@@ -121,10 +122,23 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
+      category: 'Core',
       pluginDependency: [],
       selector: 'widget-position',
       componentClassName: 'WidgetPositionComponent',
+    },
+    {
+      name: 'Static Label',
+      description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
+      icon: 'labelWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Core',
+      pluginDependency: [],
+      selector: 'widget-label',
+      componentClassName: 'WidgetLabelComponent'
     },
     {
       name: 'Switch Panel',
@@ -134,7 +148,7 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
+      category: 'Core',
       pluginDependency: [],
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
@@ -147,33 +161,20 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
+      category: 'Core',
       pluginDependency: [],
       selector: 'widget-slider',
       componentClassName: 'WidgetSliderComponent'
     },
     {
-      name: 'Static Label',
-      description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
-      icon: 'labelWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
-      selector: 'widget-label',
-      componentClassName: 'WidgetLabelComponent'
-    },
-    {
-      name: "Simple Linear",
+      name: "Compact Linear",
       description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
       icon: 'simpleLinearGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
+      category: 'Gauge',
       pluginDependency: [],
       selector: 'widget-simple-linear',
       componentClassName: 'WidgetSimpleLinearComponent'
@@ -186,7 +187,7 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
+      category: 'Gauge',
       pluginDependency: [],
       selector: 'widget-gauge-ng-linear',
       componentClassName: 'WidgetGaugeNgLinearComponent'
@@ -199,7 +200,7 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
+      category: 'Gauge',
       pluginDependency: [],
       selector: 'widget-gauge-ng-radial',
       componentClassName: 'WidgetGaugeNgRadialComponent'
@@ -212,20 +213,20 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
+      category: 'Gauge',
       pluginDependency: [],
       selector: 'widget-gauge-ng-compass',
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
     {
-      name: 'Steel Style',
+      name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
+      category: 'Gauge',
       pluginDependency: [],
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
@@ -238,23 +239,10 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Components',
+      category: 'Component',
       pluginDependency: [],
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
-    },
-    {
-      name: 'Racesteer',
-      description: 'A dynamic race steering display that fuses polar performance data with live environmental conditions, guiding you to the optimal steering, tacking, and gybing angles for maximum speed. Instantly see how your performance stacks up against competition polars, helping you make smarter tactical decisions on the water.',
-      icon: 'racesteeringWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: ['signalk-polar-performance-plugin'],
-      selector: 'widget-racesteer',
-      componentClassName: 'WidgetRacesteerComponent'
     },
     {
       name: 'Freeboard-SK',
@@ -264,23 +252,10 @@ export class WidgetService {
       minHeight: 4,
       defaultWidth: 3,
       defaultHeight: 7,
-      category: 'Components',
-      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider' ],
+      category: 'Component',
+      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider'],
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
-    },
-    {
-      name: 'Data Chart',
-      description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
-      icon: 'datachartWidget',
-      minWidth: 1,
-      minHeight: 2,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: [],
-      selector: 'widget-data-chart',
-      componentClassName: 'WidgetDataChartComponent'
     },
     {
       name: 'Autopilot Head',
@@ -290,23 +265,49 @@ export class WidgetService {
       minHeight: 7,
       defaultWidth: 2,
       defaultHeight: 7,
-      category: 'Components',
+      category: 'Component',
       pluginDependency: ['autopilot'],
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
     {
-      name: 'Countdown Timer',
-      description: 'A simple race start countdown timer. The timer can be started, paused, synched, reset and the countdown duration specified.',
-      icon: 'racetimerWidget',
-      minWidth: 3,
-      minHeight: 3,
-      defaultWidth: 3,
-      defaultHeight: 4,
-      category: 'Components',
+      name: 'Realtime Data Chart',
+      description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
+      icon: 'datachartWidget',
+      minWidth: 1,
+      minHeight: 2,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Component',
       pluginDependency: [],
-      selector: 'widget-racetimer',
-      componentClassName: 'WidgetRaceTimerComponent',
+      selector: 'widget-data-chart',
+      componentClassName: 'WidgetDataChartComponent'
+    },
+    {
+      name: 'Embed Webpage Viewer',
+      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not enabled by default but are supported.',
+      icon: 'embedWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Component',
+      pluginDependency: [],
+      selector: 'widget-iframe',
+      componentClassName: 'WidgetIframeComponent',
+    },
+    {
+      name: 'Racesteer',
+      description: 'A dynamic race steering display that fuses polar performance data with live environmental conditions, guiding you to the optimal steering, tacking, and gybing angles for maximum speed. Instantly see how your performance stacks up against competition polars, helping you make smarter tactical decisions on the water.',
+      icon: 'racesteeringWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Racing',
+      pluginDependency: ['signalk-polar-performance-plugin'],
+      selector: 'widget-racesteer',
+      componentClassName: 'WidgetRacesteerComponent'
     },
     {
       name: 'Racer - Start Line Insight',
@@ -317,7 +318,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 2,
       pluginDependency: ['signalk-racer'],
-      category: 'Components',
+      category: 'Racing',
       selector: 'widget-racer-line',
       componentClassName: 'WidgetRacerLineComponent',
     },
@@ -330,35 +331,35 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 2,
       pluginDependency: ['signalk-racer'],
-      category: 'Components',
+      category: 'Racing',
       selector: 'widget-racer-timer',
       componentClassName: 'WidgetRacerTimerComponent',
     },
     {
-      name: 'Embed Webpage Viewer',
-      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not enabled by default but are supported.',
-      icon: 'embedWidget',
-      minWidth: 1,
-      minHeight: 1,
+      name: 'Wind Trends',
+      description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (kts). Displays live values and SMA over the current period’s average.',
+      icon: 'windtrendsWidget',
+      minWidth: 5,
+      minHeight: 4,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Components',
+      category: 'Racing',
       pluginDependency: [],
-      selector: 'widget-iframe',
-      componentClassName: 'WidgetIframeComponent',
+      selector: 'widget-windtrends-chart',
+      componentClassName: 'WidgetWindTrendsChartComponent'
     },
     {
-      name: "Tutorial",
-      description: "KIP's getting started tutorial widget.",
-      icon: 'tutorialWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
+      name: 'Countdown Timer',
+      description: 'A simple race start countdown timer. The timer can be started, paused, synched, reset and the countdown duration specified.',
+      icon: 'racetimerWidget',
+      minWidth: 3,
+      minHeight: 3,
+      defaultWidth: 3,
+      defaultHeight: 4,
+      category: 'Racing',
       pluginDependency: [],
-      selector: 'widget-tutorial',
-      componentClassName: 'WidgetTutorialComponent',
+      selector: 'widget-racetimer',
+      componentClassName: 'WidgetRaceTimerComponent',
     }
   ];
 

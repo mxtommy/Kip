@@ -16,7 +16,7 @@ export class WidgetsListComponent implements OnInit {
   protected _widgets = inject(WidgetService);
   private _widgetsList: WidgetDescriptionWithPluginStatus[] = [];
   protected filteredWidgetsList = signal<WidgetDescriptionWithPluginStatus[]>([]);
-  protected _widgetCategory = signal<string>("Basic");
+  protected _widgetCategory = signal<string>("Core");
   protected isDependencyValid = signal<boolean>(true);
 
   ngOnInit(): void {

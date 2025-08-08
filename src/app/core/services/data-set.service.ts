@@ -20,7 +20,7 @@ export interface IDatasetServiceDatapoint {
   }
 }
 
-type TimeScaleFormat = "hour" | "minute" | "second";
+export type TimeScaleFormat = "hour" | "minute" | "second" | "Last Minute" | "Last 5 Minutes" | "Last 30 Minutes";
 
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
@@ -49,6 +49,9 @@ interface IDatasetServiceObserverRegistration {
   rxjsSubject: ReplaySubject<IDatasetServiceDatapoint>;
 }
 
+// How to interpret angular (radian) data
+type AngleDomain = 'scalar' | 'direction' | 'signed';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -59,6 +62,18 @@ export class DatasetService {
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
+
+  // List of Signal K paths that should be interpreted as signed angles (-π, π].
+  // Add your specific paths here. All other radian paths will default to direction domain [0, 2π).
+  private readonly signedAnglePaths = new Set<string>([
+    "self.navigation.attitude.roll",
+    "self.navigation.attitude.pitch",
+    "self.navigation.attitude.yaw",
+    "self.environment.wind.angleApparent",
+    "self.environment.wind.angleTrueGround",
+    "self.environment.wind.angleTrueWater",
+    "self.steering.rudderAngle"
+  ]);
 
   constructor() {
     const appSettings = this.appSettings;
@@ -102,9 +117,27 @@ export class DatasetService {
     }
 
     switch (dsConf.timeScaleFormat) {
+      case "Last 30 Minutes":
+        newDataSourceConfiguration.maxDataPoints = 120; // 30 min * sampleTime
+        newDataSourceConfiguration.sampleTime = 15000; // 15 seconds
+        newDataSourceConfiguration.smoothingPeriod = 50; // moving average points to use
+        break;
+
+      case "Last 5 Minutes":
+        newDataSourceConfiguration.maxDataPoints = 60; // 5 min * sampleTime
+        newDataSourceConfiguration.sampleTime = 5000; // 5 seconds
+        newDataSourceConfiguration.smoothingPeriod = 25; // moving average points to use
+        break;
+
+      case "Last Minute":
+        newDataSourceConfiguration.maxDataPoints = 60; // 1 min * sampleTime
+        newDataSourceConfiguration.sampleTime = 1000; // 1 second
+        newDataSourceConfiguration.smoothingPeriod = 25; // moving average points to use
+        break;
+
       case "hour":
-        newDataSourceConfiguration.maxDataPoints = dsConf.period * 60; // hours * 60 min
-        newDataSourceConfiguration.sampleTime = 60000; // 1 minute
+        newDataSourceConfiguration.maxDataPoints = dsConf.period * 120; // hours * 60 min
+        newDataSourceConfiguration.sampleTime = 30000; // 30 seconds
         newDataSourceConfiguration.smoothingPeriod = Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor); // moving average points to use
         break;
 
@@ -119,6 +152,11 @@ export class DatasetService {
         newDataSourceConfiguration.sampleTime = 200;
         newDataSourceConfiguration.smoothingPeriod = Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor); // moving average points to use
         break;
+    }
+
+    // Enforce minimum of 1 for maxDataPoints to prevent infinite size array
+    if (!newDataSourceConfiguration.maxDataPoints || newDataSourceConfiguration.maxDataPoints < 1) {
+      newDataSourceConfiguration.maxDataPoints = 1;
     }
 
     return newDataSourceConfiguration;
@@ -171,7 +209,10 @@ export class DatasetService {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
-    // Subscribe to path data, update historicalData/stats and sends new values to Observers
+  // Decide how to interpret the dataset values (scalar vs radian domains)
+  const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+
+  // Subscribe to path data, update historicalData/stats and sends new values to Observers
     dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
       (newValue: IPathUpdate) => {
         if (newValue.data.value === null) return; // we don't need null values
@@ -183,7 +224,7 @@ export class DatasetService {
         dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
-        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit);
+  const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
       }
@@ -247,6 +288,8 @@ export class DatasetService {
    * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
+   * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
+   * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
@@ -265,7 +308,7 @@ export class DatasetService {
       editable: editable
     };
 
-    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'minichart '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
+    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 
@@ -402,148 +445,129 @@ export class DatasetService {
    * @return {*}  {IDatasetServiceDatapoint} A new historicalData object. Note: push() the object to the historicalData to
    * @memberof DatasetService
    */
-  private updateDataset(ds: IDatasetServiceDataSource, unit: string): IDatasetServiceDatapoint {
+  private updateDataset(ds: IDatasetServiceDataSource, unit: string, domain: AngleDomain = 'scalar'): IDatasetServiceDatapoint {
     let avgCalc: number = null;
     let smaCalc: number = null;
+    let minCalc: number = null;
+    let maxCalc: number = null;
 
-    switch (unit) {
-      case "rad":
-        avgCalc = calculateDirectionalAverage(ds.historicalData);
-        smaCalc = calculateDirectionalSMA(ds.historicalData, ds.smoothingPeriod)
-        break;
+    if (unit === "rad") {
+      // Circular statistics for angles
+      avgCalc = this.circularMeanRad(ds.historicalData);
+      const window = ds.historicalData.slice(-ds.smoothingPeriod);
+      smaCalc = this.circularMeanRad(window);
+      const { min, max } = this.circularMinMaxRad(ds.historicalData);
 
-      default:
-        avgCalc = calculateAverage(ds.historicalData);
-        smaCalc = calculateSMA(ds.historicalData, ds.smoothingPeriod);
-        break;
+      // Normalize outputs to requested domain
+      if (domain === 'direction') {
+        avgCalc = this.normalizeToDirection(avgCalc);
+        smaCalc = this.normalizeToDirection(smaCalc);
+        minCalc = this.normalizeToDirection(min);
+        maxCalc = this.normalizeToDirection(max);
+      } else if (domain === 'signed') {
+        avgCalc = this.normalizeToSigned(avgCalc);
+        smaCalc = this.normalizeToSigned(smaCalc);
+        minCalc = this.normalizeToSigned(min);
+        maxCalc = this.normalizeToSigned(max);
+      } else {
+        // Fallback: treat as scalar (shouldn't happen for unit==='rad')
+        minCalc = min;
+        maxCalc = max;
+      }
+    } else {
+      // Arithmetic statistics for scalars
+      avgCalc = calculateAverage(ds.historicalData);
+      smaCalc = calculateSMA(ds.historicalData, ds.smoothingPeriod);
+      minCalc = Math.min(...ds.historicalData);
+      maxCalc = Math.max(...ds.historicalData);
     }
 
     const newDatapoint: IDatasetServiceDatapoint = {
       timestamp: Date.now(),
       data: {
-        value: ds.historicalData[ds.historicalData.length - 1],
+        value: unit === 'rad'
+          ? (domain === 'signed'
+              ? this.normalizeToSigned(ds.historicalData[ds.historicalData.length - 1])
+              : this.normalizeToDirection(ds.historicalData[ds.historicalData.length - 1]))
+          : ds.historicalData[ds.historicalData.length - 1],
         sma: smaCalc,
         ema: null,
         doubleEma: null,
         lastAverage: avgCalc,
-        lastMinimum: Math.min(...ds.historicalData),
-        lastMaximum: Math.max(...ds.historicalData)
+        lastMinimum: minCalc,
+        lastMaximum: maxCalc
       }
     };
 
     return newDatapoint;
 
     function calculateAverage(arr: number[]): number | null {
-      if (arr.length === 0) {
-          return null; // Handle empty array case
-      }
-
+      if (arr.length === 0) return null;
       const sum = arr.reduce((acc, val) => acc + val, 0);
       return sum / arr.length;
     }
 
-    function calculateDirectionalAverage(radianValues: number[]): number {
-      // Convert radians to unit vectors
-      const unitVectors = radianValues.map(rad => [Math.cos(rad), Math.sin(rad)]);
-
-      // Calculate weighted sum of unit vectors
-      const sumVector = unitVectors.reduce(
-          (acc, vec) => [acc[0] + vec[0], acc[1] + vec[1]],
-          [0, 0]
-      );
-
-      // Normalize the sum vector
-      const magnitude = Math.sqrt(sumVector[0] * sumVector[0] + sumVector[1] * sumVector[1]);
-      const normalizedVector = [sumVector[0] / magnitude, sumVector[1] / magnitude];
-
-      // Calculate average direction in radians
-      let averageRad = Math.atan2(normalizedVector[1], normalizedVector[0]);
-
-      // Handle wrap-around issues
-      // averageRad = (averageRad + 2 * Math.PI) % (2 * Math.PI); // Adjust to [0, 2π)
-      averageRad = (averageRad + Math.PI) % (2 * Math.PI) - Math.PI;
-
-      return averageRad;
-    }
-
     function calculateSMA(values: number[], windowSize: number): number {
-      // Check if the array size is smaller than the window size
-      if (values.length < windowSize) {
-          windowSize = values.length;
-      }
-
-      // Calculate the SMA
+      if (values.length < windowSize) windowSize = values.length;
       let sum = 0;
       for (let i = values.length - windowSize; i < values.length; i++) {
-          sum += values[i];
+        sum += values[i];
       }
       return sum / windowSize;
     }
+  }
 
-    function calculateDirectionalSMA(radianValues: number[], windowSize: number): number {
-      if (radianValues.length === 0) {
-        return 0; // Handle empty array case
+  // Windowed circular mean (for SMA)
+  private circularMeanRad(anglesRad: number[]): number {
+    if (anglesRad.length === 0) return 0;
+    const sumSin = anglesRad.reduce((sum, a) => sum + Math.sin(a), 0);
+    const sumCos = anglesRad.reduce((sum, a) => sum + Math.cos(a), 0);
+    return Math.atan2(sumSin / anglesRad.length, sumCos / anglesRad.length);
+  }
+
+  // Circular min/max: returns the smallest arc containing all points
+  private circularMinMaxRad(anglesRad: number[]): { min: number, max: number } {
+    if (anglesRad.length === 0) return { min: 0, max: 0 };
+    const degAngles = anglesRad.map(a => ((a * 180 / Math.PI) + 360) % 360).sort((a, b) => a - b);
+    let maxGap = 0;
+    let minIdx = 0;
+    for (let i = 0; i < degAngles.length; i++) {
+      const next = (i + 1) % degAngles.length;
+      const gap = (degAngles[next] - degAngles[i] + 360) % 360;
+      if (gap > maxGap) {
+        maxGap = gap;
+        minIdx = next;
       }
-
-      // Adjust window size if array length is smaller
-      const actualWindowSize = Math.min(windowSize, radianValues.length);
-
-      // Calculate the sum of radian values within the window
-      let sum = 0;
-      for (let i = radianValues.length - actualWindowSize; i < radianValues.length; i++) {
-        sum += radianValues[i];
-      }
-
-      // Calculate the simple moving average
-      const sma = sum / actualWindowSize;
-
-      // Handle wrap-around for wind direction averages
-      const adjustedSMA = (sma + Math.PI) % (2 * Math.PI) - Math.PI;
-
-      return adjustedSMA;
     }
+    // Convert back to radians
+    const min = degAngles[minIdx] * Math.PI / 180;
+    const max = degAngles[(minIdx - 1 + degAngles.length) % degAngles.length] * Math.PI / 180;
+    return { min, max };
+  }
 
-    /**
-     * Double Exponential Moving Average (DEMA) calculation
-     *
-     * @param {IDatasetServiceDatapoint[]} ds The current historicalData array
-     * @param {number} ema1 The new historicalData's calculated ema
-     * @param {number} smoothingPeriod The historicalData configuration smoothingPeriod
-     * @return {*}  {number} The DEMA value
-     */
-    // function calculateDEMA(ds: IDatasetServiceDatapoint[], ema1: number, smoothingPeriod: number): number {
-    //   //  Check for min available periods
-    //   if (ds.length < smoothingPeriod) {
-    //     console.log("[Dataset Service] Insufficient data for the given smoothingPeriod to calculate DEMA.");
-    //     return;
-    //   }
+  // Domain resolution helpers
+  private resolveAngleDomain(path: string, unit: string): AngleDomain {
+    if (unit !== 'rad') return 'scalar';
+    const incoming = this.normalizePathKey(path);
+    for (const candidate of this.signedAnglePaths) {
+      if (incoming === this.normalizePathKey(candidate)) {
+        return 'signed';
+      }
+    }
+    return 'direction';
+  }
 
-    //   const smoothingFactor = 2 / (1 + smoothingPeriod);
-
-    //   // Calculate the second EMA (EMA2) of the EMA1 values
-    //   let ema2 = (ema1 * smoothingFactor) + (ds[ds.length - 1].data.ema * (1 - smoothingFactor));
-
-    //   // Calculate and return the DEMA
-    //   return (2 * ema1) - ema2;
-    // }
-
-    /**
-     * Exponential Moving Average (EMA) calculation
-     *
-     * @param {IDatasetServiceDatapoint[]} ds The new historicalData's calculated ema
-     * @param {number} currentValue The new historicalData's value
-     * @param {number} smoothingPeriod The historicalData configuration smoothingPeriod
-     * @return {*}  {number} The EMA value
-     */
-    // function calculateEMA(ds: IDatasetServiceDatapoint[], currentValue: number, smoothingPeriod: number): number {
-    //   if (ds.length < smoothingPeriod) {
-    //     console.log("[Dataset Service] Insufficient data for the given smoothingPeriod to calculate EMA.");
-    //     return;
-    //   }
-    //   const smoothingFactor = 2 / (1 + smoothingPeriod);
-
-    //   // Calculate and return EMA
-    //   return (currentValue * smoothingFactor) + (ds[ds.length - 1].data.sma * (1 - smoothingFactor));
-    // }
+  // Angle normalization helpers
+  private normalizePathKey(path: string): string {
+    return path.replace(/^vessels\.self\./, '').replace(/^self\./, '');
+  }
+  private mod(a: number, n: number): number { return ((a % n) + n) % n; }
+  private normalizeToDirection(rad: number): number {
+    const twoPi = 2 * Math.PI;
+    return this.mod(rad, twoPi); // [0, 2π)
+  }
+  private normalizeToSigned(rad: number): number {
+    const twoPi = 2 * Math.PI;
+    return this.mod(rad + Math.PI, twoPi) - Math.PI; // (-π, π]
   }
 }

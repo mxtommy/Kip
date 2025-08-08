@@ -204,6 +204,8 @@ export interface IWidgetSvcConfig {
   datasetUUID?: string;
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
+  /** Used by windtrend chart Widget to set datapoint configuration */
+  timeScale?: string;
   /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
   trackAgainstAverage?: boolean;
   /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */

@@ -146,6 +146,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         y: {
           type: "time",
           display: this.widgetProperties.config.showTimeScale,
+          position:  this.widgetProperties.config.verticalChart ? "right" : "left",
           suggestedMin: "",
           suggestedMax: "",
           title: {
@@ -181,7 +182,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         x: {
           type: "linear",
           display: this.widgetProperties.config.showYScale,
-          position: "bottom",
+          position:  this.widgetProperties.config.verticalChart ? "top" : "bottom",
           suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
           suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
           min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
@@ -273,38 +274,38 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     }
 
     this.lineChartOptions.plugins = {
-      subtitle: {
-        display: this.widgetProperties.config.showLabel,
-        align: "start",
-        padding: {
-          top: -31,
-          bottom: 4
-        },
-        text: `  ${this.widgetProperties.config.displayName}`,
-        font: {
-          size: 14,
-        },
-        color: this.getThemeColors().chartLabel
-      },
       title: {
         display: true,
         align: "end",
         padding: {
-          top: 6,
-          bottom: 10
+          top: 3,
+          bottom: 0
         },
         text: "",
         font: {
-          size: 22,
+          size: 32,
 
         },
         color: this.getThemeColors().chartValue
+      },
+      subtitle: {
+        display: this.widgetProperties.config.showLabel,
+        align: "start",
+        padding: {
+          top: -35,
+          bottom: 20
+        },
+        text: `  ${this.widgetProperties.config.displayName}`,
+        font: {
+          size: 22,
+        },
+        color: this.getThemeColors().chartLabel
       },
       annotation : {
         annotations: {
           minimumLine: {
             type: 'line',
-            scaleID: 'y',
+            scaleID: this.widgetProperties.config.verticalChart ? 'x' : 'y',
             display: this.widgetProperties.config.showDatasetMinimumValueLine,
             value: null,
             drawTime: 'afterDatasetsDraw',
@@ -319,7 +320,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           },
           maximumLine: {
             type: 'line',
-            scaleID: 'y',
+            scaleID: this.widgetProperties.config.verticalChart ? 'x' : 'y',
             display: this.widgetProperties.config.showDatasetMaximumValueLine,
             value: null,
             drawTime: 'afterDatasetsDraw',
@@ -334,7 +335,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
           },
           averageLine: {
             type: 'line',
-            scaleID: 'y',
+            scaleID: this.widgetProperties.config.verticalChart ? 'x' : 'y',
             display: this.widgetProperties.config.showDatasetAverageValueLine,
             value: null,
             borderDash: [6, 6],
