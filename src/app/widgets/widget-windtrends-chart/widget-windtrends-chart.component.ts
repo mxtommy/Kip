@@ -109,7 +109,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.font = `bold 22px ${def.family}`;
-        ctx.fillText('Data aquisition in progress...', x + boxW / 2, y + boxH / 2);
+        ctx.fillText('Data acquisition in progress...', x + boxW / 2, y + boxH / 2);
         ctx.restore();
         return; // Skip other drawings until ready
       }
