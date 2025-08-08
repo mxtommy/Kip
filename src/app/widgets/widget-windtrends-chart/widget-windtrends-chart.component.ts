@@ -33,7 +33,6 @@ interface IDataSetRow {
   styleUrl: './widget-windtrends-chart.component.scss'
 })
 export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly _dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
   private readonly _dataset = inject(DatasetService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
@@ -44,8 +43,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     parsing: false,
     datasets: {
       line: {
-        pointRadius: 0, // disable for all `'line'` datasets
-        pointHoverRadius: 0, // disable for all `'line'` datasets
+        pointRadius: 0,
+        pointHoverRadius: 0,
         tension:  0.3,
       }
     },
@@ -78,7 +77,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         }
       }
     });
-    }
+  }
 
   ngOnInit(): void {
     this.validateConfig();
@@ -87,11 +86,12 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
   ngAfterViewInit(): void {
     this.startWidget();
+    this.testSimulateCrossingZero();
   }
 
   protected startWidget(): void {
-    this.datasetConfig = this._dsService.getDatasetConfig(this.widgetProperties.uuid);
-    this.dataSourceInfo = this._dsService.getDataSourceInfo(this.widgetProperties.uuid);
+    this.datasetConfig = this._dataset.getDatasetConfig(this.widgetProperties.uuid);
+    this.dataSourceInfo = this._dataset.getDataSourceInfo(this.widgetProperties.uuid);
 
     if (this.datasetConfig) {
       this.createDatasets();
@@ -109,7 +109,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         });
       }
 
-      this.startStreaming();
+      //this.startStreaming();
     }
   }
 
@@ -182,22 +182,16 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         type: "linear",
         position: "top",
         beginAtZero: false,
-        min: 0,
-        max: 360,
-        title: {
-          display: false
-         },
+        // min/max will be set dynamically in updateChartAfterDataChange
+        title: { display: false },
         ticks: {
-          callback: (value: number) => ((value + 360) % 360).toFixed(0), // wrap-around formatting
-          count: 2,
-          font: {
-            size: 20,
-          },
+          callback: (value: number) => ((value % 360 + 360) % 360).toFixed(0), // show wrapped angle
+          font: { size: 20 },
         },
         grid: {
           display: true,
           color: this.theme().contrastDimmer
-         }
+        }
       }
     };
 
@@ -205,28 +199,17 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       title: {
         display: true,
         align: "center",
-        padding: {
-          top: -3,
-          bottom: -20
-        },
+        padding: { top: -3, bottom: -20 },
         text: "",
-        font: {
-          size: 62,
-
-        },
+        font: { size: 62 },
         color: this.getThemeColors().chartValue
       },
       subtitle: {
         display: true,
         align: "start",
-        padding: {
-          top: -45,
-          bottom: 10
-        },
+        padding: { top: -45, bottom: 10 },
         text: `  TWD`,
-        font: {
-          size: 28
-        },
+        font: { size: 28 },
         color: this.getThemeColors().chartLabel
       },
       annotation : {
@@ -245,9 +228,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
               display: true,
               position: "start",
               padding: 8,
-              font: {
-                size: 22,
-              },
+              font: { size: 22 },
               color: this.getThemeColors().chartValue,
               backgroundColor: 'rgba(63,63,63,1)',
               drawTime: 'afterDatasetsDraw',
@@ -255,9 +236,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           }
         }
       },
-      legend: {
-        display: false
-      }
+      legend: { display: false }
     }
   }
 
@@ -288,7 +267,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         pointHoverRadius: 0,
         pointHitRadius: 0,
         borderWidth: 10,
-        fill: false, // Will be set dynamically based on lastAverage
+        fill: false,
         borderColor: (context) => {
           const chart = context.chart;
           const { ctx, chartArea, data } = chart;
@@ -340,13 +319,117 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     this.setDatasetsColors();
   }
 
+public testSimulateCrossingZero(): void {
+  const testData: IDatasetServiceDatapoint[] = [
+    { timestamp: 1, data: { value: 6.1959, sma: 6.1959, lastAverage: 6.1959, lastMinimum: 6.1959, lastMaximum: 6.1959 } }, // ~355°
+    { timestamp: 2, data: { value: 6.2483, sma: 6.2483, lastAverage: 6.2221, lastMinimum: 6.1959, lastMaximum: 6.2483 } }, // ~358°
+    { timestamp: 3, data: { value: 0.0175, sma: 0.0175, lastAverage: 0.0175, lastMinimum: 0.0175, lastMaximum: 0.0175 } }, // ~1°
+    { timestamp: 4, data: { value: 0.0524, sma: 0.0524, lastAverage: 0.0349, lastMinimum: 0.0175, lastMaximum: 0.0524 } }, // ~3°
+    { timestamp: 5, data: { value: 0.0873, sma: 0.0873, lastAverage: 0.0524, lastMinimum: 0.0175, lastMaximum: 0.0873 } }, // ~5°
+  ];
+
+  this.createDatasets();
+  this.pushRowsToDatasets(testData);
+  this.updateChartAfterDataChange();
+  this.ngZone.runOutsideAngular(() => {
+    this.chart?.update('quiet');
+  });
+}
+
+  private startStreaming(): void {
+    this._dsServiceSub?.unsubscribe();
+
+    const batchThenLive$ = this._dataset.getDatasetBatchThenLiveObservable(this.widgetProperties.uuid);
+
+    this._dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+      if (Array.isArray(dsPointOrBatch)) {
+        // Initial batch: fill the chart with the last N points
+        this.pushRowsToDatasets(dsPointOrBatch);
+      } else {
+        // Live: handle new single datapoint
+        this.pushRowsToDatasets([dsPointOrBatch]);
+
+        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
+          this.chart.data.datasets.forEach(ds => ds.data.shift());
+        }
+      }
+
+      this.updateChartAfterDataChange();
+
+      this.ngZone.runOutsideAngular(() => {
+        this.chart?.update('quiet');
+      });
+    });
+  }
+
+  private unwrapAngles(degrees: (number|null)[]): (number|null)[] {
+    if (degrees.length === 0) return [];
+    const unwrapped: (number|null)[] = [];
+    let prev = null;
+    for (const val of degrees) {
+      if (val == null) {
+        unwrapped.push(null);
+        continue;
+      }
+      if (prev == null) {
+        unwrapped.push(val);
+        prev = val;
+        continue;
+      }
+      let delta = val - prev;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      unwrapped.push(unwrapped[unwrapped.length - 1]! + delta);
+      prev = val;
+    }
+    return unwrapped;
+  }
+
+  private pushRowsToDatasets(rows: IDatasetServiceDatapoint[]): void {
+    this.chart.data.datasets[0].data.push(...this.transformDatasetRows(rows, 'value'));
+    this.chart.data.datasets[1].data.push(...this.transformDatasetRows(rows, 'sma'));
+    this.chart.data.datasets[2].data.push(...this.transformDatasetRows(rows, 'avg'));
+    this.chart.data.datasets[3].data.push(...this.transformDatasetRows(rows, 'min'));
+    this.chart.data.datasets[4].data.push(...this.transformDatasetRows(rows, 'max'));
+  }
+
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string): IDataSetRow[] {
+    // Convert radians to degrees (do not normalize here)
+    const degs = rows.map(row => {
+      const rowMapping = {
+        value: row.data.value,
+        sma: row.data.sma,
+        ema: row.data.ema,
+        dema: row.data.doubleEma,
+        avg: row.data.lastAverage,
+        min: row.data.lastMinimum,
+        max: row.data.lastMaximum
+      };
+      const v = rowMapping[datasetType];
+      return v == null ? null : this.unitsService.convertToUnit("deg", v);
+    });
+
+    // Unwrap the angles for continuity
+    const unwrapped = this.unwrapAngles(degs);
+
+    // Map back to rows, skipping nulls
+    return rows.map((row, idx) => ({
+      x: unwrapped[idx],
+      y: row.timestamp
+    }));
+  }
+
+  private normalizeAngle(angle: number): number {
+    return ((angle % 360) + 360) % 360;
+  }
+
   private updateChartAfterDataChange() {
     // Update Title value
     const lastData = this.chart.data.datasets[2].data;
     const last = lastData.length - 1;
     const lastAverage = lastData[last]?.x ?? 0;
     const trackValue: number = this.chart.data.datasets[0].data[last]?.x ?? 0;
-    this.chart.options.plugins.title.text = `${trackValue.toFixed(0)}°`;
+    this.chart.options.plugins.title.text = `${this.normalizeAngle(trackValue).toFixed(0)}°`;
 
     // Update last min/max lines
     const lastMinimum = this.chart.data.datasets[3].data[last]?.x ?? 0;
@@ -369,94 +452,17 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     // Draw average line
     if (this.chart.options.plugins.annotation.annotations.averageLine.value != lastAverage) {
       this.chart.options.plugins.annotation.annotations.averageLine.value = lastAverage;
-      this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${lastAverage.toFixed(0)}°`;
+      this.chart.options.plugins.annotation.annotations.averageLine.label.content = `${this.normalizeAngle(lastAverage).toFixed(0)}°`;
     }
-  }
-
-  private startStreaming(): void {
-    this._dsServiceSub?.unsubscribe();
-
-    const batchThenLive$ = this._dsService.getDatasetBatchThenLiveObservable(
-      this.widgetProperties.uuid
-    );
-
-    this._dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
-      if (Array.isArray(dsPointOrBatch)) {
-        // Initial batch: fill the chart with the last N points
-        const valueRows = this.transformDatasetRows(dsPointOrBatch, 'value');
-        this.chart.data.datasets[0].data.push(...valueRows);
-
-        const avgRows = this.transformDatasetRows(dsPointOrBatch, 'sma');
-        this.chart.data.datasets[1].data.push(...avgRows);
-
-        const lastAvgRows = this.transformDatasetRows(dsPointOrBatch, 'avg');
-        this.chart.data.datasets[2].data.push(...lastAvgRows);
-
-        const lastMinRows = this.transformDatasetRows(dsPointOrBatch, 'min');
-        this.chart.data.datasets[3].data.push(...lastMinRows);
-
-        const lastMaxRows = this.transformDatasetRows(dsPointOrBatch, 'max');
-        this.chart.data.datasets[4].data.push(...lastMaxRows);
-      } else {
-        // Live: handle new single datapoint
-        const valueRow = this.transformDatasetRows([dsPointOrBatch], 'value')[0];
-        this.chart.data.datasets[0].data.push(valueRow);
-
-        const avgRow = this.transformDatasetRows([dsPointOrBatch], 'sma')[0];
-        this.chart.data.datasets[1].data.push(avgRow);
-
-        const lastAvgRows = this.transformDatasetRows([dsPointOrBatch], 'avg')[0];
-        this.chart.data.datasets[2].data.push(lastAvgRows);
-
-        const lastMinRows = this.transformDatasetRows([dsPointOrBatch], 'min')[0];
-        this.chart.data.datasets[3].data.push(lastMinRows);
-
-        const lastMaxRows = this.transformDatasetRows([dsPointOrBatch], 'max')[0];
-        this.chart.data.datasets[4].data.push(lastMaxRows);
-
-        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
-          this.chart.data.datasets[0].data.shift();
-          this.chart.data.datasets[1].data.shift();
-          this.chart.data.datasets[2].data.shift();
-          this.chart.data.datasets[3].data.shift();
-          this.chart.data.datasets[4].data.shift();
-        }
-      }
-
-      this.updateChartAfterDataChange();
-
-      this.ngZone.runOutsideAngular(() => {
-        this.chart?.update('quiet');
-      });
-    });
-  }
-
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string): IDataSetRow[] {
-    const convert = (v: number) => this.unitsService.convertToUnit("deg", v);
-
-    return rows.map(row => {
-      const rowMapping = {
-        value: row.data.value,
-        sma: row.data.sma,
-        ema: row.data.ema,
-        dema: row.data.doubleEma,
-        avg: row.data.lastAverage,
-        min: row.data.lastMinimum,
-        max: row.data.lastMaximum
-      };
-      return { x: convert(rowMapping[datasetType]), y: row.timestamp };
-    });
   }
 
   private lineGradian(ctx: CanvasRenderingContext2D, chartArea: ChartArea): CanvasGradient {
     const gradientBorder = ctx.createLinearGradient(0, 0, chartArea.right, 0);
     const r = (chartArea.left + (chartArea.width / 2)) / chartArea.right;
-
     gradientBorder.addColorStop(0, this.theme().port);
     gradientBorder.addColorStop(r, this.theme().port);
     gradientBorder.addColorStop(r, this.theme().starboard);
     gradientBorder.addColorStop(1, this.theme().starboard);
-
     return gradientBorder;
   }
 
@@ -491,7 +497,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().contrast;
         colors.chartLabel = this.theme().contrastDim;
         break;
-
       case "blue":
         colors.valueLine = this.theme().blueDim;
         colors.valueFill = this.theme().blueDimmer;
@@ -501,9 +506,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().blueDim;
         colors.chartLabel = this.theme().blueDim;
         break;
-
       case "green":
-         colors.valueLine = this.theme().greenDim;
+        colors.valueLine = this.theme().greenDim;
         colors.valueFill = this.theme().greenDimmer;
         colors.averageLine = this.theme().green;
         colors.averageFill = this.theme().green;
@@ -511,9 +515,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().greenDim;
         colors.chartLabel = this.theme().greenDim;
         break;
-
       case "pink":
-         colors.valueLine = this.theme().pinkDim;
+        colors.valueLine = this.theme().pinkDim;
         colors.valueFill = this.theme().pinkDimmer;
         colors.averageLine = this.theme().pink;
         colors.averageFill = this.theme().pink;
@@ -521,7 +524,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().pinkDim;
         colors.chartLabel = this.theme().pinkDim;
         break;
-
       case "orange":
         colors.valueLine = this.theme().orangeDim;
         colors.valueFill = this.theme().orangeDimmer;
@@ -531,9 +533,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().orangeDim;
         colors.chartLabel = this.theme().orangeDim;
         break;
-
       case "purple":
-         colors.valueLine = this.theme().purpleDim;
+        colors.valueLine = this.theme().purpleDim;
         colors.valueFill = this.theme().purpleDimmer;
         colors.averageLine = this.theme().purple;
         colors.averageFill = this.theme().purple;
@@ -541,9 +542,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().purpleDim;
         colors.chartLabel = this.theme().purpleDim;
         break;
-
       case "grey":
-         colors.valueLine = this.theme().greyDim;
+        colors.valueLine = this.theme().greyDim;
         colors.valueFill = this.theme().greyDimmer;
         colors.averageLine = this.theme().grey;
         colors.averageFill = this.theme().grey;
@@ -551,9 +551,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         colors.averageChartLine = this.theme().greyDim;
         colors.chartLabel = this.theme().greyDim;
         break;
-
       case "yellow":
-         colors.valueLine = this.theme().yellowDim;
+        colors.valueLine = this.theme().yellowDim;
         colors.valueFill = this.theme().yellowDimmer;
         colors.averageLine = this.theme().yellow;
         colors.averageFill = this.theme().yellow;
