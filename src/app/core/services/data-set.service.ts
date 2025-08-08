@@ -49,6 +49,9 @@ interface IDatasetServiceObserverRegistration {
   rxjsSubject: ReplaySubject<IDatasetServiceDatapoint>;
 }
 
+// How to interpret angular (radian) data
+type AngleDomain = 'scalar' | 'direction' | 'signed';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -59,6 +62,18 @@ export class DatasetService {
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
+
+  // List of Signal K paths that should be interpreted as signed angles (-π, π].
+  // Add your specific paths here. All other radian paths will default to direction domain [0, 2π).
+  private readonly signedAnglePaths = new Set<string>([
+    "self.navigation.attitude.roll",
+    "self.navigation.attitude.pitch",
+    "self.navigation.attitude.yaw",
+    "self.environment.wind.angleApparent",
+    "self.environment.wind.angleTrueGround",
+    "self.environment.wind.angleTrueWater",
+    "self.steering.rudderAngle"
+  ]);
 
   constructor() {
     const appSettings = this.appSettings;
@@ -194,7 +209,10 @@ export class DatasetService {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
-    // Subscribe to path data, update historicalData/stats and sends new values to Observers
+  // Decide how to interpret the dataset values (scalar vs radian domains)
+  const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+
+  // Subscribe to path data, update historicalData/stats and sends new values to Observers
     dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
       (newValue: IPathUpdate) => {
         if (newValue.data.value === null) return; // we don't need null values
@@ -206,7 +224,7 @@ export class DatasetService {
         dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
-        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit);
+  const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
       }
@@ -427,7 +445,7 @@ export class DatasetService {
    * @return {*}  {IDatasetServiceDatapoint} A new historicalData object. Note: push() the object to the historicalData to
    * @memberof DatasetService
    */
-  private updateDataset(ds: IDatasetServiceDataSource, unit: string): IDatasetServiceDatapoint {
+  private updateDataset(ds: IDatasetServiceDataSource, unit: string, domain: AngleDomain = 'scalar'): IDatasetServiceDatapoint {
     let avgCalc: number = null;
     let smaCalc: number = null;
     let minCalc: number = null;
@@ -439,8 +457,23 @@ export class DatasetService {
       const window = ds.historicalData.slice(-ds.smoothingPeriod);
       smaCalc = this.circularMeanRad(window);
       const { min, max } = this.circularMinMaxRad(ds.historicalData);
-      minCalc = min;
-      maxCalc = max;
+
+      // Normalize outputs to requested domain
+      if (domain === 'direction') {
+        avgCalc = this.normalizeToDirection(avgCalc);
+        smaCalc = this.normalizeToDirection(smaCalc);
+        minCalc = this.normalizeToDirection(min);
+        maxCalc = this.normalizeToDirection(max);
+      } else if (domain === 'signed') {
+        avgCalc = this.normalizeToSigned(avgCalc);
+        smaCalc = this.normalizeToSigned(smaCalc);
+        minCalc = this.normalizeToSigned(min);
+        maxCalc = this.normalizeToSigned(max);
+      } else {
+        // Fallback: treat as scalar (shouldn't happen for unit==='rad')
+        minCalc = min;
+        maxCalc = max;
+      }
     } else {
       // Arithmetic statistics for scalars
       avgCalc = calculateAverage(ds.historicalData);
@@ -452,7 +485,11 @@ export class DatasetService {
     const newDatapoint: IDatasetServiceDatapoint = {
       timestamp: Date.now(),
       data: {
-        value: ds.historicalData[ds.historicalData.length - 1],
+        value: unit === 'rad'
+          ? (domain === 'signed'
+              ? this.normalizeToSigned(ds.historicalData[ds.historicalData.length - 1])
+              : this.normalizeToDirection(ds.historicalData[ds.historicalData.length - 1]))
+          : ds.historicalData[ds.historicalData.length - 1],
         sma: smaCalc,
         ema: null,
         doubleEma: null,
@@ -506,5 +543,31 @@ export class DatasetService {
     const min = degAngles[minIdx] * Math.PI / 180;
     const max = degAngles[(minIdx - 1 + degAngles.length) % degAngles.length] * Math.PI / 180;
     return { min, max };
+  }
+
+  // Domain resolution helpers
+  private resolveAngleDomain(path: string, unit: string): AngleDomain {
+    if (unit !== 'rad') return 'scalar';
+    const incoming = this.normalizePathKey(path);
+    for (const candidate of this.signedAnglePaths) {
+      if (incoming === this.normalizePathKey(candidate)) {
+        return 'signed';
+      }
+    }
+    return 'direction';
+  }
+
+  // Angle normalization helpers
+  private normalizePathKey(path: string): string {
+    return path.replace(/^vessels\.self\./, '').replace(/^self\./, '');
+  }
+  private mod(a: number, n: number): number { return ((a % n) + n) % n; }
+  private normalizeToDirection(rad: number): number {
+    const twoPi = 2 * Math.PI;
+    return this.mod(rad, twoPi); // [0, 2π)
+  }
+  private normalizeToSigned(rad: number): number {
+    const twoPi = 2 * Math.PI;
+    return this.mod(rad + Math.PI, twoPi) - Math.PI; // (-π, π]
   }
 }

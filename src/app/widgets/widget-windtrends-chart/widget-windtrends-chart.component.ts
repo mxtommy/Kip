@@ -297,8 +297,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
     this.defaultConfig = {
       filterSelfPaths: true,
-      color: 'contrast',
-      timeScale: ''
+      color: "contrast",
+      timeScale: "Last 30 Minutes"
     };
 
     effect(() => {
@@ -318,7 +318,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
   ngAfterViewInit(): void {
     this.startWidget();
-    // this.testSimulateCrossingZero();
   }
 
   protected startWidget(): void {
@@ -366,9 +365,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private createServiceDataset(): void {
     if (this.widgetProperties.config.timeScale === '') return;
     const pathDirection = "self.environment.wind.directionTrue";
-    //TODO: Remove testing line environment.wind.speedOverGround
-    //const pathSpeed = "self.environment.wind.speedTrue";
-    const pathSpeed = "self.environment.wind.speedOverGround";
+    const pathSpeed = "self.environment.wind.speedTrue";
     const source = "default";
 
     // Create datasets if it does not exist
@@ -725,52 +722,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
     this.setDatasetsColors();
   }
-
-  /*  public testSimulateCrossingZero(): void {
-     // Generate 30 seconds of oscillating wind direction crossing 0° back and forth
-     const points = 30;
-     const startTs = Date.now() - (points - 1) * 1000; // 1-second increments
-     const toRad = (d: number) => d * Math.PI / 180;
-     const amplitudeDeg = 20;           // +/- 20° swing around 0
-     const periodSec = 12;              // oscillation period
-     const noiseDeg = 2;                // jitter for value around SMA
-     const windowSize = 5;              // rolling window for SMA/min/max
-
-     // Base oscillation in degrees (centered around 0°), then unwrap for continuity
-     const baseDegSeq = Array.from({ length: points }, (_, i) =>
-       amplitudeDeg * Math.sin((2 * Math.PI * i) / periodSec)
-     );
-     const degUnwrapped = this.unwrapAngles(baseDegSeq);
-
-     const testData: IDatasetServiceDatapoint[] = degUnwrapped.map((deg, i) => {
-       const start = Math.max(0, i - windowSize + 1);
-       const window = degUnwrapped.slice(start, i + 1);
-       const avgDeg = window.reduce((s, v) => s + v, 0) / window.length;
-       const minDeg = Math.min(...window);
-       const maxDeg = Math.max(...window);
-       // Slight variation of value from SMA
-       const jitter = (Math.random() * 2 - 1) * noiseDeg; // [-noiseDeg, +noiseDeg]
-       const valueDeg = avgDeg + jitter;
-
-       return {
-         timestamp: startTs + i * 1000,
-         data: {
-           value: toRad(valueDeg),
-           sma: toRad(avgDeg),
-           lastAverage: 0,             // fixed 0 rad as requested
-           lastMinimum: toRad(minDeg),
-           lastMaximum: toRad(maxDeg)
-         }
-       };
-     });
-
-     this.createDatasets();
-     this.pushRowsToDatasets(testData);
-     this.updateChartAfterDataChange();
-     this.ngZone.runOutsideAngular(() => {
-     this.chart?.update();
-     });
-   } */
 
   private startStreaming(): void {
     this._dsDirectionSub?.unsubscribe();
