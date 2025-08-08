@@ -64,11 +64,55 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private xStep: number | null = null;
   private xCenterSpeed: number | null = null;
   private xStepSpeed: number | null = null;
+  // Paint background under grid lines (chartArea only) so it appears beneath grids
+  private gridBackgroundPlugin = {
+    id: 'xSpeedGridBackground',
+    beforeDraw: (chart: Chart) => {
+      const area = chart.chartArea as ChartArea | undefined;
+      if (!area) return;
+      const ctx = chart.ctx as CanvasRenderingContext2D;
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.fillStyle = this.theme().background;
+      // Fill exactly the plotting area where grid lines are drawn
+      ctx.fillRect(area.left, area.top, area.width / 2, area.height);
+      ctx.restore();
+    }
+  };
   private centerTickPlugin = {
     id: 'centerTickStyle',
     afterDraw: (chart) => {
       const ctx = chart.ctx as CanvasRenderingContext2D;
       const area = chart.chartArea as ChartArea;
+
+      // Loading overlay until we have enough data to draw nicely
+      const dirVals = chart.data?.datasets?.[0]?.data as (IDataSetRow[] | undefined);
+      const spdVals = chart.data?.datasets?.[5]?.data as (IDataSetRow[] | undefined);
+      const ready = (dirVals?.length ?? 0) >= 2 && (spdVals?.length ?? 0) >= 2;
+      if (!ready) {
+        ctx.save();
+        // Draw centered message box within the plotting area
+        const boxW = Math.min(area.width * 0.7, 420);
+        const boxH = 90;
+        const x = area.left + (area.width - boxW) / 2;
+        const y = area.top + (area.height - boxH) / 2;
+        // Background
+        ctx.fillStyle = this.theme().background;
+        ctx.fillRect(x, y, boxW, boxH);
+        // Border
+        ctx.strokeStyle = this.theme().contrastDim;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, boxW, boxH);
+        // Text
+        const def = Chart.defaults.font;
+        ctx.fillStyle = this.getThemeColors().chartLabel;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold 22px ${def.family}`;
+        ctx.fillText('Data aquisition in progress...', x + boxW / 2, y + boxH / 2);
+        ctx.restore();
+        return; // Skip other drawings until ready
+      }
 
       const drawForAxis = (axisKey: 'x' | 'xSpeed', format: (v: number) => string) => {
         const scale = chart.scales?.[axisKey] as (Scale | undefined);
@@ -104,6 +148,70 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       drawForAxis('x', (v) => `${(((v % 360) + 360) % 360).toFixed(0)}°`);
       drawForAxis('xSpeed', (v) => `${v.toFixed(1)}`);
 
+      // Draw xSpeed rightmost tick label shifted 10px left
+      const xSpeedScale = (chart.scales?.['xSpeed'] as (Scale | undefined));
+      if (xSpeedScale) {
+        const scales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
+        const sAny = xSpeedScale as unknown as { min?: number; max?: number };
+        const xmax = (scales?.['xSpeed']?.max as number | undefined) ?? sAny.max;
+        if (typeof xmax === 'number' && isFinite(xmax)) {
+          const px = xSpeedScale.getPixelForValue(xmax);
+          const def = Chart.defaults.font;
+          ctx.save();
+          // Match tick label color for xSpeed axis
+          const tickColorOptSpd = (xSpeedScale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks?.color;
+          const spdColor = typeof tickColorOptSpd === 'function'
+            ? (tickColorOptSpd as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale: xSpeedScale, tick: { value: xmax } }) ?? Chart.defaults.color
+            : (typeof tickColorOptSpd === 'string' ? tickColorOptSpd : Chart.defaults.color);
+          ctx.fillStyle = spdColor as string;
+          ctx.font = `normal ${20}px ${def.family}`;
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'top';
+          const y = (xSpeedScale.options as { position?: string })?.position === 'top' ? (xSpeedScale.top + 4) : (xSpeedScale.bottom + 2);
+          const step = this.xStepSpeed ?? 1;
+          const dp = Math.max(0, Math.min(3, Math.ceil(-Math.log10(step))));
+          ctx.fillText(`${xmax.toFixed(dp)}`, px - 5, y);
+          ctx.restore();
+
+          // Extend the rightmost xSpeed tick vertical line 10px above the top time scale line
+          ctx.save();
+          ctx.strokeStyle = this.theme().contrastDim;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          const xLine = Math.round(px) + 0.5;
+          ctx.moveTo(xLine, area.bottom);
+          ctx.lineTo(xLine, area.top - 42);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // Draw x leftmost tick label shifted 5px right
+      const xScale = (chart.scales?.['x'] as (Scale | undefined));
+      if (xScale) {
+        const scales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
+        const sAny = xScale as unknown as { min?: number; max?: number };
+        const xmin = (scales?.['x']?.min as number | undefined) ?? sAny.min;
+        if (typeof xmin === 'number' && isFinite(xmin)) {
+          const px = xScale.getPixelForValue(xmin);
+          const def = Chart.defaults.font;
+          ctx.save();
+          // Match tick label color for x axis
+          const tickColorOptDir = (xScale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks?.color;
+          const dirColor = typeof tickColorOptDir === 'function'
+            ? (tickColorOptDir as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale: xScale, tick: { value: xmin } }) ?? Chart.defaults.color
+            : (typeof tickColorOptDir === 'string' ? tickColorOptDir : Chart.defaults.color);
+          ctx.fillStyle = dirColor as string;
+          ctx.font = `normal ${20}px ${def.family}`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          const y = (xScale.options as { position?: string })?.position === 'top' ? (xScale.top + 4) : (xScale.bottom + 2);
+          const wrapped = this.normalizeAngle(xmin);
+          ctx.fillText(`${wrapped.toFixed(0)}°`, px + 5, y);
+          ctx.restore();
+        }
+      }
+
       // Top-right speed value
       const ds = chart.data?.datasets as unknown as { label?: string; data: IDataSetRow[] }[];
       const speedVal = ds?.[5]?.data; // first speed dataset index (see dataset order)
@@ -114,12 +222,22 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         ctx.save();
         ctx.fillStyle = this.getThemeColors().chartValue;
         const def = Chart.defaults.font;
+        // Draw speed value centered
         ctx.font = `bold 62px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${lastSpeed.toFixed(1)}`, area.left + (area.width / 4), area.top - 62);
+        const speedText = `${lastSpeed.toFixed(1)}`;
+        const speedX = area.left + (area.width / 4);
+        const speedY = area.top - 62;
+        ctx.fillText(speedText, speedX, speedY);
+        // Measure speed text to place unit right after it
+        const metrics = ctx.measureText(speedText);
+        const padding = 8; // px spacing between value and unit
+        const unitX = speedX + (metrics.width / 2) + padding;
+        const unitY = area.top - 51;
         ctx.font = `bold 28px ${def.family}`;
-        ctx.fillText(`kts`, area.left + 70 + (area.width / 4), area.top - 51);
+        ctx.textAlign = 'left';
+        ctx.fillText('kts', unitX, unitY);
         ctx.restore();
       }
 
@@ -179,11 +297,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       this.setChartOptions();
 
       if (!this.chart) {
-        this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+          this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
           type: this.lineChartType,
           data: this.lineChartData,
           options: this.lineChartOptions,
-          plugins: [this.centerTickPlugin]
+            plugins: [this.gridBackgroundPlugin, this.centerTickPlugin]
         });
         // Render once so initial axes and plugin drawings appear before data
         this.ngZone.runOutsideAngular(() => {
@@ -298,6 +416,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         title: { display: false },
         ticks: {
           count: 5,
+          align: 'inner',
           autoSkip: false,
           includeBounds: true,
           stepSize: xDefaultStep,
@@ -309,6 +428,10 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             const step = this.xStep ?? Number.NaN;
             const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
             if (Number.isFinite(center) && Math.abs(value - center) <= tol) return '';
+            // Hide leftmost label (at min) to avoid overlap with custom shifted label
+            const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
+            const minOpt = scales?.x?.min;
+            if (typeof minOpt === 'number' && isFinite(minOpt) && Math.abs((value as number) - minOpt) <= tol) return '';
             const wrapped = ((value % 360 + 360) % 360);
             return `${wrapped.toFixed(0)}°`;
           },
@@ -332,7 +455,17 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         },
         grid: {
           display: true,
-          color: this.theme().contrastDimmer,
+          color: (ctx) => {
+            const tickVal = (ctx as unknown as { tick?: { value: number }, scale: Scale }).tick?.value ?? Number.NaN;
+            const scale = (ctx as unknown as { scale: Scale }).scale;
+            const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
+            const sAny = scale as unknown as { min?: number };
+            const min = (scales?.x?.min as number | undefined) ?? sAny.min;
+            const step = this.xStep ?? 1;
+            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const isMin = Number.isFinite(tickVal) && Number.isFinite(min) && Math.abs(tickVal - (min as number)) <= tol;
+            return isMin ? 'rgba(0,0,0,0)' : this.theme().contrastDimmer;
+          },
           lineWidth: 1
         }
       },
@@ -347,6 +480,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         title: { display: false },
         ticks: {
           count: 5,
+          align: 'inner',
           autoSkip: false,
           includeBounds: true,
           stepSize: xsDefaultStep,
@@ -357,6 +491,10 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             const step = this.xStepSpeed ?? Number.NaN;
             const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
             if (Number.isFinite(center) && Math.abs((value as number) - center) <= tol) return '';
+            // Hide rightmost label (at max) to avoid overlap with custom shifted label
+            const scales = this.chart?.options?.scales as unknown as { xSpeed?: { max?: number } } | undefined;
+            const maxOpt = scales?.xSpeed?.max;
+            if (typeof maxOpt === 'number' && isFinite(maxOpt) && Math.abs((value as number) - maxOpt) <= tol) return '';
             // Derive decimals from step so adjacent ticks remain distinct
             const s = Number.isFinite(step) ? step : 1;
             const dp = Math.max(0, Math.min(3, Math.ceil(-Math.log10(s))));
@@ -381,13 +519,23 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         },
         grid: {
           display: true,
-          color: this.theme().contrastDimmer,
+          color: (ctx) => {
+            const tickVal = (ctx as unknown as { tick?: { value: number }, scale: Scale }).tick?.value ?? Number.NaN;
+            const scale = (ctx as unknown as { scale: Scale }).scale;
+            const scales = this.chart?.options?.scales as unknown as { xSpeed?: { max?: number } } | undefined;
+            const sAny = scale as unknown as { max?: number };
+            const max = (scales?.xSpeed?.max as number | undefined) ?? sAny.max;
+            const step = this.xStepSpeed ?? 1;
+            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const isMax = Number.isFinite(tickVal) && Number.isFinite(max) && Math.abs(tickVal - (max as number)) <= tol;
+            return isMax ? 'rgba(0,0,0,0)' : this.theme().contrastDimmer;
+          },
           lineWidth: 1
         }
       }
     };
 
-  this.lineChartOptions.plugins = {
+    this.lineChartOptions.plugins = {
       title: {
         display: true,
         align: "end",
@@ -409,11 +557,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       legend: { display: false }
     }
 
-  // Cache initial centers/steps for tick styling before first data update
-  this.xCenter = (xDefaultMin + xDefaultMax) / 2;
-  this.xStep = xDefaultStep;
-  this.xCenterSpeed = (xsDefaultMin + xsDefaultMax) / 2;
-  this.xStepSpeed = xsDefaultStep;
+    // Cache initial centers/steps for tick styling before first data update
+    this.xCenter = (xDefaultMin + xDefaultMax) / 2;
+    this.xStep = xDefaultStep;
+    this.xCenterSpeed = (xsDefaultMin + xsDefaultMax) / 2;
+    this.xStepSpeed = xsDefaultStep;
   }
 
   private createDatasets() {
