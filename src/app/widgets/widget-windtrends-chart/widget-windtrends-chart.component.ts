@@ -12,13 +12,13 @@ import 'chartjs-adapter-date-fns';
 Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
 
 interface IChartColors {
-    valueLine: string,
-    valueFill: string,
-    averageLine: string,
-    averageFill: string,
-    averageChartLine: string,
-    chartLabel: string,
-    chartValue: string
+  valueLine: string,
+  valueFill: string,
+  averageLine: string,
+  averageFill: string,
+  averageChartLine: string,
+  chartLabel: string,
+  chartValue: string
 }
 interface IDataSetRow {
   x: number,
@@ -36,7 +36,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private readonly ngZone = inject(NgZone);
   private readonly _dataset = inject(DatasetService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
-  public lineChartData: ChartData <'line', {x: number, y: number} []> = {
+  public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
   };
   public lineChartOptions: ChartConfiguration['options'] = {
@@ -45,7 +45,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       line: {
         pointRadius: 0,
         pointHoverRadius: 0,
-        tension:  0.3,
+        tension: 0.3,
       }
     },
     animations: {
@@ -64,6 +64,42 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private xStep: number | null = null;
   private xCenterSpeed: number | null = null;
   private xStepSpeed: number | null = null;
+  // Visual constants
+  private readonly CENTER_LINE_WIDTH = 4;
+  private readonly GRID_LINE_WIDTH = 1;
+  private readonly EDGE_EXTEND_UP_PX = 42; // extension height above top scale
+  private readonly EDGE_SPEED_LABEL_OFFSET = 5; // px left shift for rightmost speed label
+  private readonly EDGE_DIR_LABEL_OFFSET = 5;   // px right shift for leftmost direction label
+  private readonly TICK_LABEL_FONT_SIZE = 20;
+  private readonly CENTER_LABEL_FONT_SIZE = 22;
+  private readonly SPEED_VALUE_FONT_SIZE = 62;
+  private readonly TOP_VALUE_Y_OFFSET = 62;     // px above area.top for big top values
+  private readonly TOP_UNIT_Y_OFFSET = 51;      // px above area.top for units
+  private readonly UNIT_FONT_SIZE = 28;
+  private readonly UNIT_PADDING = 8;            // px between speed value and 'kts'
+
+  // Helper: tolerance based on step (25% of step, min 1e-6)
+  private tolFromStep(step: number | null): number {
+    const s = step ?? 1;
+    return Math.max(1e-6, s * 0.25);
+  }
+
+  // Helper: resolve tick color from scale ticks.color (string or function)
+  private resolveTickColor(chart: Chart, scale: Scale, tickValue: number): string {
+    const ticksOpt = (scale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks;
+    const col = ticksOpt?.color;
+    if (typeof col === 'function') {
+      const resolved = (col as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale, tick: { value: tickValue } });
+      return resolved ?? Chart.defaults.color as string;
+    }
+    return typeof col === 'string' ? col : (Chart.defaults.color as string);
+  }
+
+  // Helper: y position for top scale labels relative to an axis scale
+  private axisTopLabelY(scale: Scale): number {
+    const pos = (scale.options as { position?: string })?.position;
+    return pos === 'top' ? (scale.top + 4) : (scale.bottom + 2);
+  }
   // Paint background under grid lines (chartArea only) so it appears beneath grids
   private gridBackgroundPlugin = {
     id: 'xSpeedGridBackground',
@@ -71,9 +107,10 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       const area = chart.chartArea as ChartArea | undefined;
       if (!area) return;
       const ctx = chart.ctx as CanvasRenderingContext2D;
+      const theme = this.theme();
       ctx.save();
       ctx.globalCompositeOperation = 'destination-over';
-      ctx.fillStyle = this.theme().background;
+      ctx.fillStyle = theme.background;
       // Fill exactly the plotting area where grid lines are drawn
       ctx.fillRect(area.left, area.top, area.width / 2, area.height);
       ctx.restore();
@@ -84,6 +121,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     afterDraw: (chart) => {
       const ctx = chart.ctx as CanvasRenderingContext2D;
       const area = chart.chartArea as ChartArea;
+      const theme = this.theme();
+      const chartColors = this.getThemeColors();
+      const def = Chart.defaults.font;
+      const scaleMap = chart.scales as Record<string, Scale | undefined>;
+      const optScales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
 
       // Loading overlay until we have enough data to draw nicely
       const dirVals = chart.data?.datasets?.[0]?.data as (IDataSetRow[] | undefined);
@@ -115,8 +157,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       }
 
       const drawForAxis = (axisKey: 'x' | 'xSpeed', format: (v: number) => string) => {
-        const scale = chart.scales?.[axisKey] as (Scale | undefined);
-        const scales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
+        const scale = scaleMap?.[axisKey] as (Scale | undefined);
+        const scales = optScales;
         if (!scale) return;
         // Use configured min/max if present, else fall back to built scale bounds
         const sAny = scale as unknown as { min?: number; max?: number };
@@ -126,21 +168,20 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         const center = (min + max) / 2;
         const px = scale.getPixelForValue(center);
         ctx.save();
-        ctx.strokeStyle = this.theme().contrastDim;
-        ctx.lineWidth = 4;
+        // Center guideline for the given axis
+        ctx.strokeStyle = theme.contrastDim;
+        ctx.lineWidth = this.CENTER_LINE_WIDTH;
         ctx.beginPath();
         ctx.moveTo(px, area.top);
         ctx.lineTo(px, area.bottom);
         ctx.stroke();
         ctx.restore();
         ctx.save();
-        ctx.fillStyle = this.theme().contrastDim;
-        const def = Chart.defaults.font;
-        ctx.font = `bold ${22}px ${def.family}`;
+        ctx.fillStyle = theme.contrastDim;
+        ctx.font = `bold ${this.CENTER_LABEL_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        const position = (scale.options as { position?: string })?.position;
-        const y = position === 'top' ? (scale.top + 4) : (scale.bottom + 2);
+        const y = this.axisTopLabelY(scale);
         ctx.fillText(format(center), px, y);
         ctx.restore();
       };
@@ -148,66 +189,56 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       drawForAxis('x', (v) => `${(((v % 360) + 360) % 360).toFixed(0)}°`);
       drawForAxis('xSpeed', (v) => `${v.toFixed(1)}`);
 
-      // Draw xSpeed rightmost tick label shifted 10px left
-      const xSpeedScale = (chart.scales?.['xSpeed'] as (Scale | undefined));
+      // Draw xSpeed rightmost tick label shifted slightly left (custom label)
+      const xSpeedScale = (scaleMap?.['xSpeed'] as (Scale | undefined));
       if (xSpeedScale) {
-        const scales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
+        const scales = optScales;
         const sAny = xSpeedScale as unknown as { min?: number; max?: number };
         const xmax = (scales?.['xSpeed']?.max as number | undefined) ?? sAny.max;
         if (typeof xmax === 'number' && isFinite(xmax)) {
           const px = xSpeedScale.getPixelForValue(xmax);
-          const def = Chart.defaults.font;
           ctx.save();
           // Match tick label color for xSpeed axis
-          const tickColorOptSpd = (xSpeedScale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks?.color;
-          const spdColor = typeof tickColorOptSpd === 'function'
-            ? (tickColorOptSpd as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale: xSpeedScale, tick: { value: xmax } }) ?? Chart.defaults.color
-            : (typeof tickColorOptSpd === 'string' ? tickColorOptSpd : Chart.defaults.color);
-          ctx.fillStyle = spdColor as string;
-          ctx.font = `normal ${20}px ${def.family}`;
+          ctx.fillStyle = this.resolveTickColor(chart, xSpeedScale, xmax);
+          ctx.font = `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
           ctx.textAlign = 'right';
           ctx.textBaseline = 'top';
-          const y = (xSpeedScale.options as { position?: string })?.position === 'top' ? (xSpeedScale.top + 4) : (xSpeedScale.bottom + 2);
+          const y = this.axisTopLabelY(xSpeedScale);
           const step = this.xStepSpeed ?? 1;
           const dp = Math.max(0, Math.min(3, Math.ceil(-Math.log10(step))));
-          ctx.fillText(`${xmax.toFixed(dp)}`, px - 5, y);
+          ctx.fillText(`${xmax.toFixed(dp)}`, px - this.EDGE_SPEED_LABEL_OFFSET, y);
           ctx.restore();
 
           // Extend the rightmost xSpeed tick vertical line 10px above the top time scale line
           ctx.save();
-          ctx.strokeStyle = this.theme().contrastDim;
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = theme.contrastDim;
+          ctx.lineWidth = this.GRID_LINE_WIDTH;
           ctx.beginPath();
           const xLine = Math.round(px) + 0.5;
           ctx.moveTo(xLine, area.bottom);
-          ctx.lineTo(xLine, area.top - 42);
+          ctx.lineTo(xLine, area.top - this.EDGE_EXTEND_UP_PX);
           ctx.stroke();
           ctx.restore();
         }
       }
 
-      // Draw x leftmost tick label shifted 5px right
-      const xScale = (chart.scales?.['x'] as (Scale | undefined));
+      // Draw x leftmost tick label shifted slightly right (custom label)
+      const xScale = (scaleMap?.['x'] as (Scale | undefined));
       if (xScale) {
-        const scales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
+        const scales = optScales;
         const sAny = xScale as unknown as { min?: number; max?: number };
         const xmin = (scales?.['x']?.min as number | undefined) ?? sAny.min;
         if (typeof xmin === 'number' && isFinite(xmin)) {
           const px = xScale.getPixelForValue(xmin);
-          const def = Chart.defaults.font;
           ctx.save();
           // Match tick label color for x axis
-          const tickColorOptDir = (xScale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks?.color;
-          const dirColor = typeof tickColorOptDir === 'function'
-            ? (tickColorOptDir as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale: xScale, tick: { value: xmin } }) ?? Chart.defaults.color
-            : (typeof tickColorOptDir === 'string' ? tickColorOptDir : Chart.defaults.color);
-          ctx.fillStyle = dirColor as string;
-          ctx.font = `normal ${20}px ${def.family}`;
+          ctx.fillStyle = this.resolveTickColor(chart, xScale, xmin);
+          ctx.font = `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
-          const y = (xScale.options as { position?: string })?.position === 'top' ? (xScale.top + 4) : (xScale.bottom + 2);
+          const y = this.axisTopLabelY(xScale);
           const wrapped = this.normalizeAngle(xmin);
-          ctx.fillText(`${wrapped.toFixed(0)}°`, px + 5, y);
+          ctx.fillText(`${wrapped.toFixed(0)}°`, px + this.EDGE_DIR_LABEL_OFFSET, y);
           ctx.restore();
         }
       }
@@ -220,22 +251,20 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
       if (typeof lastSpeed === 'number' && isFinite(lastSpeed)) {
         ctx.save();
-        ctx.fillStyle = this.getThemeColors().chartValue;
-        const def = Chart.defaults.font;
+        ctx.fillStyle = chartColors.chartValue;
         // Draw speed value centered
-        ctx.font = `bold 62px ${def.family}`;
+        ctx.font = `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const speedText = `${lastSpeed.toFixed(1)}`;
         const speedX = area.left + (area.width / 4);
-        const speedY = area.top - 62;
+        const speedY = area.top - this.TOP_VALUE_Y_OFFSET;
         ctx.fillText(speedText, speedX, speedY);
         // Measure speed text to place unit right after it
         const metrics = ctx.measureText(speedText);
-        const padding = 8; // px spacing between value and unit
-        const unitX = speedX + (metrics.width / 2) + padding;
-        const unitY = area.top - 51;
-        ctx.font = `bold 28px ${def.family}`;
+        const unitX = speedX + (metrics.width / 2) + this.UNIT_PADDING;
+        const unitY = area.top - this.TOP_UNIT_Y_OFFSET;
+        ctx.font = `bold ${this.UNIT_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'left';
         ctx.fillText('kts', unitX, unitY);
         ctx.restore();
@@ -248,12 +277,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       if (typeof lastDir === 'number' && isFinite(lastDir)) {
         const dir = this.normalizeAngle(lastDir);
         ctx.save();
-        ctx.fillStyle = this.getThemeColors().chartValue;
-        const def = Chart.defaults.font;
-        ctx.font = `bold 62px ${def.family}`;
+        ctx.fillStyle = chartColors.chartValue;
+        ctx.font = `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - 62);
+        ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - this.TOP_VALUE_Y_OFFSET);
         ctx.restore();
       }
     }
@@ -297,11 +325,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       this.setChartOptions();
 
       if (!this.chart) {
-          this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+        this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
           type: this.lineChartType,
           data: this.lineChartData,
           options: this.lineChartOptions,
-            plugins: [this.gridBackgroundPlugin, this.centerTickPlugin]
+          plugins: [this.gridBackgroundPlugin, this.centerTickPlugin]
         });
         // Render once so initial axes and plugin drawings appear before data
         this.ngZone.runOutsideAngular(() => {
@@ -320,10 +348,10 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     // remove dataset if they exists and recreate
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-twd`).length === 0) {
+    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-twd`).length > 0) {
       this._dataset.remove(`${this.widgetProperties.uuid}-twd`);
     }
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-tws`).length === 0) {
+    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-tws`).length > 0) {
       this._dataset.remove(`${this.widgetProperties.uuid}-tws`);
     }
     this.createServiceDataset();
@@ -354,14 +382,14 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
     this.lineChartOptions.indexAxis = 'y';
 
-  // Provide initial x (direction) range so ticks/center line render before data arrives
-  const xDefaultMin = 0;
-  const xDefaultMax = 360;
-  const xDefaultStep = (xDefaultMax - xDefaultMin) / 4; // 5 ticks
-  // Provide initial xSpeed (knots) range as well
-  const xsDefaultMin = 0;
-  const xsDefaultMax = 20;
-  const xsDefaultStep = (xsDefaultMax - xsDefaultMin) / 4; // 5 ticks
+    // Provide initial x (direction) range so ticks/center line render before data arrives
+    const xDefaultMin = 0;
+    const xDefaultMax = 360;
+    const xDefaultStep = (xDefaultMax - xDefaultMin) / 4; // 5 ticks
+    // Provide initial xSpeed (knots) range as well
+    const xsDefaultMin = 0;
+    const xsDefaultMax = 20;
+    const xsDefaultStep = (xsDefaultMax - xsDefaultMin) / 4; // 5 ticks
 
     this.lineChartOptions.scales = {
       y: {
@@ -425,8 +453,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           callback: (value: number) => {
             // Hide the default center tick label; plugin will draw a bold themed label there
             const center = this.xCenter ?? Number.NaN;
-            const step = this.xStep ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStep);
             if (Number.isFinite(center) && Math.abs(value - center) <= tol) return '';
             // Hide leftmost label (at min) to avoid overlap with custom shifted label
             const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
@@ -439,16 +466,14 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           font: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenter ?? Number.NaN;
-            const step = this.xStep ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStep);
             const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
             return { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenter ?? Number.NaN;
-            const step = this.xStep ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStep);
             const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
             return isCenter ? this.theme().contrast : undefined;
           },
@@ -461,8 +486,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
             const sAny = scale as unknown as { min?: number };
             const min = (scales?.x?.min as number | undefined) ?? sAny.min;
-            const step = this.xStep ?? 1;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStep ?? 1);
             const isMin = Number.isFinite(tickVal) && Number.isFinite(min) && Math.abs(tickVal - (min as number)) <= tol;
             return isMin ? 'rgba(0,0,0,0)' : this.theme().contrastDimmer;
           },
@@ -488,31 +512,29 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           maxRotation: 0,
           callback: (value: number) => {
             const center = this.xCenterSpeed ?? Number.NaN;
-            const step = this.xStepSpeed ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStepSpeed);
             if (Number.isFinite(center) && Math.abs((value as number) - center) <= tol) return '';
             // Hide rightmost label (at max) to avoid overlap with custom shifted label
             const scales = this.chart?.options?.scales as unknown as { xSpeed?: { max?: number } } | undefined;
             const maxOpt = scales?.xSpeed?.max;
             if (typeof maxOpt === 'number' && isFinite(maxOpt) && Math.abs((value as number) - maxOpt) <= tol) return '';
             // Derive decimals from step so adjacent ticks remain distinct
-            const s = Number.isFinite(step) ? step : 1;
+            const stepS = this.xStepSpeed ?? Number.NaN;
+            const s = Number.isFinite(stepS) ? stepS : 1;
             const dp = Math.max(0, Math.min(3, Math.ceil(-Math.log10(s))));
             return `${(value as number).toFixed(dp)}`;
           },
           font: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenterSpeed ?? Number.NaN;
-            const step = this.xStepSpeed ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStepSpeed);
             const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
             return { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenterSpeed ?? Number.NaN;
-            const step = this.xStepSpeed ?? Number.NaN;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStepSpeed);
             const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
             return isCenter ? this.theme().contrast : undefined;
           },
@@ -525,8 +547,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             const scales = this.chart?.options?.scales as unknown as { xSpeed?: { max?: number } } | undefined;
             const sAny = scale as unknown as { max?: number };
             const max = (scales?.xSpeed?.max as number | undefined) ?? sAny.max;
-            const step = this.xStepSpeed ?? 1;
-            const tol = Number.isFinite(step) ? Math.max(1e-6, step * 0.25) : 1e-6;
+            const tol = this.tolFromStep(this.xStepSpeed ?? 1);
             const isMax = Number.isFinite(tickVal) && Number.isFinite(max) && Math.abs(tickVal - (max as number)) <= tol;
             return isMax ? 'rgba(0,0,0,0)' : this.theme().contrastDimmer;
           },
@@ -552,7 +573,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         font: { size: 35 },
         color: this.getThemeColors().chartLabel
       },
-      annotation : {
+      annotation: {
       },
       legend: { display: false }
     }
@@ -708,51 +729,51 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     this.setDatasetsColors();
   }
 
- /*  public testSimulateCrossingZero(): void {
-    // Generate 30 seconds of oscillating wind direction crossing 0° back and forth
-    const points = 30;
-    const startTs = Date.now() - (points - 1) * 1000; // 1-second increments
-    const toRad = (d: number) => d * Math.PI / 180;
-    const amplitudeDeg = 20;           // +/- 20° swing around 0
-    const periodSec = 12;              // oscillation period
-    const noiseDeg = 2;                // jitter for value around SMA
-    const windowSize = 5;              // rolling window for SMA/min/max
+  /*  public testSimulateCrossingZero(): void {
+     // Generate 30 seconds of oscillating wind direction crossing 0° back and forth
+     const points = 30;
+     const startTs = Date.now() - (points - 1) * 1000; // 1-second increments
+     const toRad = (d: number) => d * Math.PI / 180;
+     const amplitudeDeg = 20;           // +/- 20° swing around 0
+     const periodSec = 12;              // oscillation period
+     const noiseDeg = 2;                // jitter for value around SMA
+     const windowSize = 5;              // rolling window for SMA/min/max
 
-    // Base oscillation in degrees (centered around 0°), then unwrap for continuity
-    const baseDegSeq = Array.from({ length: points }, (_, i) =>
-      amplitudeDeg * Math.sin((2 * Math.PI * i) / periodSec)
-    );
-    const degUnwrapped = this.unwrapAngles(baseDegSeq);
+     // Base oscillation in degrees (centered around 0°), then unwrap for continuity
+     const baseDegSeq = Array.from({ length: points }, (_, i) =>
+       amplitudeDeg * Math.sin((2 * Math.PI * i) / periodSec)
+     );
+     const degUnwrapped = this.unwrapAngles(baseDegSeq);
 
-    const testData: IDatasetServiceDatapoint[] = degUnwrapped.map((deg, i) => {
-      const start = Math.max(0, i - windowSize + 1);
-      const window = degUnwrapped.slice(start, i + 1);
-      const avgDeg = window.reduce((s, v) => s + v, 0) / window.length;
-      const minDeg = Math.min(...window);
-      const maxDeg = Math.max(...window);
-      // Slight variation of value from SMA
-      const jitter = (Math.random() * 2 - 1) * noiseDeg; // [-noiseDeg, +noiseDeg]
-      const valueDeg = avgDeg + jitter;
+     const testData: IDatasetServiceDatapoint[] = degUnwrapped.map((deg, i) => {
+       const start = Math.max(0, i - windowSize + 1);
+       const window = degUnwrapped.slice(start, i + 1);
+       const avgDeg = window.reduce((s, v) => s + v, 0) / window.length;
+       const minDeg = Math.min(...window);
+       const maxDeg = Math.max(...window);
+       // Slight variation of value from SMA
+       const jitter = (Math.random() * 2 - 1) * noiseDeg; // [-noiseDeg, +noiseDeg]
+       const valueDeg = avgDeg + jitter;
 
-      return {
-        timestamp: startTs + i * 1000,
-        data: {
-          value: toRad(valueDeg),
-          sma: toRad(avgDeg),
-          lastAverage: 0,             // fixed 0 rad as requested
-          lastMinimum: toRad(minDeg),
-          lastMaximum: toRad(maxDeg)
-        }
-      };
-    });
+       return {
+         timestamp: startTs + i * 1000,
+         data: {
+           value: toRad(valueDeg),
+           sma: toRad(avgDeg),
+           lastAverage: 0,             // fixed 0 rad as requested
+           lastMinimum: toRad(minDeg),
+           lastMaximum: toRad(maxDeg)
+         }
+       };
+     });
 
-    this.createDatasets();
-    this.pushRowsToDatasets(testData);
-    this.updateChartAfterDataChange();
-    this.ngZone.runOutsideAngular(() => {
-    this.chart?.update();
-    });
-  } */
+     this.createDatasets();
+     this.pushRowsToDatasets(testData);
+     this.updateChartAfterDataChange();
+     this.ngZone.runOutsideAngular(() => {
+     this.chart?.update();
+     });
+   } */
 
   private startStreaming(): void {
     this._dsDirectionSub?.unsubscribe();
@@ -788,9 +809,9 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     });
   }
 
-  private unwrapAngles(degrees: (number|null)[]): (number|null)[] {
+  private unwrapAngles(degrees: (number | null)[]): (number | null)[] {
     if (degrees.length === 0) return [];
-    const unwrapped: (number|null)[] = [];
+    const unwrapped: (number | null)[] = [];
     let prev = null;
     for (const val of degrees) {
       if (val == null) {
@@ -910,8 +931,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   }
 
   private updateChartAfterDataChange() {
-  // Update Title value (no-op here; axis ranges computed below)
-
     // Calculate dynamic x (direction) scale range based on lastAverage center and lastMin/Max distances (with wrap-around)
     const dirAvgArr = this.chart.data.datasets[2]?.data as IDataSetRow[] | undefined;
     const dirSmaArr = this.chart.data.datasets[1]?.data as IDataSetRow[] | undefined;
@@ -920,21 +939,21 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     const hasSma = !!dirSmaArr?.length;
     const hasVal = !!dirValArr?.length;
     // Center MUST be the latest lastAverage value when available, else fall back to SMA, else Value
-      const centerVal = hasAvg
-        ? dirAvgArr![dirAvgArr!.length - 1].x
-        : hasSma
-          ? dirSmaArr![dirSmaArr!.length - 1].x
-          : hasVal
-            ? dirValArr![dirValArr!.length - 1].x
-            : undefined;
+    const centerVal = hasAvg
+      ? dirAvgArr![dirAvgArr!.length - 1].x
+      : hasSma
+        ? dirSmaArr![dirSmaArr!.length - 1].x
+        : hasVal
+          ? dirValArr![dirValArr!.length - 1].x
+          : undefined;
     if (typeof centerVal === 'number' && isFinite(centerVal)) {
       // Try to use lastMinimum/Maximum if available; else derive half-range from recent window using angular distance
       const minDs = this.chart.data.datasets[3]?.data as IDataSetRow[] | undefined;
       const maxDs = this.chart.data.datasets[4]?.data as IDataSetRow[] | undefined;
       const lastMin = minDs?.length ? minDs[minDs.length - 1].x : undefined;
       const lastMax = maxDs?.length ? maxDs[maxDs.length - 1].x : undefined;
-  const minDiff = typeof lastMin === 'number' && isFinite(lastMin) ? this.angularDiff(centerVal, lastMin) : Number.NaN;
-  const maxDiff = typeof lastMax === 'number' && isFinite(lastMax) ? this.angularDiff(centerVal, lastMax) : Number.NaN;
+      const minDiff = typeof lastMin === 'number' && isFinite(lastMin) ? this.angularDiff(centerVal, lastMin) : Number.NaN;
+      const maxDiff = typeof lastMax === 'number' && isFinite(lastMax) ? this.angularDiff(centerVal, lastMax) : Number.NaN;
       let halfRange = Number.isFinite(minDiff) || Number.isFinite(maxDiff)
         ? Math.max(Number.isFinite(minDiff) ? minDiff : 0, Number.isFinite(maxDiff) ? maxDiff : 0)
         : Number.NaN;
@@ -954,18 +973,18 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       halfRange = Math.max(halfRange || 0, minHalfRangeDeg);
       // 5 ticks (4 intervals) with a nice step, snapped to grid around the chosen center
       const requestedStep = (2 * halfRange) / 4; // = halfRange / 2
-  // Allow 15° by including 1.5 mantissa; also support 7.5
-  const dStep = this.niceStepFromMantissas(requestedStep, [1, 1.5, 2, 2.5, 5, 7.5, 10]);
-        // Do NOT snap the center; place it exactly at lastAverage
-        const xMin = centerVal - 2 * dStep;
-        const xMax = centerVal + 2 * dStep;
+      // Allow 15° by including 1.5 mantissa; also support 7.5
+      const dStep = this.niceStepFromMantissas(requestedStep, [1, 1.5, 2, 2.5, 5, 7.5, 10]);
+      // Place center exactly at lastAverage
+      const xMin = centerVal - 2 * dStep;
+      const xMax = centerVal + 2 * dStep;
       this.chart.options.scales.x.min = xMin;
       this.chart.options.scales.x.max = xMax;
       const xScale = this.chart.options.scales as unknown as { x: { ticks?: { stepSize?: number } } };
       xScale.x.ticks = { ...(xScale.x.ticks ?? {}), stepSize: dStep };
 
-      // cache for tick styling
-        this.xCenter = centerVal;
+      // Cache for tick styling
+      this.xCenter = centerVal;
       this.xStep = dStep;
     }
 
@@ -1032,11 +1051,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           step = windowMs / 5;
           break;
       }
-  const yScale = this.chart.options.scales as unknown as { y: { ticks?: { stepSize?: number; count?: number } } };
-  const ticksCopy = { ...(yScale.y.ticks ?? {}) } as { stepSize?: number; count?: number };
-  delete ticksCopy.count;
-  ticksCopy.stepSize = step;
-  yScale.y.ticks = ticksCopy;
+      const yScale = this.chart.options.scales as unknown as { y: { ticks?: { stepSize?: number; count?: number } } };
+      const ticksCopy = { ...(yScale.y.ticks ?? {}) } as { stepSize?: number; count?: number };
+      delete ticksCopy.count;
+      ticksCopy.stepSize = step;
+      yScale.y.ticks = ticksCopy;
     }
   }
 
