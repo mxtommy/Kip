@@ -234,7 +234,7 @@ export class WidgetService {
       name: 'Wind Trends',
       description: 'Visualize True wind trends on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
       icon: 'datachartWidget',
-      minWidth: 2,
+      minWidth: 5,
       minHeight: 4,
       defaultWidth: 2,
       defaultHeight: 3,

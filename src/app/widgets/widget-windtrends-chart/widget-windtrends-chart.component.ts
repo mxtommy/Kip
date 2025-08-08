@@ -78,10 +78,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private readonly UNIT_FONT_SIZE = 28;
   private readonly UNIT_PADDING = 8;            // px between speed value and 'kts'
 
-  // Helper: tolerance based on step (25% of step, min 1e-6)
-  private tolFromStep(step: number | null): number {
-    const s = step ?? 1;
-    return Math.max(1e-6, s * 0.25);
+  // Helper: robust near-equality to avoid suppressing non-target ticks
+  private nearlyEqual(a: number, b: number, eps = 1e-6): boolean {
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+    const scale = Math.max(1, Math.max(Math.abs(a), Math.abs(b)));
+    return Math.abs(a - b) <= eps * scale;
   }
 
   // Helper: resolve tick color from scale ticks.color (string or function)
@@ -127,34 +128,10 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
       const scaleMap = chart.scales as Record<string, Scale | undefined>;
       const optScales = chart.options?.scales as Record<string, { min?: number; max?: number }> | undefined;
 
-      // Loading overlay until we have enough data to draw nicely
+      // Loading overlay flag; do not skip drawings so all lines are visible on load
       const dirVals = chart.data?.datasets?.[0]?.data as (IDataSetRow[] | undefined);
       const spdVals = chart.data?.datasets?.[5]?.data as (IDataSetRow[] | undefined);
       const ready = (dirVals?.length ?? 0) >= 2 && (spdVals?.length ?? 0) >= 2;
-      if (!ready) {
-        ctx.save();
-        // Draw centered message box within the plotting area
-        const boxW = Math.min(area.width * 0.7, 420);
-        const boxH = 90;
-        const x = area.left + (area.width - boxW) / 2;
-        const y = area.top + (area.height - boxH) / 2;
-        // Background
-        ctx.fillStyle = this.theme().background;
-        ctx.fillRect(x, y, boxW, boxH);
-        // Border
-        ctx.strokeStyle = this.theme().contrastDim;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, boxW, boxH);
-        // Text
-        const def = Chart.defaults.font;
-        ctx.fillStyle = this.getThemeColors().chartLabel;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `bold 22px ${def.family}`;
-        ctx.fillText('Data acquisition in progress...', x + boxW / 2, y + boxH / 2);
-        ctx.restore();
-        return; // Skip other drawings until ready
-      }
 
       const drawForAxis = (axisKey: 'x' | 'xSpeed', format: (v: number) => string) => {
         const scale = scaleMap?.[axisKey] as (Scale | undefined);
@@ -282,6 +259,34 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - this.TOP_VALUE_Y_OFFSET);
+        ctx.restore();
+      }
+
+      // Draw loading overlay box/text visible above background; keep lines visible via semi-transparent fill
+      if (!ready) {
+        const boxW = Math.min(area.width * 0.7, 420);
+        const boxH = 90;
+        const x = area.left + (area.width - boxW) / 2;
+        const y = area.top + (area.height - boxH) / 2;
+        // Background with slight transparency so lines remain visible
+        ctx.save();
+        ctx.globalAlpha = 0.82;
+        ctx.fillStyle = theme.background;
+        ctx.fillRect(x, y, boxW, boxH);
+        ctx.restore();
+        // Border on top
+        ctx.save();
+        ctx.strokeStyle = theme.contrastDim;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, boxW, boxH);
+        ctx.restore();
+        // Text over everything
+        ctx.save();
+        ctx.fillStyle = this.getThemeColors().chartLabel;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold 22px ${def.family}`;
+        ctx.fillText('Data acquisition in progress...', x + boxW / 2, y + boxH / 2);
         ctx.restore();
       }
     }
@@ -453,12 +458,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           callback: (value: number) => {
             // Hide the default center tick label; plugin will draw a bold themed label there
             const center = this.xCenter ?? Number.NaN;
-            const tol = this.tolFromStep(this.xStep);
-            if (Number.isFinite(center) && Math.abs(value - center) <= tol) return '';
+            if (this.nearlyEqual(value, center)) return '';
             // Hide leftmost label (at min) to avoid overlap with custom shifted label
             const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
             const minOpt = scales?.x?.min;
-            if (typeof minOpt === 'number' && isFinite(minOpt) && Math.abs((value as number) - minOpt) <= tol) return '';
+            if (typeof minOpt === 'number' && this.nearlyEqual(value as number, minOpt)) return '';
             const wrapped = ((value % 360 + 360) % 360);
             return `${wrapped.toFixed(0)}°`;
           },
@@ -466,15 +470,13 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           font: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenter ?? Number.NaN;
-            const tol = this.tolFromStep(this.xStep);
-            const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
+            const isCenter = this.nearlyEqual(tickVal, center);
             return { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenter ?? Number.NaN;
-            const tol = this.tolFromStep(this.xStep);
-            const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
+            const isCenter = this.nearlyEqual(tickVal, center);
             return isCenter ? this.theme().contrast : undefined;
           },
         },
@@ -486,8 +488,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
             const sAny = scale as unknown as { min?: number };
             const min = (scales?.x?.min as number | undefined) ?? sAny.min;
-            const tol = this.tolFromStep(this.xStep ?? 1);
-            const isMin = Number.isFinite(tickVal) && Number.isFinite(min) && Math.abs(tickVal - (min as number)) <= tol;
+            const isMin = this.nearlyEqual(tickVal, min as number);
             return isMin ? 'rgba(0,0,0,0)' : this.theme().contrastDimmer;
           },
           lineWidth: 1
@@ -512,12 +513,11 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           maxRotation: 0,
           callback: (value: number) => {
             const center = this.xCenterSpeed ?? Number.NaN;
-            const tol = this.tolFromStep(this.xStepSpeed);
-            if (Number.isFinite(center) && Math.abs((value as number) - center) <= tol) return '';
+            if (this.nearlyEqual(value as number, center)) return '';
             // Hide rightmost label (at max) to avoid overlap with custom shifted label
             const scales = this.chart?.options?.scales as unknown as { xSpeed?: { max?: number } } | undefined;
             const maxOpt = scales?.xSpeed?.max;
-            if (typeof maxOpt === 'number' && isFinite(maxOpt) && Math.abs((value as number) - maxOpt) <= tol) return '';
+            if (typeof maxOpt === 'number' && this.nearlyEqual(value as number, maxOpt)) return '';
             // Derive decimals from step so adjacent ticks remain distinct
             const stepS = this.xStepSpeed ?? Number.NaN;
             const s = Number.isFinite(stepS) ? stepS : 1;
@@ -527,15 +527,13 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
           font: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenterSpeed ?? Number.NaN;
-            const tol = this.tolFromStep(this.xStepSpeed);
-            const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
+            const isCenter = this.nearlyEqual(tickVal, center);
             return { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenterSpeed ?? Number.NaN;
-            const tol = this.tolFromStep(this.xStepSpeed);
-            const isCenter = Number.isFinite(tickVal) && Number.isFinite(center) && Math.abs(tickVal - center) <= tol;
+            const isCenter = this.nearlyEqual(tickVal, center);
             return isCenter ? this.theme().contrast : undefined;
           },
         },
@@ -547,8 +545,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
             const scales = this.chart?.options?.scales as unknown as { xSpeed?: { max?: number } } | undefined;
             const sAny = scale as unknown as { max?: number };
             const max = (scales?.xSpeed?.max as number | undefined) ?? sAny.max;
-            const tol = this.tolFromStep(this.xStepSpeed ?? 1);
-            const isMax = Number.isFinite(tickVal) && Number.isFinite(max) && Math.abs(tickVal - (max as number)) <= tol;
+            const isMax = this.nearlyEqual(tickVal, max as number);
             return isMax ? 'rgba(0,0,0,0)' : this.theme().contrastDimmer;
           },
           lineWidth: 1
