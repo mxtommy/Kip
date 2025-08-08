@@ -781,68 +781,49 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   }
 
   private pushRowsToDatasets(rows: IDatasetServiceDatapoint[]): void {
-    this.chart.data.datasets[0].data.push(...this.transformDatasetRows(rows, 'value'));
-    this.chart.data.datasets[1].data.push(...this.transformDatasetRows(rows, 'sma'));
-    this.chart.data.datasets[2].data.push(...this.transformDatasetRows(rows, 'avg'));
-    this.chart.data.datasets[3].data.push(...this.transformDatasetRows(rows, 'min'));
-    this.chart.data.datasets[4].data.push(...this.transformDatasetRows(rows, 'max'));
+    this.pushRowsGeneric(rows, 0, 'deg', true);
   }
 
   private pushRowsToSpeedDatasets(rows: IDatasetServiceDatapoint[]): void {
-    this.chart.data.datasets[5].data.push(...this.transformSpeedRows(rows, 'value'));
-    this.chart.data.datasets[6].data.push(...this.transformSpeedRows(rows, 'sma'));
-    this.chart.data.datasets[7].data.push(...this.transformSpeedRows(rows, 'avg'));
-    this.chart.data.datasets[8].data.push(...this.transformSpeedRows(rows, 'min'));
-    this.chart.data.datasets[9].data.push(...this.transformSpeedRows(rows, 'max'));
+    this.pushRowsGeneric(rows, 5, 'knots', false);
   }
 
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string): IDataSetRow[] {
-    // Convert radians to degrees (do not normalize here)
-    const degs = rows.map(row => {
-      const rowMapping = {
-        value: row.data.value,
-        sma: row.data.sma,
-        ema: row.data.ema,
-        dema: row.data.doubleEma,
-        avg: row.data.lastAverage,
-        min: row.data.lastMinimum,
-        max: row.data.lastMaximum
-      };
-      const v = rowMapping[datasetType];
-      return v == null ? null : this.unitsService.convertToUnit("deg", v);
-    });
-
-    // Unwrap the angles for continuity
-    const unwrapped = this.unwrapAngles(degs);
-
-    // Map back to rows, skipping nulls
-    return rows.map((row, idx) => ({
-      x: unwrapped[idx],
-      y: row.timestamp, // temporarily store timestamp; converted to age in updateChartAfterDataChange
-      ts: row.timestamp,
-    }));
+  private getRowValue(row: IDatasetServiceDatapoint, datasetType: 'value' | 'sma' | 'ema' | 'dema' | 'avg' | 'min' | 'max'): number | null {
+    switch (datasetType) {
+      case 'value': return row.data.value ?? null;
+      case 'sma': return row.data.sma ?? null;
+      case 'ema': return row.data.ema ?? null;
+      case 'dema': return row.data.doubleEma ?? null;
+      case 'avg': return row.data.lastAverage ?? null;
+      case 'min': return row.data.lastMinimum ?? null;
+      case 'max': return row.data.lastMaximum ?? null;
+      default: return null;
+    }
   }
 
-  private transformSpeedRows(rows: IDatasetServiceDatapoint[], datasetType: string): IDataSetRow[] {
+  // Generic transform for degree/knots series
+  private transformRows(rows: IDatasetServiceDatapoint[], datasetType: 'value' | 'sma' | 'ema' | 'dema' | 'avg' | 'min' | 'max', toUnit: 'deg' | 'knots', unwrap: boolean): IDataSetRow[] {
     const vals = rows.map(row => {
-      const rowMapping = {
-        value: row.data.value,
-        sma: row.data.sma,
-        ema: row.data.ema,
-        dema: row.data.doubleEma,
-        avg: row.data.lastAverage,
-        min: row.data.lastMinimum,
-        max: row.data.lastMaximum
-      };
-      const v = rowMapping[datasetType];
-      return v == null ? null : this.unitsService.convertToUnit("knots", v);
+      const raw = this.getRowValue(row, datasetType);
+      return raw == null ? null : this.unitsService.convertToUnit(toUnit, raw);
     });
 
+    const xs = unwrap ? this.unwrapAngles(vals) : vals;
+
     return rows.map((row, idx) => ({
-      x: vals[idx],
+      x: xs[idx] as number,
       y: row.timestamp,
       ts: row.timestamp,
     }));
+  }
+
+  // Push a batch of rows into 5 consecutive datasets starting at baseIndex
+  private pushRowsGeneric(rows: IDatasetServiceDatapoint[], baseIndex: 0 | 5, toUnit: 'deg' | 'knots', unwrap: boolean): void {
+  const types: ('value' | 'sma' | 'avg' | 'min' | 'max')[] = ['value', 'sma', 'avg', 'min', 'max'];
+    types.forEach((type, i) => {
+      (this.chart.data.datasets[baseIndex + i].data as IDataSetRow[])
+        .push(...this.transformRows(rows, type, toUnit, unwrap));
+    });
   }
 
   private normalizeAngle(angle: number): number {
@@ -853,20 +834,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private angularDiff(a: number, b: number): number {
     const d = ((a - b + 540) % 360) - 180; // [-180, 180)
     return Math.abs(d);
-  }
-
-  // Compute a "nice" step size close to the requested step using 1/2/2.5/5 * 10^n
-  private niceStep(step: number): number {
-    if (!isFinite(step) || step <= 0) return 1;
-    const exp = Math.floor(Math.log10(step));
-    const base = step / Math.pow(10, exp);
-    let niceBase: number;
-    if (base <= 1) niceBase = 1;
-    else if (base <= 2) niceBase = 2;
-    else if (base <= 2.5) niceBase = 2.5;
-    else if (base <= 5) niceBase = 5;
-    else niceBase = 10;
-    return niceBase * Math.pow(10, exp);
   }
 
   // More flexible: choose from provided mantissas (ascending) for a nice step
