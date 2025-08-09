@@ -1,3 +1,19 @@
+# V 3.7.0
+## New features
+* Real‑time True Wind Trends widget with dual top axes for direction (°) and speed (kts). Shows live values plus SMA over the period average for faster tactical wind shift / pressure awareness.
+## Improvements
+* Data Chart layout: Cleaner vertical option, optional min/max line, flexible top/right axes, larger fonts for readability.
+* Dataset Service circular angle stats: Correct mean/SMA/min/max for wrap‑around angles (no 0→360 jump spikes) for smoother, accurate trends.
+* Widget categories: New Core & Racing groupings (retired "Basic") reduce hunting time and clarify purpose.
+* Configuration upgrade guidance: More prominent tips ease migration and new input control adaptation after upgrades.
+* Help access: "Get help" button on empty dashboards boosts documentation visibility and user support.
+* Tutorial widget: Clearer instructions improve first‑time user experience.
+* Help documentation updates.
+## Fixes
+* Enforce WSS under HTTPS to avoid mixed‑content issues. _Contribution by @tkurki_
+* Server reconnect counter should not resets when switching tabs; removed redundant snackbar action button.
+## New Contributor
+* @tkurki made their first contribution
 # V 3.6.1
 ## Fixes
 * Dashboard swipe gesture over Freeboard-SK and Embed widgets not changing dashboard. Fixes #744
