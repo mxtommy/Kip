@@ -79,7 +79,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
         enableTicks: true,
         compassUseNumbers: false,
         highlightsWidth: 5,
-        scaleStart: 180
+        scaleStart: 180,
+        barStartPosition: "left"
       },
       numInt: 1,
       numDecimal: 0,
@@ -167,7 +168,8 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
       this.observeMetaStream();
       this.metaSub = this.zones$.subscribe(zones => {
         if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
-          const gaugeZonesHighlight = getHighlights(zones, this.theme(), this.widgetProperties.config.paths['gaugePath'].convertUnitTo, this.unitsService, this.adjustedScale.min, this.adjustedScale.max)
+          const invert = this.widgetProperties.config.gauge.barStartPosition === "right" ? true : false;
+          const gaugeZonesHighlight = getHighlights(zones, this.theme(), this.widgetProperties.config.paths['gaugePath'].convertUnitTo, this.unitsService, this.adjustedScale.min, this.adjustedScale.max, invert);
           highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
           highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
         } else {
@@ -336,7 +338,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
   }
 
   private configureMeasuringGauge(): void {
-    this.adjustedScale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper);
+    this.adjustedScale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.gauge.barStartPosition === "right" ? true : false);
 
     this.gaugeOptions.minValue = this.adjustedScale.min;
     this.gaugeOptions.maxValue = this.adjustedScale.max;
@@ -359,6 +361,7 @@ export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements
     this.gaugeOptions.minorTicks = 2;
     this.gaugeOptions.ticksAngle = 270;
     this.gaugeOptions.startAngle = 45;
+    this.gaugeOptions.barStartPosition = this.widgetProperties.config.gauge.barStartPosition || "left";
     this.gaugeOptions.strokeTicks = true;
     this.gaugeOptions.numbersMargin = 3;
     this.gaugeOptions.fontNumbersSize = 15;

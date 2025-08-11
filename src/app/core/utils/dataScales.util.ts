@@ -7,17 +7,18 @@ export interface IScale {
 }
 
 /**
-   * Returns an adjusted scale range, with major tick values that are well rounded ie. limiting
-   * tick value factions as best as possible. Note that the min/max value are starting points.
-   * The returned range may be different from the input range, as the min/max values *may
-   * will be adjusted.
-   *
-   * @private
-   * @param {number} minValue suggested range min value
-   * @param {number} maxValue suggested range max value
-   * @return {*}  {[number, number, number[]]} array containing calculated rounded range minimal value, maximum value and the corresponding tick array values
-   */
-export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: number): IScale {
+ * Returns an adjusted scale range, with major tick values that are well rounded ie. limiting
+ * tick value factions as best as possible. Note that the min/max value are starting points.
+ * The returned range may be different from the input range, as the min/max values *may
+ * will be adjusted.
+ *
+ * @private
+ * @param {number} minValue suggested range min value
+ * @param {number} maxValue suggested range max value
+ * @param {boolean} [invert=false] whether the resulting scale should be inverted. When true, min/max are swapped and ticks are reversed.
+ * @return {*}  {[number, number, number[]]} array containing calculated rounded range minimal value, maximum value and the corresponding tick array values
+ */
+export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: number, invert = false): IScale {
   const tickArray = [] as number[];
   let niceRange = maxValue - minValue;
   let majorTickSpacing = 0;
@@ -43,7 +44,11 @@ export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: numbe
   if (tickArray[tickArray.length - 1] !== niceMaxValue) {
     tickArray.push(niceMaxValue);
   }
-  return {min: niceMinValue, max: niceMaxValue, majorTicks: tickArray};
+  if (invert) {
+    const invertedTicks = [...tickArray].reverse();
+    return { min: niceMinValue, max: niceMaxValue, majorTicks: invertedTicks };
+  }
+  return { min: niceMinValue, max: niceMaxValue, majorTicks: tickArray };
 }
 
 function calcNiceNumber(range: number, round: boolean): number {
