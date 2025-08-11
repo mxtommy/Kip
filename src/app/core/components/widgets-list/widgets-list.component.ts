@@ -34,6 +34,7 @@ export class WidgetsListComponent implements OnInit {
   }
 
   protected onSelectWidget(selectedWidget: WidgetDescriptionWithPluginStatus): void {
+  if (!selectedWidget.isDependencyValid) return; // guard against keyboard activation on disabled card
     const {
       name,
       description,

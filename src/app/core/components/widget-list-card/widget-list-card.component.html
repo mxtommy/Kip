@@ -1,4 +1,4 @@
-<div class="item-container">
+<div class="item-container" role="button" tabindex="0" [attr.aria-disabled]="!pluginDependencyValid() ? 'true' : null">
   <div class="item-icon">
     <mat-icon
       [svgIcon]="svgIcon()"
@@ -8,9 +8,9 @@
     ></mat-icon>
   </div>
   <div class="item-label">
-    <p class="title no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom:0px; margin-top: 8px' : ''">{{ name() }}</p>
+    <p class="title no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom:0px; margin-top: 4px' : ''">{{ name() }}</p>
     @if (pluginsStatus().length > 0) {
-      <div class="dependency no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom: 8px' : ''">
+      <div class="dependency no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom: 8px;margin-top: 4px;' : ''">
       <span [class]="!pluginDependencyValid() ? 'dependency-error' : ''">Plugin:</span>
       @for (plugin of pluginsStatus(); let last = $last; track $index) {
         <span [class]="!pluginDependencyValid() ? plugin.enabled ? 'dependency-ok' : 'dependency-error' : ''">

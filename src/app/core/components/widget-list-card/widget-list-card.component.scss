@@ -50,11 +50,12 @@
   color: var(--mat-sys-outline);
   text-align: start;
   font-style: italic;
-  font-size: var(--mat-sys-label-small-size);
+  font-size: var(--mat-sys-label-large-size);
 }
 
 .dependency-error {
   color: var(--kip-port-color);
+  font-weight: bold;
 }
 
 .dependency-ok {

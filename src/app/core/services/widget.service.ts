@@ -73,8 +73,8 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 })
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
-  private readonly _widgetCategories = ["Core", "Gauge", "Component", "Racing"];
-  private readonly _widgetDefinition: WidgetDescription[] = [
+  private readonly _widgetCategories = [...WIDGET_CATEGORIES];
+  private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
       description: 'Displays numeric data in a clear and concise format, with options to show minimum and/or maximum recorded values. Includes an optional background minichart for quick visual trend insights.',
@@ -233,7 +233,7 @@ export class WidgetService {
     },
     {
       name: 'Windsteer',
-      description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
+      description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.',
       icon: 'windsteeringWidget',
       minWidth: 1,
       minHeight: 1,
@@ -337,12 +337,12 @@ export class WidgetService {
     },
     {
       name: 'Wind Trends',
-      description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (kts). Displays live values and SMA over the current period’s average.',
+      description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (knots). Displays live values and SMA over the current period’s average.',
       icon: 'windtrendsWidget',
       minWidth: 5,
       minHeight: 4,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 5,
+      defaultHeight: 4,
       category: 'Racing',
       pluginDependency: [],
       selector: 'widget-windtrends-chart',
@@ -363,7 +363,7 @@ export class WidgetService {
     }
   ];
 
-  get kipWidgets(): WidgetDescription[] {
+  get kipWidgets(): readonly WidgetDescription[] {
     return this._widgetDefinition;
   }
 
