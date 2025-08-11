@@ -1,3 +1,7 @@
+# V 3.7.1
+## Fixes
+* Fix widget resize touch events stop responding. Fixes #759
+* Racer Start Line widget: Fix the rotation button direction by @gregw. Fixes #757
 # V 3.7.0
 ## New features
 * Real‑time True Wind Trends widget with dual top axes for direction (°) and speed (kts). Shows live values plus SMA over the period average for faster tactical wind shift / pressure awareness.
