@@ -28,9 +28,14 @@ export interface WidgetDescription {
   /**
    * An array of plugin names that this widget requires to be installed
    * and enabled on the Signal K server. If the widget does not have any
-   * dependencies, this can be an empty array.
+   * required plugins, this can be an empty array.
    */
-  pluginDependency: string[];
+  requiredPlugins: string[];
+  /**
+   * An array of plugin names that are optional for this widget. If the widget does not have any
+   * optional plugins, this can be omitted or an empty array.
+   */
+  optionalPlugins?: string[];
   /**
    * The category of the widget, used for filtering in the widget list.
    */
@@ -84,7 +89,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
     },
@@ -97,7 +102,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
     },
@@ -110,7 +115,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
     },
@@ -123,7 +128,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-position',
       componentClassName: 'WidgetPositionComponent',
     },
@@ -136,7 +141,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-label',
       componentClassName: 'WidgetLabelComponent'
     },
@@ -149,7 +154,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
@@ -162,7 +167,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Core',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-slider',
       componentClassName: 'WidgetSliderComponent'
     },
@@ -175,7 +180,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Gauge',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-simple-linear',
       componentClassName: 'WidgetSimpleLinearComponent'
     },
@@ -188,7 +193,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Gauge',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-gauge-ng-linear',
       componentClassName: 'WidgetGaugeNgLinearComponent'
     },
@@ -201,7 +206,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Gauge',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-gauge-ng-radial',
       componentClassName: 'WidgetGaugeNgRadialComponent'
     },
@@ -214,7 +219,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Gauge',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-gauge-ng-compass',
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
@@ -227,7 +232,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Gauge',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
     },
@@ -240,7 +245,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Component',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
     },
@@ -253,7 +258,7 @@ export class WidgetService {
       defaultWidth: 3,
       defaultHeight: 7,
       category: 'Component',
-      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider'],
+      requiredPlugins: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider'],
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
     },
@@ -266,7 +271,8 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 7,
       category: 'Component',
-      pluginDependency: ['autopilot'],
+      requiredPlugins: [],
+      optionalPlugins: ['autopilot', 'Pypilot'],
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
@@ -279,7 +285,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Component',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
     },
@@ -292,7 +298,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Component',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
     },
@@ -305,7 +311,7 @@ export class WidgetService {
       defaultWidth: 2,
       defaultHeight: 3,
       category: 'Racing',
-      pluginDependency: ['signalk-polar-performance-plugin'],
+      requiredPlugins: ['signalk-polar-performance-plugin'],
       selector: 'widget-racesteer',
       componentClassName: 'WidgetRacesteerComponent'
     },
@@ -317,7 +323,7 @@ export class WidgetService {
       minHeight: 2,
       defaultWidth: 2,
       defaultHeight: 2,
-      pluginDependency: ['signalk-racer'],
+      requiredPlugins: ['signalk-racer'],
       category: 'Racing',
       selector: 'widget-racer-line',
       componentClassName: 'WidgetRacerLineComponent',
@@ -330,7 +336,7 @@ export class WidgetService {
       minHeight: 2,
       defaultWidth: 2,
       defaultHeight: 2,
-      pluginDependency: ['signalk-racer'],
+      requiredPlugins: ['signalk-racer'],
       category: 'Racing',
       selector: 'widget-racer-timer',
       componentClassName: 'WidgetRacerTimerComponent',
@@ -344,7 +350,7 @@ export class WidgetService {
       defaultWidth: 5,
       defaultHeight: 4,
       category: 'Racing',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-windtrends-chart',
       componentClassName: 'WidgetWindTrendsChartComponent'
     },
@@ -357,11 +363,12 @@ export class WidgetService {
       defaultWidth: 3,
       defaultHeight: 4,
       category: 'Racing',
-      pluginDependency: [],
+      requiredPlugins: [],
       selector: 'widget-racetimer',
       componentClassName: 'WidgetRaceTimerComponent',
     }
   ];
+
   get kipWidgets(): readonly WidgetDescription[] {
     return this._widgetDefinition;
   }
@@ -392,9 +399,12 @@ export class WidgetService {
   public async getKipWidgetsWithStatus(): Promise<WidgetDescriptionWithPluginStatus[]> {
     const pluginCache: Record<string, boolean> = {};
 
-    // Collect all unique plugin dependencies
+    // Collect all unique plugin dependencies (required + optional)
     const allDeps = Array.from(
-      new Set(this._widgetDefinition.flatMap(w => w.pluginDependency))
+      new Set(this._widgetDefinition.flatMap(w => [
+        ...(w.requiredPlugins || []),
+        ...(w.optionalPlugins || [])
+      ]))
     );
 
     // Check each unique dependency once
@@ -406,18 +416,22 @@ export class WidgetService {
 
     // Map widgets using the cached results
     return this._widgetDefinition.map(widget => {
-      if (!widget.pluginDependency || widget.pluginDependency.length === 0) {
-        return {
-          ...widget,
-          isDependencyValid: true,
-          pluginsStatus: []
-        };
-      }
-      const pluginsStatus = widget.pluginDependency.map(dep => ({
+      const required = widget.requiredPlugins || [];
+      const optional = widget.optionalPlugins || [];
+
+      const requiredStatus = required.map(dep => ({
         name: dep,
-        enabled: pluginCache[dep]
+        enabled: pluginCache[dep],
+        required: true
       }));
-      const isDependencyValid = pluginsStatus.every(p => p.enabled);
+      const optionalStatus = optional.map(dep => ({
+        name: dep,
+        enabled: pluginCache[dep],
+        required: false
+      }));
+      const pluginsStatus = [...requiredStatus, ...optionalStatus];
+      // Widget is valid if all required plugins are enabled
+      const isDependencyValid = requiredStatus.every(p => p.enabled);
       return {
         ...widget,
         isDependencyValid,
