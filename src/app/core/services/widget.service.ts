@@ -9,6 +9,20 @@ export enum WidgetCategories {
   Component = "Component",
   Racing = "Racing"
 }
+/**
+ * WidgetDescription defines the metadata and plugin dependencies for a widget.
+ *
+ * - requiredPlugins: All listed plugins must be enabled for the widget to function.
+ * - optionalPlugins: If present, at least one must be enabled for the widget to function. If requirements are met, missing optional plugins are shown as unavailable but do not block use.
+ *
+ * Example:
+ * {
+ *   name: 'Autopilot',
+ *   ...
+ *   requiredPlugins: [],
+ *   optionalPlugins: ['autopilot', 'pypilot-autopilot-provider']
+ * }
+ */
 export interface WidgetDescription {
   /**
    * The name of the widget, which will be displayed in the widget list.
@@ -26,14 +40,11 @@ export interface WidgetDescription {
    */
   icon: string;
   /**
-   * An array of plugin names that this widget requires to be installed
-   * and enabled on the Signal K server. If the widget does not have any
-   * required plugins, this can be an empty array.
+   * Plugins that must be enabled for the widget to function. If empty, no required plugins.
    */
   requiredPlugins: string[];
   /**
-   * An array of plugin names that are optional for this widget. If the widget does not have any
-   * optional plugins, this can be omitted or an empty array.
+   * Plugins that are optional for the widget. If present, at least one must be enabled for the widget to function. If omitted or empty, no optional plugin logic is applied.
    */
   optionalPlugins?: string[];
   /**
@@ -272,7 +283,7 @@ export class WidgetService {
       defaultHeight: 7,
       category: 'Component',
       requiredPlugins: [],
-      optionalPlugins: ['autopilot', 'Pypilot'],
+      optionalPlugins: ['autopilot', 'pypilot-autopilot-provider'],
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
@@ -383,8 +394,8 @@ export class WidgetService {
    * For each widget, this method:
    * - Checks all unique plugin dependencies using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
    * - Adds the following properties to each widget:
-   *   - `isDependencyValid`: `true` if all dependencies are enabled or if there are no dependencies; `false` otherwise.
-   *   - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean }` for every dependency.
+   * - `isDependencyValid`: `true` if all required plugins are enabled and, if optionalPlugins is present, at least one optional plugin is enabled. Otherwise `false`.
+   * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
    *
    * @returns Promise resolving to an array of WidgetDescriptionWithPluginStatus objects.
    *

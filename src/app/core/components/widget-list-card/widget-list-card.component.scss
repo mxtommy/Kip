@@ -68,13 +68,17 @@
   text-decoration: underline;
 }
 .dependency-optional-ok {
-  color: var(--mat-sys-outline);
-  font-style: italic;
+  color: var(--kip-starboard-color);
 }
 .dependency-optional-error {
+  color: var(--kip-port-color);
+}
+.dependency-optional-missing-met {
   color: var(--mat-sys-outline);
-  font-style: italic;
   text-decoration: line-through;
+}
+.dependency-optional-present-met {
+  color: var(--mat-sys-outline);
 }
 .plugin-type-label {
   font-size: 0.8em;
