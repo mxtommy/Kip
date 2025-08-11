@@ -50,11 +50,40 @@
   color: var(--mat-sys-outline);
   text-align: start;
   font-style: italic;
-  font-size: var(--mat-sys-label-small-size);
+  font-size: var(--mat-sys-label-large-size);
 }
 
 .dependency-error {
   color: var(--kip-port-color);
+  font-weight: bold;
+}
+
+.dependency-required-ok {
+  color: var(--kip-starboard-color);
+  font-weight: bold;
+}
+.dependency-required-error {
+  color: var(--kip-port-color);
+  font-weight: bold;
+  text-decoration: underline;
+}
+.dependency-optional-ok {
+  color: var(--kip-starboard-color);
+}
+.dependency-optional-error {
+  color: var(--kip-port-color);
+}
+.dependency-optional-missing-met {
+  color: var(--mat-sys-outline);
+  text-decoration: line-through;
+}
+.dependency-optional-present-met {
+  color: var(--mat-sys-outline);
+}
+.plugin-type-label {
+  font-size: 0.8em;
+  margin-left: 2px;
+  opacity: 0.7;
 }
 
 .dependency-ok {
