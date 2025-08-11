@@ -90,7 +90,7 @@ export class WidgetService {
     },
     {
       name: 'Text',
-      description: 'Displays text data with customizable color formatting option.',
+      description: 'Displays text data with a customizable color formatting option.',
       icon: 'textWidget',
       minWidth: 1,
       minHeight: 1,
@@ -181,7 +181,7 @@ export class WidgetService {
     },
     {
       name: 'Linear',
-      description: 'A horizontal or vertical linear gauge that supports zones highlights. ',
+      description: 'A horizontal or vertical linear gauge that supports zone highlighting.',
       icon: 'linearGauge',
       minWidth: 1,
       minHeight: 1,
@@ -194,7 +194,7 @@ export class WidgetService {
     },
     {
       name: 'Radial',
-      description: 'A radial gauge that supports various configurations, including capacity and measurement dials and zones highlight.',
+      description: 'A radial gauge with configurable capacity and measurement dials plus zone highlighting.',
       icon: 'radialGauge',
       minWidth: 1,
       minHeight: 1,
@@ -207,7 +207,7 @@ export class WidgetService {
     },
     {
       name: 'Compass',
-      description: 'A faceplate or card rotating compass gauge with various cardinal point indicator options.',
+      description: 'A faceplate or card-style rotating compass gauge with multiple cardinal point indicator options.',
       icon: 'compassGauge',
       minWidth: 1,
       minHeight: 1,
@@ -246,7 +246,7 @@ export class WidgetService {
     },
     {
       name: 'Freeboard-SK',
-      description: 'Add Freeboard-SK Chart Plotter as a widget with auto sign-in to your dashboard.',
+      description: 'Adds the Freeboard-SK chart plotter as a widget with automatic sign-in to your dashboard.',
       icon: 'freeboardWidget',
       minWidth: 3,
       minHeight: 4,
@@ -272,7 +272,7 @@ export class WidgetService {
     },
     {
       name: 'Realtime Data Chart',
-      description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
+      description: 'Visualizes data on a real-time chart with multiple preconfigured series including actuals, SMA and period overall averages and Min/Max. Requires the KIP Dataset to be configured.',
       icon: 'datachartWidget',
       minWidth: 1,
       minHeight: 2,
@@ -285,7 +285,7 @@ export class WidgetService {
     },
     {
       name: 'Embed Webpage Viewer',
-      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not enabled by default but are supported.',
+      description: 'Embeds external web-based applications—such as Grafana graphs or other Signal K apps—into your dashboard for seamless integration. Interaction is disabled by default but can be enabled.',
       icon: 'embedWidget',
       minWidth: 1,
       minHeight: 1,
@@ -298,7 +298,7 @@ export class WidgetService {
     },
     {
       name: 'Racesteer',
-      description: 'A dynamic race steering display that fuses polar performance data with live environmental conditions, guiding you to the optimal steering, tacking, and gybing angles for maximum speed. Instantly see how your performance stacks up against competition polars, helping you make smarter tactical decisions on the water.',
+      description: 'A dynamic race steering display that fuses polar performance data with live conditions to guide optimal steering, tacking, and gybing angles for maximum speed. Instantly compare performance against competition polars for smarter tactical decisions.',
       icon: 'racesteeringWidget',
       minWidth: 1,
       minHeight: 1,
@@ -324,7 +324,7 @@ export class WidgetService {
     },
     {
       name: 'Racer - Start Timer',
-      description: 'An advanced racing countdown timer that indicates if you are OCS (On Course Side). Set the start line, choose your countdown duration, easily adjust the timer, or set the exact start time. At the start, automatically switches to your desired dashboard—unless you are over early.',
+      description: 'An advanced racing countdown timer that indicates OCS (On Course Side) status. Set the start line, choose or adjust the duration, or specify the exact start time. Automatically switches to the target dashboard at the start unless over early.',
       icon: 'racertimerWidget',
       minWidth: 2,
       minHeight: 2,
@@ -350,7 +350,7 @@ export class WidgetService {
     },
     {
       name: 'Countdown Timer',
-      description: 'A simple race start countdown timer. The timer can be started, paused, synched, reset and the countdown duration specified.',
+      description: 'A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.',
       icon: 'racetimerWidget',
       minWidth: 3,
       minHeight: 3,
@@ -362,7 +362,6 @@ export class WidgetService {
       componentClassName: 'WidgetRaceTimerComponent',
     }
   ];
-
   get kipWidgets(): readonly WidgetDescription[] {
     return this._widgetDefinition;
   }
