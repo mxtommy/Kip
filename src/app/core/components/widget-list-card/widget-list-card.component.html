@@ -11,10 +11,19 @@
     <p class="title no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom:0px; margin-top: 4px' : ''">{{ name() }}</p>
     @if (pluginsStatus().length > 0) {
       <div class="dependency no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom: 8px;margin-top: 4px;' : ''">
-      <span [class]="!pluginDependencyValid() ? 'dependency-error' : ''">Plugin:</span>
+      <span [class]="!pluginDependencyValid() ? 'dependency-error' : ''">Plugins:</span>
       @for (plugin of pluginsStatus(); let last = $last; track $index) {
-        <span [class]="!pluginDependencyValid() ? plugin.enabled ? 'dependency-ok' : 'dependency-error' : ''">
+        <span
+          [ngClass]="{
+            'dependency-required-ok': plugin.required && plugin.enabled,
+            'dependency-required-error': plugin.required && !plugin.enabled,
+            'dependency-optional-ok': !plugin.required && plugin.enabled,
+            'dependency-optional-error': !plugin.required && !plugin.enabled
+          }"
+          [attr.title]="plugin.required ? 'Required' : 'Optional'"
+        >
           {{ plugin.enabled ? '✔' : '✖' }} {{ plugin.name }}
+          <span class="plugin-type-label">{{ plugin.required ? '(required)' : '(optional)' }}</span>
         </span>
         @if (!last) {<span>, </span>}
       }

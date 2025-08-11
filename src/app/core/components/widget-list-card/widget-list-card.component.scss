@@ -58,6 +58,30 @@
   font-weight: bold;
 }
 
+.dependency-required-ok {
+  color: var(--kip-starboard-color);
+  font-weight: bold;
+}
+.dependency-required-error {
+  color: var(--kip-port-color);
+  font-weight: bold;
+  text-decoration: underline;
+}
+.dependency-optional-ok {
+  color: var(--mat-sys-outline);
+  font-style: italic;
+}
+.dependency-optional-error {
+  color: var(--mat-sys-outline);
+  font-style: italic;
+  text-decoration: line-through;
+}
+.plugin-type-label {
+  font-size: 0.8em;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
 .dependency-ok {
   color: var(--kip-starboard-color);
 }

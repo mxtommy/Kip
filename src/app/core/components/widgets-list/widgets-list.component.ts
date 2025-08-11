@@ -6,7 +6,6 @@ import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'widgets-list',
-  standalone: true,
   imports: [MatButtonToggleModule, WidgetListCardComponent],
   templateUrl: './widgets-list.component.html',
   styleUrl: './widgets-list.component.scss'
@@ -44,7 +43,8 @@ export class WidgetsListComponent implements OnInit {
       defaultWidth,
       defaultHeight,
       category,
-      pluginDependency,
+      requiredPlugins,
+      optionalPlugins,
       selector,
       componentClassName
     } = selectedWidget;
@@ -58,7 +58,9 @@ export class WidgetsListComponent implements OnInit {
       defaultWidth,
       defaultHeight,
       category,
-      pluginDependency,
+      requiredPlugins,
+      // Only include optionalPlugins if present
+      ...(optionalPlugins ? { optionalPlugins } : {}),
       selector,
       componentClassName
     };

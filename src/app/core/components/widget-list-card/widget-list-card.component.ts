@@ -1,10 +1,11 @@
 import { Component, inject, input, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'widget-list-card',
-  imports: [MatIconModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './widget-list-card.component.html',
   styleUrl: './widget-list-card.component.scss'
 })
@@ -14,7 +15,7 @@ export class WidgetListCardComponent {
   protected iconSize = input.required<number>();
   protected name = input.required<string>();
   protected description = input.required<string>();
-  protected pluginsStatus = input.required<{ name: string; enabled: boolean }[]>();
+  protected pluginsStatus = input.required<{ name: string; enabled: boolean; required: boolean }[]>();
   protected pluginDependencyValid = input.required<boolean>();
 
   constructor() {

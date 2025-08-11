@@ -70,7 +70,7 @@ export interface WidgetDescription {
 
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   isDependencyValid: boolean;
-  pluginsStatus: { name: string; enabled: boolean }[];
+  pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
 }
 
 @Injectable({
@@ -430,8 +430,11 @@ export class WidgetService {
         required: false
       }));
       const pluginsStatus = [...requiredStatus, ...optionalStatus];
-      // Widget is valid if all required plugins are enabled
-      const isDependencyValid = requiredStatus.every(p => p.enabled);
+      // Widget is valid if all required plugins are enabled AND (if any optional plugins, at least one is enabled)
+      let isDependencyValid = requiredStatus.every(p => p.enabled);
+      if (isDependencyValid && optional.length > 0) {
+        isDependencyValid = optionalStatus.some(p => p.enabled);
+      }
       return {
         ...widget,
         isDependencyValid,
