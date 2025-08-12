@@ -1,3 +1,13 @@
+# V 3.8.0
+## New features
+* Pitch & Roll widget: Horizon-style attitude display for live pitch and roll, helping monitor vessel motion in sea state.
+## Improvements
+* Radial gauge: Progress bar start position (left, middle, right) — enables split-from-center and regressive styles.
+* Linear gauge: Needle option refined — tick values and bars are centered within the needle for better readability.
+* Add Widget dialog: Optional plugin dependency awareness and display.
+## Fixes
+* Widget resize: Touch events could stop responding. Fixes #759
+* Racer Start Line widget: Correct rotation button direction. Thanks @gregw — Fixes #757
 # V 3.7.0
 ## New features
 * Real‑time True Wind Trends widget with dual top axes for direction (°) and speed (kts). Shows live values plus SMA over the period average for faster tactical wind shift / pressure awareness.

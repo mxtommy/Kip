@@ -85,6 +85,7 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 - **Radial gauge**: Visually display any numerical data on a radial scale: boat speed, wind speed, engine RPM, etc.
 - **Compass gauge**: A card or marine compass to display directional data such as heading, bearing to next waypoint, wind angle, etc.
 - **Radial and linear Steel gauge**: Old-school look & feel gauges.
+- **Pitch & Roll**: Horizon-style attitude indicator showing live pitch and roll for monitoring trim, heel, and sea-state response.
 - **Wind Steering Display**: Your typical sailboat wind gauge.
 - **Freeboard-SK Chart Plotter**: A high-quality Signal K implementation of the Freeboard integration widget.
 - **Autopilot Head**: Operate your autopilot from any device remotely.
