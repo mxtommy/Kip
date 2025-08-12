@@ -303,7 +303,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       needleShadow: true,
       needleSide: "both",
       needleStart: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 200 : 155 : -45,
-      needleEnd: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 150 : 180 : 55,
+      needleEnd: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 175 : 180 : 55,
 
       colorNeedleEnd: getColors(this.widgetProperties.config.color, this.theme()).color,
       colorNeedleShadowUp: getColors(this.widgetProperties.config.color, this.theme()).color,
