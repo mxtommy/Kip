@@ -1,12 +1,13 @@
-import { Component, Input, OnDestroy, OnInit, input } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input } from '@angular/core';
 import { AbstractControl, UntypedFormControl, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subscription, debounceTime, map, startWith } from 'rxjs';
 import { MatOption } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
-import { NgFor, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { MatAutocompleteTrigger, MatAutocomplete } from '@angular/material/autocomplete';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface ITzDefinition {
   offset: string;
@@ -21,8 +22,7 @@ function requireMatch(tz: ITzDefinition[]): ValidatorFn {
 }
 
 export const getDynamicTimeZones = (): ITzDefinition[] => {
-  // method is supported
-  //@ts-ignore
+  //@ts-expect-error method is supported
   const timeZones = Intl.supportedValuesOf('timeZone'); // Get all supported time zones
   const now = new Date();
 
@@ -41,12 +41,12 @@ export const getDynamicTimeZones = (): ITzDefinition[] => {
     selector: 'display-datetime-options',
     templateUrl: './display-datetime.component.html',
     styleUrls: ['./display-datetime.component.css'],
-    standalone: true,
-    imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, NgFor, MatOption, AsyncPipe]
+    imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, MatOption, AsyncPipe]
 })
-export class DisplayDatetimeComponent implements OnInit, OnDestroy {
+export class DisplayDatetimeComponent implements OnInit {
+  private readonly _destroyRef = inject(DestroyRef);
   readonly dateFormat = input<UntypedFormControl>(undefined);
-  @Input () dateTimezone: UntypedFormControl;
+  readonly dateTimezone = input<UntypedFormControl>(undefined);
   private tz: ITzDefinition[] = [];
   public filteredTZ: Observable<ITzDefinition[]>;
   private filteredTZSubscription: Subscription = null;
@@ -54,10 +54,8 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
   constructor() { }
 
   ngOnInit(): void {
-    //@ts-ignore until we upgrade to TypeScript v5+
+    //@ts-expect-error until we upgrade to TypeScript v5+
     if (typeof Intl.supportedValuesOf !== "undefined") {
-      // method is supported
-      //@ts-ignore until we upgrade to TypeScript v5+
       this.tz = getDynamicTimeZones().sort((a, b) => this.compareOffsets(a.offset, b.offset));
     } else {
       // Revert to static list
@@ -1734,16 +1732,17 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
       ].sort((a, b) => this.compareOffsets(a.offset, b.offset));
     }
 
-    this.dateTimezone.setValidators([Validators.required, requireMatch(this.tz)]);
+    this.tz.unshift({ offset: "", label: "System Timezone -" });
+    this.dateTimezone().setValidators([Validators.required, requireMatch(this.tz)]);
 
     // add autocomplete filtering
-    this.filteredTZ = this.dateTimezone.valueChanges.pipe(
+    this.filteredTZ = this.dateTimezone().valueChanges.pipe(
       debounceTime(500),
       startWith(''),
       map(value => this.filterTZ(value || ''))
     );
 
-    this.filteredTZSubscription = this.filteredTZ.subscribe();
+    this.filteredTZSubscription = this.filteredTZ.pipe(takeUntilDestroyed(this._destroyRef)).subscribe();
   }
 
   private filterTZ( value: string ): ITzDefinition[] {
@@ -1764,9 +1763,5 @@ export class DisplayDatetimeComponent implements OnInit, OnDestroy {
     };
 
     return parseOffset(offsetA) - parseOffset(offsetB);
-  }
-
-  ngOnDestroy(): void {
-    this.filteredTZSubscription?.unsubscribe();
   }
 }

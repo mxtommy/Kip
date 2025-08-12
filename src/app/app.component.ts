@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, signal, viewChild, inject, EventEmitter, AfterViewInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef } from '@angular/core';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
-import { SignalKDeltaService, IStreamStatus } from './core/services/signalk-delta.service';
+import { SignalKDeltaService } from './core/services/signalk-delta.service';
+import { ConnectionStateMachine, IConnectionStatus } from './core/services/connection-state-machine.service';
 import { AppService } from './core/services/app-service';
 import { Howl } from 'howler';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -11,56 +11,69 @@ import { MatButtonModule } from '@angular/material/button';
 import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
+import { DialogService } from './core/services/dialog.service';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { DatasetService } from './core/services/data-set.service';
 
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    standalone: true,
     imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  private _snackBar = inject(MatSnackBar);
-  private _deltaService = inject(SignalKDeltaService);
-  private _app = inject(AppService);
-  private _dashboard = inject(DashboardService);
-  private _uiEvent = inject(uiEventService);
-  public appSettingsService = inject(AppSettingsService);
-  public authenticationService = inject(AuthenticationService);
-  public openSidenavEvent: EventEmitter<void> = new EventEmitter<void>();
+  private readonly _snackBar = inject(MatSnackBar);
+  private readonly _deltaService = inject(SignalKDeltaService); // Loading of SignalKDeltaService to start collecting deltas
+  private readonly _connectionStateMachine = inject(ConnectionStateMachine);
+  private readonly _app = inject(AppService);
+  private readonly _dashboard = inject(DashboardService);
+  private readonly _uiEvent = inject(uiEventService);
+  private readonly _dialog = inject(DialogService);
+  public readonly appSettingsService = inject(AppSettingsService);
+  public readonly authenticationService = inject(AuthenticationService);
+  private readonly _dataSet = inject(DatasetService); // Early loading of DatasetService
+  private readonly _responsive = inject(BreakpointObserver);
+  private readonly _destroyRef = inject(DestroyRef);
 
-  protected actionsSidenav = viewChild<MatSidenav>('actionsSidenav');
-  protected actionsSidenavOpen = false;
-  protected notificationsSidenavOpened = signal<boolean>(false);
-  protected notificationsVisibility: string = 'hidden';
+  protected actionsSidenavOpened = model<boolean>(false);
+  protected notificationsSidenavOpened = model<boolean>(false);
+  protected isPhonePortrait: Signal<BreakpointState>;
 
+  constructor() {
+    effect(() => {
+      if (this.appSettingsService.configUpgrade()) {
+        this._dialog.openFrameDialog({
+          title: 'Upgrade Instructions',
+          component: 'upgrade-config',
+        }, true).subscribe(data => {
+          if (!data) {return} //clicked cancel
+        });
+      }
+    });
 
-  protected themeName: string;
-  private themeNameSub: Subscription;
-  private appNotificationSub: Subscription;
-  private connectionStatusSub: Subscription;
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
 
-  ngOnInit() {
     // Connection Status Notification sub
-    this.connectionStatusSub = this._deltaService.getDataStreamStatusAsO().subscribe((status: IStreamStatus) => {
+    this._connectionStateMachine.status$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((status: IConnectionStatus) => {
       this.displayConnectionsStatusNotification(status);
       }
     );
 
     // Snackbar Notifications sub
-    this.appNotificationSub = this._app.getSnackbarAppNotifications().subscribe(appNotification => {
-        this._snackBar.open(appNotification.message, 'dismiss', {
+    this._app.getSnackbarAppNotifications().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(appNotification => {
+      this._snackBar.open(appNotification.message, appNotification.action, {
           duration: appNotification.duration,
           verticalPosition: 'top'
         });
 
         if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
-          const sound = new Howl({
+          let sound = new Howl({
             src: ['assets/notification.mp3'],
             autoplay: true,
             preload: true,
@@ -68,15 +81,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
             volume: 0.3,
             onend: function() {
               // console.log('Finished!');
+              // sound.unload();
+              sound = undefined;
             },
             onloaderror: function() {
               console.log("snackbar: player onload error");
+              sound.unload();
+              sound = undefined;
             },
             onplayerror: function() {
               console.log("snackbar: player locked");
               this.howlPlayer.once('unlock', function() {
                 this.howlPlayer.play();
+                this.howlPlayer.unload();
+                this.howlPlayer = undefined;
               });
+              sound.unload();
+              sound = undefined;
             }
           });
           sound.play();
@@ -85,7 +106,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     );
+  }
 
+  ngOnInit() {
     // Add event listeners for swipe gestures
     this._uiEvent.addGestureListeners(
       this.onSwipeLeft.bind(this),
@@ -94,69 +117,92 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Add keyboard shortcut listener
-    this._uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
+    this._uiEvent.addHotkeyListener(
+      (key, event) => this.handleKeyDown(key, event),
+      { ctrlKey: true, keys: ['arrowright', 'arrowleft'] } // Filter for arrow keys with Ctrl
+    );
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    // Avoid executing shortcuts when an input field is focused
-    if (['INPUT', 'TEXTAREA', 'MAT-SELECT'].includes(document.activeElement.tagName)) return;
-    if (event.ctrlKey && event.ctrlKey) {
-      switch (event.key) {
-        case 'ArrowRight':
-          this.onSwipeRight(event);
-          break;
-        case 'ArrowLeft':
-          this.onSwipeLeft(event);
-          break;
-        default:
-          break;
-      }
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
+    if (key === 'arrowright') {
+      this.onSwipeRight(event);
+    } else if (key === 'arrowleft') {
+      this.onSwipeLeft(event);
+    } else if (key === 'escape') {
+      this.backdropClicked();
     }
   }
 
-  private displayConnectionsStatusNotification(streamStatus: IStreamStatus) {
-    switch (streamStatus.operation) {
+  protected escapeKeyPressed(key: string): void {
+    key= key.toLocaleLowerCase();
+    if (key === 'escape') {
+      this.backdropClicked();
+    }
+  }
+
+  private displayConnectionsStatusNotification(connectionStatus: IConnectionStatus) {
+    const message = connectionStatus.message;
+
+    // Use legacy operation codes for compatibility
+    switch (connectionStatus.operation) {
       case 0: // not connected
-        this._app.sendSnackbarNotification("Not connected to server.", 5000, true);
+        this._app.sendSnackbarNotification(message, 5000, true);
         break;
 
       case 1: // connecting
-        this._app.sendSnackbarNotification("Connecting to server.", 2000, true);
-       break;
-
       case 2: // connected
-        this._app.sendSnackbarNotification("Connection successful.", 2000, false);
         break;
 
-      case 3: // connection error
-        this._app.sendSnackbarNotification("Error connecting to server.", 0, false);
+      case 3: // connection error/retrying
+        this._app.sendSnackbarNotification(message, 3000, false, ""); // Changed from 0 (indefinite) to 3000 to avoid blocking
+        break;
+
+      case 4: // resetting
+        this._app.sendSnackbarNotification(message, 3000, true, "");
+        break;
+
+      case 5: // permanent failure
+        this._app.sendSnackbarNotification(message, 0, false);
         break;
 
       default:
-        this._app.sendSnackbarNotification("Unknown stream connection status.", 0, false);
-        break;
+        console.error(`[AppComponent] Unknown operation code: ${connectionStatus.operation} for state: ${connectionStatus.state}`);
+        this._app.sendSnackbarNotification(`Unknown connection status: ${connectionStatus.state}`, 0, false);
     }
   }
 
   protected onSwipeRight(e: Event): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
-      this.notificationsSidenavOpened.set(true);
+      if (this.isPhonePortrait().matches) {
+        this.actionsSidenavOpened.set(false);
+        this.notificationsSidenavOpened.set(true);
+      } else {
+        this.actionsSidenavOpened.set(false);
+        this.notificationsSidenavOpened.update(opened => !opened);
+      }
     }
+  }
+
+  protected backdropClicked(): void {
+    this.notificationsSidenavOpened.update(opened => opened ? !opened : false);
+    this.actionsSidenavOpened.update(opened => opened ? !opened : false);
   }
 
   protected onSwipeLeft(e: Event): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
       e.preventDefault();
-      this.actionsSidenavOpen = true;
+      if (this.isPhonePortrait().matches) {
+        this.notificationsSidenavOpened.set(false);
+        this.actionsSidenavOpened.set(true);
+      } else {
+        this.notificationsSidenavOpened.set(false);
+        this.actionsSidenavOpened.update(opened => !opened);
+      }
     }
   }
 
   ngOnDestroy() {
-    this.themeNameSub.unsubscribe();
-    this.appNotificationSub.unsubscribe();
-    this.connectionStatusSub.unsubscribe();
     this._uiEvent.removeGestureListeners(
       this.onSwipeLeft.bind(this),
       this.onSwipeRight.bind(this)

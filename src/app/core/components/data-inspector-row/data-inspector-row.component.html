@@ -1,0 +1,21 @@
+<mat-cell class="cell-source cells">{{ source() }}</mat-cell>
+<mat-cell class="cell-value cells">{{ convertValue(pathValue(), type()) }}</mat-cell>
+<mat-cell class="cell-action cells">
+  @switch (type()) {
+    @case ('boolean') {
+      <span class="path-type">Boolean</span>
+    }
+    @case ('string') {
+      <span class="path-type">String</span>
+    }
+    @case ('Date') {
+      <span class="path-type">String</span>
+    }
+    @case ('object') {
+      <span class="path-type">Object</span>
+    }
+    @default {
+      <button mat-stroked-button class="change-units-btn" (click)="openDialog()">{{selectedUnit}}</button>
+    }
+  }
+</mat-cell>

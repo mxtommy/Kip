@@ -6,20 +6,22 @@
     (change)="onCategoryChange($event)"
     class="list-filter"
   >
-    @for (category of _widgets.categories; track category) {
+    @for (category of _widgets.categories; track $index) {
       <mat-button-toggle [value]="category">
         {{ category }}
       </mat-button-toggle>
     }
   </mat-button-toggle-group>
   <div>
-    @for (widgetType of widgetsList; track widgetType.selector) {
-      <widget-list-card
+    @for (widgetType of filteredWidgetsList(); track widgetType.selector) {
+      <widget-list-card [class.dependency-missing]="!widgetType.isDependencyValid"
         [svgIcon]="widgetType.icon"
         [iconSize]="48"
         [name]="widgetType.name"
         [description]="widgetType.description"
-        (click)="onSelectWidget(widgetType.selector)"
+        [pluginDependencyValid]="widgetType.isDependencyValid"
+        [pluginsStatus]="widgetType.pluginsStatus"
+        (click)="onSelectWidget(widgetType)"
       />
     }
   </div>

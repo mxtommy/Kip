@@ -1,25 +1,39 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <canvas #canvasLabel class="canvas-label"></canvas>
+  <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"></widget-title>
   <div class="widgets-container" #widgetContainer (onResize)="onResized($event)">
-    <ng-container *ngFor="let ctrl of switchControls">
-      <app-svg-boolean-switch class="svg-widget" *ngIf="ctrl.type === '1'"
-        [controlData]="ctrl"
-        [theme]="theme"
-        [dimensions]="ctrlDimensions"
-        (toggleClick)="toggle($event)">
-      </app-svg-boolean-switch>
-      <app-svg-boolean-button class="svg-widget" *ngIf="ctrl.type === '2'"
-        [controlData]="ctrl"
-        [theme]="theme"
-        [dimensions]="ctrlDimensions"
-        (toggleClick)="toggle($event)">
-      </app-svg-boolean-button>
-      <app-svg-boolean-light class="svg-widget" *ngIf="ctrl.type === '3'"
-        [controlData]="ctrl"
-        [theme]="theme"
-        [dimensions]="ctrlDimensions"
-        (toggleClick)="toggle($event)">
-      </app-svg-boolean-light>
-    </ng-container>
+    @for (ctrl of switchControls(); track $index) {
+      <ng-container>
+        @switch (ctrl.type) {
+          @case ("1") {
+            <app-svg-boolean-switch class="svg-widget"
+              [controlData]="ctrl"
+              [theme]="theme()"
+              [dimensions]="ctrlDimensions"
+              (toggleClick)="toggle($event)">
+            </app-svg-boolean-switch>
+          }
+          @case ("2") {
+            <app-svg-boolean-button class="svg-widget"
+              [controlData]="ctrl"
+              [theme]="theme()"
+              [dimensions]="ctrlDimensions"
+              (toggleClick)="toggle($event)">
+            </app-svg-boolean-button>
+          }
+          @case ("3") {
+            <app-svg-boolean-light class="svg-widget"
+              [controlData]="ctrl"
+              [theme]="theme()"
+              [dimensions]="ctrlDimensions"
+              (toggleClick)="toggle($event)">
+            </app-svg-boolean-light>
+          }
+        }
+      </ng-container>
+    }
   </div>
+  @if (!dashboard.isDashboardStatic()) {
+    <div class="widgetOverlay">
+    </div>
+  }
 </widget-host>

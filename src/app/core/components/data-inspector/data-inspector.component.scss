@@ -1,0 +1,147 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.data-inspector-container {
+  margin-left: 24px;
+  margin-right: 24px;
+  height: calc(100% - 63px);
+}
+
+.table-content-area {
+  height: calc(100% - 56px - 86px);
+  overflow-y: scroll;
+  width: 100%;
+  scroll-behavior: smooth;
+}
+
+.mat-column-path {
+  flex: 0 0 50%;
+  width: 50%;
+}
+
+.mat-mdc-table {
+  overflow: auto;
+}
+
+.paginator{
+  width: 100%;
+  height: 56px;
+  background-color: var(--mat-sys-background);
+}
+
+.filter-field {
+  padding: 15px 0px 15px 0px;
+  width: 100%;
+  height: 86px;
+}
+
+.pathHeader {
+  flex: 1 1 45%;
+}
+
+.putHeader {
+  flex: 1 1 10%;
+}
+
+.dataHeader {
+  flex: 1 1 45%;
+}
+
+.table-row {
+  border-bottom-color: var(--mat-table-row-item-outline-color, var(--mat-sys-outline, rgba(0, 0, 0, 0.12)));
+  border-bottom-width: var(--mat-table-row-item-outline-width, 1px);
+  border-bottom-style: solid;
+}
+
+.row-cell {
+  border-bottom-color: white;
+  border-bottom-width: 0px;
+  border-bottom-style: solid;
+}
+
+.pathCell {
+  flex: 1 1 45%;
+  word-break: break-word; /* Breaks words at arbitrary points if needed */
+  overflow-wrap: break-word; /* Ensures wrapping for long words */
+}
+
+.putCell {
+  flex: 1 1 10%;
+}
+
+.dataCell {
+  flex: 1 1 45%;
+  flex-flow: column;
+  flex-wrap: nowrap;
+  gap: 2px;
+}
+
+.flex-container {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 5px;
+  margin: 5px 0px 5px 0px;
+  height: 100%;
+  width: 100%;
+}
+
+.source-sub-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 5px;
+  width: 100%;
+}
+
+.put-icon {
+  color: var(--kip-starboard-color);
+}
+
+@media screen and (max-width: 750px) {
+  .pathHeader {
+    flex: 1 1 50%;
+  }
+
+  .dataHeader {
+    flex: 1 1 50%;
+  }
+
+  .dataCell {
+    flex: 1 1 100%;
+  }
+
+  .dataCell {
+    flex: 1 1 100%;
+    margin-left: 24px;
+  }
+
+  .mat-mdc-table .mat-mdc-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .mat-mdc-table .mat-mdc-cell:before {
+    content: attr(data-label);
+    float: left;
+    padding-right: 5px;
+  }
+
+  mat-row::after {
+    min-height: auto;
+    padding-bottom: 10px;
+  }
+
+  .dataRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actionCell {
+    margin-left: 24px;
+  }
+
+}

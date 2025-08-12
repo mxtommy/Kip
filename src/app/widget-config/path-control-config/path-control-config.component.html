@@ -1,11 +1,9 @@
-@if (pathFormGroup.value.isPathConfigurable) {
-  <div [formGroup]="pathFormGroup" class="flex-container rounded-card rounded-card-color">
+@if (pathFormGroup().value.isPathConfigurable) {
+  <div [formGroup]="pathFormGroup()" class="flex-container rounded-card rounded-card-color">
     <div class="flex-field-100">
-      <span [style.color]="pathFormGroup.enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup.value.description}}</span>
+      <span [style.color]="pathFormGroup().enabled ? '' : 'rgba(255,255,255,0.5)'">{{pathFormGroup().value.description}}</span>
     </div>
-
-
-      @if (pathFormGroup.value.pathType == 'number' && showPathSkUnitsFilter) {
+      @if (pathFormGroup().value.pathType === 'number' && showPathSkUnitsFilter) {
         <div class="flex-field-fixed">
           <mat-form-field floatLabel="auto" appearance="fill" class="filter-path">
             <mat-label>
@@ -18,9 +16,9 @@
             <mat-select #pathUnitsFilter
               [formControl]="pathSkUnitsFilterControl"
               panelWidth=""
-              (selectionChange)="pathFormGroup.controls['path'].setValue(pathInput.value)">
+              (selectionChange)="pathFormGroup().controls['path'].setValue(pathInput.value)">
               <mat-option>All</mat-option>
-              @for (item of pathSkUnitsFiltersList; track item) {
+              @for (item of pathSkUnitsFiltersList; track $index) {
                 <mat-option [value]="item">{{item.properties.quantity}}: {{item.properties.display}}</mat-option>
               }
             </mat-select>
@@ -29,31 +27,38 @@
       }
       <div class="flex-field-to-100">
         <mat-form-field floatLabel="auto" appearance="fill" class="pathField">
-          <mat-label>Signal K Path</mat-label>
+          <mat-label>
+            Signal K Path
+            @if (pathFormGroup().value.pathRequired === false) {
+              <span class="optional-label">(optional)</span>
+            }
+          </mat-label>
           <input #pathInput type="text" matInput
             placeholder="Type to use autocomplete or select from list"
             formControlName="path"
-            required
             [matAutocomplete]="pathAutoComplete"
-            >
-            @if (pathFormGroup.value.path) {
-              <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup.controls['path'].setValue('')">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-            @if (pathFormGroup.controls['path'].errors?.['required']) {
-              <mat-error>
-                Path is required. Please enter a valid Signal K path.
-              </mat-error>
-            }  @else if (pathFormGroup.controls['path'].errors?.['requireMatch']) {
-              <mat-error>
-                Path not recognized. Please enter a path from the server's published list.
-              </mat-error>
-            }
+          >
+          @if (pathFormGroup().value.pathRequired === false) {
+            <mat-hint>Leave blank to disable this path.</mat-hint>
+          }
+          @if (pathFormGroup().value.path) {
+            <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup().controls['path'].setValue('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          @if (pathFormGroup().controls['path'].errors?.['required']) {
+            <mat-error>
+              Path is required. Please enter a valid Signal K path.
+            </mat-error>
+          } @else if (pathFormGroup().controls['path'].errors?.['requireMatch']) {
+            <mat-error>
+              Path not recognized. Please enter a path from the server's published list.
+            </mat-error>
+          }
           <mat-autocomplete #pathAutoComplete="matAutocomplete">
             @for (option of filteredPaths | async; track option.path) {
               <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
-                @if (option.meta != undefined) {
+                @if (option.meta !== undefined) {
                   <span>{{option.path}}</span>
                   <br>
                   <small class="pathMetaDescription">{{option.meta.description}}</small>
@@ -74,7 +79,7 @@
             placeholder="Select source"
             formControlName="source"
             required>
-            @for (source of availableSources; track source) {
+            @for (source of availableSources; track $index) {
               <mat-option [value]="source">
                 {{source}}
               </mat-option>
@@ -92,16 +97,16 @@
         </mat-form-field>
       </div>
       <div class="unitField">
-        @if ((pathFormGroup.value.pathType == 'number' && pathFormGroup.value.isConvertUnitToConfigurable === undefined) || (pathFormGroup.value.pathType == 'number' && pathFormGroup.value.isConvertUnitToConfigurable === true)) {
+        @if ((pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === undefined) || (pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === true)) {
           <mat-form-field class="fields">
             <mat-label>Display Format</mat-label>
             <mat-select
                 placeholder="Select unit"
                 formControlName="convertUnitTo"
                 required>
-                @for (group of unitList.conversions; track group) {
+                @for (group of unitList.conversions; track $index) {
                   <mat-optgroup [label]="group.group">
-                    @for (unit of group.units; track unit) {
+                    @for (unit of group.units; track $index) {
                       <mat-option [value]="unit.measure">
                         {{unit.description}}
                       </mat-option>
@@ -115,4 +120,3 @@
     </div>
   </div>
 }
-

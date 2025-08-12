@@ -1,148 +1,131 @@
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
-import { SafePipe } from '../../core/pipes/safe.pipe';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { AppService } from '../../core/services/app-service';
 
 @Component({
     selector: 'widget-iframe',
     templateUrl: './widget-iframe.component.html',
     styleUrls: ['./widget-iframe.component.scss'],
-    standalone: true,
-    imports: [WidgetHostComponent, SafePipe]
+    imports: [WidgetHostComponent]
 })
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  protected _dashboard = inject(DashboardService);
-  private _appSettings = inject(AppSettingsService);
   private _sanitizer = inject(DomSanitizer);
-  private _app = inject(AppService);
+  protected _dashboard = inject(DashboardService);
+  readonly iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
   protected widgetUrl: SafeResourceUrl | null = null;
-  protected iframe = viewChild<ElementRef<HTMLIFrameElement>>('plainIframe');
-  private _widgetHost = viewChild(WidgetHostComponent);
+  protected displayTransparentOverlay = signal<string>('block');
 
   constructor() {
     super();
 
     this.defaultConfig = {
-      widgetUrl: null
+      widgetUrl: null,
+      allowInput: false
     };
+
+    effect(() => {
+      if (!this._dashboard.isDashboardStatic()) {
+        this.displayTransparentOverlay.set('block');
+      } else {
+        this.displayTransparentOverlay.set(this.widgetProperties.config.allowInput ? 'none' : 'block');
+      }
+    });
   }
 
   ngOnInit() {
-    this.validateConfig();;
-    this.validateUrlAccess(this.widgetProperties?.config?.widgetUrl);
+    this.validateConfig();
     window.addEventListener('message', this.handleIframeGesture);
+    this.displayTransparentOverlay.set(this.widgetProperties.config.allowInput ? 'none' : 'block');
+    this.widgetUrl = this.resolveUrl(this.widgetProperties.config.widgetUrl);
   }
 
   ngAfterViewInit() {
-    if (this.iframe() && this.iframe()?.nativeElement) {
-      this.iframe().nativeElement.onload = () => this.injectHammerJS();
+    const iframe = this.iframe();
+    if (iframe) {
+      iframe.nativeElement.onload = () => this.injectHammerJS();
     }
   }
 
   protected startWidget(): void {
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.validateUrlAccess(this.widgetProperties.config.widgetUrl = config.widgetUrl);
+  ngOnDestroy() {
+    window.removeEventListener('message', this.handleIframeGesture);
   }
 
-  private validateUrlAccess(url: string | null): void {
-    if (this.isValidUrl(url)) {
-      this.checkUrlAccessibility(url).then((accessible) => {
-        if (accessible) {
-          this.widgetUrl = this._sanitizer.bypassSecurityTrustResourceUrl(url);
-        } else {
-          this._app.sendSnackbarNotification("Error: The URL cannot be accessed. Make sure the URL is both valid and points to the same server as KIP.");
-          this.widgetUrl = null;
-        }
-      });
-    } else {
-      this._app.sendSnackbarNotification("Error: Invalid URL. Please check the URL format.");
-      this.widgetUrl = null;
-    }
-  }
+  private handleIframeGesture = (event: MessageEvent) => {
+    if (!event.data) return;
 
-  private isValidUrl(url: string): boolean {
-    try {
-      const parsedUrl = new URL(url);
-      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
-    } catch (e) {
-      return false;
-    }
-  }
-
-  private async checkUrlAccessibility(url: string): Promise<boolean> {
-    try {
-      const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
-      return response.ok;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  protected handleIframeGesture = (event: any) => {
-    if (!event.data || !event.data.gesture || event.data.eventData.instanceId !== this.widgetProperties.uuid) return;
-
-    switch (event.data.gesture) {
-      case 'swipeup':
-        if (this._dashboard.isDashboardStatic()) {
-          this._dashboard.previousDashboard();
-        }
-        break;
-      case 'swipedown':
-        if (this._dashboard.isDashboardStatic()) {
-          this._dashboard.nextDashboard();
-        }
-        break;
-      case 'swipeleft':
+    // Handle gestures
+    if (event.data.gesture && event.data.eventData.instanceId === this.widgetProperties.uuid) {
+      switch (event.data.gesture) {
+        case 'swipeup':
+          this._dashboard.navigateToPreviousDashboard();
+          break;
+        case 'swipedown':
+          this._dashboard.navigateToNextDashboard();
+          break;
+        case 'swipeleft': {
           const leftSidebarEvent = new Event('openLeftSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(leftSidebarEvent);
-        break;
-      case 'swiperight':
+          break;
+        }
+        case 'swiperight':{
           const rightSidebarEvent = new Event('openRightSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(rightSidebarEvent);
-        break;
-      case 'press':
-        this._widgetHost()?.openBottomSheet();
-        break;
-      case 'doubletap':
-        this._widgetHost()?.openWidgetOptions(event);
-        break;
-      default:
-        break;
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    // Handle keydown events
+    if (event.data.type === 'keydown' && event.data.keyEventData.instanceId === this.widgetProperties.uuid) {
+      const { key, ctrlKey, shiftKey } = event.data.keyEventData;
+
+      // Re-dispatch the keydown event
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key,
+        ctrlKey,
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(keyboardEvent);
     }
   };
 
-  injectHammerJS() {
+  private injectHammerJS() {
+    const baseHref = document.getElementsByTagName('base')[0]?.href || '/';
     const iframeWindow = this.iframe().nativeElement.contentWindow;
     const iframeDocument = this.iframe().nativeElement.contentDocument;
 
     if (!iframeDocument || !iframeWindow) {
-      console.error('[IFrame Widget] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue, bad or empty widget URL.');
+      console.error('[WidgetIframe] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue or iframe not fully loaded.');
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((iframeWindow as any).Hammer) {
-      console.log("[IFrame Widget] HammerJS already loaded in iframe");
+      console.log('[WidgetIframe] HammerJS already loaded in iframe');
       return;
     }
 
     // Inject HammerJS
     const hammerScript = iframeDocument.createElement('script');
-    hammerScript.src = `${this._appSettings.signalkUrl.url}/@mxtommy/kip/assets/hammer.min.js`;
+    hammerScript.src = `${baseHref}assets/hammer.min.js`;
     hammerScript.onload = () => this.injectSwipeHandler();
     iframeDocument.body.appendChild(hammerScript);
   }
 
-  injectSwipeHandler() {
+  private injectSwipeHandler() {
     const iframeDocument = this.iframe().nativeElement.contentDocument;
     if (!iframeDocument) {
-      console.error('[IFrame Widget] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
+      console.error('[WidgetIframe] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
       return;
     }
 
@@ -151,14 +134,13 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     script.textContent = `
       if (!window.hammerInstance) {
         const hammer = new Hammer(document.body);
-        hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL, velocity: 0.3, threshold: 10, domEvents: true });
-        hammer.get('press').set({ time: 500 });
-        hammer.get('doubletap').set({ taps: 2 });
+        hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL, velocity: 1.5, threshold: 200, domEvents: true });
 
         const instanceId = '${this.widgetProperties.uuid}'; // Include the instance ID in the script to prevent multiple listeners
 
         hammer.on('swipeleft', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -180,6 +162,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
         hammer.on('swiperight', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -201,6 +184,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
         hammer.on('swipeup', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -222,6 +206,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
         hammer.on('swipedown', (ev) => {
           ev.preventDefault();
+          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
           const eventData = {
             type: ev.type,
             deltaX: ev.deltaX,
@@ -241,46 +226,17 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
           window.parent.postMessage({ gesture: 'swipedown', eventData: eventData }, '*');
         });
 
-        hammer.on('press', (ev) => {
-          ev.preventDefault();
-          const eventData = {
-            type: ev.type,
-            deltaX: ev.deltaX,
-            deltaY: ev.deltaY,
-            velocityX: ev.velocityX,
-            velocityY: ev.velocityY,
-            direction: ev.direction,
-            distance: ev.distance,
-            angle: ev.angle,
-            center: ev.center,
-            offsetDirection: ev.offsetDirection,
-            scale: ev.scale,
-            rotation: ev.rotation,
-            isFinal: ev.isFinal,
-            instanceId: instanceId // Include the instance ID in the event data
-          };
-          window.parent.postMessage({ gesture: 'press', eventData: eventData }, '*');
-        });
-
-        hammer.on('doubletap', (ev) => {
-          ev.preventDefault();
-          const eventData = {
-            type: ev.type,
-            deltaX: ev.deltaX,
-            deltaY: ev.deltaY,
-            velocityX: ev.velocityX,
-            velocityY: ev.velocityY,
-            direction: ev.direction,
-            distance: ev.distance,
-            angle: ev.angle,
-            center: ev.center,
-            offsetDirection: ev.offsetDirection,
-            scale: ev.scale,
-            rotation: ev.rotation,
-            isFinal: ev.isFinal,
-            instanceId: instanceId // Include the instance ID in the event data
-          };
-          window.parent.postMessage({ gesture: 'doubletap', eventData: eventData }, '*');
+        // Add keydown listener
+        document.addEventListener('keydown', (event) => {
+          if (event.ctrlKey && event.shiftKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'E', 'F', 'N'].includes(event.key)) {
+            const keyEventData = {
+              key: event.key,
+              ctrlKey: event.ctrlKey,
+              shiftKey: event.shiftKey,
+              instanceId: instanceId
+            };
+            window.parent.postMessage({ type: 'keydown', keyEventData: keyEventData }, '*');
+          }
         });
 
         window.hammerInstance = hammer; // Store the instance to prevent multiple listeners
@@ -289,8 +245,30 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     iframeDocument.body.appendChild(script);
   }
 
-  ngOnDestroy(): void {
-    window.removeEventListener('message', this.handleIframeGesture);
-    this.destroyDataStreams();
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetUrl = this.resolveUrl(config.widgetUrl);
+  }
+
+  private isValidProtocol(url: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+    } catch (e) {
+      console.warn(`[Embed Widget] Invalid Url: ${url}, Error: ${e}`);
+      return false;
+    }
+  }
+
+  private resolveUrl(rawUrl: string): SafeResourceUrl | null {
+    if (!rawUrl) return null;
+    try {
+      // Check if the URL is absolute
+      const parsedUrl = new URL(rawUrl, window.location.origin);
+      const resolvedUrl = this.isValidProtocol(parsedUrl.href) ? this._sanitizer.bypassSecurityTrustResourceUrl(parsedUrl.href) : null;
+      return resolvedUrl;
+    } catch (e) {
+      console.warn(`[Embed Widget] Can't resolve Url: ${rawUrl}, Error: ${e}`);
+      return null; // Return an empty string if the URL is invalid
+    }
   }
 }

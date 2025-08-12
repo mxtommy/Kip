@@ -3,18 +3,21 @@ import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, Reactive
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
 import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
-import { UUID } from '../../core/utils/uuid';
+import { UUID } from '../../core/utils/uuid.util';
 import { MatButtonModule } from '@angular/material/button';
 import { BooleanControlConfigComponent, IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
+export interface IAddNewPathObject {
+  path: IWidgetPath;
+  ctrlType: number;
+}
 
 @Component({
     selector: 'boolean-multicontrol-options',
     templateUrl: './boolean-multicontrol-options.component.html',
     styleUrls: ['./boolean-multicontrol-options.component.css'],
-    standalone: true,
     imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -25,14 +28,12 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   private fb = inject(UntypedFormBuilder);
-
   readonly multiCtrlArray = input.required<UntypedFormArray>();
-  public readonly addPath = output<IWidgetPath>();
+  public readonly addPath = output<IAddNewPathObject>();
   public readonly updatePath = output<IDynamicControl[]>();
   public readonly delPath = output<IDeleteEventObj>();
-
   public multiFormGroup: UntypedFormGroup = null;
-  public arrayLength: number = null;
+  public arrayLength = 0;
   private multiCtrlArraySubscription: Subscription = null;
 
   ngOnInit(): void {
@@ -54,7 +55,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
         ctrlLabel: [null, Validators.required],
         type: ['1', Validators.required],
         pathID:[newUUID],
-        color:['text'],
+        color:['contrast'],
         isNumeric: [false],
         value:[null]
       }
@@ -63,20 +64,24 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
     this.arrayLength = this.multiCtrlArray().length;
 
     // Create corresponding path group
-    const newPathObj: IWidgetPath = {
-      description: null,
-      path: null,
-      pathID: newUUID,
-      source: 'default',
-      pathType: 'boolean',
-      isPathConfigurable: true,
-      showPathSkUnitsFilter: false,
-      pathSkUnitsFilter: 'unitless',
-      convertUnitTo: 'unitless',
-      sampleTime: 500
-    }
+    const newPath: IAddNewPathObject = {
+      path: {
+        description: null,
+        path: null,
+        pathID: newUUID,
+        source: 'default',
+        pathType: 'boolean',
+        supportsPut: true,
+        isPathConfigurable: true,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: null,
+        convertUnitTo: null,
+        sampleTime: 500
+      },
+      ctrlType: 1
+    };
 
-    this.addPath.emit(newPathObj);
+    this.addPath.emit(newPath);
   }
 
   public moveUp(index: number) {
@@ -97,7 +102,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   }
 
   getFormGroup(ctrl: AbstractControl): UntypedFormGroup {
-    return <UntypedFormGroup>ctrl;
+    return ctrl as UntypedFormGroup;
   }
 
   ngOnDestroy(): void {

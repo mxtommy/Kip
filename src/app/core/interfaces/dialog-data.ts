@@ -10,6 +10,7 @@ export interface DialogConfirmationData {
 export interface DialogComponentData {
   title: string;
   component: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentType?: ComponentType<any>;
 }
 
@@ -22,7 +23,7 @@ export interface DialogNameData {
 
 export interface DialogWidgetOptionsData {
   title: string;
-  config: any;
+  config: object;
   confirmBtnText: string;
   cancelBtnText: string;
 }

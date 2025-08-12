@@ -1,46 +1,46 @@
-import { Component, OnDestroy, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild, signal } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-
+import { CanvasService } from '../../core/services/canvas.service';
+import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
+import { getColors } from '../../core/utils/themeColors.utils';
+import { MinichartComponent } from '../minichart/minichart.component';
+import { DatasetService } from '../../core/services/data-set.service';
 
 @Component({
     selector: 'widget-numeric',
     templateUrl: './widget-numeric.component.html',
     styleUrls: ['./widget-numeric.component.scss'],
-    standalone: true,
-    imports: [ WidgetHostComponent, NgxResizeObserverModule ]
+    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MinichartComponent]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild('canvasEl', {static: true}) canvasEl: ElementRef<HTMLCanvasElement>;
-  @ViewChild('canvasMM', {static: true}) canvasMM: ElementRef<HTMLCanvasElement>;
-  @ViewChild('canvasBG', {static: true}) canvasBG: ElementRef<HTMLCanvasElement>;
-
+  protected miniChart = viewChild(MinichartComponent);
+  private canvasUnit = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasUnit');
+  private canvasMinMax = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMinMax');
+  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
+  protected showMiniChart = signal<boolean>(false);
+  private readonly canvas = inject(CanvasService);
+  private readonly _dataset = inject(DatasetService);
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
-  private labelColor: string = undefined;
+  protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
-  private currentValueLength: number = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
-  private currentMinMaxLength: number = 0;
-  private valueFontSize: number = 1;
-  private minMaxFontSize: number = 1;
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
   private maxMinMaxTextWidth = 0;
   private maxMinMaxTextHeight = 0;
+
   private flashInterval = null;
   private isDestroyed = false; // gard against callbacks after destroyed
 
-  private readonly fontString = "Roboto";
   protected canvasValCtx: CanvasRenderingContext2D;
-  protected canvasMMCtx: CanvasRenderingContext2D;
-  protected canvasBGCtx: CanvasRenderingContext2D;
-  private cHeight: number = 0;
-  private cWidth: number = 0;
+  protected canvasMinMaxCtx: CanvasRenderingContext2D;
+  protected canvasUnitCtx: CanvasRenderingContext2D;
 
   constructor() {
     super();
@@ -64,38 +64,64 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       showMax: false,
       showMin: false,
       numDecimal: 1,
-      numInt: 1,
+      showMiniChart: false,
+      yScaleMin: 0,
+      yScaleMax: 10,
+      inverseYAxis: false,
+      verticalChart: false,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
       ignoreZones: false
     };
+
+    effect(() => {
+      if (this.theme()) {
+        this.setColors();
+        this.updateCanvas();
+        this.updateCanvasUnit();
+      }
+    });
   }
 
   ngOnInit(): void {
     this.validateConfig();
-    this.getColors(this.widgetProperties.config.color);
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
   }
 
   ngAfterViewInit(): void {
-    this.canvasValCtx = this.canvasEl.nativeElement.getContext('2d');
-    this.canvasMMCtx = this.canvasMM.nativeElement.getContext('2d');
-    this.canvasBGCtx = this.canvasBG.nativeElement.getContext('2d');
-    this.cWidth = Math.floor(this.cWidth);
-    this.cHeight = Math.floor(this.cHeight);
-    document.fonts.ready.then(() => {
-      if (this.isDestroyed) return;
-      this.startWidget();
-      this.updateCanvasBG();
-    });
+    const canvasElement = this.canvasValue().nativeElement;
+    this.canvas.setHighDPISize(this.canvasValue().nativeElement, canvasElement.parentElement.getBoundingClientRect());
+    this.canvas.setHighDPISize(this.canvasUnit().nativeElement, canvasElement.parentElement.getBoundingClientRect());
+    this.canvas.setHighDPISize(this.canvasMinMax().nativeElement, canvasElement.parentElement.getBoundingClientRect());
+    this.canvasValCtx = this.canvasValue().nativeElement.getContext('2d');
+    this.canvasMinMaxCtx = this.canvasMinMax().nativeElement.getContext('2d');
+    this.canvasUnitCtx = this.canvasUnit().nativeElement.getContext('2d');
+
+    this.maxValueTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
+    this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
+    this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
+    if (this.isDestroyed) return;
+
+    this.manageDatasetAndChart();
+
+    if (this.showMiniChart() && this.miniChart()) {
+      this.setMiniChart();
+    }
+    this.startWidget();
+    this.updateCanvasUnit();
   }
 
   protected startWidget(): void {
+    if (this.showMiniChart() && this.miniChart()) {
+      this.miniChart().startChart();
+    }
     this.unsubscribeDataStream();
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
-    this.getColors(this.widgetProperties.config.color);
+    this.setColors();
     this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
       // Initialize min/max
@@ -107,13 +133,13 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       if (!this.widgetProperties.config.ignoreZones) {
         switch (newValue.state) {
           case States.Alarm:
-            this.valueStateColor = this.theme.zoneAlarm;
+            this.valueStateColor = this.theme().zoneAlarm;
             break;
           case States.Warn:
-            this.valueStateColor = this.theme.zoneWarn;
+            this.valueStateColor = this.theme().zoneWarn;
             break;
           case States.Alert:
-            this.valueStateColor = this.theme.zoneAlert;
+            this.valueStateColor = this.theme().zoneAlert;
             break;
           default:
             this.valueStateColor = this.valueColor;
@@ -127,78 +153,71 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.startWidget();
+
+    this.manageDatasetAndChart();
+
+    // Defer to next tick so viewChild is ready if just shown
+    setTimeout(() => {
+      if (this.showMiniChart() && this.miniChart()) {
+        this.setMiniChart();
+      }
+      this.startWidget();
+      this.updateCanvas();
+      this.updateCanvasUnit();
+    });
+  }
+
+  private manageDatasetAndChart(): void {
+    const pathInfo = this.widgetProperties.config.paths['numericPath'];
+    if (!pathInfo || !pathInfo.path || !pathInfo.source) return;
+
+    if (this.widgetProperties.config.showMiniChart) {
+      if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
+        this._dataset.create(pathInfo.path, pathInfo.source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
+      }
+    } else {
+      // Remove dataset if it exists
+      this._dataset.list()
+        .filter(ds => ds.uuid === this.widgetProperties.uuid)
+        .forEach(ds => this._dataset.remove(ds.uuid));
+    }
+
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
+  }
+
+  private setMiniChart(): void {
+    this.miniChart().dataPath = this.widgetProperties.config.paths['numericPath'].path;
+    this.miniChart().dataSource = this.widgetProperties.config.paths['numericPath'].source;
+    this.miniChart().color = this.widgetProperties.config.color;
+    this.miniChart().convertUnitTo = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    this.miniChart().numDecimal = this.widgetProperties.config.numDecimal;
+    this.miniChart().yScaleMin = this.widgetProperties.config.yScaleMin;
+    this.miniChart().yScaleMax = this.widgetProperties.config.yScaleMax;
+    this.miniChart().inverseYAxis = this.widgetProperties.config.inverseYAxis;
+    this.miniChart().verticalChart = this.widgetProperties.config.verticalChart;
+    this.miniChart().datasetUUID = this.widgetProperties.uuid;
+  }
+
+  protected onResized(e: ResizeObserverEntry) {
+    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) return;
+
+    this.canvas.setHighDPISize(this.canvasValue().nativeElement, e.contentRect);
+    this.canvas.setHighDPISize(this.canvasUnit().nativeElement, e.contentRect);
+    this.canvas.setHighDPISize(this.canvasMinMax().nativeElement, e.contentRect);
+
+    this.maxValueTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
+    this.maxValueTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
+    this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
+    this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
+
+    if (this.isDestroyed) return;
     this.updateCanvas();
-    this.updateCanvasBG();
+    this.updateCanvasUnit();
   }
 
-  protected onResized(event: ResizeObserverEntry) {
-    if (!this.canvasEl || !this.canvasMM || !this.canvasBG) {
-      console.error('[Widget Canvas] Canvas elements are not initialized.');
-      return;
-    }
-    if (event.contentRect.height < 50) return;
-    if (event.contentRect.width < 50) return;
-
-    if ((this.cWidth != Math.floor(event.contentRect.width)) || (this.cHeight != Math.floor(event.contentRect.height))) {
-      this.cWidth = this.canvasEl.nativeElement.width = this.canvasBG.nativeElement.width = this.canvasMM.nativeElement.width = Math.floor(event.contentRect.width);
-      this.cHeight = this.canvasEl.nativeElement.height = this.canvasBG.nativeElement.height = this.canvasMM.nativeElement.height = Math.floor(event.contentRect.height);
-
-      this.maxValueTextWidth = Math.floor(this.cWidth * 0.85);
-      this.maxValueTextHeight = Math.floor(this.cHeight * 0.85);
-      this.maxMinMaxTextWidth = Math.floor(this.cWidth * 0.57);
-      this.maxMinMaxTextHeight = Math.floor(this.cHeight * 0.1);
-
-      this.currentValueLength = 0; //will force resetting the font size
-      this.currentMinMaxLength = 0;
-      document.fonts.ready.then(() => {
-        if (this.isDestroyed) return;
-        this.updateCanvas();
-        this.updateCanvasBG();
-      });
-    };
-  }
-
-  private getColors(color: string): void {
-    switch (color) {
-      case "contrast":
-        this.labelColor = this.theme.contrastDim;
-        this.valueColor = this.theme.contrast;
-        break;
-      case "blue":
-        this.labelColor = this.theme.blueDim;
-        this.valueColor = this.theme.blue;
-        break;
-      case "green":
-        this.labelColor = this.theme.greenDim;
-        this.valueColor = this.theme.green;
-        break;
-      case "pink":
-        this.labelColor = this.theme.pinkDim;
-        this.valueColor = this.theme.pink;
-        break;
-      case "orange":
-        this.labelColor = this.theme.orangeDim;
-        this.valueColor = this.theme.orange;
-        break;
-      case "purple":
-        this.labelColor = this.theme.purpleDim;
-        this.valueColor = this.theme.purple;
-        break;
-      case "grey":
-        this.labelColor = this.theme.greyDim;
-        this.valueColor = this.theme.grey;
-        break;
-      case "yellow":
-        this.labelColor = this.theme.yellowDim;
-        this.valueColor = this.theme.yellow;
-        break;
-      default:
-        this.labelColor = this.theme.contrastDim;
-        this.valueColor = this.theme.contrast;
-        break;
-    }
-    this.valueStateColor = this.valueColor;
+  private setColors(): void {
+    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
+    this.valueStateColor = this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
   ngOnDestroy() {
@@ -208,138 +227,113 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvasValCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-    this.canvasMMCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-    this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-    this.canvasBG.nativeElement.remove();
-    this.canvasBG = null;
-    this.canvasEl.nativeElement.remove();
-    this.canvasEl = null;
-    this.canvasMM.nativeElement.remove();
-    this.canvasMM = null;
+    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
+    this.canvas.clearCanvas(this.canvasMinMaxCtx, this.canvasMinMax().nativeElement.width, this.canvasMinMax().nativeElement.height);
+    this.canvas.clearCanvas(this.canvasUnitCtx, this.canvasUnit().nativeElement.width, this.canvasUnit().nativeElement.height);
   }
 
 /* ******************************************************************************************* */
 /*                                  Canvas                                                     */
 /* ******************************************************************************************* */
-// High resolution scaling see https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#scaling_for_high_resolution_displays
-  private updateCanvas() {
+private updateCanvas(): void {
     if (this.canvasValCtx) {
-      this.canvasValCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+      this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
       this.drawValue();
       if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
-        this.canvasMMCtx.clearRect(0, 0, this.cWidth, this.cHeight);
+        this.canvas.clearCanvas(this.canvasMinMaxCtx, this.canvasMinMax().nativeElement.width, this.canvasMinMax().nativeElement.height);
         this.drawMinMax();
       }
     }
   }
 
-  private updateCanvasBG() {
-    if (this.canvasBGCtx) {
-      this.canvasBGCtx.clearRect(0, 0, this.cWidth, this.cHeight);
-      this.drawTitle();
+  private updateCanvasUnit(): void {
+    if (this.canvasUnitCtx) {
+      this.canvas.clearCanvas(this.canvasUnitCtx, this.canvasUnit().nativeElement.width, this.canvasUnit().nativeElement.height);
       this.drawUnit();
     }
   }
 
-  private drawValue() {
+  private drawValue(): void {
     const valueText = this.getValueText();
-
-    if (this.currentValueLength !== valueText.length) {
-        this.currentValueLength = valueText.length;
-        this.valueFontSize = this.calculateOptimalFontSize(valueText, "bold", this.maxValueTextWidth, this.maxValueTextHeight, this.canvasValCtx);
-    }
-
-    this.canvasValCtx.font = `bold ${this.valueFontSize}px ${this.fontString}`;
-    this.canvasValCtx.fillStyle = this.valueStateColor;
-    this.canvasValCtx.textAlign = "center";
-    this.canvasValCtx.textBaseline = "middle";
-    this.canvasValCtx.fillText(valueText, Math.floor(this.cWidth / 2), Math.floor((this.cHeight * 0.5) + (this.valueFontSize / 15)), this.maxValueTextWidth);
+    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
+    this.canvas.drawText(
+      this.canvasValCtx,
+      valueText,
+      Math.floor(this.canvasValue().nativeElement.width / 2),
+      Math.floor((this.canvasValue().nativeElement.height / 2) * 1.15),
+      this.maxValueTextWidth,
+      this.maxValueTextHeight,
+      'bold',
+      this.valueStateColor
+    );
   }
 
   private getValueText(): string {
-    const cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
     if (this.dataValue === null) {
         return "--";
     }
-    if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'HH:MM:SS'].includes(cUnit)) {
+
+    const cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
         return this.dataValue.toString();
     }
 
     return this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
   }
 
-  private calculateOptimalFontSize(text: string, fontWeight: string, maxWidth: number, maxHeight: number, ctx: CanvasRenderingContext2D): number {
-    let minFontSize = 1;
-    let maxFontSize = maxHeight;
-    let fontSize = maxFontSize;
+  private drawUnit(): void {
+  const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+  if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
 
-    while (minFontSize <= maxFontSize) {
-        fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-        ctx.font = `${fontWeight} ${fontSize}px ${this.fontString}`;
-        const measure = ctx.measureText(text).width;
+  const marginX = 10 * this.canvas.scaleFactor;
+  const marginY = 5 * this.canvas.scaleFactor;
+  const canvasWidth = this.canvasUnit().nativeElement.width;
+  const canvasHeight = this.canvasUnit().nativeElement.height;
 
-        if (measure > maxWidth) {
-            maxFontSize = fontSize - 1;
-        } else {
-            minFontSize = fontSize + 1;
-        }
-    }
+  this.canvas.drawText(
+    this.canvasUnitCtx,
+    unit,
+    canvasWidth - marginX,    // X: right edge minus margin
+    canvasHeight - marginY,   // Y: bottom edge minus margin
+    Math.floor(canvasWidth * 0.25),
+    Math.floor(canvasHeight * 0.15),
+    'bold',
+    this.valueColor,
+    'end',        // right-aligned
+    'bottom'      // baseline at the bottom
+  );
+}
 
-    return maxFontSize;
-  }
+  private drawMinMax(): void {
 
-  private drawTitle() {
-    const displayName = this.widgetProperties.config.displayName;
-    if (displayName === null) { return; }
-    const maxTextWidth = Math.floor(this.cWidth * 0.94);
-    const maxTextHeight = Math.floor(this.cHeight * 0.1);
-    const fontSize = this.calculateOptimalFontSize(displayName, "normal", maxTextWidth, maxTextHeight, this.canvasBGCtx);
-    this.canvasBGCtx.font = `normal ${fontSize}px ${this.fontString}`;
-    this.canvasBGCtx.textAlign = "left";
-    this.canvasBGCtx.textBaseline = "top";
-    this.canvasBGCtx.fillStyle = this.labelColor;
-    this.canvasBGCtx.fillText(displayName, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.03), maxTextWidth);
-  }
-
-  private drawUnit() {
-    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) { return; }
-
-    const maxTextWidth = Math.floor(this.cWidth * 0.35);
-    const maxTextHeight = Math.floor(this.cHeight * 0.15);
-    const fontSize = this.calculateOptimalFontSize(unit, "bold", maxTextWidth, maxTextHeight, this.canvasBGCtx);
-
-    this.canvasBGCtx.font = `bold ${fontSize}px ${this.fontString}`;
-    this.canvasBGCtx.textAlign = "right";
-    this.canvasBGCtx.textBaseline="bottom";
-    this.canvasBGCtx.fillStyle = this.valueColor;
-    this.canvasBGCtx.fillText(unit, Math.floor(this.cWidth * 0.97), Math.floor(this.cHeight * 0.97), maxTextWidth);
-  }
-
-  private drawMinMax() {
-    if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) { return; }
+    if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) return;
 
     let valueText = '';
-
     if (this.widgetProperties.config.showMin) {
-        valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Min: --";
+      valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Min: --';
     }
     if (this.widgetProperties.config.showMax) {
-        valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : " Max: --";
+      valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Max: --';
     }
     valueText = valueText.trim();
 
-    if (this.currentMinMaxLength !== valueText.length) {
-        this.currentMinMaxLength = valueText.length;
-        this.minMaxFontSize = this.calculateOptimalFontSize(valueText, "normal", this.maxMinMaxTextWidth, this.maxMinMaxTextHeight, this.canvasMMCtx);
-    }
 
-    this.canvasMMCtx.font = `normal ${this.minMaxFontSize}px ${this.fontString}`;
-    this.canvasMMCtx.textAlign = "left";
-    this.canvasMMCtx.textBaseline = "bottom";
-    this.canvasMMCtx.fillStyle = this.valueColor;
-    this.canvasMMCtx.fillText(valueText, Math.floor(this.cWidth * 0.03), Math.floor(this.cHeight * 0.9559), this.maxMinMaxTextWidth);
+    const marginX = 10 * this.canvas.scaleFactor;
+    const marginY = 5 * this.canvas.scaleFactor;
+    const canvasHeight = this.canvasUnit().nativeElement.height;
+
+    this.canvas.drawText(
+      this.canvasMinMaxCtx,
+      valueText,
+      marginX, // X: left edge plus margin
+      Math.floor(canvasHeight - marginY), // Y: bottom edge minus margin
+      this.maxMinMaxTextWidth,
+      this.maxMinMaxTextHeight,
+      'normal',
+      this.valueColor,
+      'start',      // left-aligned
+      'bottom'  // baseline at the bottom
+    );
   }
 
   private applyDecorations(txtValue: string): string {

@@ -4,7 +4,7 @@
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "paths": {
       "gaugeScales": [
@@ -24,7 +24,8 @@
     ],
     "module": "es2020",
     "baseUrl": "./",
-    "isolatedModules": false
+    "isolatedModules": false,
+    "resolveJsonModule": true
   },
   "angularCompilerOptions": {
     "preserveWhitespaces": false,

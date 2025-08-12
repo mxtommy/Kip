@@ -9,18 +9,18 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import isEqual from 'lodash-es/isEqual';
 
 @Component({
     selector: 'menu-notifications',
     templateUrl: './menu-notifications.component.html',
     styleUrls: ['./menu-notifications.component.scss'],
-    standalone: true,
     imports: [MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, MatIconModule, SlicePipe]
 })
 export class MenuNotificationsComponent {
-  private notificationsService = inject(NotificationsService);
-  private _notifications$ = this.notificationsService.observeNotifications();
-  protected notificationConfig = toSignal(this.notificationsService.observeNotificationConfiguration(), {requireSync: true});
+  private _notificationsService = inject(NotificationsService);
+  private _notifications$ = this._notificationsService.observeNotifications();
+  protected notificationConfig = toSignal(this._notificationsService.observeNotificationConfiguration(), {requireSync: true});
   protected menuNotifications = toSignal(this._notifications$.pipe(
     map(notifications => {
       // Define states filter
@@ -40,19 +40,19 @@ export class MenuNotificationsComponent {
     map(notifications => notifications.filter(
       item => item.value && item.value.method && item.value.method.includes(Methods.Visual)
     ))
-  ), {requireSync: true});
-  protected isMuted: boolean = false;
+  ), {requireSync: true , equal: isEqual});
+  protected isMuted = false;
 
   protected mutePlayer(state: boolean): void {
     this.isMuted = state;
-    this.notificationsService.mutePlayer(state);
+    this._notificationsService.mutePlayer(state);
   }
 
   protected silence(path: string): void {
-    this.notificationsService.setSkMethod(path, [ Methods.Visual ]);
+    this._notificationsService.setSkMethod(path, [ Methods.Visual ]);
   }
 
   protected clear(path: string): void {
-    this.notificationsService.setSkState(path, States.Normal);
+    this._notificationsService.setSkState(path, States.Normal);
   }
 }

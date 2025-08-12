@@ -1,65 +1,119 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, OnDestroy, viewChild, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort, MatSortHeader } from '@angular/material/sort';
-
+import { MatIconModule } from '@angular/material/icon';
+import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild } from '@angular/core';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { DataService } from '../../services/data.service';
 import { ISkPathData } from "../../interfaces/app-interfaces";
-import { DataBrowserRowComponent } from '../data-browser-row/data-browser-row.component';
-import { NgFor, KeyValuePipe } from '@angular/common';
-import { MatInput } from '@angular/material/input';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { DataInspectorRowComponent } from '../data-inspector-row/data-inspector-row.component';
+import { KeyValuePipe } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { PageHeaderComponent } from '../page-header/page-header.component';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { map, throttleTime } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 
 
 @Component({
     selector: 'data-inspector',
     templateUrl: './data-inspector.component.html',
-    styleUrls: ['./data-inspector.component.css'],
-    standalone: true,
-    imports: [ MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgFor, DataBrowserRowComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, KeyValuePipe, PageHeaderComponent]
+    styleUrls: ['./data-inspector.component.scss'],
+    imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatIconModule]
 })
-export class DataInspectorComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private dataService = inject(DataService);
-  private cdRef = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
+  private _responsive = inject(BreakpointObserver);
+  private isPhonePortrait: Signal<BreakpointState>;
+  private filterSubject = new Subject<string>();
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
+  readonly paginator = viewChild.required(MatPaginator);
+  readonly sort = viewChild.required(MatSort);
   protected readonly pageTitle = 'Data Inspector';
-  private pathsSubscription: Subscription = null;
-  private dataTableTimer: NodeJS.Timeout = null;
 
-  public pageSize: number = 10;
+  public pageSize = 25;
+  protected hidePageSize = false;
+  protected showFirstLastButtons = true;
+  protected showPageSizeOptions = [5, 10, 25, 100];
   public tableData = new MatTableDataSource<ISkPathData>([]);
-  public displayedColumns: string[] = ['path', 'defaultSource'];
+  public displayedColumns: string[] = ['path', 'supportsPut', 'defaultSource'];
 
-  public onResize(event) {
-    this.setNumPerPage(event.target.innerHeight, event.target.innerWidth);
-  }
+  constructor() {
+    this.filterSubject.pipe(
+      debounceTime(500)
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(filterValue => {
+      this.tableData.filter = filterValue.trim().toLowerCase();
+      if (this.tableData.paginator) {
+        this.tableData.paginator.firstPage();
+      }
+    });
 
-  ngOnInit() {
-    this.dataTableTimer = setTimeout(()=>{
-      this.pathsSubscription = this.dataService.startSkDataFullTree().subscribe((paths: ISkPathData[]) => {
-        this.tableData.data = paths;
-      })}, 0); // set timeout to make it async otherwise delays page load
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+
+    effect(() => {
+      if (this.isPhonePortrait().matches) {
+        this.hidePageSize = true;
+        this.showFirstLastButtons = false;
+        this.showPageSizeOptions = [];
+      } else {
+        this.hidePageSize = false;
+        this.showFirstLastButtons = true;
+        this.showPageSizeOptions = [5, 10, 25, 100];
+      }
+    });
   }
 
   ngAfterViewInit() {
+    this.dataService.startSkDataFullTree()
+      .pipe(
+        map((paths: ISkPathData[]) =>
+          paths
+            .filter(path => Object.keys(path.sources || {}).length > 0) // Filter out items with empty sources
+            .map(path => ({
+              ...path,
+              sources: path.type && path.type.includes('object') && typeof path.sources === 'object'
+                ? Object.fromEntries(
+                    Object.entries(path.sources).map(([key, value]) => [
+                      key,
+                      {
+                        ...value,
+                        sourceValue: typeof value.sourceValue === 'object'
+                          ? JSON.stringify(value.sourceValue) // Stringify only sourceValue if it's an object
+                          : value.sourceValue
+                      }
+                    ])
+                  ) // Transform only sourceValue in sources if path.type contains 'object'
+                : path.sources
+            }))
+        ),
+        throttleTime(500), // Emit at most once every 500ms
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((filteredPaths: ISkPathData[]) => {
+        this.tableData.data = filteredPaths;
+      });
+
+    // Assign paginator and sort to the tableData
     this.tableData.paginator = this.paginator();
     this.tableData.sort = this.sort();
-    this.tableData.filter = "self.";
-    this.setNumPerPage(window.innerHeight, window.innerWidth);
-    this.cdRef.detectChanges();
+
+    // Add a custom sorting accessor for the "supportsPut" column
+    this.tableData.sortingDataAccessor = (item, property) => {
+      switch (property) {
+        case 'supportsPut':
+          return item.meta?.supportsPut ? 1 : 0; // Sort by boolean value (1 for true, 0 for false)
+        default:
+          return item[property]; // Default sorting for other columns
+      }
+    };
   }
 
   public applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
-    this.tableData.filter = filterValue.trim().toLowerCase();
-
-    if (this.tableData.paginator) {
-      this.tableData.paginator.firstPage();
-    }
+    this.filterSubject.next(filterValue);
   }
 
   public trackByPath(index: number, item: ISkPathData): string {
@@ -70,31 +124,18 @@ export class DataInspectorComponent implements OnInit, AfterViewInit, OnDestroy 
     return `${item.key}`;
   }
 
-  private setNumPerPage(height: number, width: number){
-    if (width < 750) {
-      this.pageSize = 5;
-    } else if (height > 900) {
-      this.pageSize = 15;
-    } else if (height > 750 && height < 900) {
-      this.pageSize = 10;
-    } else {
-      this.pageSize = 5;
-    }
-  }
-
-  getSourceKey(source: { key: unknown, value: any }): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSourceKey(source: { key: any, value: any }): string {
     return String(source.key);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSourceValue(item: { key: any, value: any } ): any {
     return item.value.sourceValue;
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.dataTableTimer);
-    this.tableData.data = null
-    this.tableData = null;
-    this.pathsSubscription?.unsubscribe();
+    this.filterSubject.complete(); // Clean up the Subject
     this.dataService.stopSkDataFullTree();
   }
 }

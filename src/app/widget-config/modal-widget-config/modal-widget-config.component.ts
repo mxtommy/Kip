@@ -1,18 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormsModule, ReactiveFormsModule }    from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialog, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
-import { MatButton } from '@angular/material/button';
-import { MatDivider } from '@angular/material/divider';
-import { MatOption } from '@angular/material/core';
-import { MatSelect } from '@angular/material/select';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatInput } from '@angular/material/input';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { NgIf } from '@angular/common';
-import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
-import { BooleanMultiControlOptionsComponent } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
+import { BooleanMultiControlOptionsComponent, IAddNewPathObject } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
@@ -22,22 +19,23 @@ import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
+import { SelectAutopilotComponent } from '../select-autopilot/select-autopilot.component';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
     selector: 'modal-widget-config',
     templateUrl: './modal-widget-config.component.html',
-    styleUrls: ['./modal-widget-config.component.css'],
-    standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatDialogTitle, MatDialogContent, MatTabGroup, MatTab, NgIf, MatFormField, MatLabel, MatInput, MatCheckbox, MatSelect, MatOption, MatTabLabel, MatDivider, MatDialogActions, MatButton, MatDialogClose,
-      DisplayDatetimeComponent,
-      DisplayChartOptionsComponent,
-      DatasetChartOptionsComponent,
-      BooleanMultiControlOptionsComponent,
-      PathsOptionsComponent
-    ]
+    styleUrls: ['./modal-widget-config.component.scss'],
+    imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
-  private dialog = inject(MatDialog);
+  // Property name constants to avoid magic strings
+  private static readonly KEY_MULTI_CHILD_CTRLS = 'multiChildCtrls';
+  private static readonly KEY_DISPLAY_SCALE = 'displayScale';
+  private static readonly KEY_GAUGE = 'gauge';
+  private static readonly KEY_AUTOPILOT = 'autopilot';
+  private static readonly KEY_PATHS = 'paths';
+  private static readonly KEY_CONVERT_UNIT_TO = 'convertUnitTo';
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
   private DatasetService = inject(DatasetService);
@@ -45,81 +43,115 @@ export class ModalWidgetConfigComponent implements OnInit {
   private app = inject(AppService);
   protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
 
-
-  public titleDialog: string = "Widget Options";
+  public titleDialog = "Widget Options";
   public formMaster: UntypedFormGroup;
   public availableDataSets: IDatasetServiceDatasetConfig[];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
-  public isPathArray: boolean = false;
-  public addPathEvent: IWidgetPath;
+  public isPathArray = false;
+  public addPathEvent: IAddNewPathObject;
+  public delPathEvent: string;
+  public updatePathEvent: IDynamicControl[];
   public colors = [];
 
   ngOnInit() {
-    this.availableDataSets = this.DatasetService.list().sort();
+    // Defensive guard: if dialog opened without required data, close early to avoid runtime errors.
+    if (!this.widgetConfig) {
+      console.error("Widget configuration data is missing. Closing dialog.");
+      this.dialogRef.close();
+      return;
+    }
+    this.availableDataSets = this.DatasetService.list().sort((a, b) => {
+      const aLabel = (a as unknown as { label?: string }).label || '';
+      const bLabel = (b as unknown as { label?: string }).label || '';
+      return aLabel.localeCompare(bLabel, undefined, { sensitivity: 'base' });
+    });
     this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
-    this.setFormOptions();
     this.colors = this.app.configurableThemeColors;
   }
 
-  private generateFormGroups(formData: Object, parent?: string): UntypedFormGroup {
+  // Helper to ensure we only treat plain object literals as nested groups and not arrays, dates, etc.
+  private isPlainObject(val: unknown): val is Record<string, unknown> {
+    return Object.prototype.toString.call(val) === '[object Object]';
+  }
+
+  private generateFormGroups(formData: object, parent?: string): UntypedFormGroup {
     const groups = this.fb.group({});
 
     Object.keys(formData).forEach(key => {
-      // handle Objects
-      if ( (typeof(formData[key]) == 'object') && (formData[key] !== null) ) {
-
-        if (key == "multiChildCtrls") {
+      const value = (formData as Record<string, unknown>)[key];
+      // handle Objects (plain objects or arrays explicitly handled below)
+      if (value !== null && (Array.isArray(value) || this.isPlainObject(value))) {
+  if (key === ModalWidgetConfigComponent.KEY_MULTI_CHILD_CTRLS) {
           groups.addControl(key, this.fb.array([]));
           const fa = groups.get(key) as UntypedFormArray;
-
-          formData[key].forEach((ctrl: IDynamicControl) => {
+          (value as IDynamicControl[]).forEach((ctrl: IDynamicControl) => {
             fa.push(this.generateCtrlArray(ctrl));
           });
-
-        } else if (key == "displayScale") {
-          groups.addControl(key, this.generateFormGroups(formData[key], key));
-        } else if (key == "gauge") {
-          groups.addControl(key, this.generateFormGroups(formData[key], key));
-        }else if (key == "paths") {
-          if (this.widgetConfig.multiChildCtrls !== undefined) { // build as formArray if multi control type widget only
+  } else if (key === ModalWidgetConfigComponent.KEY_DISPLAY_SCALE) {
+          groups.addControl(key, this.generateFormGroups(value, key));
+  } else if (key === ModalWidgetConfigComponent.KEY_GAUGE) {
+          groups.addControl(key, this.generateFormGroups(value, key));
+  } else if (key === ModalWidgetConfigComponent.KEY_AUTOPILOT) {
+          groups.addControl(key, this.generateFormGroups(value, key));
+  } else if (key === ModalWidgetConfigComponent.KEY_PATHS) {
+          const pathsValue = value as Record<string, unknown>;
+          if (this.widgetConfig.multiChildCtrls !== undefined) {
             this.isPathArray = true;
             groups.addControl(key, this.fb.array([]));
             const fa = groups.get(key) as UntypedFormArray;
-            Object.keys(formData[key]).forEach(pathKey => {
-              fa.push(this.generatePathArray(pathKey, this.widgetConfig.paths[pathKey]));
+            Object.keys(pathsValue).forEach(pathKey => {
+              const pathObj = pathsValue[pathKey] as IWidgetPath;
+              if (pathObj) {
+                const pathGroup = this.generatePathArray(pathKey, pathObj);
+                if (pathObj.isPathConfigurable === false) {
+                  pathGroup.disable(); // disables validation, but value is kept in getRawValue()
+                }
+                fa.push(pathGroup);
+              }
             });
           } else {
-            groups.addControl(key, this.generateFormGroups(formData[key], key));
+            const pathsGroup = this.fb.group({});
+            Object.keys(pathsValue).forEach(pathKey => {
+              const pathObj = pathsValue[pathKey] as IWidgetPath;
+              if (pathObj) {
+                const pathGroup = this.generateFormGroups(pathObj, pathKey);
+                if (pathObj.isPathConfigurable === false) {
+                  pathGroup.disable(); // disables validation,
+                }
+                pathsGroup.addControl(pathKey, pathGroup);
+              }
+            });
+            groups.addControl(key, pathsGroup);
           }
         }
 
-        if (parent == 'paths') {
-          groups.addControl(key, this.generateFormGroups(formData[key], key));
+  if (parent === ModalWidgetConfigComponent.KEY_PATHS) {
+          groups.addControl(key, this.generateFormGroups(value, key));
         }
 
       } else {
       // Handle Primitives - property values
-        if (parent == "convertUnitTo") {
+  if (parent === ModalWidgetConfigComponent.KEY_CONVERT_UNIT_TO) {
           // If we are building units list
-          let unitConfig = this.widgetConfig.paths[key];
-          if ( (unitConfig.pathType == "number") || ('datasetUUID' in this.widgetConfig)) {
-            groups.addControl(key, new UntypedFormControl(formData[key])); //only add control if it's a number or historical graph. Strings and booleans don't have units and conversions yet...
+          const unitConfig = (formData as Record<string, unknown>)[key] as IWidgetPath;
+          if (unitConfig && (unitConfig as IWidgetPath).pathType == "number" || ('datasetUUID' in this.widgetConfig)) {
+            groups.addControl(key, new UntypedFormControl(value)); //only add control if it's a number or historical graph. Strings and booleans don't have units and conversions yet...
           }
         } else {
           // not building Units list
           // Use switch in case we will need more Required form validator at some point.
           switch (key) {
-            case "path": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            case "path": groups.addControl(key, new UntypedFormControl(value));
             break;
 
-            case "datasetUUID": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            case "datasetUUID": groups.addControl(key, new UntypedFormControl(value, Validators.required));
             break;
 
-            case "dataTimeout": groups.addControl(key, new UntypedFormControl(formData[key], Validators.required));
+            case "dataTimeout": groups.addControl(key, new UntypedFormControl(value, Validators.required));
             break;
 
-            default: groups.addControl(key, new UntypedFormControl(formData[key]));
+            default: groups.addControl(key, new UntypedFormControl(value));
             break;
           }
         }
@@ -137,11 +169,12 @@ export class ModalWidgetConfigComponent implements OnInit {
     return fg;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private generatePathFields(key: string, value: any): UntypedFormControl {
     let ctrl: UntypedFormControl = null;
 
     switch (key) {
-      case "path": ctrl = new UntypedFormControl(value, Validators.required);
+      case "path": ctrl = new UntypedFormControl(value);
       break;
 
       case "source": ctrl = new UntypedFormControl(value, Validators.required);
@@ -163,7 +196,7 @@ export class ModalWidgetConfigComponent implements OnInit {
     return fg;
   }
 
-  public addPathGroup(e: IWidgetPath): void {
+  public addPathGroup(e: IAddNewPathObject): void {
     this.addPathEvent = e;
   }
 
@@ -176,6 +209,7 @@ export class ModalWidgetConfigComponent implements OnInit {
         if (pathIDCtrl.value == ctrl.pathID) {
           fg.controls['description'].setValue(ctrl.ctrlLabel);
           fg.controls['pathType'].setValue(ctrl.isNumeric ? 'number' : 'boolean');
+          this.updatePathEvent = ctrlUpdates;
         }
       });
     });
@@ -187,7 +221,6 @@ export class ModalWidgetConfigComponent implements OnInit {
     pathsFormArray.controls.forEach((fg: UntypedFormGroup) => {
       const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
       if (pathIDCtrl.value == e.pathID) {
-        const del = pathsFormArray.controls['']
          pathsFormArray.removeAt(i);
       } else {
         i++
@@ -196,20 +229,11 @@ export class ModalWidgetConfigComponent implements OnInit {
 
     const multiCtrlFormArray = this.formMaster.get('multiChildCtrls') as UntypedFormArray;
     multiCtrlFormArray.removeAt(e.ctrlIndex);
-  }
 
-  /**
-   * EnablePaths
-   */
-  public setPaths() {
-    this.setFormOptions();
-  }
+    this.delPathEvent = e.pathID;
 
-  private setFormOptions(): void {
-    if (this.formMaster.contains('courseOverGroundEnable')) {
-      const ctrlGrp = this.formMaster.get('paths.courseOverGround');
-      this.formMaster.controls['courseOverGroundEnable'].value ? ctrlGrp.enable() : ctrlGrp.disable();
-    }
+    // Explicitly update the form's value object
+    this.formMaster.updateValueAndValidity();
   }
 
   get convertUnitToControl(): UntypedFormControl {
@@ -299,15 +323,6 @@ export class ModalWidgetConfigComponent implements OnInit {
   get showAverageDataToControl(): UntypedFormControl {
     return this.formMaster.get('showAverageData') as UntypedFormControl;
   }
-
-  get convertUnitToToControl(): UntypedFormControl {
-    return this.formMaster.get('convertUnitTo') as UntypedFormControl;
-  }
-
-  get datasetUUIDControl(): UntypedFormControl {
-    return this.formMaster.get('datasetUUID') as UntypedFormControl;
-  }
-
   get displayNameToControl(): UntypedFormControl {
     return this.formMaster.get('displayName') as UntypedFormControl;
   }
@@ -316,8 +331,12 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('numDecimal') as UntypedFormControl;
   }
 
-  get verticalGraphToControl(): UntypedFormControl {
-    return this.formMaster.get('verticalGraph') as UntypedFormControl;
+  get verticalChartToControl(): UntypedFormControl {
+    return this.formMaster.get('verticalChart') as UntypedFormControl;
+  }
+
+  get inverseYAxisToControl(): UntypedFormControl {
+    return this.formMaster.get('inverseYAxis') as UntypedFormControl;
   }
 
   get colorToControl(): UntypedFormControl {
@@ -333,6 +352,6 @@ export class ModalWidgetConfigComponent implements OnInit {
   }
 
   submitConfig() {
-    this.dialogRef.close(this.formMaster.value);
+    this.dialogRef.close(this.formMaster.getRawValue());
   }
 }

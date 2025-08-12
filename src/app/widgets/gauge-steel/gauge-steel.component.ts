@@ -2,8 +2,9 @@ import { UnitsService } from './../../core/services/units.service';
 import { Component, OnChanges, SimpleChanges, OnInit, input, inject } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import type { ITheme } from '../../core/services/app-service';
-import { States } from '../../core/interfaces/signalk-interfaces';
+import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare let steelseries: any; // 3rd party
 
 export const SteelBackgroundColors = {
@@ -45,7 +46,6 @@ export const SteelFrameColors = {
     selector: 'gauge-steel',
     templateUrl: './gauge-steel.component.html',
     styleUrls: ['./gauge-steel.component.scss'],
-    standalone: true,
     imports: [NgxResizeObserverModule]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges {
@@ -60,16 +60,17 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
   readonly minValue = input<number>(undefined);
   readonly maxValue = input<number>(undefined);
   readonly decimals = input<number>(undefined);
-  readonly zones = input<Array<any>>(undefined);
+  readonly zones = input<ISkZone[]>(undefined);
   readonly title = input<string>(undefined);
   readonly units = input<string>(undefined);
   readonly value = input<number>(undefined);
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   readonly theme = input<ITheme>(undefined, { alias: "themeColors" });
 
-  private gaugeStarted: boolean = false;
+  private gaugeStarted = false;
   private gauge;
   private gaugeOptions = {};
-  protected paddingTop: number = 0;
+  protected paddingTop = 0;
 
   ngOnInit(): void {
     this.buildOptions();
@@ -96,8 +97,8 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
     const zones = this.zones();
     if (zones) {
 
-      let sections = [];
-      let areas = [];
+      const sections = [];
+      const areas = [];
 
       // Sort zones based on lower value
       const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);

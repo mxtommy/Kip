@@ -6,7 +6,7 @@ describe('SignalkRequestsService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: SignalkRequestsService = TestBed.get(SignalkRequestsService);
+    const service: SignalkRequestsService = TestBed.inject(SignalkRequestsService);
     expect(service).toBeTruthy();
   });
 });

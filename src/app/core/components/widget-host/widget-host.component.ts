@@ -23,8 +23,10 @@ export class WidgetHostComponent {
   constructor() {
   }
 
-  public openWidgetOptions(e: Event): void {
+  public openWidgetOptions(): void {
     if (!this._dashboard.isDashboardStatic()) {
+      // Prevent opening Options Dialogue if the widget has no config property
+      if (!this.config()) return;
       this._dialog.openWidgetOptions({
         title: 'Widget Options',
         config: this.config(),

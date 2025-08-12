@@ -1,0 +1,169 @@
+@use '@angular/material' as mat;
+:host {
+  overflow: clip;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.text-generic-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: inherit;
+}
+
+.filler {
+  width: 100%;
+  height: 76%;
+}
+
+.buttons-container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  column-gap: 2%;
+  position: relative;
+  height: 24%;
+  width: 100%;
+  padding: 0px 10px 14px 10px;
+  z-index: 20;
+  pointer-events: auto;
+  align-items: center;
+}
+
+.button {
+  min-width: 0px;
+  width: 100%;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  @include mat.button-overrides((
+    filled-container-height: 100%,
+    filled-horizontal-padding: 0px,
+    filled-icon-spacing: 0px,
+  ));
+}
+
+.select-button {
+  flex: none;
+  width: 18%;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-blue-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.port-button {
+  flex: 1 1 auto;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.starboard-button {
+  flex: 1 1 auto;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-starboard-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.port-small-button {
+  flex: 1 1 auto;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.starboard-small-button {
+  flex: 1 1 auto;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-starboard-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.buttons-svg-icon {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+.svg-content {
+  width: 100%;
+  height: 100%;
+  padding: 0em;
+  margin: 0em;
+  text {
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor:middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    stroke: none;
+  }
+}
+
+.pin-container {
+  flex-basis: 18%;
+}
+
+.pin {
+  fill: var(--kip-port-color);
+  text {
+    font-size: 19px;
+  }
+}
+
+.len-bias-container {
+  flex-basis: 35%;
+}
+
+.len-bias {
+  fill: var(--kip-contrast-color);
+  text {
+    font-size: 12px;
+  }
+}
+
+.boat-container {
+  flex-basis: 18%;
+}
+
+.boat {
+  fill: var(--kip-starboard-color);
+  text {
+    font-size: 19px;
+  }
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  bottom: 0;
+  color: transparent;
+  z-index: 21;
+}

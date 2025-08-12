@@ -1,4 +1,4 @@
-import { enableProdMode, APP_INITIALIZER, Injectable, importProvidersFrom } from '@angular/core';
+import { enableProdMode, Injectable, importProvidersFrom, provideAppInitializer } from '@angular/core';
 import { routes } from './app/app.routes';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
@@ -21,23 +21,10 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule, bootstrapApplication } from '@angular/platform-browser';
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
+import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
 import 'hammerjs';
-
-/**
- * Bootstrap function used by AppInitService provider at app initialization
- * that start network, authentication and storage service pre-app.component
- * start. app.component start all other services.
- *
- * @param {AppNetworkInitService} AppNetworkInitService instance
- * @return {*} Promise once AppNetworkInitService is done
- */
-const appNetworkInitializerFn = (appNetInitSvc: AppNetworkInitService) => {
-  return () => appNetInitSvc.initNetworkServices()
-    .then(res => { })
-    .catch(res => { })
-};
 
 /**
  * Injectable class that override Hammerjs default gesture configuration.
@@ -51,7 +38,7 @@ export class kipHammerConfig extends HammerGestureConfig {
   // see: https://angular.dev/api/platform-browser/HammerGestureConfig
   overrides = {
     // Override default hammerjs gestures configuration
-    swipe: { direction: Hammer.DIRECTION_ALL, velocity: 0.6, threshold: 20, domEvents: true },
+    swipe: { direction: Hammer.DIRECTION_ALL, velocity: 0.3, threshold: 10, domEvents: true },
     press: { time: 500, domEvents: true },
   };
   options = {
@@ -75,16 +62,6 @@ bootstrapApplication(AppComponent, {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthenticationInterceptor,
-      multi: true,
-    },
-    // Imports AppInitService which executes function appInitializerFn()
-    // during the application initialization process (bootstrapping) to
-    // get app config from server storage before starting AppSettings service.
-    AppNetworkInitService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: appNetworkInitializerFn,
-      deps: [AppNetworkInitService],
       multi: true,
     },
     // Binds KIP's Hammerjs configuration overrides to a provider
@@ -122,6 +99,7 @@ bootstrapApplication(AppComponent, {
     DataService,
     SignalKConnectionService,
     SignalKDeltaService,
+    ConnectionStateMachine,
     DatasetService,
     DashboardService,
     UnitsService,
@@ -133,5 +111,23 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptorsFromDi()),
     provideRouter(routes, withHashLocation()),
     provideAnimations(),
+    /**
+     * Bootstrap function that starts network, authentication and storage service
+     * and gets the configuration from Signal K before app.component is started.
+     *
+     * This is needed to ensure that the app has the configuration
+     * before it starts.
+     *
+     * app.component then starts all other services.
+     *
+     * @param {AppNetworkInitService} AppNetworkInitService instance
+     * @return {*} Promise once AppNetworkInitService is done
+     */
+    provideAppInitializer(() => {
+      const appNetInitSvc = new AppNetworkInitService();
+      return appNetInitSvc.initNetworkServices()
+        .then(() => { })
+        .catch(() => { });
+    }),
   ],
 });

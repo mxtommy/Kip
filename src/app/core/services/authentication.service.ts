@@ -2,7 +2,7 @@ import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, timer, lastValueFrom, Subscription } from 'rxjs';
-import { filter, map, switchMap } from "rxjs/operators";
+import { filter, map, switchMap, distinctUntilChanged } from "rxjs/operators";
 
 export interface IAuthorizationToken {
   expiry: number;
@@ -14,7 +14,7 @@ const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL chan
 const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
 const validateTokenEndpoint = 'auth/validate';
-const tokenRenewalBuffer: number = 60; // nb of seconds before token expiration
+const tokenRenewalBuffer = 60; // nb of seconds before token expiration
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +29,7 @@ export class AuthenticationService implements OnDestroy {
   public authToken$ = this._authToken$.asObservable();
   private connectionEndpointSubscription: Subscription = null;
   private authTokenSubscription: Subscription = null;
+  private isRenewingToken = false; // Prevent overlapping renewals
 
   // Network connection
   private loginUrl = null;
@@ -57,38 +58,27 @@ export class AuthenticationService implements OnDestroy {
         console.log('[Authentication Service] Deleting user session token');
         localStorage.removeItem('authorization_token');
       }
-   }
+    }
 
     // Token Subject subscription to handle token expiration and renewal
     this.authTokenSubscription = this._authToken$.pipe(
-      filter((token: IAuthorizationToken) => (!!token && token.expiry !== null)),
-        map((token: IAuthorizationToken) => token.expiry),
-        switchMap((expiry: number) => timer(this.getTokenExpirationDate(expiry, tokenRenewalBuffer))),
-      )
-      .subscribe(() => {
-        let token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
-        if (token.isDeviceAccessToken) {
-          console.warn('[Authentication Service] Device Access Token expired. Manually renew token using SignalK Connection Tab');
-        } else {
-          if (this.isTokenExpired(token.expiry)) {
-            console.log('[Authentication Service] User session Token expired');
-          } else {
-            let connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
-            console.log('[Authentication Service] User session Token expires soon. Renewing token.');
-            console.log("[Authentication Service] \nToken Expiry: " + this.getTokenExpirationDate(token.expiry) + "\nTimeout at: " + this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer));
-            this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
-            .catch( (error: HttpErrorResponse) => {
-              console.error("[AppInit Service] Token renewal failure. Server returned: " + JSON.stringify(error.error));
-            });
-          }
-        }
-      }
-    );
+      filter((token: IAuthorizationToken) => !!token && token.expiry !== null), // Ensure token and expiry exist
+      distinctUntilChanged((prev, curr) => prev.expiry === curr.expiry), // Only react to changes in the token
+      map((token: IAuthorizationToken) => {
+        const expirationDate = this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer);
+        const duration = expirationDate.getTime() - Date.now(); // Calculate duration in milliseconds
+        console.log(`[Authentication Service] Token refresh timer set for ${duration} ms (Token Expiry: ${expirationDate.toISOString()})`);
+        return Math.max(duration, 0); // Ensure duration is not negative
+      }),
+      switchMap((duration: number) => timer(duration)) // Set timer for the calculated duration
+    ).subscribe(() => {
+      this.handleTokenRenewal();
+    });
 
     // Endpoint connection observer
     this.connectionEndpointSubscription =  this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
       if (endpoint.operation === 2) {
-        let httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
+        const httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
         this.loginUrl = httpApiUrl + loginEndpoint;
         this.logoutUrl = httpApiUrl + logoutEndpoint;
         this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
@@ -96,22 +86,66 @@ export class AuthenticationService implements OnDestroy {
     });
   }
 
+  private handleTokenRenewal(): void {
+    if (this.isRenewingToken) {
+      console.warn('[Authentication Service] Token renewal already in progress.');
+      return;
+    }
+
+    this.isRenewingToken = true;
+
+    const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
+    if (!token) {
+      console.warn('[Authentication Service] No token found in local storage. Cannot renew.');
+      this.isRenewingToken = false;
+      return;
+    }
+
+    if (token.isDeviceAccessToken) {
+      console.warn('[Authentication Service] Device Access Token expired. Manual renewal required.');
+      this.isRenewingToken = false;
+    } else {
+      if (this.isTokenExpired(token.expiry)) {
+        console.log('[Authentication Service] User session Token expired. Cannot renew.');
+        this.isRenewingToken = false;
+      } else {
+        console.log('[Authentication Service] User session Token expires soon. Renewing token...');
+        const connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
+        this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
+          .then(() => {
+            console.log('[Authentication Service] Token successfully renewed.');
+          })
+          .catch((error: HttpErrorResponse) => {
+            console.error('[Authentication Service] Token renewal failed. Server returned:', error.error);
+          })
+          .finally(() => {
+            this.isRenewingToken = false;
+          });
+      }
+    }
+  }
+
   /**
    * ASync server login API function. Handles logout, token and logged in status. Use
    * newUrl param to indicate against what server the login should take place, if it's
    * not the current server (if we are changing the sk URL). This param must be used
    * as the AuthenticationService has no dependency on AppSettings Service and once
-   * AuthenticationService is intanciated, newUrl is the only way to change it's
-   * tartget endpoint.
+   * AuthenticationService is instantiated, newUrl is the only way to change its
+   * target endpoint.
    *
    * @param {{ usr: string; pwd: string; newUrl?: string; }} { usr, pwd, newUrl }
    * @return {*}  {Promise<void>}
+   * @throws {Error} If the login URL is not set or if the HTTP request fails.
    * @memberof AuthenticationService
+   *
+   * @description
+   * This method may throw errors or return a rejected promise if login fails due to network issues,
+   * invalid credentials, or server errors. Consumers should handle errors using try/catch or .catch().
    */
   public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
     let serverLoginFullUrl: string;
     if (newUrl) {
-      serverLoginFullUrl = newUrl + defaultApiPath + loginEndpoint;
+      serverLoginFullUrl = newUrl.replace(/\/+$/, '') + defaultApiPath + loginEndpoint;
     } else {
       serverLoginFullUrl = this.loginUrl;
     }
@@ -120,8 +154,13 @@ export class AuthenticationService implements OnDestroy {
     if (this._IsLoggedIn$.getValue()) {
       await this.logout(true);
     }
-    await lastValueFrom(this.http.post(serverLoginFullUrl, {"username" : usr, "password" : pwd}, {observe: 'response'}))
-      .then((loginResponse: HttpResponse<any>) => {
+    if (!serverLoginFullUrl) {
+      console.error("[Authentication Service] Login URL is not set. Cannot perform login.");
+      this.deleteToken();
+      throw new Error("Login URL is not set.");
+    }
+    await lastValueFrom(this.http.post<{ token: string }>(serverLoginFullUrl, {"username" : usr, "password" : pwd}, {observe: 'response'}))
+      .then((loginResponse: HttpResponse<{ token: string }>) => {
           console.log("[Authentication Service] User " + usr + " login successful");
           this.setSession(loginResponse.body.token);
       })
@@ -134,14 +173,8 @@ export class AuthenticationService implements OnDestroy {
   private handleError(error: HttpErrorResponse) {
     if (error.status === 0) {
       // A client-side or network error occurred. Handle it accordingly.
-      console.error('[Authentication Service] An error occurred:', error.error);
       this.deleteToken();
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
-      console.error(`[Authentication Service] Backend returned code ${error.status}, body was: `, error.error);
     }
-    // Return an observable with a user-facing error message.
     throw error;
   }
 
@@ -154,9 +187,9 @@ export class AuthenticationService implements OnDestroy {
    * @memberof AuthenticationService
    */
   private setSession(token: string): void {
-    if (!!token) {
+    if (token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-      let authorizationToken: IAuthorizationToken = {
+      const authorizationToken: IAuthorizationToken = {
         'token' : null, 'expiry' : null, 'isDeviceAccessToken' : false
       };
 
@@ -206,7 +239,7 @@ export class AuthenticationService implements OnDestroy {
     let date = new Date(0);
 
     if(buffer) {
-      let bufferedDate = new Date(0);
+      const bufferedDate = new Date(0);
       bufferedDate.setUTCSeconds(dateAsSeconds - buffer);
       date = bufferedDate;
     } else {
@@ -230,7 +263,7 @@ export class AuthenticationService implements OnDestroy {
   public async logout(isLoginAction: boolean): Promise<void> {
     localStorage.removeItem('authorization_token');
     await lastValueFrom(this.http.put(this.logoutUrl, null))
-      .then((response) => {
+      .then(() => {
         this._IsLoggedIn$.next(false);
         if (!isLoginAction) {
           this._authToken$.next(null);
@@ -256,7 +289,7 @@ export class AuthenticationService implements OnDestroy {
   public setDeviceAccessToken(token: string): void {
     if (token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-      let authorizationToken: IAuthorizationToken = {
+      const authorizationToken: IAuthorizationToken = {
         'token' : null, 'expiry' : null, 'isDeviceAccessToken' : true
       };
 

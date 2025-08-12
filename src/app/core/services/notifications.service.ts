@@ -2,7 +2,7 @@
  * This Service handles app notifications sent by the Signal K server.
  */
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, filter, map, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
@@ -11,7 +11,7 @@ import { SignalkRequestsService } from './signalk-requests.service';
 import { DataService } from './data.service';
 import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
-import { UUID } from '../utils/uuid';
+import { UUID } from '../utils/uuid.util';
 import { TMethod, ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
 
@@ -50,9 +50,7 @@ interface ISeverityLevel {
   visual: number;
 }
 
-interface IAlarmSeverities {
-  [key: string]: ISeverityLevel;
-}
+type IAlarmSeverities = Record<string, ISeverityLevel>;
 
 
 @Injectable({
@@ -87,7 +85,7 @@ export class NotificationsService implements OnDestroy {
   private _howlPlayer: Howl;
   private _activeAlarmSoundtrack: number = null;
   private _activeHowlId: number = null;
-  private _isHowlIdMuted: boolean = false;
+  private _isHowlIdMuted = false;
 
   // Notification acknowledge timeouts references
   private _lastEmittedValue: IAlarmInfo = null;
@@ -112,7 +110,9 @@ export class NotificationsService implements OnDestroy {
     });
 
     this._resetServiceSubscription = this.data.isResetService().subscribe(reset => {
-      reset ? this.reset() : null;
+      if (reset) {
+        this.reset();
+      }
     });
 
     // Init audio player
@@ -187,7 +187,7 @@ export class NotificationsService implements OnDestroy {
   private updateNotificationsState() {
     let audioSev = 0;
     let visualSev = 0;
-    let activeNotifications: number = 0;
+    let activeNotifications = 0;
 
     for (const alarm of this._notifications) {
       if (!alarm.value || !('method' in alarm.value)  || alarm.value.method.length === 0) {
@@ -427,5 +427,6 @@ export class NotificationsService implements OnDestroy {
     this._notificationConfig$.complete();
     this._notifications$.complete();
     this._alarmsInfo$.complete();
+    this._howlPlayer?.unload();
   }
 }

@@ -10,23 +10,25 @@
       </button>
     }
   }
-  @if (!app.isNightMode()) {
-    <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
-      <span class="material-icons">mode_night</span>
-    </button>
-  } @else {
-    <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
-      <span class="material-icons">light_mode</span>
-    </button>
+  @if (!isAutoNightMode()) {
+    @if (!app.isNightMode()) {
+      <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+        <span class="material-icons">mode_night</span>
+      </button>
+    } @else {
+      <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+        <span class="material-icons">light_mode</span>
+      </button>
+    }
   }
 </div>
 <div class="menu-item-container">
-  @for (item of menuItems; track item) {
+  @for (item of menuItems; track $index) {
     <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onActionItem(item.action)"/>
   }
 </div>
 <div class="actions-container actions-bottom-container">
-  <button mat-flat-button class="action-button" (click)="onActionItem('layout')" (touchstart)="onActionItem('layout')">
+  <button mat-flat-button class="action-button" (click)="onActionItem('layout')">
     <span class="material-icons">lock_open</span>
   </button>
 </div>

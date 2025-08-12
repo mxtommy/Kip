@@ -5,6 +5,43 @@ import Qty from 'js-quantities';
 import { AppSettingsService } from './app-settings.service';
 import { Subscription } from 'rxjs';
 
+/**
+ * All valid Signal K numeric units supported by KIP.
+ *
+ * Allowed values:
+ * - 's'        (seconds)
+ * - 'Hz'       (hertz)
+ * - 'm3'       (cubic meters)
+ * - 'm3/s'     (cubic meters per second)
+ * - 'kg/s'     (kilograms per second)
+ * - 'kg/m3'    (kilograms per cubic meter)
+ * - 'deg'      (degrees)
+ * - 'rad'      (radians)
+ * - 'rad/s'    (radians per second)
+ * - 'A'        (amperes)
+ * - 'C'        (coulombs)
+ * - 'V'        (volts)
+ * - 'W'        (watts)
+ * - 'Nm'       (newton meters)
+ * - 'J'        (joules)
+ * - 'ohm'      (ohms)
+ * - 'm'        (meters)
+ * - 'm/s'      (meters per second)
+ * - 'm2'       (square meters)
+ * - 'K'        (kelvin)
+ * - 'Pa'       (pascals)
+ * - 'kg'       (kilograms)
+ * - 'ratio'    (ratio, 0-1)
+ * - 'm/s2'     (meters per second squared)
+ * - 'rad/s2'   (radians per second squared)
+ * - 'N'        (newtons)
+ * - 'T'        (tesla)
+ * - 'Lux'      (lux)
+ * - 'Pa/s'     (pascals per second)
+ * - 'Pa.s'     (pascal seconds)
+ * - 'unitless' (no unit)
+ * - null       (no filter)
+ */
 export type TValidSkUnits = 's' | 'Hz' | 'm3' | 'm3/s' | 'kg/s' | 'kg/m3' | 'deg' | 'rad' | 'rad/s' | 'A' | 'C' | 'V' | 'W' | 'Nm' | 'J' | 'ohm' | 'm' | 'm/s' | 'm2' | 'K' | 'Pa' | 'kg' | 'ratio' | 'm/s2' | 'rad/s2' | 'N' | 'T' | 'Lux' | 'Pa/s' | 'Pa.s' | 'unitless' | null;
 
 /**
@@ -23,7 +60,7 @@ export interface IConversionPathList {
 export interface IUnitGroup {
   group: string;
   units: IUnit[];
-}[]
+}
 
 /**
  * Individual Kip units system measures definition
@@ -36,9 +73,7 @@ export interface IUnit {
 /**
  * Interface for defaults Units per unit Groups to be applied
  */
-export interface IUnitDefaults {
-  [key: string]: string;
-}
+export type IUnitDefaults = Record<string, string>;
 
 /**
  * Interface for supported path value units provided by Signal K (schema v 1.7)
@@ -74,7 +109,8 @@ export class UnitsService implements OnDestroy {
    */
   private readonly _conversionList: IUnitGroup[] = [
     { group: 'Unitless', units: [
-      { measure: 'unitless', description: "As-Is numeric value" }
+      { measure: 'unitless', description: "As-Is numeric value" },
+      { measure: ' ', description: "No unit label - As-Is numeric value" }
     ] },
     { group: 'Speed', units: [
       { measure: 'knots', description: "Knots - Nautical miles per hour"},
@@ -110,11 +146,13 @@ export class UnitsService implements OnDestroy {
      ] },
     { group: 'Length', units: [
       { measure: 'm', description: "Meters (base)"},
+      { measure: 'mm', description: "Millimeters"},
       { measure: 'fathom', description: "Fathoms"},
-      { measure: 'feet', description: "Feet"},
-      { measure: 'km', description: "Kilometers"},
       { measure: 'nm', description: "Nautical Miles"},
+      { measure: 'km', description: "Kilometers"},
       { measure: 'mi', description: "Miles"},
+      { measure: 'feet', description: "Feet"},
+      { measure: 'inch', description: "Inches"},
     ] },
     { group: 'Volume', units: [
       { measure: 'liter', description: "Liters (base)"},
@@ -161,7 +199,7 @@ export class UnitsService implements OnDestroy {
       { measure: 'Minutes', description: "Minutes" },
       { measure: 'Hours', description: "Hours" },
       { measure: 'Days', description: "Days" },
-      { measure: 'HH:MM:SS', description: "Hours:Minute:seconds"}
+      { measure: 'D HH:MM:SS', description: "Day Hour:Minute:sec"}
     ] },
     { group: 'Angular Velocity', units: [
       { measure: 'rad/s', description: "Radians per second (base)" },
@@ -186,6 +224,7 @@ export class UnitsService implements OnDestroy {
       { measure: 'ratio', description: "Ratio 0-1 (base)" }
     ] },
     { group: 'Position', units: [
+      { measure: 'pdeg', description: "Position Degrees" },
       { measure: 'latitudeMin', description: "Latitude in minutes" },
       { measure: 'latitudeSec', description: "Latitude in seconds" },
       { measure: 'longitudeMin', description: "Longitude in minutes" },
@@ -238,14 +277,14 @@ export class UnitsService implements OnDestroy {
         }
       },
       { unit: "deg", properties: {
-          display: "\u00b0",
+          display: "Position",
           quantity: "Angle",
           quantityDisplay: "\u2220",
           description: "Latitude or longitude in decimal degrees"
         }
       },
       { unit: "rad", properties: {
-          display: "\u33ad",
+          display: "\u00b0",
           quantity: "Angle",
           quantityDisplay: "\u2220",
           description: "Angular arc in radians"
@@ -419,6 +458,7 @@ export class UnitsService implements OnDestroy {
 
   private unitConversionFunctions = {
     'unitless': function(v) { return v; },
+    ' ': function(v) { return v; },
 //  speed
     'knots': Qty.swiftConverter("m/s", "kn"),
     'kph': Qty.swiftConverter("m/s", "kph"),
@@ -452,8 +492,10 @@ export class UnitsService implements OnDestroy {
     "fahrenheit": Qty.swiftConverter("tempK", "tempF"),
 //  length
     "m": function(v) { return v; },
+    "mm": function(v) { return v*1000; },
     "fathom": Qty.swiftConverter('m', 'fathom'),
     "feet": Qty.swiftConverter('m', 'foot'),
+    "inch": Qty.swiftConverter('m', 'in'),
     "km": Qty.swiftConverter('m', 'km'),
     "nm": Qty.swiftConverter('m', 'nmi'),
     "mi": Qty.swiftConverter('m', 'mi'),
@@ -491,14 +533,25 @@ export class UnitsService implements OnDestroy {
     "Minutes": Qty.swiftConverter('s', 'minutes'),
     "Hours": Qty.swiftConverter('s', 'hours'),
     "Days": Qty.swiftConverter('s', 'days'),
-    "HH:MM:SS": function(v) {
+    "D HH:MM:SS": function(v) {
       v = parseInt(v, 10);
-      if (v < 0) { v = v *-1} // always positive
+      const isNegative = v < 0; // Check if the value is negative
+      v = Math.abs(v); // Use the absolute value for calculations
 
-      let h = Math.floor(v / 3600);
-      let m = Math.floor(v % 3600 / 60);
-      let s = Math.floor(v % 3600 % 60);
-      return ('0' + h).slice(-2) + ":" + ('0' + m).slice(-2) + ":" + ('0' + s).slice(-2);
+      const days = Math.floor(v / 86400);
+      const h = Math.floor((v % 86400) / 3600);
+      const m = Math.floor((v % 3600) / 60);
+      const s = Math.floor(v % 60);
+
+      let result = (isNegative ? '-' : '');
+      if (days > 0) {
+        result += days + 'd ' + h.toString() + ':' + m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+      } else {
+        result += h.toString() + ':' +
+                  m.toString().padStart(2, '0') + ':' +
+                  s.toString().padStart(2, '0');
+      }
+      return result;
     },
 //  angularVelocity
     "rad/s": function(v) { return v; },
@@ -518,9 +571,9 @@ export class UnitsService implements OnDestroy {
     'percent': function(v) { return v * 100 },
     'percentraw': function(v) { return v },
     'ratio': function(v) { return v },
-// lat/lon
+// Position Degrees lat/lon
+    'pdeg': function(v) { return v; }, // Signal K uses degrees for lat/lon
     'latitudeMin': function(v) {
-        v = Qty(v, 'rad').to('deg').scalar ;
         let degree = Math.trunc(v);
         let s = 'N';
         if (v < 0) { s = 'S'; degree = degree * -1 }
@@ -529,19 +582,17 @@ export class UnitsService implements OnDestroy {
         return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
       },
     'latitudeSec': function(v) {
-      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'N';
       if (v < 0) { s = 'S'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
       if (s == 'S') { r = r * -1 }
-      let minutes = Math.trunc(r);
-      let seconds = (r % 1) * 60;
+      const minutes = Math.trunc(r);
+      const seconds = (r % 1) * 60;
 
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
     'longitudeMin': function(v) {
-      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
@@ -550,14 +601,13 @@ export class UnitsService implements OnDestroy {
       return degree + '° ' + r.toFixed(2).padStart(5, '0') + '\' ' + s;
     },
     'longitudeSec': function(v) {
-      v = Qty(v, 'rad').to('deg').scalar ;
       let degree = Math.trunc(v);
       let s = 'E';
       if (v < 0) { s = 'W'; degree = degree * -1 }
       let r = (v % 1) * 60; // decimal part of input, * 60 to get minutes
       if (s == 'W') { r = r * -1 }
-      let minutes = Math.trunc(r);
-      let seconds = (r % 1) * 60;
+      const minutes = Math.trunc(r);
+      const seconds = (r % 1) * 60;
 
       return degree + '° ' + minutes + '\' ' + seconds.toFixed(2).padStart(5, '0') + '" ' + s;
     },
@@ -578,7 +628,7 @@ export class UnitsService implements OnDestroy {
   public convertToUnit(unit: string, value: number): number {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
-    let num: number = +value; // sometime we get strings here. Weird! Lazy patch.
+    const num: number = +value; // sometime we get strings here. Weird! Lazy patch.
     return this.unitConversionFunctions[unit](num);
   }
 
@@ -622,9 +672,9 @@ export class UnitsService implements OnDestroy {
   public getConversionsForPath(path: string): IConversionPathList {
     const pathUnitType = this.data.getPathUnitType(path);
     const UNITLESS = 'unitless';
-    let defaultUnit: string = "unitless";
+    let defaultUnit = "unitless";
 
-    if (pathUnitType === null) {
+    if (pathUnitType === null || pathUnitType === 'RFC 3339 (UTC)') {
       return { base: UNITLESS, conversions: this._conversionList };
     } else {
       const groupList = this._conversionList.filter(unitGroup => {

@@ -18,12 +18,10 @@ export interface IDeleteEventObj {
     selector: 'boolean-control-config',
     templateUrl: './boolean-control-config.component.html',
     styleUrls: ['./boolean-control-config.component.scss'],
-    standalone: true,
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, MatIconModule]
 })
 export class BooleanControlConfigComponent implements OnInit {
   private app = inject(AppService);
-
   readonly ctrlFormGroup = input.required<UntypedFormGroup>();
   readonly controlIndex = input<number>(undefined);
   readonly arrayLength = input<number>(undefined);

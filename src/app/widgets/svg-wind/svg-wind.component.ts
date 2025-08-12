@@ -1,373 +1,362 @@
-import { Component, SimpleChanges, AfterViewInit, ElementRef, input, viewChild } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { Component, ElementRef, input, viewChild, signal, effect, computed, untracked } from '@angular/core';
+import { animateRotation } from '../../core/utils/svg-animate.util';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
 
 interface ISVGRotationObject {
-  oldDegreeIndicator: string,
-  newDegreeIndicator: string,
-  animationElement: ElementRef<SVGAnimateTransformElement>
+  oldValue: number,
+  newValue: number,
 }
 
 @Component({
     selector: 'app-svg-wind',
     templateUrl: './svg-wind.component.svg',
     styleUrl: './svg-wind.component.scss',
-    standalone: true,
-    imports: [NgIf]
+    imports: []
 })
-export class SvgWindComponent implements AfterViewInit {
-  readonly compassAnimate = viewChild.required('compassAnimate', { read: ElementRef });
-  readonly appWindAnimate = viewChild.required('appWindAnimate', { read: ElementRef });
-  readonly trueWindAnimate = viewChild.required('trueWindAnimate', { read: ElementRef });
-  readonly appWindValueAnimate = viewChild.required('appWindValueAnimate', { read: ElementRef });
-  readonly trueWindValueAnimate = viewChild.required('trueWindValueAnimate', { read: ElementRef });
-  readonly waypointAnimate = viewChild.required('waypointAnimate', { read: ElementRef });
-  readonly courseOverGroundAnimate = viewChild.required('courseOverGroundAnimate', { read: ElementRef });
+export class SvgWindComponent {
+  protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
+  protected readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
+  protected readonly twaIndicator = viewChild.required<ElementRef<SVGGElement>>('twaIndicator');
+  protected readonly wptIndicator = viewChild.required<ElementRef<SVGGElement>>('wptIndicator');
+  protected readonly setIndicator = viewChild.required<ElementRef<SVGGElement>>('setIndicator');
+  protected readonly cogIndicator = viewChild.required<ElementRef<SVGGElement>>('cogIndicator');
 
-  readonly compassHeading = input<number>(undefined);
-  readonly courseOverGroundAngle = input<number>(undefined);
-  readonly courseOverGroundEnable = input<boolean>(undefined);
-  readonly trueWindAngle = input<number>(undefined);
-  readonly trueWindSpeed = input<number>(undefined);
-  readonly appWindAngle = input<number>(undefined);
-  readonly appWindSpeed = input<number>(undefined);
-  readonly laylineAngle = input<number>(undefined);
-  readonly closeHauledLineEnable = input<boolean>(undefined);
-  readonly sailSetupEnable = input<boolean>(undefined);
-  readonly windSectorEnable = input<boolean>(undefined);
-  readonly waypointAngle = input<number>(undefined);
-  readonly waypointEnable = input<boolean>(undefined);
-  readonly trueWindMinHistoric = input<number>(undefined);
-  readonly trueWindMidHistoric = input<number>(undefined);
-  readonly trueWindMaxHistoric = input<number>(undefined);
+  protected readonly compassHeading = input.required<number>();
+  protected readonly courseOverGroundAngle = input<number>(undefined);
+  protected readonly courseOverGroundEnabled = input.required<boolean>();
+  protected readonly trueWindAngle = input.required<number>();
+  protected readonly twsEnabled = input.required<boolean>();
+  protected readonly twaEnabled = input.required<boolean>();
+  protected readonly trueWindSpeed = input.required<number>();
+  protected readonly trueWindSpeedUnit = input.required<string>();
+  protected readonly appWindAngle = input.required<number>();
+  protected readonly awsEnabled = input.required<boolean>();
+  protected readonly appWindSpeed = input.required<number>();
+  protected readonly appWindSpeedUnit = input.required<string>();
+  protected readonly laylineAngle = input<number>(undefined);
+  protected readonly closeHauledLineEnabled = input.required<boolean>();
+  protected readonly sailSetupEnabled = input.required<boolean>();
+  protected readonly windSectorEnabled = input.required<boolean>();
+  protected readonly driftEnabled = input.required<boolean>();
+  protected readonly driftSet = input<number>(undefined);
+  protected readonly driftFlow = input<number>(undefined);
+  protected readonly waypointAngle = input<number>(undefined);
+  protected readonly waypointEnabled = input.required<boolean>();
+  protected readonly trueWindMinHistoric = input<number>(undefined);
+  protected readonly trueWindMidHistoric = input<number>(undefined);
+  protected readonly trueWindMaxHistoric = input<number>(undefined);
 
-  // Compass faceplate
-  compassFaceplate: ISVGRotationObject;
-  headingValue: string ="--";
+  protected compass: ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected twa: ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected awa: ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected wpt: ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected cog: ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  //Appwind
-  appWind: ISVGRotationObject;
-  appWindValue: ISVGRotationObject;
-  appWindSpeedDisplay: string = "--";
-
-  //truewind
-  trueWind: ISVGRotationObject;
-  trueWindValue: ISVGRotationObject;
-  trueWindSpeedDisplay: string = "--";
-  trueWindHeading: number = 0;
-
-  //waypoint
-  waypoint: ISVGRotationObject;
-  waypointActive: boolean = false;
-
-  // Course Over Ground
-  courseOverGround: ISVGRotationObject;
-  courseOverGroundActive: boolean = false;
+  protected headingValue ="--";
+  protected appWindSpeedDisplay = computed(() => {
+    const appWindSpeed = this.appWindSpeed();
+    if (appWindSpeed == null) return "--";
+    return appWindSpeed.toFixed(1);
+  });
+  protected trueWindSpeedDisplay = computed(() => {
+    const trueWindSpeed = this.trueWindSpeed();
+    if (trueWindSpeed == null) return "--";
+    return trueWindSpeed.toFixed(1);
+  });
+  private trueWindHeading = 0;
+  protected waypointActive = signal<boolean>(false);
+  protected flow = computed(() => {
+    const flow = this.driftFlow();
+    if (flow == null) return "--";
+    return flow.toFixed(1);
+  });
 
   //laylines - Close-Hauled lines
-  closeHauledLinePortPath: string = "M 231,231 231,90";
-  closeHauledLineStbdPath: string = "M 231,231 231,90";
-
+  private portLaylinePrev = 0;
+  private stbdLaylinePrev = 0;
+  private portLaylineAnimId: number | null = null;
+  private stbdLaylineAnimId: number | null = null;
+  protected closeHauledLinePortPath = "M 500,500 500,500";
+  protected closeHauledLineStbdPath = "M 500,500 500,500";
   //WindSectors
-  portWindSectorPath: string = "none";
-  stbdWindSectorPath: string = "none";
+  private portSectorPrev = { min: 0, mid: 0, max: 0 };
+  private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
+  private portSectorAnimId: number | null = null;
+  private stbdSectorAnimId: number | null = null;
+  protected portWindSectorPath = "";
+  protected stbdWindSectorPath = "";
+  // Rotation Animation
+  private animationFrameIds = new WeakMap<SVGGElement, number>();
+
+  private readonly CENTER = 500;
+  private readonly RADIUS = 350;
+  private readonly ANIMATION_DURATION = 1000;
 
   constructor() {
-    this.appWind =  {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
+    effect(() => {
+      const waypoint = this.waypointEnabled();
 
-    this.appWindValue = {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
+      untracked(() => {
+        this.waypointActive.set(waypoint);
+      });
+    });
 
-    this.trueWind = {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
+    effect(() => {
+      const heading = parseFloat(this.compassHeading().toFixed(0));
+      if (heading === null) return;
 
-    this.trueWindValue = {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
-
-    this.compassFaceplate = {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
-
-    this.waypoint =  {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
-
-    this.courseOverGround =  {
-      oldDegreeIndicator: '0',
-      newDegreeIndicator: '0',
-      animationElement: undefined
-    };
-  }
-
-  ngAfterViewInit(): void {
-    this.compassFaceplate.animationElement = this.compassAnimate();
-    this.appWind.animationElement = this.appWindAnimate();
-    this.appWindValue.animationElement = this.appWindValueAnimate();
-    this.trueWind.animationElement = this.trueWindAnimate();
-    this.trueWindValue.animationElement = this.trueWindValueAnimate();
-    this.waypoint.animationElement = this.waypointAnimate();
-    this.courseOverGround.animationElement = this.courseOverGroundAnimate();
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-
-    //heading
-    if (changes.compassHeading) {
-      if (! changes.compassHeading.firstChange) {
-        if (changes.compassHeading.currentValue === null) {return}
-        this.compassFaceplate.oldDegreeIndicator = this.compassFaceplate.newDegreeIndicator;
-
-        this.compassFaceplate.newDegreeIndicator = changes.compassHeading.currentValue.toFixed(0);
-        this.headingValue = this.compassFaceplate.newDegreeIndicator;
-
-        // rotates with heading change
-        this.smoothCircularRotation(this.compassFaceplate);
-        this.updateClauseHauledLines();
-        this.updateWindSectors(); // they need to update to new heading too
-      }
-    }
-
-    // CourseOverGroundAngle
-    if (changes.courseOverGroundAngle) {
-      if (this.courseOverGroundEnable() == false) {
-        this.courseOverGroundActive = false;
-        return
-      }
-
-      if (!changes.courseOverGroundAngle.firstChange) {
-        if (changes.courseOverGroundAngle.currentValue === null) {
-          this.courseOverGroundActive = false;
-        } else {
-          this.courseOverGroundActive = true;
-          this.courseOverGround.oldDegreeIndicator = this.courseOverGround.newDegreeIndicator;
-          this.courseOverGround.newDegreeIndicator = changes.courseOverGroundAngle.currentValue.toFixed(0);
-          this.smoothCircularRotation(this.courseOverGround);
+      untracked(() => {
+        this.compass.oldValue = this.compass.newValue;
+        this.compass.newValue = heading;
+        this.headingValue = heading.toString();
+        if (this.rotatingDial()?.nativeElement) {
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          this.updateCloseHauledLines();
+          this.updateWindSectors();
         }
-      }
-    }
+      });
+    });
 
-    // WaypointAngle
-    if (changes.waypointAngle) {
-      if (this.waypointEnable() == false) {
-        this.waypointActive = false;
-        return
-      }
+    effect(() => {
+      const cogAngle = parseFloat(this.courseOverGroundAngle().toFixed(0));
+      if (cogAngle == null) return;
 
-      if (! changes.waypointAngle.firstChange) {
-        if (changes.waypointAngle.currentValue === null) {
-          this.waypointActive = false;
-        } else {
-          this.waypointActive = true;
-          this.waypoint.oldDegreeIndicator = this.waypoint.newDegreeIndicator;
-          this.waypoint.newDegreeIndicator = changes.waypointAngle.currentValue.toFixed(0);
-          this.smoothCircularRotation(this.waypoint);
+      untracked(() => {
+        this.cog.oldValue = this.cog.newValue;
+        this.cog.newValue =  cogAngle - this.compass.newValue;
+        if (this.cogIndicator()?.nativeElement) {
+          animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
-      }
-    }
+      });
+    });
 
-    //appWindAngle
-    if (changes.appWindAngle) {
-      if (! changes.appWindAngle.firstChange) {
-        if (changes.appWindAngle.currentValue === null) {return}
-        this.appWind.oldDegreeIndicator = this.appWind.newDegreeIndicator;
-        this.appWindValue.oldDegreeIndicator = this.appWindValue.newDegreeIndicator;
+    effect(() => {
+      const wptAngle = this.waypointAngle();
 
-        this.appWind.newDegreeIndicator = changes.appWindAngle.currentValue.toFixed(0);
+      untracked(() => {
+        if (!wptAngle) {
+            this.waypointActive.set(false);
+          return;
+        }
 
-        let valueRotationOffset = Number(changes.appWindAngle.currentValue) * -1;
-        this.appWindValue.newDegreeIndicator = valueRotationOffset.toFixed(0);
+        if (this.waypointEnabled()) {
+          this.waypointActive.set(true);
+        } else {
+          this.waypointActive.set(false);
+        }
+        this.wpt.oldValue = this.wpt.newValue;
+        this.wpt.newValue = wptAngle;
+        if (this.wptIndicator()?.nativeElement) {
+          animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+        }
+      });
+    });
 
-        this.smoothCircularRotation(this.appWind, this.appWindValue);
-      }
-    }
+    effect(() => {
+      const appWindAngle = parseFloat(this.appWindAngle().toFixed(0));
+      if (appWindAngle == null) return;
 
-    //trueWindAngle
-    if (changes.trueWindAngle) {
-      if (! changes.trueWindAngle.firstChange) {
-        if (changes.trueWindAngle.currentValue === null) {return}
-        this.trueWind.oldDegreeIndicator = this.trueWind.newDegreeIndicator;
-        this.trueWindValue.oldDegreeIndicator = this.trueWindValue.newDegreeIndicator;
+      untracked(() => {
+        this.awa.oldValue = this.awa.newValue;
+        this.awa.newValue = appWindAngle;
+        if (this.awaIndicator()?.nativeElement) {
+          animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+        }
+      });
+    });
 
-        this.trueWindHeading = changes.trueWindAngle.currentValue;
-        this.trueWind.newDegreeIndicator = this.addHeading(this.trueWindHeading, (Number(this.compassFaceplate.newDegreeIndicator) * -1)).toFixed(0); //compass rotate is negative as we actually have to rotate counter clockwise
+    effect(() => {
+      const trueWindAngle = parseFloat(this.trueWindAngle().toFixed(0));
+      if (trueWindAngle == null) return;
 
-        let valueRotationOffset = Number(this.trueWind.newDegreeIndicator) * -1;
-        this.trueWindValue.newDegreeIndicator = valueRotationOffset.toFixed(0);
+      untracked(() => {
+        this.twa.oldValue = this.twa.newValue;
+        this.trueWindHeading = trueWindAngle;
+        this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
+         if (this.twaIndicator()?.nativeElement) {
+          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+          this.updateCloseHauledLines();
+        }
+      });
+    });
 
-        this.smoothCircularRotation(this.trueWind, this.trueWindValue);
-        this.updateClauseHauledLines();
-      }
-    }
+    effect(() => {
+      const driftSet = parseFloat(this.driftSet().toFixed(0));
+      if (driftSet == null) return;
 
-    //appWindSpeed
-    if (changes.appWindSpeed) {
-      if (! changes.appWindSpeed.firstChange) {
-        if (changes.appWindSpeed.currentValue === null) {return}
-        this.appWindSpeedDisplay = changes.appWindSpeed.currentValue.toFixed(1);
-      }
-    }
-
-    //trueWindSpeed
-    if (changes.trueWindSpeed) {
-      if (! changes.trueWindSpeed.firstChange) {
-        if (changes.trueWindSpeed.currentValue === null) {return}
-        this.trueWindSpeedDisplay = changes.trueWindSpeed.currentValue.toFixed(1);
-      }
-    }
-
-    //Min/Max
-    if ((changes.trueWindMinHistoric && !changes.trueWindMinHistoric.firstChange) || (changes.trueWindMaxHistoric && !changes.trueWindMaxHistoric.firstChange)) {
-      if (isNaN(Number((this.trueWindMinHistoric()))) && isNaN(Number(this.trueWindMaxHistoric()))) {
-        this.updateWindSectors();
-      }
-    }
-
+      untracked(() => {
+        this.set.oldValue = this.set.newValue;
+        this.set.newValue =  driftSet;
+        if (this.setIndicator()?.nativeElement) {
+          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
+        }
+      });
+    });
   }
 
-  private updateClauseHauledLines(){
-    let portLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle()*-1));
-    //find xy of that rotation (160 = radius of inner circle)
-    let portX = 160 * Math.sin((portLaylineRotate*Math.PI)/180) + 231; //231 is middle
-    let portY = (160 * Math.cos((portLaylineRotate*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    this.closeHauledLinePortPath = 'M 231,231 ' + portX +',' + portY;
+  private updateCloseHauledLines(): void {
+    if (!this.closeHauledLineEnabled()) return;
 
-    let stbdLaylineRotate = this.addHeading(Number(this.trueWind.newDegreeIndicator), (this.laylineAngle()));
-    //find xy of that rotation (160 = radius of inner circle)
-    let stbdX = 160 * Math.sin((stbdLaylineRotate*Math.PI)/180) + 231; //231 is middle
-    let stbdY = (160 * Math.cos((stbdLaylineRotate*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    this.closeHauledLineStbdPath = 'M 231,231 ' + stbdX +',' + stbdY;
+    // Animate Port Layline
+    const portLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle() * -1);
+    this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
+    this.portLaylinePrev = portLaylineRotate;
+
+    // Animate Starboard Layline
+    const stbdLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle());
+    this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
+    this.stbdLaylinePrev = stbdLaylineRotate;
   }
+
+  private animateLayline(from: number, to: number, isPort: boolean) {
+    // Cancel any previous animation for this layline
+    if (isPort && this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
+    if (!isPort && this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
+
+    const duration = this.ANIMATION_DURATION;
+    const start = performance.now();
+    const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const animate = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = ease(progress);
+      // Interpolate angle
+      let delta = to - from;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      const currentAngle = (from + delta * eased + 360) % 360;
+
+      // Calculate endpoint
+      const radian = (currentAngle * Math.PI) / 180;
+      const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
+      const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
+
+      if (isPort) {
+        this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+      } else {
+        this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+      }
+
+      if (progress < 1) {
+        const id = requestAnimationFrame(animate);
+        if (isPort) this.portLaylineAnimId = id;
+        else this.stbdLaylineAnimId = id;
+      } else {
+        if (isPort) this.portLaylineAnimId = null;
+        else this.stbdLaylineAnimId = null;
+      }
+    };
+
+    const id = requestAnimationFrame(animate);
+    if (isPort) this.portLaylineAnimId = id;
+    else this.stbdLaylineAnimId = id;
+  }
+
+  private windSectorsInitialized = false;
 
   private updateWindSectors() {
-    let portMin = this.addHeading(this.addHeading(this.trueWindMinHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()*-1));
-    let portMid = this.addHeading(this.addHeading(this.trueWindMidHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()*-1));
-    let portMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()*-1));
+    if (
+      !this.windSectorEnabled() ||
+      this.trueWindMinHistoric() == null ||
+      this.trueWindMidHistoric() == null ||
+      this.trueWindMaxHistoric() == null
+    ) {
+      return;
+    }
 
-    //console.log(this.trueWindMinHistoric.toFixed(0) + ' ' + this.trueWindMaxHistoric.toFixed(0) + ' ' + portMin.toFixed(0) + ' ' + portMax.toFixed(0));
-    let portMinX = 160 * Math.sin((portMin*Math.PI)/180) + 231; //231 is middle
-    let portMinY = (160 * Math.cos((portMin*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    let portMidX = 160 * Math.sin((portMid*Math.PI)/180) + 231; //231 is middle
-    let portMidY = (160 * Math.cos((portMid*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    let portMaxX = 160 * Math.sin((portMax*Math.PI)/180) + 231; //231 is middle
-    let portMaxY = (160 * Math.cos((portMax*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
+    const portNew = {
+      min: this.trueWindMinHistoric(),
+      mid: this.trueWindMidHistoric(),
+      max: this.trueWindMaxHistoric()
+    };
+    const stbdNew = {
+      min: this.trueWindMinHistoric(),
+      mid: this.trueWindMidHistoric(),
+      max: this.trueWindMaxHistoric()
+    };
 
-    //calculate angles for arc options https://stackoverflow.com/questions/21816286/svg-arc-how-to-determine-sweep-and-larg-arc-flags-given-start-end-via-point
-    let portLgArcFl =   Math.abs(angle([portMinX,portMinY],[portMidX,portMidY],[portMaxX,portMaxY])) > Math.PI/2 ? 0 : 1;
-    let portSweepFl =           angle([portMaxX,portMaxY],[portMinX,portMinY],[portMidX,portMidY])  > 0    ? 0 : 1;
+    if (!this.windSectorsInitialized) {
+      this.portSectorPrev = portNew;
+      this.stbdSectorPrev = stbdNew;
+      this.windSectorsInitialized = true;
+      // Draw in place, no animation
+      this.animateWindSector(portNew, portNew, true);
+      this.animateWindSector(stbdNew, stbdNew, false);
+      return;
+    }
 
-    this.portWindSectorPath = 'M 231,231 L ' + portMinX + ',' + portMinY + ' A 160,160 0 ' + portLgArcFl + ' ' + portSweepFl + ' ' + portMaxX + ',' + portMaxY +' z';
-    //////////
-    let stbdMin = this.addHeading(this.addHeading(this.trueWindMinHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()));
-    let stbdMid = this.addHeading(this.addHeading(this.trueWindMidHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()));
-    let stbdMax = this.addHeading(this.addHeading(this.trueWindMaxHistoric(), (Number(this.compassFaceplate.newDegreeIndicator) * -1)), (this.laylineAngle()));
+    // Animate as usual
+    this.animateWindSector(this.portSectorPrev, portNew, true);
+    this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
 
-    let stbdMinX = 160 * Math.sin((stbdMin*Math.PI)/180) + 231; //231 is middle
-    let stbdMinY = (160 * Math.cos((stbdMin*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    let stbdMidX = 160 * Math.sin((stbdMid*Math.PI)/180) + 231; //231 is middle
-    let stbdMidY = (160 * Math.cos((stbdMid*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-    let stbdMaxX = 160 * Math.sin((stbdMax*Math.PI)/180) + 231; //231 is middle
-    let stbdMaxY = (160 * Math.cos((stbdMax*Math.PI)/180)*-1) + 231; //-1 since SVG 0 is at top
-
-    let stbdLgArcFl = Math.abs(angle([stbdMinX,stbdMinY],[stbdMidX,stbdMidY],[stbdMaxX,stbdMaxY])) > Math.PI/2 ? 0 : 1;
-    let stbdSweepFl = angle([stbdMaxX,stbdMaxY],[stbdMinX,stbdMinY],[stbdMidX,stbdMidY])  > 0    ? 0 : 1;
-
-    this.stbdWindSectorPath = 'M 231,231 L ' + stbdMinX + ',' + stbdMinY + ' A 160,160 0 ' + stbdLgArcFl + ' ' + stbdSweepFl + ' ' + stbdMaxX + ',' + stbdMaxY +' z';
-
+    this.portSectorPrev = portNew;
+    this.stbdSectorPrev = stbdNew;
   }
 
-  private addHeading(h1: number = 0, h2: number = 0) {
+  private animateWindSector(from: { min: number, mid: number, max: number }, to: { min: number, mid: number, max: number }, isPort: boolean) {
+    if (isPort && this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+    if (!isPort && this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+
+    const duration = this.ANIMATION_DURATION;
+    const start = performance.now();
+    const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const animate = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = ease(progress);
+
+      // Interpolate each angle
+      const lerp = (a: number, b: number) => a + (b - a) * eased;
+      const min = lerp(from.min, to.min);
+      const mid = lerp(from.mid, to.mid);
+      const max = lerp(from.max, to.max);
+
+      // Calculate path
+      const minAngle = this.addHeading(this.addHeading(min, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
+      const midAngle = this.addHeading(this.addHeading(mid, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
+      const maxAngle = this.addHeading(this.addHeading(max, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
+
+      const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
+      const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
+      const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER;
+      const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER;
+      const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER;
+      const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER;
+
+      const largeArcFlag = Math.abs(angle([minX, minY], [midX, midY], [maxX, maxY])) > Math.PI / 2 ? 0 : 1;
+      const sweepFlag = angle([maxX, maxY], [minX, minY], [midX, midY]) > 0 ? 0 : 1;
+
+      const path = `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
+
+      if (isPort) {
+        this.portWindSectorPath = path;
+      } else {
+        this.stbdWindSectorPath = path;
+      }
+
+      if (progress < 1) {
+        const id = requestAnimationFrame(animate);
+        if (isPort) this.portSectorAnimId = id;
+        else this.stbdSectorAnimId = id;
+      } else {
+        if (isPort) this.portSectorAnimId = null;
+        else this.stbdSectorAnimId = null;
+      }
+    };
+
+    const id = requestAnimationFrame(animate);
+    if (isPort) this.portSectorAnimId = id;
+    else this.stbdSectorAnimId = id;
+  }
+
+  private addHeading(h1 = 0, h2 = 0) {
     let h3 = h1 + h2;
     while (h3 > 359) { h3 = h3 - 359; }
     while (h3 < 0) { h3 = h3 + 359; }
     return h3;
-  }
-
-  private smoothCircularRotation(rotationElement: ISVGRotationObject, countRotationElement?:ISVGRotationObject): void {
-    const oldAngle = Number(rotationElement.oldDegreeIndicator)
-    const newAngle = Number(rotationElement.newDegreeIndicator);
-    const diff = oldAngle - newAngle;
-
-    // only update if on DOM and value rounded changed
-    if (rotationElement.animationElement && (diff != 0)) {
-      // Special cases to smooth out passing between 359 to/from 0
-      // if more than half the circle, it could need to go over the 359 to 0 without doing full full circle
-      if ( Math.abs(diff) > 180 ) {
-
-        if (Math.sign(diff) == 1) { // Moving clockwise
-          if (oldAngle == 359) { // Going over 0
-            // special cases
-            rotationElement.oldDegreeIndicator = "0"; // Set to 0 and animate so we don't jump
-            rotationElement.animationElement.nativeElement.beginElement();
-            if (countRotationElement !== undefined) {
-              countRotationElement.oldDegreeIndicator = "0";
-              countRotationElement.animationElement.nativeElement.beginElement();
-            }
-          } else {
-            rotationElement.newDegreeIndicator = "359";
-            rotationElement.animationElement.nativeElement.beginElement();
-            if (countRotationElement !== undefined) {
-              countRotationElement.newDegreeIndicator = "-359";
-              countRotationElement.animationElement.nativeElement.beginElement();
-            }
-            rotationElement.oldDegreeIndicator = "0";
-            rotationElement.newDegreeIndicator = newAngle.toFixed(0);
-            rotationElement.animationElement.nativeElement.beginElement();
-            if (countRotationElement !== undefined) {
-              countRotationElement.oldDegreeIndicator = rotationElement.oldDegreeIndicator;
-              countRotationElement.newDegreeIndicator = "0";
-              countRotationElement.animationElement.nativeElement.beginElement();
-            }
-          }
-        } else { // Moving counter clockwise
-          if (oldAngle == 0) { // going over 359
-            // special cases
-            rotationElement.oldDegreeIndicator = "359";
-            rotationElement.animationElement.nativeElement.beginElement();
-            if (countRotationElement !== undefined) {
-              countRotationElement.oldDegreeIndicator = "-359";
-              countRotationElement.animationElement.nativeElement.beginElement();
-            }
-          } else {
-            rotationElement.newDegreeIndicator = "0";
-            rotationElement.animationElement.nativeElement.beginElement();
-            if (countRotationElement !== undefined) {
-              countRotationElement.newDegreeIndicator = "0";
-              countRotationElement.animationElement.nativeElement.beginElement();
-            }
-            rotationElement.oldDegreeIndicator = "359";
-            rotationElement.newDegreeIndicator = newAngle.toFixed(0);
-            rotationElement.animationElement.nativeElement.beginElement();
-            if (countRotationElement !== undefined) {
-              countRotationElement.oldDegreeIndicator = "-359";
-              countRotationElement.newDegreeIndicator = (newAngle * -1).toFixed(0); // values rotate counter clockwise (negative values). else they'll do a 360
-              countRotationElement.animationElement.nativeElement.beginElement();
-            }
-          }
-        }
-      } else { // not doing more then 180, normal rotation
-        rotationElement.animationElement.nativeElement.beginElement();
-        if (countRotationElement !== undefined) {
-          countRotationElement.animationElement.nativeElement.beginElement();
-        }
-      }
-    }
   }
 }

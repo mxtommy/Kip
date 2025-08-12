@@ -1,12 +1,20 @@
-.textGenericWrapper {
-  position: relative;
+:host {
+  display: block;
   width: 100%;
   height: 100%;
 }
 
-.canvas-size {
+.textGenericWrapper {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: inherit;
+}
+
+.canvas {
+  display: block;
   position: absolute;
   top: 0;
   left: 0;
-  z-index: inherit;
 }

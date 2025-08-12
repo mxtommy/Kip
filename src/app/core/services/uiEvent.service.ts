@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import screenfull from 'screenfull';
-declare var NoSleep: any; //3rd party library
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare let NoSleep: any; //3rd party library
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ export class uiEventService {
   private noSleep = new NoSleep();
   private initialTouchX: number | null = null;
   private initialTouchY: number | null = null;
+  private hotkeyListeners = new Map<(key: string, event: KeyboardEvent) => void, EventListener>();
 
   constructor() {
     if (screenfull.isEnabled) {
@@ -25,7 +27,7 @@ export class uiEventService {
       });
     } else {
       this.fullscreenSupported.set(false);
-      console.warn('[Actions Menu] Fullscreen mode is not supported by this device/browser.');
+      console.log('[UI Event Service] Fullscreen mode is not supported by device/browser.');
     }
 
     this.checkNoSleepSupport();
@@ -38,17 +40,18 @@ export class uiEventService {
     try {
       this.noSleep = new NoSleep();
       if (typeof this.noSleep.enable !== 'function' || typeof this.noSleep.disable !== 'function') {
-        throw new Error('[Actions Menu] NoSleep methods not available');
+        throw new Error('[UI Event Service] NoSleep methods not available');
       }
     } catch (error) {
       this.noSleepSupported.set(false);
-      console.warn('[Actions Menu] NoSleep is not supported by this device/browser.');
+      console.warn(`[UI Event Service] NoSleep is not supported by this device/browser. Error: ${error}`);
     }
   }
 
   private checkPwaMode(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone !== undefined;
-    console.log('[Actions Menu] PWA mode:', isStandalone);
+    console.log('[UI Event Service] PWA mode:', isStandalone);
     return isStandalone;
   }
 
@@ -60,7 +63,7 @@ export class uiEventService {
         this.noSleep.disable();
       }
       this.noSleepStatus.set(!this.noSleepStatus());
-      console.log('[Actions Menu] NoSleep:', this.noSleepStatus());
+      console.log('[UI Event Service] NoSleep active:', this.noSleepStatus());
     }
   }
 
@@ -78,7 +81,7 @@ export class uiEventService {
       this.fullscreenStatus.set(!this.fullscreenStatus());
     } else {
       this.fullscreenSupported.set(false);
-      console.warn('[Actions Menu] Fullscreen mode is not supported by this browser.');
+      console.log('[UI Event Service] Fullscreen mode is not supported by this browser.');
     }
   }
 
@@ -138,11 +141,41 @@ export class uiEventService {
     }
   }
 
-  public addHotkeyListener(callback: (event: KeyboardEvent) => void): void {
-    document.addEventListener('keydown', callback);
+  public addHotkeyListener(
+    callback: (key: string, event: KeyboardEvent) => void,
+    options?: { keys?: string[]; ctrlKey?: boolean; shiftKey?: boolean }
+  ): void {
+    const wrappedCallback: EventListener = (event: Event) => {
+      if (event instanceof KeyboardEvent) {
+        const normalizedKey = event.key.toLowerCase(); // Normalize key to lowercase
+        // Apply optional filters
+        if (options) {
+          if (options.keys && !options.keys.includes(normalizedKey)) {
+            return; // Skip if the key is not in the allowed list
+          }
+          if (options.ctrlKey !== undefined && event.ctrlKey !== options.ctrlKey) {
+            return; // Skip if ctrlKey does not match
+          }
+          if (options.shiftKey !== undefined && event.shiftKey !== options.shiftKey) {
+            return; // Skip if shiftKey does not match
+          }
+        }
+
+        callback(normalizedKey, event); // Pass normalized key and event to the callback
+      } else {
+        console.warn("[uiEvent Service] Non-keyboard event detected in addHotkeyListener:", event);
+      }
+    };
+
+    this.hotkeyListeners.set(callback, wrappedCallback);
+    document.addEventListener('keydown', wrappedCallback);
   }
 
-  public removeHotkeyListener(callback: (event: KeyboardEvent) => void): void {
-    document.removeEventListener('keydown', callback);
+  public removeHotkeyListener(callback: (key: string, event: KeyboardEvent) => void): void {
+    const wrappedCallback = this.hotkeyListeners.get(callback);
+    if (wrappedCallback) {
+      document.removeEventListener('keydown', wrappedCallback);
+      this.hotkeyListeners.delete(callback);
+    }
   }
 }

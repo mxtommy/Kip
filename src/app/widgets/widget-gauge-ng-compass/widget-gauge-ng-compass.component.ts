@@ -5,20 +5,29 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { ViewChild, Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect, viewChild } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { ISkMetadata, States } from '../../core/interfaces/signalk-interfaces';
+import { States } from '../../core/interfaces/signalk-interfaces';
+import { getColors } from '../../core/utils/themeColors.utils';
 
-function rgbaToHex(rgba) {
-  let [r, g, b, a = 1] = rgba.match(/\d+(\.\d+)?/g).map(Number);
-  // Convert the alpha from 0-1 to 0-255 then to HEX, default to 255 (fully opaque) if alpha is not provided
-  let alpha = a === 1 ? '' : Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
+function rgbaToHex(rgba: string) {
+  const match = rgba.match(/(\d+(\.\d+)?|\.\d+)/g);
+  if (!match || match.length < 3) {
+    throw new Error("Invalid RGBA format");
+  }
+
+  // Extract RGBA values
+  const [r, g, b, a = 1] = match.map(Number);
+
+  // Convert alpha from 0-1 to 0-255 and then to HEX
+  const alpha = a === 1 ? '' : Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
+
+  // Convert RGB to HEX
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase() + alpha;
 }
 
@@ -48,22 +57,19 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
 
   // Gauge text value for value box rendering
-  protected textValue: string = "--";
+  protected textValue = "--";
   // Gauge value
-  protected value: number = 0;
+  protected value = 0;
 
-  @ViewChild('compassGauge', { static: true }) compassGauge: RadialGauge;
-  @ViewChild('compassGauge', { static: true, read: ElementRef }) gauge: ElementRef;
+  readonly ngGauge = viewChild<RadialGauge>('compassGauge');
+  readonly gauge = viewChild('compassGauge', { read: ElementRef });
+  private initCompleted = false;
 
   protected gaugeOptions = {} as RadialGaugeOptions;
   // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  protected colorStrokeTicks: string = "";
+  protected colorStrokeTicks = "";
   protected unitName: string = null;
-
-  // Zones support
-  private meta: ISkMetadata = null;
-  private metaSub: Subscription;
-  private state: string = "normal";
+  private state: string = States.Normal;
 
   private readonly negToPortPaths = [
     "self.environment.wind.angleApparent",
@@ -86,7 +92,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
           isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
-          isConvertUnitToConfigurable: false,
+          showConvertUnitTo: false,
           convertUnitTo: this.DEG,
           sampleTime: 500
         }
@@ -102,26 +108,40 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
       color: "contrast",
       dataTimeout: 5
     };
+
+    effect(() => {
+      if (this.theme()) {
+        if (!this.initCompleted) return;
+        this.startWidget();
+      }
+    });
   }
 
   ngOnInit() {
     this.validateConfig();
-    this.setCanvasHight();
-    this.setGaugeConfig();
   }
 
   protected startWidget(): void {
     this.setGaugeConfig();
-    this.compassGauge.update(this.gaugeOptions);
+    this.ngGauge().update(this.gaugeOptions);
 
     this.unsubscribeDataStream();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (!newValue.data) {
-        this.textValue = "--";
+      if (!newValue || !newValue.data || newValue.data.value === null) {
+        newValue = {
+          data: {
+            value: 0,
+            timestamp: new Date(),
+          },
+          state: States.Normal // Default state
+        };
         this.value = 0;
+        this.textValue = '--';
       } else {
-        let convertedValue: number = this.negToPortPaths.includes(this.widgetProperties.config.paths['gaugePath'].path) ? convertNegToPortDegree(newValue.data.value) : newValue.data.value;
+        const convertedValue: number = this.negToPortPaths.includes(this.widgetProperties.config.paths['gaugePath'].path)
+          ? convertNegToPortDegree(newValue.data.value)
+          : newValue.data.value;
 
         // Compound value to displayScale
         this.value = Math.min(Math.max(convertedValue, 0), 360);
@@ -129,28 +149,32 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
         this.textValue = this.value.toFixed(0);
       }
 
+      // Validate and handle `newValue.state`
+      if (newValue.state == null) {
+        newValue.state = States.Normal; // Provide a default value for state
+      }
+
       if (this.state !== newValue.state) {
         this.state = newValue.state;
-        //@ts-ignore
-        let option: RadialGaugeOptions = {};
+        const option: RadialGaugeOptions = {};
         // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
         switch (newValue.state) {
           case States.Emergency:
-            option.colorValueText = this.theme.zoneEmergency;
+            option.colorValueText = this.theme().zoneEmergency;
             break;
           case States.Alarm:
-            option.colorValueText = this.theme.zoneAlarm;
+            option.colorValueText = this.theme().zoneAlarm;
             break;
           case States.Warn:
-            option.colorValueText = this.theme.zoneWarn;
+            option.colorValueText = this.theme().zoneWarn;
             break;
           case States.Alert:
-            option.colorValueText = this.theme.zoneAlert;
+            option.colorValueText = this.theme().zoneAlert;
             break;
           default:
-            option.colorValueText = this.theme.contrast;
+            option.colorValueText = this.theme().contrast; // Fallback for unknown or null state
         }
-        this.compassGauge.update(option);
+        this.ngGauge().update(option);
       }
     });
   }
@@ -162,25 +186,26 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
   }
 
   private setCanvasHight(): void {
-    const gaugeSize = this.gauge.nativeElement.getBoundingClientRect();
+    const gaugeSize = this.gauge().nativeElement.getBoundingClientRect();
     const resize: RadialGaugeOptions = {};
     resize.height = gaugeSize.height;
     resize.width = gaugeSize.width;
 
-    this.compassGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   ngAfterViewInit(): void {
+    this.setCanvasHight();
     this.startWidget();
+    this.initCompleted = true;
   }
 
   protected onResized(event: ResizeObserverEntry): void {
-    //@ts-ignore
     const resize: RadialGaugeOptions = {};
     resize.height = event.contentRect.height;
     resize.width = event.contentRect.width;
 
-    this.compassGauge.update(resize);
+    this.ngGauge().update(resize);
   }
 
   private setGaugeConfig(): void {
@@ -260,11 +285,12 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.animationRule = "linear";
     this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 50; // prevent data and animation delay collisions
     // gauge does not support rbg abd rgba color values
-    this.setGaugeOptions(this.getColors(this.widgetProperties.config.color).color, rgbaToHex(this.getColors(this.widgetProperties.config.color).dim), rgbaToHex(this.getColors(this.widgetProperties.config.color).dimmer));
+    this.setGaugeOptions(getColors(this.widgetProperties.config.color, this.theme()).color, rgbaToHex(getColors(this.widgetProperties.config.color, this.theme()).dim), rgbaToHex(getColors(this.widgetProperties.config.color, this.theme()).dimmer));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private setGaugeOptions(color: string, dim: string, dimmer: string) {
-    const contrastDim = rgbaToHex(this.getColors('contrast').dim);
+    const contrastDim = rgbaToHex(getColors('contrast', this.theme()).dim);
     this.gaugeOptions.colorBarProgress = color;
     this.gaugeOptions.colorBorderMiddle = dim;
     this.gaugeOptions.colorBorderMiddleEnd = dim;
@@ -277,17 +303,17 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
 
     this.gaugeOptions.colorMinorTicks = contrastDim;
     this.gaugeOptions.colorNumbers = this.widgetProperties.config.gauge.compassUseNumbers ?
-      [this.theme.port, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, this.theme.port] :
-      [this.theme.port, dim, dim, dim, dim, dim, dim, dim, this.theme.port];
+      [this.theme().port, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, dim, contrastDim, contrastDim, this.theme().port] :
+      [this.theme().port, dim, dim, dim, dim, dim, dim, dim, this.theme().port];
 
     this.gaugeOptions.colorMajorTicks = this.widgetProperties.config.gauge.compassUseNumbers ?
-      [this.theme.port, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.port] :
-      [this.theme.port, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.contrast, this.theme.port];
+      [this.theme().port, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().port] :
+      [this.theme().port, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().contrast, this.theme().port];
 
-    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = this.theme.cardColor;
-    this.gaugeOptions.colorBar = this.theme.background;
+    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.gaugeOptions.colorBorderInner = this.gaugeOptions.colorBorderInnerEnd = this.theme().cardColor;
+    this.gaugeOptions.colorBar = this.theme().background;
     this.gaugeOptions.colorBarStroke="";
-    this.gaugeOptions.colorValueBoxBackground = this.theme.background;
+    this.gaugeOptions.colorValueBoxBackground = this.theme().background;
     this.gaugeOptions.colorNeedleShadowUp = "";
     this.gaugeOptions.colorNeedleShadowDown = "";
     this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
@@ -296,25 +322,7 @@ export class WidgetGaugeNgCompassComponent extends BaseWidgetComponent implement
     this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
   }
 
-  private getColors(color: string): { color: string, dim: string, dimmer: string } {
-    const themePalette = {
-      "contrast": { color: this.theme.contrast, dim: this.theme.contrastDim, dimmer: this.theme.contrastDimmer },
-      "blue": { color: this.theme.blue, dim: this.theme.blueDim, dimmer: this.theme.blueDimmer },
-      "green": { color: this.theme.green, dim: this.theme.greenDim, dimmer: this.theme.greenDimmer },
-      "pink": { color: this.theme.pink, dim: this.theme.pinkDim, dimmer: this.theme.pinkDimmer },
-      "orange": { color: this.theme.orange, dim: this.theme.orangeDim, dimmer: this.theme.orangeDimmer },
-      "purple": { color: this.theme.purple, dim: this.theme.purpleDim, dimmer: this.theme.purpleDimmer },
-      "yellow": { color: this.theme.yellow, dim: this.theme.yellowDim, dimmer: this.theme.yellowDimmer },
-      "grey": { color: this.theme.grey, dim: this.theme.greyDim, dimmer: this.theme.yellowDimmer }
-    };
-    return themePalette[color];
-  }
-
   ngOnDestroy(): void {
     this.destroyDataStreams();
-    this.metaSub?.unsubscribe();
-    // Clear references to DOM elements
-    this.compassGauge = null;
-    this.gauge = null;
   }
 }

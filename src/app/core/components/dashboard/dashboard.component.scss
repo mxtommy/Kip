@@ -1,9 +1,12 @@
+@use '@angular/material' as mat;
+
 :host {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 .grid-stack {
@@ -20,4 +23,83 @@
 .layout-action-btn {
   color: var(--mat-sys-on-primary);
   background-color: var(--mat-sys-primary);
+}
+
+/* Empty Dashboard State Styles */
+.dashboard-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.empty-state-content {
+  max-width: 500px;
+  color: var(--mat-sys-outline-variant);
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: var(--mat-sys-outline-variant);
+  margin-bottom: 1rem;
+}
+
+.empty-state-actions {
+  .touch-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    color: var(--mat-sys-outline-variant);
+    margin-top: 0.5rem;
+    animation: bounce 2s infinite;
+  }
+}
+
+.empty-state-button {
+  @include mat.button-overrides((
+    filled-label-text-color: var(--kip-widget-card-background-color),
+    filled-container-color: var(--mat-sys-outline-variant),
+    filled-hover-state-layer-opacity: 0.7,
+    filled-state-layer-color: var(--mat-sys-primary-fixed-dim)
+  ));
+}
+
+.empty-state-help {
+  position: fixed;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-state-help-button {
+  @include mat.button-overrides((
+    text-label-text-color: var(--mat-sys-outline-variant),
+    text-hover-state-layer-opacity: 0.7,
+    text-state-layer-color: var(--mat-sys-primary-fixed-dim)
+  ));
+}
+
+.empty-state-text {
+  color: var(--mat-sys-outline-variant);
+  font-style: italic;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }

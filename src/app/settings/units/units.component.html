@@ -1,25 +1,23 @@
-<div class="mat-typography">
-  <form (ngSubmit)="submitConfig()" [formGroup]="unitsFormGroup" style="height: 100%;">
-    <h1>Application Default Units</h1>
-    <p class="mat-card-subtitle">Set preferred default format per unit types. Units display formats can be overwritten in Widgets configuration.</p>
-    <div class="unit-grid">
-      @for(control of unitsFormGroup.controls | keyvalue; track control) {
-        <mat-form-field>
-          <mat-label>{{control.key}}</mat-label>
-          <mat-select
-            [placeholder] = "control.key"
-            [formControlName] = "control.key"
-            required>
-            @for(unit of groupUnits[control.key]; track unit) {
-              <mat-option [value]="unit.measure" >{{ unit.description }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
-    </div>
-    <div class="formActionFooter">
-      <mat-divider class="formActionDivider"></mat-divider>
-      <button mat-raised-button class="formActionButton" color="accent" type="submit" [disabled]="!unitsFormGroup.valid">Save</button>
-    </div>
-  </form>
-</div>
+<form (ngSubmit)="submitConfig()" [formGroup]="unitsFormGroup" style="height: 100%;">
+  <p>Configure your preferred default unit types. These defaults can be overridden
+    within individual widget settings.</p>
+  <div class="unit-grid">
+    @for(control of unitsFormGroup.controls | keyvalue; track control.key) {
+      <mat-form-field>
+        <mat-label>{{control.key}}</mat-label>
+        <mat-select
+          [placeholder] = "control.key"
+          [formControlName] = "control.key"
+          required>
+          @for(unit of groupUnits[control.key]; track unit.measure) {
+            <mat-option [value]="unit.measure" >{{ unit.description }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </div>
+  <div class="formActionFooter">
+    <mat-divider class="formActionDivider"></mat-divider>
+    <button mat-flat-button class="formActionButton" type="submit" [disabled]="!unitsFormGroup.valid">Save</button>
+  </div>
+</form>

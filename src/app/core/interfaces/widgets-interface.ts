@@ -10,6 +10,16 @@ export enum ControlType {
 }
 
 /**
+ * Allowed path types for Signal K data paths.
+ * - 'number'
+ * - 'string'
+ * - 'boolean'
+ * - 'Date'
+ * - null
+ */
+export type TWidgetPathType = 'number' | 'string' | 'boolean' | 'Date' | null;
+
+/**
  * KIP Dynamic Widgets interface.
  *
  * @export
@@ -43,10 +53,11 @@ export interface IWidget {
  * @export
  * @interface IPathArray
  */
-export interface IPathArray {
+export type IPathArray = Record<
   /** Key string use to name/identify the path IWidgetPath object. Used for Observable setup */
-  [key: string]: IWidgetPath;
-}
+  string,
+  IWidgetPath
+>;
 
 /**
  * This interface defines all possible Widget configuration settings.
@@ -95,6 +106,8 @@ export interface IWidgetSvcConfig {
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */
   numInt?: number;
+  /** Display the mini chart or not flag */
+  showMiniChart?: boolean;
 
   /** The widget's path configuration property used for Observable setup. This property can be either contain an object with one key:string per path with it's value as a IWidgetPath object, or an Array of IWidgetPaths. Array is used by multi-control widgets where key:strings Objects are not appropriate. The Key:string Object should be used for typical widgets. */
   paths?: IPathArray | IWidgetPath[];
@@ -124,6 +137,8 @@ export interface IWidgetSvcConfig {
     backgroundColor?: string;
     /** Optional. Used by GaugeSteel to set face style */
     faceColor?: string;
+    /** Optional. Angle (1-360) the progress bar should start. 360 is same as 0 degrees */
+    scaleStart?: number;
     /** Optional. Used by GaugeSteel to set radial faceplate size */
     radialSize?: string;
     /** Optional. Used by GaugeSteel to set faceplate rotation */
@@ -132,6 +147,8 @@ export interface IWidgetSvcConfig {
     digitalMeter?: boolean;
     /** Optional. Width of gauge highlights */
     highlightsWidth?: number;
+    /** Optional. Used by ngRadial to set bar start position */
+    barStartPosition?: "left" | "right" | "middle";
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
@@ -147,17 +164,6 @@ export interface IWidgetSvcConfig {
   putMomentary?: boolean;
   /** Option for widget that supports Signal K PUT command */
   putMomentaryValue?: boolean;
-
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget possible paths for AP mode */
-  usage?: {
-    [key: string]: string[];
-  };
-  /** Use by Autopilot Widget: key should match key in paths, specifies autopilot widget paths value type for AP mode */
-  typeVal?: {
-    [key: string]: string;
-  };
-  /** To retire. Used by Autopilot */
-  barColor?: string;
 
   /** Used by date Widget: configurable display format of the date/time value */
   dateFormat?: string;
@@ -176,22 +182,32 @@ export interface IWidgetSvcConfig {
   waypointEnable?: boolean;
   /** Used by wind Widget: enable/disable COG UI feature */
   courseOverGroundEnable?: boolean;
+  /** Used by wind Widget: enable/disable current UI feature */
+  driftEnable?: boolean;
+  /** Used by wind Widget: enable/disable Apparent Wind Speed UI feature */
+  awsEnable?: boolean;
+  /** Used by wind Widget: enable/disable True Wind Speed UI feature */
+  twsEnable?: boolean;
+  /** Used by wind Widget: enable/disable True Wind Angle UI indicator feature */
+  twaEnable?: boolean;
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
-  /** Used by autopilot Widget to autostart the AP widget */
-  autoStart?: boolean;
-  /** Used by autopilot Widget to invert rudder angle value */
-  invertRudder?: boolean;
+  /** Used by autopilot Widget to configure autopilot settings */
+  autopilot?: IAutopilotConfig,
 
-  /** Used by historical data Widget: Set the data conversion format. !!! Do not use for other Widget !!! */
+  /** Used by historical data Widget: Set the data conversion format. */
   convertUnitTo?: string;
+
+  /** Used to select a group for the convertUnitTo conversion. */
+  convertUnitToGroup?: string;
+
   /** Used by historical data Widget */
   datasetUUID?: string;
-  /** NOTE: Retired property - Used by historical data Widget */
-  invertData?: boolean;
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
+  /** Used by windtrend chart Widget to set datapoint configuration */
+  timeScale?: string;
   /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
   trackAgainstAverage?: boolean;
   /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */
@@ -224,18 +240,51 @@ export interface IWidgetSvcConfig {
   yScaleMin?: number;
   /** Chart y scale maximum */
   yScaleMax?: number;
+  /** Inverse Chart Y axis */
+  inverseYAxis?: boolean;
+  /** Chart data flow direction. True = vertical (top to bottom), False = horizontal (left to right) */
+  verticalChart?: boolean;
   /** Chart scale minimum value */
   minValue?: number;
   /** Chart scale maximum value */
   maxValue?: number;
-  /** Used by historical data Widget */
-  verticalGraph?: boolean;
 
  /** Used by IFrame widget: URL lo load in the iframe */
   widgetUrl?: string;
+  /** Used by IFrame widget: allow input on iframe or not */
+  allowInput?: boolean;
 
   /** Use by racetimer widget */
   timerLength?: number;
+
+  /** The next dashboard to display when the racer-timer-widget counts to 0 and the boat is not OCS*/
+  nextDashboard?: number;
+
+  /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */
+  playBeeps?: boolean;
+}
+
+export interface IAutopilotConfig {
+  /** Set rudder angle inversion */
+  invertRudder: boolean;
+  /** Set bearing direction type is Magnetic or True */
+  courseDirectionTrue: boolean,
+  /** Set heading direction type is Magnetic or True */
+  headingDirectionTrue: boolean,
+  /** Set API version of the autopilot. v1 only supports Signal K autopilot plugin (also known as Raymarine autopilot) */
+  apiVersion: "v1" | "v2",
+  /** The autopilot provider supports multiple autopilot
+   * operating simultaneously. Set the autopilot instance ID to control
+   * ('_default', 'pypilot-1', 'pypilot-2', 'raymarine-1', etc.). Use
+   * default to control the primary instance selected by the provider -
+   * see API for details.
+   *
+   * V2 only property. In V1 mode, this property is ignored */
+  instanceId: string | null,
+  /** Set autopilot plugin ID  ('pypilot-autopilot-provider', 'autopilot', etc.). autopilot is the v1 Signal K autopilot plugin ID. */
+  pluginId: string | null,
+  /** Set autopilot supported operational modes. This is defined by each autopilot plugin */
+  modes: string | null,
 }
 
 /**
@@ -245,7 +294,6 @@ export interface IWidgetSvcConfig {
  * @interface IDynamicControl
  */
 export interface IDynamicControl {
-
   /** Display label of the control */
   ctrlLabel: string;
   /** The type of control: 1 = toggle, 2 = button, 3 = light */
@@ -253,6 +301,7 @@ export interface IDynamicControl {
   /** A unique UUID to match against the path key name to link the control/path */
   pathID: string;
   /** The value of the control */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   /** The color of the control */
   color: string;
@@ -279,7 +328,37 @@ export interface IDataHighlight {
 
 /**
  * Defines all possible properties for data paths. Combines both
- * both KIP and Signal K path features.
+ * KIP and Signal K path features. Used for widget configuration, UI, and data binding.
+ *
+ * @example
+ * ```typescript
+ * // As part of a widget config object:
+ * const widgetConfig: IWidgetSvcConfig = {
+ *   paths: {
+ *     main: {
+ *       description: 'Apparent Wind Angle',
+ *       path: 'self.environment.wind.angleApparent',
+ *       source: null,
+ *       pathType: 'number',
+ *       isPathConfigurable: true,
+ *       sampleTime: 1000
+ *     },
+ *     hidden: {
+ *       description: 'Hidden Path',
+ *       path: 'self.hidden.path',
+ *       source: null,
+ *       pathType: 'number',
+ *       isPathConfigurable: false, // Not shown in UI or validated
+ *       sampleTime: 1000
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * Notes:
+ * - Only paths with isPathConfigurable: true are included in the widget configuration UI and form validation logic.
+ * - Paths with isPathConfigurable: false are hidden from the UI and excluded from validation, allowing for hardcoded or system paths.
+ * - See also: {@link TWidgetPathType}, {@link TValidSkUnits}, and unit conversion docs in units.service.
  *
  * @export
  * @interface IWidgetPath
@@ -287,32 +366,91 @@ export interface IDataHighlight {
 export interface IWidgetPath {
   /** Required: Path description label used in the Widget settings UI */
   description: string | null | '';
-  /** Required: Signal K path (ie. self.environment.wind.angleTrueWater) of the data to be received or null value. See KIP's Data Browser or Signal K's Data Browser UI to identified possible available paths. NOTE: Not all setup will have the same paths. Path availability depends on network components and Signal K configuration that exists on each vessel. */
+  /**
+   * Required: Signal K path (ie. self.environment.wind.angleTrueWater) of the data to be received or null value.
+   * See KIP's Data Browser or Signal K's Data Browser UI to identify possible available paths.
+   * NOTE: Not all setups will have the same paths. Path availability depends on network components and Signal K configuration that exists on each vessel.
+   */
   path: string | null;
-  /** Required: Enforce a preferred Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thru hulls, wind vanes, engines, fuel tanks, ect.). Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K. */
+  /**
+   * Required: Enforce a preferred Signal K "data" Source for the path when/if multiple Sources are available (ie. the vessel has multiple depth thru hulls, wind vanes, engines, fuel tanks, etc.).
+   * Use null value to use Signal K's default Source configuration. Source defaults and priorities are configured in Signal K.
+   */
   source: string | null;
-  /** Required: Used by the Widget Options UI to filter the list of Signal K path the user can select from. Format can be: number, string, boolean or null to list all types */
-  pathType: string  | null;
-  /** Used to hide the path configuration from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the path. Use this to hardcode a path configuration */
+  /**
+   * Required: Used by the Widget Options UI to filter the list of Signal K paths the user can select from.
+   * Allowed values are defined in {@link TWidgetPathType}.
+   * @see TWidgetPathType
+   */
+  pathType: TWidgetPathType;
+  /** Only lists paths that support PUT action. Defaults to false */
+  supportsPut?: boolean;
+  /**
+   * Used to hide the path configuration from the Widget Options UI and exclude it from form validation.
+   * Setting this property to `false` prevents users from seeing and changing the path in the UI,
+   * and ensures the path is not included in the configuration form or its validation logic.
+   * Use this to hardcode a path configuration or for system/hidden paths.
+   *
+   * Example:
+   *   isPathConfigurable: false // Path is hidden and not user-editable
+   */
   isPathConfigurable: boolean;
-  /** Hide numeric path type filter */
-  showPathSkUnitsFilter?: boolean;
-  /** Numeric path type filter to limiting path search results list based on SK Meta Units. Use valid Sk Units type, 'unitless' for paths with no meta units or null to list all types (no filter) */
+  /**
+   * Numeric path type filter to limit path search results based on SK Meta Units.
+   * Allowed values are defined in {@link TValidSkUnits}.
+   * Use 'unitless' for numeric paths with no meta units, or null to list all types of paths (no filter).
+   * @see TValidSkUnits
+   */
   pathSkUnitsFilter?: TValidSkUnits;
-  /** Used to hide the path Format configuration field from the the Widget Options UI. Setting this property to "false" prevent users from seeing and changing the Format for the path's value. Use this to hardcode a format configuration */
-  isConvertUnitToConfigurable?: boolean;
-  /** Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format. Also used as a source to identify conversion group. */
+  /**
+   * Show or hide the path form's filter dropdown control bound to
+   * pathSkUnitsFilter path property visible in Widget Options UI.
+   *
+   * This filter is available to paths with number type values.
+   */
+  showPathSkUnitsFilter?: boolean;
+  /**
+   * Used in Widget Options UI and by observeDataStream() method to convert Signal K transmitted values to a specified format.
+   * Allowed values are defined in {@link unitConversionFunctions}.
+   * Also used as a source to identify conversion group.
+   * Use null for no conversion.
+   *
+   * @see units.service unitConversionFunctions()
+   */
   convertUnitTo?: string;
-  /** Required: Used to throttle/limit the path's Observer emitted values frequency and reduce Angular change detection cycles. Configure according to data type and human perception. Value in milliseconds */
+  /**
+   * Show or hide the path form's Format dropdown control bound to convertUnitTo
+   * path property in Widget Options UI.
+   *
+   * Setting this property to "false" prevents users from seeing
+   * and changing the Format for the path's values. Use this to hardcode a
+   * format configuration.
+   */
+  showConvertUnitTo?: boolean;
+  /**
+   * Required: Used to throttle/limit the path's Observer emitted values
+   * frequency and reduce Angular change detection cycles. Configure according
+   * to data type and human perception. Value in milliseconds.
+   */
   sampleTime: number;
   /** Used as a reference ID when path is an Array and array index is not appropriate. */
   pathID?: string | null | '';
-  /** NOT IMPLEMENTED -Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
+  /** NOT IMPLEMENTED - Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */
   smoothingPeriod?: number;
-  /** NOT IMPLEMENTED -Signal K - format=[delta|full] specifies delta or full format. Default: delta */
+  /** NOT IMPLEMENTED - Signal K - format=[delta|full] specifies delta or full format. Default: delta */
   format?: TFormat;
-  /** NOT IMPLEMENTED -Signal K - policy=[instant|ideal|fixed]. Default: ideal */
+  /** NOT IMPLEMENTED - Signal K - policy=[instant|ideal|fixed]. Default: ideal */
   policy?: TPolicy;
-  /** NOT IMPLEMENTED -Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
+  /** NOT IMPLEMENTED - Signal K - minPeriod=[milliseconds] becomes the fastest message transmission rate allowed, e.g. every minPeriod/1000 seconds. This is only relevant for policy='instant' to avoid swamping the client or network. */
   minPeriod?: number;
+  /**
+   * Optional: Indicates if the path control must have a path value or not.
+   * - If true: The control is valid if the path is either a valid (non-empty) path or empty (null or '').
+   *   - If the path is set but not valid (malformed), the control is invalid.
+   * - If false or undefined: The control behaves as usual (no additional validation).
+   *
+   * Example:
+   *   pathRequired: true // Path must be valid or empty
+   */
+  pathRequired?: boolean;
 }

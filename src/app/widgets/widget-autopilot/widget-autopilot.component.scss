@@ -1,158 +1,329 @@
-:root {
+@use '@angular/material' as mat;
+
+:host {
   display: block;
   height: 100%;
   width: 100%;
 }
 
-.apStencil.confirmCommand {
-  z-index: 5;
-  visibility: hidden;
-}
-
-.apStencil.error {
-  z-index: 6;
-  visibility: hidden;
-}
-
-.apCompass {
-  position: relative;
-  width: 360px;
-  height: 202px;
-  margin: auto;
-  border-radius: 5px;
-}
-
-div.apStatusBar {
-  width: 360px;
-  height: 18.5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  background-color: red;
-}
-
-.apStatusBar, .apStatusBar DIV {
-  display: inline-block;
-  position: relative;
-}
-
-div.autopilotWidget {
-  display:block;
-  position: relative;
-  border:none;
-  margin: 0px;
-  padding:  5px 0px;
-  width: 100%;
-  height: calc(100% - 10px);
-}
-
-.headerAutopilot {
+.widget-host {
   display: block;
-  position: relative;
-  width: 346px;
-  margin: auto;
-  margin-bottom: 5px;
+  height: 100%;
+  width: 100%;
 }
 
-.headerAutopilot .apTitle {
-  display: inline-block;
-  font-weight: bold;
-  width: calc(100% - 64px);
-  margin: 0px;
-}
-
-.headerAutopilot .apPower {
-  display: inline-block;
-  width: 64px;
-  margin: 0px;
-}
-
-.auto-pilot-btn-width {
-  width:85px;
-}
-
-.button-color-red {
-  --mdc-filled-button-container-color: var(--kip-port-color);
-  --mdc-filled-button-label-text-color: var(--kip-contrast-color);
-}
-
-.activityIcon {
-  opacity: 40%;
-  color: red;
-  width:25px;
-}
-
-.autopilotGridBtnContainer {
+.autopilot-grid-container {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
   display: grid;
-  width: fit-content;
-  margin: auto;
-  margin-top: 5px;
-  height: 160px;
-  grid-template-columns: [col-start] 25% [col1-end] 25% [col2-end] 25% [col3-end] 25% [col-End];
-  grid-template-rows: [row-start] 25% [row1-end] 25% [row2-end] 25% [row3-end] 25% [row-end];
-  grid-template-areas:
-    ". mute message ."
-    "port minus1  plus1 starboard"
-    "windmode minus10 plus10 trackmode"
-    "standby . . auto1";
-  row-gap: 6px;
-  column-gap: 4px;
-  justify-items: center;
+  gap: 0.5rem 0.5rem;
+  padding: 10px;
+  grid-template:
+    "modes modes"   minmax(50px, 1fr)
+    "screen screen" minmax(50px, auto)
+    / 1fr 1fr;
+  grid-template-rows: 0.15fr 1fr;
+  grid-auto-rows: minmax(50px, 2fr);
+}
+
+.ap-modes {
+  grid-area: modes;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(50px, 1fr);
+  gap: 0.5rem 0.5rem;
+}
+
+.ap-screen {
+  position: relative;
+  grid-area: screen;
+  width: 100%;
+  height: 100%;
+  max-height: 200px;
+  align-content: center;
+}
+
+.ap-screen-overlay {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  vertical-align: middle;
+  text-align: center;
+  background-color: var(--mat-sys-background);
+}
+
+.ap-error-icon {
+  padding-top: 15px;
+}
+
+.ap-error-text {
+  color: var(--mat-sys-error-container);
+}
+
+.ap-btn {
+  width: 100%;
+  border-radius: 12px;
   align-items: center;
   justify-content: center;
-  align-content: start;
-  --mdc-filled-button-container-shape: 5px;
+  cursor: pointer;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-blue-dim-color),
+    filled-label-text-color: var(--kip-contrast-color),
+    filled-container-height: 100%
+  ));
 }
 
-.itemStbTack {
-  grid-area: starboard;
+.ap-btn-ctrlbar {
+  padding: 4px;
 }
 
-.itemMute {
-  grid-area: mute;
+.ap-btn-modes {
+  @include mat.button-overrides((
+    filled-horizontal-padding: 0rem
+  ));
 }
 
-.itemMessage {
-  grid-area: message;
+.ap-btn-notifications {
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-yellow-dim-color),
+  ));
 }
 
-.itemPrtTack {
-  grid-area: port;
+.ap-btn-engage {
+  @include mat.button-overrides((
+    filled-horizontal-padding: 0rem,
+    filled-container-color: var(--kip-port-color),
+  ));
 }
 
-.itemPlus1 {
-  grid-area: plus1;
+.ap-btn-disengage {
+  @include mat.button-overrides((
+    filled-horizontal-padding: 0rem,
+    filled-container-color: var(--kip-starboard-color),
+  ));
 }
 
-.itemMinus1 {
-  grid-area: minus1;
+.svg-icon-ctrlbar {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
 }
 
-.itemStandby {
-  grid-area: standby;
+.svg-icon {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0.5rem;
 }
 
-.itemPlus10 {
-  grid-area: plus10;
+.svg-element {
+  width: 100%;
+  height: 100%;
+  padding: 0em;
+  text {
+    font-family: Roboto;
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor: middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    stroke: none;
+  }
+  path {
+    stroke-width :7.59058;
+    stroke-linecap: round;
+    stroke-miterlimit: 0;
+    stroke-dasharray: none;
+  }
 }
 
-.itemMinus10 {
-  grid-area: minus10;
+.svg-element-msg {
+  font-family: Roboto;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  text-anchor: middle;
+  font-style: normal;
+  font-variant: normal;
+  font-stretch: normal;
+  font-variant-ligatures: normal;
+  font-variant-caps: normal;
+  font-variant-numeric: normal;
+  font-variant-east-asian: normal;
+  fill: var(--kip-contrast-color);
+  fill-opacity: 1;
+  stroke: none;
 }
 
-.itemAuto {
-  grid-area: auto1;
+.svg-element-note {
+  font-family: Roboto;
+  font-size: 0.5em;
+  font-weight: normal;
+  text-align: center;
+  text-anchor: middle;
+  font-style: italic;
+  font-variant: normal;
+  font-stretch: normal;
+  font-variant-ligatures: normal;
+  font-variant-caps: normal;
+  font-variant-numeric: normal;
+  font-variant-east-asian: normal;
+  fill: var(--kip-contrast-dim-color);
+  fill-opacity: 1;
+  stroke: none;
 }
 
-.itemWindmode {
-  grid-area: windmode;
+.svg-element-error-txt {
+  fill: var(--mat-sys-error-container);
 }
 
-.itemTrackmode {
-  grid-area: trackmode;
+.svg-element-notifications {
+  fill: var(--kip-contrast-color);
 }
 
-.itemNxtWp {
-  grid-area: nxtWp;
+.svg-element-clear-notifications {
+  fill: var(--kip-contrast-color);
+  fill-opacity: 1;
+  stroke: none;
+}
+
+.svg-modes {
+  text {
+    font-size: 12px;
+  }
+}
+
+.svg-route {
+  text {
+    font-size: 25px;
+  }
+}
+
+.embed-widget {
+  border: 1px solid var(--mat-sys-surface-container-highest);
+  border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+  .autopilot-grid-container {
+    padding: 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .autopilot-btn {
+    font-size: 0.95rem;
+    padding: 0.4em 0.5em;
+  }
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  bottom: 0;
+  color: transparent;
+  z-index: 21;
+}
+
+.svg-menu-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg-menu-box {
+  fill: var(--mat-sys-surface);
+  stroke: none;
+  border-radius: 12px;
+}
+
+.svg-menu {
+  max-width: 80%;
+  background: transparent;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  z-index: 20;
+  display: block;
+  font-family: Roboto;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-anchor: middle;
+  text-align: center;
+  alignment-baseline: middle;
+}
+
+g:hover rect {
+  fill-opacity: 0.7;
+}
+g:hover text {
+  fill-opacity: 0.7;
+}
+
+g:active rect {
+  fill-opacity: 0.4;
+}
+g:active text {
+  fill-opacity: 0.4;
+}
+
+.svg-menu-item {
+  fill: var(--kip-blue-color);
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-text {
+  fill: var(--kip-contrast-color);
+  stroke: none;
+}
+
+.svg-menu-item-current {
+  fill: var(--kip-blue-color);
+  pointer-events: none;
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-current-text {
+  fill: var(--kip-contrast-color);
+  stroke: none;
+  pointer-events: none;
+}
+
+.svg-menu-item-disabled {
+  fill: var(--kip-blue-color);
+  pointer-events: none;
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-disabled-text {
+  fill: var(--mat-sys-surface-tint);
+  stroke: none;
+  pointer-events: none;
+}
+
+.svg-menu-item-cancel {
+  fill: var(--mat-sys-outline);
+  stroke: var(--mat-sys-outline-variant);
+}
+
+.svg-menu-item-cancel-text {
+  fill: var(--kip-contrast-color);
+  stroke: none;
 }
 
 .counterText {

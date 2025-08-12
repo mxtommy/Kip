@@ -4,15 +4,17 @@ import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
-import { tap, concatMap, catchError, lastValueFrom } from 'rxjs';
+import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject } from 'rxjs';
+import { AuthenticationService } from './authentication.service';
 
-interface Config {
+export interface Config {
   name: string,
   scope: string
 }
 
 interface IPatchAction {
   url: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   document: any
 }
 
@@ -22,21 +24,24 @@ interface IPatchAction {
 export class StorageService {
   private server = inject(SignalKConnectionService);
   private http = inject(HttpClient);
+  private readonly _auth = inject(AuthenticationService);
 
-  private serverEndpoint: String = null;
-  public isAppDataSupported: boolean = false;
-  private serverConfigs: Config[] = [];
+  private serverEndpoint: string = null;
+  public isAppDataSupported = false;
   private configFileVersion: number = null;
   public sharedConfigName: string;
   private InitConfig: IConfig = null;
-  public storageServiceReady$: Subject<boolean> = new Subject<boolean>();
+  public storageServiceReady$ = new BehaviorSubject<boolean>(false);
+  private _isLoggedIn = false;
+  private _networkStatus: IEndpointStatus = undefined;
+
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
   private patch = function(arg: IPatchAction) { // http JSON Patch function
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
-        tap((_) => console.log("[Storage Service] Remote config patch request completed successfully")),
+        tap(() => console.log("[Storage Service] Remote config patch request completed successfully")),
         catchError((error) => this.handleError(error))
       );
   }
@@ -44,17 +49,14 @@ export class StorageService {
   constructor() {
       const server = this.server;
 
-      server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
-        if (status.httpServiceUrl !== null) {
-          this.serverEndpoint = status.httpServiceUrl.substring(0,status.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
-          console.log("[Storage Service] Service startup. AppData API set to: " + this.serverEndpoint);
-        }
+      this._auth.isLoggedIn$.subscribe((isLoggedIn) => {
+        this._isLoggedIn = isLoggedIn;
+        this.isStorageServiceReady();
+      });
 
-        if (status.operation === 2) {
-          this.storageServiceReady$.next(true);
-        } else {
-          this.storageServiceReady$.next(false);
-        }
+      server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
+        this._networkStatus = status;
+        this.isStorageServiceReady();
       });
 
       server.serverVersion$.subscribe(version => {
@@ -68,9 +70,28 @@ export class StorageService {
       .pipe(
           concatMap((arg: IPatchAction) => this.patch(arg)) // insures orderly call sequencing
         )
-      .subscribe(_ => {
+      .subscribe(() => {
         //console.log("[Storage Service] Subscription results received")
       });
+  }
+
+  private isStorageServiceReady(): void {
+    if (this._networkStatus?.httpServiceUrl) {
+      this.serverEndpoint = this._networkStatus.httpServiceUrl.substring(0,this._networkStatus.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
+    }
+
+    if (this._networkStatus?.operation === 2 && this._isLoggedIn && this.serverEndpoint) {
+      this.storageServiceReady$.next(true);
+      console.log(`[Remote Storage Service] Authenticated ${this._isLoggedIn} ,AppData API: ${this.serverEndpoint}`);
+    } else {
+      this.storageServiceReady$.next(false);
+    }
+  }
+
+  private ensureReady(): void {
+    if (!this.storageServiceReady$.getValue()) {
+      throw new Error('[StorageService] Not ready: storageServiceReady is false');
+    }
   }
 
   /**
@@ -86,7 +107,12 @@ export class StorageService {
    * @memberof StorageService
    */
   public async listConfigs(forceConfigFileVersion?: number): Promise<Config[]> {
-    let serverConfigs: Config[] = [];
+    this.ensureReady();
+    const serverConfigs: Config[] = [];
+    if (!this.serverEndpoint) {
+      console.warn("[Storage Service] No server endpoint set. Cannot retrieve config list");
+      return null;
+    }
     const url = this.serverEndpoint;
     let globalUrl = url + "global/kip/" + this.configFileVersion + "/?keys=true";
     let userUrl = url + "user/kip/" + this.configFileVersion + "/?keys=true";
@@ -98,7 +124,7 @@ export class StorageService {
 
     await lastValueFrom(this.http.get<string[]>(globalUrl))
       .then((configNames: string[]) => {
-        for(let cname of configNames) {
+        for(const cname of configNames) {
           serverConfigs.push({ scope: 'global', name: cname });
         }
         console.log(`[Storage Service] Retrieved Global config list`);
@@ -110,7 +136,7 @@ export class StorageService {
 
     await lastValueFrom(this.http.get<string[]>(userUrl))
       .then((configNames: string[]) => {
-        for(let cname of configNames) {
+        for(const cname of configNames) {
           serverConfigs.push({ scope: 'user', name: cname });
         }
         console.log(`[Storage Service] Retrieved User config list`);
@@ -139,13 +165,14 @@ export class StorageService {
    * @memberof StorageService
    */
   public async getConfig(scope: string, configName: string, forceConfigFileVersion?: number, isInitLoad?: boolean): Promise<IConfig> {
+    this.ensureReady();
     let conf: IConfig = null;
     let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/" + configName;
 
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/" + configName;
     }
-    await lastValueFrom(this.http.get<any>(url))
+    await lastValueFrom(this.http.get<IConfig>(url))
       .then(remoteConfig => {
         conf = remoteConfig;
         console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
@@ -173,9 +200,13 @@ export class StorageService {
    * @return {*}  {null} returns null if operation is successful or raises an error.
    * @memberof StorageService
    */
-  public async setConfig(scope: string, configName: string, config: IConfig): Promise<null> {
+  public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
+    this.ensureReady();
     let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/"+ configName;
-    let response: any;
+    let response = null;
+    if (forceConfigFileVersion) {
+      url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/"+ configName;
+    }
     await lastValueFrom(this.http.post<null>(url, config))
       .then(x => {
         console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
@@ -195,10 +226,14 @@ export class StorageService {
    * @param {*} value unstringified update object. The resulting outgoing POST request will automatically stringify.
    * @memberof StorageService
    */
-  public patchConfig(ObjType: string, value: any) {
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public patchConfig(ObjType: string, value: any, forceConfigFileVersion?: number) {
+    this.ensureReady();
     let url = this.serverEndpoint + "user/kip/" + this.configFileVersion;
     let document;
+    if (forceConfigFileVersion) {
+      url = this.serverEndpoint + "user/kip/" + forceConfigFileVersion;
+    }
 
     switch (ObjType) {
       case "IAppConfig":
@@ -277,7 +312,7 @@ export class StorageService {
         break;
     }
 
-    let patch: IPatchAction = {url, document};
+    const patch: IPatchAction = {url, document};
     this.patchQueue$.next(patch);
   }
 
@@ -292,6 +327,7 @@ export class StorageService {
    * @memberof StorageService
    */
   public patchGlobal(configName: string, scope: string, config: IConfig, operation: string, fileVersion?: number) {
+    this.ensureReady();
     let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
     if (fileVersion) {
       url = this.serverEndpoint + scope + "/kip/" + fileVersion;
@@ -330,7 +366,7 @@ export class StorageService {
         break;
     }
 
-    let patch: IPatchAction = {url, document};
+    const patch: IPatchAction = {url, document};
     this.patchQueue$.next(patch);
   }
 
@@ -347,18 +383,19 @@ export class StorageService {
    * @memberof StorageService
    */
   public removeItem(scope: string, name: string, forceConfigFileVersion?: number) {
+    this.ensureReady();
     let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion;
     }
-    let document =
+    const document =
     [
       {
           "op": "remove",
           "path": `/${name}`
       }
     ]
-    let patch: IPatchAction = {url, document};
+    const patch: IPatchAction = {url, document};
     this.patchQueue$.next(patch);
   }
 
@@ -366,6 +403,7 @@ export class StorageService {
    * *** Not implemented
    */
   public clear() {
+    this.ensureReady();
 
   }
 

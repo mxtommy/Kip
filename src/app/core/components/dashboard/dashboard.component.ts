@@ -1,9 +1,9 @@
-import { AfterViewInit, Component, DestroyRef, effect, inject, OnDestroy, ViewChild } from '@angular/core';
-import { GridstackComponent, GridstackModule, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
+import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
-import { UUID } from '../../utils/uuid';
+import { UUID } from '../../utils/uuid.util';
 import { AppService } from '../../services/app-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,8 @@ import { DialogService } from '../../services/dialog.service';
 import { NotificationBadgeComponent } from "../notification-badge/notification-badge.component";
 import { NotificationsService } from '../../services/notifications.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { uiEventService } from '../../services/uiEvent.service';
+import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 
 import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
@@ -27,12 +29,18 @@ import { WidgetSteelGaugeComponent } from '../../../widgets/widget-gauge-steel/w
 import { WidgetIframeComponent } from '../../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetPositionComponent } from '../../../widgets/widget-position/widget-position.component';
 import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/widget-race-timer.component';
+import { WidgetRacerLineComponent } from '../../../widgets/widget-racer-line/widget-racer-line.component';
+import { WidgetRacerTimerComponent } from '../../../widgets/widget-racer-timer/widget-racer-timer.component';
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-horizon.component';
-import { uiEventService } from '../../services/uiEvent.service';
+import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
+import { DatasetService } from '../../services/data-set.service';
+import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 
 
 @Component({
@@ -43,24 +51,28 @@ import { uiEventService } from '../../services/uiEvent.service';
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy{
-  private _app = inject(AppService);
-  private _dialog = inject(DialogService);
-  protected dashboard = inject(DashboardService);
-  private _notifications = inject(NotificationsService);
-  private _destroyRef = inject(DestroyRef);
-  private _uiEvent = inject(uiEventService);
-  protected notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
-  protected isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
-  @ViewChild('grid', { static: true }) private _gridstack!: GridstackComponent;
-  private _previousIsStaticState: boolean = true;
-  protected gridOptions: NgGridStackOptions = {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly _app = inject(AppService);
+  private readonly _dialog = inject(DialogService);
+  protected readonly dashboard = inject(DashboardService);
+  private readonly _notifications = inject(NotificationsService);
+  private readonly _destroyRef = inject(DestroyRef);
+  private readonly _uiEvent = inject(uiEventService);
+  private readonly _dataset = inject(DatasetService);
+  protected readonly _router = inject(Router);
+  protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
+  protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
+  private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
+  private _previousIsStaticState = true;
+  protected readonly gridOptions = signal<NgGridStackOptions>({
     margin: 4,
     minRow: 12,
     maxRow: 12,
     float: true,
     acceptWidgets: false,
     resizable: {handles: 'all'},
-  }
+  });
+  private _boundHandleKeyDown = this.handleKeyDown.bind(this);
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -76,37 +88,44 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetFreeboardskComponent,
       WidgetAutopilotComponent,
       WidgetDataChartComponent,
+      WidgetRacerLineComponent,
+      WidgetRacerTimerComponent,
       WidgetRaceTimerComponent,
       WidgetIframeComponent,
       WidgetTutorialComponent,
       WidgetWindComponent,
+      WidgetRacesteerComponent,
       WidgetPositionComponent,
       WidgetLabelComponent,
-      WidgetHorizonComponent
+      WidgetHorizonComponent,
+      WidgetSliderComponent,
+      WidgetWindTrendsChartComponent
     ]);
-
-    effect(() => {
-      this.loadDashboard(this.dashboard.activeDashboard());
-    });
   }
 
   ngAfterViewInit(): void {
+    this.resizeGridColumns();
+    this._uiEvent.addHotkeyListener(
+      this._boundHandleKeyDown,
+      { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
+    );
+
     this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
       if (isStatic) {
-        this._gridstack.grid.setStatic(isStatic);
+        this._gridstack().grid.setStatic(isStatic);
         if (isStatic !== this._previousIsStaticState) {
           this.saveDashboard();
           this._previousIsStaticState = isStatic;
         }
       } else {
-        this._gridstack.grid.setStatic(isStatic);
+        this._gridstack().grid.setStatic(isStatic);
         this._previousIsStaticState = isStatic;
       }
     });
 
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
-        this._gridstack.grid.getGridItems().forEach((item: GridItemHTMLElement) => {
+        this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
           if (item.gridstackNode.id === action.id) {
             switch (action.operation) {
               case 'delete':
@@ -123,62 +142,58 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       }
     });
 
-    this.resizeGridColumns();
-    this._uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
-
-    setTimeout(() => {
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
+      const id = params['id'];
+      let pageIdParam : number | null = null;
+      if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
+        pageIdParam = Number(id);
+      }
+      this.dashboard.setActiveDashboard(pageIdParam ?? this.dashboard.activeDashboard());
       this.loadDashboard(this.dashboard.activeDashboard());
     });
   }
 
   ngOnDestroy(): void {
     // Destroy the Gridstack instance to clean up internal resources
-    if (this._gridstack?.grid) {
-      this._gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+    const _gridstack = this._gridstack();
+    if (_gridstack?.grid) {
+      _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
     }
-    // Remove the reference to the GridstackComponent
-    this._gridstack = null;
-
-    this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
+    this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    // Avoid executing shortcuts when an input field is focused
-    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      if (event.ctrlKey && event.ctrlKey) {
-      switch (event.key) {
-        case 'ArrowDown':
-          this.previousDashboard(event);
-          break;
-        case 'ArrowUp':
-          this.nextDashboard(event);
-          break;
-        default:
-          break;
-      }
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
+    if (key === 'arrowdown') {
+      this.previousDashboard(event);
+    } else if (key === 'arrowup') {
+      this.nextDashboard(event);
     }
   }
 
   protected resizeGridColumns(): void {
-    this._gridstack.grid.cellHeight(window.innerHeight / this._gridstack.grid.getRow());
+    this._gridstack().grid.cellHeight(window.innerHeight / this._gridstack().grid.getRow());
   }
 
   /**
-   * @description load a dashboard from configuration
-   * @protected
+   * Load a dashboard from configuration in batch mode
    * @param {number} dashboardId the ID of the dashboard to load
-   * @param {boolean} [addRemove] Optional (default true). If false, removes all widgets from
-   * the grid before loading the dashboard. This is useful when loading a different dashboard.
-   * If cancelling layout changes, use true.
+   *
    * @memberof DashboardComponent
    */
-  protected loadDashboard(dashboardId: number): void {
+  private loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
-    this._gridstack.grid?.load(dashboard.configuration as NgGridStackWidget[]);
+    const _gridstack = this._gridstack();
+    if (_gridstack?.grid) {
+      setTimeout(() => {
+        _gridstack.grid.batchUpdate();
+        _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+        _gridstack.grid.commit();
+      }, 0);
+    }
   }
 
   protected saveDashboard(): void {
-    const serializedData = this._gridstack.grid.save(false, false) as NgGridStackWidget[] || null;
+    const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
@@ -191,40 +206,43 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.setStaticDashboard(true);
   }
 
-  protected addNewWidget(e: any): void {
+  protected addNewWidget(e: unknown): void {
     if (!this.dashboard.isDashboardStatic()) {
       const inputX = (e as HammerInput).center.x;
       const inputY = (e as HammerInput).center.y;
-      const gridCell = this._gridstack.grid.getCellFromPixel({left: inputX, top: inputY});
-      const isCellEmpty = this._gridstack.grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
+      const gridCell = this._gridstack().grid.getCellFromPixel({left: inputX, top: inputY});
+      const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
 
       if (isCellEmpty) {
-        if (this._gridstack.grid.willItFit({x: gridCell.x, y: gridCell.y, w: 2, h: 3})) {
+        if (this._gridstack().grid.willItFit({x: gridCell.x, y: gridCell.y, w: 2, h: 3})) {
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe(data => {
-            if (!data) {return} //clicked cancel
+          }, true).subscribe( data => {
+            if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
             const ID = UUID.create();
+            const widget = data as WidgetDescription;
+
             const newWidget: NgGridStackWidget = {
               x: gridCell.x,
               y: gridCell.y,
-              w: 2,
-              h: 3,
+              w: widget.defaultWidth,
+              h: widget.defaultHeight,
+              minW: widget.minWidth,
+              minH: widget.minHeight,
               id: ID,
-              // @ts-ignore
-              selector: data,
+              selector: widget.selector,
               input: {
                 widgetProperties: {
-                  type: data,
+                  type: widget.selector,
                   uuid: ID,
                 }
               }
             };
-            this._gridstack.grid.addWidget(newWidget);
+            this._gridstack().grid.addWidget(newWidget);
           });
         } else {
-          this._app.sendSnackbarNotification('Add Widget Error: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
+          this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
         }
       }
     }
@@ -246,13 +264,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       }
     } as NgGridStackWidget;
 
-    if(this._gridstack.grid.willItFit(newItem)) {
-      this._gridstack.grid.addWidget(newItem);
+    const _gridstack = this._gridstack();
+    if(_gridstack.grid.willItFit(newItem)) {
+      _gridstack.grid.addWidget(newItem);
     } else {
       newItem.h = 2;
       newItem.w = 2;
-      if(this._gridstack.grid.willItFit(newItem)) {
-        this._gridstack.grid.addWidget(newItem);
+      if(_gridstack.grid.willItFit(newItem)) {
+        _gridstack.grid.addWidget(newItem);
       } else {
        this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
       }
@@ -260,20 +279,41 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
   }
 
   private deleteWidget(item: GridItemHTMLElement): void {
-    this._gridstack.grid.removeWidget(item);
+    const ngNode = item.gridstackNode as NgGridStackNode;
+
+    this._gridstack().grid.removeWidget(item);
+
+    switch (ngNode.selector) {
+      case 'widget-numeric-chart':
+      case 'widget-windtrends-chart': {
+        // Perform any specific cleanup or actions for dataset enabled widgets
+        const allDatasets = this._dataset.list() as { uuid: string }[];
+        const toRemove = allDatasets?.filter(ds => ds.uuid === ngNode.id || ds.uuid?.startsWith(`${ngNode.id}-`)) || [];
+        toRemove.forEach(ds => this._dataset.remove(ds.uuid));
+        break;
+      }
+    }
   }
 
-  protected nextDashboard(e: any): void {
+  protected nextDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-      this.dashboard.nextDashboard();
+      this.dashboard.navigateToNextDashboard();
     }
   }
 
   protected previousDashboard(e: Event): void {
     e.preventDefault();
     if (this.dashboard.isDashboardStatic()) {
-      this.dashboard.previousDashboard();
+      this.dashboard.navigateToPreviousDashboard();
     }
+  }
+
+  protected editDashboard(): void {
+    this.dashboard.toggleStaticDashboard();
+  }
+
+  protected navigateToHelp(): void {
+    this._router.navigate(['/help']);
   }
 }

@@ -1,8 +1,6 @@
 <form (ngSubmit)="saveAllSettings()" #notificationsForm="ngForm" id="notificationSetting">
-  <p class="mat-card-subtitle description-text">Notifications are integral to Signal K's data state messaging
-    framework. They are designed to provide operators with important information, enabling
-    them to take appropriate actions. In KIP, notifications are presented as Notifications menu items and
-    accompanied by audio prompts for enhanced user interaction.</p>
+  <p>Manage notification settings, ensuring operators
+    stay informed about critical events.</p>
   <mat-slide-toggle
     name="disableNotifications"
     [(ngModel)]="notificationConfig.disableNotifications"
@@ -18,9 +16,11 @@
         <mat-panel-title>
           Notifications
         </mat-panel-title>
-        <mat-panel-description>
-          Show or hide menu items based on their state
-        </mat-panel-description>
+        @if (!isPhonePortrait().matches) {
+          <mat-panel-description>
+            Show or hide menu items based on their state
+          </mat-panel-description>
+        }
       </mat-expansion-panel-header>
       <mat-checkbox
         name="showNormalState"
@@ -40,9 +40,11 @@
         <mat-panel-title>
           Audio Prompts
         </mat-panel-title>
-        <mat-panel-description>
-          Mute and unmute data state audio prompts
-        </mat-panel-description>
+        @if (!isPhonePortrait().matches) {
+          <mat-panel-description>
+            Mute and unmute data state audio prompts
+          </mat-panel-description>
+        }
       </mat-expansion-panel-header>
       <mat-checkbox
         name="=disableSound"

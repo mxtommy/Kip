@@ -4,10 +4,9 @@ import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
 import { cloneDeep,merge } from 'lodash-es';
-import Qty from 'js-quantities';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-const SELFROOTDEF: string = "self";
+const SELFROOTDEF = "self";
 
 export interface IPathUpdate {
   data: IPathData;
@@ -17,6 +16,7 @@ export interface IPathUpdate {
 
 interface IPathData {
   /** The path value */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   /** The value's timestamp Date Object (in Zulu time). */
   timestamp: Date | null;
@@ -29,6 +29,7 @@ export interface IDataState {
 // Validation of Signal K RFC3339S datetype format
 const isRfc3339StringDate = (date: Date | string): boolean => {
   if (isFinite(+(date instanceof Date ? date : new Date(date)))) {
+    // eslint-disable-next-line no-useless-escape
     const rfc3339 = new RegExp("^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$");
     if (rfc3339.test(date as string)) {
       return true;
@@ -38,6 +39,18 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
   } else {
     return false;
   }
+};
+
+// Translate units from sk metadata to appropriate type category
+const typeFromUnits = (units: string): string => {
+  if (!units) {
+    return undefined;
+  }
+  // So far the only thing that has units and isn't a number is a Date.
+  if (units === "RFC 3339 (UTC)") {
+    return "Date";
+  }
+  return "number";
 };
 
 /**
@@ -73,22 +86,20 @@ export interface IDeltaUpdate {
 })
 export class DataService implements OnDestroy {
   private delta = inject(SignalKDeltaService);
-
-  private _destroyRef = inject(DestroyRef); // Inject DestroyRef
-
+  private readonly _destroyRef = inject(DestroyRef);
 
   // Performance stats
   private _deltaUpdatesCounter: number = null;
-  private _deltaUpdatesSubject: ReplaySubject<IDeltaUpdate> = new ReplaySubject(60);
+  private _deltaUpdatesSubject = new ReplaySubject<IDeltaUpdate>(60);
   private _deltaUpdatesCounterTimer = null;
 
   // Full skData updates for data-browser component
-  private _isSkDataFullTreeActive: boolean = false;
+  private _isSkDataFullTreeActive = false;
   private _skDataSubject$ = new BehaviorSubject<ISkPathData[]>([]);
 
   // Full skMeta updates for Zones component
   private _dataServiceMeta: IPathMetaData[] = [];
-  private _isSkMetaFullTreeActive: boolean = false;
+  private _isSkMetaFullTreeActive = false;
   private _dataServiceMetaSubject$ = new BehaviorSubject<IPathMetaData[]>([]);
 
   // Notifications
@@ -97,7 +108,7 @@ export class DataService implements OnDestroy {
   private _isReset = new Subject<boolean>();
 
   // Service data variables
-  private _selfUrn: string = 'self'; // self urn, should get updated on first delta or rest call.
+  private _selfUrn = 'self'; // self urn, should get updated on first delta or rest call.
   private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 
@@ -180,7 +191,6 @@ export class DataService implements OnDestroy {
       this._pathRegister.splice(index, 1);
     }
   }
-
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
     const matchingPaths = this._pathRegister.find(item => item.path === path && item.source === source);
@@ -265,12 +275,6 @@ export class DataService implements OnDestroy {
     this._deltaUpdatesCounter++;
     const updatePath = this.setPathContext(dataPath.context, dataPath.path);
 
-    // Convert position values from degrees to radians
-    if (updatePath.includes('position.latitude') || updatePath.includes('position.longitude')) {
-      const degToRad = Qty.swiftConverter('deg', 'rad');
-      dataPath.value = degToRad(dataPath.value);
-    }
-
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
     if (!pathItem) {
@@ -351,7 +355,7 @@ export class DataService implements OnDestroy {
           path: metaPath,
           pathValue: undefined,
           pathTimestamp: undefined,
-          type: meta.meta.units ? "number" : undefined,
+          type: typeFromUnits(meta.meta.units),
           state: States.Normal,
           defaultSource: undefined,
           sources: {},
@@ -360,7 +364,7 @@ export class DataService implements OnDestroy {
         this._skData.push(pathObject);
       } else {
         if (pathObject.type === 'object' && meta.meta.units) {
-          pathObject.type = "number";
+          pathObject.type = typeFromUnits(meta.meta.units);
         }
         pathObject.meta = merge(pathObject.meta, meta.meta);
       }
@@ -403,7 +407,6 @@ export class DataService implements OnDestroy {
 
   public stopSkDataFullTree(): void {
     this._isSkDataFullTreeActive = false;
-    this._skDataSubject$.next(null);
   }
 
   private setSelfUrn(value: string) {
@@ -432,9 +435,14 @@ export class DataService implements OnDestroy {
       .map(item => item.path);
   }
 
-  public getPathsAndMetaByType(valueType: string, selfOnly?: boolean): IPathMetaData[] {
+  public getPathsAndMetaByType(valueType: string, supportsPutOnly?: boolean, selfOnly?: boolean): IPathMetaData[] {
     return this._skData
-      .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
+      .filter(item => {
+        const typeMatches = item.type === valueType;
+        const selfMatches = !selfOnly || item.path.startsWith("self");
+        const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true  : true;
+        return typeMatches && selfMatches && supportsPutMatches;
+      })
       .map(item => ({ path: item.path, meta: item.meta }));
   }
 

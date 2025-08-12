@@ -11,7 +11,7 @@ describe('WidgetDataChartComponent', () => {
       imports: [WidgetDataChartComponent]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(WidgetDataChartComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

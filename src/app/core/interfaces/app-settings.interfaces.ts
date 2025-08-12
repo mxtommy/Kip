@@ -1,5 +1,4 @@
 import { IDatasetServiceDatasetConfig } from '../services/data-set.service';
-import { IWidget } from './widgets-interface';
 import { IUnitDefaults } from '../services/units.service';
 import { Dashboard } from './../services/dashboard.service';
 
@@ -24,6 +23,7 @@ export interface IConfig {
 export interface IAppConfig {
   configVersion: number;
   autoNightMode: boolean;
+  redNightMode: boolean;
   nightModeBrightness: number;
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;

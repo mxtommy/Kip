@@ -7,6 +7,7 @@ import { DialogConfirmationComponent } from '../components/dialog-confirmation/d
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
 import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
+import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,9 @@ export class DialogService {
     switch (data.component) {
       case 'select-widget':
         data.componentType = WidgetsListComponent;
+        break;
+      case 'upgrade-config':
+        data.componentType = UpgradeConfigComponent;
         break;
     }
 

@@ -1,7 +1,7 @@
-<widget-host
+<widget-host style="overflow: clip;"
   [(config)]="widgetProperties.config"
   [id]="widgetProperties.uuid"
-  (configChange)="updateConfig($event)"
+  (configChange)="updateConfig()"
 >
   <iframe
     #freeboardSkIframe

@@ -1,14 +1,15 @@
 <widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
     <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
       [displayName]="widgetProperties.config.displayName"
-      [displayNameColor]="theme.contrastDim"
-      [unitLabel]="unitsLabel"
-      [dataValue]="dataLabelValue"
-      [barColor]="barColor"
-      [barColorGradient]="barColorGradient"
-      [barColorBackground]="barColorBackground"
-      [gaugeValue]="dataLabelValue"
+      [displayNameColor]="theme().contrastDim"
+      [unitLabel]="unitsLabel()"
+      [dataValue]="dataValue()"
+      [dataValueLabel]="dataLabelValue()"
+      [barColor]="barColor()"
+      [barColorGradient]="barColorGradient()"
+      [barColorBackground]="barColorBackground()"
       [gaugeMaxValue]="widgetProperties.config.displayScale.upper"
       [gaugeMinValue]="widgetProperties.config.displayScale.lower"
+      [highlights]="this.highlights()"
     ></svg-simple-linear-gauge>
 </widget-host>

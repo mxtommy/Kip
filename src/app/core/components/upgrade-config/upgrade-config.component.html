@@ -1,0 +1,92 @@
+<h2>All New Touch, Mouse, and Keyboard Navigation</h2>
+<p class="warning"><strong>Heads up:</strong> The new version introduces a completely
+  redesigned fullscreen interface with no navigation bar. Please review the input modes table below to get an understanding
+  of the new ways to operate KIP before upgrading. After the upgrade, give yourself time to get comfortable with the
+  changes.</p>
+<table class="nav-table">
+  <thead>
+    <tr>
+      <th>Actions</th>
+      <th>Touch</th>
+      <th>Mouse</th>
+      <th>Keyboard Shortcuts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Open Actions menu</td>
+      <td>Swipe left</td>
+      <td>Click, drag left, and release</td>
+      <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8592;</kbd> (Left Arrow)</td>
+    </tr>
+    <tr>
+      <td>Open Notification menu</td>
+      <td>Swipe right</td>
+      <td>Click, drag right, and release</td>
+      <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8594;</kbd> (Right Arrow)</td>
+    </tr>
+    <tr>
+      <td>Cycle through dashboards</td>
+      <td>Swipe up/down</td>
+      <td>Click, drag up/down, and release</td>
+      <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8593;</kbd>/<kbd style="font-size: x-large;">&#8595;</kbd> (Up/Down Arrow)</td>
+    </tr>
+    <tr>
+      <td>Toggle Fullscreen</td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd></td>
+    </tr>
+    <tr>
+      <td>Toggle Night mode</td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>N</kbd></td>
+    </tr>
+    <tr>
+      <td>Toggle dashboard edit mode</td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd></td>
+    </tr>
+  </tbody>
+</table>
+<i>Note that the words Touch and Tap are synonymous with mouse click.</i><br/><br/>
+
+<h2>Migration Limitations</h2>
+<p>
+  <span class="warning">Important:</span> The new widget layout engine is <strong>completely different</strong> from the previous version. When you upgrade, your configuration will be migrated, but <strong>the way dashboards and widgets are arranged will change significantly</strong>.
+</p>
+<ul>
+  <li>All KIP configuration settings will be migrated.</li>
+  <li>Each v2 Page layout will become a v3 Dashboard.</li>
+  <li>All widgets and their settings will appear in their new dashboards.</li>
+  <li>
+    <span class="warning"><strong>Note:</strong> Widget positions, order, and sizes <strong>WILL BE LOST</strong>. After upgrading, dashboards will contain small widgets that you must reposition and resize manually.</span>
+  </li>
+</ul>
+
+<p>To upgrade your configuration, follow these steps:</p>
+<ol>
+  <li>
+    As a safety measure, if you are using Signal K authentication, manually back up your configuration. Make a copy of the <code>9.0.0.json</code> files found on the Signal K server in the following folders:
+    <ul>
+      <li><code>~/.signalk/applicationData/users/(username)/kip/</code></li>
+      <li><code>~/.signalk/applicationData/global/kip/</code></li>
+    </ul>
+  </li>
+  <li>Click the <strong>Upgrade</strong> button below.</li>
+  <li>Once the upgrade is complete, KIP will restart and display the migrated dashboards.</li>
+  <li>Reposition and resize your widgets as needed.</li>
+  <li>Once satisfied, delete the <code>9.0.0.json</code> configuration files located in the previously mentioned folders. They are not needed any more.</li>
+</ol>
+
+<p>
+  For tips and guidance, consult KIP’s in-app <strong>Help</strong> section. Most common questions are answered there.
+  If you need support, join the <a href="https://discord.gg/AMDYT2DQga" target="_blank">Signal K #kip Discord channel</a>.
+</p>
+
+<div class="button-group">
+  <button mat-flat-button (click)="upgrade()">Upgrade</button>
+  <button mat-flat-button (click)="startFresh()" style="margin-left: 20px;">Start Fresh</button>
+</div>

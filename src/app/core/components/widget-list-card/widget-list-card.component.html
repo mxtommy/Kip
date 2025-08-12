@@ -1,4 +1,4 @@
-<div class="item-container">
+<div class="item-container" role="button" tabindex="0" [attr.aria-disabled]="!pluginDependencyValid() ? 'true' : null">
   <div class="item-icon">
     <mat-icon
       [svgIcon]="svgIcon()"
@@ -8,7 +8,30 @@
     ></mat-icon>
   </div>
   <div class="item-label">
-    <p class="title no-text-select">{{ name() }}</p>
+    <p class="title no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom:0px; margin-top: 4px' : ''">{{ name() }}</p>
+    @if (pluginsStatus().length > 0) {
+      <div class="dependency no-text-select" [style]="pluginsStatus().length > 0 ? 'margin-bottom: 8px;margin-top: 4px;' : ''">
+        <span [class]="!pluginDependencyValid() ? 'dependency-error' : ''">Plugins:</span>
+        @for (plugin of pluginsStatus(); let last = $last; track $index) {
+          <span
+          [ngClass]="
+            !pluginDependencyValid()
+              ? (plugin.enabled
+                  ? (plugin.required ? 'dependency-required-ok' : 'dependency-optional-ok')
+                  : (plugin.required ? 'dependency-required-error' : 'dependency-optional-error'))
+              : (plugin.required
+                  ? ''
+                  : (plugin.enabled ? 'dependency-optional-present-met' : 'dependency-optional-missing-met'))
+          "
+            [attr.title]="plugin.required ? 'Required' : 'Optional'"
+          >
+            {{ plugin.enabled ? '✔' : '✖' }} {{ plugin.name }}
+            <span class="plugin-type-label">{{ plugin.required ? '' : '(optional)' }}</span>
+          </span>
+          @if (!last) {<span>, </span>}
+        }
+      </div>
+    }
     <span class="description no-text-select">{{ description() }}</span>
   </div>
 </div>

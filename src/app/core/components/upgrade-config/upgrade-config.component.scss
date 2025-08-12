@@ -1,0 +1,31 @@
+.button-group {
+  display: flex;
+  justify-content: center;
+}
+
+  .nav-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2em;
+  }
+  .nav-table th, .nav-table td {
+    border: 1px solid #bbb;
+    padding: 0.5em 1em;
+    text-align: center;
+  }
+  .nav-table th {
+    background: #dddddd;
+    color: #222;
+    font-weight: bold;
+  }
+  .nav-table tr:nth-child(even) {
+    background: #242424;
+  }
+  .warning {
+    color: #b71c1c;
+  }
+  .button-group {
+    margin-top: 2em;
+    display: flex;
+    gap: 20px;
+  }

@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { DataService } from './data.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { StorageService } from './storage.service';
+import { ConnectionStateMachine } from './connection-state-machine.service';
 
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
@@ -28,6 +29,7 @@ export class AppNetworkInitService implements OnDestroy {
 
   private connection = inject(SignalKConnectionService);
   private auth = inject(AuthenticationService);
+  private connectionStateMachine = inject(ConnectionStateMachine);
   private router = inject(Router);
   private delta = inject(SignalKDeltaService); // Init to get data before app starts
   private data = inject(DataService); // Init to get data before app starts
@@ -45,7 +47,12 @@ export class AppNetworkInitService implements OnDestroy {
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {
-        await this.connection.resetSignalK({url: this.config.signalKUrl, new: false}, this.config.proxyEnabled, this.config.signalKSubscribeAll);
+        // Use SignalKConnectionService to initialize connection with the configured URL
+        await this.connection.initializeConnection(
+          {url: this.config.signalKUrl, new: false},
+          this.config.proxyEnabled,
+          this.config.signalKSubscribeAll
+        );
       }
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
@@ -63,11 +70,24 @@ export class AppNetworkInitService implements OnDestroy {
       }
 
     } catch (error) {
-      console.warn("[AppInit Network Service] Services loaded. Connection attempt unsuccessful");
-      console.error(error);
-      return Promise.reject("[AppInit Network Service] Services loaded. Connection issue");
+      if (error.status === 0) {
+        console.warn("[AppInit Network Service] Initialization failed. Network error. Redirecting to settings page.");
+      } else if (error.status === 401) {
+        console.warn("[AppInit Network Service] Initialization failed. Unauthorized access. Redirecting to login page.");
+      } else {
+        console.warn("[AppInit Network Service] Initialization failed. Error: ", JSON.stringify(error));
+      }
+      return Promise.reject("[AppInit Network Service] Startup completed with connection issue.");
     } finally {
       console.log("[AppInit Network Service] Initialization completed");
+      // Enable WebSocket functionality now that initialization is complete
+      this.connectionStateMachine.enableWebSocketMode();
+
+      // Start WebSocket connection if HTTP discovery was successful
+      if (this.connectionStateMachine.isHTTPConnected()) {
+        console.log("[AppInit Network Service] Starting WebSocket connection after initialization");
+        this.connectionStateMachine.startWebSocketConnection();
+      }
     }
   }
 
@@ -81,7 +101,7 @@ export class AppNetworkInitService implements OnDestroy {
         } else if (error.status === 401) {
           this.router.navigate(['/login']);
         }
-        console.error("[AppInit Network Service] Login failure. Server returned: " + JSON.stringify(error.error));
+        throw error;  // Re-throw the error to be handled by the caller
       }
     }
   }
@@ -109,6 +129,11 @@ export class AppNetworkInitService implements OnDestroy {
       this.setLocalStorageConfig();
       console.log(`[AppInit Network Service] Upgrading Connection version from 9 to 10`);
     }
+    if (this.config.configVersion == 10) {
+      this.config.configVersion = 11;
+      this.setLocalStorageConfig();
+      console.log(`[AppInit Network Service] Upgrading Connection version from 10 to 11`);
+    }
   }
 
   private preloadFonts (): void {
@@ -116,7 +141,7 @@ export class AppNetworkInitService implements OnDestroy {
     const fonts = [
       {
         family: "Roboto",
-        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmSU5fChc4AMP6lbBP.woff2)",
+        src: "url(./assets/google-fonts/KFOlCnqEu92Fr1MmSU5fChc4AMP6lbBP.woff2)",
         options: {
           weight: "300",
           style: "normal"
@@ -124,7 +149,7 @@ export class AppNetworkInitService implements OnDestroy {
       },
       {
         family: "Roboto",
-        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmSU5fBBc4AMP6lQ.woff2)",
+        src: "url(./assets/google-fonts/KFOlCnqEu92Fr1MmSU5fBBc4AMP6lQ.woff2)",
         options: {
           weight: "300",
           style: "normal"
@@ -132,7 +157,7 @@ export class AppNetworkInitService implements OnDestroy {
       },
       {
         family: "Roboto",
-        src: "url(/assets/google-fonts/KFOmCnqEu92Fr1Mu7GxKKTU1Kvnz.woff2)",
+        src: "url(./assets/google-fonts/KFOmCnqEu92Fr1Mu7GxKKTU1Kvnz.woff2)",
         options: {
           weight: "400",
           style: "normal"
@@ -140,7 +165,7 @@ export class AppNetworkInitService implements OnDestroy {
       },
       {
         family: "Roboto",
-        src: "url(/assets/google-fonts/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2)",
+        src: "url(./assets/google-fonts/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2)",
         options: {
           weight: "400",
           style: "normal"
@@ -148,7 +173,7 @@ export class AppNetworkInitService implements OnDestroy {
       },
     {
         family: "Roboto",
-        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmEU9fChc4AMP6lbBP.woff2)",
+        src: "url(./assets/google-fonts/KFOlCnqEu92Fr1MmEU9fChc4AMP6lbBP.woff2)",
         options: {
           weight: "500",
           style: "normal"
@@ -156,7 +181,7 @@ export class AppNetworkInitService implements OnDestroy {
       },
       {
         family: "Roboto",
-        src: "url(/assets/google-fonts/KFOlCnqEu92Fr1MmEU9fBBc4AMP6lQ.woff2)",
+        src: "url(./assets/google-fonts/KFOlCnqEu92Fr1MmEU9fBBc4AMP6lQ.woff2)",
         options: {
           weight: "500",
           style: "normal"
@@ -167,8 +192,12 @@ export class AppNetworkInitService implements OnDestroy {
     for (const {family, src, options} of fonts) {
       const font = new FontFace(family, src, options);
       font.load()
-        .then(() => document.fonts.add(font))
-        .catch(err => console.log(`[AppInit Network Service] Error loading fonts: ${err}`));
+        .then(() =>
+          document.fonts.add(font)
+      )
+        .catch(err =>
+          console.log(`[AppInit Network Service] Error loading fonts: ${err}`)
+        );
     }
   }
 

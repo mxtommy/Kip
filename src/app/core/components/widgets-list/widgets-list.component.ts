@@ -1,33 +1,69 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonToggleChange, MatButtonToggleModule } from '@angular/material/button-toggle';
-import { WidgetDescription, WidgetService } from '../../services/widget.service';
+import { WidgetDescriptionWithPluginStatus, WidgetService, WidgetDescription } from '../../services/widget.service';
 import { WidgetListCardComponent } from '../widget-list-card/widget-list-card.component';
 import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'widgets-list',
-  standalone: true,
   imports: [MatButtonToggleModule, WidgetListCardComponent],
   templateUrl: './widgets-list.component.html',
   styleUrl: './widgets-list.component.scss'
 })
-export class WidgetsListComponent {
-  private dialogRef = inject<MatDialogRef<WidgetsListComponent>>(MatDialogRef);
-
+export class WidgetsListComponent implements OnInit {
+  private _dialogRef = inject<MatDialogRef<WidgetsListComponent>>(MatDialogRef);
   protected _widgets = inject(WidgetService);
-  protected widgetsList: WidgetDescription[] = [];
-  protected _widgetCategory = signal<string>("Basic");
+  private _widgetsList: WidgetDescriptionWithPluginStatus[] = [];
+  protected filteredWidgetsList = signal<WidgetDescriptionWithPluginStatus[]>([]);
+  protected _widgetCategory = signal<string>("Core");
+  protected isDependencyValid = signal<boolean>(true);
 
-  constructor() {
-    this.widgetsList = this._widgets.kipWidgets.filter((widget) => widget.category === this._widgetCategory());
+  ngOnInit(): void {
+    this.loadWidgets();
+  }
+
+  private async loadWidgets(): Promise<void> {
+    this._widgetsList = await this._widgets.getKipWidgetsWithStatus();
+    this.filteredWidgetsList.set(this._widgetsList.filter(widget => widget.category === this._widgetCategory()));
   }
 
   protected onCategoryChange(category: MatButtonToggleChange): void {
-    this.widgetsList = this._widgets.kipWidgets.filter((widget) => widget.category === category.value);
+    this.filteredWidgetsList.set(this._widgetsList.filter(widget => widget.category === category.value));
     this._widgetCategory.set(category.value);
   }
 
-  protected onSelectWidget(widgetSelector: string): void {
-    this.dialogRef.close(widgetSelector);
+  protected onSelectWidget(selectedWidget: WidgetDescriptionWithPluginStatus): void {
+  if (!selectedWidget.isDependencyValid) return; // guard against keyboard activation on disabled card
+    const {
+      name,
+      description,
+      icon,
+      minWidth,
+      minHeight,
+      defaultWidth,
+      defaultHeight,
+      category,
+      requiredPlugins,
+      optionalPlugins,
+      selector,
+      componentClassName
+    } = selectedWidget;
+
+    const widget: WidgetDescription = {
+      name,
+      description,
+      icon,
+      minWidth,
+      minHeight,
+      defaultWidth,
+      defaultHeight,
+      category,
+      requiredPlugins,
+      // Only include optionalPlugins if present
+      ...(optionalPlugins ? { optionalPlugins } : {}),
+      selector,
+      componentClassName
+    };
+    this._dialogRef.close(widget);
   }
 }

@@ -3,8 +3,8 @@
 
 @mixin color($theme) {
   .button-color-red {
-    --mdc-filled-button-container-color: var(--kip-port-color);
-    --mdc-filled-button-label-text-color: var(--kip-contrast-color);
+    --mat-button-filled-container-color: var(--kip-port-color);
+    --mat-button-filled-label-text-color: var(--kip-contrast-color);
   }
 }
 

@@ -11,7 +11,7 @@ import type { IDatasetServiceDatasetConfig } from '../../services/data-set.servi
 import { FilterSelfPipe } from '../../pipes/filter-self.pipe';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
-import { NgFor } from '@angular/common';
+
 import { MatSelect } from '@angular/material/select';
 import { MatStepper, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
 import { MatDivider } from '@angular/material/divider';
@@ -22,18 +22,11 @@ import { FormsModule } from '@angular/forms';
 import { MatRadioModule } from '@angular/material/radio';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 
-interface settingsForm {
-  selectedPath: string;
-  selectedSource: string;
-  interval: number;
-  dataPoints: number;
-};
 
 @Component({
     selector: 'settings-datasets',
     templateUrl: './datasets.component.html',
     styleUrls: ['./datasets.component.scss'],
-    standalone: true,
     imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider, PageHeaderComponent]
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
@@ -56,7 +49,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private loadDatasets() {
-    this.tableData.data = this.dsService.list();
+    this.tableData.data = this.dsService.list().filter(ds => ds.editable !== false);
   }
 
   ngAfterViewInit() {
@@ -108,7 +101,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
-    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label);
+    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label, true, true);
     this.loadDatasets();
   }
 
@@ -141,8 +134,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
     selector: 'settings-datasets-modal',
     templateUrl: './datasets.modal.html',
     styleUrls: ['./datasets.component.scss'],
-    standalone: true,
-    imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
+    imports: [MatRadioModule, MatDialogTitle, MatDialogContent, FormsModule, MatStepper, MatStep, MatStepLabel, MatFormField, MatLabel, MatSelect, MatOption, MatCheckbox, MatDivider, MatButton, MatStepperNext, MatInput, MatStepperPrevious, FilterSelfPipe]
 })
 export class SettingsDatasetsModalComponent implements OnInit {
   private SignalKDataService = inject(DataService);
@@ -164,14 +156,14 @@ export class SettingsDatasetsModalComponent implements OnInit {
 
   public availablePaths: string[] = [];
   public availableSources: string[] = [];
-  public filterSelfPaths:boolean = true;
+  public filterSelfPaths = true;
 
   ngOnInit() {
     if (this.dataset) {
       this.titleDialog = "Edit Dataset";
       this.formDataset = this.dataset;
 
-      let pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
+      const pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
       if (pathObject !== null) {
         this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
       }
@@ -185,7 +177,7 @@ export class SettingsDatasetsModalComponent implements OnInit {
   }
 
   public changePath() { // called when we choose a new path. Resets the form old value with default info of this path
-    let pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
+    const pathObject = this.SignalKDataService.getPathObject(this.formDataset.path);
     if (pathObject === null) { return; }
     this.availableSources = ['default'].concat(Object.keys(pathObject.sources));
     this.formDataset.pathSource = 'default';

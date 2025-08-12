@@ -9,9 +9,7 @@ interface IKipTimer {
   intervalMS: number;
 }
 
-interface IKipTimers {
-  [key: string]: IKipTimer;
-}
+type IKipTimers = Record<string, IKipTimer>;
 
 @Injectable({
   providedIn: 'root'
@@ -53,7 +51,7 @@ export class TimersService {
 
 
   public startTimer(timerName: string) {
-    if (!this.kipTimers.hasOwnProperty(timerName)) { return; }
+    if (!Object.prototype.hasOwnProperty.call(this.kipTimers, timerName)) { return; }
 
     if (this.kipTimers[timerName].timeoutID !== null) { return } // already running
 
@@ -63,7 +61,7 @@ export class TimersService {
   }
 
   public stopTimer(timerName: string) {
-    if (!this.kipTimers.hasOwnProperty(timerName)) { return; }
+    if (!Object.prototype.hasOwnProperty.call(this.kipTimers, timerName)) { return; }
     if (this.kipTimers[timerName].timeoutID === null) { return; } // already Stopped
     clearInterval(this.kipTimers[timerName].timeoutID);
     this.kipTimers[timerName].timeoutID = null;
@@ -71,13 +69,13 @@ export class TimersService {
 
 
   public setTimer(timerName: string, timerValue: number) {
-    if (!this.kipTimers.hasOwnProperty(timerName)) { return; }
+    if (!Object.prototype.hasOwnProperty.call(this.kipTimers, timerName)) { return; }
     this.kipTimers[timerName].currentValue.next(timerValue);
   }
 
 
   public deleteTimer(timerName: string) {
-    if (!this.kipTimers.hasOwnProperty(timerName)) { return; }
+    if (!Object.prototype.hasOwnProperty.call(this.kipTimers, timerName)) { return; }
     this.stopTimer(timerName);
     this.kipTimers[timerName].currentValue.complete();
     delete this.kipTimers[timerName];
@@ -85,7 +83,7 @@ export class TimersService {
 
 
   public isRunning(timerName: string) : boolean {
-    let running: boolean = false;
+    let running = false;
     if (timerName in this.kipTimers) {
       running = this.kipTimers[timerName].timeoutID === null ? false : true;
     };

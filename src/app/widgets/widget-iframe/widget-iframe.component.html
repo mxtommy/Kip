@@ -1,4 +1,4 @@
-<widget-host
+<widget-host style="overflow: hidden;"
   [(config)]="widgetProperties.config"
   [id]="widgetProperties.uuid"
   (configChange)="updateConfig($event)"
@@ -6,33 +6,23 @@
   @if (widgetUrl) {
   <iframe
     #plainIframe
-    [src]="widgetUrl | safe"
+    [src]="widgetUrl"
     width="100%"
     height="100%"
     frameborder="0"
-    sandbox="allow-scripts allow-same-origin allow-popups"
     class="widgetIframe"
   ></iframe>
   } @else {
     <div style="padding: 15px;">
-      <h2>Bad or empty URL</h2>
+      <h2>Empty or bad URL</h2>
       <p>
-        IMPORTANT: cross-domain security rules (
-          <a
-            href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS"
-            target="_blank"
-          >CORS!</a>
-        ) apply to this widget. This means that you can only load pages that are
-        <strong>on the same domain</strong> as the Signal K server that KIP is running on.
+        IMPORTANT: cross-domain security rules (CORS) apply to this widget.
       </p>
-      <p>Typically, you can load Grafana, NODE-Red and other Signal K
-        plugins or related tools.
+      <p>Typically, you can load Grafana graphs, Signal K
+        apps or other related tools.
       </p>
     </div>
   }
-
-  @if (!_dashboard.isDashboardStatic()) {
-    <div class="widgetOverlay">
-    </div>
-  }
+  <div class="widgetOverlay" [style.display]="displayTransparentOverlay()">
+  </div>
 </widget-host>

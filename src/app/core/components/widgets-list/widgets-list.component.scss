@@ -1,3 +1,9 @@
 .list-filter {
   margin-bottom: 20px;
 }
+
+.dependency-missing {
+  pointer-events: none;
+  opacity: 0.8;
+  background-color: var(--mat-sys-neutral10);
+}

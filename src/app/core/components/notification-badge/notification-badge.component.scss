@@ -16,19 +16,19 @@
 }
 
 .icon-alert-color {
-  --mdc-list-list-item-leading-icon-color: var(--kip-zone-alert-color);
+  --mat-list-list-item-leading-icon-color: var(--kip-zone-alert-color);
 }
 
 .icon-warn-color {
-  --mdc-list-list-item-leading-icon-color: var(--kip-zone-warn-color);
+  --mat-list-list-item-leading-icon-color: var(--kip-zone-warn-color);
 }
 
 .icon-alarm-color {
-  --mdc-list-list-item-leading-icon-color: var(--kip-zone-alarm-color);
+  --mat-list-list-item-leading-icon-color: var(--kip-zone-alarm-color);
 }
 
 .icon-emergency-color {
-  --mdc-list-list-item-leading-icon-color: var(--kip-zone-emergency-color);
+  --mat-list-list-item-leading-icon-color: var(--kip-zone-emergency-color);
 }
 
  // Blink button on Alarm or Emergency state

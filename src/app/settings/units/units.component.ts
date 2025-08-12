@@ -14,7 +14,6 @@ import { KeyValuePipe } from '@angular/common';
     selector: 'settings-units',
     templateUrl: './units.component.html',
     styleUrls: ['./units.component.scss'],
-    standalone: true,
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, MatOption, MatDivider, MatButton, KeyValuePipe]
 })
 export class SettingsUnitsComponent implements OnInit {
@@ -23,30 +22,29 @@ export class SettingsUnitsComponent implements OnInit {
   private appService = inject(AppService);
 
   public unitsFormGroup = new UntypedFormGroup({});
-  protected groupUnits: {[key: string]: IUnit}[] = [];
+  protected groupUnits: Record<string, IUnit>[] = [];
 
   ngOnInit() {
     const unitsSettings: IUnitDefaults = this.appSettingsService.getDefaultUnits();
     // Format unit group data a bit better for consumption in template
     const unitGroupsRaw = this.units.getConversions();
 
-    for (let i = 0; i < unitGroupsRaw.length; i++) {
-      if(unitGroupsRaw[i].group === "Position") return; // Skip the iteration when key is "Position" as it's not a valid unit group as-is. We need to use position Objects instead. Then we can set format properly.
+    for (const groupRaw of unitGroupsRaw) {
+      if (groupRaw.group === "Position") continue; // Skip the iteration when key is "Position" as it's not a valid unit group as-is. We need to use position Objects instead. Then we can set format properly.
       const units = [];
 
-      for (let index = 0; index < unitGroupsRaw[i].units.length; index++) {
-        const unit: IUnit = unitGroupsRaw[i].units[index];
+      for (const unit of groupRaw.units) {
         units.push(unit);
       }
-      this.groupUnits[unitGroupsRaw[i].group] = units;
+      this.groupUnits[groupRaw.group] = units;
       // Generate formGroup
-      this.unitsFormGroup.addControl(unitGroupsRaw[i].group, new UntypedFormControl(unitsSettings[unitGroupsRaw[i].group]));
+      this.unitsFormGroup.addControl(groupRaw.group, new UntypedFormControl(unitsSettings[groupRaw.group]));
     }
     this.unitsFormGroup.updateValueAndValidity();
   }
 
   submitConfig() {
     this.appSettingsService.setDefaultUnits(this.unitsFormGroup.value);
-    this.appService.sendSnackbarNotification("Configuration saved", 5000, false);
+    this.appService.sendSnackbarNotification("Configuration saved", 3000, false);
   }
 }

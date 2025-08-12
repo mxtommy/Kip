@@ -4,18 +4,17 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { Subscription } from 'rxjs';
+import { ISkZone } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
     selector: 'widget-gauge-steel',
     templateUrl: './widget-gauge-steel.component.html',
     styleUrls: ['./widget-gauge-steel.component.scss'],
-    standalone: true,
     imports: [WidgetHostComponent, GaugeSteelComponent]
 })
 export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  dataValue: any = 0;
-
-  protected zones = [];
+  protected dataValue = 0;
+  protected zones: ISkZone[] = [];
 
   // Zones support
   private metaSub: Subscription;
@@ -72,9 +71,16 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
     this.metaSub?.unsubscribe();
 
     this.observeDataStream('gaugePath', newValue => {
-      if (newValue.data.value == null) {
-        newValue.data.value = 0;
+      if (!newValue || !newValue.data) {
+        newValue = {
+          data: {
+            value: 0,
+            timestamp: new Date(),
+          },
+          state: "normal" // Default state
+        };
       }
+
       // Compound value to displayScale
       this.dataValue = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
     });
@@ -104,6 +110,7 @@ export class WidgetSteelGaugeComponent extends BaseWidgetComponent implements On
 
   ngOnDestroy() {
     this.destroyDataStreams();
+    this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
   }
 }

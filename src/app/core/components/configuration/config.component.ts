@@ -14,7 +14,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { NgIf, NgFor } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 
@@ -28,8 +28,7 @@ interface IRemoteConfig {
     selector: 'settings-config',
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
-    standalone: true,
-    imports: [RouterLink, NgIf, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, NgFor, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
+    imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy {
   private appSettingsService = inject(AppSettingsService);
@@ -39,11 +38,11 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   private fb = inject(UntypedFormBuilder);
 
   protected readonly pageTitle: string = "Configurations";
-  public hasToken: boolean = false;
-  public isTokenTypeDevice: boolean = false;
+  public hasToken = false;
+  public isTokenTypeDevice = false;
   private tokenSub: Subscription;
 
-  public supportApplicationData: boolean = false;
+  public supportApplicationData = false;
   public serverConfigList: IRemoteConfig[] = [];
   public serverUpgradableConfigList: IRemoteConfig[] = [];
 
@@ -77,7 +76,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     });
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
-    this.getServerConfigList();
+    if(this.hasToken) this.getServerConfigList();
     // this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
 
@@ -96,8 +95,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
         }
       })
       .catch((error: HttpErrorResponse) => {
-        let errMsg: string = null;
-
         switch (error.status) {
           case 401:
             this.appService.sendSnackbarNotification("Application Storage Error: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false);
@@ -185,7 +182,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   public getLocalConfigFromMemory(): IConfig {
-    let localConfig: IConfig = {
+    const localConfig: IConfig = {
       "app": this.appSettingsService.getAppConfig(),
       "dashboards": this.appSettingsService.getDashboardConfig(),
       "theme": this.appSettingsService.getThemeConfig(),
@@ -194,7 +191,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   public getLocalConfigFromLocalStorage(): IConfig {
-    let localConfig: IConfig = {
+    const localConfig: IConfig = {
       "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
       "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardsConfig'),
       "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
@@ -220,14 +217,19 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     window.URL.revokeObjectURL(downloadURL); // Cleanup memory
   }
 
-  public uploadJsonConfig(event: any) {
-    const file = event.target.files[0]; // Get the selected file
+  public uploadJsonConfig(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file && file.type === "application/json") {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           this.jsonData = JSON.parse(e.target?.result as string); // Parse JSON
-          this.hasToken ? this.saveConfig(this.jsonData, 'user', 'default', false, true) : this.saveToLocalstorage(this.jsonData);
+          if (this.hasToken) {
+            this.saveConfig(this.jsonData, 'user', 'default', false, true);
+          } else {
+            this.saveToLocalstorage(this.jsonData);
+          }
           this.appSettingsService.reloadApp();
         } catch (error) {
           this.appService.sendSnackbarNotification("Invalid JSON file", 3000, false);

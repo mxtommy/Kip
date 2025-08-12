@@ -1,17 +1,16 @@
-import { DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
-import { IStreamStatus, SignalKDeltaService } from './signalk-delta.service';
+import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-const modePath: string = 'self.environment.mode';
+import { toSignal } from '@angular/core/rxjs-interop';
+import * as packageInfo from '../../../../package.json';
 
 /**
  * Snack-bar notification message interface.
  */
 export interface AppNotification {
   message: string;
+  action?: string;
   duration: number;
   silent: boolean;
 }
@@ -62,7 +61,8 @@ export interface ITheme {
 @Injectable({
   providedIn: 'root'
 })
-export class AppService implements OnDestroy {
+export class AppService {
+  readonly MODE_PATH: string = 'self.environment.mode';
   public readonly configurableThemeColors: {label: string, value: string}[] = [
     {label: "Contrast", value: "contrast"},
     {label: "Blue", value: "blue"},
@@ -73,35 +73,62 @@ export class AppService implements OnDestroy {
     {label: "Purple", value: "purple"},
     {label: "Grey", value: "grey"}
   ];
-  public isNightMode = signal<boolean>(false);
-  private _autoNightDeltaStatus: Subscription = null;
-  private _autoNightModeSubscription: Subscription = null;
-  private _environmentModePathSubscription: Subscription = null;
-  private _autoNightModeThemeSubscription: Subscription = null;
-
   public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
-  private readonly _cssThemeColorRoles: ITheme = null;
+  private _cssThemeColorRoles: ITheme = null;
   private _settings = inject(AppSettingsService);
-  private _delta = inject(SignalKDeltaService);
   private _data = inject(DataService);
-  private _destroyRef = inject(DestroyRef);
+  public isNightMode = signal<boolean>(false);
+  private _useAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), { requireSync: true });
+  private _theme = toSignal(this._settings.getThemeNameAsO(), { requireSync: true });
+  private _redNightMode = toSignal(this._settings.getRedNightModeAsO(), { requireSync: true });
+  private _environmentMode = toSignal(this._data.subscribePath(this.MODE_PATH, 'default'));
+
+  public readonly appVersion = signal<string>(packageInfo.version);
+  public readonly browserVersion = signal<string>('Unknown');
+  public readonly osVersion = signal<string>('Unknown');
 
   constructor() {
-    this.autoNightModeObserver();
+    effect(() => {
+      if (this._theme() === 'light-theme') {
+        document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
+      } else {
+        // Remove the light theme class if it exists
+        document.body.classList.remove('light-theme');
+      }
+    });
+
+    effect(() => {
+      const mode = this._environmentMode().data.value;
+      if (this._useAutoNightMode()) {
+        this.isNightMode.set(mode === "night");
+        this.toggleDayNightMode();
+      }
+    });
+
+    effect(() => {
+      const redNightMode = this._redNightMode();
+
+      untracked(() => {
+        if (redNightMode) {
+          this.toggleDayNightMode();
+        } else {
+          this.toggleDayNightMode();
+        }
+      });
+    });
+
     this.readThemeCssRoleVariables();
     this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
 
-    this._settings.getThemeNameAsO().pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe(themeName => {
-        if (themeName === 'light-theme')
-          document.body.classList.toggle('light-theme', themeName === 'light-theme');
-        else {
-          // Remove the light theme class if it exists
-          document.body.classList.remove('light-theme');
-        }
-        this.readThemeCssRoleVariables();
-      });
+    this.browserVersion.set(this.getBrowserVersion());
+    this.osVersion.set(this.getOSVersion());
+
+    console.log("*********** KIP Version Information ***********");
+    console.log(`** App Version: ${this.appVersion()}`);
+    console.log(`** Browser Version: ${this.browserVersion()}`);
+    console.log(`** OS Version: ${this.osVersion()}`);
+    console.log("***********************************************");
   }
 
   /**
@@ -114,8 +141,8 @@ export class AppService implements OnDestroy {
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
    */
-  public sendSnackbarNotification(message: string, duration: number = 10000, silent: boolean = false) {
-    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
+  public sendSnackbarNotification(message: string, duration = 10000, silent = false, action = "Dismiss") {
+    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent, action: action });
   }
 
   /**
@@ -174,7 +201,7 @@ export class AppService implements OnDestroy {
     return this._cssThemeColorRoles;
   }
 
-  public setBrightness(brightness: number, applyNightFilters: boolean = false): void {
+  public setBrightness(brightness: number, applyNightFilters = false): void {
     const appFilterWrapper = document.body;
 
     // Set the brightness level
@@ -187,58 +214,79 @@ export class AppService implements OnDestroy {
 
   public toggleDayNightMode(): void {
     if (this.isNightMode()) {
-      // Night mode: Apply brightness and night filters
-      this.setBrightness(this._settings.getNightModeBrightness(), true);
+      if (this._redNightMode()) {
+        document.body.classList.toggle('night-theme', true);
+        this.setBrightness(1, false);
+      } else {
+        this.setBrightness(this._settings.getNightModeBrightness(), true);
+        document.body.classList.remove('night-theme');
+        if (this._theme() === 'light-theme') {
+          document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
+        } else {
+          document.body.classList.remove('light-theme');
+        }
+      }
+
     } else {
-      // Day mode: Reset to normal brightness and remove filters
+      document.body.classList.remove('night-theme');
+      if (this._theme() === 'light-theme') {
+        document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
+      }
       this.setBrightness(1, false);
     }
+    this.readThemeCssRoleVariables();
+    this._cssThemeColorRoles = this.cssThemeColorRoles$.getValue();
   }
 
-  private autoNightModeObserver(): void {
-    this._autoNightModeSubscription = this._settings.getAutoNightModeAsO().subscribe(modeEnabled => {
-      if (modeEnabled) {
-        this.environmentModeObserver();
-      } else {
-        this._environmentModePathSubscription?.unsubscribe();
-      }
-    });
-  }
+  /**
+   * Helper method to get the browser version.
+   */
+  private getBrowserVersion(): string {
+    const userAgent = navigator.userAgent;
+    let browser = 'Unknown';
 
-  private environmentModeObserver(): void {
-    const deltaStatus = this._delta.getDataStreamStatusAsO(); // wait for delta service to start
-    this._autoNightDeltaStatus = deltaStatus.subscribe(stat => {
-      stat as IStreamStatus;
-      if(stat.operation == 2) {
-        this._environmentModePathSubscription = this._data.subscribePath(modePath, 'default').subscribe(path => {
-          if (this._settings.getAutoNightMode()) {
-            if (path.data.value) {
-              if (path.data.value === "night") {
-                this.isNightMode.set(true);
-                this.toggleDayNightMode();
-              } else if (path.data.value === "day") {
-                this.isNightMode.set(false);
-                this.toggleDayNightMode();
-              }
-            }
-          }
-        });
-      }
-    });
-  }
-
-  public  validateAutoNightModeSupported(): boolean {
-    if (!this._data.getPathObject(modePath)) {
-      this.sendSnackbarNotification("Dependency Error: self.environment.mode path was not found. To enable Automatic Night Mode, verify that the following Signal K requirements are met: 1) The Derived Data plugin is installed and enabled. 2) The plugin's Sun:Sets environment.sun parameter is checked.", 0);
-      return false;
+    if (userAgent.includes('Edg')) {
+      browser = `Edge ${userAgent.match(/Edg\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('Chromium')) {
+      browser = `Chrome ${userAgent.match(/Chrome\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Chromium')) {
+      browser = `Chromium ${userAgent.match(/Chromium\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Firefox')) {
+      browser = `Firefox ${userAgent.match(/Firefox\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome') && !userAgent.includes('Chromium')) {
+      browser = `Safari ${userAgent.match(/Version\/(\d+)/)?.[1]}`;
+    } else if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+      browser = `Opera ${userAgent.match(/(Opera|OPR)\/(\d+)/)?.[2]}`;
     }
-    return true;
+
+    return browser;
   }
 
-  ngOnDestroy(): void {
-    this._autoNightModeSubscription?.unsubscribe();
-    this._environmentModePathSubscription?.unsubscribe();
-    this._autoNightModeThemeSubscription?.unsubscribe();
-    this._autoNightDeltaStatus?.unsubscribe();
+  /**
+   * Helper method to get the OS version.
+   */
+  private getOSVersion(): string {
+    const platform = navigator.platform;
+    const userAgent = navigator.userAgent;
+
+    if (platform.startsWith('Mac')) {
+      return 'macOS';
+    } else if (platform.startsWith('Win')) {
+      return 'Windows';
+    } else if (/Linux/.test(platform)) {
+      // Check for Raspberry Pi identifiers in the userAgent or platform
+      if (
+        userAgent.includes('ARM') ||
+        userAgent.includes('aarch64') ||
+        userAgent.includes('Raspberry') ||
+        platform.includes('armv7l') ||
+        platform.includes('armv8l')
+      ) {
+        return 'Raspberry Pi';
+      }
+      return 'Linux';
+    } else {
+      return 'Unknown OS';
+    }
   }
 }

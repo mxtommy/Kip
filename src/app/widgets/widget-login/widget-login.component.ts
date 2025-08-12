@@ -28,7 +28,7 @@ export class WidgetLoginComponent implements OnInit {
   }
 
   public openUserCredentialModal(errorMsg: string) {
-    let dialogRef = this.dialog.open(ModalUserCredentialComponent, {
+    const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       disableClose: true,
       data: {
         user: this.connectionConfig.loginName,
@@ -51,7 +51,7 @@ export class WidgetLoginComponent implements OnInit {
 
   private serverLogin(newUrl?: string) {
     this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
-    .then( _ => {
+    .then(() => {
       this.appSettingsService.reloadApp();
     })
     .catch((error: HttpErrorResponse) => {

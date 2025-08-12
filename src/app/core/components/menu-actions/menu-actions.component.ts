@@ -7,6 +7,8 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
 import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
 import { uiEventService } from '../../services/uiEvent.service';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 interface MenuActionItem extends LargeIconTile {
   action: string;
@@ -26,6 +28,8 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected uiEvent = inject(uiEventService);
   private dashboard = inject(DashboardService);
   protected app = inject(AppService);
+  private _settings = inject(AppSettingsService);
+  protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
   protected readonly menuItems: MenuActionItem[]  = [
     { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
     { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Inspector', action: 'datainspector' },
@@ -39,35 +43,30 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.uiEvent.addHotkeyListener(this.handleKeyDown.bind(this));
+    this.uiEvent.addHotkeyListener(
+      (key, event) => this.handleKeyDown(key, event),
+      { ctrlKey: true, shiftKey: true, keys: ['e', 'f', 'n'] } // Filter for specific keys and modifiers
+    );
   }
 
   ngOnDestroy(): void {
     this.uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));;
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    // Normalize key to lowercase
-    const key = event.key.toLowerCase();
-
-    // Check if Ctrl and Shift are pressed
-    const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey for Mac (Cmd)
-    const isShiftPressed = event.shiftKey;
-
-    if (isCtrlPressed && isShiftPressed) {
-      switch (key) {
-        case 'e':
-          this.onActionItem('layout');
-          break;
-        case 'f':
-          this.onActionItem('toggleFullScreen');
-          break;
-        case 'n':
-          this.onActionItem('nightMode');
-          break;
-        default:
-          break;
-      }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private handleKeyDown(key: string, event: KeyboardEvent): void {
+    switch (key) {
+      case 'e':
+        this.onActionItem('layout');
+        break;
+      case 'f':
+        this.onActionItem('toggleFullScreen');
+        break;
+      case 'n':
+        this.onActionItem('nightMode');
+        break;
+      default:
+        break;
     }
   }
 
