@@ -235,6 +235,19 @@ export class WidgetService {
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
     {
+      name: 'Pitch & Roll',
+      description: 'Horizon-style attitude indicator showing live pitch and roll (°) with smooth animation—ideal for monitoring trim, heel, and sea-state response.',
+      icon: 'pitchRollGauge',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-horizon',
+      componentClassName: 'WidgetHorizonComponent'
+    },
+    {
       name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',

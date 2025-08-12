@@ -132,6 +132,27 @@
         <circle cx="12" cy="12" r="2" />
       </g>
     </svg>
+    <svg id="pitchRollGauge" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <defs>
+        <clipPath id="pitchRollGaugeClip">
+          <circle cx="12" cy="12" r="9" />
+        </clipPath>
+      </defs>
+      <g fill="currentColor">
+        <circle cx="12" cy="12" r="9" fill-opacity="0.3" />
+        <rect x="3" y="12" width="18" height="9" clip-path="url(#pitchRollGaugeClip)" />
+      </g>
+      <!-- Horizon and roll cues -->
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+        <!-- Subtle roll arc along the top -->
+        <path d="M6 6a9 9 0 0 1 12 0" />
+        <!-- Roll zero index at top center -->
+        <path d="M12 3v2.5" />
+        <!-- Horizon line -->
+        <path d="M7 12h10" />
+      </g>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
     <svg id="embedWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 20 20">
       <path fill="currentColor" d="M17 4H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m-3 6.5L12.5 12l1.5 1.5V15l-3-3l3-3zm1 4.5v-1.5l1.5-1.5l-1.5-1.5V9l3 3z" />
     </svg>

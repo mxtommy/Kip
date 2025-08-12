@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "3.7.1-beta.1",
+  "version": "3.8.0",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -72,8 +72,8 @@
     "@types/node": "^24.1.0",
     "angular-eslint": "20.1.1",
     "chart.js": "^4.4.9",
-    "chartjs-adapter-date-fns": "^3.0.0",
-    "chartjs-plugin-annotation": "^3.1.0",
+    "chartjs-plugin-annotation": "^3.0.1",
+    "steelseries": "^2.0.9",
     "codelyzer": "^6.0.0",
     "compare-versions": "^6.1.1",
     "core-js": "^3.13.1",

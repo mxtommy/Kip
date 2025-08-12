@@ -40,7 +40,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
-
+import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-horizon.component';
 
 @Component({
   selector: 'dashboard',
@@ -97,7 +97,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetPositionComponent,
       WidgetLabelComponent,
       WidgetSliderComponent,
-      WidgetWindTrendsChartComponent
+      WidgetWindTrendsChartComponent,
+      WidgetHorizonComponent
     ]);
   }
 
