@@ -300,14 +300,14 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       needle: isNeedle,
       needleType: this.widgetProperties.config.gauge.useNeedle ? "arrow" : "line",
-      needleShadow: false,
+      needleShadow: true,
       needleSide: "both",
-      needleStart: this.widgetProperties.config.gauge.useNeedle ? 200 : -45,
-      needleEnd: this.widgetProperties.config.gauge.useNeedle ? 150 : 55,
+      needleStart: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 200 : 155 : -45,
+      needleEnd: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 150 : 180 : 55,
 
-      colorNeedleEnd: "",
-      colorNeedleShadowUp: "",
-      colorNeedleShadowDown: "black",
+      colorNeedleEnd: getColors(this.widgetProperties.config.color, this.theme()).color,
+      colorNeedleShadowUp: getColors(this.widgetProperties.config.color, this.theme()).color,
+      colorNeedleShadowDown: getColors(this.widgetProperties.config.color, this.theme()).color,
 
       units: this.widgetProperties.config.paths['gaugePath'].convertUnitTo,
       fontUnits: "Roboto",
@@ -431,7 +431,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorBarProgress: this.widgetProperties.config.gauge.useNeedle ? "" : themePaletteColor,
       colorBarProgressEnd: '',
       colorNeedle: this.widgetProperties.config.gauge.useNeedle ? themePaletteColor : themePaletteDarkColor,
-      needleWidth: this.widgetProperties.config.gauge.useNeedle ? 20 : 0,
+      needleWidth: this.widgetProperties.config.gauge.useNeedle ? 45 : 0,
     });
   }
 
