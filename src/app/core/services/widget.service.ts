@@ -235,6 +235,19 @@ export class WidgetService {
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
     {
+      name: 'Pitch & Roll',
+      description: 'Displays pitch and roll angles for monitoring vessel orientation in sea state.',
+      icon: 'steelGauge',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-horizon',
+      componentClassName: 'WidgetHorizonComponent'
+    },
+    {
       name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',
