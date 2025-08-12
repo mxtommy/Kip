@@ -1,0 +1,5 @@
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" class="wrapper" (onResize)="onResized($event)">
+  <canvas [id]="widgetProperties.uuid" style="z-index: inherit;">
+    Browser does not support canvas element.
+  </canvas>
+</widget-host>
