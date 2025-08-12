@@ -236,8 +236,8 @@ export class WidgetService {
     },
     {
       name: 'Pitch & Roll',
-      description: 'Displays pitch and roll angles for monitoring vessel orientation in sea state.',
-      icon: 'steelGauge',
+      description: 'Horizon-style attitude indicator showing live pitch and roll (°) with smooth animation—ideal for monitoring trim, heel, and sea-state response.',
+      icon: 'pitchRollGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
