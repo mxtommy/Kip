@@ -3,13 +3,13 @@ import { Subscription, interval } from 'rxjs';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { SvgWindComponent } from '../svg-wind/svg-wind.component';
+import { SvgWindsteerComponent } from '../svg-windsteer/svg-windsteer.component';
 
 
 @Component({
     selector: 'widget-wind-steer',
-    templateUrl: './widget-wind.component.html',
-    imports: [ SvgWindComponent, WidgetHostComponent ]
+    templateUrl: './widget-windsteer.component.html',
+    imports: [ SvgWindsteerComponent, WidgetHostComponent ]
 })
 export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
   private zones = inject(NgZone);

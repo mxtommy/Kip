@@ -33,7 +33,7 @@ import { WidgetRacerLineComponent } from '../../../widgets/widget-racer-line/wid
 import { WidgetRacerTimerComponent } from '../../../widgets/widget-racer-timer/widget-racer-timer.component';
 import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
 import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
-import { WidgetWindComponent } from '../../../widgets/widget-wind/widget-wind.component';
+import { WidgetWindComponent } from '../../../widgets/widget-windsteer/widget-windsteer.component';
 import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
 import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
 import { ActivatedRoute, Router } from '@angular/router';

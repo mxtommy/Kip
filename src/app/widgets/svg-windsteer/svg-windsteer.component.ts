@@ -9,12 +9,12 @@ interface ISVGRotationObject {
 }
 
 @Component({
-    selector: 'app-svg-wind',
-    templateUrl: './svg-wind.component.svg',
-    styleUrl: './svg-wind.component.scss',
+    selector: 'svg-windsteer',
+    templateUrl: './svg-windsteer.component.svg',
+    styleUrl: './svg-windsteer.component.scss',
     imports: []
 })
-export class SvgWindComponent {
+export class SvgWindsteerComponent {
   protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
   protected readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
   protected readonly twaIndicator = viewChild.required<ElementRef<SVGGElement>>('twaIndicator');
