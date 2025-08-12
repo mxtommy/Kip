@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, NgZone, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
@@ -7,12 +7,27 @@ import { SvgWindsteerComponent } from '../svg-windsteer/svg-windsteer.component'
 
 
 @Component({
-    selector: 'widget-wind-steer',
-    templateUrl: './widget-windsteer.component.html',
-    imports: [ SvgWindsteerComponent, WidgetHostComponent ]
+  selector: 'widget-wind-steer',
+  templateUrl: './widget-windsteer.component.html',
+  imports: [SvgWindsteerComponent, WidgetHostComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy  {
+export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private zones = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
+  private markScheduled = false;
+  private scheduleRafId: number | null = null;
+  private readonly DEG_EPSILON = 1;      // degrees
+  private readonly SPEED_EPSILON = 0.1;  // knots
+  private hasHeading = false;
+  private hasCOG = false;
+  private hasAWA = false;
+  private hasAWS = false;
+  private hasTWA = false;
+  private hasTWS = false;
+  private hasSet = false;
+  private hasDrift = false;
+  private hasWPT = false;
   protected currentHeading = 0;
   protected courseOverGroundAngle = 0;
   protected appWindAngle = 0;
@@ -51,7 +66,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
         "appWindAngle": {
           description: "Apparent Wind Angle",
@@ -64,7 +79,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
         "appWindSpeed": {
           description: "Apparent Wind Speed",
@@ -76,7 +91,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'm/s',
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 1000
         },
         "trueWindAngle": {
           description: "True Wind Angle",
@@ -89,7 +104,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
         "trueWindSpeed": {
           description: "True Wind Speed",
@@ -101,7 +116,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'm/s',
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 1000
         },
         "courseOverGround": {
           description: "True Course Over Ground",
@@ -114,7 +129,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathSkUnitsFilter: 'rad',
           showConvertUnitTo: false,
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 1000
         },
         "nextWaypointBearing": {
           description: "Next Waypoint True Bearing",
@@ -127,7 +142,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
         "set": {
           description: "True Drift Set",
@@ -140,7 +155,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
           showConvertUnitTo: false,
-          sampleTime: 500
+          sampleTime: 1000
         },
         "drift": {
           description: "Drift Speed Impact",
@@ -152,7 +167,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'm/s',
           convertUnitTo: "knots",
-          sampleTime: 500
+          sampleTime: 1000
         }
       },
       windSectorEnable: true,
@@ -169,7 +184,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       enableTimeout: false,
       dataTimeout: 5
     };
-   }
+  }
 
   ngOnInit(): void {
     this.validateConfig();
@@ -179,95 +194,111 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   protected startWidget(): void {
     this.unsubscribeDataStream();
     this.stopWindSectors();
-    this.appWindSpeedUnit = this.widgetProperties.config.paths['trueWindSpeed'].convertUnitTo;
-    this.trueWindSpeedUnit = this.widgetProperties.config.paths['appWindSpeed'].convertUnitTo;
-    this.observeDataStream('headingPath', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.currentHeading = newValue.data.value;
-    });
-
-    this.observeDataStream('courseOverGround', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.courseOverGroundAngle = newValue.data.value;
-    });
-
-    this.observeDataStream('drift', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.driftFlow = newValue.data.value;
-    });
-
-    this.observeDataStream('set', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-          newValue.data.value = 0
-      }
-      this.driftSet = newValue.data.value;
-    });
-
-    this.observeDataStream('nextWaypointBearing', newValue => {
-      if (newValue.data.value < 0) {// stb
-        this.waypointAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
-      } else {
-        this.waypointAngle = newValue.data.value;
-      }
-    });
-
-    this.observeDataStream('appWindAngle', newValue => {
-        if (newValue.data.value == null) { // act upon data timeout of null
-          newValue.data.value = 0
+    const desiredAwsUnit = this.widgetProperties.config.paths['appWindSpeed'].convertUnitTo;
+    const desiredTwsUnit = this.widgetProperties.config.paths['trueWindSpeed'].convertUnitTo;
+    if (this.appWindSpeedUnit !== desiredAwsUnit) this.appWindSpeedUnit = desiredAwsUnit;
+    if (this.trueWindSpeedUnit !== desiredTwsUnit) this.trueWindSpeedUnit = desiredTwsUnit;
+    // Subscribe to streams outside Angular to avoid triggering Change Detection per emission
+    this.zones.runOutsideAngular(() => {
+      this.observeDataStream('headingPath', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const next = this.normalizeAngle(newValue.data.value);
+        if (!this.hasHeading || this.angleDelta(this.currentHeading, next) >= this.DEG_EPSILON) {
+          this.currentHeading = next;
+          this.hasHeading = true;
+          this.scheduleMarkForCheck();
         }
-        if (newValue.data.value < 0) {// stb
-          this.appWindAngle = 360 + newValue.data.value; // adding a negative number subtracts it...
-        } else {
-          this.appWindAngle = newValue.data.value;
+      });
+
+      this.observeDataStream('courseOverGround', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const next = this.normalizeAngle(newValue.data.value);
+        if (!this.hasCOG || this.angleDelta(this.courseOverGroundAngle, next) >= this.DEG_EPSILON) {
+          this.courseOverGroundAngle = next;
+          this.hasCOG = true;
+          this.scheduleMarkForCheck();
         }
+      });
 
-        //add to historical for wind sectors
-        if (this.widgetProperties.config.windSectorEnable) {
-          const to360Angle = this.addHeading(this.currentHeading, newValue.data.value);
-          this.addHistoricalWindDirection(to360Angle);
+      this.observeDataStream('drift', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const next = newValue.data.value;
+        if (!this.hasDrift || Math.abs(this.driftFlow - next) >= this.SPEED_EPSILON) {
+          this.driftFlow = next;
+          this.hasDrift = true;
+          this.scheduleMarkForCheck();
         }
-      }
-    );
+      });
 
-    this.observeDataStream('appWindSpeed', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.appWindSpeed = newValue.data.value;
-    });
+      this.observeDataStream('set', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const next = this.normalizeAngle(newValue.data.value);
+        if (!this.hasSet || this.angleDelta(this.driftSet, next) >= this.DEG_EPSILON) {
+          this.driftSet = next;
+          this.hasSet = true;
+          this.scheduleMarkForCheck();
+        }
+      });
 
-    this.observeDataStream('trueWindSpeed', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-      this.trueWindSpeed = newValue.data.value;
-    });
+      this.observeDataStream('nextWaypointBearing', newValue => {
+        const raw = newValue.data.value;
+        const next = this.normalizeAngle(raw);
+        if (!this.hasWPT || this.angleDelta(this.waypointAngle, next) >= this.DEG_EPSILON) {
+          this.waypointAngle = next;
+          this.hasWPT = true;
+          this.scheduleMarkForCheck();
+        }
+      });
 
-    this.observeDataStream('trueWindAngle', newValue => {
-      if (newValue.data.value == null) { // act upon data timeout of null
-        newValue.data.value = 0;
-      }
-        // Depending on path, this number can either be an absolute 360 deg value
-        // or a +/-180 deg value relative to boat - usually includes the word angle.
-        // 1 to 180 for stb
-        // -1 to -180 for port
-        // The display dial needs the value in 0-360
+      this.observeDataStream('appWindAngle', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const raw = newValue.data.value;
+        const next = this.normalizeAngle(raw);
+        if (!this.hasAWA || this.angleDelta(this.appWindAngle, next) >= this.DEG_EPSILON) {
+          this.appWindAngle = next;
+          this.hasAWA = true;
+          if (this.widgetProperties.config.windSectorEnable) {
+            const to360Angle = this.addHeading(this.currentHeading, raw);
+            this.addHistoricalWindDirection(to360Angle);
+          }
+          this.scheduleMarkForCheck();
+        }
+      });
+
+      this.observeDataStream('appWindSpeed', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const next = newValue.data.value;
+        if (!this.hasAWS || Math.abs(this.appWindSpeed - next) >= this.SPEED_EPSILON) {
+          this.appWindSpeed = next;
+          this.hasAWS = true;
+          this.scheduleMarkForCheck();
+        }
+      });
+
+      this.observeDataStream('trueWindSpeed', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
+        const next = newValue.data.value;
+        if (!this.hasTWS || Math.abs(this.trueWindSpeed - next) >= this.SPEED_EPSILON) {
+          this.trueWindSpeed = next;
+          this.hasTWS = true;
+          this.scheduleMarkForCheck();
+        }
+      });
+
+      this.observeDataStream('trueWindAngle', newValue => {
+        if (newValue.data.value == null) { newValue.data.value = 0; }
         const path = this.widgetProperties.config.paths['trueWindAngle'].path;
-        if (path.includes('angleTrueWater') || path.includes('angleTrueGround')) {
-          //-180 to 180, we need to account for boat heading
-          this.trueWindAngle = this.addHeading(this.currentHeading, newValue.data.value);
-        } else {
-          // Other path, assume it's an absolute 360 angle
-          this.trueWindAngle = newValue.data.value;
+        const base = (path.includes('angleTrueWater') || path.includes('angleTrueGround'))
+          ? this.addHeading(this.currentHeading, newValue.data.value)
+          : newValue.data.value;
+        const next = this.normalizeAngle(base);
+        if (!this.hasTWA || this.angleDelta(this.trueWindAngle, next) >= this.DEG_EPSILON) {
+          this.trueWindAngle = next;
+          this.hasTWA = true;
+          this.scheduleMarkForCheck();
         }
-      }
-    );
+      });
+    });
 
     this.startWindSectors();
   }
@@ -284,7 +315,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   private startWindSectors() {
     this.zones.runOutsideAngular(() => {
-      this.windSectorObservableSub = interval(500).subscribe(() => {
+      this.windSectorObservableSub = interval(1000).subscribe(() => {
         this.historicalCleanup();
       });
     });
@@ -299,6 +330,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     this.trueWindMinHistoric = arc.min;
     this.trueWindMaxHistoric = arc.max;
     this.trueWindMidHistoric = arc.mid;
+    this.scheduleMarkForCheck();
   }
 
   private arcForAngles(data: number[]): { min: number; max: number; mid: number } {
@@ -327,15 +359,42 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   private historicalCleanup() {
     const n = Date.now() - (this.widgetProperties.config.windSectorWindowSeconds * 1000);
     this.historicalWindDirection = this.historicalWindDirection.filter(d => d.timestamp >= n);
+    this.scheduleMarkForCheck();
   }
 
   private stopWindSectors() {
     this.windSectorObservableSub?.unsubscribe();
   }
 
+  // Normalize any angle to [0,360)
+  private normalizeAngle(a: number): number {
+    return ((a % 360) + 360) % 360;
+  }
+
   private addHeading(h1: number, h2: number) {
     let h3 = (h1 + h2) % 360;
     if (h3 < 0) h3 += 360;
     return h3;
+  }
+
+  // Smallest absolute angular difference (0..180)
+  private angleDelta(from: number, to: number): number {
+    const d = ((to - from + 540) % 360) - 180;
+    return Math.abs(d);
+  }
+
+  // Coalesce multiple updates into a single markForCheck per animation frame
+  private scheduleMarkForCheck() {
+    if (this.markScheduled) return;
+    this.markScheduled = true;
+    this.zones.runOutsideAngular(() => {
+      this.scheduleRafId = requestAnimationFrame(() => {
+        this.zones.run(() => {
+          this.cdr.markForCheck();
+        });
+        this.markScheduled = false;
+        this.scheduleRafId = null;
+      });
+    });
   }
 }

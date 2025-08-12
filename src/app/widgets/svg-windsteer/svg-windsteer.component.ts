@@ -1,7 +1,8 @@
-import { Component, ElementRef, input, viewChild, signal, effect, computed, untracked } from '@angular/core';
+import { Component, ElementRef, input, viewChild, signal, effect, untracked, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { animateRotation } from '../../core/utils/svg-animate.util';
+import { DecimalPipe } from '@angular/common';
 
-const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
+const angle = ([a, b], [c, d], [e, f]) => (Math.atan2(f - d, e - c) - Math.atan2(b - d, a - c) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
 
 interface ISVGRotationObject {
   oldValue: number,
@@ -9,12 +10,13 @@ interface ISVGRotationObject {
 }
 
 @Component({
-    selector: 'svg-windsteer',
-    templateUrl: './svg-windsteer.component.svg',
-    styleUrl: './svg-windsteer.component.scss',
-    imports: []
+  selector: 'svg-windsteer',
+  templateUrl: './svg-windsteer.component.svg',
+  styleUrl: './svg-windsteer.component.scss',
+  imports: [DecimalPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SvgWindsteerComponent {
+export class SvgWindsteerComponent implements OnDestroy {
   protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
   protected readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
   protected readonly twaIndicator = viewChild.required<ElementRef<SVGGElement>>('twaIndicator');
@@ -54,24 +56,9 @@ export class SvgWindsteerComponent {
   protected cog: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  protected headingValue ="--";
-  protected appWindSpeedDisplay = computed(() => {
-    const appWindSpeed = this.appWindSpeed();
-    if (appWindSpeed == null) return "--";
-    return appWindSpeed.toFixed(1);
-  });
-  protected trueWindSpeedDisplay = computed(() => {
-    const trueWindSpeed = this.trueWindSpeed();
-    if (trueWindSpeed == null) return "--";
-    return trueWindSpeed.toFixed(1);
-  });
+  protected headingValue = "--";
   private trueWindHeading = 0;
   protected waypointActive = signal<boolean>(false);
-  protected flow = computed(() => {
-    const flow = this.driftFlow();
-    if (flow == null) return "--";
-    return flow.toFixed(1);
-  });
 
   //laylines - Close-Hauled lines
   private portLaylinePrev = 0;
@@ -92,7 +79,7 @@ export class SvgWindsteerComponent {
 
   private readonly CENTER = 500;
   private readonly RADIUS = 350;
-  private readonly ANIMATION_DURATION = 1000;
+  private readonly ANIMATION_DURATION = 900;
 
   constructor() {
     effect(() => {
@@ -125,7 +112,7 @@ export class SvgWindsteerComponent {
 
       untracked(() => {
         this.cog.oldValue = this.cog.newValue;
-        this.cog.newValue =  cogAngle - this.compass.newValue;
+        this.cog.newValue = cogAngle - this.compass.newValue;
         if (this.cogIndicator()?.nativeElement) {
           animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
@@ -137,7 +124,7 @@ export class SvgWindsteerComponent {
 
       untracked(() => {
         if (!wptAngle) {
-            this.waypointActive.set(false);
+          this.waypointActive.set(false);
           return;
         }
 
@@ -175,7 +162,7 @@ export class SvgWindsteerComponent {
         this.twa.oldValue = this.twa.newValue;
         this.trueWindHeading = trueWindAngle;
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
-         if (this.twaIndicator()?.nativeElement) {
+        if (this.twaIndicator()?.nativeElement) {
           animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
           this.updateCloseHauledLines();
         }
@@ -188,7 +175,7 @@ export class SvgWindsteerComponent {
 
       untracked(() => {
         this.set.oldValue = this.set.newValue;
-        this.set.newValue =  driftSet;
+        this.set.newValue = driftSet;
         if (this.setIndicator()?.nativeElement) {
           animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
@@ -354,9 +341,39 @@ export class SvgWindsteerComponent {
   }
 
   private addHeading(h1 = 0, h2 = 0) {
-    let h3 = h1 + h2;
-    while (h3 > 359) { h3 = h3 - 359; }
-    while (h3 < 0) { h3 = h3 + 359; }
-    return h3;
+  let h3 = (h1 + h2) % 360;
+  if (h3 < 0) h3 += 360;
+  return h3;
+  }
+
+  ngOnDestroy(): void {
+    // Cancel layline animations
+    if (this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
+    if (this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
+    this.portLaylineAnimId = null;
+    this.stbdLaylineAnimId = null;
+
+    // Cancel wind sector animations
+    if (this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+    if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+    this.portSectorAnimId = null;
+    this.stbdSectorAnimId = null;
+
+    // Cancel any animateRotation frames tracked in WeakMap for known elements
+    const els: (ElementRef<SVGGElement> | undefined)[] = [
+      this.rotatingDial(),
+      this.awaIndicator(),
+      this.twaIndicator(),
+      this.wptIndicator(),
+      this.setIndicator(),
+      this.cogIndicator(),
+    ];
+    for (const ref of els) {
+      const el = ref?.nativeElement;
+      if (!el) continue;
+      const id = this.animationFrameIds.get(el);
+      if (id) cancelAnimationFrame(id);
+      this.animationFrameIds.delete(el);
+    }
   }
 }

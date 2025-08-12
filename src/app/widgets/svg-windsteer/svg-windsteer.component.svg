@@ -469,7 +469,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="903.84814"
         y="114.73512"
-        id="text42">{{ trueWindSpeedDisplay() }}</text>
+        id="text42">{{ (trueWindSpeed() | number:'1.1-1') ?? '--' }}</text>
       <text
         xml:space="preserve"
         class="true-wind-label"
@@ -493,7 +493,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="94.580925"
         y="114.63747"
-        id="text40">{{ appWindSpeedDisplay() }}</text>
+        id="text40">{{ (appWindSpeed() | number:'1.1-1') ?? '--' }}</text>
       <text
        xml:space="preserve"
        class="app-wind-label"
@@ -511,7 +511,7 @@
        style="font-style:normal;font-variant:normal;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
        x="499.78842"
        y="523.55145"
-       >{{flow()}}</text>
+      >{{ (driftFlow() | number:'1.1-1') ?? '--' }}</text>
   </g>
   <g id="layerIndicators"
     style="display:inline">
