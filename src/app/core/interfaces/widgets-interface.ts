@@ -147,6 +147,8 @@ export interface IWidgetSvcConfig {
     digitalMeter?: boolean;
     /** Optional. Width of gauge highlights */
     highlightsWidth?: number;
+    /** Optional. Used by ngRadial to set bar start position */
+    barStartPosition?: "left" | "right" | "middle";
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;

@@ -273,26 +273,27 @@
                 placeholder="Enter or select number..."
               />
             </mat-form-field>
-            } @if ((widgetConfig?.ignoreZones !== undefined)) {
-            <mat-checkbox name="ignoreZones" formControlName="ignoreZones">
-              Ignore Zones configuration
-            </mat-checkbox>
-            } @if ( (widgetConfig?.gauge?.type === 'ngRadial' &&
-            ['measuring','capacity'].includes(formMaster.value.gauge.subType))
-            || widgetConfig?.gauge?.type === 'ngLinear') {
-            <mat-form-field formGroupName="gauge">
-              <mat-label>Highlights Width</mat-label>
-              <input
-                type="number"
-                min="0"
-                max="25"
-                matInput
-                placeholder="Enter or select number..."
-                name="highlightsWidth"
-                formControlName="highlightsWidth"
-                required
-              />
-            </mat-form-field>
+            }
+            @if ((widgetConfig?.ignoreZones !== undefined)) {
+              <mat-checkbox name="ignoreZones" formControlName="ignoreZones">
+                Ignore Zones configuration
+              </mat-checkbox>
+            }
+            @if ( (widgetConfig?.gauge?.type === 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType))
+              || widgetConfig?.gauge?.type === 'ngLinear') {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Highlights Width</mat-label>
+                <input
+                  type="number"
+                  min="0"
+                  max="25"
+                  matInput
+                  placeholder="Enter or select number..."
+                  name="highlightsWidth"
+                  formControlName="highlightsWidth"
+                  required
+                />
+              </mat-form-field>
             } @if (widgetConfig?.gauge?.type === 'ngRadial') { @if
             (['marineCompass','baseplateCompass'].indexOf(formMaster.value.gauge.subType)
             > -1) {
@@ -338,21 +339,35 @@
                 <mat-option value="capacity">Capacity</mat-option>
               </mat-select>
             </mat-form-field>
+            @if (widgetConfig?.gauge?.type === 'ngRadial' && ['measuring'].includes(formMaster.value.gauge.subType)) {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Progress Bar Start Position</mat-label>
+                <mat-select
+                  placeholder="Select start position..."
+                  formControlName="barStartPosition"
+                  name="barStartPosition">
+                  <mat-option value="left">Left</mat-option>
+                  <mat-option value="middle">Middle</mat-option>
+                  <mat-option value="right">Right</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
             @if (formMaster.value.gauge.subType === 'capacity') {
-            <mat-form-field formGroupName="gauge">
-              <mat-label>Progress Bar Start Angle</mat-label>
-              <input
-                type="number"
-                min="1"
-                max="360"
-                matInput
-                placeholder="Enter or select number..."
-                name="scaleStart"
-                formControlName="scaleStart"
-                required
-              />
-            </mat-form-field>
-            } } } @if (widgetConfig?.gauge?.type === 'ngLinear') {
+              <mat-form-field formGroupName="gauge">
+                <mat-label>Progress Bar Start Angle</mat-label>
+                <input
+                  type="number"
+                  min="1"
+                  max="360"
+                  matInput
+                  placeholder="Enter or select number..."
+                  name="scaleStart"
+                  formControlName="scaleStart"
+                  required />
+              </mat-form-field>
+            }
+          }
+        } @if (widgetConfig?.gauge?.type === 'ngLinear') {
             <div formGroupName="gauge">
               <mat-checkbox name="useNeedle" formControlName="useNeedle">
                 Use needle indicator
