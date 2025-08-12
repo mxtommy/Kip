@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, AfterContentInit, signal, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterContentInit, ChangeDetectorRef, inject } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { debounce } from 'lodash';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare let steelseries: any; // 3rd party
 
 export const SteelPointerColors = {
@@ -37,12 +37,6 @@ export const SteelFrameDesign = {
   'glossyMetal': steelseries.FrameDesign.GLOSSY_METAL
 }
 
-interface AttitudeData {
-  roll: number;
-  pitch: number;
-  yaw: number;
-}
-
 @Component({
     selector: 'widget-horizon',
     templateUrl: './widget-horizon.component.html',
@@ -52,8 +46,11 @@ interface AttitudeData {
 })
 export class WidgetHorizonComponent extends BaseWidgetComponent implements OnInit, AfterContentInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
-  private gaugeOptions: any = {};
-  private gauge = null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected gaugeOptions: any = {};
+  private gauge = null;à
+  private streamsInitialized = false;
 
   constructor() {
     super();
@@ -66,34 +63,34 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
           path: "self.navigation.attitude.pitch",
           source: "default",
           pathType: 'number',
-          isPathConfigurable: false,
+          pathRequired: false,
+          isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 1000
         },
         "gaugeRollPath": {
           description: "Attitude Roll Data",
           path: "self.navigation.attitude.roll",
           source: "default",
           pathType: 'number',
-          isPathConfigurable: false,
+          pathRequired: false,
+          isPathConfigurable: true,
           showPathSkUnitsFilter: false,
           pathSkUnitsFilter: 'rad',
           convertUnitTo: "deg",
-          sampleTime: 500
+          sampleTime: 1000
         }
       },
       gauge: {
         type: 'horizon',
-        faceColor: 'Red'
+        noFrameVisible: false,
+        faceColor: 'anthracite'
       },
       enableTimeout: false,
       dataTimeout: 5,
     };
-
-    // Debounce the onResized method
-  this.onResized = debounce(this.onResized.bind(this), 200);
   }
 
   ngOnInit() {
@@ -102,32 +99,39 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
 
   ngAfterContentInit(): void {
     this.cdr.detectChanges(); // Force DOM update
-    // this.startWidget();
+  this.startWidget();
+    // Perform an initial resize to avoid first-draw jump
+  const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
+  const container = canvas?.parentElement as HTMLElement | null;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      this.onResized({ contentRect: { width: rect.width, height: rect.height } } as unknown as ResizeObserverEntry);
+    }
   }
 
   protected startWidget(): void {
-    this.unsubscribeDataStream();
     this.buildOptions();
-    if (this.gauge) {
-      this.gauge = null;
+    this.gauge = new steelseries.Horizon(this.widgetProperties.uuid + '-canvas', this.gaugeOptions);
+
+    if (!this.streamsInitialized) {
+      this.observeDataStream('gaugePitchPath', newValue => {
+        if (newValue.data.value == null) {
+          this.gauge.setPitchAnimated(0);
+        } else {
+          this.gauge.setPitchAnimated(newValue.data.value);
+        }
+      });
+
+      this.observeDataStream('gaugeRollPath', newValue => {
+        if (newValue.data.value == null) {
+          this.gauge.setRollAnimated(0);
+        } else {
+          this.gauge.setRollAnimated(newValue.data.value);
+        }
+      });
+
+      this.streamsInitialized = true;
     }
-    this.gauge = new steelseries.Horizon(this.widgetProperties.uuid, this.gaugeOptions);
-
-    this.observeDataStream('gaugePitchPath', newValue => {
-      if (newValue.data.value == null) {
-        this.gauge.setPitchAnimated(0);
-      } else {
-        this.gauge.setPitchAnimated(newValue.data.value);
-      }
-    });
-
-    this.observeDataStream('gaugeRollPath', newValue => {
-      if (newValue.data.value == null) {
-        this.gauge.setRollAnimated(0);
-      } else {
-        this.gauge.setRollAnimated(newValue.data.value);
-      }
-    });
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -143,9 +147,10 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
   }
 
   private buildOptions() {
-    this.gaugeOptions['pointerColor'] = SteelPointerColors[this.widgetProperties.config.gauge.faceColor];
-    this.gaugeOptions['frameVisible'] = false;
-    this.gaugeOptions['foregroundVisible'] = false
+    this.gaugeOptions['pointerColor'] = SteelPointerColors.Red;
+    this.gaugeOptions['frameVisible'] = this.widgetProperties.config.gauge.noFrameVisible ?? false;
+    this.gaugeOptions['frameDesign'] = SteelFrameDesign[this.widgetProperties.config.gauge.faceColor ?? 'anthracite'];
+    this.gaugeOptions['foregroundVisible'] = false;
   }
 
   onResized(event: ResizeObserverEntry) {

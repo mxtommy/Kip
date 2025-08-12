@@ -149,6 +149,10 @@ export interface IWidgetSvcConfig {
     highlightsWidth?: number;
     /** Optional. Used by ngRadial to set bar start position */
     barStartPosition?: "left" | "right" | "middle";
+    /** Optional. Used by ngRadial to set bar end position */
+    barEndPosition?: "left" | "right" | "middle";
+    /** Optional. Used by Horizon steelgauge to show or hide the frame */
+    noFrameVisible?: boolean;
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
