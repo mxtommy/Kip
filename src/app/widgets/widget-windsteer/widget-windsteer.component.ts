@@ -266,8 +266,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           this.appWindAngle = next;
           this.hasAWA = true;
           if (this.widgetProperties.config.windSectorEnable) {
-            const absAngle = this.addHeading(this.currentHeading, raw);
-            this.addHistoricalWindDirection(absAngle);
+            // Track historical AWA directly for boat-relative wind sectors
+            this.addHistoricalWindDirection(this.normalizeAngle(raw));
           }
           this.scheduleMarkForCheck();
         }

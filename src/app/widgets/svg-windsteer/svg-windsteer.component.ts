@@ -102,7 +102,8 @@ export class SvgWindsteerComponent implements OnDestroy {
         this.headingValue = heading.toString();
         if (this.rotatingDial()?.nativeElement) {
           animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
-          this.updateCloseHauledLines();
+          // Heading affects dial-local geometry for laylines and sectors; refresh without animation
+          this.updateCloseHauledLines(false);
           this.updateWindSectors(false);
         }
       });
@@ -155,6 +156,8 @@ export class SvgWindsteerComponent implements OnDestroy {
         if (this.awaIndicator()?.nativeElement) {
           animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
+        // Laylines align to apparent wind; recompute on AWA
+        this.updateCloseHauledLines();
       });
     });
 
@@ -169,10 +172,19 @@ export class SvgWindsteerComponent implements OnDestroy {
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
         if (this.twaIndicator()?.nativeElement) {
           animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
-          this.updateCloseHauledLines();
         }
       });
     });
+
+    // Recompute laylines when laylineAngle changes
+    effect(() => {
+      // read to establish dependency
+      void this.laylineAngle();
+      if (!this.closeHauledLineEnabled()) return;
+      untracked(() => this.updateCloseHauledLines());
+    });
+
+  // Recompute laylines when AWA changes (already handled in AWA effect) and when laylineAngle changes (below)
 
     effect(() => {
       const raw = this.driftSet();
@@ -213,21 +225,24 @@ export class SvgWindsteerComponent implements OnDestroy {
     });
   }
 
-  private updateCloseHauledLines(): void {
+  private updateCloseHauledLines(animate = true): void {
     if (!this.closeHauledLineEnabled()) return;
 
-    // Animate Port Layline
-    const portLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle() * -1);
-    this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
+    // Dial-local angle must include heading so that dial rotation (-heading) yields boat-relative result
+    const heading = Number(this.compass.newValue) || 0;
+  const boatBase = Number(this.awa.newValue) || 0;
+  const lay = Number(this.laylineAngle()) || 0;
+  const portLaylineRotate = this.addHeading(heading, this.addHeading(boatBase, lay * -1));
+    this.animateLayline(this.portLaylinePrev, portLaylineRotate, true, animate);
     this.portLaylinePrev = portLaylineRotate;
 
     // Animate Starboard Layline
-    const stbdLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle());
-    this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
+  const stbdLaylineRotate = this.addHeading(heading, this.addHeading(boatBase, lay));
+    this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false, animate);
     this.stbdLaylinePrev = stbdLaylineRotate;
   }
 
-  private animateLayline(from: number, to: number, isPort: boolean) {
+  private animateLayline(from: number, to: number, isPort: boolean, withAnim = true) {
     // Cancel any previous animation for this layline
     if (isPort && this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
     if (!isPort && this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
@@ -239,11 +254,17 @@ export class SvgWindsteerComponent implements OnDestroy {
       return;
     }
 
+  if (!withAnim) {
+      this.drawLayline(to, isPort);
+      if (isPort) this.portLaylineAnimId = null; else this.stbdLaylineAnimId = null;
+      return;
+    }
+
     const duration = this.ANIMATION_DURATION;
     const start = performance.now();
     const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-    const animate = (now: number) => {
+  const tick = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
       const eased = ease(progress);
@@ -256,7 +277,7 @@ export class SvgWindsteerComponent implements OnDestroy {
       this.drawLayline(currentAngle, isPort);
 
       if (progress < 1) {
-        const id = requestAnimationFrame(animate);
+        const id = requestAnimationFrame(tick);
         if (isPort) this.portLaylineAnimId = id;
         else this.stbdLaylineAnimId = id;
       } else {
@@ -265,7 +286,7 @@ export class SvgWindsteerComponent implements OnDestroy {
       }
     };
 
-    const id = requestAnimationFrame(animate);
+    const id = requestAnimationFrame(tick);
     if (isPort) this.portLaylineAnimId = id;
     else this.stbdLaylineAnimId = id;
   }
@@ -439,12 +460,13 @@ export class SvgWindsteerComponent implements OnDestroy {
   }
 
   private computeSectorPath(state: { min: number, mid: number, max: number }, isPort: boolean): string {
-    const lay = this.laylineAngle();
-    const compass = Number(this.compass.newValue);
+  const lay = Number(this.laylineAngle()) || 0;
     const offset = lay * (isPort ? -1 : 1);
-    const minAngle = this.addHeading(this.addHeading(state.min, compass * -1), offset);
-    const midAngle = this.addHeading(this.addHeading(state.mid, compass * -1), offset);
-    const maxAngle = this.addHeading(this.addHeading(state.max, compass * -1), offset);
+    const heading = Number(this.compass.newValue) || 0;
+    // Dial-local = heading + boat-relative (AWA min/mid/max + lay offset)
+    const minAngle = this.addHeading(heading, this.addHeading(state.min, offset));
+    const midAngle = this.addHeading(heading, this.addHeading(state.mid, offset));
+    const maxAngle = this.addHeading(heading, this.addHeading(state.max, offset));
 
     const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
     const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
