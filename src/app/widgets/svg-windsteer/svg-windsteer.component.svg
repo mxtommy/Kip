@@ -112,7 +112,7 @@
       class="wind-sector-port"
       style="fill-opacity:0.5;stroke:none" />
     <path id="StbdSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
+      [style.display]="stbdWindSectorPath != 'none' ? 'inline' : 'none'"
       [attr.d]="stbdWindSectorPath"
       class="wind-sector-stbd"
       style="fill-opacity:0.5;stroke:none" />
@@ -548,17 +548,6 @@
          x="500"
          y="110"
          id="text10">T</text>
-        attributeName="transform"
-        type="rotate"
-        [attr.from]="trueWind.oldDegreeIndicator+' 500 500'"
-        [attr.to]="trueWind.newDegreeIndicator+' 500 500'"
-        begin="indefinite"
-        dur="0.5s"
-        keySplines="0.25 0.1 0.25 1"
-        keyTimes="0;1"
-        calcMode="spline"
-        additive="replace"
-        fill="freeze" />
     </g>
   </g>
   <g id="layerHeading"

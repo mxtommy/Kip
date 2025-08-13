@@ -80,6 +80,7 @@ export class SvgWindsteerComponent implements OnDestroy {
   private readonly CENTER = 500;
   private readonly RADIUS = 350;
   private readonly ANIMATION_DURATION = 900;
+  private readonly EPS_ANGLE = 0.5; // degrees, gate tiny animations
 
   constructor() {
     effect(() => {
@@ -91,8 +92,9 @@ export class SvgWindsteerComponent implements OnDestroy {
     });
 
     effect(() => {
-      const heading = parseFloat(this.compassHeading().toFixed(0));
-      if (heading === null) return;
+      const raw = this.compassHeading();
+      const heading = Number.isFinite(raw) ? Math.round(raw as number) : null;
+      if (heading == null) return;
 
       untracked(() => {
         this.compass.oldValue = this.compass.newValue;
@@ -101,13 +103,14 @@ export class SvgWindsteerComponent implements OnDestroy {
         if (this.rotatingDial()?.nativeElement) {
           animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
           this.updateCloseHauledLines();
-          this.updateWindSectors();
+          this.updateWindSectors(false);
         }
       });
     });
 
     effect(() => {
-      const cogAngle = parseFloat(this.courseOverGroundAngle().toFixed(0));
+      const raw = this.courseOverGroundAngle();
+      const cogAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (cogAngle == null) return;
 
       untracked(() => {
@@ -142,7 +145,8 @@ export class SvgWindsteerComponent implements OnDestroy {
     });
 
     effect(() => {
-      const appWindAngle = parseFloat(this.appWindAngle().toFixed(0));
+      const raw = this.appWindAngle();
+      const appWindAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (appWindAngle == null) return;
 
       untracked(() => {
@@ -155,7 +159,8 @@ export class SvgWindsteerComponent implements OnDestroy {
     });
 
     effect(() => {
-      const trueWindAngle = parseFloat(this.trueWindAngle().toFixed(0));
+      const raw = this.trueWindAngle();
+      const trueWindAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (trueWindAngle == null) return;
 
       untracked(() => {
@@ -170,7 +175,8 @@ export class SvgWindsteerComponent implements OnDestroy {
     });
 
     effect(() => {
-      const driftSet = parseFloat(this.driftSet().toFixed(0));
+      const raw = this.driftSet();
+      const driftSet = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (driftSet == null) return;
 
       untracked(() => {
@@ -202,7 +208,7 @@ export class SvgWindsteerComponent implements OnDestroy {
           this.stbdWindSectorPath = 'none';
           return;
         }
-        this.updateWindSectors();
+        this.updateWindSectors(true);
       });
     });
   }
@@ -226,6 +232,13 @@ export class SvgWindsteerComponent implements OnDestroy {
     if (isPort && this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
     if (!isPort && this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
 
+    // Gate tiny animations
+    if (this.angleDelta(from, to) < this.EPS_ANGLE) {
+      this.drawLayline(to, isPort);
+      if (isPort) this.portLaylineAnimId = null; else this.stbdLaylineAnimId = null;
+      return;
+    }
+
     const duration = this.ANIMATION_DURATION;
     const start = performance.now();
     const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -240,16 +253,7 @@ export class SvgWindsteerComponent implements OnDestroy {
       if (delta < -180) delta += 360;
       const currentAngle = (from + delta * eased + 360) % 360;
 
-      // Calculate endpoint
-      const radian = (currentAngle * Math.PI) / 180;
-      const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
-      const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
-
-      if (isPort) {
-        this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
-      } else {
-        this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
-      }
+      this.drawLayline(currentAngle, isPort);
 
       if (progress < 1) {
         const id = requestAnimationFrame(animate);
@@ -266,9 +270,20 @@ export class SvgWindsteerComponent implements OnDestroy {
     else this.stbdLaylineAnimId = id;
   }
 
+  private drawLayline(angleDeg: number, isPort: boolean) {
+    const radian = (angleDeg * Math.PI) / 180;
+    const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
+    const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
+    if (isPort) {
+      this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+    } else {
+      this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+    }
+  }
+
   private windSectorsInitialized = false;
 
-  private updateWindSectors() {
+  private updateWindSectors(animate = true) {
     if (
       !this.windSectorEnabled() ||
       this.trueWindMinHistoric() == null ||
@@ -290,18 +305,37 @@ export class SvgWindsteerComponent implements OnDestroy {
     };
 
     if (!this.windSectorsInitialized) {
+      this.windSectorsInitialized = true;
+      if (animate) {
+        this.animateWindSector(portNew, portNew, true);
+        this.animateWindSector(stbdNew, stbdNew, false);
+      } else {
+        this.portWindSectorPath = this.computeSectorPath(portNew, true);
+        this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+      }
       this.portSectorPrev = portNew;
       this.stbdSectorPrev = stbdNew;
-      this.windSectorsInitialized = true;
-      // Draw in place, no animation
-      this.animateWindSector(portNew, portNew, true);
-      this.animateWindSector(stbdNew, stbdNew, false);
       return;
     }
 
-    // Animate as usual
-    this.animateWindSector(this.portSectorPrev, portNew, true);
-    this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
+    if (animate) {
+      // Gate tiny sector animations
+      const smallMove =
+        this.angleDelta(this.portSectorPrev.min, portNew.min) < this.EPS_ANGLE &&
+        this.angleDelta(this.portSectorPrev.mid, portNew.mid) < this.EPS_ANGLE &&
+        this.angleDelta(this.portSectorPrev.max, portNew.max) < this.EPS_ANGLE;
+      if (smallMove) {
+        this.portWindSectorPath = this.computeSectorPath(portNew, true);
+        this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+      } else {
+        this.animateWindSector(this.portSectorPrev, portNew, true);
+        this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
+      }
+    } else {
+      // No animation requested (e.g., heading-only updates)
+      this.portWindSectorPath = this.computeSectorPath(portNew, true);
+      this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+    }
 
     this.portSectorPrev = portNew;
     this.stbdSectorPrev = stbdNew;
@@ -310,6 +344,18 @@ export class SvgWindsteerComponent implements OnDestroy {
   private animateWindSector(from: { min: number, mid: number, max: number }, to: { min: number, mid: number, max: number }, isPort: boolean) {
     if (isPort && this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
     if (!isPort && this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+
+    // Gate tiny animations quickly
+    const smallMove =
+      this.angleDelta(from.min, to.min) < this.EPS_ANGLE &&
+      this.angleDelta(from.mid, to.mid) < this.EPS_ANGLE &&
+      this.angleDelta(from.max, to.max) < this.EPS_ANGLE;
+    if (smallMove) {
+      const path = this.computeSectorPath(to, isPort);
+      if (isPort) this.portWindSectorPath = path; else this.stbdWindSectorPath = path;
+      if (isPort) this.portSectorAnimId = null; else this.stbdSectorAnimId = null;
+      return;
+    }
 
     const duration = this.ANIMATION_DURATION;
     const start = performance.now();
@@ -327,21 +373,7 @@ export class SvgWindsteerComponent implements OnDestroy {
       const max = lerp(from.max, to.max);
 
       // Calculate path
-      const minAngle = this.addHeading(this.addHeading(min, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
-      const midAngle = this.addHeading(this.addHeading(mid, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
-      const maxAngle = this.addHeading(this.addHeading(max, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
-
-      const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
-      const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
-      const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER;
-      const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER;
-      const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER;
-      const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER;
-
-      const largeArcFlag = Math.abs(angle([minX, minY], [midX, midY], [maxX, maxY])) > Math.PI / 2 ? 0 : 1;
-      const sweepFlag = angle([maxX, maxY], [minX, minY], [midX, midY]) > 0 ? 0 : 1;
-
-      const path = `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
+      const path = this.computeSectorPath({ min, mid, max }, isPort);
 
       if (isPort) {
         this.portWindSectorPath = path;
@@ -365,9 +397,9 @@ export class SvgWindsteerComponent implements OnDestroy {
   }
 
   private addHeading(h1 = 0, h2 = 0) {
-  let h3 = (h1 + h2) % 360;
-  if (h3 < 0) h3 += 360;
-  return h3;
+    let h3 = (h1 + h2) % 360;
+    if (h3 < 0) h3 += 360;
+    return h3;
   }
 
   ngOnDestroy(): void {
@@ -399,5 +431,31 @@ export class SvgWindsteerComponent implements OnDestroy {
       if (id) cancelAnimationFrame(id);
       this.animationFrameIds.delete(el);
     }
+  }
+
+  private angleDelta(from: number, to: number): number {
+    const d = ((to - from + 540) % 360) - 180;
+    return Math.abs(d);
+  }
+
+  private computeSectorPath(state: { min: number, mid: number, max: number }, isPort: boolean): string {
+    const lay = this.laylineAngle();
+    const compass = Number(this.compass.newValue);
+    const offset = lay * (isPort ? -1 : 1);
+    const minAngle = this.addHeading(this.addHeading(state.min, compass * -1), offset);
+    const midAngle = this.addHeading(this.addHeading(state.mid, compass * -1), offset);
+    const maxAngle = this.addHeading(this.addHeading(state.max, compass * -1), offset);
+
+    const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
+    const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
+    const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER;
+    const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER;
+    const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER;
+    const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER;
+
+    const largeArcFlag = Math.abs(angle([minX, minY], [midX, midY], [maxX, maxY])) > Math.PI / 2 ? 0 : 1;
+    const sweepFlag = angle([maxX, maxY], [minX, minY], [midX, midY]) > 0 ? 0 : 1;
+
+    return `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
   }
 }

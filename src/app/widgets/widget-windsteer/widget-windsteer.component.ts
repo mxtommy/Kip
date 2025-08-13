@@ -308,7 +308,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       });
     });
 
-  this.startWindSectors();
+    this.startWindSectors();
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
