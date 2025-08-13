@@ -231,7 +231,7 @@ ngOnInit(): void {
         response = await firstValueFrom(
           this.makeHttpRequest(
             this.http.get<IV2AutopilotOptionsResponse>(
-              `API_PATHS.V2_AUTOPILOTS/${targetInstance}`
+              `${API_PATHS.V2_AUTOPILOTS}/${targetInstance}`
             )
           )
         );
