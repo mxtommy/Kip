@@ -80,7 +80,7 @@ export class SvgWindsteerComponent implements OnDestroy {
   private readonly CENTER = 500;
   private readonly RADIUS = 350;
   private readonly ANIMATION_DURATION = 900;
-  private readonly EPS_ANGLE = 0.5; // degrees, gate tiny animations
+  private readonly EPS_ANGLE = 1.0; // degrees, gate tiny animations
 
   constructor() {
     effect(() => {
