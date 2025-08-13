@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { WidgetWindComponent } from './widget-wind.component';
+import { SvgWindsteerComponent } from './svg-windsteer.component';
 
-describe('WidgetWindComponent', () => {
-  let component: WidgetWindComponent;
-  let fixture: ComponentFixture<WidgetWindComponent>;
+describe('SvgWindComponent', () => {
+  let component: SvgWindsteerComponent;
+  let fixture: ComponentFixture<SvgWindsteerComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [WidgetWindComponent]
+    imports: [SvgWindsteerComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(WidgetWindComponent);
+    fixture = TestBed.createComponent(SvgWindsteerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

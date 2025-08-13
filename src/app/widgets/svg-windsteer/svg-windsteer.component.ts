@@ -1,7 +1,8 @@
-import { Component, ElementRef, input, viewChild, signal, effect, computed, untracked } from '@angular/core';
+import { Component, ElementRef, input, viewChild, signal, effect, untracked, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { animateRotation } from '../../core/utils/svg-animate.util';
+import { DecimalPipe } from '@angular/common';
 
-const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
+const angle = ([a, b], [c, d], [e, f]) => (Math.atan2(f - d, e - c) - Math.atan2(b - d, a - c) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
 
 interface ISVGRotationObject {
   oldValue: number,
@@ -9,12 +10,13 @@ interface ISVGRotationObject {
 }
 
 @Component({
-    selector: 'app-svg-wind',
-    templateUrl: './svg-wind.component.svg',
-    styleUrl: './svg-wind.component.scss',
-    imports: []
+  selector: 'svg-windsteer',
+  templateUrl: './svg-windsteer.component.svg',
+  styleUrl: './svg-windsteer.component.scss',
+  imports: [DecimalPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SvgWindComponent {
+export class SvgWindsteerComponent implements OnDestroy {
   protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
   protected readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
   protected readonly twaIndicator = viewChild.required<ElementRef<SVGGElement>>('twaIndicator');
@@ -54,24 +56,9 @@ export class SvgWindComponent {
   protected cog: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  protected headingValue ="--";
-  protected appWindSpeedDisplay = computed(() => {
-    const appWindSpeed = this.appWindSpeed();
-    if (appWindSpeed == null) return "--";
-    return appWindSpeed.toFixed(1);
-  });
-  protected trueWindSpeedDisplay = computed(() => {
-    const trueWindSpeed = this.trueWindSpeed();
-    if (trueWindSpeed == null) return "--";
-    return trueWindSpeed.toFixed(1);
-  });
+  protected headingValue = "--";
   private trueWindHeading = 0;
   protected waypointActive = signal<boolean>(false);
-  protected flow = computed(() => {
-    const flow = this.driftFlow();
-    if (flow == null) return "--";
-    return flow.toFixed(1);
-  });
 
   //laylines - Close-Hauled lines
   private portLaylinePrev = 0;
@@ -92,7 +79,8 @@ export class SvgWindComponent {
 
   private readonly CENTER = 500;
   private readonly RADIUS = 350;
-  private readonly ANIMATION_DURATION = 1000;
+  private readonly ANIMATION_DURATION = 900;
+  private readonly EPS_ANGLE = 1.0; // degrees, gate tiny animations
 
   constructor() {
     effect(() => {
@@ -104,8 +92,9 @@ export class SvgWindComponent {
     });
 
     effect(() => {
-      const heading = parseFloat(this.compassHeading().toFixed(0));
-      if (heading === null) return;
+      const raw = this.compassHeading();
+      const heading = Number.isFinite(raw) ? Math.round(raw as number) : null;
+      if (heading == null) return;
 
       untracked(() => {
         this.compass.oldValue = this.compass.newValue;
@@ -113,19 +102,21 @@ export class SvgWindComponent {
         this.headingValue = heading.toString();
         if (this.rotatingDial()?.nativeElement) {
           animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
-          this.updateCloseHauledLines();
-          this.updateWindSectors();
+          // Heading affects dial-local geometry for laylines and sectors; refresh without animation
+          this.updateCloseHauledLines(false);
+          this.updateWindSectors(false);
         }
       });
     });
 
     effect(() => {
-      const cogAngle = parseFloat(this.courseOverGroundAngle().toFixed(0));
+      const raw = this.courseOverGroundAngle();
+      const cogAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (cogAngle == null) return;
 
       untracked(() => {
         this.cog.oldValue = this.cog.newValue;
-        this.cog.newValue =  cogAngle - this.compass.newValue;
+        this.cog.newValue = cogAngle - this.compass.newValue;
         if (this.cogIndicator()?.nativeElement) {
           animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
@@ -137,7 +128,7 @@ export class SvgWindComponent {
 
       untracked(() => {
         if (!wptAngle) {
-            this.waypointActive.set(false);
+          this.waypointActive.set(false);
           return;
         }
 
@@ -155,7 +146,8 @@ export class SvgWindComponent {
     });
 
     effect(() => {
-      const appWindAngle = parseFloat(this.appWindAngle().toFixed(0));
+      const raw = this.appWindAngle();
+      const appWindAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (appWindAngle == null) return;
 
       untracked(() => {
@@ -164,62 +156,115 @@ export class SvgWindComponent {
         if (this.awaIndicator()?.nativeElement) {
           animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
+        // Laylines align to apparent wind; recompute on AWA
+        this.updateCloseHauledLines();
       });
     });
 
     effect(() => {
-      const trueWindAngle = parseFloat(this.trueWindAngle().toFixed(0));
+      const raw = this.trueWindAngle();
+      const trueWindAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (trueWindAngle == null) return;
 
       untracked(() => {
         this.twa.oldValue = this.twa.newValue;
         this.trueWindHeading = trueWindAngle;
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
-         if (this.twaIndicator()?.nativeElement) {
+        if (this.twaIndicator()?.nativeElement) {
           animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
-          this.updateCloseHauledLines();
         }
       });
     });
 
+    // Recompute laylines when laylineAngle changes
     effect(() => {
-      const driftSet = parseFloat(this.driftSet().toFixed(0));
+      // read to establish dependency
+      void this.laylineAngle();
+      if (!this.closeHauledLineEnabled()) return;
+      untracked(() => this.updateCloseHauledLines());
+    });
+
+  // Recompute laylines when AWA changes (already handled in AWA effect) and when laylineAngle changes (below)
+
+    effect(() => {
+      const raw = this.driftSet();
+      const driftSet = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
       if (driftSet == null) return;
 
       untracked(() => {
         this.set.oldValue = this.set.newValue;
-        this.set.newValue =  driftSet;
+        this.set.newValue = driftSet;
         if (this.setIndicator()?.nativeElement) {
           animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds);
         }
       });
     });
+
+    // Ensure wind sectors update on min/mid/max or layline changes, and clear when disabled
+    effect(() => {
+      const enabled = this.windSectorEnabled();
+      // establish dependencies without unused vars warnings
+      void this.trueWindMinHistoric();
+      void this.trueWindMidHistoric();
+      void this.trueWindMaxHistoric();
+      void this.laylineAngle();
+
+      untracked(() => {
+        if (!enabled) {
+          // stop any ongoing sector animations and hide paths
+          if (this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+          if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+          this.portSectorAnimId = null;
+          this.stbdSectorAnimId = null;
+          this.portWindSectorPath = 'none';
+          this.stbdWindSectorPath = 'none';
+          return;
+        }
+        this.updateWindSectors(true);
+      });
+    });
   }
 
-  private updateCloseHauledLines(): void {
+  private updateCloseHauledLines(animate = true): void {
     if (!this.closeHauledLineEnabled()) return;
 
-    // Animate Port Layline
-    const portLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle() * -1);
-    this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
+    // Dial-local angle must include heading so that dial rotation (-heading) yields boat-relative result
+    const heading = Number(this.compass.newValue) || 0;
+  const boatBase = Number(this.awa.newValue) || 0;
+  const lay = Number(this.laylineAngle()) || 0;
+  const portLaylineRotate = this.addHeading(heading, this.addHeading(boatBase, lay * -1));
+    this.animateLayline(this.portLaylinePrev, portLaylineRotate, true, animate);
     this.portLaylinePrev = portLaylineRotate;
 
     // Animate Starboard Layline
-    const stbdLaylineRotate = this.addHeading(Number(this.awa.newValue), this.laylineAngle());
-    this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
+  const stbdLaylineRotate = this.addHeading(heading, this.addHeading(boatBase, lay));
+    this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false, animate);
     this.stbdLaylinePrev = stbdLaylineRotate;
   }
 
-  private animateLayline(from: number, to: number, isPort: boolean) {
+  private animateLayline(from: number, to: number, isPort: boolean, withAnim = true) {
     // Cancel any previous animation for this layline
     if (isPort && this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
     if (!isPort && this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
+
+    // Gate tiny animations
+    if (this.angleDelta(from, to) < this.EPS_ANGLE) {
+      this.drawLayline(to, isPort);
+      if (isPort) this.portLaylineAnimId = null; else this.stbdLaylineAnimId = null;
+      return;
+    }
+
+  if (!withAnim) {
+      this.drawLayline(to, isPort);
+      if (isPort) this.portLaylineAnimId = null; else this.stbdLaylineAnimId = null;
+      return;
+    }
 
     const duration = this.ANIMATION_DURATION;
     const start = performance.now();
     const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-    const animate = (now: number) => {
+  const tick = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
       const eased = ease(progress);
@@ -229,19 +274,10 @@ export class SvgWindComponent {
       if (delta < -180) delta += 360;
       const currentAngle = (from + delta * eased + 360) % 360;
 
-      // Calculate endpoint
-      const radian = (currentAngle * Math.PI) / 180;
-      const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
-      const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
-
-      if (isPort) {
-        this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
-      } else {
-        this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
-      }
+      this.drawLayline(currentAngle, isPort);
 
       if (progress < 1) {
-        const id = requestAnimationFrame(animate);
+        const id = requestAnimationFrame(tick);
         if (isPort) this.portLaylineAnimId = id;
         else this.stbdLaylineAnimId = id;
       } else {
@@ -250,14 +286,25 @@ export class SvgWindComponent {
       }
     };
 
-    const id = requestAnimationFrame(animate);
+    const id = requestAnimationFrame(tick);
     if (isPort) this.portLaylineAnimId = id;
     else this.stbdLaylineAnimId = id;
   }
 
+  private drawLayline(angleDeg: number, isPort: boolean) {
+    const radian = (angleDeg * Math.PI) / 180;
+    const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
+    const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
+    if (isPort) {
+      this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+    } else {
+      this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+    }
+  }
+
   private windSectorsInitialized = false;
 
-  private updateWindSectors() {
+  private updateWindSectors(animate = true) {
     if (
       !this.windSectorEnabled() ||
       this.trueWindMinHistoric() == null ||
@@ -279,18 +326,37 @@ export class SvgWindComponent {
     };
 
     if (!this.windSectorsInitialized) {
+      this.windSectorsInitialized = true;
+      if (animate) {
+        this.animateWindSector(portNew, portNew, true);
+        this.animateWindSector(stbdNew, stbdNew, false);
+      } else {
+        this.portWindSectorPath = this.computeSectorPath(portNew, true);
+        this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+      }
       this.portSectorPrev = portNew;
       this.stbdSectorPrev = stbdNew;
-      this.windSectorsInitialized = true;
-      // Draw in place, no animation
-      this.animateWindSector(portNew, portNew, true);
-      this.animateWindSector(stbdNew, stbdNew, false);
       return;
     }
 
-    // Animate as usual
-    this.animateWindSector(this.portSectorPrev, portNew, true);
-    this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
+    if (animate) {
+      // Gate tiny sector animations
+      const smallMove =
+        this.angleDelta(this.portSectorPrev.min, portNew.min) < this.EPS_ANGLE &&
+        this.angleDelta(this.portSectorPrev.mid, portNew.mid) < this.EPS_ANGLE &&
+        this.angleDelta(this.portSectorPrev.max, portNew.max) < this.EPS_ANGLE;
+      if (smallMove) {
+        this.portWindSectorPath = this.computeSectorPath(portNew, true);
+        this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+      } else {
+        this.animateWindSector(this.portSectorPrev, portNew, true);
+        this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
+      }
+    } else {
+      // No animation requested (e.g., heading-only updates)
+      this.portWindSectorPath = this.computeSectorPath(portNew, true);
+      this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+    }
 
     this.portSectorPrev = portNew;
     this.stbdSectorPrev = stbdNew;
@@ -299,6 +365,18 @@ export class SvgWindComponent {
   private animateWindSector(from: { min: number, mid: number, max: number }, to: { min: number, mid: number, max: number }, isPort: boolean) {
     if (isPort && this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
     if (!isPort && this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+
+    // Gate tiny animations quickly
+    const smallMove =
+      this.angleDelta(from.min, to.min) < this.EPS_ANGLE &&
+      this.angleDelta(from.mid, to.mid) < this.EPS_ANGLE &&
+      this.angleDelta(from.max, to.max) < this.EPS_ANGLE;
+    if (smallMove) {
+      const path = this.computeSectorPath(to, isPort);
+      if (isPort) this.portWindSectorPath = path; else this.stbdWindSectorPath = path;
+      if (isPort) this.portSectorAnimId = null; else this.stbdSectorAnimId = null;
+      return;
+    }
 
     const duration = this.ANIMATION_DURATION;
     const start = performance.now();
@@ -316,21 +394,7 @@ export class SvgWindComponent {
       const max = lerp(from.max, to.max);
 
       // Calculate path
-      const minAngle = this.addHeading(this.addHeading(min, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
-      const midAngle = this.addHeading(this.addHeading(mid, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
-      const maxAngle = this.addHeading(this.addHeading(max, Number(this.compass.newValue) * -1), this.laylineAngle() * (isPort ? -1 : 1));
-
-      const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
-      const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
-      const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER;
-      const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER;
-      const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER;
-      const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER;
-
-      const largeArcFlag = Math.abs(angle([minX, minY], [midX, midY], [maxX, maxY])) > Math.PI / 2 ? 0 : 1;
-      const sweepFlag = angle([maxX, maxY], [minX, minY], [midX, midY]) > 0 ? 0 : 1;
-
-      const path = `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
+      const path = this.computeSectorPath({ min, mid, max }, isPort);
 
       if (isPort) {
         this.portWindSectorPath = path;
@@ -354,9 +418,66 @@ export class SvgWindComponent {
   }
 
   private addHeading(h1 = 0, h2 = 0) {
-    let h3 = h1 + h2;
-    while (h3 > 359) { h3 = h3 - 359; }
-    while (h3 < 0) { h3 = h3 + 359; }
+    let h3 = (h1 + h2) % 360;
+    if (h3 < 0) h3 += 360;
     return h3;
+  }
+
+  ngOnDestroy(): void {
+    // Cancel layline animations
+    if (this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
+    if (this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
+    this.portLaylineAnimId = null;
+    this.stbdLaylineAnimId = null;
+
+    // Cancel wind sector animations
+    if (this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+    if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+    this.portSectorAnimId = null;
+    this.stbdSectorAnimId = null;
+
+    // Cancel any animateRotation frames tracked in WeakMap for known elements
+    const els: (ElementRef<SVGGElement> | undefined)[] = [
+      this.rotatingDial(),
+      this.awaIndicator(),
+      this.twaIndicator(),
+      this.wptIndicator(),
+      this.setIndicator(),
+      this.cogIndicator(),
+    ];
+    for (const ref of els) {
+      const el = ref?.nativeElement;
+      if (!el) continue;
+      const id = this.animationFrameIds.get(el);
+      if (id) cancelAnimationFrame(id);
+      this.animationFrameIds.delete(el);
+    }
+  }
+
+  private angleDelta(from: number, to: number): number {
+    const d = ((to - from + 540) % 360) - 180;
+    return Math.abs(d);
+  }
+
+  private computeSectorPath(state: { min: number, mid: number, max: number }, isPort: boolean): string {
+  const lay = Number(this.laylineAngle()) || 0;
+    const offset = lay * (isPort ? -1 : 1);
+    const heading = Number(this.compass.newValue) || 0;
+    // Dial-local = heading + boat-relative (AWA min/mid/max + lay offset)
+    const minAngle = this.addHeading(heading, this.addHeading(state.min, offset));
+    const midAngle = this.addHeading(heading, this.addHeading(state.mid, offset));
+    const maxAngle = this.addHeading(heading, this.addHeading(state.max, offset));
+
+    const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
+    const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
+    const midX = this.RADIUS * Math.sin((midAngle * Math.PI) / 180) + this.CENTER;
+    const midY = (this.RADIUS * Math.cos((midAngle * Math.PI) / 180) * -1) + this.CENTER;
+    const maxX = this.RADIUS * Math.sin((maxAngle * Math.PI) / 180) + this.CENTER;
+    const maxY = (this.RADIUS * Math.cos((maxAngle * Math.PI) / 180) * -1) + this.CENTER;
+
+    const largeArcFlag = Math.abs(angle([minX, minY], [midX, midY], [maxX, maxY])) > Math.PI / 2 ? 0 : 1;
+    const sweepFlag = angle([maxX, maxY], [minX, minY], [midX, midY]) > 0 ? 0 : 1;
+
+    return `M ${this.CENTER},${this.CENTER} L ${minX},${minY} A ${this.RADIUS},${this.RADIUS} 0 ${largeArcFlag} ${sweepFlag} ${maxX},${maxY} z`;
   }
 }
