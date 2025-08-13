@@ -49,6 +49,14 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
 
   private windSectorObservableSub: Subscription = null;
 
+  // Efficient wind-sector state
+  private windSamples: { t: number; u: number; i: number }[] = [];
+  private windMinDeque: { i: number; u: number }[] = [];
+  private windMaxDeque: { i: number; u: number }[] = [];
+  private windSampleIndex = 0;
+  private lastUnwrapped: number | null = null;
+  private lastSector: { min?: number; mid?: number; max?: number } = {};
+
   constructor() {
     super();
 
@@ -258,8 +266,8 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
           this.appWindAngle = next;
           this.hasAWA = true;
           if (this.widgetProperties.config.windSectorEnable) {
-            const to360Angle = this.addHeading(this.currentHeading, raw);
-            this.addHistoricalWindDirection(to360Angle);
+            const absAngle = this.addHeading(this.currentHeading, raw);
+            this.addHistoricalWindDirection(absAngle);
           }
           this.scheduleMarkForCheck();
         }
@@ -300,7 +308,7 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
       });
     });
 
-    this.startWindSectors();
+  this.startWindSectors();
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -314,6 +322,23 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   private startWindSectors() {
+    // Reset state
+    this.windSamples = [];
+    this.windMinDeque = [];
+    this.windMaxDeque = [];
+    this.windSampleIndex = 0;
+    this.lastUnwrapped = null;
+    this.lastSector = {};
+
+    if (!this.widgetProperties.config.windSectorEnable) {
+      // Clear outputs when disabled
+      this.trueWindMinHistoric = undefined;
+      this.trueWindMidHistoric = undefined;
+      this.trueWindMaxHistoric = undefined;
+      this.scheduleMarkForCheck();
+      return;
+    }
+
     this.zones.runOutsideAngular(() => {
       this.windSectorObservableSub = interval(1000).subscribe(() => {
         this.historicalCleanup();
@@ -321,16 +346,25 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
     });
   }
 
-  private addHistoricalWindDirection(windDirection: number) {
-    this.historicalWindDirection.push({
-      timestamp: Date.now(),
-      windDirection: windDirection
-    });
-    const arc = this.arcForAngles(this.historicalWindDirection.map(d => d.windDirection));
-    this.trueWindMinHistoric = arc.min;
-    this.trueWindMaxHistoric = arc.max;
-    this.trueWindMidHistoric = arc.mid;
-    this.scheduleMarkForCheck();
+  private addHistoricalWindDirection(absAngle: number) {
+    // Maintain unwrapped angle series and monotonic deques (O(1) amortized)
+    const now = Date.now();
+    const u = this.unwrapAngle(absAngle);
+    const i = this.windSampleIndex++;
+    this.windSamples.push({ t: now, u, i });
+
+    // Update min deque (increasing u)
+    while (this.windMinDeque.length && this.windMinDeque[this.windMinDeque.length - 1].u >= u) {
+      this.windMinDeque.pop();
+    }
+    this.windMinDeque.push({ i, u });
+
+    // Update max deque (decreasing u)
+    while (this.windMaxDeque.length && this.windMaxDeque[this.windMaxDeque.length - 1].u <= u) {
+      this.windMaxDeque.pop();
+    }
+    this.windMaxDeque.push({ i, u });
+    // No immediate computation; done on cleanup tick
   }
 
   private arcForAngles(data: number[]): { min: number; max: number; mid: number } {
@@ -357,13 +391,68 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   }
 
   private historicalCleanup() {
-    const n = Date.now() - (this.widgetProperties.config.windSectorWindowSeconds * 1000);
-    this.historicalWindDirection = this.historicalWindDirection.filter(d => d.timestamp >= n);
-    this.scheduleMarkForCheck();
+    if (!this.widgetProperties.config.windSectorEnable) return;
+
+    const cutoff = Date.now() - (this.widgetProperties.config.windSectorWindowSeconds * 1000);
+
+    // Evict expired samples and synchronize deques
+    while (this.windSamples.length && this.windSamples[0].t < cutoff) {
+      const removed = this.windSamples.shift();
+      if (!removed) break;
+      if (this.windMinDeque.length && this.windMinDeque[0].i === removed.i) this.windMinDeque.shift();
+      if (this.windMaxDeque.length && this.windMaxDeque[0].i === removed.i) this.windMaxDeque.shift();
+    }
+
+    if (!this.windSamples.length || !this.windMinDeque.length || !this.windMaxDeque.length) {
+      // No data -> clear outputs
+      if (this.trueWindMinHistoric !== undefined || this.trueWindMidHistoric !== undefined || this.trueWindMaxHistoric !== undefined) {
+        this.trueWindMinHistoric = undefined;
+        this.trueWindMidHistoric = undefined;
+        this.trueWindMaxHistoric = undefined;
+        this.lastSector = {};
+        this.scheduleMarkForCheck();
+      }
+      return;
+    }
+
+    const minU = this.windMinDeque[0].u;
+    const maxU = this.windMaxDeque[0].u;
+    const midU = (minU + maxU) / 2;
+
+    const nextMin = this.normalizeAngle(minU);
+    const nextMid = this.normalizeAngle(midU);
+    const nextMax = this.normalizeAngle(maxU);
+
+    const changed =
+      this.lastSector.min === undefined || this.angleDelta(this.lastSector.min!, nextMin) >= this.DEG_EPSILON ||
+      this.lastSector.mid === undefined || this.angleDelta(this.lastSector.mid!, nextMid) >= this.DEG_EPSILON ||
+      this.lastSector.max === undefined || this.angleDelta(this.lastSector.max!, nextMax) >= this.DEG_EPSILON;
+
+    if (changed) {
+      this.trueWindMinHistoric = nextMin;
+      this.trueWindMidHistoric = nextMid;
+      this.trueWindMaxHistoric = nextMax;
+      this.lastSector = { min: nextMin, mid: nextMid, max: nextMax };
+      this.scheduleMarkForCheck();
+    }
   }
 
   private stopWindSectors() {
     this.windSectorObservableSub?.unsubscribe();
+  }
+
+  private unwrapAngle(a: number): number {
+    // Unwrap to continuous domain based on last value, favoring shortest path
+    if (this.lastUnwrapped == null) {
+      this.lastUnwrapped = a;
+      return a;
+    }
+    const last = this.lastUnwrapped;
+    const lastMod = ((last % 360) + 360) % 360;
+    const diff = ((a - lastMod + 540) % 360) - 180; // [-180, 180)
+    const u = last + diff;
+    this.lastUnwrapped = u;
+    return u;
   }
 
   // Normalize any angle to [0,360)

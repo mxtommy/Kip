@@ -181,6 +181,30 @@ export class SvgWindsteerComponent implements OnDestroy {
         }
       });
     });
+
+    // Ensure wind sectors update on min/mid/max or layline changes, and clear when disabled
+    effect(() => {
+      const enabled = this.windSectorEnabled();
+      // establish dependencies without unused vars warnings
+      void this.trueWindMinHistoric();
+      void this.trueWindMidHistoric();
+      void this.trueWindMaxHistoric();
+      void this.laylineAngle();
+
+      untracked(() => {
+        if (!enabled) {
+          // stop any ongoing sector animations and hide paths
+          if (this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+          if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+          this.portSectorAnimId = null;
+          this.stbdSectorAnimId = null;
+          this.portWindSectorPath = 'none';
+          this.stbdWindSectorPath = 'none';
+          return;
+        }
+        this.updateWindSectors();
+      });
+    });
   }
 
   private updateCloseHauledLines(): void {
