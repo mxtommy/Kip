@@ -1,16 +1,13 @@
-import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal, NgZone, inject, OnDestroy } from '@angular/core';
+import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal, NgZone, inject, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { animateRotation, animateRudderWidth } from '../../core/utils/svg-animate.util';
 
-interface ISVGRotationObject {
-  oldValue: number;
-  newValue: number;
-}
 
 @Component({
   selector: 'app-svg-autopilot',
   templateUrl: './svg-autopilot.component.svg',
   styleUrl: './svg-autopilot.component.scss',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: []
 })
 export class SvgAutopilotComponent implements OnDestroy {
@@ -29,8 +26,10 @@ export class SvgAutopilotComponent implements OnDestroy {
   protected readonly targetPilotHeadingTrue = input.required<boolean>();
   protected readonly headingDirectionTrue = input.required<boolean>();
 
-  protected compass : ISVGRotationObject = { oldValue: 0, newValue: 0 };
-  protected awa : ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  protected compassAngle = signal<number>(0);
+  protected awaAngle = signal<number>(0);
+  private prevCompassAngle = 0;
+  private prevAwaAngle = 0;
 
   protected oldRudderPrtAngle = 0;
   protected newRudderPrtAngle = 0;
@@ -42,9 +41,9 @@ export class SvgAutopilotComponent implements OnDestroy {
   protected apModeValueDirection = signal<string>('');
 
   protected apTWA = computed(() => {
-    const apTWA = parseFloat(this.targetWindAngleHeading().toFixed(0))
-    if (apTWA == null) return;
-    return apTWA;
+    const raw = this.targetWindAngleHeading();
+    if (raw == null) return;
+    return this.roundDeg(raw);
   });
   protected lockedMode = computed(() => {
     const mode = this.apMode();
@@ -56,14 +55,20 @@ export class SvgAutopilotComponent implements OnDestroy {
       if (mode === "standby") return "Standby";
       return "Off-line";
   });
-  protected lockedHdg = computed(() => {
-    const lockedHdg = parseFloat(this.targetPilotHeading().toFixed(0));
-    const lockedAWA = parseFloat(this.targetWindAngleHeading().toFixed(0));
-     switch (this.apMode()) {
-      case "auto": return lockedHdg;
-      case "route": return lockedHdg;
-      case "wind": return lockedAWA;
-      default: return "--";
+  protected lockedHdg = computed<number | null>(() => {
+    const h = this.targetPilotHeading();
+    const w = this.targetWindAngleHeading();
+    if (!Number.isFinite(h as number) || !Number.isFinite(w as number)) return null;
+    const lockedHdg = this.roundDeg(h as number);
+    const lockedAWA = this.roundDeg(w as number);
+    switch (this.apMode()) {
+      case "auto":
+      case "route":
+        return lockedHdg;
+      case "wind":
+        return lockedAWA;
+      default:
+        return null;
     }
   });
   protected lockedHdgAnnotation = computed(() => {
@@ -82,60 +87,58 @@ export class SvgAutopilotComponent implements OnDestroy {
   protected hdgDirectionTrue = computed(() => {
     return this.headingDirectionTrue() ? 'T' : 'M';
   });
-  private animationFrameIds = new WeakMap<SVGGElement, number>();
-  private rudderAnimationFrames = new WeakMap<SVGRectElement, number>();
-  private readonly ANIMATION_DURATION = 1000;
+  private animationFrames = new WeakMap<Element, number>();
+  private readonly ANIMATION_DURATION = 1000; // unified animation duration (ms)
   private readonly DEG_TO_PX = 16.66666667; // 30° maps to 500px, so 1° = 500/30 = 16.6667px
-  private readonly EPS_ANGLE = 1.0; // degrees, gate tiny rotations
+  private readonly ROT_CENTER: [number, number] = [500, 560.061];
   private readonly ngZone = inject(NgZone);
+  // Integer degree rounding (changes <1° are ignored elsewhere)
+  private roundDeg(v: number): number { return Math.round(v); }
 
   constructor() {
     effect(() => {
-      if (this.compassHeading() === null || this.compassHeading() === undefined) return;
-      const compassHeading = parseFloat(this.compassHeading().toFixed(0));
-
+      const heading = this.compassHeading();
+      if (!Number.isFinite(heading as number)) return;
+      const next = this.roundDeg(heading);
       untracked(() => {
-        this.compass.oldValue = this.compass.newValue;
-        this.compass.newValue = compassHeading;
-        if (this.rotatingDial()?.nativeElement) {
-          const delta = this.angleDelta(this.compass.oldValue, this.compass.newValue);
-          if (delta < this.EPS_ANGLE) {
-            this.rotatingDial().nativeElement.setAttribute('transform', `rotate(${-this.compass.newValue} 500 560.061)`);
-          } else {
-            animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, 500, undefined, this.animationFrameIds, [500, 560.061], this.ngZone);
-          }
-        }
+        const prev = this.prevCompassAngle;
+        if (prev === next) return;
+        this.prevCompassAngle = next;
+        this.compassAngle.set(next);
+        const dial = this.rotatingDial()?.nativeElement;
+        if (!dial) return;
+        animateRotation(dial, -prev, -next, this.ANIMATION_DURATION, undefined, this.animationFrames, this.ROT_CENTER, this.ngZone);
       });
     });
 
     effect(() => {
-      const aWA = parseFloat(this.appWindAngle().toFixed(0));
-      const awa360 = (aWA + 360) % 360;
+      const aWA = this.appWindAngle();
+      if (!Number.isFinite(aWA as number)) return;
+      const nextRaw = this.roundDeg(aWA);
+      const next = (nextRaw + 360) % 360;
       untracked(() => {
-        this.awa.oldValue = this.awa.newValue;
-        this.awa.newValue = awa360;
-        if (this.awaIndicator()?.nativeElement) {
-          const delta = this.angleDelta(this.awa.oldValue, this.awa.newValue);
-          if (delta < this.EPS_ANGLE) {
-            this.awaIndicator().nativeElement.setAttribute('transform', `rotate(${this.awa.newValue} 500 560.061)`);
-          } else {
-            animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds,[500, 560.061], this.ngZone);
-          }
-        }
+        const prev = this.prevAwaAngle;
+        if (prev === next) return;
+        this.prevAwaAngle = next;
+        this.awaAngle.set(next);
+        const awaEl = this.awaIndicator()?.nativeElement;
+        if (!awaEl) return;
+        animateRotation(awaEl, prev, next, this.ANIMATION_DURATION, undefined, this.animationFrames, this.ROT_CENTER, this.ngZone);
       });
     });
 
     effect(() => {
-      const rudderAngle = this.rudderAngle();
-      if (rudderAngle == null) return;
+  const rudderAngle = this.rudderAngle();
+  if (!Number.isFinite(rudderAngle as number)) return;
       untracked(() => {
         this.updateRudderAngle(-rudderAngle);
       });
     });
 
     effect(() => {
-      const state = this.apMode();
-      const awa = parseFloat(this.appWindAngle().toFixed(0));
+  const state = this.apMode();
+  const awaRaw = this.appWindAngle();
+  const awa = Number.isFinite(awaRaw as number) ? this.roundDeg(awaRaw) : 0;
       let xteValue = this.courseXte();
 
       untracked(() => {
@@ -188,27 +191,32 @@ export class SvgAutopilotComponent implements OnDestroy {
     });
   }
 
+  private lastRudderSigned = Number.NaN;
   private updateRudderAngle(newAngle: number): void {
+    if (!Number.isFinite(newAngle)) return;
+    const rounded = this.roundDeg(newAngle);
+    if (this.lastRudderSigned === rounded) return;
+    this.lastRudderSigned = rounded;
     const maxAngle = 30;
-    const capped = Math.min(Math.abs(newAngle), maxAngle) * this.DEG_TO_PX;
+    const capped = Math.min(Math.abs(rounded), maxAngle) * this.DEG_TO_PX;
 
-    if (newAngle <= 0) {
+  if (rounded <= 0) {
       animateRudderWidth(
         this.rudderStarboardRect().nativeElement,
         this.oldRudderStbAngle,
         capped,
-        500,
-        undefined,
-        this.rudderAnimationFrames,
+        this.ANIMATION_DURATION,
+    undefined,
+    this.animationFrames,
         this.ngZone
       );
       animateRudderWidth(
         this.rudderPortRect().nativeElement,
         this.oldRudderPrtAngle,
         0,
-        500,
-        undefined,
-        this.rudderAnimationFrames,
+        this.ANIMATION_DURATION,
+    undefined,
+    this.animationFrames,
         this.ngZone
       );
       this.oldRudderStbAngle = capped;
@@ -218,18 +226,18 @@ export class SvgAutopilotComponent implements OnDestroy {
         this.rudderPortRect().nativeElement,
         this.oldRudderPrtAngle,
         capped,
-        500,
-        undefined,
-        this.rudderAnimationFrames,
+        this.ANIMATION_DURATION,
+    undefined,
+    this.animationFrames,
         this.ngZone
       );
       animateRudderWidth(
         this.rudderStarboardRect().nativeElement,
         this.oldRudderStbAngle,
         0,
-        500,
-        undefined,
-        this.rudderAnimationFrames,
+        this.ANIMATION_DURATION,
+    undefined,
+    this.animationFrames,
         this.ngZone
       );
       this.oldRudderPrtAngle = capped;
@@ -237,29 +245,15 @@ export class SvgAutopilotComponent implements OnDestroy {
     }
   }
 
-  private angleDelta(from: number, to: number): number {
-    const d = ((to - from + 540) % 360) - 180;
-    return Math.abs(d);
-  }
-
   ngOnDestroy(): void {
     // Cancel rotation frames
-    const rotatingEls: (ElementRef<SVGGElement> | undefined)[] = [ this.rotatingDial(), this.awaIndicator() ];
+    const rotatingEls: (ElementRef<SVGGElement> | undefined)[] = [ this.rotatingDial(), this.awaIndicator(), this.rudderPortRect(), this.rudderStarboardRect() ];
     for (const ref of rotatingEls) {
       const el = ref?.nativeElement;
       if (!el) continue;
-      const id = this.animationFrameIds.get(el);
+      const id = this.animationFrames.get(el);
       if (id) cancelAnimationFrame(id);
-      this.animationFrameIds.delete(el);
-    }
-    // Cancel rudder animations
-    const rudderEls: (ElementRef<SVGRectElement> | undefined)[] = [ this.rudderPortRect(), this.rudderStarboardRect() ];
-    for (const ref of rudderEls) {
-      const el = ref?.nativeElement;
-      if (!el) continue;
-      const id = this.rudderAnimationFrames.get(el);
-      if (id) cancelAnimationFrame(id);
-      this.rudderAnimationFrames.delete(el);
+      this.animationFrames.delete(el);
     }
   }
 }
