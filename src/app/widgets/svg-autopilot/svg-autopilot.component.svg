@@ -381,7 +381,7 @@
       class="contrast-text"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:73.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="109.25"
-  y="160.33212">{{ compassAngle() ?? '--' }}°<tspan
+      y="160.33212">{{ compassAngle() ?? '--' }}°<tspan
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         >{{ hdgDirectionTrue() }}</tspan></text>
   </g>

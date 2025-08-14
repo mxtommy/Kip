@@ -174,6 +174,7 @@ export class SvgAutopilotComponent implements OnDestroy {
     });
   }
 
+  private lastRudderSigned = Number.NaN;
   private updateRudderAngle(newAngle: number): void {
     if (!Number.isFinite(newAngle)) return;
     const rounded = this.roundDeg(newAngle);
