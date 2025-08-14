@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal } from '@angular/core';
+import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal, NgZone, inject, OnDestroy } from '@angular/core';
 import { animateRotation, animateRudderWidth } from '../../core/utils/svg-animate.util';
 
 interface ISVGRotationObject {
@@ -13,7 +13,7 @@ interface ISVGRotationObject {
   standalone: true,
   imports: []
 })
-export class SvgAutopilotComponent {
+export class SvgAutopilotComponent implements OnDestroy {
   private readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
   private readonly awaIndicator = viewChild.required<ElementRef<SVGGElement>>('awaIndicator');
   private readonly rudderStarboardRect = viewChild.required<ElementRef<SVGRectElement>>('rudderStarboardRect');
@@ -86,6 +86,8 @@ export class SvgAutopilotComponent {
   private rudderAnimationFrames = new WeakMap<SVGRectElement, number>();
   private readonly ANIMATION_DURATION = 1000;
   private readonly DEG_TO_PX = 16.66666667; // 30° maps to 500px, so 1° = 500/30 = 16.6667px
+  private readonly EPS_ANGLE = 1.0; // degrees, gate tiny rotations
+  private readonly ngZone = inject(NgZone);
 
   constructor() {
     effect(() => {
@@ -96,7 +98,12 @@ export class SvgAutopilotComponent {
         this.compass.oldValue = this.compass.newValue;
         this.compass.newValue = compassHeading;
         if (this.rotatingDial()?.nativeElement) {
-          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, 500, undefined, this.animationFrameIds, [500, 560.061]);
+          const delta = this.angleDelta(this.compass.oldValue, this.compass.newValue);
+          if (delta < this.EPS_ANGLE) {
+            this.rotatingDial().nativeElement.setAttribute('transform', `rotate(${-this.compass.newValue} 500 560.061)`);
+          } else {
+            animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, 500, undefined, this.animationFrameIds, [500, 560.061], this.ngZone);
+          }
         }
       });
     });
@@ -108,7 +115,12 @@ export class SvgAutopilotComponent {
         this.awa.oldValue = this.awa.newValue;
         this.awa.newValue = awa360;
         if (this.awaIndicator()?.nativeElement) {
-          animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds,[500, 560.061]);
+          const delta = this.angleDelta(this.awa.oldValue, this.awa.newValue);
+          if (delta < this.EPS_ANGLE) {
+            this.awaIndicator().nativeElement.setAttribute('transform', `rotate(${this.awa.newValue} 500 560.061)`);
+          } else {
+            animateRotation(this.awaIndicator().nativeElement, this.awa.oldValue, this.awa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds,[500, 560.061], this.ngZone);
+          }
         }
       });
     });
@@ -187,7 +199,8 @@ export class SvgAutopilotComponent {
         capped,
         500,
         undefined,
-        this.rudderAnimationFrames
+        this.rudderAnimationFrames,
+        this.ngZone
       );
       animateRudderWidth(
         this.rudderPortRect().nativeElement,
@@ -195,7 +208,8 @@ export class SvgAutopilotComponent {
         0,
         500,
         undefined,
-        this.rudderAnimationFrames
+        this.rudderAnimationFrames,
+        this.ngZone
       );
       this.oldRudderStbAngle = capped;
       this.oldRudderPrtAngle = 0;
@@ -206,7 +220,8 @@ export class SvgAutopilotComponent {
         capped,
         500,
         undefined,
-        this.rudderAnimationFrames
+        this.rudderAnimationFrames,
+        this.ngZone
       );
       animateRudderWidth(
         this.rudderStarboardRect().nativeElement,
@@ -214,10 +229,37 @@ export class SvgAutopilotComponent {
         0,
         500,
         undefined,
-        this.rudderAnimationFrames
+        this.rudderAnimationFrames,
+        this.ngZone
       );
       this.oldRudderPrtAngle = capped;
       this.oldRudderStbAngle = 0;
+    }
+  }
+
+  private angleDelta(from: number, to: number): number {
+    const d = ((to - from + 540) % 360) - 180;
+    return Math.abs(d);
+  }
+
+  ngOnDestroy(): void {
+    // Cancel rotation frames
+    const rotatingEls: (ElementRef<SVGGElement> | undefined)[] = [ this.rotatingDial(), this.awaIndicator() ];
+    for (const ref of rotatingEls) {
+      const el = ref?.nativeElement;
+      if (!el) continue;
+      const id = this.animationFrameIds.get(el);
+      if (id) cancelAnimationFrame(id);
+      this.animationFrameIds.delete(el);
+    }
+    // Cancel rudder animations
+    const rudderEls: (ElementRef<SVGRectElement> | undefined)[] = [ this.rudderPortRect(), this.rudderStarboardRect() ];
+    for (const ref of rudderEls) {
+      const el = ref?.nativeElement;
+      if (!el) continue;
+      const id = this.rudderAnimationFrames.get(el);
+      if (id) cancelAnimationFrame(id);
+      this.rudderAnimationFrames.delete(el);
     }
   }
 }
