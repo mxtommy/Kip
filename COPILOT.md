@@ -255,3 +255,108 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 
 ---
 
+## 12. SVG Animation Utilities (requestAnimationFrame Helpers)
+
+High-performance SVG animations in KIP (e.g., wind steering dial laylines, sector bands, rotating indicators) use a small set of utilities found in `src/app/widgets/utils/svg-animate.util.ts` to ensure:
+
+- No unnecessary Angular change detection on every animation frame
+- Consistent easing and shortest‑path angle interpolation
+- Centralized cancellation logic (preventing overlapping animations per element/concern)
+- Readable, minimal widget component code
+
+### 12.1 Design Principles
+1. Run frame loops outside Angular's `NgZone` to avoid triggering change detection ~60 times/sec.
+2. Only re-enter the zone once per animation (on completion callback) if UI state needs Angular binding updates.
+3. Gate “tiny” animations (angle deltas below a threshold) to avoid visual jitter and wasted work.
+4. Always animate the shortest angular path (wrap via ±180 logic) for rotational continuity.
+5. Provide generic primitives (angle + sector interpolation) so components don’t duplicate interpolation math.
+
+### 12.2 Provided Functions
+| Function | Purpose | Key Inputs | Notes |
+|----------|---------|-----------|-------|
+| `animateRotation(el, fromDeg, toDeg, durationMs, onDone?, ngZone?)` | Smoothly rotates an SVG element (`transform: rotate(...)`) | Element, start+end angles, duration | Tracks per-element frame id internally (WeakMap) so a new call cancels the prior rotation for that element. |
+| `animateRudderWidth(rectEl, fromWidth, toWidth, durationMs, onDone?, ngZone?)` | Interpolates a `<rect>` width | SVGRectElement, numeric widths | Same outside-zone strategy; width set via `setAttribute`. |
+| `animateAngleTransition(fromDeg, toDeg, durationMs, applyFn, onDone?, ngZone?)` | Generic angle interpolation (no DOM assumptions) | Angles, duration, callback(angle) | Use for derived geometry (e.g., computing a path string). |
+| `animateSectorTransition(from: SectorAngles, to: SectorAngles, durationMs, applyFn, onDone?, ngZone?)` | Interpolates a structured group of three related angles (`min, mid, max`) | Objects with `{min, mid, max}` | Uses same angle normalization per field + easing. |
+
+`SectorAngles` interface:
+```
+interface SectorAngles { min: number; mid: number; max: number; }
+```
+
+### 12.3 NgZone Strategy
+All helpers accept an optional `NgZone`. When provided they:
+1. Call `ngZone.runOutsideAngular()` wrapping the frame loop.
+2. Use `requestAnimationFrame` until elapsed >= duration.
+3. Apply easing (cubic in/out) and normalized shortest-path interpolation.
+4. On final frame, invoke `onDone` inside Angular (`ngZone.run(...)`) so any bound template values update once.
+
+If `ngZone` is omitted they still function (pure browser environment) — suitable for non-Angular contexts or tests.
+
+### 12.4 Cancellation Rules
+- `animateRotation` & `animateRudderWidth` internally keep a WeakMap<Element, frameId>; a new call replaces the old.
+- Callers of `animateAngleTransition` / `animateSectorTransition` receive the raw `frameId` and MUST store & cancel it if a new animation is started for the same conceptual target (e.g., a layline or sector band) before completion.
+- Always cancel outstanding frame ids in `ngOnDestroy` to avoid orphan rAF callbacks if the component is torn down mid-animation.
+
+### 12.5 Angle Handling Details
+- Input angles are normalized to [0, 360).
+- Delta uses wrapped signed difference: `((to - from + 540) % 360) - 180` for shortest path.
+- Interpolated angle = `from + easedT * delta`; final angle normalized again.
+- A small epsilon (e.g., ~0.25°) can be used by callers to skip tiny animations; component sets `EPS_ANGLE` constant.
+
+### 12.6 Easing
+Currently a fixed cubic ease-in-out: `t < 0.5 ? 4t^3 : 1 - pow(-2t + 2, 3)/2`. Chosen for smooth acceleration/deceleration without overshoot. If future needs arise, expose an optional easing parameter (keep backward compatibility by defaulting to cubic in/out).
+
+### 12.7 Usage Patterns
+
+Rotate an indicator:
+```
+this.animationFrameIds.set(
+  el,
+  animateRotation(el, currentAngle, targetAngle, 300, () => { /* one-time post animation logic */ }, this.ngZone)
+);
+```
+
+Animate a layline path angle:
+```
+if (this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
+this.portLaylineAnimId = animateAngleTransition(
+  prevAngle,
+  nextAngle,
+  300,
+  angle => this.updateLaylinePath(angle, /* isPort= */ true),
+  () => { this.portLaylineAnimId = null; },
+  this.ngZone
+);
+```
+
+Animate a wind sector (three angles):
+```
+if (this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+this.portSectorAnimId = animateSectorTransition(
+  previousSector,
+  newSector,
+  300,
+  sector => this.updateSectorPath(sector, true),
+  () => { this.portSectorAnimId = null; },
+  this.ngZone
+);
+```
+
+### 12.8 When NOT to Animate
+- First render / initialization where the user has no prior visual expectation — just set final state.
+- Discontinuous jumps (e.g., compass wrap after data gap) that would produce a long spin — snap instead.
+- Extremely small (< epsilon) changes — update instantly.
+
+### 12.9 Testing Tips
+- For deterministic unit tests, inject a mock `performance.now()` / substitute a manual time advance, or abstract the timestamp acquisition behind a seam if greater test coverage is required.
+- Validate shortest-path logic with cases like `from=350 → to=10` (should rotate +20°, not -340°).
+- Confirm cancellation by firing a second animation mid-way; the first should not apply further frames.
+
+### 12.10 Future Extensions (Backlog Ideas)
+- Optional custom easing function parameter.
+- Support for group animations (batch multiple angle transitions under one rAF loop for micro-optimizations).
+- Auto-prefetch “snap if > threshold degrees” heuristic inside helpers (today caller decides).
+
+---
+
