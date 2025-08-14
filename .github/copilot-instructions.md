@@ -78,3 +78,33 @@ Use this quick-start map to be productive in this repo. Prefer these concrete pa
 - Use Data Inspector (src/app/core/components/data-inspector) to verify live paths/metadata.
 - Dev with source maps: npm run dev. Watch console from DataService/DataSetService for timeouts/lifecycle logs.
 - Embeds (widget-iframe): prefer same-origin or relative URLs to avoid CORS and input-injection limits (see embedwidget.md).
+
+## SVG Animation Helpers (rAF)
+High-frequency SVG updates (rotations, path morphs) should NOT trigger Angular change detection every frame.
+
+Core utilities (src/app/widgets/utils/svg-animate.util.ts):
+- animateRotation(el, fromDeg, toDeg, durationMs, onDone?, ngZone?)
+- animateRudderWidth(rectEl, from, to, durationMs, onDone?, ngZone?)
+- animateAngleTransition(fromDeg, toDeg, durationMs, applyFn(angle), onDone?, ngZone?)
+- animateSectorTransition(fromAngles, toAngles, durationMs, applyFn(sector), onDone?, ngZone?)
+
+Pattern:
+1. Inject NgZone; pass it so frames run outside Angular.
+2. Cancel prior frame id before starting a new conceptual animation (store returned id from the generic helpers).
+3. Skip tiny angle deltas (< ~0.25°) to prevent jitter.
+4. On destroy: cancel outstanding ids (including those tracked internally for animateRotation/animateRudderWidth via element refs).
+
+Example (angle interpolation):
+```
+if (this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
+this.portLaylineAnimId = animateAngleTransition(
+	prev,
+	next,
+	300,
+	angle => this.drawLayline(angle, true),
+	() => { this.portLaylineAnimId = null; },
+	this.ngZone
+);
+```
+
+See COPILOT.md Section 12 for full rationale, cancellation rules, and future extension ideas.

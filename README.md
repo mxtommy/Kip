@@ -172,6 +172,9 @@ For comprehensive development guidance, please refer to these instruction files:
 - **[COPILOT.md](./COPILOT.md)**: Complete KIP project guidelines including architecture, services, widget development patterns, theming, and Signal K integration.
 - **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v20+ coding standards, component patterns, and framework best practices.
 
+### **Performance & SVG Animation**
+For guidance on high-performance widget animations (e.g., wind dial rotations, laylines, wind sectors) using requestAnimationFrame outside Angular's change detection, see the new section 12 "SVG Animation Utilities" in [COPILOT.md](./COPILOT.md#12-svg-animation-utilities-requestanimationframe-helpers).
+
 ### **Development Workflow:**
 1. **Start Here**: Read `COPILOT.md` for KIP-specific architecture and patterns.
 2. **Angular Standards**: Follow `.github/instructions/angular.instructions.md` for modern Angular development.
