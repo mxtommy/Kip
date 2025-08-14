@@ -91,32 +91,6 @@
          transform="scale(-1,1)" />
     </g>
   </g>
-   <g id="LayerLayline"
-     [style.display]="closeHauledLineEnabled() ? 'inline' : 'none'">
-    <path id="PortLayline"
-       [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
-       [attr.d]="closeHauledLineStbdPath"
-       style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6"
-       class="laylines" />
-    <path id="StbdLayline"
-       [style.display]="trueWindAngle() != null ? 'inline' : 'none'"
-       [attr.d]="closeHauledLinePortPath"
-       class="laylines"
-       style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6" />
-  </g>
-  <g id="LayerWindShift"
-     [style.display]="windSectorEnabled() ? 'inline' : 'none'">
-    <path id="portSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-      [attr.d]="portWindSectorPath"
-      class="wind-sector-port"
-      style="fill-opacity:0.5;stroke:none" />
-    <path id="StbdSectorShift"
-      [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-      [attr.d]="stbdWindSectorPath"
-      class="wind-sector-stbd"
-      style="fill-opacity:0.5;stroke:none" />
-  </g>
   <g id="layerCompass">
     <g id="fixedDial">
       <path id="portStarboardBackground"
@@ -428,6 +402,31 @@
             x="500.15503"
             y="101.96342">N</tspan></text>
       </g>
+      <!-- Moved inside rotating dial so they rotate passively with the boat -->
+      <g id="LayerLayline" [style.display]="closeHauledLineEnabled() ? 'inline' : 'none'">
+        <path id="PortLayline"
+          [style.display]="appWindAngle() != null ? 'inline' : 'none'"
+          [attr.d]="closeHauledLineStbdPath"
+          style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6"
+          class="laylines" />
+        <path id="StbdLayline"
+          [style.display]="appWindAngle() != null ? 'inline' : 'none'"
+          [attr.d]="closeHauledLinePortPath"
+          class="laylines"
+          style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6" />
+      </g>
+      <g id="LayerWindShift" [style.display]="windSectorEnabled() ? 'inline' : 'none'">
+        <path id="portSectorShift"
+          [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
+          [attr.d]="portWindSectorPath"
+          class="wind-sector-port"
+          style="fill-opacity:0.5;stroke:none" />
+        <path id="StbdSectorShift"
+          [style.display]="stbdWindSectorPath != 'none' ? 'inline' : 'none'"
+          [attr.d]="stbdWindSectorPath"
+          class="wind-sector-stbd"
+          style="fill-opacity:0.5;stroke:none" />
+     </g>
       <g #wptIndicator
         [attr.display]="waypointActive() ? 'inline' : 'none'">
         <path
@@ -469,7 +468,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="903.84814"
         y="114.73512"
-        id="text42">{{ trueWindSpeedDisplay() }}</text>
+        id="text42">{{ (trueWindSpeed() | number:'1.1-1') ?? '--' }}</text>
       <text
         xml:space="preserve"
         class="true-wind-label"
@@ -493,7 +492,7 @@
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:14.5521;stroke-miterlimit:0"
         x="94.580925"
         y="114.63747"
-        id="text40">{{ appWindSpeedDisplay() }}</text>
+        id="text40">{{ (appWindSpeed() | number:'1.1-1') ?? '--' }}</text>
       <text
        xml:space="preserve"
        class="app-wind-label"
@@ -511,7 +510,7 @@
        style="font-style:normal;font-variant:normal;font-stretch:normal;font-size:66.6667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
        x="499.78842"
        y="523.55145"
-       >{{flow()}}</text>
+      >{{ (driftFlow() | number:'1.1-1') ?? '--' }}</text>
   </g>
   <g id="layerIndicators"
     style="display:inline">
@@ -548,17 +547,6 @@
          x="500"
          y="110"
          id="text10">T</text>
-        attributeName="transform"
-        type="rotate"
-        [attr.from]="trueWind.oldDegreeIndicator+' 500 500'"
-        [attr.to]="trueWind.newDegreeIndicator+' 500 500'"
-        begin="indefinite"
-        dur="0.5s"
-        keySplines="0.25 0.1 0.25 1"
-        keyTimes="0;1"
-        calcMode="spline"
-        additive="replace"
-        fill="freeze" />
     </g>
   </g>
   <g id="layerHeading"
