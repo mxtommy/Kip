@@ -556,6 +556,16 @@
                 }
                 @if (widgetConfig?.gauge?.type === 'horizon') {
                   <div formGroupName="gauge">
+                    <mat-checkbox name="invertPitch" formControlName="invertPitch">
+                      Reverse Pitch Axis
+                    </mat-checkbox>
+                  </div>
+                  <div formGroupName="gauge">
+                    <mat-checkbox name="invertRoll" formControlName="invertRoll">
+                      Reverse Roll Axis
+                    </mat-checkbox>
+                  </div>
+                  <div formGroupName="gauge">
                     <mat-checkbox name="noFrameVisible" formControlName="noFrameVisible">
                       Show Frame
                     </mat-checkbox>
